@@ -17,6 +17,27 @@ redraw them if an SVG changes.
 | ![Concept 2](2-cube-window.png) | **The cube is the browser.** Its front face is a web page (title bar dots, text lines) and its other faces glow: a page in three dimensions, which is what the app does. |
 | ![Concept 3](3-cube-horizon.png) | **Cube over the horizon.** A wireframe cube floating over the neon grid and striped sun of the app's 3D room: the room itself in one mark, leaning into the 1980s look. |
 
+## Concept 4: the mix (owner, prompt 45)
+
+The owner asked for concept 1 and concept 3 combined: concept 3's grid
+lines, no sun but "a little hyperspace effect" instead, and "Now in 3D"
+in a cheesy 1990s font above or on the sides of the cube. All three keep
+concept 1's cube and orbit ring over concept 3's neon grid, with star
+streaks bursting out from behind the cube. The words are chrome block
+letters with a magenta extrusion, in the Impact font.
+
+| Version | Where the words go |
+|---|---|
+| ![Concept 4a](4a-now-in-3d-above.png) | **4a, above.** "NOW IN 3D" in one line over the cube. |
+| ![Concept 4b](4b-now-in-3d-on-cube.png) | **4b, on the cube.** "NOW" on its left face, "IN 3D" on its right face, following the faces' angles. |
+| ![Concept 4c](4c-now-in-3d-sides.png) | **4c, beside it.** "NOW" to the left of the cube, "IN" over "3D" to the right. |
+
+The words are too small to read at app icon sizes (16 to 48 px), so the
+icon would be the same picture without them, and the version with words
+would be the logo for the README, the About box, and the installer.
+Before real use the lettering is turned into outlines, so it does not
+depend on the Impact font being installed.
+
 Other directions worth a sketch:
 - The cube built from three stacked tab cards (the tab rail) at
   different depths.

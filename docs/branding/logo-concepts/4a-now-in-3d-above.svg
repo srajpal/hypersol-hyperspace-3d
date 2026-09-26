@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Concept 4a: a cube in orbit over a neon grid, with NOW IN 3D above">
+  <!-- Concept 4 (owner, prompt 45): concept 1's cube and orbit, concept 3's grid, a hyperspace burst instead of the sun, and "NOW IN 3D" in 1990s chrome letters. The text uses the Impact font; outline it before real use. -->
+  <defs>
+    <clipPath id="tile"><rect width="256" height="256" rx="48"/></clipPath>
+    <linearGradient id="top" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9ff6ff"/><stop offset="1" stop-color="#39e6ff"/></linearGradient>
+    <linearGradient id="left" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d7dff"/><stop offset="1" stop-color="#3b2bb8"/></linearGradient>
+    <linearGradient id="right" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff4fd8"/><stop offset="1" stop-color="#8a1f9e"/></linearGradient>
+    <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="0.42" stop-color="#9ff6ff"/>
+      <stop offset="0.5" stop-color="#1c2a78"/><stop offset="0.62" stop-color="#ff7fe0"/>
+      <stop offset="1" stop-color="#fff2ff"/>
+    </linearGradient>
+    <linearGradient id="fade" gradientUnits="userSpaceOnUse" x1="0" y1="190" x2="0" y2="256"><stop offset="0" stop-color="#b43cff" stop-opacity="0.2"/><stop offset="1" stop-color="#b43cff" stop-opacity="1"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#b9f7ff" stop-opacity="0.55"/><stop offset="1" stop-color="#39e6ff" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="256" height="256" rx="48" fill="#07051a"/>
+  <g clip-path="url(#tile)">
+  <circle cx="128" cy="132" r="70" fill="url(#glow)"/>
+  <polygon points="82.0,121.5 61.9,115.3 61.2,118.2" fill="#ffffff" opacity="0.49"/>
+  <polygon points="90.9,153.0 49.8,175.2 50.7,176.7" fill="#ffffff" opacity="0.92"/>
+  <polygon points="90.5,91.8 77.2,75.1 74.9,77.3" fill="#ffffff" opacity="0.94"/>
+  <polygon points="190.1,150.7 221.5,161.2 222.1,159.3" fill="#ffffff" opacity="0.74"/>
+  <polygon points="73.6,110.4 52.5,100.2 51.3,103.2" fill="#ffffff" opacity="0.64"/>
+  <polygon points="93.4,121.3 73.5,114.0 72.9,116.1" fill="#e7c8ff" opacity="0.84"/>
+  <polygon points="62.3,146.4 26.1,153.2 26.6,155.4" fill="#ffffff" opacity="0.80"/>
+  <polygon points="122.3,88.0 114.4,19.5 112.4,19.7" fill="#e7c8ff" opacity="0.53"/>
+  <polygon points="175.8,157.3 227.0,186.7 228.8,183.3" fill="#9ff6ff" opacity="0.80"/>
+  <polygon points="82.5,101.3 49.0,76.4 46.8,79.7" fill="#9ff6ff" opacity="0.69"/>
+  <polygon points="109.4,101.0 82.9,53.3 80.0,55.1" fill="#e7c8ff" opacity="0.59"/>
+  <polygon points="84.2,170.2 68.9,181.7 70.8,183.9" fill="#ffffff" opacity="0.76"/>
+  <polygon points="86.2,133.7 53.2,133.1 53.3,136.8" fill="#e7c8ff" opacity="0.65"/>
+  <polygon points="153.5,105.3 183.2,76.5 180.9,74.3" fill="#ffffff" opacity="0.86"/>
+  <polygon points="156.9,98.8 183.9,69.8 181.9,68.1" fill="#e7c8ff" opacity="0.93"/>
+  <polygon points="151.5,164.8 168.1,189.9 170.0,188.5" fill="#e7c8ff" opacity="0.87"/>
+  <polygon points="92.9,103.1 75.3,85.9 72.7,89.0" fill="#ffffff" opacity="0.68"/>
+  <polygon points="175.0,82.5 213.0,44.9 210.7,42.7" fill="#e7c8ff" opacity="0.65"/>
+  <polygon points="173.2,166.4 189.6,180.0 190.7,178.6" fill="#ffffff" opacity="0.67"/>
+  <polygon points="170.9,167.4 187.8,183.5 189.9,181.1" fill="#ffffff" opacity="0.92"/>
+  <polygon points="100.4,108.1 79.5,88.2 77.8,90.2" fill="#9ff6ff" opacity="0.93"/>
+  <polygon points="87.1,101.4 68.8,85.8 67.0,88.2" fill="#e7c8ff" opacity="0.69"/>
+  <polygon points="69.6,139.9 25.0,144.8 25.3,147.0" fill="#9ff6ff" opacity="0.52"/>
+  <polygon points="94.3,122.6 51.1,108.4 49.9,112.5" fill="#ffffff" opacity="0.80"/>
+  <polygon points="67.3,119.4 33.1,111.1 32.6,113.3" fill="#ffffff" opacity="0.85"/>
+  <polygon points="153.2,76.9 167.0,50.4 164.3,49.1" fill="#9ff6ff" opacity="0.82"/>
+  <polygon points="190.3,127.9 232.8,126.2 232.7,124.1" fill="#9ff6ff" opacity="0.67"/>
+  <polygon points="192.2,105.2 255.1,80.3 254.1,77.9" fill="#ffffff" opacity="0.50"/>
+  <polygon points="82.7,140.6 39.9,146.5 40.7,150.8" fill="#ffffff" opacity="0.69"/>
+  <polygon points="92.1,80.5 80.6,61.2 77.8,63.1" fill="#e7c8ff" opacity="0.84"/>
+  <polygon points="128.0,80.8 130.0,53.5 126.2,53.5" fill="#9ff6ff" opacity="0.49"/>
+  <polygon points="184.6,112.1 224.9,99.9 223.7,96.4" fill="#ffffff" opacity="0.81"/>
+  <polygon points="146.6,165.8 157.2,189.5 160.9,187.5" fill="#ffffff" opacity="0.76"/>
+  <polygon points="85.9,103.1 31.5,64.4 30.3,66.1" fill="#ffffff" opacity="0.46"/>
+  <polygon points="146.4,74.7 155.2,53.1 151.7,51.9" fill="#ffffff" opacity="0.67"/>
+  <polygon points="172.1,86.0 193.0,65.9 191.4,64.3" fill="#9ff6ff" opacity="0.70"/>
+  <polygon points="131.9,86.4 137.9,40.5 133.9,40.1" fill="#ffffff" opacity="0.91"/>
+  <polygon points="69.1,164.1 29.7,183.8 31.1,186.5" fill="#ffffff" opacity="0.89"/>
+  <polygon points="137.3,76.9 147.9,19.5 145.9,19.2" fill="#ffffff" opacity="0.69"/>
+  </g>
+  <g clip-path="url(#tile)" stroke="url(#fade)" stroke-width="1.6">
+  <line x1="128" y1="196" x2="-138" y2="336"/>
+  <line x1="128" y1="196" x2="-100" y2="336"/>
+  <line x1="128" y1="196" x2="-62" y2="336"/>
+  <line x1="128" y1="196" x2="-24" y2="336"/>
+  <line x1="128" y1="196" x2="14" y2="336"/>
+  <line x1="128" y1="196" x2="52" y2="336"/>
+  <line x1="128" y1="196" x2="90" y2="336"/>
+  <line x1="128" y1="196" x2="128" y2="336"/>
+  <line x1="128" y1="196" x2="166" y2="336"/>
+  <line x1="128" y1="196" x2="204" y2="336"/>
+  <line x1="128" y1="196" x2="242" y2="336"/>
+  <line x1="128" y1="196" x2="280" y2="336"/>
+  <line x1="128" y1="196" x2="318" y2="336"/>
+  <line x1="128" y1="196" x2="356" y2="336"/>
+  <line x1="128" y1="196" x2="394" y2="336"/>
+  <line x1="0" y1="199.0" x2="256" y2="199.0"/>
+  <line x1="0" y1="206.1" x2="256" y2="206.1"/>
+  <line x1="0" y1="216.5" x2="256" y2="216.5"/>
+  <line x1="0" y1="229.9" x2="256" y2="229.9"/>
+  <line x1="0" y1="246.2" x2="256" y2="246.2"/>
+  </g>
+  <rect x="0" y="195" width="256" height="2" fill="#ff4fd8" opacity="0.9" clip-path="url(#tile)"/>
+  <path d="M 46.0 142.0 A 82.0 24.8 0 0 1 210.0 142.0" transform="rotate(-12 128 142.0)" fill="none" stroke="#39e6ff" stroke-width="3.5" opacity="0.45"/>
+  <polygon points="79.2,84.3 143.2,74.3 189.5,107.8 125.5,117.7" fill="url(#top)"/>
+  <polygon points="79.2,84.3 125.5,117.7 112.8,189.7 66.5,156.2" fill="url(#left)"/>
+  <polygon points="125.5,117.7 189.5,107.8 176.8,179.7 112.8,189.7" fill="url(#right)"/>
+  <polygon points="79.2,84.3 143.2,74.3 189.5,107.8 125.5,117.7" fill="none" stroke="#f1ecff" stroke-width="1.8" stroke-linejoin="round" opacity="0.85"/>
+  <polygon points="79.2,84.3 125.5,117.7 112.8,189.7 66.5,156.2" fill="none" stroke="#f1ecff" stroke-width="1.8" stroke-linejoin="round" opacity="0.85"/>
+  <polygon points="125.5,117.7 189.5,107.8 176.8,179.7 112.8,189.7" fill="none" stroke="#f1ecff" stroke-width="1.8" stroke-linejoin="round" opacity="0.85"/>
+  <path d="M 46.0 142.0 A 82.0 24.8 0 0 0 210.0 142.0" transform="rotate(-12 128 142.0)" fill="none" stroke="#39e6ff" stroke-width="4" opacity="0.95"/>
+  <g transform=" translate(128 58) skewX(-10)" font-family="Impact, 'Arial Black', 'Helvetica Neue', sans-serif" font-size="40" text-anchor="middle" letter-spacing="1">
+  <text x="3.5" y="4.5" fill="#8a1f9e" stroke="#8a1f9e" stroke-width="2">NOW IN 3D</text>
+  <text x="2.8" y="3.6" fill="#8a1f9e" stroke="#8a1f9e" stroke-width="2">NOW IN 3D</text>
+  <text x="2.1" y="2.7" fill="#8a1f9e" stroke="#8a1f9e" stroke-width="2">NOW IN 3D</text>
+  <text x="1.4" y="1.8" fill="#8a1f9e" stroke="#8a1f9e" stroke-width="2">NOW IN 3D</text>
+  <text x="0.7" y="0.9" fill="#8a1f9e" stroke="#8a1f9e" stroke-width="2">NOW IN 3D</text>
+  <text x="0" y="0" fill="url(#chrome)" stroke="#07051a" stroke-width="2.4" paint-order="stroke">NOW IN 3D</text>
+  <text x="0" y="0" fill="none" stroke="#ffffff" stroke-width="0.6" opacity="0.7">NOW IN 3D</text>
+  </g>
+  <path d="M 214 23 L 215.26 28.74 L 221 30 L 215.26 31.26 L 214 37 L 212.74 31.26 L 207 30 L 212.74 28.74 Z" fill="#ffffff"/>
+  <path d="M 40 66 L 40.72 69.28 L 44 70 L 40.72 70.72 L 40 74 L 39.28 70.72 L 36 70 L 39.28 69.28 Z" fill="#ffffff"/>
+</svg>
