@@ -90,8 +90,7 @@ Downloads folder), printing, and private tabs that keep nothing.
 
 ![A private tab](screenshots/m8/22-private-tab.png)
 
-**Milestone 9: passwords and site permissions** (built; waiting for
-the owner's acceptance). After you sign in, the browser offers to save
+**Milestone 9: passwords and site permissions** (accepted 2026-09-26). After you sign in, the browser offers to save
 the password, encrypted with your system's keychain; later, clicking the
 sign-in field lists the saved account, and picking it fills the form.
 The Library has a Passwords tab. Sites ask before using the camera,
@@ -114,8 +113,7 @@ and pages print flat.
 
 ![New tab and New private tab under "+"](screenshots/m9/29-new-tab-menu.png)
 
-**Milestone 10: tabs and economy** (built; waiting for the owner's
-acceptance). Reopen a closed tab (Ctrl+Shift+T) with its back history,
+**Milestone 10: tabs and economy** (accepted 2026-09-26). Reopen a closed tab (Ctrl+Shift+T) with its back history,
 search your tabs (Ctrl+Shift+A), and mute a tab from the speaker on its
 card. Settings > Tabs sets the card size and whether tabs show as
 cards, cards that hide, or a list in the top bar. Economy mode (on by

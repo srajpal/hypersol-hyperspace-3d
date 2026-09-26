@@ -91,15 +91,13 @@ lifted out of ordinary pages, free camera movement, mobile, VR, and more.
 
 ## Progress
 
-Eight milestones are done: a live page on a tilted panel in the 3D room,
+Ten milestones are done: a live page on a tilted panel in the 3D room,
 tabs as cards, bookmarks and history, ad and tracker blocking with
 encrypted DNS, a layers view that lifts a page's parts to different
-depths, two themes in a 1980s and 1990s look, an instrument panel, and
-the everyday tools (zoom, find, downloads, printing, private tabs).
-Milestones 9 (a password manager and site permissions) and 10
-(reopening, searching, and muting tabs, tab display choices, an economy
-mode, sleeping tabs, and a faster history) are built and waiting for
-the owner's acceptance. See
+depths, two themes in a 1980s and 1990s look, an instrument panel, the
+everyday tools (zoom, find, downloads, printing, private tabs), a
+password manager with site permissions, and tab tools with an economy
+mode and sleeping tabs. See
 [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 

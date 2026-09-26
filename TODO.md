@@ -20,8 +20,8 @@ Plan approved 2026-09-24.
 | 6 | Themes and look (design) | Final Nebula and Daylight, theme switch, matching room lighting, design pass over all screens, custom window frame considered | Done (accepted 2026-09-26; tab cards to shrink, see below) |
 | 7 | Instrument panel | Floating panels with live readouts about the page and the browser: dials, meters, a console, and a network list, like a light DevTools; each part switchable in Settings | Done (accepted 2026-09-26) |
 | 8 | Everyday browser features | Zoom (buttons, shortcuts, per site), find in page, downloads panel, printing, private tabs | Done (accepted 2026-09-26, with follow-ups below) |
-| 9 | Passwords and site permissions | A password manager (offer to save on sign-in, fill on return, a Passwords tab in the Library, encrypted with the system's keychain) and a site permissions panel (camera, microphone, location: per-site prompts and choices to review and revoke); plus the milestone 8 feedback (download finished notice, private tab under "+", printing) | Built, waiting for acceptance |
-| 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Built, waiting for acceptance |
+| 9 | Passwords and site permissions | A password manager (offer to save on sign-in, fill on return, a Passwords tab in the Library, encrypted with the system's keychain) and a site permissions panel (camera, microphone, location: per-site prompts and choices to review and revoke); plus the milestone 8 feedback (download finished notice, private tab under "+", printing) | Done (accepted, prompt 50) |
+| 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Done (accepted, prompt 50) |
 | 11 | First release v0.1 | Installers for Windows, macOS, Linux; per-OS checks; the app logo and icons; continuous integration (GitHub issue #5); holoml first-result scope (SPEC.md outline, parser package with one test); full regression pass | Later |
 | 12 | HoloML v0.1 language | Spec, schema, parser, conformance samples | Later |
 | 13 | HoloML in the browser | `.holo` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
@@ -1275,7 +1275,7 @@ Answers given before the plan; the plan is the next section
 
 ## Milestone 9 — Passwords and site permissions
 
-Status: Built, waiting for the owner's acceptance (checks below). Build approved 2026-09-26 (prompt 46), after the
+Status: Done. Accepted by the owner 2026-09-26 (prompt 50) after testing everything. Build approved 2026-09-26 (prompt 46), after the
 owner chose the logo direction. Questions answered 2026-09-26 (prompt
 45: Q1 b, Q2 a, Q3 a). Pushed before the build started. Electron
 security check at the start: 44.4.5 still newest (2026-09-26).
@@ -1421,7 +1421,7 @@ fails if they ever share a module.
 
 ## Milestone 10 — Tabs and economy
 
-Status: Built, waiting for the owner's acceptance (checks below). The owner asked to push, build this milestone, and
+Status: Done. Accepted by the owner 2026-09-26 (prompt 50) after testing; feedback for the next plan recorded below. The owner asked to push, build this milestone, and
 then list the tests (prompt 49, 2026-09-26), without a separate plan
 review; the choices below are the agent's defaults, marked for the
 owner's review at acceptance, and each can be changed in Settings or
@@ -1558,6 +1558,20 @@ Changed checks, because their requirement changed (documented here):
 - L1 to L10 pass on Windows, with C to K and the unit tests.
 - The owner has tried the new tab features, economy mode, and sleeping
   tabs, and accepts.
+
+### Owner feedback on milestones 9 and 10 (2026-09-26, prompt 50), not yet planned
+
+1. Cards that hide behave strangely: keep only two ways to show tabs,
+   cards and a list.
+2. The address bar should complete previously visited sites, like other
+   browsers.
+3. The page's window should be wider (too much space on the right), with
+   adjustable settings for the angle and more.
+4. The top bar's menu (the dots) should close when clicking elsewhere.
+5. Settings: better organized and better looking, perhaps in levels,
+   with a search.
+6. Show the available shortcuts somewhere, and allow remapping them.
+7. The Library's search box should reset when changing tabs.
 
 ## GitHub issues #8 to #15 (2026-09-26, prompt 39)
 

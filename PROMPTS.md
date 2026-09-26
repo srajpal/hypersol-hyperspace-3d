@@ -559,3 +559,30 @@ Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b3
 ```text
 Let's push, complete the next milestone and then list the tests.
 ```
+
+
+## 50 — 2026-09-26
+
+Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b35 · Tokens: not captured
+
+```text
+1) i think the hide cards has a strange behavior, lets leave only two options (show as cards and show as list).
+2) address bar needs to auto complete previous sites (like other browsers)
+3) the size of the window that displays the site needs to be wider, too much space on the right. and also maybe have some tweakable settings if you do not want so much of an angle. think of some adjustable settings for that and add them.
+[Request interrupted by user]
+I tested everything in milesotne 9 and accept.
+I tested milestone 10 and accept.
+
+1. i think the hide cards has a strange behavior, lets leave only two options (show as cards and show as list).
+2. address bar needs to auto complete previous sites (like other browsers)
+3. the size of the window that displays the site needs to be wider, too much space on the right. and also maybe have some tweakable settings if you do not want so much of an angle. think of some adjustable settings for that and add them.
+4. settings dots menu needs to close if you click off of it.
+5. organize settings better, better look and feel. maybe multiple levels, there are too many settings now. allow a search on settings to find something.
+6. show the shortcuts available somewhere and allow remapping
+7. library search box should reset when changing tabs
+
+
+commit and push current if not pushed and show me a plan for the items i just listed
+```
+
+The message arrived as one prompt: an interrupted first try followed by the full request; both parts are kept as received.

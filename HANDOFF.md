@@ -1,7 +1,7 @@
 # HANDOFF.md
 
 State of the project for whoever picks it up next, human or agent.
-Last updated 2026-09-26 (milestones 9 and 10 built, waiting for acceptance).
+Last updated 2026-09-26 (milestones 9 and 10 accepted; the owner's feedback, prompt 50, is being planned).
 
 ## Where things stand
 
@@ -19,7 +19,8 @@ milestone 8 feedback: download notice, private tab under "+", flat
 printing) and milestone 10 (reopen, search, and mute tabs; card size
 and how tabs are shown; economy mode; sleeping tabs; history in a
 worker thread, GitHub issue #4) are built, their checks pass, and both
-wait for the owner's acceptance (TODO.md has the results). Then 11
+were accepted by the owner on 2026-09-26 (prompt 50), with seven
+feedback items recorded in TODO.md for the next plan. Then 11
 (First release, with the chosen logo direction, concept 4d in
 docs/branding/logo-concepts/). HoloML keeps its name (owner, prompt 44;
 HSML was checked and advised against, prompt 43); the holoml repository
