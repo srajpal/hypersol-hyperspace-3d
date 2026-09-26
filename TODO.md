@@ -21,7 +21,7 @@ Plan approved 2026-09-24.
 | 7 | Instrument panel | Floating panels with live readouts about the page and the browser: dials, meters, a console, and a network list, like a light DevTools; each part switchable in Settings | Done (accepted 2026-09-26) |
 | 8 | Everyday browser features | Zoom (buttons, shortcuts, per site), find in page, downloads panel, printing, private tabs | Done (accepted 2026-09-26, with follow-ups below) |
 | 9 | Passwords and site permissions | A password manager (offer to save on sign-in, fill on return, a Passwords tab in the Library, encrypted with the system's keychain) and a site permissions panel (camera, microphone, location: per-site prompts and choices to review and revoke); plus the milestone 8 feedback (download finished notice, private tab under "+", printing) | Built, waiting for acceptance |
-| 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Later |
+| 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | In progress (prompt 49) |
 | 11 | First release v0.1 | Installers for Windows, macOS, Linux; per-OS checks; the app logo and icons; continuous integration (GitHub issue #5); holoml first-result scope (SPEC.md outline, parser package with one test); full regression pass | Later |
 | 12 | HoloML v0.1 language | Spec, schema, parser, conformance samples | Later |
 | 13 | HoloML in the browser | `.holo` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
@@ -1418,6 +1418,100 @@ fails if they ever share a module.
 - K1 to K10 pass on Windows, with C to J and the unit tests.
 - The owner has tried saving and filling a password, a permission
   prompt, the download notice, the "+" menu, and printing, and accepts.
+
+## Milestone 10 — Tabs and economy
+
+Status: In progress. The owner asked to push, build this milestone, and
+then list the tests (prompt 49, 2026-09-26), without a separate plan
+review; the choices below are the agent's defaults, marked for the
+owner's review at acceptance, and each can be changed in Settings or
+later. Milestone 9 was pushed first; its acceptance is still to come
+(the owner will test it with this milestone's list). Electron security
+check at the start: 44.4.5 still newest (2026-09-26).
+
+Goal: the tab requests from prompt 42 and a lighter browser: reopen,
+search, and mute tabs; choose how tabs are shown; an economy mode; tabs
+that sleep when unused; and history work moved off the main process
+(GitHub issue #4).
+
+### Decisions (agent defaults, for the owner's review)
+
+- Reopen a closed tab: Ctrl/Cmd+Shift+T and "Reopen closed tab" in the
+  menu; the last 25 closed tabs of this session (memory only), reopened
+  where they were, with their back and forward history. Private tabs are
+  not remembered.
+- Search tabs: Ctrl/Cmd+Shift+A and "Search tabs" in the menu: a list of
+  every tab (title, site, sound, asleep) under the top bar; typing
+  filters it; arrows and Enter switch; each has a close button.
+- Mute: a tab playing sound shows a speaker on its card and in the
+  lists; clicking it mutes or unmutes the tab; "Mute tab" in the menu
+  does the same for the tab in front. Muting belongs to the tab.
+- Settings > Tabs, size: Small, Medium (today's size, the default),
+  Large.
+- Settings > Tabs, show tabs as: Cards (today: the rail appears with two
+  or more tabs; the default), Cards that hide (the rail stays out of the
+  way and slides in when the pointer rests at the left edge or with
+  Ctrl+Tab; a list of tabs shows in the top bar), or a List in the top
+  bar only (no cards). The list is a row of small tabs under the top
+  bar: favicon, title, sound, close, and "+".
+- Economy mode, Settings > Economy: Off, On, or On when running on
+  battery (the default). It draws the room at a lower resolution, turns
+  off the glow, sun, horizon band, scanlines, parallax, and switch
+  animations, and caps the room at 30 frames a second. The page itself
+  stays sharp. "ECO" shows in the top bar while it is on.
+- Sleeping tabs, Settings > Economy: put a tab to sleep after it has
+  not been in front for 30 minutes (the default; also Off, 5, 15, 60);
+  in economy mode after 5 minutes at most. Never asleep: the tab in
+  front, a tab playing sound, a tab with a download running, a tab with
+  text typed into a form, a tab still loading. A sleeping tab keeps its
+  card, snapshot, and title, marked "asleep"; opening it loads the page
+  again with its back and forward history.
+- History off the main process (issue #4): history searches, recent
+  pages, and writes run in a worker thread with its own connection to
+  hypersol.sqlite; search uses a full-text index (SQLite FTS5 with the
+  trigram tokenizer, which matches parts of words like today's search;
+  shorter than three letters falls back to the plain search); a
+  "latest visit per address" index serves the start panel. Budgets,
+  measured by a unit benchmark with 100,000 visits: a search or the
+  recent list answers within 50 ms, and the main process's event loop
+  is never held more than 20 ms by history work.
+
+### Tasks
+
+- [ ] 1. Main process: sound state and mute per tab; downloads say which
+      tab started them; power source (battery or not); tab history kept
+      for reopening and waking; the history worker.
+- [ ] 2. Page preload: tells the shell when a form has typed text.
+- [ ] 3. Shell: closed-tab list and reopening; tab search; mute on cards,
+      lists, and the menu.
+- [ ] 4. Settings > Tabs: card size and how tabs are shown; the list in
+      the top bar; cards that hide.
+- [ ] 5. Economy mode and sleeping tabs, with their Settings.
+- [ ] 6. History worker, full-text search, and the benchmark (issue #4).
+- [ ] 7. Tests: unit (closed-tab list, sleep rules, history worker and
+      benchmark, settings); end-to-end L1 to L10; C to K as regression.
+- [ ] 8. Docs, privacy statement, and screenshots (MILESTONE=m10).
+
+### Checks
+
+| # | Check | Expected result |
+|---|---|---|
+| L1 | Reopen a closed tab | Ctrl+Shift+T and the menu reopen the last closed tabs in order, in place, with back history; private tabs are not reopened |
+| L2 | Search tabs | The shortcut opens the list; typing filters; Enter switches; close works; Escape closes |
+| L3 | Mute | A page playing sound shows the speaker; clicking it (card, list, or menu) mutes the page and back |
+| L4 | Card size | Small, Medium, and Large change the cards and the page's room; saved |
+| L5 | How tabs are shown | Cards that hide: no rail until the left edge or Ctrl+Tab, list in the top bar; List only: no cards; the list switches and closes tabs |
+| L6 | Economy mode | On: lower resolution, effects off, at most 30 frames a second, "ECO" shown; "on battery" follows the power source |
+| L7 | Sleeping tabs | An unused tab sleeps (its page is gone, card kept); opening it wakes it with its history; tabs with sound, a download, or typed text stay awake |
+| L8 | History still works | History, search, and the start panel work through the worker; E checks pass |
+| L9 | History budget | Unit benchmark: 100,000 visits, search and recent within 50 ms, main thread held at most 20 ms |
+| L10 | Keyboard and menus | The new shortcuts and menu entries work from the page and the shell |
+
+### Done when
+
+- L1 to L10 pass on Windows, with C to K and the unit tests.
+- The owner has tried the new tab features, economy mode, and sleeping
+  tabs, and accepts.
 
 ## GitHub issues #8 to #15 (2026-09-26, prompt 39)
 
