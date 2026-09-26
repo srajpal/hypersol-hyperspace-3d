@@ -68,6 +68,10 @@ Rule 13 check, 2026-09-26 (start of milestone 7, the instrument panel):
 Rule 13 check, 2026-09-26 (start of milestone 8, everyday features):
 44.4.5 still the newest stable release. No upgrade needed.
 
+Rule 13 check, 2026-09-26 (start of milestone 9, passwords and site
+permissions): 44.4.5 (2026-09-23) still the newest stable release on
+releases.electronjs.org; no security notes listed. No upgrade needed.
+
 Graphics on the build machine: NVIDIA GeForce RTX 4050 Laptop GPU and
 AMD Radeon integrated graphics; one 1920×1080 display at 100% scaling;
 touchpad, no touch screen.

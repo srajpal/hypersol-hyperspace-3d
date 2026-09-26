@@ -20,7 +20,7 @@ Plan approved 2026-09-24.
 | 6 | Themes and look (design) | Final Nebula and Daylight, theme switch, matching room lighting, design pass over all screens, custom window frame considered | Done (accepted 2026-09-26; tab cards to shrink, see below) |
 | 7 | Instrument panel | Floating panels with live readouts about the page and the browser: dials, meters, a console, and a network list, like a light DevTools; each part switchable in Settings | Done (accepted 2026-09-26) |
 | 8 | Everyday browser features | Zoom (buttons, shortcuts, per site), find in page, downloads panel, printing, private tabs | Done (accepted 2026-09-26, with follow-ups below) |
-| 9 | Passwords and site permissions | A password manager (offer to save on sign-in, fill on return, a Passwords tab in the Library, encrypted with the system's keychain) and a site permissions panel (camera, microphone, location: per-site prompts and choices to review and revoke); plus the milestone 8 feedback (download finished notice, private tab under "+", printing) | Later (Passwords answers recorded, prompt 38) |
+| 9 | Passwords and site permissions | A password manager (offer to save on sign-in, fill on return, a Passwords tab in the Library, encrypted with the system's keychain) and a site permissions panel (camera, microphone, location: per-site prompts and choices to review and revoke); plus the milestone 8 feedback (download finished notice, private tab under "+", printing) | Planned (prompt 45); build waiting for the owner |
 | 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Later |
 | 11 | First release v0.1 | Installers for Windows, macOS, Linux; per-OS checks; the app logo and icons; continuous integration (GitHub issue #5); holoml first-result scope (SPEC.md outline, parser package with one test); full regression pass | Later |
 | 12 | HoloML v0.1 language | Spec, schema, parser, conformance samples | Later |
@@ -1245,7 +1245,7 @@ and recent history (it only shows them; nothing new is recorded).
 J1 to J8 and the regression checks pass, the owner accepts J9, the docs
 and screenshots are updated, and the owner approves the milestone.
 
-### Owner feedback on milestone 8 (2026-09-26, prompt 38), not yet planned
+### Owner feedback on milestone 8 (2026-09-26, prompt 38), planned in milestone 9
 
 To be used when planning the next work ("Use my feed back before making
 plans"); nothing here is approved to build yet.
@@ -1261,8 +1261,8 @@ plans"); nothing here is approved to build yet.
 
 ## Milestone 9 — Passwords: owner's answers (2026-09-26, prompt 38)
 
-Not planned yet: the owner will post GitHub issues first and asked that
-their feedback shape the plan. Answers already given:
+Answers given before the plan; the plan is the next section
+("Milestone 9 — Passwords and site permissions"):
 
 - Q1 a: passwords encrypted with the system's own keychain (Electron's
   safeStorage), unlocked by the system sign-in; no master password.
@@ -1272,6 +1272,104 @@ their feedback shape the plan. Answers already given:
 - Assumptions shown with the questions (not yet confirmed or refused):
   offer to save on sign-in; fill only on the same site; never in
   private tabs; no sync.
+
+## Milestone 9 — Passwords and site permissions
+
+Status: Planned. Questions answered 2026-09-26 (prompt 45: Q1 b, Q2 a,
+Q3 a). Build not started: the owner asked to see the new logo concepts
+first. Electron security check at the start: 44.4.5 still newest
+(2026-09-26).
+
+Goal: remember sign-ins safely, let sites use the camera, microphone,
+and location when you allow it, and close the milestone 8 feedback.
+
+### Decisions (2026-09-26, prompts 38 and 45)
+
+- Passwords are encrypted with the system's keychain (Electron's
+  safeStorage: an interface to the operating system's own protected
+  storage, such as Windows' DPAPI or the macOS Keychain) and stored in
+  hypersol.sqlite; no master password (prompt 38, Q1 a). If the keychain
+  is not available (possible on some Linux systems), nothing is saved
+  and the offer says why.
+- Saving: when a form with a password field is submitted, a bar offers
+  Save, Never for this site, or Not now; a new password for a known
+  account offers Update.
+- Filling (Q1 b): only when you click a sign-in field and pick the
+  account from a small list under it; never automatically on load, so a
+  page's scripts cannot read a password you did not choose to use.
+  Only on the exact site (scheme, host, and port) it was saved for.
+- Plain http sites (Q3 a): saved and filled too, and the offer and the
+  list say "not secure" (home routers and printers often use http).
+- Never in private tabs; no import (prompt 38, Q3 a); no sync.
+- Managed in a Passwords tab in the Library: search, view, copy, delete,
+  and the "never" list (prompt 38, Q2 a). Clear data leaves passwords
+  alone unless ticked.
+- Site permissions: camera, microphone, and location ask with a prompt
+  under the top bar: Allow, Allow this time, Block (Q2 a). Allow and
+  Block are remembered per site in settings.json; "this time" lasts
+  until the tab leaves the site or closes. Every other permission stays
+  refused, as today.
+- Private tabs ask the same way, but remembered choices stay in memory
+  and are forgotten with the last private tab (as GitHub issue #8).
+- A site panel opened from the address bar shows the site's choices and
+  changes them; Settings lists every site with a remembered choice.
+- While a site uses the camera or microphone, its tab card and the top
+  bar show a live marker.
+- Location uses only the operating system's own location service; no
+  network location service or API key is added (AGENTS.md rule 3). If
+  the system gives no location, the site gets an error. Checked early in
+  the build and reported.
+- Download notice: a short notice when a download finishes or fails,
+  with Open and Show in folder (milestone 8 feedback).
+- "+" keeps opening a normal tab on click; a small arrow on it (or a
+  right-click) opens New tab and New private tab (milestone 8 feedback).
+- Printing prints the page flat, without the layers view's styles
+  (milestone 8 feedback).
+
+### Tasks
+
+- [ ] 1. Password store: safeStorage encryption, the database table, the
+      "never" list; unit tests with a stand-in keychain.
+- [ ] 2. Sign-in detection in the page preload and the save / update bar;
+      never in private tabs.
+- [ ] 3. Fill on click: the account list under a sign-in field, same site
+      only.
+- [ ] 4. Library Passwords tab: search, view, copy, delete, "never" list;
+      Clear data option.
+- [ ] 5. Site permissions: the request and check handlers, the prompt,
+      per-site memory (in memory for private tabs), the site panel, the
+      Settings list, the camera and microphone marker; location through
+      the system only.
+- [ ] 6. Download finished and failed notice.
+- [ ] 7. The "+" menu with New private tab.
+- [ ] 8. Flat printing without the layers view's styles.
+- [ ] 9. docs/privacy.md: passwords and permissions.
+- [ ] 10. Tests: unit; end-to-end K1 to K10; C to J as regression.
+- [ ] 11. Docs and screenshots (MILESTONE=m9).
+
+### Checks
+
+| # | Check | Expected result |
+|---|---|---|
+| K1 | Save a password | Signing in on a test page offers to save; Save stores it encrypted (the database holds no plain text); Never and Not now work; a changed password offers Update |
+| K2 | Fill on click | Clicking the field lists the account; choosing it fills; nothing is filled before the click; another site (other port) is not offered it |
+| K3 | Passwords tab | Search, view, copy, delete, and the "never" list work in the Library |
+| K4 | Private tabs | No offer and no fill in a private tab |
+| K5 | Keychain unavailable | With the keychain turned off (a test switch), nothing is saved and the offer says why |
+| K6 | Permission prompt | A test page asking for the camera gets the prompt; Allow, Allow this time, and Block give the page the right answer (a stand-in device in tests) |
+| K7 | Remembered choices | Allow and Block survive a restart; "this time" does not; private choices are forgotten with the last private tab; other permissions stay refused |
+| K8 | Site panel and Settings | The panel shows and changes the site's choices; Settings lists and removes them; the in-use marker shows while the camera is used |
+| K9 | Download notice | Finishing and failing downloads show the notice; Open and Show in folder work |
+| K10 | "+" menu and printing | New private tab from the "+" menu; a test page prints to PDF the same with the layers view on and off |
+
+Test sign-ins are made-up values on 127.0.0.1 fixture pages; no real
+passwords are used anywhere.
+
+### Done when
+
+- K1 to K10 pass on Windows, with C to J and the unit tests.
+- The owner has tried saving and filling a password, a permission
+  prompt, the download notice, the "+" menu, and printing, and accepts.
 
 ## GitHub issues #8 to #15 (2026-09-26, prompt 39)
 
