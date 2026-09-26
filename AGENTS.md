@@ -131,7 +131,7 @@ date given and grow with each milestone; TODO.md has the latest.
 - Unit: `pnpm test` (Vitest; 188 tests passed on 2026-09-26)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about three minutes; 141 checks on 2026-09-26). Needs openssl on PATH for
+  against it (about three minutes; 142 checks on 2026-09-26). Needs openssl on PATH for
   the certificate-error check (Git for Windows includes one). Every
   host except 127.0.0.1 is blocked during the run, and the test windows
   ignore the real mouse, so a resting cursor cannot disturb results. See

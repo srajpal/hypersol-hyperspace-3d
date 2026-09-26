@@ -1341,3 +1341,17 @@ to the #8 check. Results: 188 unit tests; 138 of 141 end-to-end checks,
 the 3 failures again the D8 clipboard checks while the Windows clipboard
 was unavailable.
 
+Follow-up review of pull request #16 (prompt 41), one P1 finding, fixed:
+closing the whole window (the app keeps running on macOS) did not clear
+the private session, since only the shell's tab list signalled the end
+of private browsing; a reopened window's private tab still read the old
+cookie and local storage and found the shield paused. The main process
+now clears the private session itself when the window closes or its
+shell crashes, and a window reopened meanwhile waits for that to finish.
+New check (m8, with the app kept running as on macOS): close the window,
+reopen, open a private tab on the same site: no old cookie or storage,
+and the shield blocks again. It fails against the reviewed code (the
+cookie survived). Results: 188 unit tests; 139 of 142 end-to-end checks,
+the 3 failures the D8 clipboard checks with the Windows clipboard
+unavailable. Native macOS not tested.
+

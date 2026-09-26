@@ -368,3 +368,52 @@ describe('GitHub issues #8 and #10', () => {
 function named(file: string): string {
   return server.url(file).replace('127.0.0.1', 'shop.test');
 }
+
+describe('PR #16 review: private data when the whole window closes', () => {
+  it('closing the window clears the private session and choices; a reopened window starts clean (app kept running, as on macOS)', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile({ layersOnOpen: true }), keepRunning: true });
+    const site = named('shield.html');
+    try {
+      await waitForPage(h, 'link-a');
+      await pressInShell(h, 'N', ['control', 'shift']);
+      await navigateTo(h, site);
+      await waitForPage(h, 'shield.html');
+      const privatePage = await focusedPage(h);
+      await inPage(h, `document.cookie = 'hs_private=secret; path=/'; localStorage.setItem('hs_private', 'secret')`, privatePage);
+      await h.shell.click('hs-shield [data-testid="shield"]');
+      await h.shell.click('hs-shield [data-testid="shield-pause"]');
+      await waitFor('paused', async () => {
+        const r = await h.shell.evaluate(
+          (tab) => (window as unknown as { hypersol: { privacy(r: object): Promise<{ value: { paused: boolean } }> } }).hypersol.privacy({ op: 'shield.report', tab }),
+          privatePage.id,
+        );
+        return r.value.paused;
+      }, (p) => p);
+
+      // Close the only window; the app keeps running.
+      await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.close());
+      await waitFor('no windows', () => h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length), (n) => n === 0);
+      const cookies = await h.app.evaluate(async ({ session }) =>
+        (await session.fromPartition('hypersol-private').cookies.get({ name: 'hs_private' })).map((c) => c.value),
+      );
+      expect(cookies).toEqual([]);
+
+      // Reopen (the dock icon on macOS), and open a new private tab on the same site.
+      await h.app.evaluate(({ app }) => app.emit('activate'));
+      await waitFor('a new window', () => h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length), (n) => n === 1);
+      h.shell = await waitFor('the new window in the test tool', async () => h.app.windows().find((w) => !w.isClosed()), (w) => w !== undefined).then((w) => w!);
+      await h.shell.waitForFunction(() => (window as unknown as { __hypersolShellTest?: { ready: boolean } }).__hypersolShellTest?.ready === true);
+      await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setIgnoreMouseEvents(true));
+      await pressInShell(h, 'N', ['control', 'shift']);
+      await navigateTo(h, site);
+      await waitForPage(h, 'shield.html');
+      const page = await focusedPage(h);
+      const stored = await inPage<{ cookie: string; local: string | null }>(h, `({ cookie: document.cookie, local: localStorage.getItem('hs_private') })`, page);
+      expect(stored.cookie).not.toContain('hs_private');
+      expect(stored.local).toBeNull();
+      await waitFor('blocking again', () => shellCall(h, 'shield'), (s) => s.count === 2);
+    } finally {
+      await h.close();
+    }
+  });
+});

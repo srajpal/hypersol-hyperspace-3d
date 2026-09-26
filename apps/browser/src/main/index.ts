@@ -131,7 +131,14 @@ function createWindow(): void {
   win.once('ready-to-show', () => (options.testBackground ? win.showInactive() : win.show()));
   win.on('closed', () => {
     mainWindow = null;
+    // Every tab went with the window, private ones included: clear the
+    // private session now, from the main process, since the shell can no
+    // longer say so. On macOS the app keeps running, and a reopened window
+    // must not find the old private data (PR #16 review).
+    endPrivate();
   });
+  // A crashed shell takes its tabs with it too.
+  win.webContents.on('render-process-gone', () => endPrivate());
   flushBeforeClose(win);
 
   const query: Record<string, string> = {
@@ -149,6 +156,18 @@ function createWindow(): void {
   } else {
     void win.loadFile(join(__dirname, '../renderer/index.html'), { query });
   }
+}
+
+/** A clearing of the private session in progress; a new window waits for it. */
+let privateClearing: Promise<void> | null = null;
+
+/** Starts clearing the private session (window closed, shell gone); a new window waits for it. */
+function endPrivate(): void {
+  const clearing = forgetPrivateData().catch((e: unknown) => console.warn(`Couldn't clear private data: ${String(e)}`));
+  privateClearing = clearing;
+  void clearing.finally(() => {
+    if (privateClearing === clearing) privateClearing = null;
+  });
 }
 
 /** The last private tab closed: its session's cookies, storage, and cache go. */
@@ -352,7 +371,11 @@ if (!app.requestSingleInstanceLock()) {
     createWindow();
 
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+      if (BrowserWindow.getAllWindows().length > 0) return;
+      // A window reopened while the old one's private data is still being
+      // cleared waits, so its first private tab starts clean.
+      if (privateClearing) void privateClearing.then(() => BrowserWindow.getAllWindows().length === 0 && createWindow());
+      else createWindow();
     });
   });
 
