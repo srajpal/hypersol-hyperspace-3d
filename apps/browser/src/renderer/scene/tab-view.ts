@@ -1,8 +1,9 @@
 import type { PagePanel, PageState, PageStatus } from '@hypersol/scene-core';
 import type { WebviewTag } from 'electron';
 import { BLOCKED_CARD, CRASHED_CARD, DNS_BLOCKED_CARD, describeLoadError, isLookupFailure, type LoadErrorCard } from '../load-errors';
-import { PRIVATE_PARTITION } from '../../shared/commands';
+import { PRIVATE_PARTITION, RESTORE_BLANK } from '../../shared/commands';
 import { LAYERS_CHANNEL, PAGE_IMAGES_CHANNEL, parseImageReport, type LayersState, type PageImage } from '../../shared/layers';
+import { PAGE_STATE_CHANNEL, parsePageState } from '../../shared/page-state';
 import { StartPanel, type StartData } from './start-panel';
 
 /** Chromium's code for a load that was cancelled by a newer one. */
@@ -27,6 +28,11 @@ export interface TabViewEvents {
   onPageReady(): void;
   /** Find in page results (milestone 8). */
   onFound?(result: { matches: number; active: number }): void;
+  /**
+   * Puts a closed or sleeping page's back and forward history into this
+   * tab's new page (milestone 10); false when there was none to restore.
+   */
+  restoreHistory?(from: number, into: number): Promise<boolean>;
 }
 
 /**
@@ -52,6 +58,17 @@ export class TabView implements PagePanel {
   private currentStatus: PageStatus;
   private w = 0;
   private h = 0;
+  /** Muted by the person (milestone 10); kept across sleeping and waking. */
+  private mutedByUser = false;
+  /** Text typed into a form on the page (milestone 10), from its preload. */
+  private typedInForm = false;
+  /**
+   * Asleep (milestone 10): the page is closed to save memory; the tab keeps
+   * its address and title, and the page whose history comes back on waking.
+   */
+  private asleepFrom: { url: string; from: number | null } | null = null;
+  /** A new page waiting for a closed page's history (reopening or waking). */
+  private restoring: { url: string; from: number } | null = null;
 
   constructor(
     readonly tabId: number,
@@ -59,6 +76,8 @@ export class TabView implements PagePanel {
     private readonly events: TabViewEvents,
     /** A private tab: its page uses the in-memory private session (milestone 8). */
     readonly isPrivate = false,
+    /** A reopened tab: the closed page whose back and forward history it gets (milestone 10). */
+    restoreFrom?: number,
   ) {
     this.element = document.createElement('div');
     this.element.className = 'hs-panel';
@@ -88,7 +107,8 @@ export class TabView implements PagePanel {
     } else {
       this.start = null;
       this.currentStatus = { state: 'loading', url };
-      this.createWebview(url);
+      if (restoreFrom !== undefined) this.createRestored(url, restoreFrom);
+      else this.createWebview(url);
     }
     this.element.append(this.shimmer, this.errorCard);
   }
@@ -106,7 +126,65 @@ export class TabView implements PagePanel {
   }
 
   get isStart(): boolean {
-    return this.webview === null;
+    return this.start !== null;
+  }
+
+  get isAsleep(): boolean {
+    return this.asleepFrom !== null;
+  }
+
+  /** Text typed into a form on the page, not yet sent. */
+  get typed(): boolean {
+    return this.typedInForm;
+  }
+
+  get muted(): boolean {
+    return this.mutedByUser;
+  }
+
+  setMuted(muted: boolean): void {
+    this.mutedByUser = muted;
+    if (this.webview && this.ready) this.webview.setAudioMuted(muted);
+  }
+
+  /**
+   * Puts the tab to sleep (milestone 10): its page closes and its memory
+   * goes; the tab keeps its address and title. Returns false if it has no
+   * page to close.
+   */
+  sleep(): boolean {
+    if (!this.webview || this.asleepFrom) return false;
+    const from = this.webContentsId;
+    const url = this.restoring?.url ?? this.currentStatus.url;
+    this.webview.remove();
+    this.webview = null;
+    this.ready = false;
+    this.restoring = null;
+    this.typedInForm = false;
+    this.pageImages = [];
+    this.shimmer.removeAttribute('data-visible');
+    this.asleepFrom = { url, from };
+    return true;
+  }
+
+  /** Wakes a sleeping tab: a new page, with the old one's back and forward history. */
+  wake(): void {
+    const asleep = this.asleepFrom;
+    if (!asleep) return;
+    this.asleepFrom = null;
+    this.emit({ ...this.currentStatus, state: 'loading', url: asleep.url });
+    if (asleep.from !== null) this.createRestored(asleep.url, asleep.from);
+    else this.createWebview(asleep.url);
+  }
+
+  /** The page this tab had before it slept (for reopening a sleeping tab that was closed). */
+  get sleepingFrom(): number | null {
+    return this.asleepFrom?.from ?? null;
+  }
+
+  /** The address a sleeping or restoring tab stands for. */
+  get pendingAddress(): string | null {
+    return this.asleepFrom?.url ?? this.restoring?.url ?? null;
   }
 
   /** The <webview>, if the tab shows a page (for the room's pointer tracking). */
@@ -246,6 +324,68 @@ export class TabView implements PagePanel {
     this.element.remove();
   }
 
+  /**
+   * A new page that takes a closed page's history (milestone 10): it starts
+   * blank, and once it is ready the main process restores the history,
+   * which loads the page that was showing. Without history, it loads the
+   * address.
+   */
+  private createRestored(url: string, from: number): void {
+    this.restoring = { url, from };
+    // A marked blank address: the main process creates the page without
+    // loading anything, since Electron restores history only into a page
+    // that has never navigated.
+    this.createWebview(RESTORE_BLANK);
+  }
+
+  private finishRestore(wv: WebviewTag, attempt = 0): void {
+    const pending = this.restoring;
+    if (!pending || this.webview !== wv) return;
+    const into = this.webContentsId;
+    // Just attached, the page's id can take a moment to become available.
+    if (into === null && attempt < 40) {
+      window.setTimeout(() => this.finishRestore(wv, attempt + 1), 25);
+      return;
+    }
+    const fallback = () => {
+      if (this.webview !== wv || this.restoring !== pending) return;
+      this.restoring = null;
+      // Without the old history: load the address itself.
+      void wv.loadURL(pending.url).catch(() => wv.setAttribute('src', pending.url));
+    };
+    if (into === null || !this.events.restoreHistory) {
+      fallback();
+      return;
+    }
+    void this.events.restoreHistory(pending.from, into).then((done) => (done ? this.restored(wv, pending) : fallback()), fallback);
+  }
+
+  /**
+   * The main process has started putting the history back; the page's own
+   * events carry the load from here. If that load already finished while
+   * the blank page stood in for it, the tab catches up now.
+   */
+  private restored(wv: WebviewTag, pending: { url: string; from: number }): void {
+    if (this.webview !== wv || this.restoring !== pending) return;
+    this.restoring = null;
+    let url = '';
+    try {
+      url = wv.getURL();
+    } catch {
+      return; // not ready yet: its events will follow
+    }
+    if (url === '' || url.startsWith('about:') || wv.isLoading()) return;
+    this.ready = true;
+    this.shimmer.removeAttribute('data-visible');
+    if (this.mutedByUser) wv.setAudioMuted(true);
+    this.events.onNavState({ canGoBack: wv.canGoBack(), canGoForward: wv.canGoForward() });
+    if (this.failed) return;
+    const title = wv.getTitle();
+    this.emit({ state: 'loaded', url, ...(title ? { title } : {}) });
+    this.events.onPageReady();
+    this.events.onSettled();
+  }
+
   private createWebview(url: string): void {
     const wv = document.createElement('webview') as WebviewTag;
     // Without this Electron drops every new-window request before the main
@@ -266,8 +406,13 @@ export class TabView implements PagePanel {
       if (!this.ready) return;
       this.events.onNavState({ canGoBack: wv.canGoBack(), canGoForward: wv.canGoForward() });
     };
+    // A blank page waiting for history never reports ready; once it is
+    // attached, the main process can put the old page's history in.
+    wv.addEventListener('did-attach', () => {
+      if (this.restoring) this.finishRestore(wv);
+    });
     wv.addEventListener('dom-ready', () => {
-      this.shimmer.removeAttribute('data-visible');
+      if (this.mutedByUser) wv.setAudioMuted(true);
       if (!this.ready) {
         this.ready = true;
         if (this.pendingUrl && this.pendingUrl !== wv.getURL()) {
@@ -276,6 +421,8 @@ export class TabView implements PagePanel {
           this.load(url);
         }
       }
+      if (this.restoring) return;
+      this.shimmer.removeAttribute('data-visible');
       navState();
       this.events.onPageReady();
     });
@@ -284,6 +431,11 @@ export class TabView implements PagePanel {
       if (r.finalUpdate !== false) this.events.onFound?.({ matches: r.matches ?? 0, active: r.activeMatchOrdinal ?? 0 });
     });
     wv.addEventListener('ipc-message', (e) => {
+      if (e.channel === PAGE_STATE_CHANNEL) {
+        const state = parsePageState(e.args[0]);
+        if (state) this.typedInForm = state.typed;
+        return;
+      }
       if (e.channel !== PAGE_IMAGES_CHANNEL) return;
       const images = parseImageReport(e.args[0]);
       if (images) this.pageImages = images;
@@ -295,6 +447,9 @@ export class TabView implements PagePanel {
       this.emit({ ...this.currentStatus, state: 'loading', message: undefined });
     });
     wv.addEventListener('did-navigate', (e) => {
+      if (this.restoring && e.url !== 'about:blank' && e.url !== RESTORE_BLANK) this.restoring = null;
+      // A new document starts with nothing typed.
+      this.typedInForm = false;
       this.emit({ ...this.currentStatus, url: e.url });
       navState();
     });
@@ -317,7 +472,7 @@ export class TabView implements PagePanel {
     });
     wv.addEventListener('did-stop-loading', () => {
       navState();
-      if (this.failed || this.currentStatus.state === 'crashed') return;
+      if (this.restoring || this.failed || this.currentStatus.state === 'crashed') return;
       this.emit({ ...this.currentStatus, state: 'loaded' });
       this.events.onSettled();
     });
@@ -421,6 +576,10 @@ export class TabView implements PagePanel {
   }
 
   private emit(status: PageStatus): void {
+    // A blank page waiting for its history stands for the page to come.
+    if (this.restoring && (status.url === 'about:blank' || status.url === '' || status.url === RESTORE_BLANK)) {
+      status = { ...status, url: this.restoring.url, state: 'loading' };
+    }
     this.currentStatus = status;
     for (const listener of this.listeners) listener(this.status);
     this.events.onStatus(this.status);

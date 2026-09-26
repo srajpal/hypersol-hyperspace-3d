@@ -47,7 +47,19 @@ export const HUD_HEIGHT = 64;
 const RAIL = { left: 40, width: CARD_WIDTH, bottomMargin: 24, gap: 12 };
 /** Room for the page. The tab rail only shows with two or more tabs (owner, prompt 33). */
 const PAGE_INSETS: Insets = { top: HUD_HEIGHT, right: 36, bottom: 36, left: RAIL.left + RAIL.width + 32 };
-const PAGE_INSETS_NO_RAIL: Insets = { ...PAGE_INSETS, left: 36 };
+/** Card sizes (milestone 10): medium is the size since milestone 6. */
+export const CARD_SCALES = { small: 0.8, medium: 1, large: 1.3 } as const;
+export type TabDisplayMode = 'cards' | 'autohide' | 'list';
+/**
+ * Cards that hide: the pointer rests this long at the left edge to bring
+ * them in, and they go this long after the pointer last moved over them.
+ * (Over the page the shell sees no pointer at all, so "it moved away"
+ * cannot be seen; the pause is what counts.)
+ */
+const REVEAL_DELAY_MS = 250;
+const HIDE_DELAY_MS = 2000;
+/** Economy mode's frame cap. */
+const ECONOMY_FPS = 30;
 const GLOW_MARGIN = 64;
 const DESK_DEPTH = 360;
 const SWITCH_MS = 250;
@@ -55,6 +67,8 @@ const SWITCH_MS = 250;
 export interface RoomCallbacks {
   onCardClick(key: number | 'plus'): void;
   onCardClose(key: number): void;
+  /** The speaker on a card: mute or unmute that tab (milestone 10). */
+  onCardAudio?(key: number): void;
 }
 
 export interface RoomOptions {
@@ -129,6 +143,16 @@ export class Room {
   /** Whether the tab rail shows: only with two or more tabs. */
   private railShown = false;
   private extra = { right: 0, bottom: 0 };
+  /** Milestone 10: card size, how tabs are shown, room above the page for the tab list, economy mode. */
+  private cardScale = 1;
+  private display: TabDisplayMode = 'cards';
+  private revealed = false;
+  private revealTimer: number | undefined;
+  private hideTimer: number | undefined;
+  private tabCount = 0;
+  private topExtra = 0;
+  private economy = false;
+  private lastDrawn = 0;
   /** The last few parallax decisions, for diagnosing test failures. */
   readonly pointerLog: { x: number; y: number; target: string; overPage: boolean }[] = [];
   private readonly raycaster = new Raycaster();
@@ -281,7 +305,8 @@ export class Room {
       }
     }
     this.order = all.map((m) => m.key);
-    const shown = models.length >= 2;
+    this.tabCount = models.length;
+    const shown = this.wantRail();
     if (shown !== this.railShown) {
       this.railShown = shown;
       if (!shown && this.hoveredCard) this.setHovered(null);
@@ -305,6 +330,86 @@ export class Room {
     return this.railShown;
   }
 
+  // ---- Tab display and economy (milestone 10) ------------------------------
+
+  private get railWidth(): number {
+    return CARD_WIDTH * this.cardScale;
+  }
+
+  /** The rail shows with two or more tabs; cards that hide only while brought in; never for the list. */
+  private wantRail(): boolean {
+    if (this.tabCount < 2 || this.display === 'list') return false;
+    return this.display === 'cards' || this.revealed;
+  }
+
+  private updateRail(): void {
+    const shown = this.wantRail();
+    if (shown === this.railShown) return;
+    this.railShown = shown;
+    if (!shown && this.hoveredCard) this.setHovered(null);
+    this.layout();
+    this.requestRender();
+  }
+
+  /** Card size, how tabs are shown, and the room the tab list takes above the page. */
+  setTabLayout(options: { scale: number; display: TabDisplayMode; topExtra: number }): void {
+    const changed = options.scale !== this.cardScale || options.topExtra !== this.topExtra;
+    this.cardScale = options.scale;
+    this.topExtra = options.topExtra;
+    if (options.display !== this.display) {
+      this.display = options.display;
+      this.revealed = false;
+    }
+    const shown = this.wantRail();
+    if (changed || shown !== this.railShown) {
+      this.railShown = shown;
+      this.layout();
+      this.requestRender();
+    }
+  }
+
+  /** Cards that hide: brings the rail in for a while (the left edge, Ctrl+Tab). */
+  reveal(ms = HIDE_DELAY_MS): void {
+    if (this.display !== 'autohide') return;
+    this.revealed = true;
+    this.updateRail();
+    window.clearTimeout(this.hideTimer);
+    this.hideTimer = window.setTimeout(() => this.conceal(), ms);
+  }
+
+  private conceal(): void {
+    this.revealed = false;
+    this.updateRail();
+  }
+
+  get display_(): { scale: number; display: TabDisplayMode; revealed: boolean } {
+    return { scale: this.cardScale, display: this.display, revealed: this.revealed };
+  }
+
+  /**
+   * Economy mode: the room at a lower resolution, without its glow, sun,
+   * horizon band, parallax, or switch animations, and at most 30 frames a
+   * second. The page itself is untouched.
+   */
+  setEconomy(on: boolean): void {
+    if (on === this.economy) return;
+    this.economy = on;
+    this.webgl.setPixelRatio(on ? Math.max(0.5, window.devicePixelRatio * 0.5) : window.devicePixelRatio);
+    this.horizon.visible = !on;
+    this.sun.visible = this.theme.room.sun && !on;
+    if (on) this.parallax.setPointer(0, 0);
+    this.layout();
+    this.requestRender();
+  }
+
+  get economyOn(): boolean {
+    return this.economy;
+  }
+
+  get pixelRatio(): number {
+    return this.webgl.getPixelRatio();
+  }
+
   setSnapshot(tabId: number, dataUrl: string): void {
     this.cards.get(tabId)?.setSnapshot(dataUrl);
   }
@@ -322,7 +427,7 @@ export class Room {
     this.focusedId = tabId;
     this.railScroll = scrollToShow(this.arcInput(), this.order.indexOf(tabId));
     this.layoutCards();
-    const duration = animate && !this.reducedMotion.matches ? SWITCH_MS : 0;
+    const duration = animate && !this.reducedMotion.matches && !this.economy ? SWITCH_MS : 0;
 
     const next = this.views.get(tabId);
     if (next) {
@@ -350,8 +455,14 @@ export class Room {
   // ---- Layout -------------------------------------------------------------
 
   private pageInsets(): Insets {
-    const base = this.railShown ? PAGE_INSETS : PAGE_INSETS_NO_RAIL;
-    return { ...base, right: base.right + this.extra.right, bottom: base.bottom + this.extra.bottom };
+    const left = this.railShown ? RAIL.left + this.railWidth + 32 : 36;
+    return {
+      ...PAGE_INSETS,
+      left,
+      top: PAGE_INSETS.top + this.topExtra,
+      right: PAGE_INSETS.right + this.extra.right,
+      bottom: PAGE_INSETS.bottom + this.extra.bottom,
+    };
   }
 
   get tiltDeg(): number {
@@ -420,12 +531,12 @@ export class Room {
       viewportHeight: window.innerHeight,
       rail: {
         left: RAIL.left,
-        top: HUD_HEIGHT,
-        width: RAIL.width,
+        top: HUD_HEIGHT + this.topExtra,
+        width: this.railWidth,
         bottom: window.innerHeight - RAIL.bottomMargin,
       },
-      cardWidth: CARD_WIDTH,
-      cardHeight: CARD_HEIGHT,
+      cardWidth: this.railWidth,
+      cardHeight: CARD_HEIGHT * this.cardScale,
       gap: RAIL.gap,
       count: Math.max(1, this.order.length),
       scroll: this.railScroll,
@@ -443,6 +554,7 @@ export class Room {
       if (!card || !place) return;
       card.mesh.position.set(place.position.x, place.position.y, place.position.z);
       card.mesh.rotation.set(place.rotationX, place.rotationY, 0);
+      card.mesh.scale.setScalar(this.cardScale);
       card.setOpacity(this.railShown ? place.opacity : 0);
     });
   }
@@ -458,7 +570,7 @@ export class Room {
 
   private cardPose(key: number): Pose {
     const card = this.cards.get(key);
-    const scale = CARD_WIDTH / Math.max(1, this.currentLayout.panelWidth);
+    const scale = this.railWidth / Math.max(1, this.currentLayout.panelWidth);
     if (!card) return { ...this.centrePose(), scale };
     return { position: card.mesh.position.clone(), rotation: card.mesh.rotation.clone(), scale };
   }
@@ -490,12 +602,16 @@ export class Room {
   requestRender(): void {
     if (this.framePending || this.contextLost) return;
     this.framePending = true;
-    requestAnimationFrame((t) => this.frame(t));
+    // Economy mode: at most ECONOMY_FPS frames a second.
+    const wait = this.economy ? 1000 / ECONOMY_FPS - (performance.now() - this.lastDrawn) : 0;
+    if (wait > 1) window.setTimeout(() => requestAnimationFrame((t) => this.frame(t)), wait);
+    else requestAnimationFrame((t) => this.frame(t));
   }
 
   private frame(time: number): void {
     this.framePending = false;
     if (this.contextLost) return;
+    this.lastDrawn = performance.now();
     const dt = this.lastFrameTime === 0 ? 16 : Math.min(50, time - this.lastFrameTime);
     this.lastFrameTime = time;
 
@@ -550,7 +666,7 @@ export class Room {
   /** The glow sits just behind the focused page, following it as it moves. */
   private placeGlow(): void {
     const entry = this.views.get(this.focusedId);
-    if (!entry) {
+    if (!entry || this.economy) {
       this.glow.visible = false;
       return;
     }
@@ -636,7 +752,7 @@ export class Room {
     this.glow.material.color.set(c.accent);
     this.glow.material.opacity = theme.glowStrength;
     this.horizon.material.color.set(c.horizon);
-    this.sun.visible = theme.room.sun;
+    this.sun.visible = theme.room.sun && !this.economy;
     for (const card of this.cards.values()) card.setTheme(theme);
     this.requestRender();
   }
@@ -665,6 +781,36 @@ export class Room {
   }
 
   /**
+   * Cards that hide: resting the pointer at the window's left edge brings
+   * the rail in; it goes a moment after the pointer moves away from it.
+   */
+  private autohidePointer(x: number): void {
+    if (this.display !== 'autohide' || this.tabCount < 2) return;
+    if (!this.revealed) {
+      if (x <= 8) {
+        if (this.revealTimer === undefined) {
+          this.revealTimer = window.setTimeout(() => {
+            this.revealTimer = undefined;
+            this.reveal();
+          }, REVEAL_DELAY_MS);
+        }
+      } else {
+        window.clearTimeout(this.revealTimer);
+        this.revealTimer = undefined;
+      }
+      return;
+    }
+    // Any move over the room keeps them a little longer.
+    this.leftRail();
+  }
+
+  private leftRail(): void {
+    if (this.display !== 'autohide' || !this.revealed) return;
+    window.clearTimeout(this.hideTimer);
+    this.hideTimer = window.setTimeout(() => this.conceal(), HIDE_DELAY_MS);
+  }
+
+  /**
    * Parallax follows the pointer over the room and pauses over the page,
    * so click targets never move under the cursor. Cards react to hover,
    * clicks, and the mouse wheel.
@@ -688,6 +834,7 @@ export class Room {
         overPage: over,
       });
       if (this.pointerLog.length > 20) this.pointerLog.shift();
+      this.autohidePointer(e.clientX);
       if (over) {
         this.parallax.setPaused(true);
         this.setHovered(null);
@@ -696,13 +843,19 @@ export class Room {
       this.parallax.setPaused(false);
       const nx = (e.clientX / window.innerWidth) * 2 - 1;
       const ny = 1 - (e.clientY / window.innerHeight) * 2;
-      this.parallax.setPointer(nx, ny);
+      // Economy mode keeps the camera still.
+      if (!this.economy) this.parallax.setPointer(nx, ny);
       this.setHovered(e.target === canvas ? this.cardAt(e.clientX, e.clientY) : null);
       if (this.parallax.moving) this.requestRender();
     });
     document.addEventListener('pointerover', (e) => {
       const el = focusedElement();
-      if (el && e.target instanceof Node && el.contains(e.target)) this.parallax.setPaused(true);
+      if (el && e.target instanceof Node && el.contains(e.target)) {
+        this.parallax.setPaused(true);
+        // Over the page the shell sees no more pointer moves: cards that
+        // hide start going now.
+        this.leftRail();
+      }
     });
     canvas.addEventListener('pointerleave', () => this.setHovered(null));
 
@@ -710,13 +863,14 @@ export class Room {
       const hit = this.cardAt(e.clientX, e.clientY);
       if (!hit) return;
       if (hit.part === 'close' && hit.card.key !== 'plus') this.options.callbacks.onCardClose(hit.card.key);
+      else if (hit.part === 'audio' && hit.card.key !== 'plus') this.options.callbacks.onCardAudio?.(hit.card.key);
       else this.options.callbacks.onCardClick(hit.card.key);
     });
 
     canvas.addEventListener(
       'wheel',
       (e) => {
-        if (!this.railShown || e.clientX > RAIL.left + RAIL.width + 24) return;
+        if (!this.railShown || e.clientX > RAIL.left + this.railWidth + 24) return;
         const before = this.railScroll;
         this.railScroll = clampScroll(this.arcInput(), this.railScroll + e.deltaY);
         if (this.railScroll === before) return;

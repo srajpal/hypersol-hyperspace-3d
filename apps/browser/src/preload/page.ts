@@ -7,8 +7,10 @@
  * for new ones; main/privacy/index.ts answers only web pages, and nothing
  * for a paused site), and the layers view with image discovery
  * (preload/layers.ts, milestone 5), and the password manager's page side
- * (preload/passwords.ts, milestone 9). It exposes nothing to pages.
+ * (preload/passwords.ts, milestone 9), and whether a form has typed text
+ * (preload/form-state.ts, milestone 10). It exposes nothing to pages.
  */
 import '@ghostery/adblocker-electron-preload';
 import './layers';
 import './passwords';
+import './form-state';

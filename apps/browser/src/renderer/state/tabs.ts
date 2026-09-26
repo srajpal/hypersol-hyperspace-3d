@@ -17,6 +17,12 @@ export interface Tab {
   favicon?: string;
   /** A private tab (milestone 8): its own in-memory session, nothing kept. */
   private: boolean;
+  /** Milestone 10: its page makes sound; the tab is muted; the tab is asleep (its page closed until opened). */
+  audible: boolean;
+  muted: boolean;
+  asleep: boolean;
+  /** A reopened tab: the closed page whose back and forward history it gets. */
+  restoreFrom?: number;
 }
 
 export interface OpenOptions {
@@ -27,6 +33,12 @@ export interface OpenOptions {
   afterId?: number;
   /** Open a private tab. */
   private?: boolean;
+  /** Put the new tab at this place in the list (a reopened tab goes back where it was). */
+  index?: number;
+  /** Milestone 10: a reopened tab's title, favicon, and the closed page to take its history from. */
+  title?: string;
+  favicon?: string;
+  restoreFrom?: number;
 }
 
 export type TabsListener = (tabs: TabStore) => void;
@@ -36,6 +48,8 @@ export class TabStore {
   private focused = -1;
   private nextId = 1;
   private readonly listeners = new Set<TabsListener>();
+  /** Called as a tab closes, with where it was, before the change is announced (reopening, milestone 10). */
+  onClosed: ((tab: Tab, index: number) => void) | null = null;
 
   get tabs(): readonly Tab[] {
     return this.list;
@@ -68,14 +82,21 @@ export class TabStore {
     const tab: Tab = {
       id: this.nextId++,
       url,
-      title: url === '' ? 'New tab' : url,
+      title: options.title ?? (url === '' ? 'New tab' : url),
       state: url === '' ? 'start' : 'loading',
       canGoBack: false,
       canGoForward: false,
       private: options.private ?? false,
+      audible: false,
+      muted: false,
+      asleep: false,
+      ...(options.favicon ? { favicon: options.favicon } : {}),
+      ...(options.restoreFrom !== undefined ? { restoreFrom: options.restoreFrom } : {}),
     };
     const after = options.afterId === undefined ? -1 : this.indexOf(options.afterId);
-    if (after >= 0) {
+    if (options.index !== undefined) {
+      this.list.splice(Math.max(0, Math.min(options.index, this.list.length)), 0, tab);
+    } else if (after >= 0) {
       this.list.splice(after + 1, 0, tab);
     } else {
       this.list.push(tab);
@@ -99,7 +120,8 @@ export class TabStore {
   close(id: number): void {
     const i = this.indexOf(id);
     if (i === -1) return;
-    this.list.splice(i, 1);
+    const [closed] = this.list.splice(i, 1);
+    this.onClosed?.(closed!, i);
     if (this.list.length === 0) {
       this.focused = -1;
       this.open();

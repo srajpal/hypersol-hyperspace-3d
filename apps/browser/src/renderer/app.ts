@@ -8,6 +8,12 @@ import type { HsSitePanel } from './hud/site-panel';
 import type { HsNotice } from './hud/notice';
 import type { PermissionKind, PermissionPrompt, PromptAnswer } from '../shared/permissions';
 import type { OfferAnswer, PasswordOffer } from '../shared/passwords';
+import type { HsTabStrip } from './hud/tab-strip';
+import { STRIP_HEIGHT } from './hud/tab-strip';
+import type { HsTabSearch } from './hud/tab-search';
+import { CARD_SCALES } from './scene/room';
+import { ClosedTabs } from './state/closed-tabs';
+import { shouldSleep, sleepMinutes } from './state/sleep';
 import type { HsAbout } from './hud/about';
 import type { HsLibrary } from './hud/library';
 import type { HsSettings } from './hud/settings';
@@ -51,6 +57,11 @@ export interface AppOptions {
   prompts: HsPrompts;
   sitePanel: HsSitePanel;
   notice: HsNotice;
+  /** Milestone 10: the list of tabs in the top bar, and tab search. */
+  tabStrip: HsTabStrip;
+  tabSearch: HsTabSearch;
+  /** Test runs: how long a "minute" is for sleeping tabs, so the checks need not wait. */
+  sleepMinuteMs?: number;
   /** Test runs: printing is counted instead of opening the system's dialog. */
   testMode?: boolean;
   tabList: HTMLElement;
@@ -121,6 +132,11 @@ export class App {
   private readonly offers = new Map<number, PasswordOffer>();
   /** What each tab's page was given (camera, microphone, location): the in-use marker. */
   private readonly access = new Map<number, PermissionKind[]>();
+  /** Milestone 10: recently closed tabs, when each tab was last in front, and the power source. */
+  private readonly closedTabs = new ClosedTabs();
+  private readonly lastSeen = new Map<number, number>();
+  private onBattery = false;
+  private economyActive = false;
   /** The room's parallax as the pages see it (-1 to 1, y down). */
   private parallax = { x: 0, y: 0 };
   private sessionTimer: number | undefined;
@@ -154,9 +170,23 @@ export class App {
       callbacks: {
         onCardClick: (key) => (key === 'plus' ? this.store.open() : this.store.focus(key)),
         onCardClose: (key) => this.store.close(key),
+        onCardAudio: (key) => this.toggleMute(key),
       },
     });
     this.store.subscribe(() => this.sync());
+    // A closed tab can be reopened (milestone 10): not private ones, nor start tabs.
+    this.store.onClosed = (tab, index) => {
+      const view = this.views.get(tab.id);
+      const url = view?.pendingAddress ?? tab.url;
+      if (tab.private || !isWeb(url)) return;
+      this.closedTabs.push({
+        url,
+        title: tab.title,
+        ...(tab.favicon ? { favicon: tab.favicon } : {}),
+        index,
+        from: view?.webContentsId ?? view?.sleepingFrom ?? null,
+      });
+    };
     options.themeButton.addEventListener('hs-theme-toggle', () => void this.toggleTheme());
     options.downloads.bridge = options.bridge;
     this.wireFind();
@@ -184,6 +214,7 @@ export class App {
     this.wireToolbar();
     this.wirePanels();
     this.wirePrompts();
+    this.wireTabs();
     options.bridge.onCommand((command) => this.onCommand(command));
   }
 
@@ -288,6 +319,7 @@ export class App {
         this.permissionQueue.delete(id);
         this.offers.delete(id);
         this.access.delete(id);
+        this.lastSeen.delete(id);
         if (!store.tabs.some((t) => t.private)) this.privateLayersSites.clear();
       }
     }
@@ -309,6 +341,13 @@ export class App {
     this.updatePrompts();
     if (store.focusedId !== this.shownFocus) {
       const previous = this.shownFocus;
+      if (this.views.has(previous)) this.lastSeen.set(previous, Date.now());
+      // Opening a sleeping tab wakes it (milestone 10).
+      const next = this.views.get(store.focusedId);
+      if (next?.isAsleep) {
+        next.wake();
+        store.update(store.focusedId, { asleep: false });
+      }
       if (this.views.has(previous)) this.captureSnapshot(previous);
       this.shownFocus = store.focusedId;
       this.room.focus(store.focusedId, previous !== -1);
@@ -335,8 +374,135 @@ export class App {
         focused: t.id === store.focusedId,
         private: t.private,
         access: (this.access.get(t.id)?.length ?? 0) > 0,
+        audible: t.audible,
+        muted: t.muted,
+        asleep: t.asleep,
       })),
     );
+    const strip = this.options.tabStrip;
+    if (strip.open) strip.tabs = this.tabModels();
+    if (this.options.tabSearch.open) this.options.tabSearch.tabs = this.tabModels();
+  }
+
+  /** The tabs as the list in the top bar and tab search show them. */
+  private tabModels() {
+    return this.store.tabs.map((t) => ({
+      id: t.id,
+      title: t.title,
+      url: this.views.get(t.id)?.pendingAddress ?? t.url,
+      ...(t.favicon ? { favicon: t.favicon } : {}),
+      focused: t.id === this.store.focusedId,
+      private: t.private,
+      audible: t.audible,
+      muted: t.muted,
+      asleep: t.asleep,
+    }));
+  }
+
+  // ---- Tabs and economy (milestone 10) --------------------------------------
+
+  private wireTabs(): void {
+    const { tabStrip, tabSearch } = this.options;
+    tabStrip.addEventListener('hs-strip-focus', (e) => this.store.focus((e as CustomEvent<number>).detail));
+    tabStrip.addEventListener('hs-strip-close', (e) => this.store.close((e as CustomEvent<number>).detail));
+    tabStrip.addEventListener('hs-strip-mute', (e) => this.toggleMute((e as CustomEvent<number>).detail));
+    tabStrip.addEventListener('hs-new-tab', () => this.store.open());
+    tabSearch.addEventListener('hs-tab-pick', (e) => this.store.focus((e as CustomEvent<number>).detail));
+    tabSearch.addEventListener('hs-tab-close', (e) => this.store.close((e as CustomEvent<number>).detail));
+    tabSearch.addEventListener('hs-tab-search-closed', () => {
+      if (!this.openPanelName) this.focusedView?.focusContent();
+    });
+    const minute = this.options.sleepMinuteMs ?? 60_000;
+    window.setInterval(() => this.sleepUnused(), Math.min(30_000, Math.max(100, minute / 2)));
+  }
+
+  /** Mutes or unmutes a tab (the speaker on its card or in the lists, or the menu). */
+  toggleMute(tabId: number): void {
+    const tab = this.store.get(tabId);
+    const view = this.views.get(tabId);
+    if (!tab || !view) return;
+    view.setMuted(!tab.muted);
+    this.store.update(tabId, { muted: !tab.muted });
+    this.updateToolbar();
+  }
+
+  /** Reopens the most recently closed tab where it was, with its back and forward history. */
+  reopenClosed(): void {
+    const closed = this.closedTabs.pop();
+    if (!closed) return;
+    this.store.open({
+      url: closed.url,
+      title: closed.title,
+      index: closed.index,
+      ...(closed.favicon ? { favicon: closed.favicon } : {}),
+      ...(closed.from !== null ? { restoreFrom: closed.from } : {}),
+    });
+  }
+
+  get closedCount(): number {
+    return this.closedTabs.size;
+  }
+
+  private searchTabs(): void {
+    const search = this.options.tabSearch;
+    if (search.open) {
+      search.close();
+      return;
+    }
+    search.tabs = this.tabModels();
+    search.show();
+  }
+
+  /** Card size, how tabs are shown, and economy mode, from Settings and the power source. */
+  private applyTabsAndEconomy(): void {
+    const s = this.settings;
+    const list = s.tabDisplay !== 'cards';
+    this.room.setTabLayout({ scale: CARD_SCALES[s.tabSize], display: s.tabDisplay, topExtra: list ? STRIP_HEIGHT : 0 });
+    const strip = this.options.tabStrip;
+    strip.open = list;
+    if (list) strip.tabs = this.tabModels();
+    this.economyActive = s.economy === 'on' || (s.economy === 'battery' && this.onBattery);
+    this.room.setEconomy(this.economyActive);
+    document.documentElement.toggleAttribute('data-economy', this.economyActive);
+    this.options.toolbar.economy = this.economyActive;
+  }
+
+  /** Test hook: whether economy mode is in effect. */
+  get economy(): boolean {
+    return this.economyActive;
+  }
+
+  /**
+   * Puts tabs to sleep that have been out of view long enough (Settings >
+   * Economy), except the tab in front and tabs that are loading, making
+   * sound, downloading, or holding typed text.
+   */
+  sleepUnused(): number {
+    const minutes = sleepMinutes(this.settings.tabSleep, this.economyActive);
+    if (minutes === 0) return 0;
+    const now = Date.now();
+    let slept = 0;
+    for (const tab of this.store.tabs) {
+      const view = this.views.get(tab.id);
+      if (!view) continue;
+      const page = view.webContentsId;
+      const candidate = {
+        focused: tab.id === this.store.focusedId,
+        busy: view.isStart || tab.state === 'loading' || tab.state === 'start',
+        asleep: view.isAsleep,
+        audible: tab.audible,
+        downloading: page !== null && this.downloadItems.some((d) => !d.finished && d.webContentsId === page),
+        typed: view.typed,
+        lastSeen: this.lastSeen.get(tab.id) ?? now,
+      };
+      if (!this.lastSeen.has(tab.id)) this.lastSeen.set(tab.id, now);
+      if (!shouldSleep(candidate, now, minutes, this.options.sleepMinuteMs)) continue;
+      if (view.sleep()) {
+        this.store.update(tab.id, { asleep: true, audible: false });
+        slept += 1;
+      }
+    }
+    return slept;
   }
 
   private createView(tab: Tab): void {
@@ -368,8 +534,13 @@ export class App {
         this.options.findBar.matchCount = r.matches;
         this.options.findBar.active = r.active;
       },
+      restoreHistory: async (from, into) => {
+        const reply = await this.options.bridge.tabs({ op: 'restore', tab: into, from });
+        return reply.ok && reply.value;
+      },
       },
       tab.private,
+      tab.restoreFrom,
     );
     this.views.set(id, view);
     this.room.addView(view);
@@ -570,6 +741,8 @@ export class App {
     t.canLayers = isWeb(tab.url) && tab.state !== 'start' && tab.state !== 'failed';
     t.site = !isWeb(tab.url) || tab.state === 'start' ? 'none' : /^https:/i.test(tab.url) ? 'secure' : 'insecure';
     t.access = this.access.get(tab.id) ?? [];
+    t.muted = tab.muted;
+    t.canReopen = this.closedTabs.size > 0;
   }
 
   // ---- Permission prompts, password offers, notices (milestone 9) ----------
@@ -672,6 +845,7 @@ export class App {
     if (!this.options.tiltFixed) this.room.setTilt(this.settings.pageTilt);
     this.instruments.setSettings(this.settings);
     this.options.toolbar.instruments = this.settings.instruments;
+    this.applyTabsAndEconomy();
   }
 
   /** Saves a change to Settings and puts it into effect. */
@@ -826,6 +1000,9 @@ export class App {
     else if (action === 'downloads') this.togglePanel('downloads');
     else if (action === 'print') this.print();
     else if (action === 'close-tab') this.store.close(this.store.focusedId);
+    else if (action === 'reopen-tab') this.reopenClosed();
+    else if (action === 'search-tabs') this.searchTabs();
+    else if (action === 'mute-tab') this.toggleMute(this.store.focusedId);
     else if (action === 'library' || action === 'settings') this.togglePanel(action);
     else if (action === 'about') this.options.about.open = true;
   }
@@ -875,6 +1052,15 @@ export class App {
       }
       case 'permission-ended':
         this.dropPrompt(command.id);
+        break;
+      case 'audio': {
+        const tabId = this.tabForWebContents(command.webContentsId);
+        if (tabId !== undefined) this.store.update(tabId, { audible: command.audible });
+        break;
+      }
+      case 'power':
+        this.onBattery = command.onBattery;
+        this.applyTabsAndEconomy();
         break;
       case 'site-access': {
         const tabId = this.tabForWebContents(command.webContentsId);
@@ -942,10 +1128,18 @@ export class App {
         this.options.toolbar.focusAddress();
         break;
       case 'next-tab':
+        this.room.reveal();
         s.cycle(1);
         break;
       case 'prev-tab':
+        this.room.reveal();
         s.cycle(-1);
+        break;
+      case 'reopen-tab':
+        this.reopenClosed();
+        break;
+      case 'search-tabs':
+        this.searchTabs();
         break;
       case 'reload':
         this.focusedView?.reload();

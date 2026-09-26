@@ -17,6 +17,8 @@ export interface TestLog {
   dnsApplied: { mode: string; resolver: string }[];
   /** Downloads that would have been opened or shown in their folder. */
   opened: { what: string; path: string }[];
+  /** Whether history runs in its worker thread (milestone 10). */
+  historyWorker?: () => boolean;
 }
 
 declare global {

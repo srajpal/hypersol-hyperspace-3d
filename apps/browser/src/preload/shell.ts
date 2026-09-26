@@ -12,6 +12,7 @@ import { INSPECT_CHANNEL } from '../shared/inspect';
 import { DOWNLOADS_CHANNEL } from '../shared/downloads';
 import { PERMISSIONS_CHANNEL } from '../shared/permissions';
 import { PASSWORDS_CHANNEL } from '../shared/passwords';
+import { TABS_CHANNEL } from '../shared/tabs';
 
 /**
  * The narrow bridge the 3D shell sees: read-only facts, commands from the
@@ -53,6 +54,9 @@ const bridge: ShellBridge = {
   },
   passwords(request) {
     return ipcRenderer.invoke(PASSWORDS_CHANNEL, request);
+  },
+  tabs(request) {
+    return ipcRenderer.invoke(TABS_CHANNEL, request);
   },
   closeReady() {
     ipcRenderer.send(CLOSE_READY_CHANNEL);

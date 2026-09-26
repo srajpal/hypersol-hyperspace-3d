@@ -32,6 +32,9 @@ export function matchShortcut(input: KeyInput, platform: string): ShortcutName |
   if (mod && input.shift && !input.alt && key === 'l') return 'layers';
   if (mod && input.shift && !input.alt && key === 'i') return 'instruments';
   if (mod && input.shift && !input.alt && key === 'n') return 'private-tab';
+  // Milestone 10: reopen a closed tab, search tabs.
+  if (mod && input.shift && !input.alt && key === 't') return 'reopen-tab';
+  if (mod && input.shift && !input.alt && key === 'a') return 'search-tabs';
   // Zoom: Ctrl/Cmd with plus (also = and the shifted +), minus, and 0.
   if (mod && !input.alt && (key === '=' || key === '+')) return 'zoom-in';
   if (plainMod && (key === '-' || key === '_')) return 'zoom-out';

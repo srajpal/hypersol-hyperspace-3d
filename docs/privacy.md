@@ -112,7 +112,10 @@ requests of its own, and it leaves certificate checking to Chromium
 unchanged. If the saved filter lists are
 damaged or were built by another version, the starter copy is used.
 
-Kept in memory only: an offer to save a password until you answer it;
+Kept in memory only: the tabs you closed this session (so you can
+reopen them) and the back and forward history of pages you closed or
+that went to sleep, all gone when the app closes, and never for private
+tabs; an offer to save a password until you answer it;
 "Allow this time" until the tab leaves the site; and choices made in
 private tabs, until the last private tab closes. Nothing is saved or
 filled in private tabs.

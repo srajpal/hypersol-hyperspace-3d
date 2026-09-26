@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { parseDataRequest, type DataOp, type DataReply, type DataRequest } from '../../shared/data';
 import { applySettingsPatch, type Settings } from '../../shared/settings';
 import { Store } from './database';
-import { inProcess, type HistoryBackend } from './history-backend';
+import { inProcess, WorkerHistory, type HistoryBackend } from './history-backend';
 import { SessionFile, SettingsFile } from './settings-file';
 
 export type DataChange = 'bookmarks' | 'history' | 'settings' | 'passwords';
@@ -60,6 +60,11 @@ export class StorageService {
 
   get available(): boolean {
     return this.store !== null;
+  }
+
+  /** Whether history runs in a worker thread that is still working (milestone 10, for the tests). */
+  get historyInWorker(): boolean {
+    return this.history instanceof WorkerHistory && this.history.working;
   }
 
   /** The database, for the password vault (main/passwords); null when it could not be opened. */

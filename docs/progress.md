@@ -113,3 +113,21 @@ and pages print flat.
 ![The download notice](screenshots/m9/28-download-notice.png)
 
 ![New tab and New private tab under "+"](screenshots/m9/29-new-tab-menu.png)
+
+**Milestone 10: tabs and economy** (built; waiting for the owner's
+acceptance). Reopen a closed tab (Ctrl+Shift+T) with its back history,
+search your tabs (Ctrl+Shift+A), and mute a tab from the speaker on its
+card. Settings > Tabs sets the card size and whether tabs show as
+cards, cards that hide, or a list in the top bar. Economy mode (on by
+itself when running on battery) draws the room more simply at 30 frames
+a second, and unused tabs go to sleep to free memory. History searches
+now run on their own thread with an index, fast even with 100,000
+visits.
+
+![A tab playing sound: the speaker on its card](screenshots/m10/30-sound-on-card.png)
+
+![Search tabs](screenshots/m10/31-tab-search.png)
+
+![Tabs as a list in the top bar](screenshots/m10/32-tab-list.png)
+
+![Economy mode on (ECO), with the Tabs and Economy settings](screenshots/m10/33-economy-and-tabs-settings.png)

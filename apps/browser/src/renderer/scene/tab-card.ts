@@ -12,8 +12,10 @@ const SCALE = W / CARD_WIDTH; // canvas pixels per world unit, for sharp text
 const SNAP = { x: 8, y: 8, w: W - 16, h: 214 };
 const BAR_Y = 228;
 const CLOSE = { cx: 360, cy: 264, r: 24 };
+/** The speaker, left of the close button, on a tab that makes sound or is muted (milestone 10). */
+const AUDIO = { cx: 304, cy: 264, r: 22 };
 
-export type CardPart = 'body' | 'close';
+export type CardPart = 'body' | 'close' | 'audio';
 
 export interface CardModel {
   /** Tab id, or 'plus' for the new-tab card. */
@@ -26,6 +28,10 @@ export interface CardModel {
   private?: boolean;
   /** Its page was given the camera, microphone, or location: marked on its card (milestone 9). */
   access?: boolean;
+  /** Milestone 10: its page makes sound; it is muted; it is asleep. */
+  audible?: boolean;
+  muted?: boolean;
+  asleep?: boolean;
 }
 
 /**
@@ -87,7 +93,10 @@ export class TabCard {
       model.loading !== this.model.loading ||
       model.focused !== this.model.focused ||
       model.favicon !== this.model.favicon ||
-      Boolean(model.access) !== Boolean(this.model.access);
+      Boolean(model.access) !== Boolean(this.model.access) ||
+      Boolean(model.audible) !== Boolean(this.model.audible) ||
+      Boolean(model.muted) !== Boolean(this.model.muted) ||
+      Boolean(model.asleep) !== Boolean(this.model.asleep);
     this.model = model;
     if (model.favicon !== this.faviconSrc) this.setFavicon(model.favicon);
     if (changed) this.draw();
@@ -128,12 +137,18 @@ export class TabCard {
     const y = (1 - v) * H;
     const showsClose = this.model.key !== 'plus' && (this.hovered || this.model.focused);
     if (showsClose && Math.hypot(x - CLOSE.cx, y - CLOSE.cy) <= CLOSE.r + 6) return 'close';
+    if (this.showsAudio && Math.hypot(x - AUDIO.cx, y - AUDIO.cy) <= AUDIO.r + 6) return 'audio';
     return 'body';
+  }
+
+  private get showsAudio(): boolean {
+    return this.model.key !== 'plus' && Boolean(this.model.audible || this.model.muted);
   }
 
   /** A point on the card in its local coordinates (for tests and hit checks). */
   static localPoint(part: CardPart): { x: number; y: number } {
     if (part === 'close') return { x: CLOSE.cx / SCALE - CARD_WIDTH / 2, y: CARD_HEIGHT / 2 - CLOSE.cy / SCALE };
+    if (part === 'audio') return { x: AUDIO.cx / SCALE - CARD_WIDTH / 2, y: CARD_HEIGHT / 2 - AUDIO.cy / SCALE };
     return { x: 0, y: 12 };
   }
 
@@ -233,6 +248,24 @@ export class TabCard {
       ctx.fillText('PRIVATE', SNAP.x + 85, SNAP.y + 31);
     }
 
+    if (this.model.asleep) {
+      // Asleep (milestone 10): the snapshot dims and says so.
+      ctx.save();
+      roundRect(ctx, SNAP.x, SNAP.y, SNAP.w, SNAP.h, 12);
+      ctx.fillStyle = c.backgroundBottom;
+      ctx.globalAlpha = 0.5;
+      ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = c.textMuted;
+      roundRect(ctx, SNAP.x + 10, SNAP.y + SNAP.h - 50, 150, 40, 8);
+      ctx.fill();
+      ctx.fillStyle = c.backgroundBottom;
+      ctx.font = '700 24px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('ASLEEP', SNAP.x + 85, SNAP.y + SNAP.h - 29);
+    }
+
     if (this.model.access) {
       // The page was given the camera, microphone, or location (milestone 9).
       ctx.fillStyle = c.warning;
@@ -255,12 +288,44 @@ export class TabCard {
       textX = 68;
     }
     const showsClose = this.hovered || focused;
-    const maxText = (showsClose ? CLOSE.cx - CLOSE.r - 10 : W - 16) - textX;
+    const right = this.showsAudio ? AUDIO.cx - AUDIO.r - 10 : showsClose ? CLOSE.cx - CLOSE.r - 10 : W - 16;
+    const maxText = right - textX;
     ctx.fillStyle = c.text;
     ctx.font = '600 32px system-ui, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText(fit(ctx, this.model.title || 'Untitled', maxText), textX, BAR_Y + 36);
+
+    if (this.showsAudio) {
+      // A speaker (milestone 10): sound waves while it plays, a slash when muted.
+      const { cx, cy } = AUDIO;
+      ctx.beginPath();
+      ctx.arc(cx, cy, AUDIO.r, 0, Math.PI * 2);
+      ctx.fillStyle = this.model.muted ? c.backgroundTop : c.accent;
+      ctx.fill();
+      ctx.fillStyle = this.model.muted ? c.text : c.backgroundBottom;
+      ctx.beginPath();
+      ctx.moveTo(cx - 12, cy - 5);
+      ctx.lineTo(cx - 6, cy - 5);
+      ctx.lineTo(cx + 2, cy - 12);
+      ctx.lineTo(cx + 2, cy + 12);
+      ctx.lineTo(cx - 6, cy + 5);
+      ctx.lineTo(cx - 12, cy + 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = ctx.fillStyle;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      if (this.model.muted) {
+        ctx.moveTo(cx + 6, cy - 7);
+        ctx.lineTo(cx + 14, cy + 7);
+        ctx.moveTo(cx + 14, cy - 7);
+        ctx.lineTo(cx + 6, cy + 7);
+      } else {
+        ctx.arc(cx + 2, cy, 9, -0.8, 0.8);
+      }
+      ctx.stroke();
+    }
 
     if (showsClose) {
       ctx.beginPath();

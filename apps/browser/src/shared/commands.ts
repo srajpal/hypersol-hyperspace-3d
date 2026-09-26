@@ -16,12 +16,21 @@ import type { InspectOp, InspectReply, InspectRequest } from './inspect';
 import type { DownloadInfo, DownloadOp, DownloadReply, DownloadRequest } from './downloads';
 import type { PermissionKind, PermissionOp, PermissionPrompt, PermissionReply, PermissionRequest } from './permissions';
 import type { PasswordOffer, PasswordOp, PasswordReply, PasswordRequest } from './passwords';
+import type { TabsOp, TabsReply, TabsRequest } from './tabs';
 
 /**
  * The private tabs' session (milestone 8): in memory only, since the name
  * has no "persist:" prefix, so nothing reaches the disk.
  */
 export const PRIVATE_PARTITION = 'hypersol-private';
+
+/**
+ * The address a new page gets when it will take a closed page's history
+ * (milestone 10). The main process creates such a page without loading
+ * anything, since Electron restores history only into a page that has
+ * never navigated.
+ */
+export const RESTORE_BLANK = 'about:blank#hypersol-restore';
 
 export type ShortcutName =
   | 'zoom-in'
@@ -31,6 +40,8 @@ export type ShortcutName =
   | 'print'
   | 'downloads'
   | 'private-tab'
+  | 'reopen-tab'
+  | 'search-tabs'
   | 'instruments'
   | 'layers'
   | 'bookmark'
@@ -58,6 +69,10 @@ export type ShellCommand =
   | { type: 'site-access'; webContentsId: number; kinds: PermissionKind[] }
   /** Offer to save or update a password for a tab (milestone 9). */
   | { type: 'password-offer'; offer: PasswordOffer }
+  /** A tab's page started or stopped making sound (milestone 10). */
+  | { type: 'audio'; webContentsId: number; audible: boolean }
+  /** The computer is running on battery, or not (economy mode, milestone 10). */
+  | { type: 'power'; onBattery: boolean }
   /** How many requests the privacy shield has blocked on a tab's page. */
   | { type: 'shield'; webContentsId: number; count: number }
   /** The shield blocked a whole page in a tab (the tab shows the blocked card). */
@@ -88,6 +103,8 @@ export interface ShellBridge {
   permissions<K extends PermissionOp>(request: Extract<PermissionRequest, { op: K }>): Promise<PermissionReply<K>>;
   /** Saved passwords: the Library tab and save offers (shared/passwords.ts). */
   passwords<K extends PasswordOp>(request: Extract<PasswordRequest, { op: K }>): Promise<PasswordReply<K>>;
+  /** A closed or sleeping tab's history into a new page (shared/tabs.ts). */
+  tabs<K extends TabsOp>(request: Extract<TabsRequest, { op: K }>): Promise<TabsReply<K>>;
   /** Answer to prepare-close: saving is done (or has failed), the window may close. */
   closeReady(): void;
 }

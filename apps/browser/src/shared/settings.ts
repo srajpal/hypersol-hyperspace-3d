@@ -24,6 +24,15 @@ export type DnsMode = 'secure' | 'automatic';
 export type ThemeChoice = 'nebula' | 'daylight' | 'system';
 /** Which console messages the instrument panel shows (milestone 7). */
 export type ConsoleFilter = 'all' | 'warnings' | 'errors';
+/** Tab card size (milestone 10); medium is the size since milestone 6. */
+export type TabSize = 'small' | 'medium' | 'large';
+/** How tabs are shown: cards on the rail, cards that hide with a list in the top bar, or the list only. */
+export type TabDisplay = 'cards' | 'autohide' | 'list';
+/** Economy mode: off, on, or on while the computer runs on battery. */
+export type EconomyMode = 'off' | 'on' | 'battery';
+/** Minutes a tab may stay out of view before it sleeps; 0 is never. */
+export const TAB_SLEEP_CHOICES = [0, 5, 15, 30, 60] as const;
+export type TabSleep = (typeof TAB_SLEEP_CHOICES)[number];
 export const MIN_TILT = 0;
 export const MAX_TILT = 20;
 
@@ -54,6 +63,11 @@ export interface Settings {
   zoomSites: Record<string, number>;
   /** Remembered camera, microphone, and location answers, by origin (milestone 9). */
   sitePermissions: Record<string, SiteChoices>;
+  /** Tabs and economy (milestone 10). */
+  tabSize: TabSize;
+  tabDisplay: TabDisplay;
+  economy: EconomyMode;
+  tabSleep: TabSleep;
 }
 
 export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
@@ -74,11 +88,15 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   consoleLevel: 'all',
   zoomSites: Object.freeze({}) as Record<string, number>,
   sitePermissions: Object.freeze({}) as Record<string, SiteChoices>,
+  tabSize: 'medium',
+  tabDisplay: 'cards',
+  economy: 'battery',
+  tabSleep: 30,
 });
 
 const SETTING_KEYS = ['searchEngine', 'onStartup', 'dnsMode', 'filterRefresh', 'pausedSites', 'layersOnOpen', 'layersSites', 'theme', 'pageTilt',
   'instruments', 'instrumentsReadouts', 'instrumentsGauges', 'instrumentsConsole', 'instrumentsNetwork', 'consoleLevel', 'zoomSites',
-  'sitePermissions'] as const;
+  'sitePermissions', 'tabSize', 'tabDisplay', 'economy', 'tabSleep'] as const;
 const INSTRUMENT_SWITCHES = ['instruments', 'instrumentsReadouts', 'instrumentsGauges', 'instrumentsConsole', 'instrumentsNetwork'] as const;
 export const MAX_PAUSED_SITES = 1000;
 export const MAX_LAYERS_SITES = 1000;
@@ -139,6 +157,18 @@ export function applySettingsPatch(current: Settings, patch: unknown): { setting
       const sites = parseSiteChoices(value);
       if (!sites) return { error: 'sitePermissions must map web origins to camera, microphone, and location choices' };
       next.sitePermissions = sites;
+    } else if (key === 'tabSize') {
+      if (value !== 'small' && value !== 'medium' && value !== 'large') return { error: `Unknown tab size: ${String(value)}` };
+      next.tabSize = value;
+    } else if (key === 'tabDisplay') {
+      if (value !== 'cards' && value !== 'autohide' && value !== 'list') return { error: `Unknown way to show tabs: ${String(value)}` };
+      next.tabDisplay = value;
+    } else if (key === 'economy') {
+      if (value !== 'off' && value !== 'on' && value !== 'battery') return { error: `Unknown economy mode: ${String(value)}` };
+      next.economy = value;
+    } else if (key === 'tabSleep') {
+      if (!(TAB_SLEEP_CHOICES as readonly unknown[]).includes(value)) return { error: `tabSleep must be one of ${TAB_SLEEP_CHOICES.join(', ')} minutes` };
+      next.tabSleep = value as TabSleep;
     } else if (key === 'consoleLevel') {
       if (value !== 'all' && value !== 'warnings' && value !== 'errors') return { error: `Unknown console level: ${String(value)}` };
       next.consoleLevel = value;

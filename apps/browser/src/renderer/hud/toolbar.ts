@@ -1,7 +1,18 @@
 import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
 import { PERMISSION_LABELS, type PermissionKind } from '../../shared/permissions';
 
-export type MenuAction = 'new-tab' | 'private-tab' | 'close-tab' | 'downloads' | 'print' | 'library' | 'settings' | 'about';
+export type MenuAction =
+  | 'new-tab'
+  | 'private-tab'
+  | 'close-tab'
+  | 'reopen-tab'
+  | 'search-tabs'
+  | 'mute-tab'
+  | 'downloads'
+  | 'print'
+  | 'library'
+  | 'settings'
+  | 'about';
 
 const icon = {
   gauge: html`<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -56,6 +67,9 @@ export class HsToolbar extends LitElement {
     canLayers: { type: Boolean },
     site: { type: String },
     access: { attribute: false },
+    economy: { type: Boolean },
+    muted: { type: Boolean },
+    canReopen: { type: Boolean },
     menuOpen: { state: true },
     plusOpen: { state: true },
     strip: { state: true },
@@ -84,6 +98,12 @@ export class HsToolbar extends LitElement {
   declare site: 'secure' | 'insecure' | 'none';
   /** What the page in front was given (camera, microphone, location): the in-use marker (milestone 9). */
   declare access: PermissionKind[];
+  /** Economy mode is on (milestone 10): "ECO" shows. */
+  declare economy: boolean;
+  /** The tab in front is muted, for the menu's Mute or Unmute. */
+  declare muted: boolean;
+  /** A closed tab can be reopened. */
+  declare canReopen: boolean;
   declare menuOpen: boolean;
   declare plusOpen: boolean;
   declare strip: 'idle' | 'loading' | 'done';
@@ -107,6 +127,9 @@ export class HsToolbar extends LitElement {
     this.downloading = false;
     this.site = 'none';
     this.access = [];
+    this.economy = false;
+    this.muted = false;
+    this.canReopen = false;
     this.menuOpen = false;
     this.plusOpen = false;
     this.strip = 'idle';
@@ -232,6 +255,20 @@ export class HsToolbar extends LitElement {
       .site .live {
         animation: none;
       }
+    }
+    .eco-pill {
+      flex: none;
+      padding: 3px 7px;
+      border-radius: 6px;
+      border: 1px solid var(--hs-accent);
+      color: var(--hs-accent);
+      font-family: var(--hs-font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+    [role='menuitem']:disabled {
+      opacity: 0.45;
     }
     .private-pill {
       flex: none;
@@ -384,12 +421,21 @@ export class HsToolbar extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     document.addEventListener('pointerdown', this.onOutside);
+    document.addEventListener('keydown', this.onEscape);
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     document.removeEventListener('pointerdown', this.onOutside);
+    document.removeEventListener('keydown', this.onEscape);
   }
+
+  /** Escape closes an open menu wherever the keyboard is in the shell. */
+  private readonly onEscape = (e: KeyboardEvent) => {
+    if (e.key !== 'Escape' || (!this.menuOpen && !this.plusOpen)) return;
+    this.menuOpen = false;
+    this.plusOpen = false;
+  };
 
   protected override willUpdate(changed: PropertyValues<this>): void {
     if (changed.has('loading')) {
@@ -457,6 +503,9 @@ export class HsToolbar extends LitElement {
         </button>
         ${this.private ? html`<span class="private-pill" data-testid="private-pill" title="Private tab: nothing is kept">PRIVATE</span>` : nothing}
         ${this.site === 'none' ? nothing : this.siteButton()}
+        ${this.economy
+          ? html`<span class="eco-pill" data-testid="eco-pill" title="Economy mode: the room draws less to save power (Settings > Economy)">ECO</span>`
+          : nothing}
         <input
           data-testid="address"
           type="text"
@@ -527,6 +576,15 @@ export class HsToolbar extends LitElement {
               </button>
               <button role="menuitem" data-testid="menu-close-tab" @click=${() => this.menu('close-tab')}>
                 Close tab <kbd>${mod}+W</kbd>
+              </button>
+              <button role="menuitem" data-testid="menu-reopen-tab" ?disabled=${!this.canReopen} @click=${() => this.menu('reopen-tab')}>
+                Reopen closed tab <kbd>${mod}+Shift+T</kbd>
+              </button>
+              <button role="menuitem" data-testid="menu-search-tabs" @click=${() => this.menu('search-tabs')}>
+                Search tabs <kbd>${mod}+Shift+A</kbd>
+              </button>
+              <button role="menuitem" data-testid="menu-mute-tab" @click=${() => this.menu('mute-tab')}>
+                ${this.muted ? 'Unmute tab' : 'Mute tab'}
               </button>
               <button role="menuitem" data-testid="menu-downloads" @click=${() => this.menu('downloads')}>
                 Downloads <kbd>${mod}+J</kbd>

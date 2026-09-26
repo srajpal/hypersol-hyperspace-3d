@@ -32,6 +32,8 @@ export interface LaunchOptions {
   downloadsDir?: string;
   /** Test mode only (--test-no-keychain): act as if the system keychain were unavailable (milestone 9, K5). */
   testNoKeychain: boolean;
+  /** Test mode only (--test-sleep-minute-ms=N): a "minute" for sleeping tabs, so the checks need not wait (milestone 10). */
+  testSleepMinuteMs?: number;
 }
 
 function switchValue(argv: readonly string[], name: string): string | undefined {
@@ -75,6 +77,8 @@ export function parseLaunchOptions(
   const filtersBase = testMode ? localAddress(switchValue(argv, 'filters-base')) : undefined;
   const dnsProbeUrl = testMode ? localAddress(switchValue(argv, 'dns-probe')) : undefined;
   const downloadsDir = testMode ? switchValue(argv, 'downloads-dir') : undefined;
+  const sleepMinuteText = testMode ? switchValue(argv, 'test-sleep-minute-ms') : undefined;
+  const sleepMinute = sleepMinuteText !== undefined && /^\d{2,6}$/.test(sleepMinuteText) ? Number(sleepMinuteText) : undefined;
   const searchUrl =
     testMode && search !== undefined && search.includes('%s') && isAllowedPageUrl(search) && search !== ''
       ? search
@@ -91,5 +95,6 @@ export function parseLaunchOptions(
     ...(dnsProbeUrl ? { dnsProbeUrl } : {}),
     ...(downloadsDir ? { downloadsDir } : {}),
     testNoKeychain: testMode && argv.includes('--test-no-keychain'),
+    ...(sleepMinute !== undefined ? { testSleepMinuteMs: sleepMinute } : {}),
   };
 }

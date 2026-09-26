@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { app, BrowserWindow, clipboard, ipcMain, Menu, nativeTheme, safeStorage, screen, session, webContents, type Session, type WebContents } from 'electron';
+import { app, BrowserWindow, clipboard, ipcMain, Menu, nativeTheme, powerMonitor, safeStorage, screen, session, webContents, type Session, type WebContents } from 'electron';
 import { daylight, nebula, themeById, type Theme } from '@hypersol/themes';
 import type { ThemeChoice } from '../shared/settings';
 import {
@@ -17,6 +17,8 @@ import { PAGE_PASSWORDS_CHANNEL } from '../shared/page-passwords';
 import { Passwords } from './passwords';
 import { PasswordVault, type Keychain } from './passwords/vault';
 import { Permissions } from './permissions';
+import { TabHistory } from './tab-history';
+import { TABS_CHANNEL } from '../shared/tabs';
 import { Downloads } from './downloads';
 import { DATA_CHANNEL } from '../shared/data';
 import { PRIVACY_CHANNEL } from '../shared/privacy';
@@ -79,6 +81,7 @@ let privacy: Privacy | null = null;
 let inspector: Inspector | null = null;
 let permissions: Permissions | null = null;
 let passwords: Passwords | null = null;
+let tabHistory: TabHistory | null = null;
 /** The private tabs' in-memory session. */
 let privateSession: Session | null = null;
 
@@ -163,6 +166,10 @@ function createWindow(): void {
   });
   // A crashed shell takes its tabs with it too.
   win.webContents.on('render-process-gone', () => endPrivate());
+  // Economy mode can follow the power source (milestone 10).
+  // Test runs start as if on mains power, so a laptop on battery runs the
+  // same checks; the economy checks switch the power source themselves.
+  win.webContents.on('did-finish-load', () => send({ type: 'power', onBattery: options.testMode ? false : powerMonitor.isOnBatteryPower() }));
   flushBeforeClose(win);
 
   const query: Record<string, string> = {
@@ -173,6 +180,7 @@ function createWindow(): void {
   if (process.argv.some((a) => a.startsWith('--tilt='))) query['tilt'] = String(options.tiltDeg);
   if (options.testMode) query['test'] = '1';
   if (options.searchUrl) query['searchUrl'] = options.searchUrl;
+  if (options.testSleepMinuteMs) query['sleepMinuteMs'] = String(options.testSleepMinuteMs);
 
   const devServer = process.env['ELECTRON_RENDERER_URL'];
   if (!app.isPackaged && devServer) {
@@ -201,6 +209,7 @@ async function forgetPrivateData(): Promise<void> {
   privacy?.forgetPrivate();
   inspector?.forgetPrivate();
   permissions?.forgetPrivate();
+  tabHistory?.forgetPrivate();
   await s.clearStorageData();
   await s.clearCache();
   await s.clearAuthCache();
@@ -261,6 +270,14 @@ if (!app.requestSingleInstanceLock()) {
     inspector?.trackTab(contents);
     permissions?.trackTab(contents);
     passwords?.trackTab(contents);
+    tabHistory?.track(contents);
+    // Sound, for the speaker on the tab and for keeping it awake (milestone 10).
+    contents.on('audio-state-changed', (event) => {
+      const host = contents.hostWebContents;
+      if (host && !host.isDestroyed()) {
+        host.send(SHELL_COMMAND_CHANNEL, { type: 'audio', webContentsId: contents.id, audible: event.audible } satisfies ShellCommand);
+      }
+    });
     // A private tab keeps nothing: no history, and its session's data goes
     // when the last private tab closes (milestone 8). The shell says when
     // that is, since a blank private tab has no page yet (PR #16 review).
@@ -403,6 +420,20 @@ if (!app.requestSingleInstanceLock()) {
     passwords = pw;
     ipcMain.handle(PAGE_PASSWORDS_CHANNEL, (event, request: unknown) => pw.handlePage(event, request));
     ipcMain.handle(PASSWORDS_CHANNEL, (event, request: unknown) => pw.handleShell(event, request));
+
+    // Back and forward history for reopened and waking tabs (milestone 10).
+    const tabsHistory = new TabHistory({ isShell: isShellContents, isPrivate: isPrivateTab });
+    tabHistory = tabsHistory;
+    ipcMain.handle(TABS_CHANNEL, (event, request: unknown) => tabsHistory.handle(event, request));
+    const sendPower = (onBattery: boolean) => {
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(SHELL_COMMAND_CHANNEL, { type: 'power', onBattery } satisfies ShellCommand);
+    };
+    powerMonitor.on('on-battery', () => sendPower(true));
+    powerMonitor.on('on-ac', () => sendPower(false));
+    if (testLog) {
+      const kept = storage;
+      testLog.historyWorker = () => kept.historyInWorker;
+    }
 
     storage.onChange((what) => {
       if (what === 'settings') applyWindowTheme();

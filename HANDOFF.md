@@ -1,7 +1,7 @@
 # HANDOFF.md
 
 State of the project for whoever picks it up next, human or agent.
-Last updated 2026-09-26 (milestone 9 built, waiting for acceptance).
+Last updated 2026-09-26 (milestones 9 and 10 built, waiting for acceptance).
 
 ## Where things stand
 
@@ -16,16 +16,18 @@ view, the Nebula and Daylight themes, an instrument panel (readouts,
 console, network list), zoom, find in page, downloads, printing, and
 private tabs. Milestone 9 (passwords, site permissions, and the
 milestone 8 feedback: download notice, private tab under "+", flat
-printing) is built and its checks K1 to K10 pass; it waits for the
-owner's acceptance (TODO.md has what to try). Then 10 (Tabs and economy)
-and 11 (First release, with the chosen logo direction, concept 4d in
+printing) and milestone 10 (reopen, search, and mute tabs; card size
+and how tabs are shown; economy mode; sleeping tabs; history in a
+worker thread, GitHub issue #4) are built, their checks pass, and both
+wait for the owner's acceptance (TODO.md has the results). Then 11
+(First release, with the chosen logo direction, concept 4d in
 docs/branding/logo-concepts/). HoloML keeps its name (owner, prompt 44;
 HSML was checked and advised against, prompt 43); the holoml repository
 now names the browser HyperSol HyperSpace 3D. GitHub issues #8 to #15
-(QA of milestone 8) were fixed in PR #16, merged 2026-09-26; #4 and #5 stay proposed for the
-tabs and economy milestone (#4, milestone 10) and the first release (#5,
-milestone 11). The Electron security check was last done
-at the start of milestone 9 (44.4.5 current). Progress screenshots live
+(QA of milestone 8) were fixed in PR #16, merged 2026-09-26; #4 is done
+in milestone 10; #5 (continuous integration) stays proposed for the
+first release (milestone 11). The Electron security check was last done
+at the start of milestone 10 (44.4.5 current). Progress screenshots live
 in docs/screenshots/<milestone>/; capture them with
 `MILESTONE=mN pnpm screenshots` when a milestone is finished and add
 them to docs/progress.md (the README has a short progress paragraph

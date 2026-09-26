@@ -57,6 +57,8 @@ export interface LaunchOptions {
   downloadsDir?: string;
   /** Act as if the system keychain were missing (test mode switch, milestone 9). */
   noKeychain?: boolean;
+  /** How long a "minute" is for sleeping tabs (test mode switch, milestone 10). */
+  sleepMinuteMs?: number;
 }
 
 /**
@@ -98,6 +100,7 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
   if (opts.dnsProbe !== undefined) args.push(`--dns-probe=${opts.dnsProbe}`);
   if (opts.downloadsDir !== undefined) args.push(`--downloads-dir=${opts.downloadsDir}`);
   if (opts.noKeychain) args.push('--test-no-keychain');
+  if (opts.sleepMinuteMs !== undefined) args.push(`--test-sleep-minute-ms=${opts.sleepMinuteMs}`);
   const app = await electron.launch({
     executablePath: electronPath,
     args,
@@ -193,7 +196,7 @@ export interface ShellHooks {
   status(): { state: string; url: string; title?: string; message?: string } | null;
   tabs(): TabInfo[];
   focusedTabId(): number;
-  cardPoint(key: number | 'plus', part: 'body' | 'close'): Point | null;
+  cardPoint(key: number | 'plus', part: 'body' | 'close' | 'audio'): Point | null;
   rail(): { scroll: number; maxScroll: number; fits: number };
   railVisible(): boolean;
   animating(): boolean;
@@ -209,6 +212,11 @@ export interface ShellHooks {
     offer: { id: number; origin: string; username: string; update: boolean; insecure: boolean; problem?: string } | null;
   };
   accessOf(tabId: number): string[];
+  closedCount(): number;
+  sleepNow(): number;
+  economy(): { on: boolean; pixelRatio: number; devicePixelRatio: number; frames: number };
+  tabDisplay(): { scale: number; display: string; revealed: boolean; railVisible: boolean; strip: boolean };
+  revealRail(): void;
   notice(): { text: string; kind: string; actions: { id: string; label: string }[] } | null;
   sitePanel(): { open: boolean; site: { origin: string; private: boolean; states: Record<string, string>; given: string[] } | null };
   downloads(): { id: number; filename: string; path: string; received: number; total: number; state: string }[];
@@ -236,6 +244,9 @@ export interface TabInfo {
   canGoBack: boolean;
   canGoForward: boolean;
   private: boolean;
+  audible: boolean;
+  muted: boolean;
+  asleep: boolean;
 }
 
 export type ShellWindow = Window & { __hypersolShellTest: ShellHooks };
@@ -531,7 +542,7 @@ export async function focusedTab(h: Harness): Promise<TabInfo> {
 }
 
 /** Clicks a tab card (or the "+" card), on its body or its close button. */
-export async function clickCard(h: Harness, key: number | 'plus', part: 'body' | 'close' = 'body'): Promise<void> {
+export async function clickCard(h: Harness, key: number | 'plus', part: 'body' | 'close' | 'audio' = 'body'): Promise<void> {
   // While a page flies to or from its card it can cover the cards; a
   // person waits for the motion to end.
   await settled(h);

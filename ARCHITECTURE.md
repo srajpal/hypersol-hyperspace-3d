@@ -129,6 +129,11 @@ touchpad, no touch screen.
 | Site permissions | Camera, microphone, and location ask with a prompt under the top bar: Allow, Allow this time, Block. Allow and Block are remembered per origin in settings.json (sitePermissions); private tabs keep theirs in memory, forgotten with the last private tab, and do not inherit normal tabs' choices. "This time" lasts until the tab leaves the site or closes. Every other permission request is refused, as before; permission checks other than camera, microphone, and location keep Electron's default answer. A site panel from the top bar's site button (lock, or "Not secure") shows and changes the site's choices; Settings lists and forgets them. Location uses only the operating system's location service (no network location service or API key; K7 ran with every host but 127.0.0.1 blocked and still got a position on Windows 11). Electron reports no "capture started or stopped" event, so the marker (camera, microphone, location icons in the site button, and LIVE on the tab card) means "given to this page": from the grant until the tab leaves the site | Milestone 9 (owner, prompt 45, Q2 a). |
 | Download notice | A notice at the bottom when a download finishes (Open, Show in folder) or fails (Downloads); a broken connection counts as a failure at once, even if it could resume. It goes after 8 seconds unless the pointer or keyboard is on it | Milestone 9, owner feedback on milestone 8. |
 | New private tab from "+" | The "+" in the top bar opens a tab; its arrow, or a right-click on it, offers New tab and New private tab | Milestone 9, owner feedback on milestone 8. |
+| Reopening closed tabs | Ctrl/Cmd+Shift+T and the menu; the last 25 closed tabs of the session, in memory; reopened in place. The main process keeps each page's back and forward history (main/tab-history.ts, memory only, the last 60 closed pages, private tabs' forgotten with the last one) and puts it into the new page with navigationHistory.restore. Electron restores only into a page that has never navigated, so the new page's webview gets the address about:blank#hypersol-restore, which the main process turns into "load nothing" as the page is created; the history goes in once the page is attached. Private tabs are not kept for reopening | Milestone 10. |
+| Tab search, mute, card size, how tabs are shown | Ctrl/Cmd+Shift+A or the menu: a filterable list of tabs. Sound: the main process forwards each page's audio-state-changed; a speaker on the card, in the lists, and "Mute tab" in the menu mute the tab (webview setAudioMuted; muting belongs to the tab). Settings > Tabs: card size Small 0.8, Medium 1, Large 1.3; Cards, Cards that hide (in at the left edge after 250 ms or with Ctrl+Tab, out 2 s after the pointer last moved over the room), or List in the top bar (a row of small tabs under the top bar, 34 px, which the page makes room for) | Milestone 10; the agent's defaults, for the owner's review. |
+| Economy mode | Settings > Economy: Off, On, or On when running on battery (the default; the main process forwards powerMonitor's on-battery and on-ac; test runs start as on mains power). It draws the room's WebGL at half the device pixel ratio (at least 0.5), hides the glow, sun, and horizon band, stops parallax and switch animations, removes scanlines and HUD glows (a data-economy attribute), and caps the room at 30 frames a second; pages are untouched. ECO shows in the top bar | Milestone 10. |
+| Sleeping tabs | Settings > Economy: after 5, 15, 30 (default), or 60 minutes out of view, or never; in economy mode after 5 minutes at most. A check runs every 30 s. Never the tab in front, a start or loading tab, a tab making sound, one whose page started a running download (downloads now record the page), or one with text typed into a form (the page preload reports typing, preload/form-state.ts; sending the form clears it). A sleeping tab's webview is removed (its page and memory go); the card keeps its snapshot, marked ASLEEP; opening it makes a new page with the old history (as reopening) | Milestone 10. |
+| History off the main process | GitHub issue #4: history reads and writes run in a worker thread (main/storage/history-worker.ts) with its own connection to hypersol.sqlite (WAL; both connections wait up to 5 s for each other); if the worker fails, the main thread takes over. Schema 3: an FTS5 index with the trigram tokenizer (substring matches as before; under three characters the plain LIKE search) and a history_latest table of each address's latest visit, kept by triggers | Milestone 10. Budgets: with 100,000 visits a search or the recent list answers within 50 ms, and the main process is never held 20 ms (L9). |
 | Preload bundles | The shell's preload and the page preload share no project module (preload/preload-graph.test.ts): a shared module becomes a separate chunk file, which a sandboxed preload cannot load (found 2026-09-26: the shell's bridge failed to load). Page-side password messages live in shared/page-passwords.ts for this reason | Sandboxed preloads load one file. |
 | Private tabs | Ctrl/Cmd+Shift+N and the menu: a tab whose page uses an in-memory session (partition "hypersol-private"), with the same shield and readouts, and permission prompts whose choices stay in memory (milestone 9); no history; never saved for "reopen your tabs"; its cookies, storage, and cache are cleared when the last private tab closes; links from it open private; marked on its card, in the top bar, and on its start panel. Site choices made from private tabs (layers view, shield pause) stay in memory; zoom from a private tab is not saved at all, apply to every private tab on that site while one is open, and are forgotten with the last one; the shield's pause request names its tab so the main process can tell (GitHub issue #8). "The last private tab" includes blank private tabs, which have no page yet: the shell tells the main process when its last private tab closes, and only then are the private session's data, pauses, and certificates cleared. The main process also clears them itself when the window closes or its shell crashes (every tab goes with it), and a window reopened meanwhile (macOS keeps the app running) waits for that to finish (PR #16 follow-up review). The shell may only attach webviews to the default or this partition | Milestone 8, owner Q3 a. |
 | Page tilt | Settings > Page tilt, 0 to 20 degrees, default 10; a --tilt on the command line wins | Less tilt gives sharper text (milestone 1 note). |
@@ -194,6 +199,8 @@ hypersol-hyperspace-3d/
           passwords.ts         saved password requests from the shell, offers
           page-passwords.ts    password requests from a page's preload (kept
                                apart from passwords.ts, see Preload bundles)
+          tabs.ts              restoring a closed or sleeping tab's history
+          page-state.ts        typed-in-a-form reports from the page preload
         preload/
           shell.ts             safe bridge exposed to the 3D shell
           page.ts              injected into every web page: the blocker's
@@ -204,6 +211,8 @@ hypersol-hyperspace-3d/
                                tested)
           passwords.ts         sign-in reports and the saved sign-ins list
                                under a field (milestone 9)
+          form-state.ts        tells the shell when a form has typed text
+                               (milestone 10)
         renderer/              the 3D shell (one Chromium page)
           index.html, main.ts
           app.ts               controller: tabs, pages, room, top bar, commands
@@ -303,6 +312,8 @@ process. It exposes read-only facts (platform, versions) and:
 - permissions: prompt answers and the site panel (shared/permissions.ts);
 - passwords: save offer answers and the Library's Passwords tab
   (shared/passwords.ts);
+- tabs: a closed or sleeping page's history into a new page
+  (shared/tabs.ts);
 - closeReady: the answer to prepare-close, once the open tabs are saved.
 Each is checked in the main process and accepted only from the shell.
 The main process also sends shield counts per tab, blocked pages, and
@@ -328,6 +339,9 @@ filter list changes as commands.
 | Remembered camera, microphone, and location choices | settings.json (sitePermissions), by origin | Changed in the site panel; forgotten in Settings |
 | Private tabs' permission choices; "Allow this time" | Memory only | Forgotten with the last private tab; "this time" when the tab leaves the site |
 | An unanswered offer to save a password | Memory only, in the main process | Until answered, replaced, or the tab closes |
+| Recently closed tabs and pages' back and forward history | Memory only (the shell: last 25 closed tabs; the main process: histories of the last 60 closed pages) | Gone when the app closes; private tabs' never kept for reopening |
+| Tab size, how tabs are shown, economy mode, sleep time | settings.json | Settings > Tabs and Settings > Economy |
+| History search index, latest visit per address | hypersol.sqlite (history_fts, history_latest) | Kept with the history and cleared with it |
 | Open tabs | session.json in the app data folder | Used only when startup is set to reopen them |
 | Cookies, cache, site storage | Chromium profile folder managed by Electron | Standard browser behaviour |
 | Filter lists | filters/engine.bin and engine.json in the app data folder (the last refresh); the starter copy in the app otherwise | Refreshed daily; switchable in Settings; "Update now" |

@@ -1,5 +1,5 @@
 import type { WebContents, WebPreferences } from 'electron';
-import { PRIVATE_PARTITION } from '../shared/commands';
+import { PRIVATE_PARTITION, RESTORE_BLANK } from '../shared/commands';
 
 /** Web pages may only be http, https, or the blank page. */
 export function isAllowedPageUrl(url: string): boolean {
@@ -56,8 +56,10 @@ export function hardenShell(
     const src = params['src'] ?? '';
     // Web pages use the default session, or the private tabs' in-memory one.
     const partition = params['partition'] ?? '';
-    const allowed = isAllowedPageUrl(src) && (partition === '' || partition === PRIVATE_PARTITION);
+    const allowed = (isAllowedPageUrl(src) || src === RESTORE_BLANK) && (partition === '' || partition === PRIVATE_PARTITION);
     if (!allowed) event.preventDefault();
+    // A page that will take a closed page's history loads nothing first (milestone 10).
+    else if (src === RESTORE_BLANK) params['src'] = '';
     onAttach?.({ requestedPreload, appliedPreload: pagePreloadPath, src, allowed });
   });
   shell.on('will-navigate', (event) => event.preventDefault());

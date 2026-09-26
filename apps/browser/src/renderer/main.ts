@@ -11,6 +11,8 @@ import './hud/downloads';
 import './hud/prompts';
 import './hud/site-panel';
 import './hud/notice';
+import './hud/tab-strip';
+import './hud/tab-search';
 import { DEFAULT_TILT_DEG, clampTilt } from '@hypersol/scene-core';
 import { defaultTheme } from '@hypersol/themes';
 import type { ShellBridge } from '../shared/commands';
@@ -52,6 +54,9 @@ const app = new App({
   prompts: document.querySelector('hs-prompts')!,
   sitePanel: document.querySelector('hs-site-panel')!,
   notice: document.querySelector('hs-notice')!,
+  tabStrip: document.querySelector('hs-tab-strip')!,
+  tabSearch: document.querySelector('hs-tab-search')!,
+  ...(params.get('test') === '1' && params.get('sleepMinuteMs') ? { sleepMinuteMs: Number(params.get('sleepMinuteMs')) } : {}),
   testMode: params.get('test') === '1',
   tabList: document.getElementById('tab-list') as HTMLElement,
 });
@@ -90,7 +95,15 @@ if (params.get('test') === '1') {
           canGoBack: t.canGoBack,
           private: t.private,
           canGoForward: t.canGoForward,
+          audible: t.audible,
+          muted: t.muted,
+          asleep: t.asleep,
         })),
+      closedCount: () => app.closedCount,
+      sleepNow: () => app.sleepUnused(),
+      economy: () => ({ on: app.economy, pixelRatio: room.pixelRatio, devicePixelRatio: window.devicePixelRatio, frames: room.frames }),
+      tabDisplay: () => ({ ...room.display_, railVisible: room.railVisible, strip: document.querySelector('hs-tab-strip')!.open }),
+      revealRail: () => room.reveal(),
       focusedTabId: () => store.focusedId,
       cardPoint: (key: number | 'plus', part: CardPart) => room.cardPoint(key, part),
       rail: () => room.rail,

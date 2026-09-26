@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sound fixture</title>
+    <style>
+      body { margin: 0; padding: 40px; font-family: sans-serif; font-size: 22px; background: #fff; }
+    </style>
+  </head>
+  <body>
+    <!-- Milestone 10 check L3: a page that makes a quiet tone until stopped. -->
+    <h1>Sound</h1>
+    <script>
+      let ctx = null;
+      window.play = async () => {
+        ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.value = 0.02;
+        osc.frequency.value = 440;
+        osc.connect(gain).connect(ctx.destination);
+        osc.start();
+        await ctx.resume();
+        return ctx.state;
+      };
+      window.stop = () => ctx?.close();
+    </script>
+  </body>
+</html>

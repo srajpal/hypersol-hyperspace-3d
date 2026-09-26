@@ -321,3 +321,9 @@ body {
   background: color-mix(in srgb, var(--hs-accent2) 14%, transparent);
   font-size: 14px;
 }
+
+/* Economy mode (milestone 10): no scanlines, and the HUD's glows off. */
+:root[data-economy] {
+  --hs-scanlines: 0 !important;
+  --hs-glow-strength: 0 !important;
+}

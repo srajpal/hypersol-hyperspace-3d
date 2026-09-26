@@ -7,7 +7,11 @@ import {
   MIN_TILT,
   SEARCH_ENGINES,
   type DnsMode,
+  type EconomyMode,
   type SearchEngineId,
+  type TabDisplay,
+  type TabSize,
+  type TabSleep,
   type Settings,
   type StartupMode,
   type ThemeChoice,
@@ -221,6 +225,53 @@ export class HsSettings extends LitElement {
               <output data-testid="set-tilt-value">${this.settings.pageTilt}°</output>
             </label>
             <p class="note">Less tilt gives sharper text.</p>
+          </fieldset>
+          <fieldset>
+            <legend>Tabs</legend>
+            <label>
+              Card size
+              <select data-testid="set-tab-size" .value=${live(this.settings.tabSize)}
+                @change=${(e: Event) => this.save({ tabSize: (e.target as HTMLSelectElement).value as TabSize })}>
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+              </select>
+            </label>
+            <label>
+              Show tabs as
+              <select data-testid="set-tab-display" .value=${live(this.settings.tabDisplay)}
+                @change=${(e: Event) => this.save({ tabDisplay: (e.target as HTMLSelectElement).value as TabDisplay })}>
+                <option value="cards">Cards</option>
+                <option value="autohide">Cards that hide</option>
+                <option value="list">List in the top bar</option>
+              </select>
+            </label>
+            <p class="note">Cards that hide come in when the pointer rests at the left edge, or with Ctrl+Tab; a list of tabs shows in the top bar.</p>
+          </fieldset>
+          <fieldset>
+            <legend>Economy</legend>
+            <label>
+              Economy mode
+              <select data-testid="set-economy" .value=${live(this.settings.economy)}
+                @change=${(e: Event) => this.save({ economy: (e.target as HTMLSelectElement).value as EconomyMode })}>
+                <option value="off">Off</option>
+                <option value="on">On</option>
+                <option value="battery">On when running on battery</option>
+              </select>
+            </label>
+            <p class="note">Draws the room at a lower resolution, without glow, sun, parallax, or animations, at most 30 frames a second. Pages stay sharp.</p>
+            <label>
+              Put unused tabs to sleep
+              <select data-testid="set-tab-sleep" .value=${live(String(this.settings.tabSleep))}
+                @change=${(e: Event) => this.save({ tabSleep: Number((e.target as HTMLSelectElement).value) as TabSleep })}>
+                <option value="0">Never</option>
+                <option value="5">After 5 minutes</option>
+                <option value="15">After 15 minutes</option>
+                <option value="30">After 30 minutes</option>
+                <option value="60">After 60 minutes</option>
+              </select>
+            </label>
+            <p class="note">A sleeping tab frees its memory and loads again when you open it. Never: the tab in front, tabs playing sound, downloading, or with text typed into a form. In economy mode, after 5 minutes at most.</p>
           </fieldset>
           <fieldset>
             <legend>Instrument panel</legend>

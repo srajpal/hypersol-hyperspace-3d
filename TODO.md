@@ -21,7 +21,7 @@ Plan approved 2026-09-24.
 | 7 | Instrument panel | Floating panels with live readouts about the page and the browser: dials, meters, a console, and a network list, like a light DevTools; each part switchable in Settings | Done (accepted 2026-09-26) |
 | 8 | Everyday browser features | Zoom (buttons, shortcuts, per site), find in page, downloads panel, printing, private tabs | Done (accepted 2026-09-26, with follow-ups below) |
 | 9 | Passwords and site permissions | A password manager (offer to save on sign-in, fill on return, a Passwords tab in the Library, encrypted with the system's keychain) and a site permissions panel (camera, microphone, location: per-site prompts and choices to review and revoke); plus the milestone 8 feedback (download finished notice, private tab under "+", printing) | Built, waiting for acceptance |
-| 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | In progress (prompt 49) |
+| 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Built, waiting for acceptance |
 | 11 | First release v0.1 | Installers for Windows, macOS, Linux; per-OS checks; the app logo and icons; continuous integration (GitHub issue #5); holoml first-result scope (SPEC.md outline, parser package with one test); full regression pass | Later |
 | 12 | HoloML v0.1 language | Spec, schema, parser, conformance samples | Later |
 | 13 | HoloML in the browser | `.holo` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
@@ -1421,7 +1421,7 @@ fails if they ever share a module.
 
 ## Milestone 10 — Tabs and economy
 
-Status: In progress. The owner asked to push, build this milestone, and
+Status: Built, waiting for the owner's acceptance (checks below). The owner asked to push, build this milestone, and
 then list the tests (prompt 49, 2026-09-26), without a separate plan
 review; the choices below are the agent's defaults, marked for the
 owner's review at acceptance, and each can be changed in Settings or
@@ -1451,7 +1451,9 @@ that sleep when unused; and history work moved off the main process
 - Settings > Tabs, show tabs as: Cards (today: the rail appears with two
   or more tabs; the default), Cards that hide (the rail stays out of the
   way and slides in when the pointer rests at the left edge or with
-  Ctrl+Tab; a list of tabs shows in the top bar), or a List in the top
+  Ctrl+Tab, and go 2 seconds after the pointer last moved over them,
+  since over the page the shell sees no pointer at all; a list of tabs
+  shows in the top bar), or a List in the top
   bar only (no cards). The list is a row of small tabs under the top
   bar: favicon, title, sound, close, and "+".
 - Economy mode, Settings > Economy: Off, On, or On when running on
@@ -1478,19 +1480,19 @@ that sleep when unused; and history work moved off the main process
 
 ### Tasks
 
-- [ ] 1. Main process: sound state and mute per tab; downloads say which
+- [x] 1. Main process: sound state and mute per tab; downloads say which
       tab started them; power source (battery or not); tab history kept
       for reopening and waking; the history worker.
-- [ ] 2. Page preload: tells the shell when a form has typed text.
-- [ ] 3. Shell: closed-tab list and reopening; tab search; mute on cards,
+- [x] 2. Page preload: tells the shell when a form has typed text.
+- [x] 3. Shell: closed-tab list and reopening; tab search; mute on cards,
       lists, and the menu.
-- [ ] 4. Settings > Tabs: card size and how tabs are shown; the list in
+- [x] 4. Settings > Tabs: card size and how tabs are shown; the list in
       the top bar; cards that hide.
-- [ ] 5. Economy mode and sleeping tabs, with their Settings.
-- [ ] 6. History worker, full-text search, and the benchmark (issue #4).
-- [ ] 7. Tests: unit (closed-tab list, sleep rules, history worker and
+- [x] 5. Economy mode and sleeping tabs, with their Settings.
+- [x] 6. History worker, full-text search, and the benchmark (issue #4).
+- [x] 7. Tests: unit (closed-tab list, sleep rules, history worker and
       benchmark, settings); end-to-end L1 to L10; C to K as regression.
-- [ ] 8. Docs, privacy statement, and screenshots (MILESTONE=m10).
+- [x] 8. Docs, privacy statement, and screenshots (MILESTONE=m10).
 
 ### Checks
 
@@ -1506,6 +1508,50 @@ that sleep when unused; and history work moved off the main process
 | L8 | History still works | History, search, and the start panel work through the worker; E checks pass |
 | L9 | History budget | Unit benchmark: 100,000 visits, search and recent within 50 ms, main thread held at most 20 ms |
 | L10 | Keyboard and menus | The new shortcuts and menu entries work from the page and the shell |
+
+### Check results (Windows 11, 2026-09-26)
+
+`pnpm test`: 220 unit tests passed. `pnpm lint` and `pnpm typecheck`
+clean. End-to-end: all nine L checks passed (L10's shortcuts and menus
+are covered inside L1 and L2). The full suite ran 159 checks: 158
+passed and D8 "copies selected text" failed once (the clipboard check
+that has failed before when the Windows clipboard was busy); it passed
+when run again (D8, 5 of 5), and the files run one at a time, so no
+other check touched the clipboard meanwhile. The full suite was then
+run again: 159 of 159 passed (317 s).
+
+| # | Result |
+|---|---|
+| L1 | Pass. Ctrl+Shift+T reopened the closed middle tab in its place, on find.html, with link-b.html behind it (Back went there); a closed private tab was not kept; the menu entry is greyed out with nothing to reopen and reopens otherwise |
+| L2 | Pass. Ctrl+Shift+A from the page and from the shell, and the menu; typing filters; Enter and the arrows switch; the list's close button closes; "No tab matches."; Escape closes |
+| L3 | Pass. A page playing a tone showed as audible; the card's speaker muted it (the page's audio muted in Electron), the menu's Unmute tab unmuted it, and the list's speaker muted it again |
+| L4 | Pass. Large (1.3) narrowed the page, Small (0.8) widened it; saved in settings.json |
+| L5 | Pass. Cards that hide: no rail with two tabs, the list shown; Ctrl+Tab brought the cards in and they went again; resting the pointer at the left edge brought them in, and they went after it moved away. List only: no cards even with Ctrl+Tab; the list switched, closed, and opened tabs |
+| L6 | Pass. On: the room at half the device's pixel ratio, no sun, no scanlines, ECO shown, and a spinning card drew at most 30 frames a second (counted over one second). "On battery" followed the power events |
+| L7 | Pass. With a 100 ms "minute" and 5 minutes set, the unused tab slept (its page closed); the tabs with typed text, a running download, and the one in front stayed awake; opening it woke it on link-a.html with link-b.html behind it (Back went there) |
+| L8 | Pass. History ran in the worker thread; visits and search worked through it |
+| L9 | Pass. 100,000 visits: nine searches and the recent list answered in 1 to 34 ms after the first (26 ms), and the main process's event loop was held at most 16 ms (budget 20). The unit benchmark on the same data kept each query under 50 ms too |
+| L10 | Pass (inside L1 and L2) |
+
+Found and fixed during the build:
+- Electron restores a page's history only into a page that has never
+  navigated, not even to a blank page. A new page for a reopened or
+  waking tab now starts with a marked blank address that the main
+  process turns into "load nothing", and the history goes in once the
+  page is attached.
+- Over the page the shell sees no pointer events, so "the pointer moved
+  away from the cards" cannot be seen; cards that hide go 2 seconds
+  after the pointer last moved over the room instead.
+- Escape now closes the top bar's menus from anywhere in the shell (the
+  screenshots showed the "+" menu staying open).
+
+Changed checks, because their requirement changed (documented here):
+- The Ctrl+Shift+T example in the shortcut unit test ("ignores other
+  combinations") now uses Ctrl+Alt+T: Ctrl+Shift+T reopens a closed tab.
+- The milestone 9 database test now expects schema 3 and also checks
+  the new search index on an upgraded database.
+- A storage test awaits recordVisit, which now answers later (history
+  runs in a worker).
 
 ### Done when
 

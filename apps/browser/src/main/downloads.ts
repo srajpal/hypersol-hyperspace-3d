@@ -36,7 +36,7 @@ export class Downloads {
 
   /** Handles downloads from a session (the normal one and the private tabs' one). */
   watch(ses: Session): void {
-    ses.on('will-download', (_event, item) => {
+    ses.on('will-download', (_event, item, contents) => {
       const folder = this.options.folder();
       const name = uniqueName(item.getFilename(), (candidate) => existsSync(join(folder, candidate)) || this.reserved(join(folder, candidate)));
       const path = join(folder, name);
@@ -51,6 +51,7 @@ export class Downloads {
         state: 'progressing',
         finished: false,
         startedAt: Date.now(),
+        webContentsId: contents && !contents.isDestroyed() ? contents.id : null,
       };
       this.items.set(info.id, { item, info });
       this.trim();

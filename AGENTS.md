@@ -142,10 +142,10 @@ after they ran; macOS and Linux not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
 - Toolchain: Node 22.13 or newer; pnpm 12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 208 tests passed on 2026-09-26)
+- Unit: `pnpm test` (Vitest; 220 tests passed on 2026-09-26)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about five minutes; 150 checks on 2026-09-26). Needs openssl on PATH for
+  against it (about six minutes; 159 checks on 2026-09-26). Needs openssl on PATH for
   the certificate-error check (Git for Windows includes one). Every
   host except 127.0.0.1 is blocked during the run, and the test windows
   ignore the real mouse, so a resting cursor cannot disturb results. See
@@ -199,7 +199,11 @@ milestone; the current milestone's checks are defined in TODO.md):
   same site, the Library's Passwords tab, private tabs, a missing
   keychain, the permission prompt, remembered choices, the site panel
   and marker, the download notice, the "+" menu and flat printing.
-- Later milestones add: tabs and economy (10), per-OS installers (11).
+- Milestone 10 checks L1 to L10 (same command): reopening closed tabs
+  with their history, tab search, mute, card size, cards that hide and
+  the list in the top bar, economy mode, sleeping tabs, history through
+  the worker, and its budget with 100,000 visits.
+- Later milestones add: per-OS installers (11).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

@@ -220,6 +220,38 @@ it('captures the main screens', async () => {
     await capture(h, '28-download-notice');
     await h.shell.click('hs-toolbar [data-testid="new-tab-more"]');
     await capture(h, '29-new-tab-menu');
+    await pressInShell(h, 'Escape');
+    await h.shell.evaluate(() => (document.querySelector('hs-notice') as unknown as { hide(): void }).hide());
+
+    // Tabs and economy (milestone 10): sound and a sleeping tab on the cards,
+    // tab search, the list in the top bar, and economy mode.
+    const setSettings = (patch: object) =>
+      h.shell.evaluate(async (p) => {
+        const w = window as unknown as { hypersol: { data(r: object): Promise<unknown> } };
+        await w.hypersol.data({ op: 'settings.set', patch: p });
+      }, patch);
+    await navigateTo(h, server.url('sound.html'));
+    await waitForPage(h, 'sound');
+    await inPage(h, 'play()', await focusedPage(h));
+    await waitFor('sound', async () => (await tabs(h)).some((t) => t.audible), (x) => x);
+    await capture(h, '30-sound-on-card');
+    await pressInShell(h, 'A', ['control', 'shift']);
+    await sleep(300);
+    await capture(h, '31-tab-search');
+    await pressInShell(h, 'Escape');
+    await setSettings({ tabDisplay: 'list' });
+    await sleep(600);
+    await capture(h, '32-tab-list');
+    await setSettings({ tabDisplay: 'cards', economy: 'on' });
+    await pressInShell(h, ',', ['control']);
+    await h.shell.evaluate(() => {
+      const body = document.querySelector('hs-settings')?.shadowRoot?.querySelector('.body');
+      body?.querySelector('[data-testid="set-tab-size"]')?.scrollIntoView({ block: 'start' });
+    });
+    await sleep(400);
+    await capture(h, '33-economy-and-tabs-settings');
+    await pressInShell(h, 'Escape');
+    await setSettings({ economy: 'battery' });
   } finally {
     await h.close();
     await server.close();

@@ -35,6 +35,12 @@ describe('parseLaunchOptions', () => {
     expect(parseLaunchOptions(['--test-no-keychain'], { HYPERSOL_TEST: '1' }).testNoKeychain).toBe(true);
   });
 
+  it('shortens the sleeping-tab minute only in test mode (milestone 10)', () => {
+    expect(parseLaunchOptions(['--test-sleep-minute-ms=200'], {}).testSleepMinuteMs).toBeUndefined();
+    expect(parseLaunchOptions(['--test-sleep-minute-ms=200'], { HYPERSOL_TEST: '1' }).testSleepMinuteMs).toBe(200);
+    expect(parseLaunchOptions(['--test-sleep-minute-ms=abc'], { HYPERSOL_TEST: '1' }).testSleepMinuteMs).toBeUndefined();
+  });
+
   it('keeps test windows in the background only in test mode', () => {
     expect(parseLaunchOptions([], { HYPERSOL_TEST_BACKGROUND: '1' }).testBackground).toBe(false);
     expect(parseLaunchOptions([], { HYPERSOL_TEST: '1', HYPERSOL_TEST_BACKGROUND: '1' }).testBackground).toBe(true);

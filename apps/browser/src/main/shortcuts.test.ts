@@ -30,6 +30,9 @@ describe('matchShortcut on Windows and Linux', () => {
     expect(m(key('L', { control: true, shift: true }))).toBe('layers');
     expect(m(key('I', { control: true, shift: true }))).toBe('instruments');
     expect(m(key('N', { control: true, shift: true }))).toBe('private-tab');
+    expect(m(key('T', { control: true, shift: true }))).toBe('reopen-tab');
+    expect(m(key('A', { control: true, shift: true }))).toBe('search-tabs');
+    expect(m(key('a', { control: true }))).toBeNull(); // Ctrl+A stays select-all
     expect(m(key('=', { control: true }))).toBe('zoom-in');
     expect(m(key('+', { control: true, shift: true }))).toBe('zoom-in');
     expect(m(key('-', { control: true }))).toBe('zoom-out');
@@ -49,7 +52,8 @@ describe('matchShortcut on Windows and Linux', () => {
   });
   it('ignores ordinary typing and other combinations', () => {
     expect(m(key('t'))).toBeNull();
-    expect(m(key('t', { control: true, shift: true }))).toBeNull();
+    // Ctrl+Shift+T reopens a closed tab since milestone 10; Ctrl+Alt+T is still nothing.
+    expect(m(key('t', { control: true, alt: true }))).toBeNull();
     expect(m(key('t', { meta: true }))).toBeNull();
     expect(m(key('ArrowLeft'))).toBeNull();
     expect(m(key('ArrowLeft', { control: true }))).toBeNull();

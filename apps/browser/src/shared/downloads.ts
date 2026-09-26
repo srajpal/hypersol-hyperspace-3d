@@ -25,6 +25,8 @@ export interface DownloadInfo {
   finished: boolean;
   /** Milliseconds since 1970. */
   startedAt: number;
+  /** The page that started it, if known: its tab stays awake while it runs (milestone 10). */
+  webContentsId: number | null;
 }
 
 export type DownloadRequest =
