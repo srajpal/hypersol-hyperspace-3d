@@ -236,7 +236,7 @@ describe('StorageService', () => {
       value: { available: false, message: "Couldn't open your saved data" },
     });
     expect(await s.handle({ op: 'bookmarks.list' })).toEqual({ ok: false, error: "Couldn't open your saved data" });
-    expect(s.recordVisit('https://a.example/', 'A')).toBeNull();
+    expect(await s.recordVisit('https://a.example/', 'A')).toBeNull();
     expect(await s.handle({ op: 'settings.get' })).toMatchObject({ ok: true });
     s.close();
   });
@@ -245,7 +245,7 @@ describe('StorageService', () => {
     const s = new StorageService(folder, cleaner);
     const changes: string[] = [];
     s.onChange((w) => changes.push(w));
-    s.recordVisit('https://a.example/', 'A');
+    await s.recordVisit('https://a.example/', 'A');
     await s.handle({ op: 'data.clear', history: true, cookies: true, cache: false });
     expect(await s.handle({ op: 'history.recent', limit: 5 })).toEqual({ ok: true, value: [] });
     expect(cleared).toEqual(['cookies']);

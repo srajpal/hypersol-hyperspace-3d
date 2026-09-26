@@ -4,6 +4,15 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()],
+    build: {
+      rollupOptions: {
+        input: {
+          index: resolve(__dirname, 'src/main/index.ts'),
+          // History searches and writes, off the main thread (milestone 10, GitHub issue #4).
+          'history-worker': resolve(__dirname, 'src/main/storage/history-worker.ts'),
+        },
+      },
+    },
   },
   preload: {
     plugins: [externalizeDepsPlugin()],

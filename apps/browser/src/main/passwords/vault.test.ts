@@ -101,7 +101,7 @@ describe('password vault (milestone 9)', () => {
     expect(() => vault.save('https://a.example', 'u', 'p')).toThrow(NO_DATABASE);
   });
 
-  it('upgrades a milestone 3 database without losing bookmarks or history', () => {
+  it('upgrades a milestone 3 database without losing bookmarks or history, and indexes it', () => {
     const dir = mkdtempSync(join(tmpdir(), 'hypersol-vault-'));
     folders.push(dir);
     const path = join(dir, 'hypersol.sqlite');
@@ -113,12 +113,18 @@ describe('password vault (milestone 9)', () => {
       PRAGMA user_version = 1;`);
     old.close();
     const store = new Store(path);
-    expect(store.schemaVersion).toBe(SCHEMA_VERSION);
-    expect(SCHEMA_VERSION).toBe(2);
-    expect(store.listBookmarks().map((b) => b.url)).toEqual(['https://kept.example/']);
-    expect(store.searchHistory('', 10)).toHaveLength(1);
-    expect(store.listLogins()).toEqual([]);
-    store.close();
+    try {
+      // Schema 2 added saved sign-ins (milestone 9); schema 3 the history indexes (milestone 10).
+      expect(store.schemaVersion).toBe(SCHEMA_VERSION);
+      expect(SCHEMA_VERSION).toBeGreaterThanOrEqual(3);
+      expect(store.listBookmarks().map((b) => b.url)).toEqual(['https://kept.example/']);
+      expect(store.searchHistory('', 10)).toHaveLength(1);
+      expect(store.searchHistory('kept.exa', 10)).toHaveLength(1); // the index was filled from the old rows
+      expect(store.recentHistory(10).map((h) => h.url)).toEqual(['https://kept.example/']);
+      expect(store.listLogins()).toEqual([]);
+    } finally {
+      store.close();
+    }
   });
 
   it('Clear data removes saved passwords only when ticked', async () => {

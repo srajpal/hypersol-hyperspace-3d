@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { parseDataRequest, type DataOp, type DataReply, type DataRequest } from '../../shared/data';
 import { applySettingsPatch, type Settings } from '../../shared/settings';
 import { Store } from './database';
+import { inProcess, type HistoryBackend } from './history-backend';
 import { SessionFile, SettingsFile } from './settings-file';
 
 export type DataChange = 'bookmarks' | 'history' | 'settings' | 'passwords';
@@ -13,6 +14,11 @@ export interface SiteDataCleaner {
 }
 
 const UNAVAILABLE = "Couldn't open your saved data";
+
+export interface StorageOptions {
+  /** Runs history elsewhere (the app: a worker thread); by default on this thread. */
+  historyBackend?: (store: Store, databasePath: string) => HistoryBackend;
+}
 
 /**
  * Saved data for the app: bookmarks and history (hypersol.sqlite),
@@ -26,6 +32,8 @@ const UNAVAILABLE = "Couldn't open your saved data";
 export class StorageService {
   private readonly store: Store | null;
   private readonly storeError: string | null;
+  /** History reads and writes, answered later (a worker thread in the app, milestone 10). */
+  private readonly history: HistoryBackend | null;
   readonly settingsFile: SettingsFile;
   private readonly sessionFile: SessionFile;
   private readonly listeners = new Set<(what: DataChange) => void>();
@@ -33,16 +41,19 @@ export class StorageService {
   constructor(
     folder: string,
     private readonly cleaner: SiteDataCleaner,
+    options: StorageOptions = {},
   ) {
     let store: Store | null = null;
     let error: string | null = null;
+    const path = join(folder, 'hypersol.sqlite');
     try {
-      store = new Store(join(folder, 'hypersol.sqlite'));
+      store = new Store(path);
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
     }
     this.store = store;
     this.storeError = error;
+    this.history = store ? (options.historyBackend?.(store, path) ?? inProcess(store.history)) : null;
     this.settingsFile = new SettingsFile(join(folder, 'settings.json'));
     this.sessionFile = new SessionFile(join(folder, 'session.json'));
   }
@@ -80,11 +91,11 @@ export class StorageService {
     return () => this.listeners.delete(listener);
   }
 
-  /** Records a page visit; returns its id, or null when history is unavailable. */
-  recordVisit(url: string, title: string): number | null {
-    if (!this.store || !/^https?:\/\//i.test(url)) return null;
+  /** Records a page visit; answers its id, or null when history is unavailable. */
+  async recordVisit(url: string, title: string): Promise<number | null> {
+    if (!this.history || !/^https?:\/\//i.test(url)) return null;
     try {
-      const id = this.store.recordVisit(url, title || url);
+      const id = await this.history.record(url, title || url);
       this.emit('history');
       return id;
     } catch {
@@ -92,10 +103,10 @@ export class StorageService {
     }
   }
 
-  updateVisitTitle(id: number, title: string): void {
-    if (!this.store || title === '') return;
+  async updateVisitTitle(id: number, title: string): Promise<void> {
+    if (!this.history || title === '') return;
     try {
-      this.store.updateVisitTitle(id, title);
+      await this.history.updateTitle(id, title);
       this.emit('history');
     } catch {
       // A missed title is not worth interrupting browsing for.
@@ -114,12 +125,18 @@ export class StorageService {
   }
 
   close(): void {
+    this.history?.close();
     this.store?.close();
   }
 
   private needStore(): Store {
     if (!this.store) throw new Error(UNAVAILABLE);
     return this.store;
+  }
+
+  private needHistory(): HistoryBackend {
+    if (!this.history) throw new Error(UNAVAILABLE);
+    return this.history;
   }
 
   private async run(r: DataRequest): Promise<unknown> {
@@ -146,15 +163,15 @@ export class StorageService {
         this.emit('bookmarks');
         return null;
       case 'history.search':
-        return this.needStore().searchHistory(r.query, r.limit);
+        return this.needHistory().search(r.query, r.limit);
       case 'history.recent':
-        return this.needStore().recentHistory(r.limit);
+        return this.needHistory().recent(r.limit);
       case 'history.delete':
-        this.needStore().deleteVisit(r.id);
+        await this.needHistory().delete(r.id);
         this.emit('history');
         return null;
       case 'history.clear':
-        this.needStore().clearHistory();
+        await this.needHistory().clear();
         this.emit('history');
         return null;
       case 'settings.get':
@@ -167,8 +184,8 @@ export class StorageService {
       case 'startup':
         return this.settingsFile.settings.onStartup === 'last-tabs' ? this.sessionFile.load() : null;
       case 'data.clear':
-        if (r.history && this.store) {
-          this.store.clearHistory();
+        if (r.history && this.history) {
+          await this.history.clear();
           this.emit('history');
         }
         if (r.cookies) await this.cleaner.clearCookiesAndSiteData();

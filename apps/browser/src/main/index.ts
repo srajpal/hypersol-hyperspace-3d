@@ -28,6 +28,8 @@ import { chooseProfileFolder } from './profile-folder';
 import { Privacy } from './privacy';
 import { hardenShell } from './security';
 import { StorageService } from './storage/service';
+import { inProcess, WorkerHistory } from './storage/history-backend';
+import { Worker } from 'node:worker_threads';
 import { installTestHooks, type TestLog } from './test-hooks';
 
 const options = parseLaunchOptions(process.argv, process.env);
@@ -273,7 +275,7 @@ if (!app.requestSingleInstanceLock()) {
         return testLog;
       },
       recordVisit: (url, title) => (isPrivate ? null : (storage?.recordVisit(url, title) ?? null)),
-      updateVisitTitle: (id, title) => storage?.updateVisitTitle(id, title),
+      updateVisitTitle: (id, title) => void storage?.updateVisitTitle(id, title),
     });
   });
 
@@ -321,13 +323,31 @@ if (!app.requestSingleInstanceLock()) {
     });
 
     // Saved data lives in the app data folder (a throwaway one in dev and tests).
-    storage = new StorageService(app.getPath('userData'), {
-      clearCookiesAndSiteData: () =>
-        ses.clearStorageData({
-          storages: ['cookies', 'localstorage', 'indexdb', 'serviceworkers', 'cachestorage', 'filesystem'],
-        }),
-      clearCache: () => ses.clearCache(),
-    });
+    storage = new StorageService(
+      app.getPath('userData'),
+      {
+        clearCookiesAndSiteData: () =>
+          ses.clearStorageData({
+            storages: ['cookies', 'localstorage', 'indexdb', 'serviceworkers', 'cachestorage', 'filesystem'],
+          }),
+        clearCache: () => ses.clearCache(),
+      },
+      {
+        // History searches and writes run in a worker thread, so a long
+        // history never holds up the main process (milestone 10, GitHub
+        // issue #4); the main thread takes over if the worker fails.
+        historyBackend: (store, path) => {
+          const fallback = inProcess(store.history);
+          try {
+            const worker = new Worker(join(__dirname, 'history-worker.js'), { workerData: { path } });
+            return new WorkerHistory(worker, fallback, (message) => console.warn(message));
+          } catch (e) {
+            console.warn(`History worker could not start: ${String(e)}`);
+            return fallback;
+          }
+        },
+      },
+    );
     if (storage.problem) console.warn(`Saved data unavailable: ${storage.problem}`);
     ipcMain.handle(DATA_CHANNEL, (event, request: unknown) => {
       if (!mainWindow || event.sender !== mainWindow.webContents) {

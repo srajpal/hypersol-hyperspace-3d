@@ -12,8 +12,8 @@ export interface GuestDeps {
   send(command: ShellCommand): void;
   platform: string;
   testLog: TestLog | null;
-  /** Records a finished page load in history; returns its id, or null. */
-  recordVisit(url: string, title: string): number | null;
+  /** Records a finished page load in history; answers its id, or null. */
+  recordVisit(url: string, title: string): Promise<number | null> | null;
   updateVisitTitle(id: number, title: string): void;
 }
 
@@ -53,7 +53,9 @@ export function wireGuest(guest: WebContents, deps: GuestDeps): void {
   // for committed main-frame navigations, not failed loads or in-page
   // jumps. Arriving at the same address again in the same tab (a reload)
   // adds no new entry. The title follows when the page reports it.
-  let visit: { id: number; url: string } | null = null;
+  // History is written in a worker thread (milestone 10), so the visit's id
+  // arrives later; a title that comes first waits for it.
+  let visit: { id: Promise<number | null>; url: string } | null = null;
   guest.on('did-navigate', (_event, url) => {
     if (visit && visit.url === url) return;
     // The title at this moment can still be the previous page's; start with
@@ -62,7 +64,11 @@ export function wireGuest(guest: WebContents, deps: GuestDeps): void {
     visit = id === null ? null : { id, url };
   });
   guest.on('page-title-updated', (_event, title) => {
-    if (visit && guest.getURL() === visit.url) deps.updateVisitTitle(visit.id, title);
+    const current = visit;
+    if (!current || guest.getURL() !== current.url) return;
+    void current.id.then((id) => {
+      if (id !== null) deps.updateVisitTitle(id, title);
+    });
   });
 
   guest.setWindowOpenHandler(({ url, disposition }) => {

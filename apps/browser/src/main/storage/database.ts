@@ -1,9 +1,10 @@
 import { DatabaseSync } from 'node:sqlite';
 import type { Bookmark, HistoryEntry } from '../../shared/data';
 import type { SavedLogin } from '../../shared/passwords';
+import { HISTORY_INDEX_MIGRATION, HistoryStore } from './history';
 
 /** Current schema; raise it and add a step to MIGRATIONS for any change. */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 const MIGRATIONS: Record<number, string> = {
   1: `
@@ -40,6 +41,9 @@ const MIGRATIONS: Record<number, string> = {
       origin TEXT PRIMARY KEY
     );
   `,
+  // Milestone 10 (GitHub issue #4): a full-text index for history search
+  // and a table of each address's latest visit (main/storage/history.ts).
+  3: HISTORY_INDEX_MIGRATION,
 };
 
 interface BookmarkRow {
@@ -48,13 +52,6 @@ interface BookmarkRow {
   title: string;
   favicon: string | null;
   created_at: number;
-}
-
-interface HistoryRow {
-  id: number;
-  url: string;
-  title: string;
-  visited_at: number;
 }
 
 interface LoginRow {
@@ -88,27 +85,19 @@ const toBookmark = (r: BookmarkRow): Bookmark => ({
   createdAt: r.created_at,
 });
 
-const toEntry = (r: HistoryRow): HistoryEntry => ({
-  id: r.id,
-  url: r.url,
-  title: r.title,
-  visitedAt: r.visited_at,
-});
-
-/** Escapes LIKE wildcards so a search for "50%" finds "50%". */
-function likePattern(text: string): string {
-  return `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
-}
-
 /** Bookmarks, history, and saved sign-ins in one SQLite file (hypersol.sqlite). */
 export class Store {
   private readonly db: DatabaseSync;
+  /** History on this connection (the app's own history goes through the worker, history-worker.ts). */
+  readonly history: HistoryStore;
 
   /** Opens (or creates) the database at path; ':memory:' for tests. Throws if it cannot. */
   constructor(path: string) {
     this.db = new DatabaseSync(path);
-    this.db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
+    // The history worker has its own connection; a writer waits for the other rather than failing.
+    this.db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
     this.migrate();
+    this.history = new HistoryStore(this.db);
   }
 
   get schemaVersion(): number {
@@ -161,51 +150,30 @@ export class Store {
     this.db.prepare('DELETE FROM bookmarks WHERE url = ?').run(url);
   }
 
-  // ---- History ------------------------------------------------------------
+  // ---- History (main/storage/history.ts) ----------------------------------
 
-  /** Records one visit; returns its id. */
   recordVisit(url: string, title: string, now = Date.now()): number {
-    const result = this.db.prepare('INSERT INTO history (url, title, visited_at) VALUES (?, ?, ?)').run(url, title, now);
-    return Number(result.lastInsertRowid);
+    return this.history.record(url, title, now);
   }
 
   updateVisitTitle(id: number, title: string): void {
-    this.db.prepare('UPDATE history SET title = ? WHERE id = ?').run(title, id);
+    this.history.updateTitle(id, title);
   }
 
-  /** Visits whose address or title contains the text, newest first. */
   searchHistory(query: string, limit: number): HistoryEntry[] {
-    const text = query.trim();
-    const rows =
-      text === ''
-        ? this.db.prepare('SELECT * FROM history ORDER BY visited_at DESC, id DESC LIMIT ?').all(limit)
-        : this.db
-            .prepare(
-              `SELECT * FROM history WHERE url LIKE ? ESCAPE '\\' OR title LIKE ? ESCAPE '\\'
-               ORDER BY visited_at DESC, id DESC LIMIT ?`,
-            )
-            .all(likePattern(text), likePattern(text), limit);
-    return (rows as unknown as HistoryRow[]).map(toEntry);
+    return this.history.search(query, limit);
   }
 
-  /** The most recent visit to each address, newest first. */
   recentHistory(limit: number): HistoryEntry[] {
-    const rows = this.db
-      .prepare(
-        `SELECT h.* FROM history h
-         JOIN (SELECT url, MAX(id) AS id FROM history GROUP BY url) latest ON latest.id = h.id
-         ORDER BY h.visited_at DESC, h.id DESC LIMIT ?`,
-      )
-      .all(limit);
-    return (rows as unknown as HistoryRow[]).map(toEntry);
+    return this.history.recent(limit);
   }
 
   deleteVisit(id: number): void {
-    this.db.prepare('DELETE FROM history WHERE id = ?').run(id);
+    this.history.delete(id);
   }
 
   clearHistory(): void {
-    this.db.exec('DELETE FROM history');
+    this.history.clear();
   }
 
   // ---- Saved sign-ins (milestone 9) ---------------------------------------
