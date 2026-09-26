@@ -5,7 +5,8 @@ repository. CLAUDE.md imports it, so Claude Code reads it automatically.
 
 ## Project
 
-HyperSol WebSurfer 3D: an open-source desktop browser with a 3D interface,
+HyperSol HyperSpace 3D (short: HyperSpace 3D): an open-source desktop
+browser with a 3D interface,
 plus HoloML, a 3D markup language kept in its own repository.
 
 - Brief: BRIEF.md (user, problem, idea, first result, later features)
@@ -13,9 +14,13 @@ plus HoloML, a 3D markup language kept in its own repository.
 - Roadmap and current plan: TODO.md (milestones, tasks, checks)
 - Prompt log: PROMPTS.md (every prompt the owner gives, verbatim)
 - Handoff: HANDOFF.md (current state and how to resume; keep it current)
-- Browser repo: https://github.com/srajpal/hypersol-websurfer-3d
+- Browser repo: https://github.com/srajpal/hypersol-hyperspace-3d
+  (renamed from hypersol-websurfer-3d on 2026-09-26; GitHub redirects
+  the old address)
 - Language repo: https://github.com/srajpal/holoml
-- Local layout: two sibling folders, `hypersol-websurfer-3d/` (this repo)
+- Local layout: two sibling folders, this repo (on the owner's machine
+  still in the folder `hypersol-websurfer-3d/`; renaming the folder is
+  optional)
   and `holoml/`, side by side under the same parent. Never nest one in
   the other. PROMPTS.md in this repo is the single prompt log for both.
 - License: Apache 2.0 (both repos); HoloML spec text also CC BY 4.0
@@ -24,8 +29,16 @@ plus HoloML, a 3D markup language kept in its own repository.
 
 - The company is "HyperSol", with no "LLC" or "Inc." after it.
 - The founders are named without job titles.
-- The browser is "HyperSol WebSurfer 3D"; the original 2001 product is
-  "HyperSol WebSurfer". The language is "HoloML", file extension `.holo`.
+- The browser is "HyperSol HyperSpace 3D"; its short display name, used
+  in the app's own interface, is "HyperSpace 3D" (renamed 2026-09-26,
+  owner, prompt 42; it was "HyperSol WebSurfer 3D" before).
+- The original 2001 product is "HyperSol WebSurfer". "HyperSpace 3D" was
+  also the title of an early HyperSol concept screen (2001 to 2003); do
+  not claim that concept shipped. The language is "HoloML", file
+  extension `.holo`.
+- Internal identifiers keep their names: the `@hypersol/` package scope,
+  `hypersol:` IPC channels, `HYPERSOL_*` environment switches,
+  `hypersol.sqlite`, and the "hypersol-private" partition.
 
 ## Rules
 
@@ -128,7 +141,7 @@ after they ran; macOS and Linux not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
 - Toolchain: Node 22.13 or newer; pnpm 12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 188 tests passed on 2026-09-26)
+- Unit: `pnpm test` (Vitest; 191 tests passed on 2026-09-26)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
   against it (about three minutes; 142 checks on 2026-09-26). Needs openssl on PATH for

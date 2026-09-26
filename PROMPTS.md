@@ -468,3 +468,30 @@ Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b3
 ```text
 One issue still exists check the comments on the pr
 ```
+
+## 42 — 2026-09-26
+
+Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b35 · Tokens: not captured
+
+Attachment: one image, an early HyperSol concept screen titled "HyperSpace 3D" (a blue 3D cube over a progress bar, "Copyright 2001-2003 HyperSol, LLC"), given as a starting point for logo ideas.
+
+```text
+Pr is merged.
+
+Let's add these features to a list and decide when to add them. 
+-Reopen closed tab
+-Search tabs and mute audio
+-Site permissions panel
+Camera, microphone, and location requests are currently denied. Clear, per-site controls would make more everyday sites usable while preserving privac
+-Economy mode
+Offer lower rendering resolution, fewer effects, and an optional frame cap. Consider sleeping inactive tabs later, with protection for forms, audio, and downloads. Our 30-tab benchmark makes memory management worth prioritizing.
+-tab options: size (small, medium, large), auto hide (toolbar list), none (toolbar list)
+- app logo (attached an original very early concept, lets get some ideas based on this)
+
+
+I do have an important change for the repo:
+
+Rename the current product to HyperSol HyperSpace 3D, using HyperSpace 3D as the short display name. Rename the existing GitHub repository to hypersol-hyperspace-3d and update local remotes and relevant links. This authorizes the repository rename.
+Update branding, documentation, and project instructions consistently. Preserve historical references to the original HyperSol WebSurfer, keep HoloML unchanged, and preserve existing user profiles, bookmarks, and settings. Avoid blindly replacing internal identifiers.
+Revise the README's historical claims to acknowledge the original HyperSpace 3D screenshot without claiming it shipped. Build and run the relevant tests, then report what changed and anything requiring my action.
+```

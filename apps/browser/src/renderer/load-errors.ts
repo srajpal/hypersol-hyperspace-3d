@@ -63,7 +63,7 @@ export function describeLoadError(code: number, description: string): LoadErrorC
     return {
       kind: 'certificate',
       title: "This site's certificate isn't valid",
-      message: `Someone could be pretending to be this site, so HyperSol WebSurfer 3D won't open it. (${description})`,
+      message: `Someone could be pretending to be this site, so HyperSpace 3D won't open it. (${description})`,
       canRetry: false,
     };
   }
@@ -87,7 +87,7 @@ export const DNS_BLOCKED_CARD: LoadErrorCard = {
   kind: 'dns-blocked',
   title: 'Encrypted DNS is blocked on this network',
   message:
-    "This network won't let HyperSol WebSurfer 3D look up sites privately. You can use this network's own DNS until you close the app; the network can then see which sites you visit.",
+    "This network won't let HyperSpace 3D look up sites privately. You can use this network's own DNS until you close the app; the network can then see which sites you visit.",
   canRetry: true,
   action: 'use-network-dns',
 };

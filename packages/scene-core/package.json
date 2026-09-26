@@ -2,7 +2,7 @@
   "name": "@hypersol/scene-core",
   "version": "0.0.0",
   "private": true,
-  "description": "Room layout maths, PagePanel interface, and camera rig for HyperSol WebSurfer 3D. No Electron or DOM imports.",
+  "description": "Room layout maths, PagePanel interface, and camera rig for HyperSol HyperSpace 3D. No Electron or DOM imports.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./src/index.ts",

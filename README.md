@@ -1,6 +1,6 @@
-# HyperSol WebSurfer 3D
+# HyperSol HyperSpace 3D
 
-An open-source desktop web browser whose interface lives in three
+HyperSpace 3D is an open-source desktop web browser whose interface lives in three
 dimensions. Ordinary websites float as panels in a 3D room, page sections
 lift into layered depth, and a companion markup language, HoloML, lets
 anyone publish a fully 3D website as easily as writing HTML.
@@ -46,22 +46,29 @@ The site's own pitch was simple: "It's new, it's cool, and it's FREE!"
 The company's second product, CheckIfSiteIsStillUp, was named Download
 of the Day on TechTV's The Screen Savers in July 2001.
 
-Behind the shipped features sat a bigger idea the founders talked about
-then and never got to build: a browser where the web itself is not flat.
-Sites rendered in three dimensions. A browser you look into, not at.
+Behind the shipped features sat a bigger idea: a browser where the web
+itself is not flat. Sites rendered in three dimensions. A browser you
+look into, not at. Between 2001 and 2003 the idea got a name,
+HyperSpace 3D, and an early concept screen: a blue cube tilted toward
+the viewer over a loading bar. That screen survives and is shown below
+as it was. It is a concept from that time; there is no claim here that
+it shipped as a product.
+
+![The early HyperSpace 3D concept screen: a blue 3D cube and a loading bar, "Copyright 2001-2003 HyperSol, LLC"](docs/history/hyperspace-3d-concept-2001-2003.jpg)
 
 That was 2001. The hardware, the graphics APIs, and the open web
 platform were not ready. Twenty-five years later they are.
 
 ## The salute
 
-HyperSol WebSurfer 3D marks the 25th anniversary of HyperSol's formation
-by finally building that idea, in the open, for everyone. It keeps the
+HyperSol HyperSpace 3D marks the 25th anniversary of HyperSol's
+formation by finally building that idea, in the open, for everyone. It keeps the
 spirit of the original: free, themed, a little bit cool, and made by
 people who wanted a browser that did something no other browser would.
 
-The name is the same. The mission is the same. The third dimension is
-new.
+The name comes from that early concept; the spirit comes from
+WebSurfer. The mission is the same. The third dimension, this time, is
+real. (Until 2026-09-26 this project was called HyperSol WebSurfer 3D.)
 
 An archived copy of the 2001 site is available through the
 [Wayback Machine](https://web.archive.org/web/20010922111629/http://www.hypersol.com/).

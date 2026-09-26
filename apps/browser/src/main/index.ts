@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { app, BrowserWindow, ipcMain, Menu, nativeTheme, screen, session, webContents, type Session } from 'electron';
 import { daylight, nebula, themeById, type Theme } from '@hypersol/themes';
@@ -17,6 +18,7 @@ import { INSPECT_CHANNEL } from '../shared/inspect';
 import { Inspector } from './inspect';
 import { wireGuest, wireShortcuts } from './guests';
 import { parseLaunchOptions } from './launch-options';
+import { chooseProfileFolder } from './profile-folder';
 import { Privacy } from './privacy';
 import { hardenShell } from './security';
 import { StorageService } from './storage/service';
@@ -29,6 +31,11 @@ if (options.userDataDir) {
   app.setPath('userData', options.userDataDir);
 } else if (!app.isPackaged) {
   app.setPath('userData', join(app.getAppPath(), '..', '..', 'userData', 'dev'));
+} else {
+  // The data folder follows the product name; an install from before the
+  // rename to HyperSpace 3D keeps its folder, and with it its bookmarks,
+  // history, and settings (main/profile-folder.ts).
+  app.setPath('userData', chooseProfileFolder(app.getPath('appData'), app.getName(), existsSync));
 }
 
 if (options.testBackground) {
@@ -102,7 +109,7 @@ function createWindow(): void {
     minWidth: 900,
     minHeight: 600,
     show: false,
-    title: 'HyperSol WebSurfer 3D',
+    title: 'HyperSpace 3D',
     backgroundColor: windowTheme(storage?.settingsFile.settings.theme ?? 'nebula').colors.backgroundBottom,
     autoHideMenuBar: true,
     webPreferences: {

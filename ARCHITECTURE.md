@@ -1,4 +1,4 @@
-# HyperSol WebSurfer 3D — Architecture
+# HyperSol HyperSpace 3D — Architecture
 
 Status: approved 2026-09-24. Run and test steps are marked "not checked yet"
 until they have actually been executed. The milestone roadmap and current
@@ -110,6 +110,7 @@ touchpad, no touch screen.
 | Closing and quitting | Before the window closes, the shell saves the open tabs and confirms (at most 2 s); a requested quit is then resumed, while an ordinary window close stays a close | Keeps the latest tabs; Quit still quits on macOS, where closing the last window keeps the app running (GitHub issue #3, PR #7 review). |
 | Damaged saved data | A damaged settings.json is renamed aside and defaults are used; if the database cannot open, browsing continues and nothing is recorded | The app always starts. |
 | Settings | JSON file in the app data folder | Simple, human-readable, easy to back up. |
+| Product name | HyperSol HyperSpace 3D; "HyperSpace 3D" in the app's own interface (window title, start panel, messages). The installed app's data folder follows the product name, but an existing folder from the earlier name "HyperSol WebSurfer 3D" is kept in use (main/profile-folder.ts), so profiles, bookmarks, and settings survive; development and test profiles are unaffected | Renamed 2026-09-26 (owner, prompt 42). Internal identifiers (package scope, channels, switches, file names) are unchanged on purpose. |
 | Themes | Nebula (dark, default) and Daylight (light) in packages/themes; each sets the HUD's CSS variables, the room (sky decorations, grid, desk, glow, fog, lights), the cards, and the layers view's outline, and switches at run time. Settings > Theme: Nebula, Daylight, or Match the system; a button at the bottom right switches the two. The window's background and title-bar scheme (nativeTheme) follow | Milestone 6 (agent's design, prompt 32; owner direction prompt 29: 1980s and 1990s). Contrast is unit tested against WCAG AA. |
 | Instrument panel | Milestone 7 (owner, prompts 33 to 35): floating glass panels in the shell's overlay, leaning in with CSS perspective and drifting with the room's parallax: a right column (page readouts, browser gauges) and a bottom strip (console, network list); the page's layout leaves room for them; the desk slab hides while the strip shows. The console and network list each maximize to fill most of the window for reading (owner, prompt 36). Off by default; Settings has the main switch, one per part, and the console level; top-bar button and Ctrl/Cmd+Shift+I; "DevTools" opens the page's real DevTools | Overlay panels keep text sharp and input simple while still floating in the room. The controls (dials, meters, readouts, switches; hud/controls.ts) take the kinds from the owner's reference and the look from the themes. |
 | Instrument readouts | The main process (main/inspect/) records, in memory only: per tab, request starts (from the one before-request listener, main/privacy), completions and failures (session events), and console messages, the last 300 of each, plus up to 300 requests still waiting (the oldest waiting one is dropped beyond that; GitHub issue #13); per host, the certificate Chromium checks (setCertificateVerifyProc passing Chromium's own verdict through with -3), up to 500, kept until the app closes, with private tabs' kept apart and cleared with the last private tab (issue #15); process memory and CPU (app.getAppMetrics). The shell asks once a second while the panel shows, only for what changed | No new network use and nothing stored; the certificate verdict stays Chromium's (I3 confirms an invalid certificate still fails). |
@@ -126,7 +127,7 @@ touchpad, no touch screen.
 | Build | electron-vite (Vite) now; electron-builder planned for milestone 10 (not yet installed) | Fast dev reload; installers for Windows, macOS, Linux. |
 | Toolchain | Node 22.13 or newer; pnpm 12.4.1 pinned in package.json (`packageManager`, with the pnpm version recorded in the lockfile); installs use `--frozen-lockfile` | Reproducible installs (GitHub issue #5). |
 | Tests | Vitest (unit), Playwright (Electron end-to-end) | Standard, cross-platform. |
-| Repos | hypersol-websurfer-3d (browser), holoml (language) | Each useful on its own; browser depends on holoml packages via npm. |
+| Repos | hypersol-hyperspace-3d (browser; renamed from hypersol-websurfer-3d on 2026-09-26), holoml (language) | Each useful on its own; browser depends on holoml packages via npm. |
 | License | Apache 2.0 both; spec text also CC BY 4.0 | Per brief. |
 
 ## 5. Parts (browser repository)
@@ -134,7 +135,7 @@ touchpad, no touch screen.
 pnpm monorepo. Package names use the @hypersol scope.
 
 ```
-hypersol-websurfer-3d/
+hypersol-hyperspace-3d/
   BRIEF.md
   ARCHITECTURE.md
   LICENSE                      Apache 2.0

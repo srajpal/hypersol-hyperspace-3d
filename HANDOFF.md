@@ -5,8 +5,10 @@ Last updated 2026-09-26 (GitHub issues #8 to #15 fixed in a pull request).
 
 ## Where things stand
 
-TODO.md's roadmap is the authority on milestone state; this is a
-summary. Milestones 1 to 8 are done and accepted by the owner (the
+The product is HyperSol HyperSpace 3D ("HyperSpace 3D" in the app),
+renamed from HyperSol WebSurfer 3D on 2026-09-26 along with the
+repository. TODO.md's roadmap is the authority on milestone state; this
+is a summary. Milestones 1 to 8 are done and accepted by the owner (the
 latest on 2026-09-26): a 3D browser with tabs as cards (hidden while
 there is one tab), bookmarks, history, Library and Settings, ad and
 tracker blocking with a shield, encrypted DNS through Quad9, a layers
@@ -15,8 +17,7 @@ console, network list), zoom, find in page, downloads, printing, and
 private tabs. Milestone 9 (Passwords) has the owner's answers but no
 plan yet: the owner asked for their feedback (TODO.md, "Owner feedback
 on milestone 8") and GitHub issues to shape it. GitHub issues #8 to #15
-(QA of milestone 8) are fixed on branch fix/github-issues-8-15, in a
-pull request for the owner's review; #4 and #5 stay proposed for the
+(QA of milestone 8) were fixed in PR #16, merged 2026-09-26; #4 and #5 stay proposed for the
 first release (milestone 10). The Electron security check was last done
 at the start of milestone 8 (44.4.5 current). Progress screenshots live
 in docs/screenshots/<milestone>/; capture them with
@@ -29,8 +30,10 @@ under "Open items from the review" below.
 
 Two repositories, both pushed to `main`:
 
-- Browser: https://github.com/srajpal/hypersol-websurfer-3d
-  Local: `C:\dev\Projects\Claude\hypersol-websurfer-3d`
+- Browser: https://github.com/srajpal/hypersol-hyperspace-3d
+  (renamed from hypersol-websurfer-3d on 2026-09-26)
+  Local: `C:\dev\Projects\Claude\hypersol-websurfer-3d` (the folder
+  keeps its old name; renaming it is optional)
 - Language: https://github.com/srajpal/holoml
   Local: `C:\dev\Projects\Claude\holoml`
 

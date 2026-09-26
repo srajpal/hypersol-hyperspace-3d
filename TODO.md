@@ -1,5 +1,8 @@
 # TODO.md — Roadmap and current plan
 
+Product: HyperSol HyperSpace 3D (renamed from HyperSol WebSurfer 3D on
+2026-09-26; see "Rename" at the end).
+
 Status key: **Done**; **Current** (plan approved, build not yet
 approved); **Later** (listed, not approved to build).
 Run and test steps are "not checked yet" until they have actually run.
@@ -1354,4 +1357,48 @@ and the shield blocks again. It fails against the reviewed code (the
 cookie survived). Results: 188 unit tests; 139 of 142 end-to-end checks,
 the 3 failures the D8 clipboard checks with the Windows clipboard
 unavailable. Native macOS not tested.
+
+## Rename to HyperSol HyperSpace 3D (2026-09-26, prompt 42)
+
+Owner decision: the product is now HyperSol HyperSpace 3D, with
+"HyperSpace 3D" as the short display name. Done:
+- GitHub repository renamed to srajpal/hypersol-hyperspace-3d (GitHub
+  redirects the old address); the local remote updated.
+- The app: window title, start panel, messages, and the menu's About
+  entry say "HyperSpace 3D"; About says "HyperSol HyperSpace 3D" and
+  salutes HyperSol WebSurfer (2001) and the HyperSpace 3D concept (2001
+  to 2003). Package metadata renamed; internal identifiers (the
+  @hypersol scope, channels, switches, file names) unchanged.
+- Profiles: an installed app's data folder follows the product name,
+  but an existing "HyperSol WebSurfer 3D" folder is kept in use, so
+  bookmarks, history, and settings survive (main/profile-folder.ts, unit
+  tested). Development and test profiles live elsewhere and are
+  unaffected.
+- Docs and project instructions: README (with the history revised to
+  show the early HyperSpace 3D concept screen without claiming it
+  shipped), BRIEF, ARCHITECTURE, AGENTS (naming conventions), HANDOFF,
+  docs/privacy.md. PROMPTS.md and earlier records keep the old name as
+  history. HoloML (the holoml repository) is unchanged, as asked; its
+  README and AGENTS.md still name the browser "HyperSol WebSurfer 3D"
+  and link the old address (which redirects).
+
+## New requests (2026-09-26, prompt 42): proposed placement, not approved
+
+The owner asked to list these and decide when to add them. Proposed
+(nothing here is approved to build yet):
+
+| Request | Proposed place | Why |
+|---|---|---|
+| Reopen a closed tab (Ctrl/Cmd+Shift+T, and a menu entry) | New milestone 10, Tabs and site controls | Small, everyday, and belongs with the other tab work |
+| Search tabs, and mute a tab's audio | Milestone 10 | Tab management; mute needs an audio indicator on cards |
+| Tab options: card size (small, medium, large), auto-hide, or none (tabs as a list in the top bar) | Milestone 10 | Follows the owner's earlier request to shrink the cards; the list mode also helps search |
+| Site permissions panel: camera, microphone, and location (all refused today), with per-site choices | Milestone 10 | Makes everyday sites usable; privacy-sensitive, so explicit prompts, per-site memory, and a panel to review and revoke |
+| Economy mode: lower rendering resolution, fewer effects, an optional frame cap; later, sleeping inactive tabs (protecting forms, audio, and downloads) | New milestone 11, Economy and performance, together with GitHub issue #4 (history work off the main process) | The 30-tab benchmark makes memory worth tackling before the first release |
+| App logo (from the early HyperSpace 3D cube) | The first release milestone (installers need icons); concepts now in docs/branding/logo-concepts/ | The owner chooses a direction first |
+
+Proposed order: 9 Passwords (with the milestone 8 feedback: a download
+finished notice, a private tab option on "+", printing quality), 10
+Tabs and site controls, 11 Economy and performance, 12 First release
+(installers, per-OS checks, the logo, GitHub issue #5). Milestones after
+that move down by two. Needs the owner's yes before the roadmap changes.
 

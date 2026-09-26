@@ -1,6 +1,6 @@
-# Privacy: what HyperSol WebSurfer 3D stores and sends
+# Privacy: what HyperSol HyperSpace 3D stores and sends
 
-HyperSol WebSurfer 3D has no telemetry: no analytics, no crash reports, no
+HyperSpace 3D has no telemetry: no analytics, no crash reports, no
 usage counts. This page lists everything it keeps on your computer and
 everything it sends over the network. It is updated whenever that
 changes (AGENTS.md rule 9).
@@ -51,9 +51,12 @@ so those requests are blocked outright instead.
 Everything is in the app data folder, except the files you download,
 which go to your system's Downloads folder (see the table):
 
-- Windows: `%APPDATA%\HyperSol WebSurfer 3D`
-- macOS: `~/Library/Application Support/HyperSol WebSurfer 3D`
-- Linux: `~/.config/HyperSol WebSurfer 3D`
+- Windows: `%APPDATA%\HyperSol HyperSpace 3D`
+- macOS: `~/Library/Application Support/HyperSol HyperSpace 3D`
+- Linux: `~/.config/HyperSol HyperSpace 3D`
+
+An install from before the product was renamed (2026-09-26) keeps using
+its folder named `HyperSol WebSurfer 3D`, with everything in it.
 
 (Development and test runs use a separate throwaway folder, never this
 one.)

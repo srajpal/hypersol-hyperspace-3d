@@ -1,9 +1,9 @@
 {
   "name": "@hypersol/browser",
-  "productName": "HyperSol WebSurfer 3D",
+  "productName": "HyperSol HyperSpace 3D",
   "version": "0.0.0",
   "private": true,
-  "description": "HyperSol WebSurfer 3D, the Electron app.",
+  "description": "HyperSol HyperSpace 3D, the Electron app.",
   "license": "Apache-2.0",
   "main": "./out/main/index.js",
   "scripts": {

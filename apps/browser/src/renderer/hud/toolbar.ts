@@ -442,7 +442,7 @@ export class HsToolbar extends LitElement {
                 Settings <kbd>${mod}+,</kbd>
               </button>
               <button role="menuitem" data-testid="menu-about" @click=${() => this.menu('about')}>
-                About HyperSol WebSurfer 3D
+                About HyperSpace 3D
               </button>
             </div>`
           : nothing}

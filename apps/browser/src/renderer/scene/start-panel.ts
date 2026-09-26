@@ -29,7 +29,7 @@ export class StartPanel {
     this.element.dataset['testid'] = 'start-panel';
 
     const title = document.createElement('h1');
-    title.textContent = 'HyperSol WebSurfer 3D';
+    title.textContent = 'HyperSpace 3D';
 
     const form = document.createElement('form');
     form.className = 'hs-start-search';

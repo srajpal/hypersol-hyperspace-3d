@@ -1,4 +1,7 @@
-# HyperSol WebSurfer 3D — Brief
+# HyperSol HyperSpace 3D — Brief
+
+The product was named HyperSol WebSurfer 3D until 2026-09-26 (owner,
+prompt 42).
 
 ## User
 The general public: everyday people who browse the web on a Windows, Mac,
@@ -14,7 +17,7 @@ true 3D website, and no browser that turns the everyday web into a 3D
 experience without effort from the site owner.
 
 ## Full idea
-HyperSol WebSurfer 3D is an open-source desktop browser whose interface
+HyperSol HyperSpace 3D is an open-source desktop browser whose interface
 lives in a 3D space. Regular websites render on floating panels in a 3D
 room, with page sections lifted into layered depth. Where possible, the
 browser detects images and 3D models on a page and turns them into
