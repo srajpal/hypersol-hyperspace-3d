@@ -20,15 +20,17 @@ printing) and milestone 10 (reopen, search, and mute tabs; card size
 and how tabs are shown; economy mode; sleeping tabs; history in a
 worker thread, GitHub issue #4) are built, their checks pass, and both
 were accepted by the owner on 2026-09-26 (prompt 50), with seven
-feedback items recorded in TODO.md for the next plan. Then 11
-(First release, with the chosen logo direction, concept 4d in
+feedback items, planned as milestone 11 (address bar completion, a
+wider page and View settings, reorganized Settings with search, shortcut
+remapping, and fixes; plan answered in prompt 51, build waiting for
+approval). Then 12 (First release, with the chosen logo direction, concept 4d in
 docs/branding/logo-concepts/). HoloML keeps its name (owner, prompt 44;
 HSML was checked and advised against, prompt 43); the holoml repository
 now names the browser HyperSol HyperSpace 3D. GitHub issues #8 to #15
 (QA of milestone 8) were fixed in PR #16, merged 2026-09-26; #4 is done
 in milestone 10; #5 (continuous integration) stays proposed for the
-first release (milestone 11). The Electron security check was last done
-at the start of milestone 10 (44.4.5 current). Progress screenshots live
+first release (milestone 12). The Electron security check was last done
+at the start of milestone 11 (44.4.5 current). Progress screenshots live
 in docs/screenshots/<milestone>/; capture them with
 `MILESTONE=mN pnpm screenshots` when a milestone is finished and add
 them to docs/progress.md (the README has a short progress paragraph
@@ -74,7 +76,7 @@ browser repo for rules and the prompt log.
   TypeScript, Three.js, Lit, SQLite (node:sqlite, built into
   Electron's Node), @ghostery/adblocker-electron (milestone 4),
   electron-vite, Vitest, Playwright; planned and not yet installed:
-  electron-builder (milestone 11). Reasons in ARCHITECTURE.md section 4.
+  electron-builder (milestone 12). Reasons in ARCHITECTURE.md section 4.
   Toolchain: Node 22.13 or newer, pnpm 12.4.1 pinned.
 - Focused page is a live Chromium view (an Electron `<webview>`) placed
   with CSS 3D transforms; background tabs are snapshot textures;
@@ -114,10 +116,10 @@ These are recommendations that survived adversarial verification but
 change scope, add a service, or cost money. None is applied.
 
 - Three-OS continuous integration (GitHub Actions) as a milestone 1 task,
-  so macOS and Linux get signal before milestone 11. Needs approval as a
+  so macOS and Linux get signal before milestone 12. Needs approval as a
   service under rule 3.
 - Code signing and notarisation: Apple Developer Program and a Windows
-  signing route. Paid accounts with lead time; start before milestone 11.
+  signing route. Paid accounts with lead time; start before milestone 12.
 - An update channel (for example a version check against GitHub
   Releases) so Chromium security fixes reach users. Needs a privacy
   statement amendment.
@@ -209,7 +211,7 @@ repo's PROMPTS.md.
   to build.
 - No code in the holoml repo yet.
 - Nothing owed from earlier milestones.
-- No SPEC.md in holoml (outline is part of milestone 11).
+- No SPEC.md in holoml (outline is part of milestone 12).
 - No git tags, branches, CI, issue templates, SECURITY.md, CONTRIBUTING.md,
   or GitHub settings.
 - No memory files saved outside the repo; everything is in these docs.

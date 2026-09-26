@@ -34,7 +34,7 @@ letters with a magenta extrusion, in the Impact font.
 
 **Chosen direction (owner, prompt 46): 4d**, which is 4b with "NOW IN"
 on the left face and a bigger "3D" on the right face. It becomes the
-real logo and icons in the first release milestone (11).
+real logo and icons in the first release milestone (12).
 
 ![Concept 4d](4d-now-in-big-3d.png)
 

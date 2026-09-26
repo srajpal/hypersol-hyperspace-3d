@@ -22,16 +22,20 @@ Plan approved 2026-09-24.
 | 8 | Everyday browser features | Zoom (buttons, shortcuts, per site), find in page, downloads panel, printing, private tabs | Done (accepted 2026-09-26, with follow-ups below) |
 | 9 | Passwords and site permissions | A password manager (offer to save on sign-in, fill on return, a Passwords tab in the Library, encrypted with the system's keychain) and a site permissions panel (camera, microphone, location: per-site prompts and choices to review and revoke); plus the milestone 8 feedback (download finished notice, private tab under "+", printing) | Done (accepted, prompt 50) |
 | 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Done (accepted, prompt 50) |
-| 11 | First release v0.1 | Installers for Windows, macOS, Linux; per-OS checks; the app logo and icons; continuous integration (GitHub issue #5); holoml first-result scope (SPEC.md outline, parser package with one test); full regression pass | Later |
-| 12 | HoloML v0.1 language | Spec, schema, parser, conformance samples | Later |
-| 13 | HoloML in the browser | `.holo` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
-| 14 | Car showroom demo | Demo site with walk-around 3D cars | Later |
-| 15 | Free camera and room navigation | Move freely around the room | Later |
-| 16 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
-| 17 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
+| 11 | Owner feedback: address bar, view, settings, shortcuts | Two ways to show tabs; address bar completion; a wider page and view settings; menus that close; reorganized Settings with search; shortcut list and remapping; Library search reset | Planned (prompt 51) |
+| 12 | First release v0.1 | Installers for Windows, macOS, Linux; per-OS checks; the app logo and icons; continuous integration (GitHub issue #5); holoml first-result scope (SPEC.md outline, parser package with one test); full regression pass | Later |
+| 13 | HoloML v0.1 language | Spec, schema, parser, conformance samples | Later |
+| 14 | HoloML in the browser | `.holo` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
+| 15 | Car showroom demo | Demo site with walk-around 3D cars | Later |
+| 16 | Free camera and room navigation | Move freely around the room | Later |
+| 17 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
+| 18 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS and Android | Later |
 
-Milestones 1 to 11 make up the first useful result in BRIEF.md. The
+Milestones 1 to 12 make up the first useful result in BRIEF.md
+(milestone 11, the owner's feedback, was added on 2026-09-26, prompt 51;
+the first release is now milestone 12, and entries below that say
+"milestone 11" for the release now mean 12). The
 instrument panel was added as milestone 7 on 2026-09-26 (prompt 35); on
 the same day the everyday browser features moved ahead of the first
 release as milestone 8, with a Passwords milestone 9 (prompt 37); then
@@ -1559,7 +1563,7 @@ Changed checks, because their requirement changed (documented here):
 - The owner has tried the new tab features, economy mode, and sleeping
   tabs, and accepts.
 
-### Owner feedback on milestones 9 and 10 (2026-09-26, prompt 50), not yet planned
+### Owner feedback on milestones 9 and 10 (2026-09-26, prompt 50), planned as milestone 11
 
 1. Cards that hide behave strangely: keep only two ways to show tabs,
    cards and a list.
@@ -1572,6 +1576,86 @@ Changed checks, because their requirement changed (documented here):
    with a search.
 6. Show the available shortcuts somewhere, and allow remapping them.
 7. The Library's search box should reset when changing tabs.
+
+## Milestone 11 — Owner feedback: address bar, view, settings, shortcuts
+
+Status: Planned. The owner's feedback (prompt 50) with the answers Q1 a,
+Q2 a, Q3 a (prompt 51). Build waiting for the owner's approval.
+Electron security check at the start: 44.4.5 still newest (2026-09-26).
+
+### Decisions (2026-09-26, prompts 50 and 51)
+
+- Tabs show as Cards or as a List in the top bar; "Cards that hide" is
+  removed (the owner found it odd). A saved "autohide" reads as Cards.
+- Address bar completion (Q1 a): as you type, the rest of a visited
+  site fills in, selected (Enter goes there, Delete removes it, typing
+  carries on); a list under the bar shows the best matches from history
+  and bookmarks (most visited and most recent first) and "Search for
+  ...". Arrows and Enter pick; each history match can be removed. The
+  matching runs in the history worker (an index of sites by visit count
+  and last visit), so it stays fast with a long history.
+- A wider page: the page is laid out so its tilted outline reaches both
+  sides of the free area (today it shrinks around its centre to fit the
+  near edge, leaving a gap on the right).
+- Settings > Appearance and view (Q3 a): how far the page leans (the
+  existing tilt, 0 to 20 degrees); which way it leans (right edge back,
+  or left edge back); how much the room moves with the pointer (off,
+  subtle, normal); space around the page (compact, normal, roomy); and
+  a "Flat and still" preset (no lean, no movement).
+- Menus close when you click elsewhere: the dots menu, the "+" menu,
+  the site panel, and tab search also close when the page takes the
+  click (the shell never sees clicks inside a page), on a card, and
+  when the window loses focus.
+- Settings (Q2 a): a wider panel with sections listed on the left
+  (General; Appearance and view; Tabs; Privacy and security, with the
+  shield, DNS, filter lists, site permissions, and passwords; Economy;
+  Instrument panel; Shortcuts; Clear data), one page each; a search at
+  the top finds any setting by its name or related words across all
+  sections, shows its section, and highlights it; a cleaner look, with
+  grouped cards and a short description under each setting.
+- Shortcuts: Settings > Shortcuts lists every shortcut with its keys;
+  Change, then press the new keys, remaps it (saved in settings.json;
+  the main process uses the remapped keys); clashes are shown and
+  refused; Reset returns the defaults; copy, paste, cut, undo, and
+  select all cannot be taken. "Keyboard shortcuts" in the menu opens
+  the page; the menus' key hints follow the remapped keys.
+- The Library's search box empties when you switch between Bookmarks,
+  History, and Passwords.
+
+### Tasks
+
+- [ ] 1. Two ways to show tabs; settings read an old "autohide" as cards.
+- [ ] 2. Address bar completion: the worker's site index and query,
+      inline completion, the suggestion list, removing a match.
+- [ ] 3. The wider page layout; View settings and the preset.
+- [ ] 4. Menus and popovers close on clicks in the page, on cards, and
+      when the window loses focus.
+- [ ] 5. Settings reorganized into sections, with search and a new look.
+- [ ] 6. Shortcut list and remapping, in the main process and the menus.
+- [ ] 7. Library search resets between tabs.
+- [ ] 8. Tests: unit (completion ranking, layout fit, shortcut table and
+      clashes, settings search, settings reading); end-to-end M1 to M8;
+      C to L as regression (L5 changes with item 1).
+- [ ] 9. Docs and screenshots (MILESTONE=m11).
+
+### Checks
+
+| # | Check | Expected result |
+|---|---|---|
+| M1 | Two ways to show tabs | Settings offers Cards and List only; a saved "autohide" opens as Cards |
+| M2 | Address bar completion | Typing part of a visited site completes it inline and lists matches (history, bookmarks, "Search for"); Enter, arrows, Delete, Escape behave as described; a removed match stays gone |
+| M3 | Wider page | At 10 degrees the page's outline reaches within a few pixels of both sides of the free area; at 0 degrees it fills it 1:1 as before |
+| M4 | View settings | Direction, movement, and margins change the page and room; "Flat and still" sets no lean and no movement; saved |
+| M5 | Menus close | The dots menu, "+" menu, site panel, and tab search close on a click in the page, on a card, and when the window loses focus |
+| M6 | Settings | Sections switch; search finds settings in other sections and shows them; keyboard reaches everything |
+| M7 | Shortcuts | The list shows every shortcut; a remap works from the page and the shell and survives a restart; a clash and a reserved key are refused; Reset works; the menu shows the new keys |
+| M8 | Library search reset | Switching tabs empties the search box and shows the full list |
+
+### Done when
+
+- M1 to M8 pass on Windows, with C to L and the unit tests.
+- The owner has tried the address bar, the wider page and View
+  settings, the new Settings, and shortcut remapping, and accepts.
 
 ## GitHub issues #8 to #15 (2026-09-26, prompt 39)
 

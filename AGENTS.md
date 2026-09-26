@@ -203,7 +203,8 @@ milestone; the current milestone's checks are defined in TODO.md):
   with their history, tab search, mute, card size, cards that hide and
   the list in the top bar, economy mode, sleeping tabs, history through
   the worker, and its budget with 100,000 visits.
-- Later milestones add: per-OS installers (11).
+- Later milestones add: the owner's feedback (11: address bar, view,
+  settings, shortcuts), per-OS installers (12).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

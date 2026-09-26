@@ -75,6 +75,9 @@ releases.electronjs.org; no security notes listed. No upgrade needed.
 Rule 13 check, 2026-09-26 (start of milestone 10, tabs and economy):
 44.4.5 still the newest stable release. No upgrade needed.
 
+Rule 13 check, 2026-09-26 (start of milestone 11, the owner's feedback):
+44.4.5 still the newest stable release. No upgrade needed.
+
 Graphics on the build machine: NVIDIA GeForce RTX 4050 Laptop GPU and
 AMD Radeon integrated graphics; one 1920×1080 display at 100% scaling;
 touchpad, no touch screen.
@@ -141,7 +144,7 @@ touchpad, no touch screen.
 | Window frame, reconsidered | Standard OS frame kept | Considered in milestone 6: a custom frame would lose native dragging, snapping, and accessibility; the theme now sets the frame's light or dark scheme. |
 | Bookmarks and history | SQLite through Node's built-in node:sqlite (owner decision 2026-09-25, prompt 20) | Fast search over thousands of rows; standard for browsers. Built into Electron's Node, so no native module and no extra package. |
 | UI widgets (address bar, menus) | Lit web components | Tiny, standards-based, no framework lock-in; themed with CSS variables. |
-| Build | electron-vite (Vite) now; electron-builder planned for milestone 11 (not yet installed) | Fast dev reload; installers for Windows, macOS, Linux. |
+| Build | electron-vite (Vite) now; electron-builder planned for milestone 12 (not yet installed) | Fast dev reload; installers for Windows, macOS, Linux. |
 | Toolchain | Node 22.13 or newer; pnpm 12.4.1 pinned in package.json (`packageManager`, with the pnpm version recorded in the lockfile); installs use `--frozen-lockfile` | Reproducible installs (GitHub issue #5). |
 | Tests | Vitest (unit), Playwright (Electron end-to-end) | Standard, cross-platform. |
 | Repos | hypersol-hyperspace-3d (browser; renamed from hypersol-websurfer-3d on 2026-09-26), holoml (language) | Each useful on its own; browser depends on holoml packages via npm. |
@@ -252,7 +255,7 @@ hypersol-hyperspace-3d/
                                contrast helpers
     holoml-renderer/           (planned) @hypersol/holoml-renderer: maps
                                HoloML nodes to Three.js objects. Skeleton in
-                               milestone 11; real work in a later milestone.
+                               milestone 12; real work in a later milestone.
   docs/
     screens.md                 (planned) layout notes and states
     screenshots/               progress screenshots, one folder per milestone
@@ -486,7 +489,7 @@ Progress screenshots: `MILESTONE=m3 pnpm screenshots` builds the app and
 saves its main screens to docs/screenshots/m3/ (Electron's own capture,
 local test pages only).
 
-Not checked yet: `pnpm package` (installers per OS, milestone 11).
+Not checked yet: `pnpm package` (installers per OS, milestone 12).
 
 Launch options, for development and tests: `--start-url=<address>`
 (default: a start tab), `--tilt=<0 to 20>`,
