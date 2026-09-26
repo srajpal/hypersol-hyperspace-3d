@@ -30,6 +30,8 @@ export interface InspectorOptions {
 export class Inspector {
   readonly monitor = new PageMonitor();
   private readonly tabs = new Set<number>();
+  private readonly privateTabs = new Set<number>();
+  private privateSession: Session | null = null;
   private lastPage = new Map<number, number>();
 
   constructor(
@@ -41,8 +43,19 @@ export class Inspector {
     this.watch(this.ses);
   }
 
+  /** The private tabs' session: what is recorded for it is kept apart. */
+  setPrivateSession(ses: Session): void {
+    this.privateSession = ses;
+  }
+
+  /** The last private tab closed. */
+  forgetPrivate(): void {
+    this.monitor.forgetPrivateCerts();
+  }
+
   /** Listens to one session's web pages (the default one, and the private tabs' one). */
   watch(ses: Session): void {
+    const isPrivate = () => this.privateSession !== null && ses === this.privateSession;
     ses.webRequest.onCompleted({ urls: ['<all_urls>'] }, (d) => {
       if (d.webContentsId === undefined || !this.tabs.has(d.webContentsId)) return;
       this.monitor.completed(d.webContentsId, d.id, d.statusCode, declaredBytes(d.responseHeaders), d.fromCache, d.timestamp);
@@ -60,7 +73,7 @@ export class Inspector {
         issuer: c.issuer?.commonName || c.issuerName,
         validExpiry: c.validExpiry,
         verification: request.verificationResult,
-      });
+      }, isPrivate());
       callback(USE_CHROMIUM_RESULT);
     });
   }
@@ -74,6 +87,7 @@ export class Inspector {
   trackTab(contents: WebContents): void {
     const id = contents.id;
     this.tabs.add(id);
+    if (this.privateSession !== null && contents.session === this.privateSession) this.privateTabs.add(id);
     contents.on('did-stop-loading', () => this.monitor.pageFinished(id, Date.now()));
     contents.on('console-message', (event) => {
       const level = LEVELS.includes(event.level) ? event.level : 'info';
@@ -81,6 +95,7 @@ export class Inspector {
     });
     contents.once('destroyed', () => {
       this.tabs.delete(id);
+      this.privateTabs.delete(id);
       this.monitor.forget(id);
       this.lastPage.delete(id);
     });
@@ -116,7 +131,7 @@ export class Inspector {
   private snapshot(contents: WebContents, sinceNet: number, sinceConsole: number): InspectSnapshot {
     const id = contents.id;
     const known = this.lastPage.get(id);
-    const s = this.monitor.snapshot(id, sinceNet, sinceConsole);
+    const s = this.monitor.snapshot(id, sinceNet, sinceConsole, this.privateTabs.has(id));
     // A new page since the shell last asked: the shell starts its lists afresh.
     // (Numbers keep rising across pages, so the new page's entries are all included.)
     const reset = known !== undefined && known !== s.pageNumber;

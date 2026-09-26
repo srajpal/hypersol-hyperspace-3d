@@ -1267,3 +1267,50 @@ their feedback shape the plan. Answers already given:
   offer to save on sign-in; fill only on the same site; never in
   private tabs; no sync.
 
+## GitHub issues #8 to #15 (2026-09-26, prompt 39)
+
+QA of milestone 8 by the owner. Fixed on branch fix/github-issues-8-15,
+in a pull request for the owner's review:
+
+- #8 (P1) Private tabs no longer write site choices to settings.json:
+  the layers view choice (shell) and the shield pause (main process,
+  which now gets the asking tab) stay in memory for private tabs, apply
+  to that site in every private tab while one is open, and are
+  forgotten with the last one. Decided and documented: private choices
+  are shared by private tabs, like their cookies.
+- #9 (P2) The page's own transforms and animations, also ones added
+  after an element was lifted, release it: our lift is taken off for one
+  batched style read when choosing layers; style and class changes are
+  now watched, ignoring our own --hs-lift updates (no loop).
+- #10 (P2) Trimming the downloads list drops only finished downloads; a
+  running one stays listed, cancellable, and keeps its name reserved.
+- #11 (P2) Layer choosing is bounded: pinned elements are found once in
+  6 ms slices and then kept current from the page's changes; candidates
+  are capped; only relevant changes lead to choosing again. Budget: no
+  long task (50 ms or more) on a changing 20,000-element page with the
+  layers view on (the old code had 59 to 72 ms ones).
+- #12 (P2) After a graphics reset the room draws again by itself;
+  nothing is drawn while the context is lost.
+- #13 (P2) Requests still waiting are bounded (300 per tab), as the list
+  is; a request no longer followed stays counted.
+- #14 (P3) Scrolling inside boxes (vertical and horizontal) refreshes
+  the image report and re-measures the layers inside them.
+- #15 (P3) docs/privacy.md, ARCHITECTURE.md, and HANDOFF.md corrected:
+  downloaded files versus the session's list; the Downloads folder
+  outside the app data folder; the real bounds and lifetimes of the
+  instrument readouts and certificates (private tabs' now kept apart and
+  cleared with the last private tab); private-tab choices; milestone
+  state taken from this file.
+
+New checks: unit (per-tab pause, pending bound, private certificates,
+running downloads kept, style comparison); end-to-end #8 (m8), #9, #11,
+#14 (m5), #10 (m8), #12 (m6). The #9, #11, #14, and #12 checks were
+confirmed to fail against the previous code. One request check changed
+with the requirement: the shield's pause request now names its tab.
+
+Results on the branch (Windows 11, 2026-09-26): 187 unit tests; lint
+and type check clean; end-to-end 137 of 140, the 3 failures being the
+D8 clipboard checks while the Windows clipboard was unavailable to every
+program on the machine (PowerShell's Set-Clipboard failed too). Not
+checked: macOS and Linux.
+

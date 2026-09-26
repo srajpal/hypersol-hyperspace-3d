@@ -1,41 +1,25 @@
 # HANDOFF.md
 
 State of the project for whoever picks it up next, human or agent.
-Last updated 2026-09-26 (milestone 8 accepted; waiting for the owner's GitHub issues).
+Last updated 2026-09-26 (GitHub issues #8 to #15 fixed in a pull request).
 
 ## Where things stand
 
-Milestones 1 and 2 are done (accepted 2026-09-25): a usable browser in
-the 3D room with tabs as cards, top bar, shortcuts, start panel, error
-cards, right-click menu, and new-window rules; the "+" card is pinned.
-The shell owns the tabs (confirmed). The Electron security check is
-done (44.4.5 is current, no security fixes pending). Milestone 3
-(Memory and Settings) is built: bookmarks and history in node:sqlite,
-Library and Settings panels, start panel with data, reopening tabs,
-clearing data, docs/privacy.md. Milestone 3 was accepted 2026-09-26
-(the owner wants a fuller look review after themes and depth layering,
-and asked to lean into the 1980s and 1990s aesthetic). GitHub issues
-#1 to #6 were handled in PR #7, merged 2026-09-26. Milestone 4 (Private
-by default) is built: ad and tracker blocking with Ghostery's engine and
-a starter copy of the lists in the app, the shield count and popover,
-element hiding, the blocked card with "open anyway", pausing per site,
-daily list refresh, and encrypted DNS through Quad9 with a
-blocked-resolver card (docs/privacy.md). F1 to F10 pass; D8 (clipboard)
-could not be checked because the machine's clipboard was unavailable.
-Waiting for the owner's look-and-feel check (F11) and acceptance; the
-live internet check (L1) needs the owner's yes. Milestone 5 (Depth
-layering) is built: a layers view, on by default, lifts each page's
-sections and images into separate depths (preload/layers.ts), with a
-top-bar button, Ctrl/Cmd+Shift+L, a global switch in Settings, and a
-choice remembered per site; image rectangles are reported to the shell
-for a later lift-to-3D milestone. G1 to G9 pass; waiting for the owner's
-look (G10) on real sites and acceptance. Milestone 6 (Themes and look) is
-built without a question round, at the owner's request (prompt 32):
-Nebula (synthwave night) and Daylight (pastel day), a theme button and
-Settings > Theme (with Match the system), the room and window following
-the theme, and Settings > Page tilt; the standard window frame is kept.
-H1 to H8 pass; the design awaits the owner's review (H9). Progress
-screenshots live in docs/screenshots/<milestone>/; capture them with
+TODO.md's roadmap is the authority on milestone state; this is a
+summary. Milestones 1 to 8 are done and accepted by the owner (the
+latest on 2026-09-26): a 3D browser with tabs as cards (hidden while
+there is one tab), bookmarks, history, Library and Settings, ad and
+tracker blocking with a shield, encrypted DNS through Quad9, a layers
+view, the Nebula and Daylight themes, an instrument panel (readouts,
+console, network list), zoom, find in page, downloads, printing, and
+private tabs. Milestone 9 (Passwords) has the owner's answers but no
+plan yet: the owner asked for their feedback (TODO.md, "Owner feedback
+on milestone 8") and GitHub issues to shape it. GitHub issues #8 to #15
+(QA of milestone 8) are fixed on branch fix/github-issues-8-15, in a
+pull request for the owner's review; #4 and #5 stay proposed for the
+first release (milestone 10). The Electron security check was last done
+at the start of milestone 8 (44.4.5 current). Progress screenshots live
+in docs/screenshots/<milestone>/; capture them with
 `MILESTONE=mN pnpm screenshots` when a milestone is finished.
 
 A four-perspective documentation review (technical, product/UX,

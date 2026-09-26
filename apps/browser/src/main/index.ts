@@ -156,6 +156,8 @@ function createWindow(): void {
 async function forgetPrivateData(): Promise<void> {
   const s = privateSession;
   if (!s) return;
+  privacy?.forgetPrivate();
+  inspector?.forgetPrivate();
   await s.clearStorageData();
   await s.clearCache();
   await s.clearAuthCache();
@@ -321,6 +323,7 @@ if (!app.requestSingleInstanceLock()) {
     const isShell = (contents: Electron.WebContents) => mainWindow !== null && contents === mainWindow.webContents;
     const inspect = new Inspector(ses, { isShell });
     inspector = inspect;
+    inspect.setPrivateSession(privateSes);
     inspect.start();
     inspect.watch(privateSes);
     ipcMain.handle(INSPECT_CHANNEL, (event, request: unknown) => {
@@ -347,6 +350,7 @@ if (!app.requestSingleInstanceLock()) {
     });
     privacy.start();
     privacy.protect(privateSes);
+    privacy.setPrivateSession(privateSes);
     const shield = privacy;
     ipcMain.handle(PRIVACY_CHANNEL, (event, request: unknown) => shield.handle(event, request));
 

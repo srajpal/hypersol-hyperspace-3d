@@ -52,7 +52,7 @@ export class Downloads {
         startedAt: Date.now(),
       };
       this.items.set(info.id, { item, info });
-      if (this.items.size > MAX_LISTED) this.items.delete(this.items.keys().next().value!);
+      this.trim();
       item.on('updated', (_e, state) => {
         info.received = item.getReceivedBytes();
         info.total = item.getTotalBytes();
@@ -64,6 +64,7 @@ export class Downloads {
         info.state = state;
         const entry = this.items.get(info.id);
         if (entry) entry.item = null;
+        this.trim();
         this.changed(true);
       });
       this.changed(true);
@@ -115,6 +116,19 @@ export class Downloads {
         } else shell.showItemInFolder(entry.info.path);
         return null;
       }
+    }
+  }
+
+  /**
+   * Keeps the list to MAX_LISTED by dropping the oldest finished entries.
+   * A running download is never dropped (GitHub issue #10): it must stay
+   * cancellable and keep its file name reserved, however many finish
+   * after it.
+   */
+  private trim(): void {
+    for (const [id, { info }] of this.items) {
+      if (this.items.size <= MAX_LISTED) return;
+      if (info.state !== 'progressing') this.items.delete(id);
     }
   }
 

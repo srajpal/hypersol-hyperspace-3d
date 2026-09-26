@@ -107,3 +107,17 @@ export function largest<T>(items: T[], area: (t: T) => number, max: number): T[]
 function round(v: number): number {
   return Math.round(v * 10) / 10;
 }
+
+/** A style attribute without our own --hs-lift declaration, for comparing. */
+export function withoutLift(style: string): string {
+  return style
+    .replace(/--hs-lift\s*:[^;]*;?/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** True when two style attributes differ only in our --hs-lift (a change we made, not the page). */
+export function sameExceptLift(before: string, after: string): boolean {
+  return withoutLift(before) === withoutLift(after);
+}
+

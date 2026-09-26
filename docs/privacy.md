@@ -48,7 +48,8 @@ so those requests are blocked outright instead.
 
 ## Stored on your computer
 
-Everything is in the app data folder, and nowhere else:
+Everything is in the app data folder, except the files you download,
+which go to your system's Downloads folder (see the table):
 
 - Windows: `%APPDATA%\HyperSol WebSurfer 3D`
 - macOS: `~/Library/Application Support/HyperSol WebSurfer 3D`
@@ -65,32 +66,50 @@ one.)
 | Filter lists from the last update, and when they were downloaded | `filters/engine.bin`, `filters/engine.json` | After a list update | Delete the folder; the starter copy included in the app is used |
 | Open tabs: their addresses and which one is in front | `session.json` | While you browse, shortly after tabs change | Reopened only when Settings > On startup is "Reopen your tabs from last time"; delete the file to forget them |
 | Cookies, site storage, and cache | Chromium's profile files in the same folder | By the sites you visit, as in any browser | Settings > Clear browsing data |
-| Files you download | Your system's Downloads folder | When you download them | Delete them there; the Downloads panel's list is only for this session |
+| Files you download (outside the app data folder) | Your system's Downloads folder | When you download them | Delete them there |
+| The Downloads panel's list | Memory only | While downloads run and finish | It lasts this session; "Clear list" empties it (the files stay) |
 
 Private tabs (Ctrl+Shift+N, or New private tab in the menu) keep none
 of this: their pages are not added to history, are not reopened with
 "reopen your tabs", and their cookies, site storage, and cache live in
-memory only and are cleared when the last private tab closes. Files
-downloaded in a private tab are still saved to the Downloads folder,
-and bookmarks you add in one are kept, as in other browsers. The shield
-and encrypted DNS work the same in private tabs.
+memory only and are cleared when the last private tab closes. Choices
+made for a site from a private tab (switching the layers view, pausing
+the shield) are kept in memory only: they apply to that site in every
+private tab while one is open, never to normal tabs, never reach
+`settings.json`, and are forgotten when the last private tab closes.
+Zooming in a private tab is not saved at all (the next page opens at
+the site's usual zoom). So
+are the certificates recorded for the instrument panel from private
+tabs. Files downloaded in a private tab are still saved to the
+Downloads folder, and bookmarks you add in one are kept, as in other
+browsers. The shield and encrypted DNS work the same in private tabs.
 
 If `settings.json` is damaged, it is renamed to
 `settings.json.damaged-<date and time>` and kept for inspection, and the
 defaults are used. If `hypersol.sqlite` cannot be opened, nothing is
 recorded until it can be, and the Library says so.
 
-The shield's per-page lists of what was blocked, the positions of the
-images on the page in front (found for a later 3D feature), and the
-instrument panel's readouts (each page's requests, console messages,
-and the certificates Chromium checked, at most 300 of each) are kept in
-memory only, and forgotten when the page or tab closes. The instrument
-panel reads what the browser already sees; it makes no requests of its
-own, and it leaves certificate checking to Chromium unchanged. If the saved filter lists are
+Kept in memory only, never on disk:
+- the shield's per-page lists of what was blocked, forgotten with the
+  page or tab;
+- the positions of the images on the page in front (for a later 3D
+  feature), forgotten with the page or tab;
+- the instrument panel's readouts for each tab: its last 300 requests
+  and console messages, and up to 300 requests still waiting for an
+  answer (beyond that the oldest waiting one is no longer followed),
+  forgotten with the page or tab;
+- the certificates Chromium checked, by site: up to 500, kept until the
+  app closes (those from private tabs apart, until the last private tab
+  closes).
+
+The instrument panel reads what the browser already sees; it makes no
+requests of its own, and it leaves certificate checking to Chromium
+unchanged. If the saved filter lists are
 damaged or were built by another version, the starter copy is used.
 
-Not stored: form entries, passwords, downloads, and anything about how
-you use the browser itself.
+Not stored: form entries, passwords, the downloads list (the files
+themselves are, in the Downloads folder), and anything about how you
+use the browser itself.
 
 ## Sent over the network
 

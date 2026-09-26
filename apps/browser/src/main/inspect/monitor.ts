@@ -1,6 +1,8 @@
 import {
   MAX_BATCH,
+  MAX_CERTS,
   MAX_ENTRIES,
+  MAX_PENDING,
   type CertInfo,
   type ConsoleEntry,
   type ConsoleLevel,
@@ -55,6 +57,8 @@ export function declaredBytes(headers: Record<string, string[]> | undefined): nu
 export class PageMonitor {
   private readonly tabs = new Map<number, TabRecord>();
   private readonly certs = new Map<string, CertInfo>();
+  /** Certificates checked for private tabs: kept apart, forgotten with the last private tab. */
+  private readonly privateCerts = new Map<string, CertInfo>();
 
   /** A tab starts loading a page (its main-frame request). */
   pageStart(tab: number, url: string, at: number): void {
@@ -89,6 +93,8 @@ export class PageMonitor {
     r.net.push(entry);
     if (r.net.length > MAX_ENTRIES) r.net.shift();
     r.waiting.set(id, { entry, at });
+    // Bounded like the list (GitHub issue #13): the oldest waiting request is no longer followed.
+    if (r.waiting.size > MAX_PENDING) r.waiting.delete(r.waiting.keys().next().value!);
     r.totals.requests += 1;
   }
 
@@ -128,9 +134,21 @@ export class PageMonitor {
   }
 
   /** Records the certificate Chromium checked for a host (the verdict itself is left to Chromium). */
-  certificate(info: CertInfo): void {
-    this.certs.set(info.host.toLowerCase(), info);
-    if (this.certs.size > 500) this.certs.delete(this.certs.keys().next().value!);
+  certificate(info: CertInfo, isPrivate = false): void {
+    const certs = isPrivate ? this.privateCerts : this.certs;
+    certs.delete(info.host.toLowerCase());
+    certs.set(info.host.toLowerCase(), info);
+    if (certs.size > MAX_CERTS) certs.delete(certs.keys().next().value!);
+  }
+
+  /** The last private tab closed: what was checked for private tabs goes. */
+  forgetPrivateCerts(): void {
+    this.privateCerts.clear();
+  }
+
+  /** How many requests a tab is still following (for tests of the bound). */
+  pendingCount(tab: number): number {
+    return this.tabs.get(tab)?.waiting.size ?? 0;
   }
 
   forget(tab: number): void {
@@ -138,7 +156,7 @@ export class PageMonitor {
   }
 
   /** The page's readout and what changed since the given numbers; `pageNumber` tells the shell when to start afresh. */
-  snapshot(tab: number, sinceNet: number, sinceConsole: number): {
+  snapshot(tab: number, sinceNet: number, sinceConsole: number, isPrivate = false): {
     page: Omit<PageReadout, 'cpuPercent' | 'memoryKB'>;
     pageNumber: number;
     net: NetEntry[];
@@ -160,7 +178,7 @@ export class PageMonitor {
         secure,
         loadMs: r.finishedAt < 0 ? -1 : Math.round(r.finishedAt - r.startedAt),
         ...r.totals,
-        cert: secure ? (this.certs.get(hostOf(r.url)) ?? null) : null,
+        cert: secure ? ((isPrivate ? this.privateCerts : this.certs).get(hostOf(r.url)) ?? null) : null,
       },
       pageNumber: r.page,
       // Oldest changes first, so a long list arrives over a few snapshots.

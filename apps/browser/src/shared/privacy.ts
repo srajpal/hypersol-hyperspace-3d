@@ -45,7 +45,8 @@ export interface DnsStatus {
 export type PrivacyRequest =
   | { op: 'shield.report'; tab: number }
   | { op: 'shield.allow-once'; tab: number; url: string }
-  | { op: 'shield.pause'; site: string; paused: boolean }
+  /** The tab tells which session the choice belongs to: a private tab's is kept in memory only. */
+  | { op: 'shield.pause'; tab: number; site: string; paused: boolean }
   | { op: 'filters.status' }
   | { op: 'filters.update' }
   | { op: 'dns.status' }
@@ -92,9 +93,10 @@ export function parsePrivacyRequest(raw: unknown): { request: PrivacyRequest } |
       if (!isWebUrl(r['url'])) return bad('url must be a web address');
       return { request: { op: 'shield.allow-once', tab: r['tab'], url: r['url'] } };
     case 'shield.pause':
+      if (!isTabId(r['tab'])) return bad('tab must be a tab id');
       if (!isHostName(r['site'])) return bad('site must be a host name');
       if (typeof r['paused'] !== 'boolean') return bad('paused must be true or false');
-      return { request: { op: 'shield.pause', site: r['site'].toLowerCase(), paused: r['paused'] } };
+      return { request: { op: 'shield.pause', tab: r['tab'], site: r['site'].toLowerCase(), paused: r['paused'] } };
     default:
       return { error: `Unknown request: ${String(r['op'])}` };
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_BATCH, MAX_ENTRIES, parseInspectRequest, type NetEntry } from '../../shared/inspect';
+import { MAX_BATCH, MAX_ENTRIES, MAX_PENDING, parseInspectRequest, type NetEntry } from '../../shared/inspect';
 import {
   filterNet,
   formatAge,
@@ -97,6 +97,31 @@ describe('PageMonitor', () => {
     expect(m.snapshot(1, 0, 0).page.cert).toMatchObject({ issuer: 'Test CA', verification: 'OK' });
     m.request(1, 2, 'http://a.example/x', 'mainFrame', 'GET', 0);
     expect(m.snapshot(1, 0, 0).page.cert).toBeNull(); // not over HTTPS
+  });
+
+  it('bounds requests still waiting as well as the list (issue #13)', () => {
+    const m = new PageMonitor();
+    m.request(1, 0, 'http://a.example/', 'mainFrame', 'GET', 0);
+    for (let i = 1; i <= 10_000; i++) m.request(1, i, `http://a.example/held-${i}`, 'xhr', 'GET', i);
+    expect(m.pendingCount(1)).toBe(MAX_PENDING);
+    expect(m.snapshot(1, 0, 0).page.requests).toBe(10_001); // still counted
+    m.completed(1, 1, 200, 10, false, 20_000); // no longer followed: ignored, no error
+    m.completed(1, 10_000, 200, 10, false, 20_000);
+    expect(m.snapshot(1, 0, 0).page.bytes).toBe(10);
+    m.request(1, 20_000, 'http://b.example/', 'mainFrame', 'GET', 30_000); // a new page starts empty
+    expect(m.pendingCount(1)).toBe(1);
+    m.forget(1);
+    expect(m.pendingCount(1)).toBe(0);
+  });
+
+  it("keeps private tabs' certificates apart, and forgets them with the last private tab (issue #15)", () => {
+    const m = new PageMonitor();
+    m.certificate({ host: 'secret.example', subject: 's', issuer: 'Private CA', validExpiry: 1, verification: 'OK' }, true);
+    m.request(1, 1, 'https://secret.example/', 'mainFrame', 'GET', 0);
+    expect(m.snapshot(1, 0, 0, false).page.cert).toBeNull(); // a normal tab does not see it
+    expect(m.snapshot(1, 0, 0, true).page.cert?.issuer).toBe('Private CA');
+    m.forgetPrivateCerts();
+    expect(m.snapshot(1, 0, 0, true).page.cert).toBeNull();
   });
 
   it('reads a declared size', () => {

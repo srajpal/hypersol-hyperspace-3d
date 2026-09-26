@@ -86,6 +86,22 @@ describe('Shield', () => {
     expect(s.decide({ tab: 1, resourceType: 'script', url: 'https://tracker.example/t.js' })).toEqual({ cancel: true });
   });
 
+  it('asks about pausing per tab, so private tabs can have their own choices (issue #8)', () => {
+    const asked: [string, number][] = [];
+    const s = new Shield(
+      () => matcher,
+      (site, tab) => (asked.push([site, tab]), tab === 2 && site === 'news.example'),
+      () => undefined,
+    );
+    s.decide({ tab: 1, resourceType: 'mainFrame', url: 'https://news.example/' });
+    s.decide({ tab: 2, resourceType: 'mainFrame', url: 'https://news.example/' });
+    expect(s.decide({ tab: 1, resourceType: 'script', url: 'https://tracker.example/t.js' })).toEqual({ cancel: true });
+    expect(s.decide({ tab: 2, resourceType: 'script', url: 'https://tracker.example/t.js' })).toEqual({});
+    expect(s.report(2).paused).toBe(true);
+    expect(s.report(1).paused).toBe(false);
+    expect(asked).toContainEqual(['news.example', 2]);
+  });
+
   it('keeps the latest items only, but counts them all', () => {
     const { s } = shield();
     s.decide({ tab: 1, resourceType: 'mainFrame', url: 'https://a.example/' });
@@ -301,8 +317,9 @@ describe('DNS', () => {
 describe('parsePrivacyRequest', () => {
   it('accepts well-formed requests', () => {
     expect(parsePrivacyRequest({ op: 'shield.report', tab: 3 })).toEqual({ request: { op: 'shield.report', tab: 3 } });
-    expect(parsePrivacyRequest({ op: 'shield.pause', site: 'News.Example', paused: true })).toEqual({
-      request: { op: 'shield.pause', site: 'news.example', paused: true },
+    // The tab is part of the request since GitHub issue #8 (a private tab's pause stays in memory).
+    expect(parsePrivacyRequest({ op: 'shield.pause', tab: 4, site: 'News.Example', paused: true })).toEqual({
+      request: { op: 'shield.pause', tab: 4, site: 'news.example', paused: true },
     });
     expect(parsePrivacyRequest({ op: 'dns.check' })).toEqual({ request: { op: 'dns.check' } });
   });
@@ -311,8 +328,9 @@ describe('parsePrivacyRequest', () => {
     expect(parsePrivacyRequest(null)).toHaveProperty('error');
     expect(parsePrivacyRequest({ op: 'shield.report', tab: -1 })).toHaveProperty('error');
     expect(parsePrivacyRequest({ op: 'shield.allow-once', tab: 2, url: 'file:///x' })).toHaveProperty('error');
-    expect(parsePrivacyRequest({ op: 'shield.pause', site: 'a b', paused: true })).toHaveProperty('error');
-    expect(parsePrivacyRequest({ op: 'shield.pause', site: 'a.example', paused: 'yes' })).toHaveProperty('error');
+    expect(parsePrivacyRequest({ op: 'shield.pause', tab: 4, site: 'a b', paused: true })).toHaveProperty('error');
+    expect(parsePrivacyRequest({ op: 'shield.pause', tab: 4, site: 'a.example', paused: 'yes' })).toHaveProperty('error');
+    expect(parsePrivacyRequest({ op: 'shield.pause', site: 'a.example', paused: true })).toHaveProperty('error'); // no tab
     expect(parsePrivacyRequest({ op: 'dns.flush' })).toEqual({ error: 'Unknown request: dns.flush' });
   });
 });

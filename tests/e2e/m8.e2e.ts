@@ -254,3 +254,99 @@ describe('J5 to J7: private tabs', () => {
     }
   });
 });
+
+describe('GitHub issues #8 and #10', () => {
+  it('#8 layers and shield choices made in a private tab stay in memory, shared by private tabs until the last closes', async () => {
+    const profile = newProfile({ layersOnOpen: true });
+    let h = await launch(server.url('link-a.html'), { userDataDir: profile });
+    const site = named('shield.html');
+    const settingsText = () => readFileSync(join(profile, 'settings.json'), 'utf8');
+    try {
+      await waitForPage(h, 'link-a');
+      await pressInShell(h, 'N', ['control', 'shift']);
+      await navigateTo(h, site);
+      await waitForPage(h, 'shield.html');
+      await h.shell.click(BAR('layers')); // layers off for shop.test, in this private tab
+      await waitFor('layers off', () => shellCall(h, 'layers'), (l) => !l.on);
+      await h.shell.click('hs-shield [data-testid="shield"]');
+      await h.shell.click('hs-shield [data-testid="shield-pause"]');
+      await waitFor(
+        'paused here',
+        async () => (await inPage<string>(h, 'document.title', 'shield.html')) === 'Shield test ready' && (await shellCall(h, 'shield')).count === 0,
+        (v) => v,
+      );
+      await sleep(500);
+      expect(settingsText()).not.toContain('shop.test');
+
+      // Another private tab on the site shares the choices while one is open.
+      const ad = server.hits.get('/ddm/ad.gif') ?? 0;
+      await pressInShell(h, 'N', ['control', 'shift']);
+      await navigateTo(h, site);
+      await waitForPage(h, 'shield.html');
+      await waitFor('page done', () => inPage<string>(h, 'document.title', 'shield.html'), (t) => t === 'Shield test ready');
+      expect(server.hits.get('/ddm/ad.gif') ?? 0).toBe(ad + 1); // still paused: the ad went through
+      expect((await shellCall(h, 'layers')).on).toBe(false);
+
+      // A normal tab on the same site is not affected.
+      await pressInShell(h, 'T', ['control']);
+      await navigateTo(h, site);
+      await waitForPage(h, 'shield.html');
+      await waitFor('blocked in a normal tab', () => shellCall(h, 'shield'), (s) => s.count === 2);
+      expect((await shellCall(h, 'layers')).on).toBe(true);
+
+      // Close every private tab: the choices go.
+      for (const t of (await tabs(h)).filter((x) => x.private)) {
+        while ((await focusedTab(h)).id !== t.id) await pressInShell(h, 'Tab', ['control']);
+        await pressInShell(h, 'W', ['control']);
+      }
+      await waitFor('no private tabs', () => tabs(h), (t) => !t.some((x) => x.private));
+      await sleep(500);
+      await pressInShell(h, 'N', ['control', 'shift']);
+      await navigateTo(h, site);
+      await waitForPage(h, 'shield.html');
+      await waitFor('blocked again in a new private tab', () => shellCall(h, 'shield'), (s) => s.count === 2);
+      expect((await shellCall(h, 'layers')).on).toBe(true);
+    } finally {
+      await h.close();
+    }
+    expect(settingsText()).not.toContain('shop.test');
+    h = await launch(server.url('link-a.html'), { userDataDir: profile });
+    try {
+      await waitForPage(h, 'link-a');
+      expect(settingsText()).not.toContain('shop.test'); // after a restart too
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('#10 a slow download stays listed and cancellable after 100 later ones finish', async () => {
+    const folder = newFolder('hypersol-e2e-downloads-');
+    const h = await launch(server.url('find.html'), { userDataDir: newProfile(), downloadsDir: folder });
+    try {
+      await waitForPage(h, 'find');
+      const page = await focusedPage(h);
+      const download = (path: string) =>
+        h.app.evaluate(({ webContents }, { id, url }) => webContents.fromId(id)!.downloadURL(url), { id: page.id, url: server.url(path) });
+      await download('download/slow.bin');
+      await waitFor('slow running', () => shellCall(h, 'downloads'), (d) =>
+        d.some((x) => x.filename === 'slow.bin' && x.state === 'progressing' && x.received > 0));
+      for (let i = 0; i < 100; i++) await download(`download/sample.txt?n=${i}`);
+      await waitFor('100 finished', () => shellCall(h, 'downloads'), (d) => d.filter((x) => x.state === 'completed').length >= 99, 60_000);
+      const slow = (await shellCall(h, 'downloads')).find((x) => x.filename === 'slow.bin');
+      expect(slow?.state).toBe('progressing');
+      const cancel = await h.shell.evaluate(
+        (id) => (window as unknown as { hypersol: { downloads(r: object): Promise<{ ok: boolean }> } }).hypersol.downloads({ op: 'downloads.cancel', id }),
+        slow!.id,
+      );
+      expect(cancel.ok).toBe(true);
+      await waitFor('cancelled', () => shellCall(h, 'downloads'), (d) => d.some((x) => x.id === slow!.id && x.state === 'cancelled'));
+    } finally {
+      await h.close();
+    }
+  }, 120_000);
+});
+
+/** The shield test page under its named test host. */
+function named(file: string): string {
+  return server.url(file).replace('127.0.0.1', 'shop.test');
+}
