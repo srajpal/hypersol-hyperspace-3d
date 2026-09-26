@@ -1267,3 +1267,91 @@ their feedback shape the plan. Answers already given:
   offer to save on sign-in; fill only on the same site; never in
   private tabs; no sync.
 
+## GitHub issues #8 to #15 (2026-09-26, prompt 39)
+
+QA of milestone 8 by the owner. Fixed on branch fix/github-issues-8-15,
+in a pull request for the owner's review:
+
+- #8 (P1) Private tabs no longer write site choices to settings.json:
+  the layers view choice (shell) and the shield pause (main process,
+  which now gets the asking tab) stay in memory for private tabs, apply
+  to that site in every private tab while one is open, and are
+  forgotten with the last one. Decided and documented: private choices
+  are shared by private tabs, like their cookies.
+- #9 (P2) The page's own transforms and animations, also ones added
+  after an element was lifted, release it: our lift is taken off for one
+  batched style read when choosing layers; style and class changes are
+  now watched, ignoring our own --hs-lift updates (no loop).
+- #10 (P2) Trimming the downloads list drops only finished downloads; a
+  running one stays listed, cancellable, and keeps its name reserved.
+- #11 (P2) Layer choosing is bounded: pinned elements are found once in
+  6 ms slices and then kept current from the page's changes; candidates
+  are capped; only relevant changes lead to choosing again. Budget: no
+  long task (50 ms or more) on a changing 20,000-element page with the
+  layers view on (the old code had 59 to 72 ms ones).
+- #12 (P2) After a graphics reset the room draws again by itself;
+  nothing is drawn while the context is lost.
+- #13 (P2) Requests still waiting are bounded (300 per tab), as the list
+  is; a request no longer followed stays counted.
+- #14 (P3) Scrolling inside boxes (vertical and horizontal) refreshes
+  the image report and re-measures the layers inside them.
+- #15 (P3) docs/privacy.md, ARCHITECTURE.md, and HANDOFF.md corrected:
+  downloaded files versus the session's list; the Downloads folder
+  outside the app data folder; the real bounds and lifetimes of the
+  instrument readouts and certificates (private tabs' now kept apart and
+  cleared with the last private tab); private-tab choices; milestone
+  state taken from this file.
+
+New checks: unit (per-tab pause, pending bound, private certificates,
+running downloads kept, style comparison); end-to-end #8 (m8), #9, #11,
+#14 (m5), #10 (m8), #12 (m6). The #9, #11, #14, and #12 checks were
+confirmed to fail against the previous code. One request check changed
+with the requirement: the shield's pause request now names its tab.
+
+Results on the branch (Windows 11, 2026-09-26): 187 unit tests; lint
+and type check clean; end-to-end 137 of 140, the 3 failures being the
+D8 clipboard checks while the Windows clipboard was unavailable to every
+program on the machine (PowerShell's Set-Clipboard failed too). Not
+checked: macOS and Linux.
+
+Pull request #16 review (prompt 40), four P2 findings, all fixed on the
+same branch:
+- A fixed element added inside a lifted section did not release it: the
+  scan now notes any change to what is pinned and chooses the layers
+  again when it ends.
+- A class on a lifted section that pins something inside it (".x #y
+  {position: fixed}") left the pinned set stale: a restyle of, in, or
+  around a layer now rechecks that element's whole subtree (in slices;
+  elsewhere only the element, so restyling animations cause no rescans).
+- Private data and choices were cleared when the last private page
+  closed although a blank private tab was still open: the shell now
+  tells the main process when its last private tab (blank ones
+  included) closes, and only then is anything cleared.
+- A download interrupted but able to resume counted as finished and
+  could be trimmed: only downloads Electron reports as done are finished
+  (new field "finished"); others stay listed, cancellable, and reserved,
+  and show as paused.
+New checks: a unit test for the resumable download (fails against the
+reviewed code), an end-to-end check for the added fixed element and the
+pinning class (the class case fails against the reviewed code; the
+added-element case also passed there in two runs, since another change
+chose the layers again within 3 s, so it guards the behaviour without
+being shown to catch that regression), and the blank private tab added
+to the #8 check. Results: 188 unit tests; 138 of 141 end-to-end checks,
+the 3 failures again the D8 clipboard checks while the Windows clipboard
+was unavailable.
+
+Follow-up review of pull request #16 (prompt 41), one P1 finding, fixed:
+closing the whole window (the app keeps running on macOS) did not clear
+the private session, since only the shell's tab list signalled the end
+of private browsing; a reopened window's private tab still read the old
+cookie and local storage and found the shield paused. The main process
+now clears the private session itself when the window closes or its
+shell crashes, and a window reopened meanwhile waits for that to finish.
+New check (m8, with the app kept running as on macOS): close the window,
+reopen, open a private tab on the same site: no old cookie or storage,
+and the shield blocks again. It fails against the reviewed code (the
+cookie survived). Results: 188 unit tests; 139 of 142 end-to-end checks,
+the 3 failures the D8 clipboard checks with the Windows clipboard
+unavailable. Native macOS not tested.
+

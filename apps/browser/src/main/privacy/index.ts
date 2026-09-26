@@ -49,6 +49,8 @@ export interface PrivacyOptions {
   onDnsApplied?: (mode: 'secure' | 'automatic', resolver: string) => void;
   /** Is this the app's own shell (the only one allowed to ask)? */
   isShell(contents: WebContents): boolean;
+  /** The shell's last private tab closed: forget everything private (main/index.ts). */
+  onPrivateEnded?: () => Promise<void>;
 }
 
 /** Downloads one list through Chromium's network stack, so encrypted DNS applies. */
@@ -95,6 +97,14 @@ export class Privacy {
   readonly shield: Shield;
   private readonly tabs = new Set<number>();
   private paused = new Set<string>();
+  /**
+   * Private tabs (milestone 8, GitHub issue #8): their pages, and the sites
+   * paused from them, which are kept in memory only, shared by the private
+   * tabs while any is open, and forgotten when the last one closes.
+   */
+  private readonly privateTabs = new Set<number>();
+  private readonly privatePaused = new Set<string>();
+  private privateSession: Session | null = null;
   private readonly pendingCounts = new Map<number, number>();
   private readonly countTimers = new Map<number, NodeJS.Timeout>();
 
@@ -152,7 +162,7 @@ export class Privacy {
     };
     this.shield = new Shield(
       () => matcher,
-      (site) => this.paused.has(site),
+      (site, tab) => this.isPausedFor(tab, site),
       (tab, count) => this.queueCount(tab, count),
       (tab, url) => this.sendToHost(tab, { type: 'page-blocked', webContentsId: tab, url }),
     );
@@ -204,7 +214,7 @@ export class Privacy {
     ses.webRequest.onHeadersReceived({ urls: ['<all_urls>'] }, (details, callback) => {
       const tab = details.webContentsId;
       const page = details.resourceType === 'mainFrame' ? details.url : details.frame?.top?.url ?? '';
-      if (tab === undefined || !this.tabs.has(tab) || this.paused.has(hostOf(page))) {
+      if (tab === undefined || !this.tabs.has(tab) || this.isPausedFor(tab, hostOf(page))) {
         callback({});
         return;
       }
@@ -223,13 +233,29 @@ export class Privacy {
     );
   }
 
+  /** The private tabs' session: pauses made from its pages stay in memory. */
+  setPrivateSession(ses: Session): void {
+    this.privateSession = ses;
+  }
+
+  /** The last private tab closed: its paused sites are forgotten. */
+  forgetPrivate(): void {
+    this.privatePaused.clear();
+  }
+
+  private isPausedFor(tab: number, site: string): boolean {
+    return this.privateTabs.has(tab) ? this.privatePaused.has(site) : this.paused.has(site);
+  }
+
   /** A web page (webview tab) was created: its requests are filtered from now on. */
   trackTab(contents: WebContents): void {
     const id = contents.id;
     this.tabs.add(id);
+    if (this.privateSession !== null && contents.session === this.privateSession) this.privateTabs.add(id);
     contents.on('did-navigate', (_event, url) => this.shield.committed(id, url));
     contents.once('destroyed', () => {
       this.tabs.delete(id);
+      this.privateTabs.delete(id);
       this.shield.forget(id);
       clearTimeout(this.countTimers.get(id));
       this.countTimers.delete(id);
@@ -259,6 +285,13 @@ export class Privacy {
         this.shield.allow(r.tab, r.url);
         return null;
       case 'shield.pause': {
+        this.ownTab(shell, r.tab);
+        if (this.privateTabs.has(r.tab)) {
+          // From a private tab: nothing reaches settings.json (GitHub issue #8).
+          if (r.paused) this.privatePaused.add(r.site);
+          else this.privatePaused.delete(r.site);
+          return null;
+        }
         const sites = new Set(this.storage.settingsFile.settings.pausedSites);
         if (r.paused) sites.add(r.site);
         else sites.delete(r.site);
@@ -276,6 +309,9 @@ export class Privacy {
         return this.dns.check();
       case 'dns.use-network':
         return this.dns.useNetwork();
+      case 'private.ended':
+        await this.options.onPrivateEnded?.();
+        return null;
     }
   }
 
@@ -283,7 +319,7 @@ export class Privacy {
   private cosmeticsPage(event: IpcMainInvokeEvent): string | null {
     if (!this.tabs.has(event.sender.id)) return null;
     const page = event.senderFrame?.url ?? event.sender.getURL();
-    return this.paused.has(hostOf(page)) ? null : page;
+    return this.isPausedFor(event.sender.id, hostOf(page)) ? null : page;
   }
 
   private ownTab(shell: WebContents, tab: number): void {

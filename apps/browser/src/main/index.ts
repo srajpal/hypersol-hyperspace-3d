@@ -55,9 +55,8 @@ let testLog: TestLog | null = null;
 let storage: StorageService | null = null;
 let privacy: Privacy | null = null;
 let inspector: Inspector | null = null;
-/** The private tabs' in-memory session, and how many private pages are open. */
+/** The private tabs' in-memory session. */
 let privateSession: Session | null = null;
-let privatePages = 0;
 
 /**
  * Windows and Linux: no menu bar; shortcuts are handled per web contents
@@ -132,7 +131,14 @@ function createWindow(): void {
   win.once('ready-to-show', () => (options.testBackground ? win.showInactive() : win.show()));
   win.on('closed', () => {
     mainWindow = null;
+    // Every tab went with the window, private ones included: clear the
+    // private session now, from the main process, since the shell can no
+    // longer say so. On macOS the app keeps running, and a reopened window
+    // must not find the old private data (PR #16 review).
+    endPrivate();
   });
+  // A crashed shell takes its tabs with it too.
+  win.webContents.on('render-process-gone', () => endPrivate());
   flushBeforeClose(win);
 
   const query: Record<string, string> = {
@@ -152,10 +158,24 @@ function createWindow(): void {
   }
 }
 
+/** A clearing of the private session in progress; a new window waits for it. */
+let privateClearing: Promise<void> | null = null;
+
+/** Starts clearing the private session (window closed, shell gone); a new window waits for it. */
+function endPrivate(): void {
+  const clearing = forgetPrivateData().catch((e: unknown) => console.warn(`Couldn't clear private data: ${String(e)}`));
+  privateClearing = clearing;
+  void clearing.finally(() => {
+    if (privateClearing === clearing) privateClearing = null;
+  });
+}
+
 /** The last private tab closed: its session's cookies, storage, and cache go. */
 async function forgetPrivateData(): Promise<void> {
   const s = privateSession;
   if (!s) return;
+  privacy?.forgetPrivate();
+  inspector?.forgetPrivate();
   await s.clearStorageData();
   await s.clearCache();
   await s.clearAuthCache();
@@ -215,15 +235,9 @@ if (!app.requestSingleInstanceLock()) {
     privacy?.trackTab(contents);
     inspector?.trackTab(contents);
     // A private tab keeps nothing: no history, and its session's data goes
-    // when the last private tab closes (milestone 8).
+    // when the last private tab closes (milestone 8). The shell says when
+    // that is, since a blank private tab has no page yet (PR #16 review).
     const isPrivate = privateSession !== null && contents.session === privateSession;
-    if (isPrivate) {
-      privatePages += 1;
-      contents.once('destroyed', () => {
-        privatePages -= 1;
-        if (privatePages === 0) void forgetPrivateData();
-      });
-    }
     wireGuest(contents, {
       send: (command) => {
         const host = contents.hostWebContents;
@@ -321,6 +335,7 @@ if (!app.requestSingleInstanceLock()) {
     const isShell = (contents: Electron.WebContents) => mainWindow !== null && contents === mainWindow.webContents;
     const inspect = new Inspector(ses, { isShell });
     inspector = inspect;
+    inspect.setPrivateSession(privateSes);
     inspect.start();
     inspect.watch(privateSes);
     ipcMain.handle(INSPECT_CHANNEL, (event, request: unknown) => {
@@ -344,9 +359,11 @@ if (!app.requestSingleInstanceLock()) {
           }
         : {}),
       isShell,
+      onPrivateEnded: forgetPrivateData,
     });
     privacy.start();
     privacy.protect(privateSes);
+    privacy.setPrivateSession(privateSes);
     const shield = privacy;
     ipcMain.handle(PRIVACY_CHANNEL, (event, request: unknown) => shield.handle(event, request));
 
@@ -354,7 +371,11 @@ if (!app.requestSingleInstanceLock()) {
     createWindow();
 
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+      if (BrowserWindow.getAllWindows().length > 0) return;
+      // A window reopened while the old one's private data is still being
+      // cleared waits, so its first private tab starts clean.
+      if (privateClearing) void privateClearing.then(() => BrowserWindow.getAllWindows().length === 0 && createWindow());
+      else createWindow();
     });
   });
 

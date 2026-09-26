@@ -53,7 +53,8 @@ export class Shield {
 
   constructor(
     private readonly matcher: () => Matcher | null,
-    private readonly isPaused: (site: string) => boolean,
+    /** Whether the shield is paused on a site for this tab (private tabs have their own, in-memory choices). */
+    private readonly isPaused: (site: string, tab: number) => boolean,
     private readonly onCount: (tab: number, count: number) => void,
     /** A whole page was blocked. Electron drops a cancelled page load without a failure event, so the shell is told. */
     private readonly onPageBlocked: (tab: number, url: string) => void = () => undefined,
@@ -66,7 +67,7 @@ export class Shield {
 
     const record = this.tabs.get(tab);
     const pageUrl = record?.pageUrl ?? '';
-    if (record && this.isPaused(record.site)) return {};
+    if (record && this.isPaused(record.site, tab)) return {};
     const match = this.matcher()?.(url, resourceType, pageUrl);
     if (!match?.blocked) return {};
     this.record(tab, { url, type: resourceType });
@@ -88,7 +89,7 @@ export class Shield {
   report(tab: number): ShieldReport {
     const record = this.tabs.get(tab);
     if (!record) return { site: '', paused: false, count: 0, items: [] };
-    return { site: record.site, paused: this.isPaused(record.site), count: record.count, items: [...record.items] };
+    return { site: record.site, paused: this.isPaused(record.site, tab), count: record.count, items: [...record.items] };
   }
 
   forget(tab: number): void {
@@ -102,7 +103,7 @@ export class Shield {
       this.allowOnce.delete(tab);
       return {};
     }
-    if (this.isPaused(record.site)) return {};
+    if (this.isPaused(record.site, tab)) return {};
     const match = this.matcher()?.(url, 'mainFrame', '');
     if (!match?.blocked) return {};
     this.record(tab, { url, type: 'mainFrame' });

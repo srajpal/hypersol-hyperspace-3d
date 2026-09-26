@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Large page</title>
+    <style>body { margin: 0; padding: 20px; font-family: sans-serif; font-size: 14px; background: #fff; }</style>
+  </head>
+  <body>
+    <main id="rows"></main>
+    <script>
+      // 20,000 small elements, like a long feed or table (GitHub issue #11).
+      const rows = document.getElementById('rows');
+      const f = document.createDocumentFragment();
+      for (let i = 0; i < 20000; i++) {
+        const el = document.createElement('div');
+        el.textContent = 'row ' + i;
+        f.append(el);
+      }
+      rows.append(f);
+      window.longTasks = [];
+      new PerformanceObserver((list) => window.longTasks.push(...list.getEntries().map((e) => e.duration))).observe({ type: 'longtask' });
+      window.addRow = () => rows.append(document.createElement('span'));
+      document.title = 'Large page ready';
+    </script>
+  </body>
+</html>

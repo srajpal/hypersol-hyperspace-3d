@@ -197,3 +197,48 @@ describe('H6: page tilt', () => {
     }
   });
 });
+
+describe('GitHub issue #12: a graphics reset', () => {
+  it('the room draws again by itself when the WebGL context comes back, cards included', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile({ layersOnOpen: false }) });
+    try {
+      await waitForPage(h, 'link-a');
+      await pressInShell(h, 'T', ['control']); // two tabs: the rail and its cards show
+      await sleep(1500);
+      const snap = () =>
+        h.app.evaluate(async ({ BrowserWindow }) => {
+          const image = await BrowserWindow.getAllWindows()[0]!.webContents.capturePage();
+          return image.toBitmap().toString('base64');
+        });
+      const before = Buffer.from(await snap(), 'base64');
+      const frames = await shellCall(h, 'frames');
+      const supported = await h.shell.evaluate(() => {
+        const canvas = document.querySelector('#room canvas') as HTMLCanvasElement;
+        const gl = (canvas.getContext('webgl2') ?? canvas.getContext('webgl')) as WebGLRenderingContext | null;
+        const ext = gl?.getExtension('WEBGL_lose_context');
+        if (!ext) return false;
+        const w = window as unknown as { __restored: boolean };
+        w.__restored = false;
+        canvas.addEventListener('webglcontextrestored', () => (w.__restored = true), { once: true });
+        ext.loseContext();
+        setTimeout(() => ext.restoreContext(), 200);
+        return true;
+      });
+      expect(supported).toBe(true);
+      await h.shell.waitForFunction(() => (window as unknown as { __restored: boolean }).__restored);
+      await waitFor('drawn again without input', () => shellCall(h, 'frames'), (n) => n > frames, 3000);
+      await sleep(800);
+      const after = Buffer.from(await snap(), 'base64');
+      // The room, the sun, the grid, and the tab cards are back: the window looks as it did.
+      let differing = 0;
+      for (let i = 0; i < Math.min(before.length, after.length); i += 4) {
+        const d = Math.abs(before[i]! - after[i]!) + Math.abs(before[i + 1]! - after[i + 1]!) + Math.abs(before[i + 2]! - after[i + 2]!);
+        if (d > 30) differing++;
+      }
+      expect(differing / (before.length / 4)).toBeLessThan(0.02);
+      expect(h.errors).toEqual([]);
+    } finally {
+      await h.close();
+    }
+  });
+});

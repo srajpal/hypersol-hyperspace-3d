@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseImageReport, parseLayersState } from '../shared/layers';
-import { LAYERS, findSectionContainer, largest, liftTransform, vanishingPoint, type Box } from './layers-plan';
+import { LAYERS, findSectionContainer, largest, liftTransform, sameExceptLift, vanishingPoint, withoutLift, type Box } from './layers-plan';
 
 const box = (width: number, height: number): Box => ({ x: 0, y: 0, width, height });
 
@@ -59,6 +59,17 @@ describe('vanishingPoint', () => {
     expect(vanishingPoint({ width: 1000, height: 600 }, { x: 9, y: Number.NaN })).toEqual(
       vanishingPoint({ width: 1000, height: 600 }, { x: 1, y: 0 }),
     );
+  });
+});
+
+describe('our own style changes (issue #9)', () => {
+  it('tells our --hs-lift apart from the page restyling an element', () => {
+    const lift = '--hs-lift: translate(1px, 2px) perspective(1400px) translateZ(70px) scale(0.94);';
+    expect(withoutLift(`color: red; ${lift}`)).toBe('color: red;');
+    expect(sameExceptLift('color: red;', `color: red; ${lift}`)).toBe(true);
+    expect(sameExceptLift(lift, lift.replace('70px', '0px'))).toBe(true);
+    expect(sameExceptLift(lift, `${lift} transform: translateX(80px);`)).toBe(false);
+    expect(sameExceptLift('', 'position: fixed;')).toBe(false);
   });
 });
 

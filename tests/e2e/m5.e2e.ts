@@ -291,3 +291,114 @@ describe('G8 and G9: motion and efficiency', () => {
     }
   });
 });
+
+describe('GitHub issues #9, #11, #14: the layers view and changing pages', () => {
+  it('#9 lets go of an element when the page transforms, animates, or pins it after it was lifted; no churn', async () => {
+    const h = await launch(server.url(PAGE), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, PAGE);
+      await waitFor('layers on', () => lifted(h), (l) => l.includes('hero') && l.includes('cards') && l.includes('form'));
+      const layerOf = (id: string) => inPage<string | null>(h, `document.getElementById('${id}').getAttribute('data-hs-layer')`, PAGE);
+      // Inline style.
+      await inPage(h, `document.getElementById('hero').style.transform = 'translateX(80px)'`, PAGE);
+      await waitFor('hero let go', () => layerOf('hero'), (l) => l === null);
+      expect(await inPage<string>(h, `getComputedStyle(document.getElementById('hero')).transform`, PAGE)).toBe('matrix(1, 0, 0, 1, 80, 0)');
+      // A class from the page's own stylesheet.
+      await inPage(h, `(() => { const s = document.createElement('style'); s.textContent = '.moved { transform: translateY(10px); }'; document.head.append(s); document.getElementById('cards').classList.add('moved'); })()`, PAGE);
+      await waitFor('cards let go', () => layerOf('cards'), (l) => l === null);
+      expect(await inPage<string>(h, `getComputedStyle(document.getElementById('cards')).transform`, PAGE)).toBe('matrix(1, 0, 0, 1, 0, 10)');
+      // Pinned afterwards.
+      await inPage(h, `document.getElementById('form').style.position = 'fixed'`, PAGE);
+      await waitFor('form let go', () => layerOf('form'), (l) => l === null);
+      // Nothing keeps changing once the page is still (our own style updates are not page changes).
+      await sleep(800);
+      await inPage(h, `window.__hsChanges = 0; new MutationObserver((r) => (window.__hsChanges += r.length)).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['data-hs-layer'] })`, PAGE);
+      await sleep(1500);
+      expect(await inPage<number>(h, 'window.__hsChanges', PAGE)).toBe(0);
+      // Off and on again: still left alone.
+      await pressInShell(h, 'L', ['control', 'shift']);
+      await waitFor('off', () => lifted(h), (l) => l.length === 0);
+      await pressInShell(h, 'L', ['control', 'shift']);
+      await waitFor('on', () => lifted(h), (l) => l.includes('long'));
+      expect(await lifted(h)).not.toEqual(expect.arrayContaining(['hero']));
+      expect(await inPage<string>(h, `getComputedStyle(document.getElementById('hero')).transform`, PAGE)).toBe('matrix(1, 0, 0, 1, 80, 0)');
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('#9 (review) lets go of a section when a fixed element is added inside it, or a class on it pins a child', async () => {
+    const h = await launch(server.url(PAGE), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, PAGE);
+      await waitFor('layers on', () => lifted(h), (l) => l.includes('hero') && l.includes('form'));
+      const layerOf = (id: string) => inPage<string | null>(h, `document.getElementById('${id}').getAttribute('data-hs-layer')`, PAGE);
+      // A fixed element added inside a lifted section.
+      await inPage(h, `(() => { const p = document.createElement('div'); p.id = 'new-fixed'; p.style.cssText = 'position:fixed;top:0;left:0;width:100px;height:30px'; p.textContent = 'fixed'; document.getElementById('hero').append(p); })()`, PAGE);
+      // Promptly: the layers are chosen again once the new element has been checked.
+      await waitFor('hero let go', () => layerOf('hero'), (l) => l === null, 3000);
+      const top = () => inPage<number>(h, `document.getElementById('new-fixed').getBoundingClientRect().top`, PAGE);
+      const before = await top();
+      await inPage(h, 'window.scrollTo(0, 200)', PAGE);
+      await sleep(300);
+      expect(Math.abs((await top()) - before)).toBeLessThan(1); // it stays put, as fixed means
+      await inPage(h, 'window.scrollTo(0, 0)', PAGE);
+      // A class on a lifted section that pins something inside it, through the page's stylesheet.
+      await inPage(h, `(() => { const s = document.createElement('style'); s.textContent = '.pin-field #field { position: fixed; top: 0; left: 0; }'; document.head.append(s); document.getElementById('form').classList.add('pin-field'); })()`, PAGE);
+      await waitFor('form let go', () => layerOf('form'), (l) => l === null, 3000);
+      expect(await inPage<string>(h, `getComputedStyle(document.getElementById('field')).position`, PAGE)).toBe('fixed');
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('#11 keeps a 20,000-element page responsive while it changes, with the layers view on', async () => {
+    const h = await launch(server.url('large.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'large.html');
+      await waitFor('built', () => inPage<string>(h, 'document.title', 'large.html'), (t) => t === 'Large page ready');
+      expect(await layersOn(h)).toBe(true);
+      await sleep(1500); // the first scan settles
+      await inPage(h, 'window.longTasks = []', 'large.html');
+      for (let i = 0; i < 6; i++) {
+        await inPage(h, 'window.addRow()', 'large.html');
+        await sleep(600);
+      }
+      const tasks = await inPage<number[]>(h, 'window.longTasks', 'large.html');
+      console.log(`#11: long tasks while the page changed: ${JSON.stringify(tasks.map((t) => Math.round(t)))}`);
+      // Budget: no pause of 50 ms or more (a long task) while the page changes.
+      expect(tasks.filter((t) => t >= 50)).toEqual([]);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('#14 follows scrolling inside boxes: image reports and the lift of layers inside them', async () => {
+    const h = await launch(server.url(PAGE), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, PAGE);
+      await inPage(
+        h,
+        `(() => {
+          const box = document.createElement('div');
+          box.id = 'scroller';
+          box.style.cssText = 'height:240px;width:400px;overflow:auto';
+          box.innerHTML = '<div style="width:1200px"><img id="moving" alt="Moving" src="/icon.png?nested" width="160" height="100"><div style="height:2000px"></div></div>';
+          document.getElementById('hero').append(box);
+        })()`,
+        PAGE,
+      );
+      const moving = async () => (await shellCall(h, 'layers')).images.find((i) => i.alt === 'Moving');
+      const start = await waitFor('reported', moving, (i) => i !== undefined);
+      await waitFor('lifted', () => lifted(h), (l) => l.includes('moving'));
+      const liftBefore = await inPage<string>(h, `document.getElementById('moving').style.getPropertyValue('--hs-lift')`, PAGE);
+      await inPage(h, `document.getElementById('scroller').scrollTop = 180`, PAGE);
+      await waitFor('moved up in the report', moving, (i) => i !== undefined && Math.abs(i.y - (start!.y - 180)) < 1);
+      await waitFor('lift follows', () => inPage<string>(h, `document.getElementById('moving').style.getPropertyValue('--hs-lift')`, PAGE), (v) => v !== liftBefore);
+      await inPage(h, `document.getElementById('scroller').scrollLeft = 120`, PAGE);
+      await waitFor('moved left in the report', moving, (i) => i !== undefined && Math.abs(i.x - (start!.x - 120)) < 1);
+    } finally {
+      await h.close();
+    }
+  });
+});

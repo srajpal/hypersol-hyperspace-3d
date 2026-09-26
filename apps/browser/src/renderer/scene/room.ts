@@ -124,6 +124,8 @@ export class Room {
   private framePending = false;
   private lastFrameTime = 0;
   private hoveredCard: TabCard | null = null;
+  /** The WebGL context is lost (a graphics reset): no drawing until it is restored. */
+  private contextLost = false;
   /** Whether the tab rail shows: only with two or more tabs. */
   private railShown = false;
   private extra = { right: 0, bottom: 0 };
@@ -141,6 +143,20 @@ export class Room {
     this.webgl.setPixelRatio(window.devicePixelRatio);
     this.webgl.setClearColor(0x000000, 0);
     container.append(this.webgl.domElement);
+    // A graphics reset (driver update, GPU switch, sleep) loses the WebGL
+    // context. Nothing is drawn while it is lost; when it comes back, the
+    // room draws again at once, without waiting for input (GitHub issue #12).
+    // Three.js uploads the textures (room, cards, snapshots) again from
+    // their images on that first frame.
+    this.webgl.domElement.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault(); // allows the browser to restore it
+      this.contextLost = true;
+    });
+    this.webgl.domElement.addEventListener('webglcontextrestored', () => {
+      this.contextLost = false;
+      this.lastFrameTime = 0;
+      this.requestRender();
+    });
 
     this.css = new CSS3DRenderer();
     this.css.domElement.classList.add('hs-css-layer');
@@ -472,13 +488,14 @@ export class Room {
   // ---- Rendering ----------------------------------------------------------
 
   requestRender(): void {
-    if (this.framePending) return;
+    if (this.framePending || this.contextLost) return;
     this.framePending = true;
     requestAnimationFrame((t) => this.frame(t));
   }
 
   private frame(time: number): void {
     this.framePending = false;
+    if (this.contextLost) return;
     const dt = this.lastFrameTime === 0 ? 16 : Math.min(50, time - this.lastFrameTime);
     this.lastFrameTime = time;
 

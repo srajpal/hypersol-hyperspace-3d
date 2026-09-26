@@ -104,6 +104,14 @@ export type InspectReply<K extends InspectOp> = { ok: true; value: InspectResult
 
 /** Most requests and console messages kept per tab. */
 export const MAX_ENTRIES = 300;
+/**
+ * Most requests followed while still waiting for an answer, per tab
+ * (GitHub issue #13). Beyond this the oldest waiting one is no longer
+ * followed: it stays counted, but its end is not recorded.
+ */
+export const MAX_PENDING = 300;
+/** Most certificates remembered (per host), for normal and for private tabs each. */
+export const MAX_CERTS = 500;
 /** Most entries sent in one snapshot. */
 export const MAX_BATCH = 100;
 

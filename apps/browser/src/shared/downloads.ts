@@ -18,6 +18,11 @@ export interface DownloadInfo {
   /** Total size, or 0 when the server did not say. */
   total: number;
   state: DownloadState;
+  /**
+   * Electron said it is done (completed, cancelled, or interrupted for good).
+   * An interruption before that can still resume, so it is not finished.
+   */
+  finished: boolean;
   /** Milliseconds since 1970. */
   startedAt: number;
 }

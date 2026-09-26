@@ -442,3 +442,29 @@ Q3 - a
 Download worked but there was no visual confirmation that it finished downloading. Printed to off, not the best pooking but something to look into later.
 Opened a private rab, should be an option under the + sign at the top. Go ahead and accept this milestone and commit everything. I will run some other tests and post some GitHub issues next so do not continue to the next milestone. Use my feed back before making plans.
 ```
+
+## 39 — 2026-09-26
+
+Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b35 · Tokens: not captured
+
+```text
+GitHub issues are ready to view. Fix and open a or for review. Let me know if you have any questions
+```
+
+Note: "open a or" read as "open a PR" (pull request).
+
+## 40 — 2026-09-26
+
+Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b35 · Tokens: not captured
+
+```text
+Check comments on pr
+```
+
+## 41 — 2026-09-26
+
+Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b35 · Tokens: not captured
+
+```text
+One issue still exists check the comments on the pr
+```

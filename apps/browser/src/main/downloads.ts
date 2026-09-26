@@ -49,10 +49,11 @@ export class Downloads {
         received: 0,
         total: item.getTotalBytes(),
         state: 'progressing',
+        finished: false,
         startedAt: Date.now(),
       };
       this.items.set(info.id, { item, info });
-      if (this.items.size > MAX_LISTED) this.items.delete(this.items.keys().next().value!);
+      this.trim();
       item.on('updated', (_e, state) => {
         info.received = item.getReceivedBytes();
         info.total = item.getTotalBytes();
@@ -62,8 +63,10 @@ export class Downloads {
       item.once('done', (_e, state) => {
         info.received = item.getReceivedBytes();
         info.state = state;
+        info.finished = true;
         const entry = this.items.get(info.id);
         if (entry) entry.item = null;
+        this.trim();
         this.changed(true);
       });
       this.changed(true);
@@ -75,7 +78,7 @@ export class Downloads {
   }
 
   get active(): number {
-    return [...this.items.values()].filter(({ info }) => info.state === 'progressing').length;
+    return [...this.items.values()].filter(({ info }) => !info.finished).length;
   }
 
   async handle(event: IpcMainInvokeEvent, raw: unknown): Promise<DownloadReply<DownloadOp>> {
@@ -94,7 +97,7 @@ export class Downloads {
       case 'downloads.list':
         return this.list();
       case 'downloads.clear':
-        for (const [id, { info }] of this.items) if (info.state !== 'progressing') this.items.delete(id);
+        for (const [id, { info }] of this.items) if (info.finished) this.items.delete(id);
         this.changed(true);
         return null;
       case 'downloads.open':
@@ -118,9 +121,23 @@ export class Downloads {
     }
   }
 
+  /**
+   * Keeps the list to MAX_LISTED by dropping the oldest finished entries.
+   * A download not yet done (running, or interrupted but able to resume)
+   * is never dropped (GitHub issue #10, PR #16 review): it must stay
+   * cancellable and keep its file name reserved, however many finish
+   * after it.
+   */
+  private trim(): void {
+    for (const [id, { info }] of this.items) {
+      if (this.items.size <= MAX_LISTED) return;
+      if (info.finished) this.items.delete(id);
+    }
+  }
+
   /** A name in use by a download still in progress. */
   private reserved(path: string): boolean {
-    return [...this.items.values()].some(({ info }) => info.path === path && info.state === 'progressing');
+    return [...this.items.values()].some(({ info }) => info.path === path && !info.finished);
   }
 
   private changed(now = false): void {

@@ -92,6 +92,13 @@ export class App {
   private readonly shieldCounts = new Map<number, number>();
   /** Whether each tab's page is in the layers view, by tab id. */
   private readonly layersOn = new Map<number, boolean>();
+  /**
+   * Layers choices made in private tabs, by site: in memory only, shared by
+   * the private tabs while any is open, forgotten with the last one
+   * (GitHub issue #8).
+   */
+  private readonly privateLayersSites = new Map<string, boolean>();
+  private hadPrivate = false;
   /** Test runs: print requests, counted instead of opening the dialog. */
   testPrints = 0;
   private downloadItems: DownloadInfo[] = [];
@@ -253,6 +260,7 @@ export class App {
         this.snapshotTimers.delete(id);
         this.shieldCounts.delete(id);
         this.layersOn.delete(id);
+        if (!store.tabs.some((t) => t.private)) this.privateLayersSites.clear();
       }
     }
 
@@ -267,6 +275,10 @@ export class App {
       })),
     );
 
+    // The last private tab closed (blank ones count): private data and choices go.
+    const hasPrivate = store.tabs.some((t) => t.private);
+    if (this.hadPrivate && !hasPrivate) void this.privacy.get({ op: 'private.ended' }).catch(() => undefined);
+    this.hadPrivate = hasPrivate;
     this.updateToolbar();
     this.updateShield(store.focusedId !== this.shownFocus);
     this.instruments.setRailShown(this.room.railVisible);
@@ -628,7 +640,8 @@ export class App {
     const url = view?.status.url ?? '';
     if (!view || !isWeb(url)) return;
     const site = hostOf(url);
-    const on = this.settings.layersSites[site] ?? this.settings.layersOnOpen;
+    const privateChoice = this.store.get(tabId)?.private ? this.privateLayersSites.get(site) : undefined;
+    const on = privateChoice ?? this.settings.layersSites[site] ?? this.settings.layersOnOpen;
     this.layersOn.set(tabId, on);
     view.sendLayers(this.layersState(tabId, false));
     if (tabId === this.store.focusedId) this.updateToolbar();
@@ -645,6 +658,10 @@ export class App {
     this.updateToolbar();
     const site = hostOf(tab.url);
     if (!site) return;
+    if (tab.private) {
+      this.privateLayersSites.set(site, on);
+      return;
+    }
     try {
       this.settings = await this.data.get({
         op: 'settings.set',
@@ -727,7 +744,7 @@ export class App {
       case 'downloads':
         this.downloadItems = command.items;
         this.options.downloads.items = command.items;
-        this.options.toolbar.downloading = command.items.some((d) => d.state === 'progressing');
+        this.options.toolbar.downloading = command.items.some((d) => !d.finished);
         break;
       case 'filters-changed':
         if (this.openPanelName === 'settings') void this.options.settingsPanel.loadPrivacy();

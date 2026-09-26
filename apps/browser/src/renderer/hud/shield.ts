@@ -309,9 +309,10 @@ export class HsShield extends LitElement {
   }
 
   private async pause(site: string, paused: boolean): Promise<void> {
-    if (!this.client) return;
+    const tab = this.tab();
+    if (!this.client || tab === null) return;
     try {
-      await this.client.get({ op: 'shield.pause', site, paused });
+      await this.client.get({ op: 'shield.pause', tab, site, paused });
       this.dispatchEvent(new CustomEvent('hs-shield-paused', { detail: { site, paused }, bubbles: true, composed: true }));
     } catch (e) {
       this.message = e instanceof Error ? e.message : String(e);
