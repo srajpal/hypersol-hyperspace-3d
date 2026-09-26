@@ -51,7 +51,9 @@ export type PrivacyRequest =
   | { op: 'filters.update' }
   | { op: 'dns.status' }
   | { op: 'dns.check' }
-  | { op: 'dns.use-network' };
+  | { op: 'dns.use-network' }
+  /** The shell's last private tab closed (blank ones included): private data and choices go (PR #16 review). */
+  | { op: 'private.ended' };
 
 export interface PrivacyResults {
   'shield.report': ShieldReport;
@@ -63,6 +65,7 @@ export interface PrivacyResults {
   /** 'blocked' when the encrypted DNS resolver cannot be reached from this network. */
   'dns.check': 'reachable' | 'blocked' | 'not-secure';
   'dns.use-network': DnsStatus;
+  'private.ended': null;
 }
 
 export type PrivacyOp = PrivacyRequest['op'];
@@ -84,6 +87,7 @@ export function parsePrivacyRequest(raw: unknown): { request: PrivacyRequest } |
     case 'dns.status':
     case 'dns.check':
     case 'dns.use-network':
+    case 'private.ended':
       return { request: { op: r['op'] } };
     case 'shield.report':
       if (!isTabId(r['tab'])) return bad('tab must be a tab id');

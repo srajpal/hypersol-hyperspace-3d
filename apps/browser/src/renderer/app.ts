@@ -98,6 +98,7 @@ export class App {
    * (GitHub issue #8).
    */
   private readonly privateLayersSites = new Map<string, boolean>();
+  private hadPrivate = false;
   /** Test runs: print requests, counted instead of opening the dialog. */
   testPrints = 0;
   private downloadItems: DownloadInfo[] = [];
@@ -274,6 +275,10 @@ export class App {
       })),
     );
 
+    // The last private tab closed (blank ones count): private data and choices go.
+    const hasPrivate = store.tabs.some((t) => t.private);
+    if (this.hadPrivate && !hasPrivate) void this.privacy.get({ op: 'private.ended' }).catch(() => undefined);
+    this.hadPrivate = hasPrivate;
     this.updateToolbar();
     this.updateShield(store.focusedId !== this.shownFocus);
     this.instruments.setRailShown(this.room.railVisible);
@@ -739,7 +744,7 @@ export class App {
       case 'downloads':
         this.downloadItems = command.items;
         this.options.downloads.items = command.items;
-        this.options.toolbar.downloading = command.items.some((d) => d.state === 'progressing');
+        this.options.toolbar.downloading = command.items.some((d) => !d.finished);
         break;
       case 'filters-changed':
         if (this.openPanelName === 'settings') void this.options.settingsPanel.loadPrivacy();

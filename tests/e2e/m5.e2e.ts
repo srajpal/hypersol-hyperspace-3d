@@ -327,6 +327,31 @@ describe('GitHub issues #9, #11, #14: the layers view and changing pages', () =>
     }
   });
 
+  it('#9 (review) lets go of a section when a fixed element is added inside it, or a class on it pins a child', async () => {
+    const h = await launch(server.url(PAGE), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, PAGE);
+      await waitFor('layers on', () => lifted(h), (l) => l.includes('hero') && l.includes('form'));
+      const layerOf = (id: string) => inPage<string | null>(h, `document.getElementById('${id}').getAttribute('data-hs-layer')`, PAGE);
+      // A fixed element added inside a lifted section.
+      await inPage(h, `(() => { const p = document.createElement('div'); p.id = 'new-fixed'; p.style.cssText = 'position:fixed;top:0;left:0;width:100px;height:30px'; p.textContent = 'fixed'; document.getElementById('hero').append(p); })()`, PAGE);
+      // Promptly: the layers are chosen again once the new element has been checked.
+      await waitFor('hero let go', () => layerOf('hero'), (l) => l === null, 3000);
+      const top = () => inPage<number>(h, `document.getElementById('new-fixed').getBoundingClientRect().top`, PAGE);
+      const before = await top();
+      await inPage(h, 'window.scrollTo(0, 200)', PAGE);
+      await sleep(300);
+      expect(Math.abs((await top()) - before)).toBeLessThan(1); // it stays put, as fixed means
+      await inPage(h, 'window.scrollTo(0, 0)', PAGE);
+      // A class on a lifted section that pins something inside it, through the page's stylesheet.
+      await inPage(h, `(() => { const s = document.createElement('style'); s.textContent = '.pin-field #field { position: fixed; top: 0; left: 0; }'; document.head.append(s); document.getElementById('form').classList.add('pin-field'); })()`, PAGE);
+      await waitFor('form let go', () => layerOf('form'), (l) => l === null, 3000);
+      expect(await inPage<string>(h, `getComputedStyle(document.getElementById('field')).position`, PAGE)).toBe('fixed');
+    } finally {
+      await h.close();
+    }
+  });
+
   it('#11 keeps a 20,000-element page responsive while it changes, with the layers view on', async () => {
     const h = await launch(server.url('large.html'), { userDataDir: newProfile() });
     try {

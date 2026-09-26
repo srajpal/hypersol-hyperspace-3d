@@ -294,6 +294,24 @@ describe('GitHub issues #8 and #10', () => {
       await waitFor('blocked in a normal tab', () => shellCall(h, 'shield'), (s) => s.count === 2);
       expect((await shellCall(h, 'layers')).on).toBe(true);
 
+      // A blank private tab keeps the private session (and its choices) alive (PR #16 review).
+      const loaded = (await tabs(h)).filter((x) => x.private).map((x) => x.id);
+      await pressInShell(h, 'N', ['control', 'shift']);
+      const blank = (await focusedTab(h)).id;
+      for (const id of loaded) {
+        while ((await focusedTab(h)).id !== id) await pressInShell(h, 'Tab', ['control']);
+        await pressInShell(h, 'W', ['control']);
+      }
+      await waitFor('only the blank private tab left', () => tabs(h), (t) => t.filter((x) => x.private).map((x) => x.id).join() === String(blank));
+      await sleep(500);
+      while ((await focusedTab(h)).id !== blank) await pressInShell(h, 'Tab', ['control']);
+      const adBefore = server.hits.get('/ddm/ad.gif') ?? 0;
+      await navigateTo(h, site);
+      await waitForPage(h, 'shield.html');
+      await waitFor('page done', () => inPage<string>(h, 'document.title', 'shield.html'), (t) => t === 'Shield test ready');
+      expect(server.hits.get('/ddm/ad.gif') ?? 0).toBe(adBefore + 1); // still paused
+      expect((await shellCall(h, 'layers')).on).toBe(false);
+
       // Close every private tab: the choices go.
       for (const t of (await tabs(h)).filter((x) => x.private)) {
         while ((await focusedTab(h)).id !== t.id) await pressInShell(h, 'Tab', ['control']);

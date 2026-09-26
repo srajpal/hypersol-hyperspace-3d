@@ -96,7 +96,7 @@ export class HsDownloads extends LitElement {
         <button class="icon-button" aria-label="Close Downloads" data-testid="downloads-close" @click=${() => this.close()}>×</button>
       </header>
       <div class="top">
-        <button data-testid="downloads-clear" ?disabled=${!this.items.some((d) => d.state !== 'progressing')} @click=${() => void this.act({ op: 'downloads.clear' })}>
+        <button data-testid="downloads-clear" ?disabled=${!this.items.some((d) => d.finished)} @click=${() => void this.act({ op: 'downloads.clear' })}>
           Clear list
         </button>
       </div>
@@ -111,7 +111,15 @@ export class HsDownloads extends LitElement {
   private item(d: DownloadInfo) {
     const size = d.total > 0 ? `${formatBytes(d.received)} of ${formatBytes(d.total)}` : formatBytes(d.received);
     const state =
-      d.state === 'completed' ? `Done · ${formatBytes(d.received)}` : d.state === 'cancelled' ? 'Cancelled' : d.state === 'interrupted' ? 'Stopped' : size;
+      d.state === 'completed'
+        ? `Done · ${formatBytes(d.received)}`
+        : d.state === 'cancelled'
+          ? 'Cancelled'
+          : d.state === 'interrupted'
+            ? d.finished
+              ? 'Stopped'
+              : `Paused · ${size}` // interrupted, can still resume
+            : size;
     return html`<li data-testid="download" data-state=${d.state}>
       <span class="name">${d.filename}</span>
       ${d.state === 'progressing'
@@ -120,7 +128,7 @@ export class HsDownloads extends LitElement {
       <div class="row">
         ${d.state === 'completed' ? html`<button data-testid="download-open" @click=${() => void this.act({ op: 'downloads.open', id: d.id })}>Open</button>` : nothing}
         ${d.state === 'completed' ? html`<button data-testid="download-show" @click=${() => void this.act({ op: 'downloads.show', id: d.id })}>Show in folder</button>` : nothing}
-        ${d.state === 'progressing' ? html`<button class="danger" data-testid="download-cancel" @click=${() => void this.act({ op: 'downloads.cancel', id: d.id })}>Cancel</button>` : nothing}
+        ${!d.finished ? html`<button class="danger" data-testid="download-cancel" @click=${() => void this.act({ op: 'downloads.cancel', id: d.id })}>Cancel</button>` : nothing}
       </div>
     </li>`;
   }

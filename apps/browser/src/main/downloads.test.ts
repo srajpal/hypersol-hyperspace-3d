@@ -54,6 +54,22 @@ describe('Downloads list (GitHub issue #10)', () => {
     expect(same.path.endsWith('collision (1).bin')).toBe(true);
   });
 
+  it('keeps a download interrupted but able to resume (not done): listed and cancellable (PR #16 review)', async () => {
+    const { downloads, start } = setup();
+    const first = start('resumable.bin');
+    first.emit('updated', {}, 'interrupted');
+    expect(downloads.list()[0]).toMatchObject({ id: 1, state: 'interrupted', finished: false });
+    for (let i = 0; i < 100; i++) start(`small-${i}.txt`).emit('done', {}, 'completed');
+    expect(downloads.list().some((d) => d.id === 1)).toBe(true);
+    expect(await downloads.handle(shell, { op: 'downloads.cancel', id: 1 })).toEqual({ ok: true, value: null });
+    expect(first.cancel).toHaveBeenCalled();
+    // Once done for good, it is finished and "Clear list" removes it.
+    first.emit('done', {}, 'interrupted');
+    expect(downloads.list().find((d) => d.id === 1)).toMatchObject({ finished: true });
+    await downloads.handle(shell, { op: 'downloads.clear' });
+    expect(downloads.list()).toEqual([]);
+  });
+
   it('never drops running downloads, even more than the list holds', () => {
     const { downloads, start } = setup();
     for (let i = 0; i < 102; i++) start(`busy-${i}.bin`);

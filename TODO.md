@@ -1314,3 +1314,30 @@ D8 clipboard checks while the Windows clipboard was unavailable to every
 program on the machine (PowerShell's Set-Clipboard failed too). Not
 checked: macOS and Linux.
 
+Pull request #16 review (prompt 40), four P2 findings, all fixed on the
+same branch:
+- A fixed element added inside a lifted section did not release it: the
+  scan now notes any change to what is pinned and chooses the layers
+  again when it ends.
+- A class on a lifted section that pins something inside it (".x #y
+  {position: fixed}") left the pinned set stale: a restyle of, in, or
+  around a layer now rechecks that element's whole subtree (in slices;
+  elsewhere only the element, so restyling animations cause no rescans).
+- Private data and choices were cleared when the last private page
+  closed although a blank private tab was still open: the shell now
+  tells the main process when its last private tab (blank ones
+  included) closes, and only then is anything cleared.
+- A download interrupted but able to resume counted as finished and
+  could be trimmed: only downloads Electron reports as done are finished
+  (new field "finished"); others stay listed, cancellable, and reserved,
+  and show as paused.
+New checks: a unit test for the resumable download (fails against the
+reviewed code), an end-to-end check for the added fixed element and the
+pinning class (the class case fails against the reviewed code; the
+added-element case also passed there in two runs, since another change
+chose the layers again within 3 s, so it guards the behaviour without
+being shown to catch that regression), and the blank private tab added
+to the #8 check. Results: 188 unit tests; 138 of 141 end-to-end checks,
+the 3 failures again the D8 clipboard checks while the Windows clipboard
+was unavailable.
+

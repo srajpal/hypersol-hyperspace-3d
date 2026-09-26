@@ -72,6 +72,8 @@ let queue: Element[] = [];
 let scanAll = true;
 let scanning = false;
 let scanned = false;
+/** The pinned set changed in an incremental scan: the layers are chosen again once it ends (PR #16 review). */
+let pinnedChanged = false;
 const afterScan: (() => void)[] = [];
 
 function isPinned(el: Element): boolean {
@@ -86,6 +88,8 @@ function runScan(): void {
   const step = () => {
     if (scanAll) {
       scanAll = false;
+      // A full scan follows many changes: choose again afterwards too.
+      pinnedChanged = true;
       pinned.clear();
       queue = document.body ? [...document.body.getElementsByTagName('*')] : [];
     }
@@ -95,10 +99,12 @@ function runScan(): void {
       for (let i = 0; i < 64 && queue.length > 0; i++) {
         const el = queue.pop()!;
         if (!el.isConnected) {
-          pinned.delete(el);
+          if (pinned.delete(el)) pinnedChanged = true;
           continue;
         }
-        if (isPinned(el)) pinned.add(el);
+        const now = isPinned(el);
+        if (now !== pinned.has(el)) pinnedChanged = true;
+        if (now) pinned.add(el);
         else pinned.delete(el);
       }
     }
@@ -107,7 +113,12 @@ function runScan(): void {
       return;
     }
     scanning = false;
+    const wasScanned = scanned;
     scanned = true;
+    // Something became pinned or stopped being pinned (a fixed element added
+    // inside a lifted section, or restyled by a parent's class): choose again.
+    if (pinnedChanged && wasScanned && on) scheduleRepick();
+    pinnedChanged = false;
     for (const done of afterScan.splice(0)) done();
   };
   step();
@@ -412,11 +423,15 @@ function onMutations(records: MutationRecord[]): void {
       const el = r.target;
       // Only our --hs-lift changed: not the page's doing.
       if (r.attributeName === 'style' && sameExceptLift(r.oldValue ?? '', el.getAttribute('style') ?? '')) continue;
-      // Just this element is checked again (pages that animate by restyling
-      // must not cause rescans); a restyled layer, or anything inside one,
-      // means choosing again (it may now move itself, or be pinned).
-      if (!scanAll) queue.push(el);
-      if (holdsLayer(el) || [...layers.keys()].some((l) => l.contains(el))) choose = true;
+      // A restyle can pin the element or, through a selector like
+      // ".open .menu", anything inside it. Where layers are involved (the
+      // element is, holds, or sits in a layer) its whole subtree is checked
+      // again, in slices; elsewhere only the element itself, so pages that
+      // animate by restyling do not cause rescans.
+      const nearLayer = holdsLayer(el) || [...layers.keys()].some((l) => l.contains(el));
+      if (nearLayer) queueSubtree(el);
+      else if (!scanAll) queue.push(el);
+      if (nearLayer) choose = true;
     }
   }
   if (queue.length > 0 || scanAll) runScan();

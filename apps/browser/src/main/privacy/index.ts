@@ -49,6 +49,8 @@ export interface PrivacyOptions {
   onDnsApplied?: (mode: 'secure' | 'automatic', resolver: string) => void;
   /** Is this the app's own shell (the only one allowed to ask)? */
   isShell(contents: WebContents): boolean;
+  /** The shell's last private tab closed: forget everything private (main/index.ts). */
+  onPrivateEnded?: () => Promise<void>;
 }
 
 /** Downloads one list through Chromium's network stack, so encrypted DNS applies. */
@@ -307,6 +309,9 @@ export class Privacy {
         return this.dns.check();
       case 'dns.use-network':
         return this.dns.useNetwork();
+      case 'private.ended':
+        await this.options.onPrivateEnded?.();
+        return null;
     }
   }
 

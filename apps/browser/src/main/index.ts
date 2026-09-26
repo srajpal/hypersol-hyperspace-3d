@@ -55,9 +55,8 @@ let testLog: TestLog | null = null;
 let storage: StorageService | null = null;
 let privacy: Privacy | null = null;
 let inspector: Inspector | null = null;
-/** The private tabs' in-memory session, and how many private pages are open. */
+/** The private tabs' in-memory session. */
 let privateSession: Session | null = null;
-let privatePages = 0;
 
 /**
  * Windows and Linux: no menu bar; shortcuts are handled per web contents
@@ -217,15 +216,9 @@ if (!app.requestSingleInstanceLock()) {
     privacy?.trackTab(contents);
     inspector?.trackTab(contents);
     // A private tab keeps nothing: no history, and its session's data goes
-    // when the last private tab closes (milestone 8).
+    // when the last private tab closes (milestone 8). The shell says when
+    // that is, since a blank private tab has no page yet (PR #16 review).
     const isPrivate = privateSession !== null && contents.session === privateSession;
-    if (isPrivate) {
-      privatePages += 1;
-      contents.once('destroyed', () => {
-        privatePages -= 1;
-        if (privatePages === 0) void forgetPrivateData();
-      });
-    }
     wireGuest(contents, {
       send: (command) => {
         const host = contents.hostWebContents;
@@ -347,6 +340,7 @@ if (!app.requestSingleInstanceLock()) {
           }
         : {}),
       isShell,
+      onPrivateEnded: forgetPrivateData,
     });
     privacy.start();
     privacy.protect(privateSes);
