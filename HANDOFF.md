@@ -23,9 +23,11 @@ the holoml repository is updated to the new browser name. GitHub issues #8 to #1
 (QA of milestone 8) were fixed in PR #16, merged 2026-09-26; #4 and #5 stay proposed for the
 tabs and economy milestone (#4, milestone 10) and the first release (#5,
 milestone 11). The Electron security check was last done
-at the start of milestone 8 (44.4.5 current). Progress screenshots live
+at the start of milestone 9 (44.4.5 current). Progress screenshots live
 in docs/screenshots/<milestone>/; capture them with
-`MILESTONE=mN pnpm screenshots` when a milestone is finished.
+`MILESTONE=mN pnpm screenshots` when a milestone is finished and add
+them to docs/progress.md (the README has a short progress paragraph
+that links there).
 
 A four-perspective documentation review (technical, product/UX,
 operational, business) ran on 2026-09-24. Its doc fixes and rule updates

@@ -120,8 +120,9 @@ the correction.
   in a document.
 - At the end of each milestone, save screenshots of the main screens to
   docs/screenshots/<milestone>/ with `MILESTONE=mN pnpm screenshots`, and
-  add them to the README's Progress section. (Added 2026-09-25, prompt
-  21.)
+  add them to docs/progress.md; the README keeps a short progress
+  paragraph that links there. (Added 2026-09-25, prompt 21; the progress
+  page split out 2026-09-26, prompt 47.)
 - Owner-only automation (Remote Control at session start, the prompt-log
   reminder) lives in CLAUDE.local.md, which is gitignored, so
   contributors' sessions never inherit it. HANDOFF.md holds a copy for

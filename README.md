@@ -91,90 +91,14 @@ lifted out of ordinary pages, free camera movement, mobile, VR, and more.
 
 ## Progress
 
-Screenshots from each finished milestone, kept in
-[docs/screenshots](docs/screenshots).
-
-**Milestone 1: a live page in the 3D room.** A real website on a tilted
-panel, clicks and typing working.
-
-![Wikipedia on the tilted panel in the 3D room](docs/screenshots/m1/1-wikipedia-tilted.png)
-
-**Milestone 2: browsing basics.** Tabs as cards on an arc, the top bar,
-the start panel, and error cards.
-
-![Three tabs as cards on the left, a page tilted in the centre](docs/screenshots/m2/1-tabs.png)
-
-![The new-tab start panel with the "Nothing saved yet" empty state](docs/screenshots/m2/2-start-panel.png)
-
-![The "We couldn't find that site" error card](docs/screenshots/m2/3-error-card.png)
-
-**Milestone 3: memory and settings.** Bookmarks and history, the Library
-and Settings panels, and a start panel with your data.
-
-![The start panel showing a bookmark and recent history](docs/screenshots/m3/2-start-panel.png)
-
-![The Library panel showing today's history](docs/screenshots/m3/4-library-history.png)
-
-![The Settings panel: search engine, startup, clear browsing data](docs/screenshots/m3/5-settings.png)
-
-**Milestone 4: private by default.** Ad and tracker blocking with a
-shield that counts and lists what was blocked, element hiding, a
-"blocked" card with "Open anyway", pausing the shield per site, and
-encrypted DNS through Quad9. Details in [docs/privacy.md](docs/privacy.md).
-
-![The shield popover listing a blocked ad image and tracker script](docs/screenshots/m4/7-shield-popover.png)
-
-![The "The shield blocked this page" card with Open anyway](docs/screenshots/m4/8-blocked-card.png)
-
-![Settings: encrypted DNS and ad and tracker blocking](docs/screenshots/m4/6-settings-privacy.png)
-
-**Milestone 5: depth layering.** A layers view breaks a page's main
-sections and images apart into separate depths, following the room's
-parallax; the page stays fully usable. It is on by default, with a
-global switch in Settings and a choice remembered per site. The page
-also reports where its images are, groundwork for lifting them into 3D
-later.
-
-![A page in the layers view: sections and images lifted at different depths](docs/screenshots/m5/9-layers-view.png)
-
-![The same page with the layers view off](docs/screenshots/m5/10-layers-off.png)
-
-![Settings: the layers view switch and per-site choices](docs/screenshots/m5/11-settings-layers.png)
-
-**Milestone 6: themes and look.** Two finished themes leaning into the
-1980s and 1990s, switched with the button at the bottom right or in
-Settings (which can also follow the system's light or dark setting). The
-room, cards, panels, and window all follow the theme. Settings > Page
-tilt trades the lean for sharper text.
-
-![Nebula: synthwave sky, striped sun, neon grid](docs/screenshots/m6/1-tabs.png)
-
-![Daylight: pastel sky and grid, with the layers view](docs/screenshots/m6/12-daylight-layers.png)
-
-![Daylight: Settings with the theme choice and page tilt](docs/screenshots/m6/14-daylight-settings.png)
-
-**Milestone 7: instrument panel.** Floating panels with live readouts,
-like a light DevTools in the room: dials and meters for the page in
-front (load time, requests, data, blocked, CPU, memory, connection and
-certificate) and for the browser (tabs, memory, frame rate, filter
-lists, encrypted DNS, clock), plus the page's console and network list.
-Off by default: Ctrl+Shift+I, the gauge button in the top bar, or
-Settings, where each part can be switched on its own. The console and
-network list maximize for reading.
-
-**Milestone 8: everyday browser features.** Zoom buttons in the top bar
-(remembered per site), find in page, a Downloads panel (files go to your
-Downloads folder), printing, and private tabs that keep nothing.
-
-![Zoom at 125% and the find bar](docs/screenshots/m8/20-zoom-and-find.png)
-
-![The Downloads panel](docs/screenshots/m8/21-downloads.png)
-
-![A private tab](docs/screenshots/m8/22-private-tab.png)
-
-![The instrument panel in Nebula](docs/screenshots/m7/17-nebula-instruments.png)
-
-![The instrument panel in Daylight](docs/screenshots/m7/16-daylight-instruments.png)
+Eight milestones are done: a live page on a tilted panel in the 3D room,
+tabs as cards, bookmarks and history, ad and tracker blocking with
+encrypted DNS, a layers view that lifts a page's parts to different
+depths, two themes in a 1980s and 1990s look, an instrument panel, and
+the everyday tools (zoom, find, downloads, printing, private tabs).
+Milestone 9, passwords and site permissions, is being built. See
+[docs/progress.md](docs/progress.md) for each milestone with
+screenshots, and [TODO.md](TODO.md) for the roadmap.
 
 ## HoloML
 
