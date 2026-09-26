@@ -535,3 +535,11 @@ Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b3
 ```text
 I like logo 2 but put now in on one side and a bigger 3d on the other. Then you can start the next milestone.
 ```
+
+## 47 — 2026-09-26
+
+Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b35 · Tokens: not captured
+
+```text
+move the Progress from the readme to its own page and just have a short concise paragraph about progress in the readme and a link to the full progress with the screenshots.
+```

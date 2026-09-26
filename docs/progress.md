@@ -89,3 +89,27 @@ Downloads folder), printing, and private tabs that keep nothing.
 ![The Downloads panel](screenshots/m8/21-downloads.png)
 
 ![A private tab](screenshots/m8/22-private-tab.png)
+
+**Milestone 9: passwords and site permissions** (built; waiting for
+the owner's acceptance). After you sign in, the browser offers to save
+the password, encrypted with your system's keychain; later, clicking the
+sign-in field lists the saved account, and picking it fills the form.
+The Library has a Passwords tab. Sites ask before using the camera,
+microphone, or location (Allow, Allow this time, Block), with a site
+panel behind the lock in the top bar and a LIVE mark on the tab. Also: a
+notice when a download finishes or fails, New private tab under "+",
+and pages print flat.
+
+![The offer to save a password after signing in](screenshots/m9/23-password-offer.png)
+
+![The saved sign-in listed under the field](screenshots/m9/24-sign-in-list.png)
+
+![The Library's Passwords tab](screenshots/m9/25-library-passwords.png)
+
+![A site asking for the camera and microphone](screenshots/m9/26-permission-prompt.png)
+
+![The site panel, with the camera and microphone given to the page](screenshots/m9/27-site-panel.png)
+
+![The download notice](screenshots/m9/28-download-notice.png)
+
+![New tab and New private tab under "+"](screenshots/m9/29-new-tab-menu.png)

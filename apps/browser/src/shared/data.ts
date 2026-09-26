@@ -41,7 +41,7 @@ export type DataRequest =
   | { op: 'settings.set'; patch: Partial<Settings> }
   | { op: 'session.save'; tabs: string[]; focused: number }
   | { op: 'startup' }
-  | { op: 'data.clear'; history: boolean; cookies: boolean; cache: boolean };
+  | { op: 'data.clear'; history: boolean; cookies: boolean; cache: boolean; passwords?: boolean };
 
 export interface DataResults {
   /** message: why history and bookmarks are unavailable; settingsProblem: why saved settings are not in use. */
@@ -128,7 +128,10 @@ export function parseDataRequest(raw: unknown): { request: DataRequest } | { err
     }
     case 'data.clear':
       if (!isFlag(r['history']) || !isFlag(r['cookies']) || !isFlag(r['cache'])) return bad('choices must be true or false');
-      return { request: { op: 'data.clear', history: r['history'], cookies: r['cookies'], cache: r['cache'] } };
+      if (r['passwords'] !== undefined && !isFlag(r['passwords'])) return bad('choices must be true or false');
+      return {
+        request: { op: 'data.clear', history: r['history'], cookies: r['cookies'], cache: r['cache'], passwords: r['passwords'] === true },
+      };
     default:
       return { error: `Unknown request: ${String(r['op'])}` };
   }

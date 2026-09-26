@@ -96,7 +96,9 @@ tabs as cards, bookmarks and history, ad and tracker blocking with
 encrypted DNS, a layers view that lifts a page's parts to different
 depths, two themes in a 1980s and 1990s look, an instrument panel, and
 the everyday tools (zoom, find, downloads, printing, private tabs).
-Milestone 9, passwords and site permissions, is being built. See
+Milestone 9, a password manager and site permissions for the camera,
+microphone, and location, is built and waiting for the owner's
+acceptance. See
 [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 

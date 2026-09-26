@@ -20,7 +20,7 @@ Plan approved 2026-09-24.
 | 6 | Themes and look (design) | Final Nebula and Daylight, theme switch, matching room lighting, design pass over all screens, custom window frame considered | Done (accepted 2026-09-26; tab cards to shrink, see below) |
 | 7 | Instrument panel | Floating panels with live readouts about the page and the browser: dials, meters, a console, and a network list, like a light DevTools; each part switchable in Settings | Done (accepted 2026-09-26) |
 | 8 | Everyday browser features | Zoom (buttons, shortcuts, per site), find in page, downloads panel, printing, private tabs | Done (accepted 2026-09-26, with follow-ups below) |
-| 9 | Passwords and site permissions | A password manager (offer to save on sign-in, fill on return, a Passwords tab in the Library, encrypted with the system's keychain) and a site permissions panel (camera, microphone, location: per-site prompts and choices to review and revoke); plus the milestone 8 feedback (download finished notice, private tab under "+", printing) | Planned (prompt 45); build waiting for the owner |
+| 9 | Passwords and site permissions | A password manager (offer to save on sign-in, fill on return, a Passwords tab in the Library, encrypted with the system's keychain) and a site permissions panel (camera, microphone, location: per-site prompts and choices to review and revoke); plus the milestone 8 feedback (download finished notice, private tab under "+", printing) | Built, waiting for acceptance |
 | 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Later |
 | 11 | First release v0.1 | Installers for Windows, macOS, Linux; per-OS checks; the app logo and icons; continuous integration (GitHub issue #5); holoml first-result scope (SPEC.md outline, parser package with one test); full regression pass | Later |
 | 12 | HoloML v0.1 language | Spec, schema, parser, conformance samples | Later |
@@ -1275,10 +1275,10 @@ Answers given before the plan; the plan is the next section
 
 ## Milestone 9 — Passwords and site permissions
 
-Status: Planned. Questions answered 2026-09-26 (prompt 45: Q1 b, Q2 a,
-Q3 a). Build not started: the owner asked to see the new logo concepts
-first. Electron security check at the start: 44.4.5 still newest
-(2026-09-26).
+Status: Built, waiting for the owner's acceptance (checks below). Build approved 2026-09-26 (prompt 46), after the
+owner chose the logo direction. Questions answered 2026-09-26 (prompt
+45: Q1 b, Q2 a, Q3 a). Pushed before the build started. Electron
+security check at the start: 44.4.5 still newest (2026-09-26).
 
 Goal: remember sign-ins safely, let sites use the camera, microphone,
 and location when you allow it, and close the milestone 8 feedback.
@@ -1328,24 +1328,24 @@ and location when you allow it, and close the milestone 8 feedback.
 
 ### Tasks
 
-- [ ] 1. Password store: safeStorage encryption, the database table, the
+- [x] 1. Password store: safeStorage encryption, the database table, the
       "never" list; unit tests with a stand-in keychain.
-- [ ] 2. Sign-in detection in the page preload and the save / update bar;
+- [x] 2. Sign-in detection in the page preload and the save / update bar;
       never in private tabs.
-- [ ] 3. Fill on click: the account list under a sign-in field, same site
+- [x] 3. Fill on click: the account list under a sign-in field, same site
       only.
-- [ ] 4. Library Passwords tab: search, view, copy, delete, "never" list;
+- [x] 4. Library Passwords tab: search, view, copy, delete, "never" list;
       Clear data option.
-- [ ] 5. Site permissions: the request and check handlers, the prompt,
+- [x] 5. Site permissions: the request and check handlers, the prompt,
       per-site memory (in memory for private tabs), the site panel, the
       Settings list, the camera and microphone marker; location through
       the system only.
-- [ ] 6. Download finished and failed notice.
-- [ ] 7. The "+" menu with New private tab.
-- [ ] 8. Flat printing without the layers view's styles.
-- [ ] 9. docs/privacy.md: passwords and permissions.
-- [ ] 10. Tests: unit; end-to-end K1 to K10; C to J as regression.
-- [ ] 11. Docs and screenshots (MILESTONE=m9).
+- [x] 6. Download finished and failed notice.
+- [x] 7. The "+" menu with New private tab.
+- [x] 8. Flat printing without the layers view's styles.
+- [x] 9. docs/privacy.md: passwords and permissions.
+- [x] 10. Tests: unit; end-to-end K1 to K10; C to J as regression.
+- [x] 11. Docs and screenshots (MILESTONE=m9).
 
 ### Checks
 
@@ -1364,6 +1364,54 @@ and location when you allow it, and close the milestone 8 feedback.
 
 Test sign-ins are made-up values on 127.0.0.1 fixture pages; no real
 passwords are used anywhere.
+
+### Check results (Windows 11, 2026-09-26)
+
+`pnpm test:e2e` ran all 150 checks (C to K plus the issue checks). K1
+to K10 passed. The first full run had two failures in E10 (keyboard
+access to the panels): the Library now has a third tab, Passwords, so
+Shift+Tab from the search field reaches it before History. That is a
+changed requirement (milestone 9 added the tab), so the check now
+expects Passwords, then History, then Bookmarks; with that, all 21
+milestone 3 checks passed. The full suite was then run again: 150 of
+150 passed (279 s). `pnpm test`: 208 unit tests passed; `pnpm lint` and
+`pnpm typecheck` clean.
+
+| # | Result |
+|---|---|
+| K1 | Pass. Typed sign-in offers to save (marked not secure on http); the database holds the password only encrypted; the same password again offers nothing; a new one offers Update and replaces it; Not now saves nothing; Never stops offers on the site |
+| K2 | Pass. Nothing filled on load; a click on the field lists the account; picking it fills both fields (the page sees the input events); another port (another origin) gets no list |
+| K3 | Pass. Passwords tab: search, Show, Copy (read back from the clipboard), Delete; the "never" list can be undone |
+| K4 | Pass. Private tab (opened from the "+" menu): no list, no offer, nothing saved |
+| K5 | Pass. With --test-no-keychain the offer says the keychain is not available, has no Save, nothing is saved, and the Library says why |
+| K6 | Pass. Stand-in camera and microphone: Allow gives video, Allow this time gives audio, Block refuses location (code 1) |
+| K7 | Pass. Remembered on the page without asking; Notification.requestPermission() is refused; after a restart Allow and Block hold and "this time" is gone; a private tab asks for itself, its choice stays out of settings.json and is gone with the last private tab |
+| K8 | Pass. Marker in the top bar and on the tab (accessOf); the site panel shows Allow, Block, and "this time", and changing Location to Ask saves; leaving the site clears the marker; Settings lists the site and Forget clears it |
+| K9 | Pass. Notices for a finished download (Show in folder and Open reach the main process) and for a broken one (Download failed, with Downloads) |
+| K10 | Pass. The "+" arrow and a right-click open the menu; New private tab and New tab work. printToPDF of a lifted page equals the flat page (dates and document id removed; two flat prints are identical first). With the print rule taken out on purpose, K10 failed, so it does test the fix |
+
+Location (the plan's early check): with every host except 127.0.0.1
+blocked, an allowed request got a position in about 4 seconds on
+Windows 11, and the app made no network request for it: the position
+comes from Windows' own location service. The operating system may use
+its own services for that; the browser adds none.
+
+Not checked by the tests: that the saved sign-ins list closes when the
+page loses the keyboard (test windows never have focus, so the page
+never gets that event); Escape and a click elsewhere close it and are
+used in the tests.
+
+Known limit: Electron reports no event when a page starts or stops
+using the camera or microphone, so the marker means "given to this
+page" (from the grant until the tab leaves the site), not "recording
+now". The operating system's own camera light and indicators still
+show actual use.
+
+Found and fixed during the build: both preloads importing the same
+module made the build split it into a separate file, which a sandboxed
+preload cannot load, so the shell's bridge failed to start. Fixed by
+keeping the preloads' imports apart; preload/preload-graph.test.ts now
+fails if they ever share a module.
 
 ### Done when
 

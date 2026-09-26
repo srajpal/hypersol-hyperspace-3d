@@ -1,6 +1,8 @@
 import type { ShellBridge } from '../shared/commands';
 import type { DataOp, DataRequest, DataResults } from '../shared/data';
 import type { PrivacyOp, PrivacyRequest, PrivacyResults } from '../shared/privacy';
+import type { PermissionOp, PermissionRequest, PermissionResults } from '../shared/permissions';
+import type { PasswordOp, PasswordRequest, PasswordResults } from '../shared/passwords';
 
 /** Saved-data requests from the shell; errors arrive as thrown Errors with plain messages. */
 export class DataClient {
@@ -21,6 +23,28 @@ export class PrivacyClient {
     const reply = await this.bridge.privacy(request);
     if (!reply.ok) throw new Error(reply.error);
     return reply.value as PrivacyResults[K];
+  }
+}
+
+/** Site permission requests (milestone 9): prompt answers and the site panel. */
+export class PermissionsClient {
+  constructor(private readonly bridge: ShellBridge) {}
+
+  async get<K extends PermissionOp>(request: Extract<PermissionRequest, { op: K }>): Promise<PermissionResults[K]> {
+    const reply = await this.bridge.permissions(request);
+    if (!reply.ok) throw new Error(reply.error);
+    return reply.value as PermissionResults[K];
+  }
+}
+
+/** Saved password requests (milestone 9): the Library's Passwords tab and save offers. */
+export class PasswordsClient {
+  constructor(private readonly bridge: ShellBridge) {}
+
+  async get<K extends PasswordOp>(request: Extract<PasswordRequest, { op: K }>): Promise<PasswordResults[K]> {
+    const reply = await this.bridge.passwords(request);
+    if (!reply.ok) throw new Error(reply.error);
+    return reply.value as PasswordResults[K];
   }
 }
 

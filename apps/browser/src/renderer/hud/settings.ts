@@ -12,8 +12,10 @@ import {
   type StartupMode,
   type ThemeChoice,
 } from '../../shared/settings';
+import { PERMISSION_KINDS, PERMISSION_LABELS, type SiteChoices } from '../../shared/permissions';
 import type { DataClient, PrivacyClient } from '../data';
 import { panelStyles } from './panel-styles';
+import { siteName } from './prompts';
 
 /**
  * The Settings panel: search engine, what opens at startup, encrypted
@@ -42,7 +44,7 @@ export class HsSettings extends LitElement {
   /** Why the open tabs could not be saved, if they could not. */
   declare sessionProblem: string;
   declare confirming: boolean;
-  declare choices: { history: boolean; cookies: boolean; cache: boolean };
+  declare choices: { history: boolean; cookies: boolean; cache: boolean; passwords: boolean };
   declare filters: FilterStatus | null;
   declare dns: DnsStatus | null;
   client: DataClient | null = null;
@@ -56,7 +58,7 @@ export class HsSettings extends LitElement {
     this.problem = '';
     this.sessionProblem = '';
     this.confirming = false;
-    this.choices = { history: true, cookies: false, cache: false };
+    this.choices = { history: true, cookies: false, cache: false, passwords: false };
     this.filters = null;
     this.dns = null;
   }
@@ -124,6 +126,18 @@ export class HsSettings extends LitElement {
         margin: 4px 0 0 26px;
         font-size: 12px;
         color: var(--hs-text-muted);
+      }
+      .sites {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .sites li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 5px 2px;
       }
       .actions {
         display: flex;
@@ -271,6 +285,10 @@ export class HsSettings extends LitElement {
             </div>
           </fieldset>
           <fieldset>
+            <legend>Site permissions</legend>
+            ${this.permissionsList()}
+          </fieldset>
+          <fieldset>
             <legend>Encrypted DNS</legend>
             ${this.dnsMode('secure', 'Secure: look up sites only through Quad9 (recommended)')}
             ${this.dnsMode('automatic', "Automatic: use Quad9 when possible, otherwise this network's DNS")}
@@ -302,7 +320,7 @@ export class HsSettings extends LitElement {
           <fieldset>
             <legend>Clear browsing data</legend>
             ${this.choice('history', 'History')} ${this.choice('cookies', 'Cookies and site data')}
-            ${this.choice('cache', 'Cached files')}
+            ${this.choice('cache', 'Cached files')} ${this.choice('passwords', 'Saved passwords')}
             <div class="actions">
               ${this.confirming
                 ? html`<div class="confirm" role="alertdialog" aria-label="Clear browsing data">
@@ -313,7 +331,7 @@ export class HsSettings extends LitElement {
                 : html`<button
                     class="danger"
                     data-testid="set-clear"
-                    ?disabled=${!this.choices.history && !this.choices.cookies && !this.choices.cache}
+                    ?disabled=${!this.choices.history && !this.choices.cookies && !this.choices.cache && !this.choices.passwords}
                     @click=${() => (this.confirming = true)}
                   >
                     Clear data
@@ -404,7 +422,34 @@ export class HsSettings extends LitElement {
     }
   };
 
-  private choice(key: 'history' | 'cookies' | 'cache', label: string) {
+  /** Remembered camera, microphone, and location answers, each removable (milestone 9). */
+  private permissionsList() {
+    const sites = Object.entries(this.settings.sitePermissions);
+    if (sites.length === 0) {
+      return html`<p class="note" data-testid="set-perm-empty">
+        Sites ask before using your camera, microphone, or location. What you allow or block is listed here.
+      </p>`;
+    }
+    const words = (choices: SiteChoices) =>
+      PERMISSION_KINDS.filter((k) => choices[k])
+        .map((k) => `${PERMISSION_LABELS[k]}: ${choices[k] === 'allow' ? 'allowed' : 'blocked'}`)
+        .join(', ');
+    return html`<ul class="sites">
+      ${sites.map(
+        ([origin, choices]) => html`<li data-testid="set-perm-site">
+          <span><strong>${siteName(origin)}</strong><br /><span class="muted">${words(choices)}</span></span>
+          <button data-testid="set-perm-remove" aria-label=${`Forget the choices for ${siteName(origin)}`}
+            @click=${() => {
+              const rest = { ...this.settings.sitePermissions };
+              delete rest[origin];
+              void this.save({ sitePermissions: rest });
+            }}>Forget</button>
+        </li>`,
+      )}
+    </ul>`;
+  }
+
+  private choice(key: 'history' | 'cookies' | 'cache' | 'passwords', label: string) {
     return html`<label>
       <input
         type="checkbox"

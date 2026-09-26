@@ -38,6 +38,12 @@ const CSS = `
 [${ATTR}='section'] { box-shadow: 0 18px 40px rgb(0 0 0 / 30%), 0 0 0 1px var(--hs-layer-accent, #39e6ff) !important; }
 [${ATTR}='image'] { box-shadow: 0 14px 30px rgb(0 0 0 / 38%) !important; }
 html[${ANIMATING}] [${ATTR}] { transition: transform ${ANIMATION_MS}ms ease !important; }
+@media print {
+  /* Printing prints the page flat, as if the layers view were off (milestone 9, owner feedback on milestone 8). */
+  [${ATTR}], [${ATTR}='section'], [${ATTR}='image'] {
+    transform: none !important; box-shadow: none !important; will-change: auto !important; transition: none !important;
+  }
+}
 @media (prefers-reduced-motion: reduce) { html[${ANIMATING}] [${ATTR}] { transition: none !important; } }
 `;
 

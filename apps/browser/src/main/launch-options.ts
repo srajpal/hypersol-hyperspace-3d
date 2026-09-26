@@ -30,6 +30,8 @@ export interface LaunchOptions {
   dnsProbeUrl?: string;
   /** Test mode only: save downloads here instead of the Downloads folder. */
   downloadsDir?: string;
+  /** Test mode only (--test-no-keychain): act as if the system keychain were unavailable (milestone 9, K5). */
+  testNoKeychain: boolean;
 }
 
 function switchValue(argv: readonly string[], name: string): string | undefined {
@@ -57,6 +59,7 @@ function localAddress(value: string | undefined): string | undefined {
  *   --search-url=<address with %s>  search engine, test mode only
  *   --filters-base=<address>        filter list downloads, test mode only (127.0.0.1)
  *   --dns-probe=<address>           DNS reachability check, test mode only (127.0.0.1)
+ *   --test-no-keychain              passwords act as if the keychain were missing, test mode only
  * and HYPERSOL_TEST=1 for test mode, HYPERSOL_TEST_BACKGROUND=1 for
  * test windows that stay out of the way.
  */
@@ -87,5 +90,6 @@ export function parseLaunchOptions(
     ...(filtersBase ? { filtersBase } : {}),
     ...(dnsProbeUrl ? { dnsProbeUrl } : {}),
     ...(downloadsDir ? { downloadsDir } : {}),
+    testNoKeychain: testMode && argv.includes('--test-no-keychain'),
   };
 }

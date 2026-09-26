@@ -68,6 +68,8 @@ one.)
 | Settings: search engine, what opens at startup, encrypted DNS mode, daily list updates on or off, sites where the shield is paused, whether pages open in the layers view, and the sites where you switched the layers view, the theme, the page tilt, the instrument panel's switches, and the zoom level of sites you zoomed | `settings.json` | When you change a setting, pause the shield on a site, or switch the layers view on a page | Delete the file; the defaults return. Settings > "Forget site choices" clears the layers view choices |
 | Filter lists from the last update, and when they were downloaded | `filters/engine.bin`, `filters/engine.json` | After a list update | Delete the folder; the starter copy included in the app is used |
 | Open tabs: their addresses and which one is in front | `session.json` | While you browse, shortly after tabs change | Reopened only when Settings > On startup is "Reopen your tabs from last time"; delete the file to forget them |
+| Saved passwords: the site, the user name, and the password encrypted with your system's keychain (Windows' data protection, the macOS Keychain, or the Linux secret service); when each was saved and last used; sites where you chose "Never" | `hypersol.sqlite` | Only when you choose Save or Update after signing in, or Never | The Library's Passwords tab, or Settings > Clear browsing data > Saved passwords |
+| Camera, microphone, and location choices you made with Allow or Block, by site | `settings.json` | When you answer a site's request, or change it in the site panel | The site panel (set it back to Ask), or Settings > Site permissions > Forget |
 | Cookies, site storage, and cache | Chromium's profile files in the same folder | By the sites you visit, as in any browser | Settings > Clear browsing data |
 | Files you download (outside the app data folder) | Your system's Downloads folder | When you download them | Delete them there |
 | The Downloads panel's list | Memory only | While downloads run and finish | It lasts this session; "Clear list" empties it (the files stay) |
@@ -110,9 +112,25 @@ requests of its own, and it leaves certificate checking to Chromium
 unchanged. If the saved filter lists are
 damaged or were built by another version, the starter copy is used.
 
-Not stored: form entries, passwords, the downloads list (the files
+Kept in memory only: an offer to save a password until you answer it;
+"Allow this time" until the tab leaves the site; and choices made in
+private tabs, until the last private tab closes. Nothing is saved or
+filled in private tabs.
+
+Passwords are never filled by themselves: a saved one goes into a page
+only when you click a sign-in field and pick the account, and only on
+the exact site it was saved for. Without a working system keychain,
+nothing is saved, and the offer says why.
+
+Not stored: other form entries, the downloads list (the files
 themselves are, in the Downloads folder), and anything about how you
 use the browser itself.
+
+Site permissions: a site can use your camera, microphone, or location
+only after you allow it; everything else a site can ask for (for
+example notifications) is refused. Your location comes from your
+operating system's location service; the browser adds no location
+service of its own.
 
 ## Sent over the network
 

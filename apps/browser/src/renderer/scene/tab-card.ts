@@ -24,6 +24,8 @@ export interface CardModel {
   focused: boolean;
   /** A private tab: marked on its card. */
   private?: boolean;
+  /** Its page was given the camera, microphone, or location: marked on its card (milestone 9). */
+  access?: boolean;
 }
 
 /**
@@ -84,7 +86,8 @@ export class TabCard {
       model.title !== this.model.title ||
       model.loading !== this.model.loading ||
       model.focused !== this.model.focused ||
-      model.favicon !== this.model.favicon;
+      model.favicon !== this.model.favicon ||
+      Boolean(model.access) !== Boolean(this.model.access);
     this.model = model;
     if (model.favicon !== this.faviconSrc) this.setFavicon(model.favicon);
     if (changed) this.draw();
@@ -228,6 +231,21 @@ export class TabCard {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('PRIVATE', SNAP.x + 85, SNAP.y + 31);
+    }
+
+    if (this.model.access) {
+      // The page was given the camera, microphone, or location (milestone 9).
+      ctx.fillStyle = c.warning;
+      roundRect(ctx, SNAP.x + SNAP.w - 110, SNAP.y + 10, 100, 40, 8);
+      ctx.fill();
+      ctx.fillStyle = c.backgroundBottom;
+      ctx.beginPath();
+      ctx.arc(SNAP.x + SNAP.w - 88, SNAP.y + 30, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = '700 24px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('LIVE', SNAP.x + SNAP.w - 50, SNAP.y + 31);
     }
 
     // Label bar: favicon, title, close button.

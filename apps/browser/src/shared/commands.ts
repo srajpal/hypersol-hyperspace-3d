@@ -14,6 +14,8 @@ import type { DataOp, DataReply, DataRequest } from './data';
 import type { PrivacyOp, PrivacyReply, PrivacyRequest } from './privacy';
 import type { InspectOp, InspectReply, InspectRequest } from './inspect';
 import type { DownloadInfo, DownloadOp, DownloadReply, DownloadRequest } from './downloads';
+import type { PermissionKind, PermissionOp, PermissionPrompt, PermissionReply, PermissionRequest } from './permissions';
+import type { PasswordOffer, PasswordOp, PasswordReply, PasswordRequest } from './passwords';
 
 /**
  * The private tabs' session (milestone 8): in memory only, since the name
@@ -47,7 +49,15 @@ export type ShellCommand =
   | { type: 'shortcut'; name: ShortcutName }
   | { type: 'open-tab'; url: string; background: boolean; openerWebContentsId?: number }
   | { type: 'favicon'; webContentsId: number; dataUrl: string }
-  | { type: 'data-changed'; what: 'bookmarks' | 'history' | 'settings' }
+  | { type: 'data-changed'; what: 'bookmarks' | 'history' | 'settings' | 'passwords' }
+  /** A page asks for the camera, microphone, or location: show the prompt for its tab (milestone 9). */
+  | { type: 'permission-prompt'; prompt: PermissionPrompt }
+  /** A prompt is no longer wanted (the tab left the site or closed). */
+  | { type: 'permission-ended'; id: number }
+  /** What a tab's page has been given access to (the in-use marker); [] clears it. */
+  | { type: 'site-access'; webContentsId: number; kinds: PermissionKind[] }
+  /** Offer to save or update a password for a tab (milestone 9). */
+  | { type: 'password-offer'; offer: PasswordOffer }
   /** How many requests the privacy shield has blocked on a tab's page. */
   | { type: 'shield'; webContentsId: number; count: number }
   /** The shield blocked a whole page in a tab (the tab shows the blocked card). */
@@ -74,6 +84,10 @@ export interface ShellBridge {
   inspect<K extends InspectOp>(request: Extract<InspectRequest, { op: K }>): Promise<InspectReply<K>>;
   /** Downloads (shared/downloads.ts). */
   downloads<K extends DownloadOp>(request: Extract<DownloadRequest, { op: K }>): Promise<DownloadReply<K>>;
+  /** Site permissions: prompt answers and the site panel (shared/permissions.ts). */
+  permissions<K extends PermissionOp>(request: Extract<PermissionRequest, { op: K }>): Promise<PermissionReply<K>>;
+  /** Saved passwords: the Library tab and save offers (shared/passwords.ts). */
+  passwords<K extends PasswordOp>(request: Extract<PasswordRequest, { op: K }>): Promise<PasswordReply<K>>;
   /** Answer to prepare-close: saving is done (or has failed), the window may close. */
   closeReady(): void;
 }

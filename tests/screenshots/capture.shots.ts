@@ -15,9 +15,15 @@ import { fileURLToPath } from 'node:url';
 import { it } from 'vitest';
 import { startFixtureServer } from '../e2e/fixture-server';
 import {
+  clickAt,
   clickCard,
+  focusedPage,
+  inPage,
   launch,
+  screenPointOf,
+  shellCall,
   navigateTo,
+  pressInPage,
   pressInShell,
   settled,
   sleep,
@@ -174,6 +180,46 @@ it('captures the main screens', async () => {
     await pressInShell(h, 'N', ['control', 'shift']);
     await sleep(600);
     await capture(h, '22-private-tab');
+    await pressInShell(h, 'W', ['control']);
+    await h.shell.evaluate(() => (document.querySelector('hs-notice') as unknown as { hide(): void }).hide()); // the download notice from above
+
+    // Passwords, site permissions, and the milestone 8 feedback (milestone 9).
+    // Made-up test sign-ins on a local page.
+    await navigateTo(h, server.url('login.html'));
+    await waitForPage(h, 'login');
+    let page = await focusedPage(h);
+    await inPage(h, `document.getElementById('user').value = 'ada'; document.getElementById('pass').value = 'test-pass-1'; true`, page);
+    await clickAt(h, await screenPointOf(h, '#go', page));
+    await waitFor('offer', async () => (await shellCall(h, 'prompts')).offer, (o) => o !== null);
+    await capture(h, '23-password-offer');
+    await h.shell.click('hs-prompts [data-testid="pw-save"]');
+    await navigateTo(h, server.url('login.html?again=1'));
+    await waitForPage(h, 'again=1');
+    page = await focusedPage(h);
+    await clickAt(h, await screenPointOf(h, '#user', page));
+    await waitFor('account list', () => inPage<boolean>(h, `document.querySelector('hypersol-sign-ins') !== null`, page), (x) => x);
+    await capture(h, '24-sign-in-list');
+    await pressInPage(h, 'Escape', [], page); // closes the list
+    await pressInShell(h, 'O', ['control', 'shift']);
+    await h.shell.click('hs-library [data-testid="lib-tab-passwords"]');
+    await capture(h, '25-library-passwords');
+    await pressInShell(h, 'Escape');
+    await navigateTo(h, server.url('media.html'));
+    await waitForPage(h, 'media');
+    page = await focusedPage(h);
+    const asked = inPage<string>(h, 'both()', page);
+    await waitFor('prompt', async () => (await shellCall(h, 'prompts')).permission, (x) => x !== null);
+    await capture(h, '26-permission-prompt');
+    await h.shell.click('hs-prompts [data-testid="perm-allow"]');
+    await asked;
+    await h.shell.click('hs-toolbar [data-testid="site-button"]');
+    await capture(h, '27-site-panel');
+    await pressInShell(h, 'Escape');
+    await navigateTo(h, server.url('download/sample.txt'));
+    await waitFor('notice', () => shellCall(h, 'notice'), (n) => n !== null);
+    await capture(h, '28-download-notice');
+    await h.shell.click('hs-toolbar [data-testid="new-tab-more"]');
+    await capture(h, '29-new-tab-menu');
   } finally {
     await h.close();
     await server.close();

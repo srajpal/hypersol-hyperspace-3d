@@ -1,7 +1,7 @@
 # HANDOFF.md
 
 State of the project for whoever picks it up next, human or agent.
-Last updated 2026-09-26 (GitHub issues #8 to #15 fixed in a pull request).
+Last updated 2026-09-26 (milestone 9 built, waiting for acceptance).
 
 ## Where things stand
 
@@ -14,12 +14,14 @@ there is one tab), bookmarks, history, Library and Settings, ad and
 tracker blocking with a shield, encrypted DNS through Quad9, a layers
 view, the Nebula and Daylight themes, an instrument panel (readouts,
 console, network list), zoom, find in page, downloads, printing, and
-private tabs. Next is milestone 9 (Passwords and site permissions),
-with the owner's Passwords answers but no plan yet; the owner's
-milestone 8 feedback (TODO.md) goes into it. Then 10 (Tabs and economy)
-and 11 (First release). HoloML: the owner is deciding whether to rename
-the language (HSML was checked and advised against, prompt 43) before
-the holoml repository is updated to the new browser name. GitHub issues #8 to #15
+private tabs. Milestone 9 (passwords, site permissions, and the
+milestone 8 feedback: download notice, private tab under "+", flat
+printing) is built and its checks K1 to K10 pass; it waits for the
+owner's acceptance (TODO.md has what to try). Then 10 (Tabs and economy)
+and 11 (First release, with the chosen logo direction, concept 4d in
+docs/branding/logo-concepts/). HoloML keeps its name (owner, prompt 44;
+HSML was checked and advised against, prompt 43); the holoml repository
+now names the browser HyperSol HyperSpace 3D. GitHub issues #8 to #15
 (QA of milestone 8) were fixed in PR #16, merged 2026-09-26; #4 and #5 stay proposed for the
 tabs and economy milestone (#4, milestone 10) and the first release (#5,
 milestone 11). The Electron security check was last done

@@ -1,10 +1,10 @@
 import { join } from 'node:path';
 import { parseDataRequest, type DataOp, type DataReply, type DataRequest } from '../../shared/data';
-import { applySettingsPatch } from '../../shared/settings';
+import { applySettingsPatch, type Settings } from '../../shared/settings';
 import { Store } from './database';
 import { SessionFile, SettingsFile } from './settings-file';
 
-export type DataChange = 'bookmarks' | 'history' | 'settings';
+export type DataChange = 'bookmarks' | 'history' | 'settings' | 'passwords';
 
 export interface SiteDataCleaner {
   /** Cookies and site storage (local storage, IndexedDB, service workers, and so on). */
@@ -49,6 +49,25 @@ export class StorageService {
 
   get available(): boolean {
     return this.store !== null;
+  }
+
+  /** The database, for the password vault (main/passwords); null when it could not be opened. */
+  get database(): Store | null {
+    return this.store;
+  }
+
+  /** Changes settings from the main process (site permissions); throws with the reason if refused. */
+  updateSettings(patch: Partial<Settings>): Settings {
+    const result = applySettingsPatch(this.settingsFile.settings, patch);
+    if ('error' in result) throw new Error(result.error);
+    this.settingsFile.save(result.settings);
+    this.emit('settings');
+    return result.settings;
+  }
+
+  /** Tells listeners that saved data changed outside a request (saved passwords). */
+  notify(what: DataChange): void {
+    this.emit(what);
   }
 
   /** Why the database could not be opened, for logs. */
@@ -140,13 +159,8 @@ export class StorageService {
         return null;
       case 'settings.get':
         return this.settingsFile.settings;
-      case 'settings.set': {
-        const result = applySettingsPatch(this.settingsFile.settings, r.patch);
-        if ('error' in result) throw new Error(result.error);
-        this.settingsFile.save(result.settings);
-        this.emit('settings');
-        return result.settings;
-      }
+      case 'settings.set':
+        return this.updateSettings(r.patch);
       case 'session.save':
         this.sessionFile.save({ tabs: r.tabs, focused: r.focused });
         return null;
@@ -159,6 +173,11 @@ export class StorageService {
         }
         if (r.cookies) await this.cleaner.clearCookiesAndSiteData();
         if (r.cache) await this.cleaner.clearCache();
+        // Saved passwords go only when ticked (milestone 9).
+        if (r.passwords && this.store) {
+          this.store.clearLogins();
+          this.emit('passwords');
+        }
         return null;
     }
   }

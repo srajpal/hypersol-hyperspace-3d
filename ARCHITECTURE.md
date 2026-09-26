@@ -121,8 +121,13 @@ touchpad, no touch screen.
 | Zoom | Minus, level, and plus in the top bar; Ctrl/Cmd with plus, minus, 0; Ctrl + mouse wheel (the page's zoom-changed event); steps from 25% to 500%; remembered per site in settings.json (not from private tabs) | Milestone 8 (owner, prompts 36 and 37). |
 | Find in page | Ctrl/Cmd+F: a find bar under the top bar using the webview's findInPage, with count, next and previous | Milestone 8. |
 | Downloads | Saved straight to the system's Downloads folder, never over an existing file ("name (1).ext"); a Downloads panel with progress, open, show in folder, cancel, clear; Ctrl/Cmd+J; a dot on the menu while one runs; the list lasts the session and keeps the last 100 finished ones, never dropping a download that is not done (running, or interrupted but able to resume; it stays cancellable and keeps its file name reserved; GitHub issue #10, PR #16 review) | Milestone 8, owner Q2 a. |
-| Printing | Ctrl/Cmd+P and the menu open the system's print dialog for the page | Milestone 8. |
-| Private tabs | Ctrl/Cmd+Shift+N and the menu: a tab whose page uses an in-memory session (partition "hypersol-private"), with the same shield, readouts, and permissions refusal; no history; never saved for "reopen your tabs"; its cookies, storage, and cache are cleared when the last private tab closes; links from it open private; marked on its card, in the top bar, and on its start panel. Site choices made from private tabs (layers view, shield pause) stay in memory; zoom from a private tab is not saved at all, apply to every private tab on that site while one is open, and are forgotten with the last one; the shield's pause request names its tab so the main process can tell (GitHub issue #8). "The last private tab" includes blank private tabs, which have no page yet: the shell tells the main process when its last private tab closes, and only then are the private session's data, pauses, and certificates cleared. The main process also clears them itself when the window closes or its shell crashes (every tab goes with it), and a window reopened meanwhile (macOS keeps the app running) waits for that to finish (PR #16 follow-up review). The shell may only attach webviews to the default or this partition | Milestone 8, owner Q3 a. |
+| Printing | Ctrl/Cmd+P and the menu open the system's print dialog for the page; the page prints flat: the layers view's styles have an @media print rule that takes the lift and shadows off (milestone 9, owner feedback on milestone 8; K10 compares PDFs with the view on and off) | Milestone 8; flat printing milestone 9. |
+| Saved passwords | A sign-in submitted by real input (the form's submit, its button, or Enter) is reported by the page preload (preload/passwords.ts, main frame only, isolated world) to the main process, which takes the origin from the sending frame, never from the page's words. It offers Save, Never for this site, or Not now (Update for a known account) in a bar under the top bar; the password waits in main-process memory until answered. Passwords are encrypted with Electron's safeStorage (the system keychain: DPAPI on Windows, Keychain on macOS, the secret service on Linux; Linux's fixed-key fallback counts as no keychain) and kept in hypersol.sqlite (schema 2: logins and login_never). Filling: nothing on load; a click on a sign-in field (or the down arrow) shows the saved accounts for that exact origin in a list in a closed shadow root; picking one asks for the password, which the main process gives only within 5 seconds of real input in that page. http sites are saved too, marked "not secure". Never in private tabs; no import, no sync. Managed in the Library's Passwords tab (search, show, copy through the main process's clipboard, delete, the "never" list); Clear data removes them only when ticked | Milestone 9 (owner, prompt 38: Q1 a, Q2 a, Q3 a; prompt 45: Q1 b fill on click, Q3 a http with a warning). A page's scripts cannot read a password the person did not choose to use. |
+| Site permissions | Camera, microphone, and location ask with a prompt under the top bar: Allow, Allow this time, Block. Allow and Block are remembered per origin in settings.json (sitePermissions); private tabs keep theirs in memory, forgotten with the last private tab, and do not inherit normal tabs' choices. "This time" lasts until the tab leaves the site or closes. Every other permission request is refused, as before; permission checks other than camera, microphone, and location keep Electron's default answer. A site panel from the top bar's site button (lock, or "Not secure") shows and changes the site's choices; Settings lists and forgets them. Location uses only the operating system's location service (no network location service or API key; K7 ran with every host but 127.0.0.1 blocked and still got a position on Windows 11). Electron reports no "capture started or stopped" event, so the marker (camera, microphone, location icons in the site button, and LIVE on the tab card) means "given to this page": from the grant until the tab leaves the site | Milestone 9 (owner, prompt 45, Q2 a). |
+| Download notice | A notice at the bottom when a download finishes (Open, Show in folder) or fails (Downloads); a broken connection counts as a failure at once, even if it could resume. It goes after 8 seconds unless the pointer or keyboard is on it | Milestone 9, owner feedback on milestone 8. |
+| New private tab from "+" | The "+" in the top bar opens a tab; its arrow, or a right-click on it, offers New tab and New private tab | Milestone 9, owner feedback on milestone 8. |
+| Preload bundles | The shell's preload and the page preload share no project module (preload/preload-graph.test.ts): a shared module becomes a separate chunk file, which a sandboxed preload cannot load (found 2026-09-26: the shell's bridge failed to load). Page-side password messages live in shared/page-passwords.ts for this reason | Sandboxed preloads load one file. |
+| Private tabs | Ctrl/Cmd+Shift+N and the menu: a tab whose page uses an in-memory session (partition "hypersol-private"), with the same shield and readouts, and permission prompts whose choices stay in memory (milestone 9); no history; never saved for "reopen your tabs"; its cookies, storage, and cache are cleared when the last private tab closes; links from it open private; marked on its card, in the top bar, and on its start panel. Site choices made from private tabs (layers view, shield pause) stay in memory; zoom from a private tab is not saved at all, apply to every private tab on that site while one is open, and are forgotten with the last one; the shield's pause request names its tab so the main process can tell (GitHub issue #8). "The last private tab" includes blank private tabs, which have no page yet: the shell tells the main process when its last private tab closes, and only then are the private session's data, pauses, and certificates cleared. The main process also clears them itself when the window closes or its shell crashes (every tab goes with it), and a window reopened meanwhile (macOS keeps the app running) waits for that to finish (PR #16 follow-up review). The shell may only attach webviews to the default or this partition | Milestone 8, owner Q3 a. |
 | Page tilt | Settings > Page tilt, 0 to 20 degrees, default 10; a --tilt on the command line wins | Less tilt gives sharper text (milestone 1 note). |
 | Graphics resets | When the WebGL context is lost, the room stops drawing; when it is restored, it draws again at once and Three.js uploads its textures again (GitHub issue #12) | The room draws only on demand, so a restore must ask for a frame itself. |
 | Window frame, reconsidered | Standard OS frame kept | Considered in milestone 6: a custom frame would lose native dragging, snapping, and accessibility; the theme now sets the frame's light or dark scheme. |
@@ -182,6 +187,10 @@ hypersol-hyperspace-3d/
           layers.ts            layers view messages between shell and page
           inspect.ts           instrument panel requests and checks
           downloads.ts         download requests, safe unique file names
+          permissions.ts       site permissions: kinds, choices, prompt answers, checks
+          passwords.ts         saved password requests from the shell, offers
+          page-passwords.ts    password requests from a page's preload (kept
+                               apart from passwords.ts, see Preload bundles)
         preload/
           shell.ts             safe bridge exposed to the 3D shell
           page.ts              injected into every web page: the blocker's
@@ -190,6 +199,8 @@ hypersol-hyperspace-3d/
           layers.ts            the layers view and image rectangles in the
                                page; layers-plan.ts: its arithmetic (unit
                                tested)
+          passwords.ts         sign-in reports and the saved sign-ins list
+                               under a field (milestone 9)
         renderer/              the 3D shell (one Chromium page)
           index.html, main.ts
           app.ts               controller: tabs, pages, room, top bar, commands
@@ -286,7 +297,11 @@ process. It exposes read-only facts (platform, versions) and:
   status and "Update now", encrypted DNS status, the reachability check,
   and "use this network's DNS", each checked by parsePrivacyRequest
   (shared/privacy.ts) and accepted only from the shell;
+- permissions: prompt answers and the site panel (shared/permissions.ts);
+- passwords: save offer answers and the Library's Passwords tab
+  (shared/passwords.ts);
 - closeReady: the answer to prepare-close, once the open tabs are saved.
+Each is checked in the main process and accepted only from the shell.
 The main process also sends shield counts per tab, blocked pages, and
 filter list changes as commands.
 6. The page preload (preload/layers.ts) lifts sections and images when
@@ -306,6 +321,10 @@ filter list changes as commands.
 |---|---|---|
 | Settings, theme, window size | settings.json in the app data folder | Human readable |
 | History, bookmarks | hypersol.sqlite in the app data folder | Delete-able from the Library panel and Settings |
+| Saved passwords, and sites never to save for | hypersol.sqlite (logins, login_never), the password encrypted with the system keychain | Delete-able in the Library's Passwords tab and with Settings > Clear browsing data > Saved passwords |
+| Remembered camera, microphone, and location choices | settings.json (sitePermissions), by origin | Changed in the site panel; forgotten in Settings |
+| Private tabs' permission choices; "Allow this time" | Memory only | Forgotten with the last private tab; "this time" when the tab leaves the site |
+| An unanswered offer to save a password | Memory only, in the main process | Until answered, replaced, or the tab closes |
 | Open tabs | session.json in the app data folder | Used only when startup is set to reopen them |
 | Cookies, cache, site storage | Chromium profile folder managed by Electron | Standard browser behaviour |
 | Filter lists | filters/engine.bin and engine.json in the app data folder (the last refresh); the starter copy in the app otherwise | Refreshed daily; switchable in Settings; "Update now" |

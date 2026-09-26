@@ -1,4 +1,5 @@
 import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
+import { PERMISSION_LABELS, type PermissionKind } from '../../shared/permissions';
 
 export type MenuAction = 'new-tab' | 'private-tab' | 'close-tab' | 'downloads' | 'print' | 'library' | 'settings' | 'about';
 
@@ -14,6 +15,12 @@ const icon = {
   layers: html`<svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M12 3 3 8l9 5 9-5-9-5Z" /><path d="m3 12.5 9 5 9-5" /><path d="m3 17 9 5 9-5" />
   </svg>`,
+  chevron: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" /></svg>`,
+  lock: html`<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>`,
+  open: html`<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 7.5-2" /></svg>`,
+  camera: html`<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="13" height="10" rx="2" /><path d="M16 11l5-3v8l-5-3" /></svg>`,
+  microphone: html`<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>`,
+  location: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11Z" /><circle cx="12" cy="10" r="2" /></svg>`,
   star: html`<svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M12 3.5l2.6 5.3 5.9.9-4.25 4.1 1 5.85L12 16.9l-5.25 2.75 1-5.85L3.5 9.7l5.9-.9z" />
   </svg>`,
@@ -26,7 +33,10 @@ const icon = {
  *
  * Events (bubbling, composed): hs-navigate (detail: typed text), hs-back,
  * hs-forward, hs-reload, hs-bookmark, hs-layers, hs-instruments, hs-new-tab, hs-zoom (detail: 1, -1, or 0 to
- * reset), hs-menu (detail: MenuAction).
+ * reset), hs-menu (detail: MenuAction), hs-site (the site button: open the site panel).
+ *
+ * The "+" button opens a new tab; its arrow, or a right-click on it, offers
+ * New tab and New private tab (milestone 9, owner feedback on milestone 8).
  */
 export class HsToolbar extends LitElement {
   static override properties = {
@@ -44,7 +54,10 @@ export class HsToolbar extends LitElement {
     private: { type: Boolean },
     downloading: { type: Boolean },
     canLayers: { type: Boolean },
+    site: { type: String },
+    access: { attribute: false },
     menuOpen: { state: true },
+    plusOpen: { state: true },
     strip: { state: true },
   };
 
@@ -67,7 +80,12 @@ export class HsToolbar extends LitElement {
   declare private: boolean;
   /** A download is in progress: a dot on the menu button. */
   declare downloading: boolean;
+  /** The page in front: https ('secure'), plain http ('insecure'), or none (a start tab). */
+  declare site: 'secure' | 'insecure' | 'none';
+  /** What the page in front was given (camera, microphone, location): the in-use marker (milestone 9). */
+  declare access: PermissionKind[];
   declare menuOpen: boolean;
+  declare plusOpen: boolean;
   declare strip: 'idle' | 'loading' | 'done';
   private stripTimer: number | undefined;
 
@@ -87,7 +105,10 @@ export class HsToolbar extends LitElement {
     this.canZoom = false;
     this.private = false;
     this.downloading = false;
+    this.site = 'none';
+    this.access = [];
     this.menuOpen = false;
+    this.plusOpen = false;
     this.strip = 'idle';
   }
 
@@ -169,6 +190,48 @@ export class HsToolbar extends LitElement {
       padding: 0 4px;
       font-family: var(--hs-font-mono);
       font-size: 12px;
+    }
+    .plus-more {
+      width: 16px;
+      margin-left: -6px;
+    }
+    .plus-more svg {
+      width: 14px;
+      height: 14px;
+    }
+    .site {
+      width: auto;
+      min-width: 32px;
+      gap: 4px;
+      display: flex;
+      align-items: center;
+      padding: 0 6px;
+      font-family: var(--hs-font-mono);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+    }
+    .site svg {
+      width: 17px;
+      height: 17px;
+    }
+    .site[data-kind='insecure'] {
+      color: var(--hs-warning);
+    }
+    .site .live {
+      display: flex;
+      gap: 2px;
+      color: var(--hs-warning);
+      animation: live 1.6s ease-in-out infinite;
+    }
+    @keyframes live {
+      50% {
+        opacity: 0.45;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .site .live {
+        animation: none;
+      }
     }
     .private-pill {
       flex: none;
@@ -269,6 +332,11 @@ export class HsToolbar extends LitElement {
         opacity: 0.6;
       }
     }
+    [role='menu'].plus-menu {
+      left: 0;
+      right: auto;
+      min-width: 200px;
+    }
     [role='menu'] {
       position: absolute;
       top: 46px;
@@ -345,9 +413,39 @@ export class HsToolbar extends LitElement {
     const mod = navigator.platform.startsWith('Mac') ? 'Cmd' : 'Ctrl';
     return html`
       <div class="bar">
-        <button data-testid="new-tab" aria-label="New tab" title=${`New tab (${mod}+T)`} @click=${() => this.fire('hs-new-tab')}>
+        <button
+          data-testid="new-tab"
+          aria-label="New tab"
+          title=${`New tab (${mod}+T); right-click for a private tab`}
+          @click=${() => this.fire('hs-new-tab')}
+          @contextmenu=${(e: MouseEvent) => {
+            e.preventDefault();
+            this.plusOpen = true;
+          }}
+        >
           ${icon.plus}
         </button>
+        <button
+          class="plus-more"
+          data-testid="new-tab-more"
+          aria-label="New tab options"
+          title="New tab or private tab"
+          aria-haspopup="menu"
+          aria-expanded=${this.plusOpen ? 'true' : 'false'}
+          @click=${() => (this.plusOpen = !this.plusOpen)}
+        >
+          ${icon.chevron}
+        </button>
+        ${this.plusOpen
+          ? html`<div role="menu" class="plus-menu" aria-label="New tab" data-testid="new-tab-menu" @keydown=${this.onMenuKey}>
+              <button role="menuitem" data-testid="plus-new-tab" @click=${() => this.menu('new-tab')}>
+                New tab <kbd>${mod}+T</kbd>
+              </button>
+              <button role="menuitem" data-testid="plus-private-tab" @click=${() => this.menu('private-tab')}>
+                New private tab <kbd>${mod}+Shift+N</kbd>
+              </button>
+            </div>`
+          : nothing}
         <button data-testid="back" aria-label="Back" title="Back" ?disabled=${!this.canGoBack} @click=${() => this.fire('hs-back')}>
           ${icon.back}
         </button>
@@ -358,6 +456,7 @@ export class HsToolbar extends LitElement {
           ${icon.reload}
         </button>
         ${this.private ? html`<span class="private-pill" data-testid="private-pill" title="Private tab: nothing is kept">PRIVATE</span>` : nothing}
+        ${this.site === 'none' ? nothing : this.siteButton()}
         <input
           data-testid="address"
           type="text"
@@ -451,8 +550,23 @@ export class HsToolbar extends LitElement {
     `;
   }
 
+  private siteButton() {
+    const insecure = this.site === 'insecure';
+    const given = this.access.map((k) => PERMISSION_LABELS[k].toLowerCase());
+    const label = `Site settings${insecure ? ', not secure' : ''}${given.length ? `; given your ${given.join(' and ')}` : ''}`;
+    return html`<button class="site" data-testid="site-button" data-kind=${this.site} aria-label=${label} title=${label}
+      @click=${() => this.fire('hs-site')}>
+      ${insecure ? icon.open : icon.lock}${insecure ? html`<span>Not secure</span>` : nothing}
+      ${this.access.length
+        ? html`<span class="live" data-testid="access-marker">${this.access.map((k) => icon[k])}</span>`
+        : nothing}
+    </button>`;
+  }
+
   private readonly onOutside = (e: PointerEvent) => {
-    if (this.menuOpen && !e.composedPath().includes(this)) this.menuOpen = false;
+    if (e.composedPath().includes(this)) return;
+    if (this.menuOpen) this.menuOpen = false;
+    if (this.plusOpen) this.plusOpen = false;
   };
 
   private readonly onKey = (e: KeyboardEvent) => {
@@ -471,13 +585,16 @@ export class HsToolbar extends LitElement {
 
   private readonly onMenuKey = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
+      const plus = this.plusOpen;
       this.menuOpen = false;
-      (this.renderRoot.querySelector('[data-testid="menu"]') as HTMLButtonElement | null)?.focus();
+      this.plusOpen = false;
+      (this.renderRoot.querySelector(plus ? '[data-testid="new-tab-more"]' : '[data-testid="menu"]') as HTMLButtonElement | null)?.focus();
     }
   };
 
   private menu(action: MenuAction): void {
     this.menuOpen = false;
+    this.plusOpen = false;
     this.fire('hs-menu', action);
   }
 

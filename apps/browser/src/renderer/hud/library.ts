@@ -1,13 +1,17 @@
 import { LitElement, css, html, nothing } from 'lit';
 import type { Bookmark, HistoryEntry } from '../../shared/data';
-import { groupByDay, type DataClient } from '../data';
+import type { SavedLogin } from '../../shared/passwords';
+import { groupByDay, type DataClient, type PasswordsClient } from '../data';
 import { panelStyles } from './panel-styles';
+import { siteName } from './prompts';
 
-type View = 'bookmarks' | 'history';
+type View = 'bookmarks' | 'history' | 'passwords';
 
 /**
- * The Library panel: bookmarks and history. Slides in from the right;
- * Escape or the close button closes it.
+ * The Library panel: bookmarks, history, and saved passwords (milestone
+ * 9: search, show, copy, delete, and the sites never to save for; owner,
+ * prompt 38, Q2 a). Slides in from the right; Escape or the close button
+ * closes it.
  *
  * Events: hs-open-url (detail: address), hs-panel-closed.
  */
@@ -21,6 +25,10 @@ export class HsLibrary extends LitElement {
     bookmarks: { state: true },
     history: { state: true },
     confirming: { state: true },
+    logins: { state: true },
+    never: { state: true },
+    revealed: { state: true },
+    note: { state: true },
   };
 
   declare open: boolean;
@@ -31,7 +39,15 @@ export class HsLibrary extends LitElement {
   declare bookmarks: Bookmark[];
   declare history: HistoryEntry[];
   declare confirming: boolean;
+  declare logins: SavedLogin[];
+  /** Sites where passwords are never saved. */
+  declare never: string[];
+  /** Passwords shown with Show, by saved sign-in id; forgotten when the panel closes. */
+  declare revealed: Record<number, string>;
+  /** A passing message on the Passwords tab (copied; why passwords can't be saved). */
+  declare note: string;
   client: DataClient | null = null;
+  passwords: PasswordsClient | null = null;
   private request = 0;
   /** A refresh is running; another was asked for meanwhile. */
   private running = false;
@@ -48,6 +64,10 @@ export class HsLibrary extends LitElement {
     this.bookmarks = [];
     this.history = [];
     this.confirming = false;
+    this.logins = [];
+    this.never = [];
+    this.revealed = {};
+    this.note = '';
   }
 
   static override styles = [
@@ -119,6 +139,25 @@ export class HsLibrary extends LitElement {
       footer {
         margin-top: 10px;
       }
+      .login {
+        flex: 1;
+        min-width: 0;
+        padding: 7px 8px;
+      }
+      .login .secret {
+        font-family: var(--hs-font-mono);
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+      .tag {
+        margin-left: 6px;
+        font-size: 11px;
+        color: var(--hs-warning);
+      }
+      .small {
+        padding: 3px 8px;
+        font-size: 12px;
+      }
     `,
   ];
 
@@ -135,6 +174,8 @@ export class HsLibrary extends LitElement {
     if (!this.open) return;
     this.open = false;
     this.confirming = false;
+    this.revealed = {};
+    this.note = '';
     this.dispatchEvent(new CustomEvent('hs-panel-closed', { bubbles: true, composed: true }));
   }
 
@@ -172,6 +213,17 @@ export class HsLibrary extends LitElement {
         const all = await this.client.get({ op: 'bookmarks.list' });
         if (ticket !== this.request) return;
         this.bookmarks = all;
+      } else if (this.view === 'passwords') {
+        if (!this.passwords) throw new Error('Passwords are not available');
+        const [status, logins, never] = await Promise.all([
+          this.passwords.get({ op: 'status' }),
+          this.passwords.get({ op: 'list' }),
+          this.passwords.get({ op: 'never.list' }),
+        ]);
+        if (ticket !== this.request) return;
+        this.logins = logins;
+        this.never = never;
+        if (!status.available) this.note = status.message ?? '';
       } else {
         const found = await this.client.get({ op: 'history.search', query: this.query, limit: 500 });
         if (ticket !== this.request) return;
@@ -196,13 +248,13 @@ export class HsLibrary extends LitElement {
           </button>
         </header>
         <div role="tablist" aria-label="Library views">
-          ${this.tab('bookmarks', 'Bookmarks')} ${this.tab('history', 'History')}
+          ${this.tab('bookmarks', 'Bookmarks')} ${this.tab('history', 'History')} ${this.tab('passwords', 'Passwords')}
         </div>
         <input
           type="search"
           data-testid="lib-search"
-          aria-label=${this.view === 'bookmarks' ? 'Search bookmarks' : 'Search history'}
-          placeholder=${this.view === 'bookmarks' ? 'Search bookmarks' : 'Search history'}
+          aria-label=${`Search ${this.view}`}
+          placeholder=${`Search ${this.view}`}
           .value=${this.query}
           @input=${this.onSearch}
         />
@@ -220,6 +272,7 @@ export class HsLibrary extends LitElement {
       @click=${() => {
         this.view = view;
         this.confirming = false;
+        this.note = '';
         void this.refresh();
       }}
     >
@@ -249,6 +302,7 @@ export class HsLibrary extends LitElement {
         )}
       </ul>`;
     }
+    if (this.view === 'passwords') return this.passwordsBody();
     if (this.history.length === 0) return this.empty('Pages you visit will show up here.');
     return groupByDay(this.history).map(
       (g) => html`<h3>${g.label}</h3>
@@ -299,8 +353,72 @@ export class HsLibrary extends LitElement {
     </footer>`;
   }
 
+  private passwordsBody() {
+    const q = this.query.trim().toLowerCase();
+    const shown = q
+      ? this.logins.filter((l) => l.origin.toLowerCase().includes(q) || l.username.toLowerCase().includes(q))
+      : this.logins;
+    return html`${this.note ? html`<p class="muted" role="status" data-testid="pw-note">${this.note}</p>` : nothing}
+      ${shown.length === 0
+        ? this.empty('Passwords you save when signing in will show up here. Only you can see them on this computer.')
+        : html`<ul>
+            ${shown.map((l) => this.loginRow(l))}
+          </ul>`}
+      ${this.never.length > 0 && !q
+        ? html`<h3>Never saved for</h3>
+            <ul>
+              ${this.never.map(
+                (origin) => html`<li>
+                  <span class="login" data-testid="pw-never-item">${siteName(origin)}</span>
+                  <button class="icon-button" data-testid="pw-never-remove" aria-label=${`Allow saving on ${siteName(origin)} again`}
+                    @click=${() => this.act(() => this.passwords!.get({ op: 'never.remove', origin }))}>×</button>
+                </li>`,
+              )}
+            </ul>`
+        : nothing}`;
+  }
+
+  private loginRow(l: SavedLogin) {
+    const shownPassword = this.revealed[l.id];
+    return html`<li data-testid="pw-item">
+      <div class="login">
+        <div class="title">${siteName(l.origin)}${l.origin.startsWith('http:') ? html`<span class="tag">not secure</span>` : nothing}</div>
+        <div class="url" data-testid="pw-username">${l.username || '(no user name)'}</div>
+        ${shownPassword !== undefined ? html`<div class="secret" data-testid="pw-value">${shownPassword}</div>` : nothing}
+      </div>
+      <button class="small" data-testid="pw-reveal" aria-label=${`${shownPassword === undefined ? 'Show' : 'Hide'} the password for ${l.username} on ${siteName(l.origin)}`}
+        @click=${() => this.toggleReveal(l.id)}>${shownPassword === undefined ? 'Show' : 'Hide'}</button>
+      <button class="small" data-testid="pw-copy" aria-label=${`Copy the password for ${l.username} on ${siteName(l.origin)}`}
+        @click=${() => this.copy(l.id)}>Copy</button>
+      <button class="icon-button" data-testid="pw-delete" aria-label=${`Delete the saved password for ${l.username} on ${siteName(l.origin)}`}
+        @click=${() => this.act(() => this.passwords!.get({ op: 'delete', id: l.id }))}>×</button>
+    </li>`;
+  }
+
+  private async toggleReveal(id: number): Promise<void> {
+    if (this.revealed[id] !== undefined) {
+      this.revealed = Object.fromEntries(Object.entries(this.revealed).filter(([key]) => Number(key) !== id));
+      return;
+    }
+    try {
+      const password = await this.passwords!.get({ op: 'reveal', id });
+      this.revealed = { ...this.revealed, [id]: password };
+    } catch (e) {
+      this.note = e instanceof Error ? e.message : String(e);
+    }
+  }
+
+  private async copy(id: number): Promise<void> {
+    try {
+      await this.passwords!.get({ op: 'copy', id });
+      this.note = 'Password copied.';
+    } catch (e) {
+      this.note = e instanceof Error ? e.message : String(e);
+    }
+  }
+
   private items(): unknown[] {
-    return this.view === 'bookmarks' ? this.bookmarks : this.history;
+    return this.view === 'bookmarks' ? this.bookmarks : this.view === 'passwords' ? this.logins : this.history;
   }
 
   private filteredBookmarks(): Bookmark[] {

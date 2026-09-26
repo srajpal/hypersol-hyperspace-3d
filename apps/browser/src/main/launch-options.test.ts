@@ -10,6 +10,7 @@ describe('parseLaunchOptions', () => {
       testMode: false,
       testBackground: false,
       testKeepRunning: false,
+      testNoKeychain: false,
     });
   });
 
@@ -25,7 +26,13 @@ describe('parseLaunchOptions', () => {
       testMode: true,
       testBackground: false,
       testKeepRunning: false,
+      testNoKeychain: false,
     });
+  });
+
+  it('turns the keychain off only in test mode (milestone 9, K5)', () => {
+    expect(parseLaunchOptions(['--test-no-keychain'], {}).testNoKeychain).toBe(false);
+    expect(parseLaunchOptions(['--test-no-keychain'], { HYPERSOL_TEST: '1' }).testNoKeychain).toBe(true);
   });
 
   it('keeps test windows in the background only in test mode', () => {

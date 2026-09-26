@@ -522,7 +522,10 @@ describe('E10 keyboard access to the panels', () => {
 
     await pressInShell(h, 'O', ['control', 'shift']);
     await waitFor('focus in the Library', active, (a) => a.host === 'HS-LIBRARY' && a.inner === 'lib-search');
-    // The panel's other controls are reachable from the keyboard.
+    // The panel's other controls are reachable from the keyboard (the
+    // Passwords tab came with milestone 9).
+    await h.shell.keyboard.press('Shift+Tab');
+    expect(await active()).toEqual({ host: 'HS-LIBRARY', inner: 'lib-tab-passwords' });
     await h.shell.keyboard.press('Shift+Tab');
     expect(await active()).toEqual({ host: 'HS-LIBRARY', inner: 'lib-tab-history' });
     await h.shell.keyboard.press('Shift+Tab');

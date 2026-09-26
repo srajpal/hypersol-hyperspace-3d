@@ -2,7 +2,12 @@ import type { PageStatus } from '@hypersol/scene-core';
 import { daylight, nebula, themeById, type Theme } from '@hypersol/themes';
 import type { ShellBridge, ShellCommand, ShortcutName } from '../shared/commands';
 import { DEFAULT_SETTINGS, defaults, searchUrlFor, type Settings } from '../shared/settings';
-import { DataClient, PrivacyClient } from './data';
+import { DataClient, PasswordsClient, PermissionsClient, PrivacyClient } from './data';
+import type { HsPrompts } from './hud/prompts';
+import type { HsSitePanel } from './hud/site-panel';
+import type { HsNotice } from './hud/notice';
+import type { PermissionKind, PermissionPrompt, PromptAnswer } from '../shared/permissions';
+import type { OfferAnswer, PasswordOffer } from '../shared/passwords';
 import type { HsAbout } from './hud/about';
 import type { HsLibrary } from './hud/library';
 import type { HsSettings } from './hud/settings';
@@ -42,6 +47,10 @@ export interface AppOptions {
   instruments: HsInstruments;
   findBar: HsFindBar;
   downloads: HsDownloads;
+  /** Permission prompts and password offers under the top bar (milestone 9). */
+  prompts: HsPrompts;
+  sitePanel: HsSitePanel;
+  notice: HsNotice;
   /** Test runs: printing is counted instead of opening the system's dialog. */
   testMode?: boolean;
   tabList: HTMLElement;
@@ -76,6 +85,8 @@ export class App {
   readonly room: Room;
   readonly data: DataClient;
   readonly privacy: PrivacyClient;
+  readonly permissions: PermissionsClient;
+  readonly passwords: PasswordsClient;
   /** True once saved settings and tabs have been loaded. */
   ready = false;
   /** The theme in use (Settings > Theme, resolved for "Match the system"). */
@@ -102,6 +113,14 @@ export class App {
   /** Test runs: print requests, counted instead of opening the dialog. */
   testPrints = 0;
   private downloadItems: DownloadInfo[] = [];
+  /** The notice each download last got (milestone 9), so each outcome is told once. */
+  private readonly downloadNotices = new Map<number, 'done' | 'failed'>();
+  /** Permission prompts waiting for each tab, oldest first (milestone 9). */
+  private readonly permissionQueue = new Map<number, PermissionPrompt[]>();
+  /** An offer to save a password, per tab. */
+  private readonly offers = new Map<number, PasswordOffer>();
+  /** What each tab's page was given (camera, microphone, location): the in-use marker. */
+  private readonly access = new Map<number, PermissionKind[]>();
   /** The room's parallax as the pages see it (-1 to 1, y down). */
   private parallax = { x: 0, y: 0 };
   private sessionTimer: number | undefined;
@@ -118,7 +137,12 @@ export class App {
     this.theme = options.theme;
     this.data = new DataClient(options.bridge);
     this.privacy = new PrivacyClient(options.bridge);
+    this.permissions = new PermissionsClient(options.bridge);
+    this.passwords = new PasswordsClient(options.bridge);
     options.library.client = this.data;
+    options.library.passwords = this.passwords;
+    options.sitePanel.client = this.permissions;
+    options.sitePanel.tab = () => (this.focusedView?.isStart === false ? this.focusedView.webContentsId : null);
     options.settingsPanel.client = this.data;
     options.settingsPanel.privacy = this.privacy;
     options.shield.client = this.privacy;
@@ -159,6 +183,7 @@ export class App {
     document.addEventListener('keyup', (e) => e.key === 'Enter' && (this.enterDown = false), true);
     this.wireToolbar();
     this.wirePanels();
+    this.wirePrompts();
     options.bridge.onCommand((command) => this.onCommand(command));
   }
 
@@ -260,20 +285,14 @@ export class App {
         this.snapshotTimers.delete(id);
         this.shieldCounts.delete(id);
         this.layersOn.delete(id);
+        this.permissionQueue.delete(id);
+        this.offers.delete(id);
+        this.access.delete(id);
         if (!store.tabs.some((t) => t.private)) this.privateLayersSites.clear();
       }
     }
 
-    this.room.setCards(
-      store.tabs.map((t) => ({
-        key: t.id,
-        title: t.title,
-        loading: t.state === 'loading',
-        ...(t.favicon ? { favicon: t.favicon } : {}),
-        focused: t.id === store.focusedId,
-        private: t.private,
-      })),
-    );
+    this.updateCards();
 
     // The last private tab closed (blank ones count): private data and choices go.
     const hasPrivate = store.tabs.some((t) => t.private);
@@ -285,7 +304,9 @@ export class App {
     if (store.focusedId !== this.shownFocus) {
       this.instruments.focusChanged();
       this.options.findBar.close();
+      this.options.sitePanel.close();
     }
+    this.updatePrompts();
     if (store.focusedId !== this.shownFocus) {
       const previous = this.shownFocus;
       if (this.views.has(previous)) this.captureSnapshot(previous);
@@ -301,6 +322,21 @@ export class App {
     void this.updateStar();
     if (newStart && this.ready) void this.refreshStartData();
     this.scheduleSessionSave();
+  }
+
+  private updateCards(): void {
+    const { store } = this;
+    this.room.setCards(
+      store.tabs.map((t) => ({
+        key: t.id,
+        title: t.title,
+        loading: t.state === 'loading',
+        ...(t.favicon ? { favicon: t.favicon } : {}),
+        focused: t.id === store.focusedId,
+        private: t.private,
+        access: (this.access.get(t.id)?.length ?? 0) > 0,
+      })),
+    );
   }
 
   private createView(tab: Tab): void {
@@ -532,6 +568,90 @@ export class App {
     t.canZoom = isWeb(tab.url) && tab.state !== 'start';
     t.zoom = this.focusedView?.zoom ?? 1;
     t.canLayers = isWeb(tab.url) && tab.state !== 'start' && tab.state !== 'failed';
+    t.site = !isWeb(tab.url) || tab.state === 'start' ? 'none' : /^https:/i.test(tab.url) ? 'secure' : 'insecure';
+    t.access = this.access.get(tab.id) ?? [];
+  }
+
+  // ---- Permission prompts, password offers, notices (milestone 9) ----------
+
+  /** Shows the focused tab's first permission prompt and its password offer. */
+  private updatePrompts(): void {
+    const id = this.store.focusedId;
+    this.options.prompts.permission = this.permissionQueue.get(id)?.[0] ?? null;
+    this.options.prompts.offer = this.offers.get(id) ?? null;
+  }
+
+  private dropPrompt(id: number): void {
+    for (const [tabId, queue] of this.permissionQueue) {
+      const rest = queue.filter((p) => p.id !== id);
+      if (rest.length > 0) this.permissionQueue.set(tabId, rest);
+      else this.permissionQueue.delete(tabId);
+    }
+    this.updatePrompts();
+  }
+
+  private wirePrompts(): void {
+    const { prompts, sitePanel, notice } = this.options;
+    prompts.addEventListener('hs-permission-answer', (e) => {
+      const { id, answer } = (e as CustomEvent<{ id: number; answer: PromptAnswer }>).detail;
+      this.dropPrompt(id);
+      void this.permissions.get({ op: 'answer', id, answer }).catch((err: unknown) => console.warn(String(err)));
+      this.focusedView?.focusContent();
+    });
+    prompts.addEventListener('hs-password-answer', (e) => {
+      const { id, answer } = (e as CustomEvent<{ id: number; answer: OfferAnswer }>).detail;
+      for (const [tabId, offer] of this.offers) if (offer.id === id) this.offers.delete(tabId);
+      this.updatePrompts();
+      void this.passwords.get({ op: 'answer', offer: id, answer }).catch((err: unknown) => console.warn(String(err)));
+    });
+    prompts.addEventListener('hs-offer-dismissed', (e) => {
+      const id = (e as CustomEvent<number>).detail;
+      for (const [tabId, offer] of this.offers) if (offer.id === id) this.offers.delete(tabId);
+      this.updatePrompts();
+    });
+    sitePanel.addEventListener('hs-site-closed', () => this.focusedView?.focusContent());
+    notice.addEventListener('hs-notice-action', (e) => {
+      const [action, id] = (e as CustomEvent<string>).detail.split(':');
+      if (action === 'downloads') this.togglePanel('downloads');
+      else if (action === 'open' || action === 'show') {
+        void this.options.bridge.downloads({ op: action === 'open' ? 'downloads.open' : 'downloads.show', id: Number(id) });
+      }
+    });
+  }
+
+  /**
+   * One notice when a download finishes, and one when it fails (a cancelled
+   * one needs none). A broken connection leaves a download interrupted but
+   * able to resume; that is told as a failure at once, and if it resumes
+   * and completes, that is told too.
+   */
+  private noticeDownloads(items: DownloadInfo[]): void {
+    for (const d of items) {
+      const told = this.downloadNotices.get(d.id);
+      if (d.state === 'completed' && told !== 'done') {
+        this.downloadNotices.set(d.id, 'done');
+        this.options.notice.show({
+          kind: 'done',
+          text: `Downloaded ${d.filename}`,
+          actions: [
+            { id: `open:${d.id}`, label: 'Open' },
+            { id: `show:${d.id}`, label: 'Show in folder' },
+          ],
+        });
+      } else if (d.state === 'interrupted' && told === undefined) {
+        this.downloadNotices.set(d.id, 'failed');
+        this.options.notice.show({
+          kind: 'failed',
+          text: `Download failed: ${d.filename}`,
+          actions: [{ id: 'downloads', label: 'Downloads' }],
+        });
+      }
+    }
+  }
+
+  /** Test hook: what a tab's page was given (the marker). */
+  accessOf(tabId: number): PermissionKind[] {
+    return this.access.get(tabId) ?? [];
   }
 
   // ---- Theme and tilt (milestone 6) ------------------------------------------
@@ -693,6 +813,11 @@ export class App {
     t.addEventListener('hs-instruments', () => void this.saveSettings({ instruments: !this.settings.instruments }));
     t.addEventListener('hs-layers', () => void this.toggleLayers());
     t.addEventListener('hs-menu', (e) => this.onMenu((e as CustomEvent<MenuAction>).detail));
+    t.addEventListener('hs-site', () => {
+      const panel = this.options.sitePanel;
+      if (panel.open) panel.close();
+      else void panel.show();
+    });
   }
 
   private onMenu(action: MenuAction): void {
@@ -741,7 +866,35 @@ export class App {
         if (tabId !== undefined) this.views.get(tabId)?.showBlocked(command.url);
         break;
       }
+      case 'permission-prompt': {
+        const tabId = this.tabForWebContents(command.prompt.webContentsId);
+        if (tabId === undefined) break;
+        this.permissionQueue.set(tabId, [...(this.permissionQueue.get(tabId) ?? []), command.prompt]);
+        this.updatePrompts();
+        break;
+      }
+      case 'permission-ended':
+        this.dropPrompt(command.id);
+        break;
+      case 'site-access': {
+        const tabId = this.tabForWebContents(command.webContentsId);
+        if (tabId === undefined) break;
+        if (command.kinds.length > 0) this.access.set(tabId, command.kinds);
+        else this.access.delete(tabId);
+        this.updateCards();
+        this.updateToolbar();
+        if (this.options.sitePanel.open) void this.options.sitePanel.refresh();
+        break;
+      }
+      case 'password-offer': {
+        const tabId = this.tabForWebContents(command.offer.webContentsId);
+        if (tabId === undefined) break;
+        this.offers.set(tabId, command.offer);
+        this.updatePrompts();
+        break;
+      }
       case 'downloads':
+        this.noticeDownloads(command.items);
         this.downloadItems = command.items;
         this.options.downloads.items = command.items;
         this.options.toolbar.downloading = command.items.some((d) => !d.finished);
@@ -762,6 +915,7 @@ export class App {
               this.applyLook();
             })
             .catch(() => undefined);
+          if (this.options.sitePanel.open) void this.options.sitePanel.refresh();
           break;
         }
         // Visits and title changes come in bursts; answer once per burst.

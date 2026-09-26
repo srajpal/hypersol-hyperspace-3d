@@ -55,6 +55,8 @@ export interface LaunchOptions {
   dnsProbe?: string;
   /** Save downloads here (test mode switch). */
   downloadsDir?: string;
+  /** Act as if the system keychain were missing (test mode switch, milestone 9). */
+  noKeychain?: boolean;
 }
 
 /**
@@ -95,6 +97,7 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
   if (opts.filtersBase !== undefined) args.push(`--filters-base=${opts.filtersBase}`);
   if (opts.dnsProbe !== undefined) args.push(`--dns-probe=${opts.dnsProbe}`);
   if (opts.downloadsDir !== undefined) args.push(`--downloads-dir=${opts.downloadsDir}`);
+  if (opts.noKeychain) args.push('--test-no-keychain');
   const app = await electron.launch({
     executablePath: electronPath,
     args,
@@ -201,6 +204,13 @@ export interface ShellHooks {
   zoom(): { factor: number; label: number };
   find(): { open: boolean; matches: number; active: number };
   prints(): number;
+  prompts(): {
+    permission: { id: number; webContentsId: number; origin: string; kinds: string[] } | null;
+    offer: { id: number; origin: string; username: string; update: boolean; insecure: boolean; problem?: string } | null;
+  };
+  accessOf(tabId: number): string[];
+  notice(): { text: string; kind: string; actions: { id: string; label: string }[] } | null;
+  sitePanel(): { open: boolean; site: { origin: string; private: boolean; states: Record<string, string>; given: string[] } | null };
   downloads(): { id: number; filename: string; path: string; received: number; total: number; state: string }[];
   instruments(): {
     open: boolean;

@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { app, BrowserWindow, ipcMain, Menu, nativeTheme, screen, session, webContents, type Session } from 'electron';
+import { app, BrowserWindow, clipboard, ipcMain, Menu, nativeTheme, safeStorage, screen, session, webContents, type Session, type WebContents } from 'electron';
 import { daylight, nebula, themeById, type Theme } from '@hypersol/themes';
 import type { ThemeChoice } from '../shared/settings';
 import {
@@ -11,6 +11,12 @@ import {
   type ShellCommand,
 } from '../shared/commands';
 import { DOWNLOADS_CHANNEL } from '../shared/downloads';
+import { PERMISSIONS_CHANNEL } from '../shared/permissions';
+import { PASSWORDS_CHANNEL } from '../shared/passwords';
+import { PAGE_PASSWORDS_CHANNEL } from '../shared/page-passwords';
+import { Passwords } from './passwords';
+import { PasswordVault, type Keychain } from './passwords/vault';
+import { Permissions } from './permissions';
 import { Downloads } from './downloads';
 import { DATA_CHANNEL } from '../shared/data';
 import { PRIVACY_CHANNEL } from '../shared/privacy';
@@ -48,6 +54,13 @@ if (options.testBackground) {
   app.commandLine.appendSwitch('disable-background-timer-throttling');
 }
 
+if (options.testMode) {
+  // A stand-in camera and microphone for the permission checks (milestone
+  // 9, K6): pages get a test picture and tone, never a real device. The
+  // prompt itself still appears and must be answered.
+  app.commandLine.appendSwitch('use-fake-device-for-media-stream');
+}
+
 const PAGE_PRELOAD = join(__dirname, '../preload/page.js');
 const SHELL_PRELOAD = join(__dirname, '../preload/shell.js');
 
@@ -62,6 +75,8 @@ let testLog: TestLog | null = null;
 let storage: StorageService | null = null;
 let privacy: Privacy | null = null;
 let inspector: Inspector | null = null;
+let permissions: Permissions | null = null;
+let passwords: Passwords | null = null;
 /** The private tabs' in-memory session. */
 let privateSession: Session | null = null;
 
@@ -183,6 +198,7 @@ async function forgetPrivateData(): Promise<void> {
   if (!s) return;
   privacy?.forgetPrivate();
   inspector?.forgetPrivate();
+  permissions?.forgetPrivate();
   await s.clearStorageData();
   await s.clearCache();
   await s.clearAuthCache();
@@ -241,6 +257,8 @@ if (!app.requestSingleInstanceLock()) {
     if (contents.getType() !== 'webview') return;
     privacy?.trackTab(contents);
     inspector?.trackTab(contents);
+    permissions?.trackTab(contents);
+    passwords?.trackTab(contents);
     // A private tab keeps nothing: no history, and its session's data goes
     // when the last private tab closes (milestone 8). The shell says when
     // that is, since a blank private tab has no page yet (PR #16 review).
@@ -268,9 +286,6 @@ if (!app.requestSingleInstanceLock()) {
     for (const s of [ses, privateSes]) {
       // No dictionary downloads (privacy statement, ARCHITECTURE.md section 8).
       s.setSpellCheckerEnabled(false);
-      // No permissions are granted yet (camera, location, notifications, and
-      // so on). Permission prompts come in a later milestone.
-      s.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
     }
 
     // Downloads go straight to the Downloads folder (milestone 8, Q2 a).
@@ -324,6 +339,51 @@ if (!app.requestSingleInstanceLock()) {
       }
       return storage!.handle(request);
     });
+    // Site permissions (milestone 9): the camera, microphone, and location
+    // ask first; everything else is refused, as before.
+    const saved = storage;
+    const isPrivateTab = (contents: WebContents) => contents.session === privateSes;
+    const isShellContents = (contents: WebContents) => mainWindow !== null && contents === mainWindow.webContents;
+    const sendToHost = (contents: WebContents, command: ShellCommand) => {
+      const host = contents.hostWebContents;
+      if (host && !host.isDestroyed()) host.send(SHELL_COMMAND_CHANNEL, command);
+    };
+    const perms = new Permissions({
+      isShell: isShellContents,
+      isPrivate: isPrivateTab,
+      saved: () => saved.settingsFile.settings.sitePermissions,
+      save: (sites) => saved.updateSettings({ sitePermissions: sites }),
+      send: sendToHost,
+    });
+    permissions = perms;
+    perms.protect(ses);
+    perms.protect(privateSes);
+    ipcMain.handle(PERMISSIONS_CHANNEL, (event, request: unknown) => perms.handle(event, request));
+
+    // Saved passwords (milestone 9), encrypted with the system's keychain.
+    const noKeychain = options.testNoKeychain;
+    const keychain: Keychain = {
+      problem: () => {
+        const missing = "Passwords can't be saved: this computer's keychain isn't available.";
+        if (noKeychain || !safeStorage.isEncryptionAvailable()) return missing;
+        // On Linux without a keyring Electron falls back to a fixed key, which protects nothing.
+        if (process.platform === 'linux' && safeStorage.getSelectedStorageBackend() === 'basic_text') return missing;
+        return null;
+      },
+      encrypt: (text) => safeStorage.encryptString(text),
+      decrypt: (bytes) => safeStorage.decryptString(Buffer.from(bytes)),
+    };
+    const pw = new Passwords(new PasswordVault(() => saved.database, keychain), {
+      isPrivate: isPrivateTab,
+      isShell: isShellContents,
+      send: sendToHost,
+      writeClipboard: (text) => clipboard.writeText(text),
+      onChange: () => saved.notify('passwords'),
+    });
+    passwords = pw;
+    ipcMain.handle(PAGE_PASSWORDS_CHANNEL, (event, request: unknown) => pw.handlePage(event, request));
+    ipcMain.handle(PASSWORDS_CHANNEL, (event, request: unknown) => pw.handleShell(event, request));
+
     storage.onChange((what) => {
       if (what === 'settings') applyWindowTheme();
       if (mainWindow && !mainWindow.isDestroyed()) {

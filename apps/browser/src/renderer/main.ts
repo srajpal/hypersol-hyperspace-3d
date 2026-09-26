@@ -8,6 +8,9 @@ import './hud/theme-button';
 import './hud/instruments';
 import './hud/find-bar';
 import './hud/downloads';
+import './hud/prompts';
+import './hud/site-panel';
+import './hud/notice';
 import { DEFAULT_TILT_DEG, clampTilt } from '@hypersol/scene-core';
 import { defaultTheme } from '@hypersol/themes';
 import type { ShellBridge } from '../shared/commands';
@@ -46,6 +49,9 @@ const app = new App({
   instruments: document.querySelector('hs-instruments')!,
   findBar: document.querySelector('hs-find-bar')!,
   downloads: document.querySelector('hs-downloads')!,
+  prompts: document.querySelector('hs-prompts')!,
+  sitePanel: document.querySelector('hs-site-panel')!,
+  notice: document.querySelector('hs-notice')!,
   testMode: params.get('test') === '1',
   tabList: document.getElementById('tab-list') as HTMLElement,
 });
@@ -99,6 +105,16 @@ if (params.get('test') === '1') {
         return { open: bar.open, matches: bar.matchCount, active: bar.active };
       },
       prints: () => app.testPrints,
+      prompts: () => {
+        const p = document.querySelector('hs-prompts')!;
+        return { permission: p.permission, offer: p.offer };
+      },
+      accessOf: (tabId: number) => app.accessOf(tabId),
+      notice: () => document.querySelector('hs-notice')!.notice,
+      sitePanel: () => {
+        const p = document.querySelector('hs-site-panel')!;
+        return { open: p.open, site: p.site };
+      },
       downloads: () => app.downloadsList,
       instruments: () => {
         const el = document.querySelector('hs-instruments')!;

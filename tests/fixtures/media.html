@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Media fixture</title>
+    <style>
+      body { margin: 0; padding: 40px; font-family: sans-serif; font-size: 22px; background: #fff; }
+    </style>
+  </head>
+  <body>
+    <!-- Milestone 9 checks K6 to K8: a page that asks for the camera, the
+         microphone, and the location. Test runs use Chromium's stand-in
+         devices; the answers come back as text. -->
+    <h1>Camera, microphone, and location</h1>
+    <script>
+      async function media(constraints) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          const kinds = stream.getTracks().map((t) => t.kind).sort().join('+');
+          stream.getTracks().forEach((t) => t.stop());
+          return 'granted:' + kinds;
+        } catch (e) {
+          return 'denied:' + e.name;
+        }
+      }
+      window.camera = () => media({ video: true });
+      window.microphone = () => media({ audio: true });
+      window.both = () => media({ video: true, audio: true });
+      // PERMISSION_DENIED is 1. With permission, a result or another error
+      // (no position available) both mean the page was allowed to ask.
+      window.locate = () =>
+        new Promise((resolve) =>
+          navigator.geolocation.getCurrentPosition(
+            () => resolve('granted:position'),
+            (e) => resolve(e.code === 1 ? 'denied:' + e.code : 'granted:error-' + e.code),
+            { timeout: 5000, maximumAge: 0 },
+          ),
+        );
+    </script>
+  </body>
+</html>

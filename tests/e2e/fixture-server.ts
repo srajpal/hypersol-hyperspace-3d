@@ -100,6 +100,7 @@ function page(title: string, body: string): string {
  *   /ddm/...                   an "ad landing" page, served for the ad host mapped to this machine
  *   /download/sample.txt       a small file sent as an attachment (a download)
  *   /download/slow.bin         2 MB sent slowly as an attachment (to cancel)
+ *   /download/broken.bin       an attachment whose connection breaks part way (a failed download)
  */
 function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
   const url = new URL(req.url ?? '/', 'http://x');
@@ -222,6 +223,17 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
       res.write(piece);
     }, 100);
     res.on('close', () => clearInterval(timer));
+    return;
+  }
+  if (path === '/download/broken.bin') {
+    res.writeHead(200, {
+      'content-type': 'application/octet-stream',
+      'content-disposition': 'attachment; filename="broken.bin"',
+      'content-length': String(1024 * 1024),
+      'cache-control': 'no-store',
+    });
+    res.write(Buffer.alloc(8 * 1024));
+    setTimeout(() => res.destroy(), 300);
     return;
   }
   if (path.startsWith('/ddm/')) {

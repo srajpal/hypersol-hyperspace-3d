@@ -1,8 +1,9 @@
 import { DatabaseSync } from 'node:sqlite';
 import type { Bookmark, HistoryEntry } from '../../shared/data';
+import type { SavedLogin } from '../../shared/passwords';
 
 /** Current schema; raise it and add a step to MIGRATIONS for any change. */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 const MIGRATIONS: Record<number, string> = {
   1: `
@@ -22,6 +23,23 @@ const MIGRATIONS: Record<number, string> = {
     CREATE INDEX history_by_time ON history (visited_at DESC);
     CREATE INDEX history_by_url ON history (url);
   `,
+  // Milestone 9: saved sign-ins. The password is stored only encrypted
+  // with the system's keychain (main/passwords/vault.ts); "never" lists
+  // the sites where you asked never to save.
+  2: `
+    CREATE TABLE logins (
+      id INTEGER PRIMARY KEY,
+      origin TEXT NOT NULL,
+      username TEXT NOT NULL,
+      secret BLOB NOT NULL,
+      created_at INTEGER NOT NULL,
+      used_at INTEGER,
+      UNIQUE (origin, username)
+    );
+    CREATE TABLE login_never (
+      origin TEXT PRIMARY KEY
+    );
+  `,
 };
 
 interface BookmarkRow {
@@ -38,6 +56,29 @@ interface HistoryRow {
   title: string;
   visited_at: number;
 }
+
+interface LoginRow {
+  id: number;
+  origin: string;
+  username: string;
+  secret: Uint8Array;
+  created_at: number;
+  used_at: number | null;
+}
+
+/** A saved sign-in with its encrypted password. */
+export interface LoginRecord extends SavedLogin {
+  secret: Uint8Array;
+}
+
+const toLogin = (r: LoginRow): LoginRecord => ({
+  id: r.id,
+  origin: r.origin,
+  username: r.username,
+  secret: r.secret,
+  createdAt: r.created_at,
+  usedAt: r.used_at,
+});
 
 const toBookmark = (r: BookmarkRow): Bookmark => ({
   id: r.id,
@@ -59,7 +100,7 @@ function likePattern(text: string): string {
   return `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 }
 
-/** Bookmarks and history in one SQLite file (hypersol.sqlite). */
+/** Bookmarks, history, and saved sign-ins in one SQLite file (hypersol.sqlite). */
 export class Store {
   private readonly db: DatabaseSync;
 
@@ -165,6 +206,67 @@ export class Store {
 
   clearHistory(): void {
     this.db.exec('DELETE FROM history');
+  }
+
+  // ---- Saved sign-ins (milestone 9) ---------------------------------------
+
+  /** Every saved sign-in, by site then user name. */
+  listLogins(): LoginRecord[] {
+    return (this.db.prepare('SELECT * FROM logins ORDER BY origin, username').all() as unknown as LoginRow[]).map(toLogin);
+  }
+
+  loginsFor(origin: string): LoginRecord[] {
+    return (this.db.prepare('SELECT * FROM logins WHERE origin = ? ORDER BY used_at DESC, username').all(origin) as unknown as LoginRow[]).map(
+      toLogin,
+    );
+  }
+
+  login(origin: string, username: string): LoginRecord | null {
+    const row = this.db.prepare('SELECT * FROM logins WHERE origin = ? AND username = ?').get(origin, username);
+    return row ? toLogin(row as unknown as LoginRow) : null;
+  }
+
+  loginById(id: number): LoginRecord | null {
+    const row = this.db.prepare('SELECT * FROM logins WHERE id = ?').get(id);
+    return row ? toLogin(row as unknown as LoginRow) : null;
+  }
+
+  /** Saves a sign-in, or replaces the password of the same site and user name. */
+  saveLogin(origin: string, username: string, secret: Uint8Array, now = Date.now()): void {
+    this.db
+      .prepare(
+        `INSERT INTO logins (origin, username, secret, created_at) VALUES (?, ?, ?, ?)
+         ON CONFLICT (origin, username) DO UPDATE SET secret = excluded.secret`,
+      )
+      .run(origin, username, secret, now);
+  }
+
+  markLoginUsed(id: number, now = Date.now()): void {
+    this.db.prepare('UPDATE logins SET used_at = ? WHERE id = ?').run(now, id);
+  }
+
+  deleteLogin(id: number): void {
+    this.db.prepare('DELETE FROM logins WHERE id = ?').run(id);
+  }
+
+  clearLogins(): void {
+    this.db.exec('DELETE FROM logins; DELETE FROM login_never;');
+  }
+
+  neverList(): string[] {
+    return (this.db.prepare('SELECT origin FROM login_never ORDER BY origin').all() as unknown as { origin: string }[]).map((r) => r.origin);
+  }
+
+  isNever(origin: string): boolean {
+    return this.db.prepare('SELECT 1 FROM login_never WHERE origin = ?').get(origin) !== undefined;
+  }
+
+  addNever(origin: string): void {
+    this.db.prepare('INSERT OR IGNORE INTO login_never (origin) VALUES (?)').run(origin);
+  }
+
+  removeNever(origin: string): void {
+    this.db.prepare('DELETE FROM login_never WHERE origin = ?').run(origin);
   }
 
   close(): void {

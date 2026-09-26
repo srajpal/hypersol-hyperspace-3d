@@ -2,6 +2,7 @@
  * Settings shared by the main process (which stores them) and the shell
  * (which shows them). Pure, so both sides and the unit tests use it.
  */
+import { parseSiteChoices, type SiteChoices } from './permissions';
 
 export const SEARCH_ENGINES = {
   duckduckgo: { name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=%s' },
@@ -51,6 +52,8 @@ export interface Settings {
   consoleLevel: ConsoleFilter;
   /** Zoom factor per site (host name), when not 100% (milestone 8). */
   zoomSites: Record<string, number>;
+  /** Remembered camera, microphone, and location answers, by origin (milestone 9). */
+  sitePermissions: Record<string, SiteChoices>;
 }
 
 export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
@@ -70,10 +73,12 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   instrumentsNetwork: true,
   consoleLevel: 'all',
   zoomSites: Object.freeze({}) as Record<string, number>,
+  sitePermissions: Object.freeze({}) as Record<string, SiteChoices>,
 });
 
 const SETTING_KEYS = ['searchEngine', 'onStartup', 'dnsMode', 'filterRefresh', 'pausedSites', 'layersOnOpen', 'layersSites', 'theme', 'pageTilt',
-  'instruments', 'instrumentsReadouts', 'instrumentsGauges', 'instrumentsConsole', 'instrumentsNetwork', 'consoleLevel', 'zoomSites'] as const;
+  'instruments', 'instrumentsReadouts', 'instrumentsGauges', 'instrumentsConsole', 'instrumentsNetwork', 'consoleLevel', 'zoomSites',
+  'sitePermissions'] as const;
 const INSTRUMENT_SWITCHES = ['instruments', 'instrumentsReadouts', 'instrumentsGauges', 'instrumentsConsole', 'instrumentsNetwork'] as const;
 export const MAX_PAUSED_SITES = 1000;
 export const MAX_LAYERS_SITES = 1000;
@@ -99,6 +104,7 @@ export function applySettingsPatch(current: Settings, patch: unknown): { setting
     pausedSites: [...current.pausedSites],
     layersSites: { ...current.layersSites },
     zoomSites: { ...current.zoomSites },
+    sitePermissions: { ...current.sitePermissions },
   };
   for (const [key, value] of Object.entries(patch)) {
     if (key === 'searchEngine') {
@@ -129,6 +135,10 @@ export function applySettingsPatch(current: Settings, patch: unknown): { setting
         return { error: 'zoomSites must map host names to zoom factors from 0.25 to 5' };
       }
       next.zoomSites = Object.fromEntries(entries.map(([h, v]) => [h.toLowerCase(), v as number]));
+    } else if (key === 'sitePermissions') {
+      const sites = parseSiteChoices(value);
+      if (!sites) return { error: 'sitePermissions must map web origins to camera, microphone, and location choices' };
+      next.sitePermissions = sites;
     } else if (key === 'consoleLevel') {
       if (value !== 'all' && value !== 'warnings' && value !== 'errors') return { error: `Unknown console level: ${String(value)}` };
       next.consoleLevel = value;
@@ -159,7 +169,7 @@ export function applySettingsPatch(current: Settings, patch: unknown): { setting
 
 /** A fresh copy of the defaults (the list inside is never shared). */
 export function defaults(): Settings {
-  return { ...DEFAULT_SETTINGS, pausedSites: [], layersSites: {}, zoomSites: {} };
+  return { ...DEFAULT_SETTINGS, pausedSites: [], layersSites: {}, zoomSites: {}, sitePermissions: {} };
 }
 
 /**
