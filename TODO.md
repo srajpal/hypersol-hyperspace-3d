@@ -1493,6 +1493,6 @@ it makes sense (prompt 43). Combined, one milestone fewer:
 | Site permissions panel: camera, microphone, and location (all refused today), per-site choices | 9, Passwords and site permissions | Both are per-site privacy decisions with the same shape: an offer or prompt on the page, a remembered per-site choice, and a place to review and revoke it |
 | Reopen a closed tab; search tabs; mute a tab's audio; tab card options (small, medium, large, auto-hide, or a list in the top bar) | 10, Tabs and economy | All tab management |
 | Economy mode: lower rendering resolution, fewer effects, a frame cap; sleeping inactive tabs (protecting forms, audio, downloads) | 10, Tabs and economy | Tab sleeping is tab work; with GitHub issue #4, all the memory and speed work lands together before the first release |
-| App logo (from the early HyperSpace 3D cube) | 11, First release | Installers need icons; concepts in docs/branding/logo-concepts/, the owner chooses a direction first |
+| App logo (from the early HyperSpace 3D cube) | 11, First release | Installers need icons; concepts in docs/branding/logo-concepts/; direction chosen 2026-09-26 (prompt 46): concept 4d |
 
 Each still gets its plan and questions when its milestone starts.
