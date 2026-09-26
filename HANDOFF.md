@@ -14,11 +14,15 @@ there is one tab), bookmarks, history, Library and Settings, ad and
 tracker blocking with a shield, encrypted DNS through Quad9, a layers
 view, the Nebula and Daylight themes, an instrument panel (readouts,
 console, network list), zoom, find in page, downloads, printing, and
-private tabs. Milestone 9 (Passwords) has the owner's answers but no
-plan yet: the owner asked for their feedback (TODO.md, "Owner feedback
-on milestone 8") and GitHub issues to shape it. GitHub issues #8 to #15
+private tabs. Next is milestone 9 (Passwords and site permissions),
+with the owner's Passwords answers but no plan yet; the owner's
+milestone 8 feedback (TODO.md) goes into it. Then 10 (Tabs and economy)
+and 11 (First release). HoloML: the owner is deciding whether to rename
+the language (HSML was checked and advised against, prompt 43) before
+the holoml repository is updated to the new browser name. GitHub issues #8 to #15
 (QA of milestone 8) were fixed in PR #16, merged 2026-09-26; #4 and #5 stay proposed for the
-first release (milestone 10). The Electron security check was last done
+tabs and economy milestone (#4, milestone 10) and the first release (#5,
+milestone 11). The Electron security check was last done
 at the start of milestone 8 (44.4.5 current). Progress screenshots live
 in docs/screenshots/<milestone>/; capture them with
 `MILESTONE=mN pnpm screenshots` when a milestone is finished.
@@ -63,7 +67,7 @@ browser repo for rules and the prompt log.
   TypeScript, Three.js, Lit, SQLite (node:sqlite, built into
   Electron's Node), @ghostery/adblocker-electron (milestone 4),
   electron-vite, Vitest, Playwright; planned and not yet installed:
-  electron-builder (milestone 10). Reasons in ARCHITECTURE.md section 4.
+  electron-builder (milestone 11). Reasons in ARCHITECTURE.md section 4.
   Toolchain: Node 22.13 or newer, pnpm 12.4.1 pinned.
 - Focused page is a live Chromium view (an Electron `<webview>`) placed
   with CSS 3D transforms; background tabs are snapshot textures;
@@ -103,10 +107,10 @@ These are recommendations that survived adversarial verification but
 change scope, add a service, or cost money. None is applied.
 
 - Three-OS continuous integration (GitHub Actions) as a milestone 1 task,
-  so macOS and Linux get signal before milestone 10. Needs approval as a
+  so macOS and Linux get signal before milestone 11. Needs approval as a
   service under rule 3.
 - Code signing and notarisation: Apple Developer Program and a Windows
-  signing route. Paid accounts with lead time; start before milestone 10.
+  signing route. Paid accounts with lead time; start before milestone 11.
 - An update channel (for example a version check against GitHub
   Releases) so Chromium security fixes reach users. Needs a privacy
   statement amendment.
@@ -198,7 +202,7 @@ repo's PROMPTS.md.
   to build.
 - No code in the holoml repo yet.
 - Nothing owed from earlier milestones.
-- No SPEC.md in holoml (outline is part of milestone 10).
+- No SPEC.md in holoml (outline is part of milestone 11).
 - No git tags, branches, CI, issue templates, SECURITY.md, CONTRIBUTING.md,
   or GitHub settings.
 - No memory files saved outside the repo; everything is in these docs.

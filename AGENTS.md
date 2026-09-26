@@ -193,7 +193,8 @@ milestone; the current milestone's checks are defined in TODO.md):
 - Milestone 8 checks J1 to J8 (same command): zoom, find in page,
   downloads, printing, private tabs (marking, no history, separate and
   cleared cookies, not reopened, shield), keyboard.
-- Later milestones add: passwords (9), per-OS installers (10).
+- Later milestones add: passwords and site permissions (9), tabs and
+  economy (10), per-OS installers (11).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

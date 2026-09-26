@@ -20,22 +20,25 @@ Plan approved 2026-09-24.
 | 6 | Themes and look (design) | Final Nebula and Daylight, theme switch, matching room lighting, design pass over all screens, custom window frame considered | Done (accepted 2026-09-26; tab cards to shrink, see below) |
 | 7 | Instrument panel | Floating panels with live readouts about the page and the browser: dials, meters, a console, and a network list, like a light DevTools; each part switchable in Settings | Done (accepted 2026-09-26) |
 | 8 | Everyday browser features | Zoom (buttons, shortcuts, per site), find in page, downloads panel, printing, private tabs | Done (accepted 2026-09-26, with follow-ups below) |
-| 9 | Passwords | A password manager: offer to save on sign-in, fill on return, view and delete; encrypted with the system's keychain | Later (questions answered, prompt 38; plan waits for the owner's GitHub issues) |
-| 10 | First release v0.1 | Installers for Windows, macOS, Linux; per-OS checks; holoml first-result scope (SPEC.md outline, parser package with one test); full regression pass | Later |
-| 11 | HoloML v0.1 language | Spec, schema, parser, conformance samples | Later |
-| 12 | HoloML in the browser | `.holo` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
-| 13 | Car showroom demo | Demo site with walk-around 3D cars | Later |
-| 14 | Free camera and room navigation | Move freely around the room | Later |
-| 15 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
-| 16 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
+| 9 | Passwords and site permissions | A password manager (offer to save on sign-in, fill on return, a Passwords tab in the Library, encrypted with the system's keychain) and a site permissions panel (camera, microphone, location: per-site prompts and choices to review and revoke); plus the milestone 8 feedback (download finished notice, private tab under "+", printing) | Later (Passwords answers recorded, prompt 38) |
+| 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Later |
+| 11 | First release v0.1 | Installers for Windows, macOS, Linux; per-OS checks; the app logo and icons; continuous integration (GitHub issue #5); holoml first-result scope (SPEC.md outline, parser package with one test); full regression pass | Later |
+| 12 | HoloML v0.1 language | Spec, schema, parser, conformance samples | Later |
+| 13 | HoloML in the browser | `.holo` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
+| 14 | Car showroom demo | Demo site with walk-around 3D cars | Later |
+| 15 | Free camera and room navigation | Move freely around the room | Later |
+| 16 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
+| 17 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS and Android | Later |
 
-Milestones 1 to 10 make up the first useful result in BRIEF.md. The
-instrument panel was added as milestone 7 on 2026-09-26 (prompt 35), and
-on the same day (prompt 37) the everyday browser features moved ahead
-of the first release as milestone 8, with a new Passwords milestone 9;
-the first release is now milestone 10. Earlier entries below that say
-"milestone 7" or "milestone 8" for the release now mean 10.
+Milestones 1 to 11 make up the first useful result in BRIEF.md. The
+instrument panel was added as milestone 7 on 2026-09-26 (prompt 35); on
+the same day the everyday browser features moved ahead of the first
+release as milestone 8, with a Passwords milestone 9 (prompt 37); then
+(prompts 42 and 43) site permissions joined Passwords as milestone 9,
+the tab requests and economy mode became milestone 10, and the first
+release is now milestone 11. Earlier entries below that say "milestone
+7", "8", or "10" for the release now mean 11.
 
 ### Where design work belongs
 
@@ -527,11 +530,11 @@ merged refreshes) and #5 (toolchain pinned and documented).
 Follow-ups, proposed and not approved to build:
 - #4: move database work to a worker off the main process; indexed
   search and history aggregation; latency benchmarks with budgets.
-  Proposed as a task in milestone 10 (first release), before real users
+  Now part of milestone 10 (tabs and economy), before real users
   build up large histories.
 - #5: continuous integration for build, lint, types, and tests needs the
   owner's approval of a service (AGENTS.md rule 3, for example GitHub
-  Actions). Windows, macOS, and Linux coverage belongs with milestone 10's
+  Actions). Windows, macOS, and Linux coverage belongs with milestone 11's
   per-OS checks.
 
 New checks added with the fixes: D13 (favicon limits); E6 (tabs saved
@@ -894,7 +897,7 @@ for sharper text.
   systems; the theme now sets its light or dark scheme.
 - Small labels (section headings, counters) use a monospace face, the
   one typographic retro touch; body text stays the system font (a custom
-  font is milestone 16).
+  font is milestone 17).
 
 ### Tasks
 
@@ -1382,23 +1385,16 @@ Owner decision: the product is now HyperSol HyperSpace 3D, with
   README and AGENTS.md still name the browser "HyperSol WebSurfer 3D"
   and link the old address (which redirects).
 
-## New requests (2026-09-26, prompt 42): proposed placement, not approved
+## New requests (2026-09-26, prompt 42): placed (prompt 43)
 
-The owner asked to list these and decide when to add them. Proposed
-(nothing here is approved to build yet):
+The owner approved the proposed order and asked to combine parts where
+it makes sense (prompt 43). Combined, one milestone fewer:
 
-| Request | Proposed place | Why |
+| Request | Milestone | Why there |
 |---|---|---|
-| Reopen a closed tab (Ctrl/Cmd+Shift+T, and a menu entry) | New milestone 10, Tabs and site controls | Small, everyday, and belongs with the other tab work |
-| Search tabs, and mute a tab's audio | Milestone 10 | Tab management; mute needs an audio indicator on cards |
-| Tab options: card size (small, medium, large), auto-hide, or none (tabs as a list in the top bar) | Milestone 10 | Follows the owner's earlier request to shrink the cards; the list mode also helps search |
-| Site permissions panel: camera, microphone, and location (all refused today), with per-site choices | Milestone 10 | Makes everyday sites usable; privacy-sensitive, so explicit prompts, per-site memory, and a panel to review and revoke |
-| Economy mode: lower rendering resolution, fewer effects, an optional frame cap; later, sleeping inactive tabs (protecting forms, audio, and downloads) | New milestone 11, Economy and performance, together with GitHub issue #4 (history work off the main process) | The 30-tab benchmark makes memory worth tackling before the first release |
-| App logo (from the early HyperSpace 3D cube) | The first release milestone (installers need icons); concepts now in docs/branding/logo-concepts/ | The owner chooses a direction first |
+| Site permissions panel: camera, microphone, and location (all refused today), per-site choices | 9, Passwords and site permissions | Both are per-site privacy decisions with the same shape: an offer or prompt on the page, a remembered per-site choice, and a place to review and revoke it |
+| Reopen a closed tab; search tabs; mute a tab's audio; tab card options (small, medium, large, auto-hide, or a list in the top bar) | 10, Tabs and economy | All tab management |
+| Economy mode: lower rendering resolution, fewer effects, a frame cap; sleeping inactive tabs (protecting forms, audio, downloads) | 10, Tabs and economy | Tab sleeping is tab work; with GitHub issue #4, all the memory and speed work lands together before the first release |
+| App logo (from the early HyperSpace 3D cube) | 11, First release | Installers need icons; concepts in docs/branding/logo-concepts/, the owner chooses a direction first |
 
-Proposed order: 9 Passwords (with the milestone 8 feedback: a download
-finished notice, a private tab option on "+", printing quality), 10
-Tabs and site controls, 11 Economy and performance, 12 First release
-(installers, per-OS checks, the logo, GitHub issue #5). Milestones after
-that move down by two. Needs the owner's yes before the roadmap changes.
-
+Each still gets its plan and questions when its milestone starts.

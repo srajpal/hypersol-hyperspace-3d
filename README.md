@@ -48,11 +48,12 @@ of the Day on TechTV's The Screen Savers in July 2001.
 
 Behind the shipped features sat a bigger idea: a browser where the web
 itself is not flat. Sites rendered in three dimensions. A browser you
-look into, not at. Between 2001 and 2003 the idea got a name,
-HyperSpace 3D, and an early concept screen: a blue cube tilted toward
-the viewer over a loading bar. That screen survives and is shown below
-as it was. It is a concept from that time; there is no claim here that
-it shipped as a product.
+look into, not at. Between 2001 and 2003 that idea became the concept
+for HyperSol's next step after WebSurfer: HyperSpace 3D. An early
+concept screen from that work survives, a blue cube tilted toward the
+viewer over a loading bar, and is shown below as it was. It was a
+concept of its time; there is no claim here that it shipped as a
+product.
 
 ![The early HyperSpace 3D concept screen: a blue 3D cube and a loading bar, "Copyright 2001-2003 HyperSol, LLC"](docs/history/hyperspace-3d-concept-2001-2003.jpg)
 
@@ -198,7 +199,7 @@ In use now: Electron 44 (the current supported stable line), TypeScript,
 Three.js, Lit, SQLite through Node's built-in node:sqlite, and Ghostery's
 open-source ad-blocking engine with open filter lists; Vite and
 electron-vite to build; Vitest and Playwright to test.
-Planned, not yet installed: electron-builder for installers (milestone 10).
+Planned, not yet installed: electron-builder for installers (milestone 11).
 Reasons for each choice are in ARCHITECTURE.md.
 
 Known limitation: Electron ships no DRM module, so video from Netflix
