@@ -214,7 +214,9 @@ export interface ShellHooks {
   ignorePrepareClose(): void;
   frames(): number;
   drawsRoom(): boolean;
-  layout(): { panelWidth: number; panelHeight: number; cameraZ: number; viewportWidth: number; viewportHeight: number };
+  holoml(): { fill: boolean; shown: boolean };
+  showUrl(url: string): void;
+  layout(): { panelWidth: number; panelHeight: number; cameraZ: number; viewportWidth: number; viewportHeight: number; rotationY: number };
   cameraOffset(): Point;
   parallaxPaused(): boolean;
   pointerLog(): { x: number; y: number; target: string; overPage: boolean }[];

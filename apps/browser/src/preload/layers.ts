@@ -16,6 +16,7 @@
  */
 import { ipcRenderer, webFrame } from 'electron';
 import { LAYERS_CHANNEL, MAX_PAGE_IMAGES, PAGE_IMAGES_CHANNEL, parseLayersState, type PageImage } from '../shared/layers';
+import { isHolomlDocument } from './holoml';
 import { LAYERS, findSectionContainer, largest, liftTransform, sameExceptLift, vanishingPoint, type Box } from './layers-plan';
 
 const ATTR = 'data-hs-layer';
@@ -470,7 +471,8 @@ function onResize(): void {
   scheduleRepick();
 }
 
-if (window === window.top) {
+// A HoloML page (milestone 14) is a 3D scene, not a page to lift apart.
+if (window === window.top && !isHolomlDocument) {
   ipcRenderer.on(LAYERS_CHANNEL, (_event, raw: unknown) => {
     const state = parseLayersState(raw);
     if (!state) return;

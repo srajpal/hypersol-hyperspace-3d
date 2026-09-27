@@ -1,0 +1,2 @@
+# HoloML test pages are read byte for byte (their error positions are checked).
+*.holoml -text

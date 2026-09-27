@@ -27,5 +27,20 @@ export default defineConfig({
       },
     },
   },
-  renderer: {},
+  renderer: {
+    build: {
+      rollupOptions: {
+        input: {
+          // The 3D shell.
+          index: resolve(__dirname, 'src/renderer/index.html'),
+          // The HoloML viewer (milestone 14): served to HoloML pages as
+          // hypersol-viewer://app/assets/viewer.js (main/holoml.ts).
+          viewer: resolve(__dirname, 'src/viewer/main.ts'),
+        },
+        output: {
+          entryFileNames: (chunk) => (chunk.name === 'viewer' ? 'assets/viewer.js' : 'assets/[name]-[hash].js'),
+        },
+      },
+    },
+  },
 });

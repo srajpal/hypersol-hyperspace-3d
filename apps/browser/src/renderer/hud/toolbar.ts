@@ -11,6 +11,7 @@ export function typedKey(text: string): string {
 export type MenuAction =
   | 'new-tab'
   | 'private-tab'
+  | 'open-file'
   | 'close-tab'
   | 'reopen-tab'
   | 'search-tabs'
@@ -681,6 +682,9 @@ export class HsToolbar extends LitElement {
               </button>
               <button role="menuitem" data-testid="menu-private-tab" @click=${() => this.menu('private-tab')}>
                 New private tab <kbd>${this.keys['private-tab'] ?? ''}</kbd>
+              </button>
+              <button role="menuitem" data-testid="menu-open-file" @click=${() => this.menu('open-file')}>
+                Open a HoloML file…
               </button>
               <button role="menuitem" data-testid="menu-close-tab" @click=${() => this.menu('close-tab')}>
                 Close tab <kbd>${this.keys['close-tab'] ?? ''}</kbd>

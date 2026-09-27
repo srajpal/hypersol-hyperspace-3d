@@ -1,8 +1,9 @@
-import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron';
 import {
   CAPTURE_KEYS_CHANNEL,
   CAPTURE_TAB_CHANNEL,
   CLOSE_READY_CHANNEL,
+  OPEN_FILE_CHANNEL,
   SHELL_COMMAND_CHANNEL,
   type ShellBridge,
   type ShellCommand,
@@ -64,6 +65,12 @@ const bridge: ShellBridge = {
   },
   captureKeys(on) {
     ipcRenderer.send(CAPTURE_KEYS_CHANNEL, on === true);
+  },
+  openFile(file) {
+    // Only a real file the person dropped has a path; others give "".
+    const path = file ? webUtils.getPathForFile(file) : null;
+    if (path === '') return Promise.resolve(null);
+    return ipcRenderer.invoke(OPEN_FILE_CHANNEL, path) as Promise<string | null>;
   },
 };
 

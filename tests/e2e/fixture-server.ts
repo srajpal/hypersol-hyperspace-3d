@@ -15,6 +15,9 @@ const TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
+  // HoloML pages and their glTF models (milestone 14).
+  '.holoml': 'model/vnd.holoml',
+  '.gltf': 'model/gltf+json',
 };
 
 /** A solid-colour 16×16 PNG, built here so the fixture has no binary file. */
@@ -101,6 +104,8 @@ function page(title: string, body: string): string {
  *   /download/sample.txt       a small file sent as an attachment (a download)
  *   /download/slow.bin         2 MB sent slowly as an attachment (to cancel)
  *   /download/broken.bin       an attachment whose connection breaks part way (a failed download)
+ *   /holoml/by-type            holoml/still.holoml, known only by its media type (no .holoml in the address)
+ *   /holoml/as-text.holoml     holoml/second.holoml sent as text/plain, known only by its address
  */
 function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
   const url = new URL(req.url ?? '/', 'http://x');
@@ -114,6 +119,14 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
     c.openNow.set(url.pathname, (c.openNow.get(url.pathname) ?? 1) - 1);
     if (!res.writableFinished) c.aborted.set(key, (c.aborted.get(key) ?? 0) + 1);
   });
+  if (path === '/holoml/by-type' || path === '/holoml/as-text.holoml') {
+    const typed = path === '/holoml/by-type';
+    readFile(join(FIXTURES_DIR, 'holoml', typed ? 'still.holoml' : 'second.holoml')).then(
+      (body) => res.writeHead(200, { 'content-type': typed ? 'model/vnd.holoml' : 'text/plain', 'cache-control': 'no-store' }).end(body),
+      () => res.writeHead(404).end(),
+    );
+    return;
+  }
   if (path === '/favicon/declared-huge.png' || path === '/favicon/error-body.png') {
     const declared = path === '/favicon/declared-huge.png';
     res.writeHead(declared ? 200 : 500, {

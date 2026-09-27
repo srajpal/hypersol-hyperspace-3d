@@ -196,6 +196,9 @@ importers:
       '@ghostery/adblocker-electron-preload':
         specifier: 2.18.2
         version: 2.18.2(electron@44.4.5)
+      '@hypersol/holoml':
+        specifier: workspace:*
+        version: link:../../packages/holoml
       '@hypersol/scene-core':
         specifier: workspace:*
         version: link:../../packages/scene-core
@@ -220,6 +223,8 @@ importers:
       vite:
         specifier: ^7.3.6
         version: 7.3.6(@types/node@26.6.2)(lightningcss@1.33.0)
+
+  packages/holoml: {}
 
   packages/scene-core: {}
 

@@ -1,0 +1,11 @@
+<holoml version="0.1">
+  <head>
+    <title>HoloML with problems</title>
+  </head>
+  <scene>
+    <cube size="1" />
+    <model src="models/placeholder-car.gltf" colour="#fff" />
+    <label position="0 2 0">Still shown</label>
+    <a href="javascript:alert(1)"><label position="0 3 0">Not a link</label></a>
+  </scene>
+</holoml>

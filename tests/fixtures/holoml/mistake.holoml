@@ -1,0 +1,8 @@
+<holoml version="0.1">
+  <head>
+    <title>Broken</title>
+  </head>
+  <scene background="#000>
+    <model src="models/placeholder-car.gltf" />
+  </scene>
+</holoml>

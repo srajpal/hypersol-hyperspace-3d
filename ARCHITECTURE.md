@@ -160,6 +160,7 @@ release since. No upgrade needed.
 | Page tilt | Settings > Page tilt, 0 to 20 degrees, default 10; a --tilt on the command line wins | Less tilt gives sharper text (milestone 1 note). |
 | Graphics resets | When the WebGL context is lost, the room stops drawing; when it is restored, it draws again at once and Three.js uploads its textures again (GitHub issue #12) | The room draws only on demand, so a restore must ask for a frame itself. |
 | No WebGL 2 | Where Chromium cannot start WebGL 2 (no graphics driver, some virtual machines, WebGL switched off), the room is not drawn and its tab cards take no clicks, but the page (CSS 3D), top bar, and panels work; a notice says "This computer can't draw the 3D room", why, and how to show tabs as a list (hud/room-message.ts). Test mode's --test-no-webgl starts the shell without WebGL (check N7) | Milestone 12 (owner, prompt 60): before, the window stayed empty. |
+| HoloML pages | A `.holoml` address or the `model/vnd.holoml` media type marks a HoloML page (main/holoml.ts, through the shield's one onHeadersReceived listener). Its headers become `text/plain; charset=utf-8` with HoloML's content policy (only the `hypersol-viewer:` script; connect and images from the page's own site, data:, blob:). The page preload confirms it with the main process, hides the text, and adds the viewer's script (`hypersol-viewer://app/assets/viewer.js`, served from out/renderer only to pages that ask); the viewer draws the scene in the tab's own sandboxed page process with Three.js and its glTF loader. The page keeps its own address in the tab, history, bookmarks, and reopened tabs. The tab in front fills the window flat (room.setFill); zoom and the layers view are off for it. Files from the computer: Ctrl+O, the menu, or a drop; each opened folder gets a random name for this run (`hypersol-file://<name>/<file>`); only that folder and those inside it are served, never history, and only the person opens such an address | Milestone 14 (owner, prompt 65: Q1 a fill the window, Q2 a models from the page's own site, Q3 a files by Ctrl+O and drop, Q4 a a tagged copy of the parser, Q5 a errors on a card, problems in the console). Nothing from a page runs in a privileged process. |
 | Window frame, reconsidered | Standard OS frame kept | Considered in milestone 6: a custom frame would lose native dragging, snapping, and accessibility; the theme now sets the frame's light or dark scheme. |
 | Bookmarks and history | SQLite through Node's built-in node:sqlite (owner decision 2026-09-25, prompt 20) | Fast search over thousands of rows; standard for browsers. Built into Electron's Node, so no native module and no extra package. |
 | UI widgets (address bar, menus) | Lit web components | Tiny, standards-based, no framework lock-in; themed with CSS variables. |
@@ -191,6 +192,10 @@ hypersol-hyperspace-3d/
           shortcuts.ts, popups.ts, context-menu.ts
                                the rules behind those, unit tested
           security.ts          webview lock-down, allowed addresses
+          holoml.ts            HoloML pages: recognising them, their
+                               headers and content policy, the viewer's
+                               script, files opened from the computer
+                               (milestone 14)
           launch-options.ts    command-line options
           downloads.ts         downloads to the Downloads folder, the list
           test-hooks.ts        logs for the end-to-end tests (test runs only)
@@ -235,6 +240,13 @@ hypersol-hyperspace-3d/
                                under a field (milestone 9)
           form-state.ts        tells the shell when a form has typed text
                                (milestone 10)
+          holoml.ts            hands a HoloML page to the viewer; opens a
+                               dropped .holoml file (milestone 14)
+        viewer/                the HoloML viewer, run inside a HoloML page
+                               (milestone 14): main.ts (reads and checks the
+                               page, the error card), scene.ts (Three.js
+                               scene, links, animation), controls.ts (orbit
+                               and walk), values.ts (attribute values)
         renderer/              the 3D shell (one Chromium page)
           index.html, main.ts
           app.ts               controller: tabs, pages, room, top bar, commands
@@ -272,9 +284,10 @@ hypersol-hyperspace-3d/
     themes/                    @hypersol/themes: theme schema, the two
                                built-in themes (nebula.ts, daylight.ts),
                                contrast helpers
-    holoml-renderer/           (planned) @hypersol/holoml-renderer: maps
-                               HoloML nodes to Three.js objects. Skeleton in
-                               milestone 12; real work in a later milestone.
+    holoml/                    @hypersol/holoml: a copy of HoloML's parser
+                               and checker from the holoml repository's
+                               v0.1.0 tag (SOURCE.json), made by sync.mjs
+                               (pnpm holoml:sync); a test checks the copy
   docs/
     screens.md                 (planned) layout notes and states
     screenshots/               progress screenshots, one folder per milestone

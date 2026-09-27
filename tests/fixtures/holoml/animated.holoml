@@ -1,0 +1,16 @@
+<holoml version="0.1">
+  <head>
+    <title>HoloML animation</title>
+  </head>
+  <scene>
+    <viewpoint position="0 1.6 6" look-at="0 0.8 0" />
+    <group id="turntable">
+      <model src="models/placeholder-car.gltf" />
+    </group>
+    <animate target="#turntable" attribute="rotation" from="0 0 0" to="0 360 0" duration="4s" repeat="indefinite" />
+    <label id="sign" position="0 2 0">Sale</label>
+    <animate target="#sign" attribute="position" to="0 3 0" duration="400ms" />
+    <model id="spin" src="models/spinner.gltf" position="3 0 0" animation="Spin" autoplay />
+    <model id="pose" src="models/spinner.gltf" position="-3 0 0" animation="Spin" />
+  </scene>
+</holoml>

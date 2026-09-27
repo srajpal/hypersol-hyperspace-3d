@@ -25,7 +25,7 @@ Plan approved 2026-09-24.
 | 11 | Owner feedback: address bar, view, settings, shortcuts | Two ways to show tabs; address bar completion; a wider page and view settings; menus that close; reorganized Settings with search; shortcut list and remapping; Library search reset | Done (accepted, prompt 54) |
 | 12 | Developer preview 0.9.0 | Source release for developers: privacy and proofreading pass, legal and project files, automatic builds and tests on Windows and Linux (GitHub issue #5), Electron check, trademark and `.holo` checks, version 0.9.0 | Done (accepted, prompt 61; released as v0.9.0) |
 | 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Done (accepted, prompt 64) |
-| 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | In progress (prompt 65: Q1 to Q5 a) |
+| 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Built; waiting for acceptance (prompt 65) |
 | 15 | Car showroom demo | Demo site with walk-around 3D cars | Later |
 | 16 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
 | 17 | macOS release | Signing, notarization, Mac checks | Later |
@@ -2007,8 +2007,9 @@ Windows line ends into a Unix one; the holoml repository's
 
 ## Milestone 14 — HoloML pages in the browser
 
-Status: In progress. Plan and build approved 2026-09-27 (prompt 65)
-with Q1 to Q5 a. Pushed before the build. Rule 13 check done
+Status: Built 2026-09-27; waiting for the owner's acceptance. Plan and
+build approved 2026-09-27 (prompt 65) with Q1 to Q5 a. Pushed before the
+build. Rule 13 check done
 (ARCHITECTURE.md section 3).
 
 Goal: opening a HoloML page (a `.holoml` address) shows its 3D scene in
@@ -2074,26 +2075,26 @@ page searches labels; printing a HoloML page prints what is on screen;
 
 ### Tasks
 
-- [ ] 1. The viewer: recognise HoloML responses, show them with the
+- [x] 1. The viewer: recognise HoloML responses, show them with the
       viewer in the tab's page process, keep the page's address
       everywhere (tab, address bar, history, bookmarks, reopening,
       restoring tabs).
-- [ ] 2. The scene: models (glTF 2.0) with position, rotation, scale,
+- [x] 2. The scene: models (glTF 2.0) with position, rotation, scale,
       and material changes; groups; lights, with a soft default light
       when a page has none; the background.
-- [ ] 3. The viewpoint: orbit (drag, wheel, pinch) and walk (arrow keys
+- [x] 3. The viewpoint: orbit (drag, wheel, pinch) and walk (arrow keys
       and W, A, S, D, drag to look), with keyboard and touch
       equivalents; the start position and look-at point.
-- [ ] 4. Labels that face the viewer; links on models, groups, and
+- [x] 4. Labels that face the viewer; links on models, groups, and
       labels (pointer, highlight, click or tap, and Tab and Enter from
       the keyboard); a model's own glTF animations (animation,
       autoplay); animate, with repeat and indefinite.
-- [ ] 5. Mistakes (per Q5), and safety: only http, https, and relative
+- [x] 5. Mistakes (per Q5), and safety: only http, https, and relative
       addresses; models only from where Q2 allows; no scripts.
-- [ ] 6. Files on the computer (if Q3 a).
-- [ ] 7. The parser and checker in the browser (per Q4).
-- [ ] 8. The HoloML showroom example as a test fixture, and screenshots.
-- [ ] 9. Documents: README, ARCHITECTURE, docs/privacy.md (what a
+- [x] 6. Files on the computer (if Q3 a).
+- [x] 7. The parser and checker in the browser (per Q4).
+- [x] 8. The HoloML showroom example as a test fixture, and screenshots.
+- [x] 9. Documents: README, ARCHITECTURE, docs/privacy.md (what a
       HoloML page may load), the Testing section, and HANDOFF.
 
 ### Checks
@@ -2112,6 +2113,28 @@ page searches labels; printing a HoloML page prints what is on screen;
 | P10 | Efficiency | An idle scene draws no frames; an animated one draws only while it moves |
 | P11 | Without WebGL 2 | A HoloML page says it cannot be shown, instead of an empty window (as N7) |
 | P12 | Regression | C to O still pass, and the unit tests |
+
+### Results (2026-09-27)
+
+| # | Result |
+|---|---|
+| P1 | Pass. still.holoml shows its scene flat across the window beside the tab rail (fill on, rotation 0); the tab shows its title and address; zoom and the layers view are off for it. Pages known only by the media type (/holoml/by-type) or only by the address (as-text.holoml, sent as text/plain) open too |
+| P2 | Pass. Models load in place, turned and scaled as written; Paint reads back #c0182a, metalness 0.7, roughness 0.3; Glass opacity 0.35; the other car keeps its own paint |
+| P3 | Pass. Orbit: arrow keys, + and -, a mouse drag, the wheel, and a one-finger touch drag (sent through the page's own debugger connection) move the view around its point. Walk: W and the right arrow move at eye height; a drag and a touch drag look around |
+| P4 | Pass. A click on a linked model and on a linked label opens its page; Alt+Left returns; Tab reaches a link and Enter follows it |
+| P5 | Pass. Labels carry their text, also in the page for Find in page; the page's four lights are used, and a page without lights gets the soft default; animate turns a group and raises a label once; a model's own animation plays with autoplay and holds its first frame without |
+| P6 | Pass. mistake.holoml shows the card with "Line 5, column 21" and the line; problems.holoml's three problems are in the instrument panel's console, and its model and labels still show |
+| P7 | Pass. A model from another site is refused (and the page's content policy refuses a fetch to it); a javascript: link is not a link; the page has no require, process, or bridge; its model request passes through the shield's listener and shows in the network list |
+| P8 | Pass. History records the page with its title; Ctrl+D bookmarks it; a closed HoloML tab reopens as a scene; tabs come back after a restart; a private tab shows a scene and adds no history |
+| P9 | Pass. A file opened from the computer (through the test hook that stands in for the file chooser) shows its scene with the model from its folder; a model outside the folder fails; a link to another file in the folder works; a web page cannot navigate to a local address; an address with an unknown folder name asks to open the file again. Dropping a file is not automated (a test cannot drop a real file) |
+| P10 | Pass. An idle scene draws no frames for 1.5 s; an animated one keeps drawing; one whose animation has finished stops |
+| P11 | Pass. Without WebGL (test switch --test-no-webgl, now for pages too), a HoloML page says it cannot draw 3D scenes |
+| P12 | Pass, with two exceptions that are issue #20. Full run: 186 of 189, then M7 passed on its own after its expected shortcut count went from 22 to 23 (the requirement changed: Ctrl+O opens a HoloML file, prompt 65, Q3 a; the unit test that Ctrl+O was unassigned changed the same way). F9 and I6 fail because the built-in filter lists are now more than a day old, as issue #20 reports; not caused by this milestone, and fixed in the issues pull request. Unit tests: 238 passed |
+
+The viewer's first run already drew the scene; the one fault found was
+that the orbit and walk controls captured the pointer on the wrapper
+element, so a click never reached the canvas's link handler; they now
+listen on the canvas itself.
 
 ### Done when
 

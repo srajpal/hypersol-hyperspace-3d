@@ -158,3 +158,16 @@ browser now still works and says why.
 ![About: version 0.9.0 and the copyright line](screenshots/m12/39-about-0.9.0.png)
 
 ![Without WebGL 2: pages still work, and a notice explains](screenshots/m12/40-no-webgl-notice.png)
+
+**Milestone 13: HoloML 0.1** (accepted 2026-09-27). The language is
+written down in the holoml repository, with a parser, a checker, and
+sample pages; no new browser screens.
+
+**Milestone 14: HoloML pages in the browser** (built 2026-09-27, waiting
+for acceptance). A `.holoml` page shows its 3D scene across the window,
+flat and still, with models, labels, links, lights, and animation; a
+page with a mistake says where it is.
+
+![A HoloML page: cars, labels, and a linked model](screenshots/m14/41-holoml-scene.png)
+
+![A HoloML page with a mistake: the line and column](screenshots/m14/42-holoml-mistake.png)

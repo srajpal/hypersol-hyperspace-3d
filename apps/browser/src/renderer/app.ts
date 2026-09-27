@@ -191,6 +191,15 @@ export class App {
       });
     };
     options.themeButton.addEventListener('hs-theme-toggle', () => void this.toggleTheme());
+    // A .holoml file dropped on the window outside the page opens in the tab in front.
+    document.addEventListener('dragover', (e) => {
+      if (e.dataTransfer?.types.includes('Files')) e.preventDefault();
+    });
+    document.addEventListener('drop', (e) => {
+      const file = [...(e.dataTransfer?.files ?? [])].find((f) => f.name.toLowerCase().endsWith('.holoml'));
+      e.preventDefault();
+      if (file) void this.openFile(file);
+    });
     options.downloads.bridge = options.bridge;
     this.wireFind();
     this.instruments = new InstrumentsController(options.instruments, {
@@ -263,6 +272,30 @@ export class App {
     const override = this.options.searchUrlOverride;
     if (override && this.settings.searchEngine === DEFAULT_SETTINGS.searchEngine) return override;
     return searchUrlFor(this.settings);
+  }
+
+  /** A HoloML page in front fills the window; other pages lean back (milestone 14). */
+  private updateFill(): void {
+    this.room.setFill(this.focusedView?.isHoloml ?? false);
+  }
+
+  /**
+   * Opens a HoloML file from the computer in the tab in front (milestone
+   * 14, Q3 a): a dropped file, or one chosen with Ctrl+O or the menu.
+   */
+  async openFile(file?: File): Promise<void> {
+    const url = await this.options.bridge.openFile(file).catch(() => null);
+    if (url) this.showUrl(url);
+  }
+
+  /** Loads an address the browser itself chose (an opened file) in the tab in front. */
+  showUrl(url: string): void {
+    const id = this.store.focusedId;
+    const view = this.views.get(id);
+    if (!view) return;
+    this.store.update(id, { url, state: 'loading', title: url });
+    view.load(url);
+    view.focusContent();
   }
 
   /** Loads typed text in a tab: an address, or a search. */
@@ -354,6 +387,7 @@ export class App {
       if (this.views.has(previous)) this.captureSnapshot(previous);
       this.shownFocus = store.focusedId;
       this.room.focus(store.focusedId, previous !== -1);
+      this.updateFill();
       if (!this.openPanelName) {
         const view = this.focusedView;
         if (view?.isStart) this.options.toolbar.focusAddress();
@@ -540,6 +574,11 @@ export class App {
       restoreHistory: async (from, into) => {
         const reply = await this.options.bridge.tabs({ op: 'restore', tab: into, from });
         return reply.ok && reply.value;
+      },
+      onHoloml: () => {
+        if (id !== this.store.focusedId) return;
+        this.updateFill();
+        this.updateToolbar();
       },
       },
       tab.private,
@@ -744,9 +783,11 @@ export class App {
     t.loading = tab.state === 'loading';
     t.layers = this.layersOn.get(tab.id) ?? false;
     t.private = tab.private;
-    t.canZoom = isWeb(tab.url) && tab.state !== 'start';
+    // A HoloML page is a 3D scene: no page zoom or layers view (milestone 14).
+    const scene = this.focusedView?.isHoloml ?? false;
+    t.canZoom = isWeb(tab.url) && tab.state !== 'start' && !scene;
     t.zoom = this.focusedView?.zoom ?? 1;
-    t.canLayers = isWeb(tab.url) && tab.state !== 'start' && tab.state !== 'failed';
+    t.canLayers = isWeb(tab.url) && tab.state !== 'start' && tab.state !== 'failed' && !scene;
     t.site = !isWeb(tab.url) || tab.state === 'start' ? 'none' : /^https:/i.test(tab.url) ? 'secure' : 'insecure';
     t.access = this.access.get(tab.id) ?? [];
     t.muted = tab.muted;
@@ -897,7 +938,7 @@ export class App {
   private applyZoomOnOpen(tabId: number): void {
     const view = this.views.get(tabId);
     const url = view?.status.url ?? '';
-    if (!view || !isWeb(url)) return;
+    if (!view || !isWeb(url) || view.isHoloml) return;
     view.setZoom(this.settings.zoomSites[hostOf(url)] ?? 1);
     if (tabId === this.store.focusedId) this.updateToolbar();
   }
@@ -952,7 +993,7 @@ export class App {
   private applyLayersOnOpen(tabId: number): void {
     const view = this.views.get(tabId);
     const url = view?.status.url ?? '';
-    if (!view || !isWeb(url)) return;
+    if (!view || !isWeb(url) || view.isHoloml) return;
     const site = hostOf(url);
     const privateChoice = this.store.get(tabId)?.private ? this.privateLayersSites.get(site) : undefined;
     const on = privateChoice ?? this.settings.layersSites[site] ?? this.settings.layersOnOpen;
@@ -1028,6 +1069,7 @@ export class App {
   private onMenu(action: MenuAction): void {
     if (action === 'new-tab') this.store.open();
     else if (action === 'private-tab') this.store.open({ private: true });
+    else if (action === 'open-file') void this.openFile();
     else if (action === 'downloads') this.togglePanel('downloads');
     else if (action === 'print') this.print();
     else if (action === 'close-tab') this.store.close(this.store.focusedId);
@@ -1206,6 +1248,9 @@ export class App {
         break;
       case 'downloads':
         this.togglePanel('downloads');
+        break;
+      case 'open-file':
+        void this.openFile();
         break;
       case 'private-tab':
         s.open({ private: true });

@@ -152,6 +152,8 @@ export class Room {
   private tabCount = 0;
   private topExtra = 0;
   private economy = false;
+  /** A HoloML page in front (milestone 14): the page fills the window, flat and still. */
+  private fill = false;
   private lastDrawn = 0;
   /** The last few parallax decisions, for diagnosing test failures. */
   readonly pointerLog: { x: number; y: number; target: string; overPage: boolean }[] = [];
@@ -420,6 +422,23 @@ export class Room {
     return this.economy;
   }
 
+  /**
+   * A HoloML page in front (milestone 14, owner prompt 65, Q1 a): its scene
+   * fills the window below the top bar, beside the tab rail, flat and
+   * still, and the room steps aside; other pages lean back as before.
+   */
+  setFill(on: boolean): void {
+    if (on === this.fill) return;
+    this.fill = on;
+    if (on) this.parallax.setPointer(0, 0);
+    this.layout();
+    this.requestRender();
+  }
+
+  get filling(): boolean {
+    return this.fill;
+  }
+
   get pixelRatio(): number {
     return this.webgl?.getPixelRatio() ?? window.devicePixelRatio;
   }
@@ -474,13 +493,14 @@ export class Room {
   // ---- Layout -------------------------------------------------------------
 
   private pageInsets(): Insets {
-    const left = this.railShown ? RAIL.left + this.railWidth + 32 : this.margin;
+    const margin = this.fill ? 0 : this.margin;
+    const left = this.railShown ? RAIL.left + this.railWidth + 32 : margin;
     return {
       ...PAGE_INSETS,
       left,
       top: PAGE_INSETS.top + this.topExtra,
-      right: this.margin + this.extra.right,
-      bottom: this.margin + this.extra.bottom,
+      right: margin + this.extra.right,
+      bottom: margin + this.extra.bottom,
     };
   }
 
@@ -504,7 +524,7 @@ export class Room {
       viewportWidth: w,
       viewportHeight: h,
       fovDeg: this.options.fovDeg ?? 40,
-      tiltDeg: this.options.tiltDeg,
+      tiltDeg: this.fill ? 0 : this.options.tiltDeg,
       direction: this.direction,
       insets: this.pageInsets(),
     });
@@ -529,7 +549,7 @@ export class Room {
     this.desk.position.set(layout.position.x, bottom - 22, layout.position.z + DESK_DEPTH / 2 - 60);
     // The instrument panel's bottom strip takes the desk's place (it would
     // otherwise float under the raised page and cover the tab rail's lowest card).
-    this.desk.visible = this.extra.bottom === 0;
+    this.desk.visible = this.extra.bottom === 0 && !this.fill;
     this.grid.position.set(0, bottom - 120, 0);
 
     // The horizon is at the camera's height, far away; the glow and sun sit on it.
@@ -834,7 +854,7 @@ export class Room {
       const nx = (e.clientX / window.innerWidth) * 2 - 1;
       const ny = 1 - (e.clientY / window.innerHeight) * 2;
       // Economy mode keeps the camera still.
-      if (!this.economy) this.parallax.setPointer(nx, ny);
+      if (!this.economy && !this.fill) this.parallax.setPointer(nx, ny);
       this.setHovered(e.target === canvas ? this.cardAt(e.clientX, e.clientY) : null);
       if (this.parallax.moving) this.requestRender();
     });

@@ -19,6 +19,8 @@ export interface TestLog {
   opened: { what: string; path: string }[];
   /** Whether history runs in its worker thread (milestone 10). */
   historyWorker?: () => boolean;
+  /** Opens a HoloML file from the computer as Ctrl+O would, without the file chooser (milestone 14). */
+  openLocal?: (path: string) => Promise<string | null>;
 }
 
 declare global {

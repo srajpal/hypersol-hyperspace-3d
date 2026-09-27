@@ -126,6 +126,12 @@ only when you click a sign-in field and pick the account, and only on
 the exact site it was saved for. Without a working system keychain,
 nothing is saved, and the offer says why.
 
+HoloML files opened from the computer (Ctrl+O, the menu, or dropping a
+file on the window): the page may read its own folder, and the folders
+inside it, for as long as the app runs; the permission is kept in memory
+only. These pages are not added to history, and a tab reopened after a
+restart asks you to open the file again.
+
 Not stored: other form entries, the downloads list (the files
 themselves are, in the Downloads folder), and anything about how you
 use the browser itself.
@@ -145,6 +151,11 @@ the list updates can be turned off:
   page names (fetched through that page's own session, as a browser tab
   does; at most 256 KB, given up after 5 seconds, and cancelled when you
   leave the page).
+- HoloML pages (`.holoml` addresses) and the 3D models they name: only
+  from the page's own site (the page's content policy allows nothing
+  else), through the page's own session, so the shield and encrypted DNS
+  apply as for any page. The browser's HoloML viewer itself comes from
+  the app, not the network.
 - Searches typed in the address bar or start panel go to the search engine
   chosen in Settings (DuckDuckGo by default).
 - DNS lookups for the sites you open go encrypted (DNS over HTTPS) to

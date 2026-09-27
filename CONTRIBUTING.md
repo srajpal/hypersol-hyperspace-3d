@@ -51,9 +51,11 @@ Every push and pull request runs all of these on Windows and Linux in
 GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 Please make sure they pass before asking for a review.
 
-Where things are: the app in `apps/browser` (main process, preloads, and
-the 3D shell), shared 3D maths in `packages/scene-core`, the themes in
-`packages/themes`, end-to-end tests and their fixture pages in `tests/`.
+Where things are: the app in `apps/browser` (main process, preloads, the
+3D shell, and the HoloML viewer), shared 3D maths in `packages/scene-core`, the themes in
+`packages/themes`, a copy of HoloML's parser and checker in
+`packages/holoml` (change HoloML in its own repository, tag it, and run
+`pnpm holoml:sync`), end-to-end tests and their fixture pages in `tests/`.
 [ARCHITECTURE.md](ARCHITECTURE.md) explains the design, and
 [TODO.md](TODO.md) the roadmap and every check.
 

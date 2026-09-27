@@ -303,7 +303,8 @@ describe('M6 and M7: Settings and shortcuts', () => {
       await h.shell.click(BAR('menu'));
       await h.shell.click(BAR('menu-shortcuts'));
       await waitFor('shortcuts shown', () => h.shell.locator(SET('set-keys-list')).isVisible(), (v) => v);
-      expect(await h.shell.locator(SET('set-key-row')).count()).toBe(22);
+      // 23 since milestone 14 added Ctrl+O, "Open a HoloML file" (owner, prompt 65, Q3 a).
+      expect(await h.shell.locator(SET('set-key-row')).count()).toBe(23);
       // Remap "Reopen closed tab" to Ctrl+Alt+R.
       await h.shell.click(SET('set-key-change-reopen-tab'));
       await waitFor('waiting for keys', () => h.shell.locator(SET('set-key-waiting')).isVisible(), (v) => v);

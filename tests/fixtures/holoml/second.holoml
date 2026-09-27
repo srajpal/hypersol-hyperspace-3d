@@ -1,0 +1,8 @@
+<holoml version="0.1">
+  <head>
+    <title>Second HoloML page</title>
+  </head>
+  <scene>
+    <label position="0 1.5 0">The second page</label>
+  </scene>
+</holoml>

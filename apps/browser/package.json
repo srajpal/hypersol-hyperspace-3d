@@ -16,6 +16,7 @@
     "@ghostery/adblocker": "2.18.2",
     "@ghostery/adblocker-electron": "2.18.2",
     "@ghostery/adblocker-electron-preload": "2.18.2",
+    "@hypersol/holoml": "workspace:*",
     "@hypersol/scene-core": "workspace:*",
     "@hypersol/themes": "workspace:*",
     "@types/three": "^0.186.0",

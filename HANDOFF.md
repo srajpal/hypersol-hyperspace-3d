@@ -4,7 +4,7 @@ The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-09-27 (milestone 12, the 0.9.0 developer preview,
 accepted and released; milestone 13, HoloML v0.1 in the holoml
 repository, accepted; milestone 14, HoloML pages in the browser, is
-being built; plan in TODO.md).
+built and waits for the owner's acceptance; TODO.md has the results).
 
 ## Where things stand
 
@@ -118,7 +118,7 @@ to this repository for rules and the prompt log.
 
 ## Not done yet, on purpose
 
-- HoloML is not shown in the browser yet (milestone 14), and its
-  packages are not published to npm.
+- HoloML's packages are not published to npm; the browser keeps a copy
+  (packages/holoml, pnpm holoml:sync).
 - No installers, signing, or updates (milestones 16 and 17).
 - No installers attached to releases: v0.9.0 is source only.

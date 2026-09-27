@@ -42,7 +42,8 @@ describe('matchShortcut on Windows and Linux', () => {
     expect(m(key('j', { control: true }))).toBe('downloads');
     expect(m(key('l', { control: true }))).toBe('focus-address');
     expect(m(key(',', { control: true }))).toBe('settings');
-    expect(m(key('o', { control: true }))).toBeNull();
+    // Unassigned until milestone 14; now it opens a HoloML file (owner, prompt 65, Q3 a).
+    expect(m(key('o', { control: true }))).toBe('open-file');
   });
   it('maps reload, back, and forward', () => {
     expect(m(key('r', { control: true }))).toBe('reload');

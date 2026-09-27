@@ -43,6 +43,15 @@ export interface PrivacyOptions {
   dnsProbeUrl?: string | null;
   /** Every request the session makes (test log). */
   observe?: (url: string) => void;
+  /**
+   * Last word on a response's headers (HoloML pages, main/holoml.ts):
+   * Electron allows one onHeadersReceived listener per session, so others
+   * adjust what the shield decided here.
+   */
+  adjustHeaders?: (
+    details: Electron.OnHeadersReceivedListenerDetails,
+    response: Electron.HeadersReceivedResponse,
+  ) => Electron.HeadersReceivedResponse;
   /** A web page's request is starting (the instrument panel's monitor, main/inspect). */
   onTabRequest?: (tab: number, details: { id: number; url: string; resourceType: string; method: string; timestamp: number }) => void;
   /** Every DNS mode put into effect (test log). */
@@ -211,7 +220,9 @@ export class Privacy {
       callback(this.shield.decide({ url: details.url, resourceType: details.resourceType, tab }));
     });
     // Filter lists can add a content security policy to pages (for example to stop pop-unders).
-    ses.webRequest.onHeadersReceived({ urls: ['<all_urls>'] }, (details, callback) => {
+    ses.webRequest.onHeadersReceived({ urls: ['<all_urls>'] }, (details, done) => {
+      const adjust = this.options.adjustHeaders;
+      const callback = (response: Electron.HeadersReceivedResponse) => done(adjust ? adjust(details, response) : response);
       const tab = details.webContentsId;
       const page = details.resourceType === 'mainFrame' ? details.url : details.frame?.top?.url ?? '';
       if (tab === undefined || !this.tabs.has(tab) || this.isPausedFor(tab, hostOf(page))) {

@@ -294,6 +294,21 @@ it('captures the main screens', async () => {
     await capture(flat, '40-no-webgl-notice');
   } finally {
     await flat.close();
+  }
+  // Milestone 14: a HoloML page across the window, and a page with a mistake.
+  const holo = await launch(server.url('holoml/still.holoml'));
+  const ready = (page: string) =>
+    waitFor('the scene', () => inPage<boolean>(holo, 'window.__holoml?.ready === true', page), (r) => r, 20_000);
+  try {
+    await waitForPage(holo, 'still.holoml');
+    await ready('still.holoml');
+    await capture(holo, '41-holoml-scene');
+    await shellCall(holo, 'showUrl', server.url('holoml/mistake.holoml'));
+    await waitForPage(holo, 'mistake.holoml');
+    await ready('mistake.holoml');
+    await capture(holo, '42-holoml-mistake');
+  } finally {
+    await holo.close();
     await server.close();
   }
-}, 180_000);
+}, 240_000);

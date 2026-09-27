@@ -1,0 +1,10 @@
+<holoml version="0.1">
+  <head>
+    <title>HoloML from the computer</title>
+  </head>
+  <scene>
+    <model id="inside" src="models/placeholder-car.gltf" />
+    <model id="outside" src="../outside.gltf" position="4 0 0" />
+    <a href="second.holoml"><label position="0 2.5 0">Next file</label></a>
+  </scene>
+</holoml>

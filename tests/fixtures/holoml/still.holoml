@@ -1,0 +1,27 @@
+<holoml version="0.1">
+  <head>
+    <title>HoloML still scene</title>
+  </head>
+  <scene background="#0b0f1e">
+    <viewpoint position="0 1.6 7" look-at="0 0.8 0" mode="orbit" />
+    <light type="ambient" intensity="0.5" />
+    <light id="sun" type="directional" position="4 8 5" look-at="0 0 0" intensity="1.1" />
+    <light type="point" position="0 3 2" range="12" />
+    <light type="spot" position="0 5 0" look-at="0 0 0" angle="30" range="10" />
+    <model id="car" src="models/placeholder-car.gltf" rotation="0 30 0">
+      <material name="Paint" color="#c0182a" metalness="0.7" roughness="0.3" />
+      <material name="Glass" opacity="0.35" />
+    </model>
+    <group id="stand" position="4 0 -1" rotation="0 45 0" scale="0.5">
+      <model src="models/placeholder-car.gltf" />
+    </group>
+    <a href="second.holoml">
+      <model id="linked" src="models/spinner.gltf" position="-3.5 0 0" />
+    </a>
+    <a href="second.holoml#top">
+      <label id="more" position="-3.5 1.8 0" size="0.25">More cars</label>
+    </a>
+    <label id="sign" position="0 2.4 0">The red car</label>
+    <model id="far" src="http://localhost:1/models/placeholder-car.gltf" position="0 0 -6" />
+  </scene>
+</holoml>

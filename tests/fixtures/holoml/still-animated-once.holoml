@@ -1,0 +1,9 @@
+<holoml version="0.1">
+  <head>
+    <title>HoloML finite animation</title>
+  </head>
+  <scene>
+    <label id="sign" position="0 1 0">Rises once</label>
+    <animate target="#sign" attribute="position" to="0 2 0" duration="300ms" repeat="2" />
+  </scene>
+</holoml>

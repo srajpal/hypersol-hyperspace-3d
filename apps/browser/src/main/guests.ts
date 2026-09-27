@@ -3,7 +3,7 @@ import type { ShellCommand, ShortcutName } from '../shared/commands';
 import { contextMenuEntries, type MenuAction } from './context-menu';
 import { FaviconLoader } from './favicon';
 import { decidePopup, GESTURE_EVENTS } from './popups';
-import { isAllowedPageUrl } from './security';
+import { isAllowedPageNavigation } from './security';
 import { matchShortcut } from './shortcuts';
 import type { TestLog } from './test-hooks';
 
@@ -54,7 +54,7 @@ export function wireGuest(guest: WebContents, deps: GuestDeps): void {
   });
 
   guest.on('will-navigate', (event, url) => {
-    if (!isAllowedPageUrl(url)) event.preventDefault();
+    if (!isAllowedPageNavigation(guest.getURL(), url)) event.preventDefault();
   });
 
   // History: one entry per page the tab navigates to. did-navigate comes
@@ -80,7 +80,7 @@ export function wireGuest(guest: WebContents, deps: GuestDeps): void {
   });
 
   guest.setWindowOpenHandler(({ url, disposition }) => {
-    if (url === '' || !isAllowedPageUrl(url)) return { action: 'deny' };
+    if (url === '' || !isAllowedPageNavigation(guest.getURL(), url)) return { action: 'deny' };
     const decision = decidePopup(disposition, lastGesture === null ? null : Date.now() - lastGesture);
     if (decision.allow) {
       deps.send({ type: 'open-tab', url, background: decision.background, openerWebContentsId: guest.id });

@@ -1,12 +1,13 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { app, BrowserWindow, clipboard, ipcMain, Menu, nativeTheme, powerMonitor, safeStorage, screen, session, webContents, type Session, type WebContents } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeTheme, powerMonitor, protocol, safeStorage, screen, session, webContents, type Session, type WebContents } from 'electron';
 import { daylight, nebula, themeById, type Theme } from '@hypersol/themes';
 import type { ThemeChoice } from '../shared/settings';
 import {
   CAPTURE_KEYS_CHANNEL,
   CAPTURE_TAB_CHANNEL,
   CLOSE_READY_CHANNEL,
+  OPEN_FILE_CHANNEL,
   PRIVATE_PARTITION,
   SHELL_COMMAND_CHANNEL,
   type ShellCommand,
@@ -30,6 +31,8 @@ import { parseLaunchOptions } from './launch-options';
 import { chooseProfileFolder } from './profile-folder';
 import { Privacy } from './privacy';
 import { hardenShell } from './security';
+import { HolomlPages } from './holoml';
+import { HOLOML_DROP_CHANNEL, LOCAL_SCHEME, VIEWER_SCHEME } from '../shared/holoml-page';
 import { StorageService } from './storage/service';
 import { inProcess, WorkerHistory } from './storage/history-backend';
 import { Worker } from 'node:worker_threads';
@@ -83,6 +86,7 @@ let inspector: Inspector | null = null;
 let permissions: Permissions | null = null;
 let passwords: Passwords | null = null;
 let tabHistory: TabHistory | null = null;
+let holoml: HolomlPages | null = null;
 /** Settings is waiting for a shortcut's new keys (milestone 11). */
 let capturingKeys = false;
 /** The person's own shortcut keys, from settings. */
@@ -153,7 +157,7 @@ function createWindow(): void {
   const send = (command: ShellCommand) => {
     if (!win.isDestroyed()) win.webContents.send(SHELL_COMMAND_CHANNEL, command);
   };
-  hardenShell(win.webContents, PAGE_PRELOAD, (record) => testLog?.attaches.push(record));
+  hardenShell(win.webContents, PAGE_PRELOAD, (record) => testLog?.attaches.push(record), options.testNoWebGL);
   wireShortcuts(win.webContents, { send, platform: process.platform, shortcutKeys, capturingKeys: () => capturingKeys });
   if (!app.isPackaged) {
     // Developer tools for the shell in development runs only.
@@ -278,6 +282,8 @@ if (!app.requestSingleInstanceLock()) {
     permissions?.trackTab(contents);
     passwords?.trackTab(contents);
     tabHistory?.track(contents);
+    const guestId = contents.id;
+    contents.once('destroyed', () => holoml?.forget(guestId));
     // Sound, for the speaker on the tab and for keeping it awake (milestone 10).
     contents.on('audio-state-changed', (event) => {
       const host = contents.hostWebContents;
@@ -300,10 +306,18 @@ if (!app.requestSingleInstanceLock()) {
       get testLog() {
         return testLog;
       },
-      recordVisit: (url, title) => (isPrivate ? null : (storage?.recordVisit(url, title) ?? null)),
+      // Files opened from the computer are not history: their addresses last one run (milestone 14).
+      recordVisit: (url, title) => (isPrivate || url.startsWith(`${LOCAL_SCHEME}:`) ? null : (storage?.recordVisit(url, title) ?? null)),
       updateVisitTitle: (id, title) => void storage?.updateVisitTitle(id, title),
     });
   });
+
+  // HoloML pages (milestone 14): the viewer's script, and files opened
+  // from the computer. Registered before the app is ready, as Electron asks.
+  protocol.registerSchemesAsPrivileged([
+    { scheme: VIEWER_SCHEME, privileges: { standard: true, secure: true, corsEnabled: true, supportFetchAPI: true } },
+    { scheme: LOCAL_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
+  ]);
 
   void app.whenReady().then(() => {
     if (options.testMode) testLog = installTestHooks();
@@ -315,6 +329,33 @@ if (!app.requestSingleInstanceLock()) {
       // No dictionary downloads (privacy statement, ARCHITECTURE.md section 8).
       s.setSpellCheckerEnabled(false);
     }
+
+    // HoloML pages (milestone 14, main/holoml.ts).
+    const devServer = !app.isPackaged ? process.env['ELECTRON_RENDERER_URL'] : undefined;
+    const pages = new HolomlPages({ viewerFiles: devServer ? null : join(__dirname, '../renderer'), ...(devServer ? { devServer } : {}) });
+    holoml = pages;
+    pages.register(ses);
+    pages.register(privateSes);
+    pages.wire();
+    ipcMain.handle(OPEN_FILE_CHANNEL, async (event, path: unknown) => {
+      if (!mainWindow || event.sender !== mainWindow.webContents) return null;
+      if (typeof path === 'string') return pages.openFile(path);
+      const chosen = await dialog.showOpenDialog(mainWindow, {
+        title: 'Open a HoloML file',
+        properties: ['openFile'],
+        filters: [{ name: 'HoloML pages', extensions: ['holoml'] }],
+      });
+      return chosen.canceled || !chosen.filePaths[0] ? null : pages.openFile(chosen.filePaths[0]);
+    });
+    // A .holoml file dropped onto a page opens in that tab.
+    ipcMain.on(HOLOML_DROP_CHANNEL, (event, path: unknown) => {
+      const guest = event.sender;
+      if (typeof path !== 'string' || guest.getType() !== 'webview') return;
+      void pages.openFile(path).then((url) => {
+        if (url && !guest.isDestroyed()) void guest.loadURL(url).catch(() => undefined);
+      });
+    });
+    if (testLog) testLog.openLocal = (path) => pages.openFile(path);
 
     // Downloads go straight to the Downloads folder (milestone 8, Q2 a).
     const downloadsFolder = options.downloadsDir ?? app.getPath('downloads');
@@ -479,6 +520,7 @@ if (!app.requestSingleInstanceLock()) {
     });
     privacy = new Privacy(ses, storage, {
       onTabRequest: (tab, details) => inspect.requestStarted(tab, details),
+      adjustHeaders: (details, response) => pages.adjust(details, response),
       filtersDir: join(app.getAppPath(), 'resources', 'filters'),
       savedDir: join(app.getPath('userData'), 'filters'),
       ...(options.filtersBase ? { filtersBase: options.filtersBase } : {}),

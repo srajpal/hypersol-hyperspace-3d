@@ -79,6 +79,8 @@ if (params.get('test') === '1') {
       },
       frames: () => room.frames,
       drawsRoom: () => room.drawsRoom,
+      holoml: () => ({ fill: room.filling, shown: app.focusedView?.isHoloml ?? false }),
+      showUrl: (url: string) => app.showUrl(url),
       layout: () => room.layoutInfo,
       cameraOffset: () => room.parallax.offset,
       parallaxPaused: () => room.parallax.paused,

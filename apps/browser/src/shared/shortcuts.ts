@@ -21,6 +21,7 @@ export interface ShortcutInfo {
 export const SHORTCUTS: readonly ShortcutInfo[] = [
   { name: 'new-tab', label: 'New tab', keys: ['Mod+T'] },
   { name: 'private-tab', label: 'New private tab', keys: ['Mod+Shift+N'] },
+  { name: 'open-file', label: 'Open a HoloML file', keys: ['Mod+O'] },
   { name: 'close-tab', label: 'Close tab', keys: ['Mod+W'] },
   { name: 'reopen-tab', label: 'Reopen closed tab', keys: ['Mod+Shift+T'] },
   { name: 'next-tab', label: 'Next tab', keys: ['Ctrl+Tab', 'Mod+PageDown'] },

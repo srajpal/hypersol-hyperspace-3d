@@ -1,0 +1,9 @@
+<holoml version="0.1">
+  <head>
+    <title>HoloML walk</title>
+  </head>
+  <scene>
+    <viewpoint position="0 1.7 6" look-at="0 1.7 0" mode="walk" />
+    <model src="models/placeholder-car.gltf" />
+  </scene>
+</holoml>

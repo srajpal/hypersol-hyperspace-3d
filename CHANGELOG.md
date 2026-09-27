@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- HoloML pages (milestone 14): a `.holoml` address shows its 3D scene
+  across the window, with models, material changes, lights, labels,
+  links, animation, and orbit or walk movement by mouse, keyboard, and
+  touch. Ctrl+O, the menu, or dropping a file opens one from the
+  computer. Mistakes show a card with their line and column.
+
 ## 0.9.0 — developer preview (2026-09-26)
 
 The first public version of HyperSol HyperSpace 3D, released as source

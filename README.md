@@ -104,6 +104,8 @@ mode and sleeping tabs. Milestone 11 added address bar completion, a
 wider page with view settings, reorganized Settings, and shortcut
 remapping. Milestone 12 made it ready to share as the 0.9.0 developer
 preview, built from source, with automatic tests on Windows and Linux.
+Milestone 13 wrote HoloML 0.1 down in its own repository, and milestone
+14 (built, waiting for acceptance) shows HoloML pages in the browser.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
@@ -113,8 +115,9 @@ HoloML is the 3D markup language developed alongside the browser, in its
 own repository so it stays independent and reusable:
 [github.com/srajpal/holoml](https://github.com/srajpal/holoml). Version
 0.1 is written down there (SPEC.md), with a parser, a checker, and
-sample pages; HoloML files use the extension `.holoml`. Showing HoloML
-pages in this browser is the next milestone.
+sample pages; HoloML files use the extension `.holoml`. This browser
+shows HoloML pages (milestone 14): open a `.holoml` address, or a file
+with Ctrl+O, and walk or orbit around the scene.
 
 ## Project documents
 
@@ -174,7 +177,9 @@ page, Ctrl+Shift+O opens the Library, Ctrl+, opens Settings, and
 Ctrl+Shift+L (or the layers button) switches the layers view, and
 Ctrl+Shift+I the instrument panel. Ctrl+plus and minus zoom, Ctrl+F
 finds, Ctrl+J shows downloads, Ctrl+P prints, and Ctrl+Shift+N opens a
-private tab. What
+private tab. A HoloML page (a `.holoml` address) shows as a 3D scene
+across the window; Ctrl+O, or dropping a `.holoml` file on the window,
+opens one from the computer. What
 the browser stores and sends is listed in [docs/privacy.md](docs/privacy.md). Development runs use a
 throwaway profile in the `userData/` folder, never your normal browser
 data.

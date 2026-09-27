@@ -146,10 +146,10 @@ see .github/workflows/ci.yml; macOS not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
 - Toolchain: Node 22.13 or newer; pnpm 12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 235 tests passed on 2026-09-26)
+- Unit: `pnpm test` (Vitest; 238 tests passed on 2026-09-27)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about six minutes; 170 checks on 2026-09-26). Needs openssl on PATH for
+  against it (about six minutes; 189 checks on 2026-09-27). Needs openssl on PATH for
   the certificate-error check (Git for Windows includes one). Every
   host except 127.0.0.1 is blocked during the run, and the test windows
   ignore the real mouse, so a resting cursor cannot disturb results. See
@@ -215,7 +215,12 @@ milestone; the current milestone's checks are defined in TODO.md):
 - Milestone 12 adds checks N1 to N7 (TODO.md): documents, privacy,
   legal files, version, the automatic builds on Windows and Linux, and
   the notice without WebGL 2 (tests/e2e/m12.e2e.ts).
-- Later milestones add: HoloML (13 to 15) and installers (16 and 17).
+- Milestone 14 checks P1 to P11 (same command, tests/e2e/m14.e2e.ts):
+  HoloML pages open and fill the window, models and materials, orbit and
+  walk, links, labels, lights, animation, mistakes, safety, browser
+  features, files from the computer, efficiency, and without WebGL 2.
+  The copy of HoloML's packages is checked by packages/holoml's test.
+- Later milestones add: the car showroom (15) and installers (16 and 17).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

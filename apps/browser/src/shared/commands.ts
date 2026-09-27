@@ -11,6 +11,8 @@ export const CAPTURE_TAB_CHANNEL = 'hypersol:capture-tab';
 export const CLOSE_READY_CHANNEL = 'hypersol:close-ready';
 /** Shell tells the main process Settings is waiting for a shortcut's new keys (milestone 11). */
 export const CAPTURE_KEYS_CHANNEL = 'hypersol:capture-keys';
+/** Open a HoloML file from the computer (milestone 14): a dropped file's path, or null to choose one. */
+export const OPEN_FILE_CHANNEL = 'hypersol:open-file';
 
 import type { DataOp, DataReply, DataRequest } from './data';
 import type { PrivacyOp, PrivacyReply, PrivacyRequest } from './privacy';
@@ -56,7 +58,8 @@ export type ShortcutName =
   | 'prev-tab'
   | 'reload'
   | 'back'
-  | 'forward';
+  | 'forward'
+  | 'open-file';
 
 export type ShellCommand =
   | { type: 'shortcut'; name: ShortcutName }
@@ -111,4 +114,10 @@ export interface ShellBridge {
   closeReady(): void;
   /** While true, key presses reach Settings instead of acting as shortcuts (remapping, milestone 11). */
   captureKeys(on: boolean): void;
+  /**
+   * Opens a HoloML file from the computer (milestone 14): a file dropped on
+   * the window, or with none, the system's file chooser. Resolves to the
+   * address to load, or null.
+   */
+  openFile(file?: File): Promise<string | null>;
 }

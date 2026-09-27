@@ -4,6 +4,7 @@ import { BLOCKED_CARD, CRASHED_CARD, DNS_BLOCKED_CARD, describeLoadError, isLook
 import { PRIVATE_PARTITION, RESTORE_BLANK } from '../../shared/commands';
 import { LAYERS_CHANNEL, PAGE_IMAGES_CHANNEL, parseImageReport, type LayersState, type PageImage } from '../../shared/layers';
 import { PAGE_STATE_CHANNEL, parsePageState } from '../../shared/page-state';
+import { HOLOML_SHOWN_CHANNEL } from '../../shared/holoml-page';
 import { StartPanel, type StartData } from './start-panel';
 
 /** Chromium's code for a load that was cancelled by a newer one. */
@@ -33,6 +34,8 @@ export interface TabViewEvents {
    * tab's new page (milestone 10); false when there was none to restore.
    */
   restoreHistory?(from: number, into: number): Promise<boolean>;
+  /** The page became, or stopped being, a HoloML page (milestone 14). */
+  onHoloml?(): void;
 }
 
 /**
@@ -62,6 +65,8 @@ export class TabView implements PagePanel {
   private mutedByUser = false;
   /** Text typed into a form on the page (milestone 10), from its preload. */
   private typedInForm = false;
+  /** The address of the HoloML page this tab shows, as its preload reported it (milestone 14). */
+  private holomlUrl: string | null = null;
   /**
    * Asleep (milestone 10): the page is closed to save memory; the tab keeps
    * its address and title, and the page whose history comes back on waking.
@@ -131,6 +136,11 @@ export class TabView implements PagePanel {
 
   get isAsleep(): boolean {
     return this.asleepFrom !== null;
+  }
+
+  /** The tab shows a HoloML page (milestone 14): its preload said so for the current address. */
+  get isHoloml(): boolean {
+    return this.holomlUrl !== null && this.webview !== null && this.holomlUrl === withoutHash(this.currentStatus.url);
   }
 
   /** Text typed into a form on the page, not yet sent. */
@@ -431,6 +441,11 @@ export class TabView implements PagePanel {
       if (r.finalUpdate !== false) this.events.onFound?.({ matches: r.matches ?? 0, active: r.activeMatchOrdinal ?? 0 });
     });
     wv.addEventListener('ipc-message', (e) => {
+      if (e.channel === HOLOML_SHOWN_CHANNEL) {
+        this.holomlUrl = typeof e.args[0] === 'string' ? withoutHash(e.args[0]) : null;
+        this.events.onHoloml?.();
+        return;
+      }
       if (e.channel === PAGE_STATE_CHANNEL) {
         const state = parsePageState(e.args[0]);
         if (state) this.typedInForm = state.typed;
@@ -450,7 +465,9 @@ export class TabView implements PagePanel {
       if (this.restoring && e.url !== 'about:blank' && e.url !== RESTORE_BLANK) this.restoring = null;
       // A new document starts with nothing typed.
       this.typedInForm = false;
+      const wasHoloml = this.isHoloml;
       this.emit({ ...this.currentStatus, url: e.url });
+      if (wasHoloml !== this.isHoloml) this.events.onHoloml?.();
       navState();
     });
     wv.addEventListener('did-navigate-in-page', (e) => {
@@ -584,6 +601,12 @@ export class TabView implements PagePanel {
     for (const listener of this.listeners) listener(this.status);
     this.events.onStatus(this.status);
   }
+}
+
+/** The address without its fragment. */
+function withoutHash(url: string): string {
+  const i = url.indexOf('#');
+  return i < 0 ? url : url.slice(0, i);
 }
 
 export type { PageState };
