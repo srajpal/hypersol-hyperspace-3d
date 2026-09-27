@@ -23,6 +23,7 @@ import {
   waitFor,
   waitForPage,
   type Harness,
+  settingsTo,
 } from './harness';
 
 let server: FixtureServer;
@@ -84,6 +85,7 @@ describe('I1 and I7: switching the panel and its parts', () => {
       await waitFor('page takes the room back', () => panelWidth(h), (w) => w === full);
 
       await openSettings(h);
+      await settingsTo(h, 'set-instruments');
       await h.shell.click(SET('set-instruments'));
       await waitFor('open from Settings', () => inst(h), (s) => s.open);
       await waitFor('saved', async () => saved(profile)['instruments'], (v) => v === true);
@@ -107,12 +109,15 @@ describe('I1 and I7: switching the panel and its parts', () => {
       await waitFor('open', () => inst(h), (s) => s.open);
       const withStrip = await shellCall(h, 'layout');
       await openSettings(h);
+      await settingsTo(h, 'set-instrumentsConsole');
       await h.shell.click(SET('set-instrumentsConsole'));
       await waitFor('console gone', () => h.shell.locator(INST('inst-console')).count(), (n) => n === 0);
       expect(await h.shell.locator(INST('inst-network')).count()).toBe(1);
+      await settingsTo(h, 'set-instrumentsNetwork');
       await h.shell.click(SET('set-instrumentsNetwork'));
       await waitFor('strip gone', () => h.shell.locator(INST('inst-strip')).count(), (n) => n === 0);
       await waitFor('page taller', () => shellCall(h, 'layout'), (l) => l.panelHeight > withStrip.panelHeight);
+      await settingsTo(h, 'set-instrumentsReadouts');
       await h.shell.click(SET('set-instrumentsReadouts'));
       await waitFor('page readouts gone', () => h.shell.locator(INST('inst-page')).count(), (n) => n === 0);
       expect(await h.shell.locator(INST('inst-browser')).count()).toBe(1);
@@ -165,6 +170,7 @@ describe('I2, I4 to I6, I8: the readouts on a test page', () => {
     const rows = () => h.shell.locator(`${INST('inst-console-list')} li`).count();
     await waitFor('three rows', rows, (n) => n === 3);
     await openSettings(h);
+    await settingsTo(h, 'set-console-level');
     await h.shell.selectOption(SET('set-console-level'), 'errors');
     await pressInShell(h, 'Escape');
     await waitFor('errors only', rows, (n) => n === 1);

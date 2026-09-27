@@ -29,6 +29,7 @@ import {
   waitForPage,
   type Harness,
   type PageRef,
+  settingsTo,
 } from './harness';
 
 let server: FixtureServer;
@@ -411,10 +412,14 @@ describe('K6 to K8: site permissions', () => {
       // K8: Settings lists the remembered choices and forgets them.
       await pressInShell(h, ',', ['control']);
       await waitFor('Settings open', () => shellCall(h, 'openPanel'), (x) => x === 'settings');
+      await settingsTo(h, 'set-perm-site');
       await waitFor('one site listed', () => h.shell.locator(SET('set-perm-site')).count(), (n) => n === 1);
+      await settingsTo(h, 'set-perm-site');
       expect(await h.shell.locator(SET('set-perm-site')).textContent()).toContain('Camera: allowed');
+      await settingsTo(h, 'set-perm-remove');
       await h.shell.click(SET('set-perm-remove'));
       await waitFor('forgotten', async () => saved(profile)['sitePermissions'], (v) => JSON.stringify(v) === '{}');
+      await settingsTo(h, 'set-perm-empty');
       expect(await h.shell.locator(SET('set-perm-empty')).isVisible()).toBe(true);
     } finally {
       await h.close();

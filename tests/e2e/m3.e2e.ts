@@ -24,6 +24,7 @@ import {
   waitForExit,
   waitForPage,
   type Harness,
+  settingsTo,
 } from './harness';
 
 let server: FixtureServer;
@@ -190,7 +191,9 @@ describe('E5 search engine setting', () => {
 
   it('sends searches to the chosen engine', async () => {
     await openSettings(h);
+    await settingsTo(h, 'set-engine-duckduckgo');
     expect(await h.shell.locator(SET('set-engine-duckduckgo')).isChecked()).toBe(true);
+    await settingsTo(h, 'set-engine-brave');
     await h.shell.click(SET('set-engine-brave'));
     await waitFor('saved', () => h.shell.locator(SET('set-message')).textContent(), (t) => t === 'Saved.');
     await h.shell.keyboard.press('Escape');
@@ -202,7 +205,9 @@ describe('E5 search engine setting', () => {
       (t) => t.url === 'https://search.brave.com/search?q=hello%20world',
     );
     await openSettings(h);
+    await settingsTo(h, 'set-engine-duckduckgo');
     await h.shell.click(SET('set-engine-duckduckgo'));
+    await settingsTo(h, 'set-engine-duckduckgo');
     await waitFor('saved', () => h.shell.locator(SET('set-engine-duckduckgo')).isChecked(), (c) => c);
     await h.shell.keyboard.press('Escape');
     await navigateTo(h, 'hello again');
@@ -216,6 +221,7 @@ describe('E6 and E7: restarts', () => {
     const profile = newProfile();
     let h = await launch('', { userDataDir: profile });
     await openSettings(h);
+    await settingsTo(h, 'set-startup-last-tabs');
     await h.shell.click(SET('set-startup-last-tabs'));
     await waitFor('saved', () => h.shell.locator(SET('set-message')).textContent(), (t) => t === 'Saved.');
     await h.shell.keyboard.press('Escape');
@@ -271,6 +277,7 @@ describe('E6 and E7: restarts', () => {
     try {
       await waitForPage(h, 'link-a');
       await openSettings(h);
+      await settingsTo(h, 'set-session-problem');
       await waitFor(
         'save problem shown',
         () => h.shell.locator(SET('set-session-problem')).textContent(),
@@ -291,6 +298,7 @@ describe('E6 and E7: restarts', () => {
     await navigateTo(h, server.url('link-b.html'));
     await waitForPage(h, 'link-b');
     await openSettings(h);
+    await settingsTo(h, 'set-engine-bing');
     await h.shell.click(SET('set-engine-bing'));
     await waitFor('saved', () => h.shell.locator(SET('set-message')).textContent(), (t) => t === 'Saved.');
     await h.close();
@@ -303,6 +311,7 @@ describe('E6 and E7: restarts', () => {
       await openLibrary(h, 'history');
       await waitFor('history kept', () => libTitles(h), (t) => t.join() === 'Form,Link B,Link A');
       await openSettings(h);
+      await settingsTo(h, 'set-engine-bing');
       await waitFor('setting kept', () => h.shell.locator(SET('set-engine-bing')).isChecked(), (c) => c);
     } finally {
       await h.close();
@@ -415,9 +424,13 @@ describe('E8 clear browsing data', () => {
     await navigateTo(h, server.url('link-a.html'));
     await waitForPage(h, 'link-a');
     await openSettings(h);
+    await settingsTo(h, 'set-clear-history');
     expect(await h.shell.locator(SET('set-clear-history')).isChecked()).toBe(true);
+    await settingsTo(h, 'set-clear-cookies');
     await h.shell.click(SET('set-clear-cookies'));
+    await settingsTo(h, 'set-clear');
     await h.shell.click(SET('set-clear'));
+    await settingsTo(h, 'set-clear-confirm');
     await h.shell.click(SET('set-clear-confirm'));
     await waitFor('cleared', () => h.shell.locator(SET('set-message')).textContent(), (t) => t === 'Cleared.');
     await h.shell.keyboard.press('Escape');
@@ -438,7 +451,9 @@ describe('E9 damaged or blocked saved data', () => {
     const h = await launch('', { userDataDir: profile });
     try {
       await openSettings(h);
+      await settingsTo(h, 'set-engine-duckduckgo');
       expect(await h.shell.locator(SET('set-engine-duckduckgo')).isChecked()).toBe(true);
+      await settingsTo(h, 'set-startup-new-tab');
       expect(await h.shell.locator(SET('set-startup-new-tab')).isChecked()).toBe(true);
       expect(readdirSync(profile).some((f) => f.startsWith('settings.json.damaged-'))).toBe(true);
       expect(h.errors).toEqual([]);
@@ -458,13 +473,16 @@ describe('E9 damaged or blocked saved data', () => {
         () => h.shell.locator(SET('set-problem')).textContent(),
         (t) => (t ?? '').includes("Your settings couldn't be read (EISDIR)"),
       );
+      await settingsTo(h, 'set-engine-brave');
       await h.shell.click(SET('set-engine-brave'));
       await waitFor(
         'failure message',
         () => h.shell.locator(SET('set-message')).textContent(),
         (t) => (t ?? '').includes("Couldn't save your settings"),
       );
+      await settingsTo(h, 'set-engine-duckduckgo');
       await waitFor('still DuckDuckGo', () => h.shell.locator(SET('set-engine-duckduckgo')).isChecked(), (c) => c);
+      await settingsTo(h, 'set-engine-brave');
       expect(await h.shell.locator(SET('set-engine-brave')).isChecked()).toBe(false);
       await h.shell.keyboard.press('Escape');
       await navigateTo(h, 'still default');

@@ -1,10 +1,10 @@
 import { DatabaseSync } from 'node:sqlite';
 import type { Bookmark, HistoryEntry } from '../../shared/data';
 import type { SavedLogin } from '../../shared/passwords';
-import { HISTORY_INDEX_MIGRATION, HistoryStore } from './history';
+import { HISTORY_INDEX_MIGRATION, HISTORY_SITES_MIGRATION, HistoryStore } from './history';
 
 /** Current schema; raise it and add a step to MIGRATIONS for any change. */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 const MIGRATIONS: Record<number, string> = {
   1: `
@@ -44,6 +44,8 @@ const MIGRATIONS: Record<number, string> = {
   // Milestone 10 (GitHub issue #4): a full-text index for history search
   // and a table of each address's latest visit (main/storage/history.ts).
   3: HISTORY_INDEX_MIGRATION,
+  // Milestone 11: visit counts and address keys, for the address bar's completions.
+  4: HISTORY_SITES_MIGRATION,
 };
 
 interface BookmarkRow {

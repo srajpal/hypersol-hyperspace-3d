@@ -77,12 +77,39 @@ describe('computePanelLayout', () => {
     expect(leftHeight).toBeGreaterThan(rightHeight);
   });
 
-  it('shrinks more as the tilt grows', () => {
-    const w0 = computePanelLayout({ ...base, tiltDeg: 0 }).panelWidth;
-    const w10 = computePanelLayout({ ...base, tiltDeg: 10 }).panelWidth;
-    const w20 = computePanelLayout({ ...base, tiltDeg: 20 }).panelWidth;
-    expect(w10).toBeLessThan(w0);
-    expect(w20).toBeLessThan(w10);
+  // Milestone 11 (owner, prompt 50: "too much space on the right"): the
+  // tilted page reaches both sides of the free area instead of shrinking
+  // around its centre. Its height still shrinks as the tilt grows, so the
+  // nearer edge fits; it no longer narrows with it.
+  it('gets shorter as the tilt grows, and reaches both sides of the free area', () => {
+    const h0 = computePanelLayout({ ...base, tiltDeg: 0 }).panelHeight;
+    const h10 = computePanelLayout({ ...base, tiltDeg: 10 }).panelHeight;
+    const h20 = computePanelLayout({ ...base, tiltDeg: 20 }).panelHeight;
+    expect(h10).toBeLessThan(h0);
+    expect(h20).toBeLessThan(h10);
+    for (const tiltDeg of [5, 10, 20]) {
+      for (const direction of [1, -1] as const) {
+        const [tl, tr, br, bl] = panelScreenQuad(computePanelLayout({ ...base, tiltDeg, direction }));
+        const left = Math.min(tl!.x, bl!.x);
+        const right = Math.max(tr!.x, br!.x);
+        expect(left - 40, `left gap at ${tiltDeg} degrees, direction ${direction}`).toBeLessThan(2);
+        expect(1240 - right, `right gap at ${tiltDeg} degrees, direction ${direction}`).toBeLessThan(2);
+      }
+    }
+  });
+
+  it('can lean the other way: the left edge back (milestone 11)', () => {
+    const layout = computePanelLayout({ ...base, tiltDeg: 10, direction: -1 });
+    const left = panelPointToWorld(layout, 0, 0);
+    const right = panelPointToWorld(layout, layout.panelWidth, 0);
+    expect(left.z).toBeLessThan(0);
+    expect(right.z).toBeGreaterThan(0);
+    for (const p of panelScreenQuad(layout)) {
+      expect(p.x).toBeGreaterThanOrEqual(40 - 0.5);
+      expect(p.x).toBeLessThanOrEqual(1240 + 0.5);
+      expect(p.y).toBeGreaterThanOrEqual(56 - 0.5);
+      expect(p.y).toBeLessThanOrEqual(760 + 0.5);
+    }
   });
 
   it('keeps the page centred in the free area', () => {

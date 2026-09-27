@@ -3,6 +3,8 @@
  * (which shows them). Pure, so both sides and the unit tests use it.
  */
 import { parseSiteChoices, type SiteChoices } from './permissions';
+import type { ShortcutName } from './commands';
+import { checkOverrides } from './shortcuts';
 
 export const SEARCH_ENGINES = {
   duckduckgo: { name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=%s' },
@@ -26,8 +28,14 @@ export type ThemeChoice = 'nebula' | 'daylight' | 'system';
 export type ConsoleFilter = 'all' | 'warnings' | 'errors';
 /** Tab card size (milestone 10); medium is the size since milestone 6. */
 export type TabSize = 'small' | 'medium' | 'large';
-/** How tabs are shown: cards on the rail, cards that hide with a list in the top bar, or the list only. */
-export type TabDisplay = 'cards' | 'autohide' | 'list';
+/** How tabs are shown: cards on the rail, or a list in the top bar (milestone 11: "cards that hide" removed). */
+export type TabDisplay = 'cards' | 'list';
+/** Which way the page leans (milestone 11): its right edge back, or its left edge back. */
+export type TiltDirection = 'right' | 'left';
+/** How much the room moves with the pointer (milestone 11). */
+export type ParallaxAmount = 'off' | 'subtle' | 'normal';
+/** Space kept around the page (milestone 11). */
+export type PageMargin = 'compact' | 'normal' | 'roomy';
 /** Economy mode: off, on, or on while the computer runs on battery. */
 export type EconomyMode = 'off' | 'on' | 'battery';
 /** Minutes a tab may stay out of view before it sleeps; 0 is never. */
@@ -68,6 +76,11 @@ export interface Settings {
   tabDisplay: TabDisplay;
   economy: EconomyMode;
   tabSleep: TabSleep;
+  /** Milestone 11: the view, and the person's own shortcut keys. */
+  tiltDirection: TiltDirection;
+  parallax: ParallaxAmount;
+  pageMargin: PageMargin;
+  shortcuts: Partial<Record<ShortcutName, string>>;
 }
 
 export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
@@ -92,11 +105,18 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   tabDisplay: 'cards',
   economy: 'battery',
   tabSleep: 30,
+  tiltDirection: 'right',
+  parallax: 'normal',
+  pageMargin: 'normal',
+  shortcuts: Object.freeze({}) as Partial<Record<ShortcutName, string>>,
 });
 
 const SETTING_KEYS = ['searchEngine', 'onStartup', 'dnsMode', 'filterRefresh', 'pausedSites', 'layersOnOpen', 'layersSites', 'theme', 'pageTilt',
   'instruments', 'instrumentsReadouts', 'instrumentsGauges', 'instrumentsConsole', 'instrumentsNetwork', 'consoleLevel', 'zoomSites',
-  'sitePermissions', 'tabSize', 'tabDisplay', 'economy', 'tabSleep'] as const;
+  'sitePermissions', 'tabSize', 'tabDisplay', 'economy', 'tabSleep', 'tiltDirection', 'parallax', 'pageMargin', 'shortcuts'] as const;
+
+/** The platform shortcut keys are checked for (the main process saves settings). */
+const platform = typeof process !== 'undefined' && typeof process.platform === 'string' ? process.platform : 'win32';
 const INSTRUMENT_SWITCHES = ['instruments', 'instrumentsReadouts', 'instrumentsGauges', 'instrumentsConsole', 'instrumentsNetwork'] as const;
 export const MAX_PAUSED_SITES = 1000;
 export const MAX_LAYERS_SITES = 1000;
@@ -123,6 +143,7 @@ export function applySettingsPatch(current: Settings, patch: unknown): { setting
     layersSites: { ...current.layersSites },
     zoomSites: { ...current.zoomSites },
     sitePermissions: { ...current.sitePermissions },
+    shortcuts: { ...current.shortcuts },
   };
   for (const [key, value] of Object.entries(patch)) {
     if (key === 'searchEngine') {
@@ -161,8 +182,21 @@ export function applySettingsPatch(current: Settings, patch: unknown): { setting
       if (value !== 'small' && value !== 'medium' && value !== 'large') return { error: `Unknown tab size: ${String(value)}` };
       next.tabSize = value;
     } else if (key === 'tabDisplay') {
-      if (value !== 'cards' && value !== 'autohide' && value !== 'list') return { error: `Unknown way to show tabs: ${String(value)}` };
+      if (value !== 'cards' && value !== 'list') return { error: `Unknown way to show tabs: ${String(value)}` };
       next.tabDisplay = value;
+    } else if (key === 'tiltDirection') {
+      if (value !== 'right' && value !== 'left') return { error: `Unknown tilt direction: ${String(value)}` };
+      next.tiltDirection = value;
+    } else if (key === 'parallax') {
+      if (value !== 'off' && value !== 'subtle' && value !== 'normal') return { error: `Unknown movement: ${String(value)}` };
+      next.parallax = value;
+    } else if (key === 'pageMargin') {
+      if (value !== 'compact' && value !== 'normal' && value !== 'roomy') return { error: `Unknown page margin: ${String(value)}` };
+      next.pageMargin = value;
+    } else if (key === 'shortcuts') {
+      const checked = checkOverrides(value, platform);
+      if ('error' in checked) return { error: checked.error };
+      next.shortcuts = checked.overrides;
     } else if (key === 'economy') {
       if (value !== 'off' && value !== 'on' && value !== 'battery') return { error: `Unknown economy mode: ${String(value)}` };
       next.economy = value;
@@ -199,7 +233,7 @@ export function applySettingsPatch(current: Settings, patch: unknown): { setting
 
 /** A fresh copy of the defaults (the list inside is never shared). */
 export function defaults(): Settings {
-  return { ...DEFAULT_SETTINGS, pausedSites: [], layersSites: {}, zoomSites: {}, sitePermissions: {} };
+  return { ...DEFAULT_SETTINGS, pausedSites: [], layersSites: {}, zoomSites: {}, sitePermissions: {}, shortcuts: {} };
 }
 
 /**
@@ -220,6 +254,8 @@ export function parseSettings(text: string): { settings: Settings; problem?: str
   const known = Object.fromEntries(
     Object.entries(data).filter(([k]) => (SETTING_KEYS as readonly string[]).includes(k)),
   );
+  // "Cards that hide" was removed in milestone 11 (owner, prompt 50): it reads as cards.
+  if (known['tabDisplay'] === 'autohide') known['tabDisplay'] = 'cards';
   const result = applySettingsPatch(defaults(), known);
   if ('error' in result) return { settings: defaults(), problem: result.error };
   return { settings: result.settings };

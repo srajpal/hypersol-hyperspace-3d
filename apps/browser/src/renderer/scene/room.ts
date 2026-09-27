@@ -49,15 +49,12 @@ const RAIL = { left: 40, width: CARD_WIDTH, bottomMargin: 24, gap: 12 };
 const PAGE_INSETS: Insets = { top: HUD_HEIGHT, right: 36, bottom: 36, left: RAIL.left + RAIL.width + 32 };
 /** Card sizes (milestone 10): medium is the size since milestone 6. */
 export const CARD_SCALES = { small: 0.8, medium: 1, large: 1.3 } as const;
-export type TabDisplayMode = 'cards' | 'autohide' | 'list';
-/**
- * Cards that hide: the pointer rests this long at the left edge to bring
- * them in, and they go this long after the pointer last moved over them.
- * (Over the page the shell sees no pointer at all, so "it moved away"
- * cannot be seen; the pause is what counts.)
- */
-const REVEAL_DELAY_MS = 250;
-const HIDE_DELAY_MS = 2000;
+export type TabDisplayMode = 'cards' | 'list';
+/** Space around the page (milestone 11): the free margin on the right and bottom, and the left without the rail. */
+export const PAGE_MARGINS = { compact: 16, normal: 36, roomy: 72 } as const;
+export type PageMarginSize = keyof typeof PAGE_MARGINS;
+/** How much the room moves with the pointer (milestone 11), as a share of the default. */
+export const PARALLAX_AMOUNTS = { off: 0, subtle: 0.5, normal: 1 } as const;
 /** Economy mode's frame cap. */
 const ECONOMY_FPS = 30;
 const GLOW_MARGIN = 64;
@@ -146,9 +143,9 @@ export class Room {
   /** Milestone 10: card size, how tabs are shown, room above the page for the tab list, economy mode. */
   private cardScale = 1;
   private display: TabDisplayMode = 'cards';
-  private revealed = false;
-  private revealTimer: number | undefined;
-  private hideTimer: number | undefined;
+  /** Milestone 11: which way the page leans, and the space around it. */
+  private direction: 1 | -1 = 1;
+  private margin: number = PAGE_MARGINS.normal;
   private tabCount = 0;
   private topExtra = 0;
   private economy = false;
@@ -336,10 +333,9 @@ export class Room {
     return CARD_WIDTH * this.cardScale;
   }
 
-  /** The rail shows with two or more tabs; cards that hide only while brought in; never for the list. */
+  /** The rail shows with two or more tabs, and never for the list. */
   private wantRail(): boolean {
-    if (this.tabCount < 2 || this.display === 'list') return false;
-    return this.display === 'cards' || this.revealed;
+    return this.tabCount >= 2 && this.display === 'cards';
   }
 
   private updateRail(): void {
@@ -356,10 +352,7 @@ export class Room {
     const changed = options.scale !== this.cardScale || options.topExtra !== this.topExtra;
     this.cardScale = options.scale;
     this.topExtra = options.topExtra;
-    if (options.display !== this.display) {
-      this.display = options.display;
-      this.revealed = false;
-    }
+    this.display = options.display;
     const shown = this.wantRail();
     if (changed || shown !== this.railShown) {
       this.railShown = shown;
@@ -368,22 +361,30 @@ export class Room {
     }
   }
 
-  /** Cards that hide: brings the rail in for a while (the left edge, Ctrl+Tab). */
-  reveal(ms = HIDE_DELAY_MS): void {
-    if (this.display !== 'autohide') return;
-    this.revealed = true;
-    this.updateRail();
-    window.clearTimeout(this.hideTimer);
-    this.hideTimer = window.setTimeout(() => this.conceal(), ms);
+  get display_(): { scale: number; display: TabDisplayMode } {
+    return { scale: this.cardScale, display: this.display };
   }
 
-  private conceal(): void {
-    this.revealed = false;
-    this.updateRail();
+  /**
+   * The view (milestone 11): which way the page leans, the space around
+   * it, and how much the room moves with the pointer.
+   */
+  setView(view: { direction: 1 | -1; margin: PageMarginSize; parallax: keyof typeof PARALLAX_AMOUNTS }): void {
+    const margin = PAGE_MARGINS[view.margin];
+    this.parallax.options.maxOffset = DEFAULT_PARALLAX.maxOffset * PARALLAX_AMOUNTS[view.parallax];
+    if (view.parallax === 'off') this.parallax.setPointer(0, 0);
+    if (view.direction === this.direction && margin === this.margin) {
+      this.requestRender();
+      return;
+    }
+    this.direction = view.direction;
+    this.margin = margin;
+    this.layout();
+    this.requestRender();
   }
 
-  get display_(): { scale: number; display: TabDisplayMode; revealed: boolean } {
-    return { scale: this.cardScale, display: this.display, revealed: this.revealed };
+  get view(): { direction: 1 | -1; margin: number; parallax: number } {
+    return { direction: this.direction, margin: this.margin, parallax: this.parallax.options.maxOffset };
   }
 
   /**
@@ -455,13 +456,13 @@ export class Room {
   // ---- Layout -------------------------------------------------------------
 
   private pageInsets(): Insets {
-    const left = this.railShown ? RAIL.left + this.railWidth + 32 : 36;
+    const left = this.railShown ? RAIL.left + this.railWidth + 32 : this.margin;
     return {
       ...PAGE_INSETS,
       left,
       top: PAGE_INSETS.top + this.topExtra,
-      right: PAGE_INSETS.right + this.extra.right,
-      bottom: PAGE_INSETS.bottom + this.extra.bottom,
+      right: this.margin + this.extra.right,
+      bottom: this.margin + this.extra.bottom,
     };
   }
 
@@ -486,6 +487,7 @@ export class Room {
       viewportHeight: h,
       fovDeg: this.options.fovDeg ?? 40,
       tiltDeg: this.options.tiltDeg,
+      direction: this.direction,
       insets: this.pageInsets(),
     });
     const layout = this.currentLayout;
@@ -781,36 +783,6 @@ export class Room {
   }
 
   /**
-   * Cards that hide: resting the pointer at the window's left edge brings
-   * the rail in; it goes a moment after the pointer moves away from it.
-   */
-  private autohidePointer(x: number): void {
-    if (this.display !== 'autohide' || this.tabCount < 2) return;
-    if (!this.revealed) {
-      if (x <= 8) {
-        if (this.revealTimer === undefined) {
-          this.revealTimer = window.setTimeout(() => {
-            this.revealTimer = undefined;
-            this.reveal();
-          }, REVEAL_DELAY_MS);
-        }
-      } else {
-        window.clearTimeout(this.revealTimer);
-        this.revealTimer = undefined;
-      }
-      return;
-    }
-    // Any move over the room keeps them a little longer.
-    this.leftRail();
-  }
-
-  private leftRail(): void {
-    if (this.display !== 'autohide' || !this.revealed) return;
-    window.clearTimeout(this.hideTimer);
-    this.hideTimer = window.setTimeout(() => this.conceal(), HIDE_DELAY_MS);
-  }
-
-  /**
    * Parallax follows the pointer over the room and pauses over the page,
    * so click targets never move under the cursor. Cards react to hover,
    * clicks, and the mouse wheel.
@@ -834,7 +806,6 @@ export class Room {
         overPage: over,
       });
       if (this.pointerLog.length > 20) this.pointerLog.shift();
-      this.autohidePointer(e.clientX);
       if (over) {
         this.parallax.setPaused(true);
         this.setHovered(null);
@@ -852,9 +823,6 @@ export class Room {
       const el = focusedElement();
       if (el && e.target instanceof Node && el.contains(e.target)) {
         this.parallax.setPaused(true);
-        // Over the page the shell sees no more pointer moves: cards that
-        // hide start going now.
-        this.leftRail();
       }
     });
     canvas.addEventListener('pointerleave', () => this.setHovered(null));

@@ -9,6 +9,8 @@ export const SHELL_COMMAND_CHANNEL = 'hypersol:command';
 export const CAPTURE_TAB_CHANNEL = 'hypersol:capture-tab';
 /** Shell tells the main process it has saved what it must before the window closes. */
 export const CLOSE_READY_CHANNEL = 'hypersol:close-ready';
+/** Shell tells the main process Settings is waiting for a shortcut's new keys (milestone 11). */
+export const CAPTURE_KEYS_CHANNEL = 'hypersol:capture-keys';
 
 import type { DataOp, DataReply, DataRequest } from './data';
 import type { PrivacyOp, PrivacyReply, PrivacyRequest } from './privacy';
@@ -107,4 +109,6 @@ export interface ShellBridge {
   tabs<K extends TabsOp>(request: Extract<TabsRequest, { op: K }>): Promise<TabsReply<K>>;
   /** Answer to prepare-close: saving is done (or has failed), the window may close. */
   closeReady(): void;
+  /** While true, key presses reach Settings instead of acting as shortcuts (remapping, milestone 11). */
+  captureKeys(on: boolean): void;
 }

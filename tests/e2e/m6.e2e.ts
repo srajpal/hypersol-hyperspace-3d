@@ -22,6 +22,7 @@ import {
   waitFor,
   waitForPage,
   type Harness,
+  settingsTo,
 } from './harness';
 
 let server: FixtureServer;
@@ -124,15 +125,19 @@ describe('H2: Settings > Theme', () => {
     try {
       await waitForPage(h, 'link-a');
       await openSettings(h);
+      await settingsTo(h, 'set-theme-nebula');
       expect(await h.shell.locator(SET('set-theme-nebula')).isChecked()).toBe(true);
+      await settingsTo(h, 'set-theme-daylight');
       await h.shell.click(SET('set-theme-daylight'));
       await waitFor('Daylight', () => themeId(h), (id) => id === 'daylight');
+      await settingsTo(h, 'set-theme-system');
       await h.shell.click(SET('set-theme-system'));
       // The system's setting, as the shell sees it, picks the theme.
       await h.shell.emulateMedia({ colorScheme: 'dark' });
       await waitFor('dark system: Nebula', () => themeId(h), (id) => id === 'nebula');
       await h.shell.emulateMedia({ colorScheme: 'light' });
       await waitFor('light system: Daylight', () => themeId(h), (id) => id === 'daylight');
+      await settingsTo(h, 'set-theme-daylight');
       await h.shell.click(SET('set-theme-daylight'));
       await waitFor('saved', async () => savedSettings(profile)['theme'], (t) => t === 'daylight');
     } finally {
@@ -161,6 +166,7 @@ describe('H6: page tilt', () => {
       await waitForPage(h, 'form');
       expect(await shellCall(h, 'tilt')).toBe(10);
       await openSettings(h);
+      await settingsTo(h, 'set-tilt');
       await h.shell.locator(SET('set-tilt')).fill('0');
       await waitFor('flat', () => shellCall(h, 'tilt'), (t) => t === 0);
       expect(await shellCall(h, 'layout')).toMatchObject({ rotationY: 0 });
@@ -168,6 +174,7 @@ describe('H6: page tilt', () => {
       await sleep(300);
       await clickField();
       await openSettings(h);
+      await settingsTo(h, 'set-tilt');
       await h.shell.locator(SET('set-tilt')).fill('20');
       await waitFor('tilted', () => shellCall(h, 'tilt'), (t) => t === 20);
       await pressInShell(h, 'Escape');

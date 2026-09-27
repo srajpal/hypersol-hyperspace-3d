@@ -1,7 +1,7 @@
 # HANDOFF.md
 
 State of the project for whoever picks it up next, human or agent.
-Last updated 2026-09-26 (milestones 9 and 10 accepted; the owner's feedback, prompt 50, is being planned).
+Last updated 2026-09-26 (milestone 11 built, waiting for acceptance).
 
 ## Where things stand
 
@@ -20,10 +20,9 @@ printing) and milestone 10 (reopen, search, and mute tabs; card size
 and how tabs are shown; economy mode; sleeping tabs; history in a
 worker thread, GitHub issue #4) are built, their checks pass, and both
 were accepted by the owner on 2026-09-26 (prompt 50), with seven
-feedback items, planned as milestone 11 (address bar completion, a
-wider page and View settings, reorganized Settings with search, shortcut
-remapping, and fixes; plan answered in prompt 51, build waiting for
-approval). Then 12 (First release, with the chosen logo direction, concept 4d in
+feedback items, built as milestone 11 (address bar completion, a wider
+page and View settings, reorganized Settings with search, shortcut
+remapping, and fixes), which waits for the owner's acceptance. Then 12 (First release, with the chosen logo direction, concept 4d in
 docs/branding/logo-concepts/). HoloML keeps its name (owner, prompt 44;
 HSML was checked and advised against, prompt 43); the holoml repository
 now names the browser HyperSol HyperSpace 3D. GitHub issues #8 to #15

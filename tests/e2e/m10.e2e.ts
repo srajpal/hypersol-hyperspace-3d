@@ -31,6 +31,7 @@ import {
   waitForExit,
   waitForPage,
   type Harness,
+  settingsTo,
 } from './harness';
 
 let server: FixtureServer;
@@ -199,9 +200,11 @@ describe('L4 and L5: card size and how tabs are shown', () => {
       const medium = await width();
       expect((await shellCall(h, 'tabDisplay')).scale).toBe(1);
       await pressInShell(h, ',', ['control']);
+      await settingsTo(h, 'set-tab-size');
       await h.shell.selectOption('hs-settings [data-testid="set-tab-size"]', 'large');
       await waitFor('large cards', () => shellCall(h, 'tabDisplay'), (d) => d.scale === 1.3);
       expect(await width()).toBeLessThan(medium);
+      await settingsTo(h, 'set-tab-size');
       await h.shell.selectOption('hs-settings [data-testid="set-tab-size"]', 'small');
       await waitFor('small cards', () => shellCall(h, 'tabDisplay'), (d) => d.scale === 0.8);
       expect(await width()).toBeGreaterThan(medium);
@@ -211,30 +214,26 @@ describe('L4 and L5: card size and how tabs are shown', () => {
     }
   });
 
-  it('L5 cards that hide come in at the left edge and with Ctrl+Tab; the list only shows no cards; the list switches and closes tabs', async () => {
+  // Milestone 11 (owner, prompt 50): "Cards that hide" was removed; tabs show
+  // as cards or as a list, and a saved "autohide" opens as cards.
+  it('L5 tabs show as cards or as a list; a saved "cards that hide" opens as cards; the list switches and closes tabs', async () => {
     const h = await launch(server.url('link-a.html'), { userDataDir: newProfile({ tabDisplay: 'autohide' }) });
     try {
       await waitForPage(h, 'link-a');
       await openTab(h, 'link-b.html');
-      let d = await shellCall(h, 'tabDisplay');
-      expect(d).toMatchObject({ display: 'autohide', railVisible: false, strip: true });
-      expect(await h.shell.locator(STRIP('strip-tab')).count()).toBe(2);
-      // Ctrl+Tab brings the cards in for a moment.
-      await pressInShell(h, 'Tab', ['control']);
-      await waitFor('cards in', () => shellCall(h, 'tabDisplay'), (x) => x.railVisible);
-      await waitFor('cards out again', () => shellCall(h, 'tabDisplay'), (x) => !x.railVisible, 5000);
-      // The pointer resting at the left edge.
-      await h.shell.mouse.move(3, 400);
-      await waitFor('cards in at the edge', () => shellCall(h, 'tabDisplay'), (x) => x.railVisible);
-      await h.shell.mouse.move(700, 400, { steps: 4 });
-      await waitFor('cards out after leaving', () => shellCall(h, 'tabDisplay'), (x) => !x.railVisible, 5000);
+      expect(await shellCall(h, 'tabDisplay')).toMatchObject({ display: 'cards', railVisible: true, strip: false });
+      await pressInShell(h, ',', ['control']);
+      await settingsTo(h, 'set-tab-display');
+      const options = await h.shell.locator('hs-settings [data-testid="set-tab-display"] option').evaluateAll((els) => els.map((e) => (e as HTMLOptionElement).value));
+      expect(options).toEqual(['cards', 'list']);
+      await pressInShell(h, 'Escape');
 
       await setSettings(h, { tabDisplay: 'list' });
-      await waitFor('list only', () => shellCall(h, 'tabDisplay'), (x) => x.display === 'list' && x.strip);
+      await waitFor('list only', () => shellCall(h, 'tabDisplay'), (x) => x.display === 'list' && x.strip && !x.railVisible);
+      expect(await h.shell.locator(STRIP('strip-tab')).count()).toBe(2);
       await pressInShell(h, 'Tab', ['control']);
       await sleep(300);
-      d = await shellCall(h, 'tabDisplay');
-      expect(d.railVisible).toBe(false);
+      expect((await shellCall(h, 'tabDisplay')).railVisible).toBe(false);
       await h.shell.locator(STRIP('strip-tab')).first().click();
       await waitFor('switched from the list', () => focusedTab(h), (t) => t.url.includes('link-a'));
       await h.shell.locator(STRIP('strip-close')).last().click();

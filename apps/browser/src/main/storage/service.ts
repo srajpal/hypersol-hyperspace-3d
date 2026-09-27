@@ -3,6 +3,7 @@ import { parseDataRequest, type DataOp, type DataReply, type DataRequest } from 
 import { applySettingsPatch, type Settings } from '../../shared/settings';
 import { Store } from './database';
 import { inProcess, WorkerHistory, type HistoryBackend } from './history-backend';
+import { siteKey } from './history';
 import { SessionFile, SettingsFile } from './settings-file';
 
 export type DataChange = 'bookmarks' | 'history' | 'settings' | 'passwords';
@@ -177,6 +178,30 @@ export class StorageService {
         return null;
       case 'history.clear':
         await this.needHistory().clear();
+        this.emit('history');
+        return null;
+      case 'history.suggest': {
+        // History (in the worker), then bookmarks that match.
+        const found = await this.needHistory().suggest(r.text, r.limit);
+        const text = r.text.trim().toLowerCase();
+        const marks = this.store
+          ? this.store
+              .listBookmarks()
+              .filter((b) => b.url.toLowerCase().includes(text) || b.title.toLowerCase().includes(text))
+              .filter((b) => !found.items.some((i) => i.url === b.url))
+              .slice(0, 3)
+              .map((b) => ({ url: b.url, title: b.title, kind: 'bookmark' as const }))
+          : [];
+        let inline = found.inline;
+        if (!inline) {
+          const key = siteKey(text);
+          const mark = this.store?.listBookmarks().find((b) => siteKey(b.url).startsWith(key));
+          if (mark && key !== '') inline = { key: siteKey(mark.url), url: mark.url };
+        }
+        return { inline, items: [...found.items, ...marks].slice(0, r.limit) };
+      }
+      case 'history.forget-url':
+        await this.needHistory().forgetUrl(r.url);
         this.emit('history');
         return null;
       case 'settings.get':

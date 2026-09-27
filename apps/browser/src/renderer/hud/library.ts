@@ -270,6 +270,8 @@ export class HsLibrary extends LitElement {
       data-testid=${`lib-tab-${view}`}
       aria-selected=${this.view === view ? 'true' : 'false'}
       @click=${() => {
+        // A new tab starts with an empty search (milestone 11, owner feedback).
+        if (this.view !== view) this.query = '';
         this.view = view;
         this.confirming = false;
         this.note = '';

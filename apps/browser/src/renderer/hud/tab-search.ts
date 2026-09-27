@@ -1,5 +1,6 @@
 import { LitElement, css, html, nothing } from 'lit';
 import type { StripTab } from './tab-strip';
+import { watchDismiss } from './dismiss';
 
 export interface SearchTab extends StripTab {
   url: string;
@@ -155,14 +156,16 @@ export class HsTabSearch extends LitElement {
     this.dispatchEvent(new CustomEvent('hs-tab-search-closed', { bubbles: true, composed: true }));
   }
 
+  private stopDismiss: (() => void) | null = null;
+
   override connectedCallback(): void {
     super.connectedCallback();
-    document.addEventListener('pointerdown', this.onOutside);
+    this.stopDismiss = watchDismiss(this, () => this.open, () => this.close());
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    document.removeEventListener('pointerdown', this.onOutside);
+    this.stopDismiss?.();
   }
 
   private get shown(): SearchTab[] {
@@ -236,10 +239,6 @@ export class HsTabSearch extends LitElement {
       const t = shown[Math.min(this.active, shown.length - 1)];
       if (t) this.pick(t.id);
     }
-  };
-
-  private readonly onOutside = (e: PointerEvent) => {
-    if (this.open && !e.composedPath().includes(this)) this.close();
   };
 }
 

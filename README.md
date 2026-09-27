@@ -97,7 +97,9 @@ encrypted DNS, a layers view that lifts a page's parts to different
 depths, two themes in a 1980s and 1990s look, an instrument panel, the
 everyday tools (zoom, find, downloads, printing, private tabs), a
 password manager with site permissions, and tab tools with an economy
-mode and sleeping tabs. See
+mode and sleeping tabs. Milestone 11 (address bar completion, a wider
+page with view settings, reorganized Settings, and shortcut remapping)
+is built and waiting for the owner's acceptance. See
 [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 

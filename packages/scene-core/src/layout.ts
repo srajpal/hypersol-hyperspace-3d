@@ -30,8 +30,10 @@ export interface LayoutInput {
   viewportHeight: number;
   /** Vertical field of view of the camera, in degrees. */
   fovDeg: number;
-  /** Page tilt around the vertical axis, in degrees. Positive turns the right edge away. */
+  /** Page tilt around the vertical axis, in degrees (0 to 20). */
   tiltDeg: number;
+  /** Which edge goes back: 1 the right edge (the default), -1 the left edge (milestone 11). */
+  direction?: 1 | -1;
   /** Space kept free around the page, in CSS pixels. */
   insets: Insets;
 }
@@ -124,7 +126,7 @@ function build(input: LayoutInput, scale: number): PanelLayout {
     panelWidth: Math.round(availW * scale),
     panelHeight: Math.round(availH * scale),
     position: { x: cx, y: cy, z: 0 },
-    rotationY: degToRad(clampTilt(input.tiltDeg)),
+    rotationY: degToRad(clampTilt(input.tiltDeg)) * (input.direction ?? 1),
     cameraZ,
     fovDeg: input.fovDeg,
     viewportWidth: vw,
@@ -132,35 +134,83 @@ function build(input: LayoutInput, scale: number): PanelLayout {
   };
 }
 
-function fitsFreeArea(input: LayoutInput, layout: PanelLayout): boolean {
-  const { insets, viewportWidth: vw, viewportHeight: vh } = input;
-  const eps = 0.5;
-  return panelScreenQuad(layout).every(
-    (p) =>
-      p.x >= insets.left - eps &&
-      p.x <= vw - insets.right + eps &&
-      p.y >= insets.top - eps &&
-      p.y <= vh - insets.bottom + eps,
-  );
+/**
+ * Where a tilted page of this size can sit so its outline stays in the
+ * free area: the range of centres (x) that keep both side edges inside,
+ * or null if none does (it is too wide, or too tall at its near edge).
+ */
+function centreRange(input: LayoutInput, rotationY: number, w: number, h: number): { lo: number; hi: number } | null {
+  const { viewportWidth: vw, viewportHeight: vh, insets } = input;
+  const d = pixelPerfectDistance(vh, input.fovDeg);
+  const c = Math.cos(rotationY);
+  const sn = Math.sin(rotationY);
+  // Screen scale of the left edge (x = -w/2 on the page) and the right edge.
+  const zLeft = (w / 2) * sn;
+  const zRight = -(w / 2) * sn;
+  if (d - zLeft <= 1 || d - zRight <= 1) return null;
+  const kLeft = d / (d - zLeft);
+  const kRight = d / (d - zRight);
+  const availH = Math.max(1, vh - insets.top - insets.bottom);
+  const cy = vh / 2 - (insets.top + availH / 2);
+  for (const k of [kLeft, kRight]) {
+    if (vh / 2 - (cy + h / 2) * k < insets.top - 0.5) return null;
+    if (vh / 2 - (cy - h / 2) * k > vh - insets.bottom + 0.5) return null;
+  }
+  const lo = (insets.left - vw / 2) / kLeft + (w / 2) * c;
+  const hi = (vw / 2 - insets.right) / kRight - (w / 2) * c;
+  return lo <= hi + 1e-6 ? { lo, hi } : null;
 }
 
 /**
- * Lays out the focused page: as large as the free area allows, centred in
- * it, tilted by tiltDeg, and shrunk just enough that the nearer edge,
- * which the tilt brings toward the camera, still fits.
- * At 0 degrees the page fills the free area at exactly 1:1.
+ * Lays out the focused page: as large as the free area allows, tilted by
+ * tiltDeg. At 0 degrees it fills the free area at exactly 1:1. Tilted, its
+ * near edge comes toward the camera and grows while the far edge recedes;
+ * the page takes the tallest size whose near edge still fits, then widens
+ * and shifts until its outline reaches both sides of the free area
+ * (milestone 11: before, it shrank around its centre and left a gap on the
+ * far side).
  */
 export function computePanelLayout(input: LayoutInput): PanelLayout {
-  const full = build(input, 1);
-  if (fitsFreeArea(input, full)) return full;
-  let lo = 0.1;
-  let hi = 1;
-  for (let i = 0; i < 30; i++) {
-    const mid = (lo + hi) / 2;
-    if (fitsFreeArea(input, build(input, mid))) lo = mid;
-    else hi = mid;
+  const base = build(input, 1);
+  if (clampTilt(input.tiltDeg) === 0) return base;
+  const rot = base.rotationY;
+  const availW = base.panelWidth;
+  const availH = base.panelHeight;
+  /** The widest page of this height that fits, with its range of centres. */
+  const widest = (h: number): { w: number; range: { lo: number; hi: number } } | null => {
+    let lo = 1;
+    let hi = availW * 4;
+    if (!centreRange(input, rot, lo, h)) return null;
+    for (let i = 0; i < 40; i++) {
+      const mid = (lo + hi) / 2;
+      if (centreRange(input, rot, mid, h)) lo = mid;
+      else hi = mid;
+    }
+    const w = Math.floor(lo);
+    const range = centreRange(input, rot, w, h);
+    return range ? { w, range } : null;
+  };
+  // The tallest height whose widest page reaches both sides (no room left
+  // across); taller than that, the near edge would stop it short.
+  const reachesSides = (h: number) => {
+    const fit = widest(h);
+    return fit !== null && fit.range.hi - fit.range.lo < 2;
+  };
+  let hLo = availH * 0.1;
+  let hHi = availH;
+  if (reachesSides(hHi)) hLo = hHi;
+  else {
+    for (let i = 0; i < 40; i++) {
+      const mid = (hLo + hHi) / 2;
+      if (reachesSides(mid)) hLo = mid;
+      else hHi = mid;
+    }
   }
-  return build(input, lo);
+  const h = Math.floor(hLo);
+  const fit = widest(h);
+  if (!fit) return build(input, 0.5);
+  const x = (fit.range.lo + fit.range.hi) / 2;
+  return { ...base, panelWidth: fit.w, panelHeight: h, position: { ...base.position, x } };
 }
 
 /** Whether a point lies inside a polygon (even-odd rule). */

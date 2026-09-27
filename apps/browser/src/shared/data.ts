@@ -22,6 +22,19 @@ export interface HistoryEntry {
   visitedAt: number;
 }
 
+/** One of the address bar's suggestions (milestone 11). */
+export interface Suggestion {
+  url: string;
+  title: string;
+  kind: 'history' | 'bookmark';
+}
+
+/** What the address bar offers for typed text: an address to complete to (its key and its real address) and the list. */
+export interface Suggestions {
+  inline: { key: string; url: string } | null;
+  items: Suggestion[];
+}
+
 export interface SavedSession {
   tabs: string[];
   focused: number;
@@ -37,6 +50,8 @@ export type DataRequest =
   | { op: 'history.recent'; limit: number }
   | { op: 'history.delete'; id: number }
   | { op: 'history.clear' }
+  | { op: 'history.suggest'; text: string; limit: number }
+  | { op: 'history.forget-url'; url: string }
   | { op: 'settings.get' }
   | { op: 'settings.set'; patch: Partial<Settings> }
   | { op: 'session.save'; tabs: string[]; focused: number }
@@ -54,6 +69,8 @@ export interface DataResults {
   'history.recent': HistoryEntry[];
   'history.delete': null;
   'history.clear': null;
+  'history.suggest': Suggestions;
+  'history.forget-url': null;
   'settings.get': Settings;
   'settings.set': Settings;
   'session.save': null;
@@ -110,6 +127,13 @@ export function parseDataRequest(raw: unknown): { request: DataRequest } | { err
     case 'history.recent':
       if (!isCount(r['limit'], 1000)) return bad('limit must be 0 to 1000');
       return { request: { op: 'history.recent', limit: r['limit'] } };
+    case 'history.suggest':
+      if (!isText(r['text'], 2048)) return bad('text must be text');
+      if (!isCount(r['limit'], 20)) return bad('limit must be 0 to 20');
+      return { request: { op: 'history.suggest', text: r['text'], limit: r['limit'] } };
+    case 'history.forget-url':
+      if (!isWebUrl(r['url'])) return bad('url must be a web address');
+      return { request: { op: 'history.forget-url', url: r['url'] } };
     case 'history.delete':
       if (!isCount(r['id'], Number.MAX_SAFE_INTEGER)) return bad('id must be a whole number');
       return { request: { op: 'history.delete', id: r['id'] } };

@@ -4,6 +4,7 @@ import { app, BrowserWindow, clipboard, ipcMain, Menu, nativeTheme, powerMonitor
 import { daylight, nebula, themeById, type Theme } from '@hypersol/themes';
 import type { ThemeChoice } from '../shared/settings';
 import {
+  CAPTURE_KEYS_CHANNEL,
   CAPTURE_TAB_CHANNEL,
   CLOSE_READY_CHANNEL,
   PRIVATE_PARTITION,
@@ -82,6 +83,10 @@ let inspector: Inspector | null = null;
 let permissions: Permissions | null = null;
 let passwords: Passwords | null = null;
 let tabHistory: TabHistory | null = null;
+/** Settings is waiting for a shortcut's new keys (milestone 11). */
+let capturingKeys = false;
+/** The person's own shortcut keys, from settings. */
+const shortcutKeys = () => storage?.settingsFile.settings.shortcuts ?? {};
 /** The private tabs' in-memory session. */
 let privateSession: Session | null = null;
 
@@ -147,7 +152,7 @@ function createWindow(): void {
     if (!win.isDestroyed()) win.webContents.send(SHELL_COMMAND_CHANNEL, command);
   };
   hardenShell(win.webContents, PAGE_PRELOAD, (record) => testLog?.attaches.push(record));
-  wireShortcuts(win.webContents, { send, platform: process.platform });
+  wireShortcuts(win.webContents, { send, platform: process.platform, shortcutKeys, capturingKeys: () => capturingKeys });
   if (!app.isPackaged) {
     // Developer tools for the shell in development runs only.
     win.webContents.on('before-input-event', (_event, input) => {
@@ -288,6 +293,8 @@ if (!app.requestSingleInstanceLock()) {
         if (host && !host.isDestroyed()) host.send(SHELL_COMMAND_CHANNEL, command);
       },
       platform: process.platform,
+      shortcutKeys,
+      capturingKeys: () => capturingKeys,
       get testLog() {
         return testLog;
       },
@@ -323,6 +330,11 @@ if (!app.requestSingleInstanceLock()) {
     downloads.watch(ses);
     downloads.watch(privateSes);
     ipcMain.handle(DOWNLOADS_CHANNEL, (event, request: unknown) => downloads.handle(event, request));
+
+    // Settings captures a shortcut's new keys: they must not act meanwhile.
+    ipcMain.on(CAPTURE_KEYS_CHANNEL, (event, on: unknown) => {
+      if (mainWindow && event.sender === mainWindow.webContents) capturingKeys = on === true;
+    });
 
     // Tab snapshots for the cards: only for a web page the asking shell hosts.
     ipcMain.handle(CAPTURE_TAB_CHANNEL, async (event, id: unknown) => {

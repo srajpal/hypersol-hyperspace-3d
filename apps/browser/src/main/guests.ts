@@ -1,5 +1,5 @@
 import { clipboard, Menu, nativeImage, type MenuItemConstructorOptions, type WebContents } from 'electron';
-import type { ShellCommand } from '../shared/commands';
+import type { ShellCommand, ShortcutName } from '../shared/commands';
 import { contextMenuEntries, type MenuAction } from './context-menu';
 import { FaviconLoader } from './favicon';
 import { decidePopup, GESTURE_EVENTS } from './popups';
@@ -11,6 +11,10 @@ export interface GuestDeps {
   /** Sends a command to the shell that hosts this page. */
   send(command: ShellCommand): void;
   platform: string;
+  /** The person's own shortcut keys (Settings > Shortcuts, milestone 11). */
+  shortcutKeys?(): Partial<Record<ShortcutName, string>>;
+  /** Settings is waiting for a new shortcut's keys: pass every key through. */
+  capturingKeys?(): boolean;
   testLog: TestLog | null;
   /** Records a finished page load in history; answers its id, or null. */
   recordVisit(url: string, title: string): Promise<number | null> | null;
@@ -21,9 +25,13 @@ export interface GuestDeps {
  * Sends browser shortcuts pressed in this web contents (the shell or a
  * page) to the shell, and stops the page from also seeing them.
  */
-export function wireShortcuts(contents: WebContents, deps: Pick<GuestDeps, 'send' | 'platform'>): void {
+export function wireShortcuts(
+  contents: WebContents,
+  deps: Pick<GuestDeps, 'send' | 'platform' | 'shortcutKeys' | 'capturingKeys'>,
+): void {
   contents.on('before-input-event', (event, input) => {
-    const name = matchShortcut(input, deps.platform);
+    if (deps.capturingKeys?.()) return;
+    const name = matchShortcut(input, deps.platform, deps.shortcutKeys?.() ?? {});
     if (!name) return;
     event.preventDefault();
     deps.send({ type: 'shortcut', name });

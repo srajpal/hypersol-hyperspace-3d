@@ -22,7 +22,7 @@ Plan approved 2026-09-24.
 | 8 | Everyday browser features | Zoom (buttons, shortcuts, per site), find in page, downloads panel, printing, private tabs | Done (accepted 2026-09-26, with follow-ups below) |
 | 9 | Passwords and site permissions | A password manager (offer to save on sign-in, fill on return, a Passwords tab in the Library, encrypted with the system's keychain) and a site permissions panel (camera, microphone, location: per-site prompts and choices to review and revoke); plus the milestone 8 feedback (download finished notice, private tab under "+", printing) | Done (accepted, prompt 50) |
 | 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Done (accepted, prompt 50) |
-| 11 | Owner feedback: address bar, view, settings, shortcuts | Two ways to show tabs; address bar completion; a wider page and view settings; menus that close; reorganized Settings with search; shortcut list and remapping; Library search reset | Planned (prompt 51) |
+| 11 | Owner feedback: address bar, view, settings, shortcuts | Two ways to show tabs; address bar completion; a wider page and view settings; menus that close; reorganized Settings with search; shortcut list and remapping; Library search reset | Built, waiting for acceptance |
 | 12 | First release v0.1 | Installers for Windows, macOS, Linux; per-OS checks; the app logo and icons; continuous integration (GitHub issue #5); holoml first-result scope (SPEC.md outline, parser package with one test); full regression pass | Later |
 | 13 | HoloML v0.1 language | Spec, schema, parser, conformance samples | Later |
 | 14 | HoloML in the browser | `.holo` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
@@ -1579,8 +1579,8 @@ Changed checks, because their requirement changed (documented here):
 
 ## Milestone 11 — Owner feedback: address bar, view, settings, shortcuts
 
-Status: Planned. The owner's feedback (prompt 50) with the answers Q1 a,
-Q2 a, Q3 a (prompt 51). Build waiting for the owner's approval.
+Status: Built, waiting for the owner's acceptance (checks below). Build approved 2026-09-26 (prompt 52). The owner's
+feedback (prompt 50) with the answers Q1 a, Q2 a, Q3 a (prompt 51).
 Electron security check at the start: 44.4.5 still newest (2026-09-26).
 
 ### Decisions (2026-09-26, prompts 50 and 51)
@@ -1624,19 +1624,19 @@ Electron security check at the start: 44.4.5 still newest (2026-09-26).
 
 ### Tasks
 
-- [ ] 1. Two ways to show tabs; settings read an old "autohide" as cards.
-- [ ] 2. Address bar completion: the worker's site index and query,
+- [x] 1. Two ways to show tabs; settings read an old "autohide" as cards.
+- [x] 2. Address bar completion: the worker's site index and query,
       inline completion, the suggestion list, removing a match.
-- [ ] 3. The wider page layout; View settings and the preset.
-- [ ] 4. Menus and popovers close on clicks in the page, on cards, and
+- [x] 3. The wider page layout; View settings and the preset.
+- [x] 4. Menus and popovers close on clicks in the page, on cards, and
       when the window loses focus.
-- [ ] 5. Settings reorganized into sections, with search and a new look.
-- [ ] 6. Shortcut list and remapping, in the main process and the menus.
-- [ ] 7. Library search resets between tabs.
-- [ ] 8. Tests: unit (completion ranking, layout fit, shortcut table and
+- [x] 5. Settings reorganized into sections, with search and a new look.
+- [x] 6. Shortcut list and remapping, in the main process and the menus.
+- [x] 7. Library search resets between tabs.
+- [x] 8. Tests: unit (completion ranking, layout fit, shortcut table and
       clashes, settings search, settings reading); end-to-end M1 to M8;
       C to L as regression (L5 changes with item 1).
-- [ ] 9. Docs and screenshots (MILESTONE=m11).
+- [x] 9. Docs and screenshots (MILESTONE=m11).
 
 ### Checks
 
@@ -1650,6 +1650,49 @@ Electron security check at the start: 44.4.5 still newest (2026-09-26).
 | M6 | Settings | Sections switch; search finds settings in other sections and shows them; keyboard reaches everything |
 | M7 | Shortcuts | The list shows every shortcut; a remap works from the page and the shell and survives a restart; a clash and a reserved key are refused; Reset works; the menu shows the new keys |
 | M8 | Library search reset | Switching tabs empties the search box and shows the full list |
+
+### Check results (Windows 11, 2026-09-26)
+
+`pnpm test`: 235 unit tests passed; `pnpm lint` and `pnpm typecheck`
+clean. End-to-end: M1 to M8 passed. The full suite (167 checks) passed
+163; the 4 that failed all read the clipboard (D8 copy a link, copy
+selected text, paste; K3's Copy inside K2), and the Windows clipboard
+was failing machine-wide at the time: PowerShell's own Set-Clipboard
+failed with "Requested Clipboard operation did not succeed". They are
+to be run again when the clipboard works; nothing in this milestone
+touches the clipboard.
+
+| # | Result |
+|---|---|
+| M1 | Pass. Settings offers Cards and List in the top bar only; a saved "autohide" opened as Cards (also L5, rewritten, and a unit test) |
+| M2 | Pass (and four runs in a row after a fix, below). Visits on a named test site: "sho" completed to the site, selected; typing on completed to a page, and Enter went to its real address; Backspace dropped the completion without completing again; Escape dropped the list and kept the typing; the arrows picked a row and Enter went there; a removed match left the list and history; the "Search ... for" row searched even for address-like text |
+| M3 | Pass. At 10 degrees the page's outline was within 3 px of both sides of the free area (36 px margins, one tab); unit tests check 5, 10, and 20 degrees both ways within 2 px |
+| M4 | Pass. Left edge back made the left edge the shorter one; Subtle halved the movement; Roomy (72 px) narrowed the page; "Flat and still" set no lean and no movement; all saved |
+| M5 | Pass. The dots menu, the "+" menu, the site panel, and tab search closed on a click in the page and on a card |
+| M6 | Pass. Eight sections; Privacy showed DNS and not Theme; "camera" found Site permissions and "lean" the page view from other sections, with working controls; a search with no match said so; Escape cleared the search, then closed |
+| M7 | Pass. 22 shortcuts listed; Reopen closed tab remapped to Ctrl+Alt+R and saved; a clash (Ctrl+T) and a reserved key (Ctrl+V) were refused with the reason; the menu showed Ctrl+Alt+R; after a restart Ctrl+Alt+R reopened a tab from the page and Ctrl+Shift+T did nothing; Reset returned the default |
+| M8 | Pass. Switching Library tabs emptied the search box and showed the full list |
+
+Found and fixed during the build:
+- The address bar sometimes sent the completed text without its scheme
+  (so http sites opened as https): the list's close-after-blur timer and
+  the replies' order could clear what was offered. Enter now looks up
+  the real address of whatever the bar shows among everything offered
+  while typing, and the blur timer leaves the list alone while the bar
+  has the keyboard.
+- A test fixture's first 100,000-visit suggestion once took 95 ms (the
+  first call after the inserts); a warm suggestion takes about 3 ms. The
+  unit check takes the middle of five tries.
+
+Changed checks, because their requirement changed (documented here):
+- L5 (milestone 10) now checks the two remaining ways to show tabs and
+  that a saved "cards that hide" opens as cards.
+- The layout unit test "shrinks more as the tilt grows" became "gets
+  shorter as the tilt grows, and reaches both sides of the free area":
+  the page no longer narrows with the tilt (owner, prompt 50).
+- Checks that use a setting first show its Settings section
+  (settingsTo, as a person picks the section), since Settings has one
+  page per section.
 
 ### Done when
 

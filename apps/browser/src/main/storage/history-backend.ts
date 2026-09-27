@@ -1,4 +1,4 @@
-import type { HistoryEntry } from '../../shared/data';
+import type { HistoryEntry, Suggestions } from '../../shared/data';
 import type { HistoryStore } from './history';
 
 /**
@@ -14,10 +14,12 @@ export interface HistoryBackend {
   recent(limit: number): Promise<HistoryEntry[]>;
   delete(id: number): Promise<void>;
   clear(): Promise<void>;
+  suggest(text: string, limit: number): Promise<Suggestions>;
+  forgetUrl(url: string): Promise<void>;
   close(): void;
 }
 
-export type HistoryOp = 'record' | 'updateTitle' | 'search' | 'recent' | 'delete' | 'clear';
+export type HistoryOp = 'record' | 'updateTitle' | 'search' | 'recent' | 'delete' | 'clear' | 'suggest' | 'forgetUrl';
 export interface HistoryMessage {
   id: number;
   op: HistoryOp;
@@ -49,6 +51,12 @@ export function answerHistory(store: HistoryStore, m: HistoryMessage): HistoryAn
       case 'clear':
         store.clear();
         break;
+      case 'suggest':
+        value = store.suggest(String(a[0]), Number(a[1]));
+        break;
+      case 'forgetUrl':
+        store.forgetUrl(String(a[0]));
+        break;
     }
     return { id: m.id, ok: true, value };
   } catch (e) {
@@ -72,6 +80,8 @@ export function inProcess(store: HistoryStore): HistoryBackend {
     recent: (limit) => run(() => store.recent(limit)),
     delete: (id) => run(() => store.delete(id)),
     clear: () => run(() => store.clear()),
+    suggest: (text, limit) => run(() => store.suggest(text, limit)),
+    forgetUrl: (url) => run(() => store.forgetUrl(url)),
     close: () => undefined,
   };
 }
@@ -150,6 +160,12 @@ export class WorkerHistory implements HistoryBackend {
   }
   clear(): Promise<void> {
     return this.ask('clear', [], () => this.fallback.clear());
+  }
+  suggest(text: string, limit: number): Promise<Suggestions> {
+    return this.ask('suggest', [text, limit], () => this.fallback.suggest(text, limit));
+  }
+  forgetUrl(url: string): Promise<void> {
+    return this.ask('forgetUrl', [url], () => this.fallback.forgetUrl(url));
   }
   close(): void {
     this.broken ??= 'closed';

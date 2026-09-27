@@ -1,5 +1,12 @@
 import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
 import { PERMISSION_LABELS, type PermissionKind } from '../../shared/permissions';
+import { watchDismiss } from './dismiss';
+import type { Suggestion, Suggestions } from '../../shared/data';
+
+/** An address as the address bar matches it: without the scheme or "www.", in lower case. */
+export function typedKey(text: string): string {
+  return text.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
+}
 
 export type MenuAction =
   | 'new-tab'
@@ -12,6 +19,7 @@ export type MenuAction =
   | 'print'
   | 'library'
   | 'settings'
+  | 'shortcuts'
   | 'about';
 
 const icon = {
@@ -44,7 +52,8 @@ const icon = {
  *
  * Events (bubbling, composed): hs-navigate (detail: typed text), hs-back,
  * hs-forward, hs-reload, hs-bookmark, hs-layers, hs-instruments, hs-new-tab, hs-zoom (detail: 1, -1, or 0 to
- * reset), hs-menu (detail: MenuAction), hs-site (the site button: open the site panel).
+ * reset), hs-menu (detail: MenuAction), hs-site (the site button: open the site panel),
+ * hs-search (detail: text to search for, from the address bar's "Search ... for" row).
  *
  * The "+" button opens a new tab; its arrow, or a right-click on it, offers
  * New tab and New private tab (milestone 9, owner feedback on milestone 8).
@@ -70,8 +79,11 @@ export class HsToolbar extends LitElement {
     economy: { type: Boolean },
     muted: { type: Boolean },
     canReopen: { type: Boolean },
+    keys: { attribute: false },
     menuOpen: { state: true },
     plusOpen: { state: true },
+    suggestions: { state: true },
+    selected: { state: true },
     strip: { state: true },
   };
 
@@ -104,8 +116,28 @@ export class HsToolbar extends LitElement {
   declare muted: boolean;
   /** A closed tab can be reopened. */
   declare canReopen: boolean;
+  /** Each shortcut's keys as they read on this platform (milestone 11: they follow remapping). */
+  declare keys: Partial<Record<string, string>>;
   declare menuOpen: boolean;
   declare plusOpen: boolean;
+  /** Address bar completion (milestone 11): the list under the bar, and the row picked with the arrows. */
+  declare suggestions: Suggestion[];
+  declare selected: number;
+  /** Where suggestions come from (the controller asks the history worker). */
+  suggest: ((text: string) => Promise<Suggestions>) | null = null;
+  forget: ((url: string) => Promise<void>) | null = null;
+  /** The search engine's name, for "Search ... for". */
+  searchName = 'the web';
+  /** What was typed, and the address it was completed to. */
+  private typed = '';
+  private inline: { key: string; url: string } | null = null;
+  /**
+   * Every address offered while typing, by the key it completes to: Enter
+   * goes to the real address of whatever the bar shows, whichever reply it
+   * came from.
+   */
+  private readonly offered = new Map<string, string>();
+  private suggestTicket = 0;
   declare strip: 'idle' | 'loading' | 'done';
   private stripTimer: number | undefined;
 
@@ -130,8 +162,11 @@ export class HsToolbar extends LitElement {
     this.economy = false;
     this.muted = false;
     this.canReopen = false;
+    this.keys = {};
     this.menuOpen = false;
     this.plusOpen = false;
+    this.suggestions = [];
+    this.selected = -1;
     this.strip = 'idle';
   }
 
@@ -306,6 +341,57 @@ export class HsToolbar extends LitElement {
     .star[aria-pressed='true'] svg {
       fill: currentColor;
     }
+    .address {
+      flex: 1;
+      min-width: 0;
+      position: relative;
+      display: flex;
+    }
+    [role='listbox'] {
+      position: absolute;
+      top: 38px;
+      left: 0;
+      right: 0;
+      margin: 0;
+      padding: 4px;
+      list-style: none;
+      border-radius: 10px;
+      border: 1px solid color-mix(in srgb, var(--hs-accent) 45%, transparent);
+      background: var(--hs-panel-glass);
+      box-shadow: 0 10px 28px var(--hs-shadow);
+      z-index: 2;
+    }
+    [role='option'] {
+      display: grid;
+      grid-template-columns: 18px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    [role='option'][aria-selected='true'] {
+      background: color-mix(in srgb, var(--hs-accent) 22%, transparent);
+    }
+    [role='option'] .text {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    [role='option'] .url {
+      color: var(--hs-text-muted);
+      margin-left: 8px;
+    }
+    [role='option'] .kind {
+      color: var(--hs-text-muted);
+      text-align: center;
+    }
+    [role='option'] button {
+      width: 22px;
+      height: 22px;
+    }
     input {
       flex: 1;
       min-width: 0;
@@ -418,15 +504,21 @@ export class HsToolbar extends LitElement {
     });
   }
 
+  private stopDismiss: (() => void) | null = null;
+
   override connectedCallback(): void {
     super.connectedCallback();
-    document.addEventListener('pointerdown', this.onOutside);
+    // The menus close on a press or focus elsewhere, clicks in the page included (milestone 11).
+    this.stopDismiss = watchDismiss(this, () => this.menuOpen || this.plusOpen, () => {
+      this.menuOpen = false;
+      this.plusOpen = false;
+    });
     document.addEventListener('keydown', this.onEscape);
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    document.removeEventListener('pointerdown', this.onOutside);
+    this.stopDismiss?.();
     document.removeEventListener('keydown', this.onEscape);
   }
 
@@ -456,13 +548,12 @@ export class HsToolbar extends LitElement {
   }
 
   override render() {
-    const mod = navigator.platform.startsWith('Mac') ? 'Cmd' : 'Ctrl';
     return html`
       <div class="bar">
         <button
           data-testid="new-tab"
           aria-label="New tab"
-          title=${`New tab (${mod}+T); right-click for a private tab`}
+          title=${`New tab (${this.keys['new-tab'] ?? ''}); right-click for a private tab`}
           @click=${() => this.fire('hs-new-tab')}
           @contextmenu=${(e: MouseEvent) => {
             e.preventDefault();
@@ -485,10 +576,10 @@ export class HsToolbar extends LitElement {
         ${this.plusOpen
           ? html`<div role="menu" class="plus-menu" aria-label="New tab" data-testid="new-tab-menu" @keydown=${this.onMenuKey}>
               <button role="menuitem" data-testid="plus-new-tab" @click=${() => this.menu('new-tab')}>
-                New tab <kbd>${mod}+T</kbd>
+                New tab <kbd>${this.keys['new-tab'] ?? ''}</kbd>
               </button>
               <button role="menuitem" data-testid="plus-private-tab" @click=${() => this.menu('private-tab')}>
-                New private tab <kbd>${mod}+Shift+N</kbd>
+                New private tab <kbd>${this.keys['private-tab'] ?? ''}</kbd>
               </button>
             </div>`
           : nothing}
@@ -506,27 +597,44 @@ export class HsToolbar extends LitElement {
         ${this.economy
           ? html`<span class="eco-pill" data-testid="eco-pill" title="Economy mode: the room draws less to save power (Settings > Economy)">ECO</span>`
           : nothing}
-        <input
-          data-testid="address"
-          type="text"
-          aria-label="Address and search"
-          placeholder="Search the web or type an address"
-          spellcheck="false"
-          autocomplete="off"
-          @focus=${(e: FocusEvent) => (e.target as HTMLInputElement).select()}
-          @keydown=${this.onKey}
-        />
+        <div class="address">
+          <input
+            data-testid="address"
+            type="text"
+            role="combobox"
+            aria-label="Address and search"
+            aria-autocomplete="both"
+            aria-expanded=${this.suggestions.length > 0 ? 'true' : 'false'}
+            aria-controls="suggestions"
+            placeholder="Search the web or type an address"
+            spellcheck="false"
+            autocomplete="off"
+            @focus=${(e: FocusEvent) => {
+              // A new typing session.
+              this.offered.clear();
+              (e.target as HTMLInputElement).select();
+            }}
+            @input=${this.onInput}
+            @blur=${() =>
+              window.setTimeout(() => {
+                // Unless the bar has the keyboard again by then.
+                if ((this.renderRoot as ShadowRoot).activeElement !== this.addressInput) this.closeSuggestions();
+              }, 150)}
+            @keydown=${this.onKey}
+          />
+          ${this.suggestionList()}
+        </div>
         <div class="zoom" role="group" aria-label="Zoom">
-          <button data-testid="zoom-out" aria-label="Zoom out" title=${`Zoom out (${mod}+−)`} ?disabled=${!this.canZoom} @click=${() => this.fire('hs-zoom', -1)}>−</button>
-          <button class="level" data-testid="zoom-level" aria-label=${`Zoom ${Math.round(this.zoom * 100)}%, reset to 100%`} title=${`Reset zoom (${mod}+0)`}
+          <button data-testid="zoom-out" aria-label="Zoom out" title=${`Zoom out (${this.keys['zoom-out'] ?? ''})`} ?disabled=${!this.canZoom} @click=${() => this.fire('hs-zoom', -1)}>−</button>
+          <button class="level" data-testid="zoom-level" aria-label=${`Zoom ${Math.round(this.zoom * 100)}%, reset to 100%`} title=${`Reset zoom (${this.keys['zoom-reset'] ?? ''})`}
             ?disabled=${!this.canZoom} @click=${() => this.fire('hs-zoom', 0)}>${Math.round(this.zoom * 100)}%</button>
-          <button data-testid="zoom-in" aria-label="Zoom in" title=${`Zoom in (${mod}+=)`} ?disabled=${!this.canZoom} @click=${() => this.fire('hs-zoom', 1)}>+</button>
+          <button data-testid="zoom-in" aria-label="Zoom in" title=${`Zoom in (${this.keys['zoom-in'] ?? ''})`} ?disabled=${!this.canZoom} @click=${() => this.fire('hs-zoom', 1)}>+</button>
         </div>
         <button
           class="instruments-button"
           data-testid="instruments"
           aria-label="Instrument panel"
-          title=${`Instrument panel (${mod}+Shift+I)`}
+          title=${`Instrument panel (${this.keys['instruments'] ?? ''})`}
           aria-pressed=${this.instruments ? 'true' : 'false'}
           @click=${() => this.fire('hs-instruments')}
         >
@@ -536,7 +644,7 @@ export class HsToolbar extends LitElement {
           class="layers-button"
           data-testid="layers"
           aria-label="Layers view"
-          title=${`Layers view (${mod}+Shift+L)`}
+          title=${`Layers view (${this.keys['layers'] ?? ''})`}
           aria-pressed=${this.layers ? 'true' : 'false'}
           ?disabled=${!this.canLayers}
           @click=${() => this.fire('hs-layers')}
@@ -569,34 +677,37 @@ export class HsToolbar extends LitElement {
         ${this.menuOpen
           ? html`<div role="menu" aria-label="Menu" @keydown=${this.onMenuKey}>
               <button role="menuitem" data-testid="menu-new-tab" @click=${() => this.menu('new-tab')}>
-                New tab <kbd>${mod}+T</kbd>
+                New tab <kbd>${this.keys['new-tab'] ?? ''}</kbd>
               </button>
               <button role="menuitem" data-testid="menu-private-tab" @click=${() => this.menu('private-tab')}>
-                New private tab <kbd>${mod}+Shift+N</kbd>
+                New private tab <kbd>${this.keys['private-tab'] ?? ''}</kbd>
               </button>
               <button role="menuitem" data-testid="menu-close-tab" @click=${() => this.menu('close-tab')}>
-                Close tab <kbd>${mod}+W</kbd>
+                Close tab <kbd>${this.keys['close-tab'] ?? ''}</kbd>
               </button>
               <button role="menuitem" data-testid="menu-reopen-tab" ?disabled=${!this.canReopen} @click=${() => this.menu('reopen-tab')}>
-                Reopen closed tab <kbd>${mod}+Shift+T</kbd>
+                Reopen closed tab <kbd>${this.keys['reopen-tab'] ?? ''}</kbd>
               </button>
               <button role="menuitem" data-testid="menu-search-tabs" @click=${() => this.menu('search-tabs')}>
-                Search tabs <kbd>${mod}+Shift+A</kbd>
+                Search tabs <kbd>${this.keys['search-tabs'] ?? ''}</kbd>
               </button>
               <button role="menuitem" data-testid="menu-mute-tab" @click=${() => this.menu('mute-tab')}>
                 ${this.muted ? 'Unmute tab' : 'Mute tab'}
               </button>
               <button role="menuitem" data-testid="menu-downloads" @click=${() => this.menu('downloads')}>
-                Downloads <kbd>${mod}+J</kbd>
+                Downloads <kbd>${this.keys['downloads'] ?? ''}</kbd>
               </button>
               <button role="menuitem" data-testid="menu-print" @click=${() => this.menu('print')}>
-                Print <kbd>${mod}+P</kbd>
+                Print <kbd>${this.keys['print'] ?? ''}</kbd>
               </button>
               <button role="menuitem" data-testid="menu-library" @click=${() => this.menu('library')}>
-                Library <kbd>${mod}+Shift+O</kbd>
+                Library <kbd>${this.keys['library'] ?? ''}</kbd>
               </button>
               <button role="menuitem" data-testid="menu-settings" @click=${() => this.menu('settings')}>
-                Settings <kbd>${mod}+,</kbd>
+                Settings <kbd>${this.keys['settings'] ?? ''}</kbd>
+              </button>
+              <button role="menuitem" data-testid="menu-shortcuts" @click=${() => this.menu('shortcuts')}>
+                Keyboard shortcuts
               </button>
               <button role="menuitem" data-testid="menu-about" @click=${() => this.menu('about')}>
                 About HyperSpace 3D
@@ -606,6 +717,133 @@ export class HsToolbar extends LitElement {
         <div class="strip" data-testid="progress" data-state=${this.strip} aria-hidden="true"><span></span></div>
       </div>
     `;
+  }
+
+  // ---- Address bar completion (milestone 11) ---------------------------------
+
+  private get addressInput(): HTMLInputElement | null {
+    return this.renderRoot.querySelector('input[data-testid="address"]');
+  }
+
+  /** The list under the bar: matches from history and bookmarks, then "Search ... for". */
+  private suggestionList() {
+    if (this.suggestions.length === 0 && this.typed.trim() === '') return nothing;
+    if (this.suggestions.length === 0 && this.selected === -1 && !this.listShown) return nothing;
+    const rows = [...this.suggestions];
+    return html`<ul id="suggestions" role="listbox" aria-label="Suggestions" data-testid="address-suggestions">
+      ${rows.map(
+        (item, i) => html`<li
+          role="option"
+          data-testid="suggestion"
+          aria-selected=${this.selected === i ? 'true' : 'false'}
+          @mousedown=${(e: Event) => e.preventDefault()}
+          @click=${() => this.go(item.url)}
+        >
+          <span class="kind" aria-hidden="true">${item.kind === 'bookmark' ? '★' : '◷'}</span>
+          <span class="text">${item.title || item.url}<span class="url">${item.url}</span></span>
+          ${item.kind === 'history' && this.forget
+            ? html`<button data-testid="suggestion-remove" aria-label=${`Remove ${item.url} from history`} title="Remove from history"
+                @click=${(e: Event) => {
+                  e.stopPropagation();
+                  void this.forget?.(item.url).then(() => this.refreshSuggestions());
+                }}>×</button>`
+            : html`<span></span>`}
+        </li>`,
+      )}
+      <li
+        role="option"
+        data-testid="suggestion-search"
+        aria-selected=${this.selected === rows.length ? 'true' : 'false'}
+        @mousedown=${(e: Event) => e.preventDefault()}
+        @click=${() => this.searchTyped()}
+      >
+        <span class="kind" aria-hidden="true">⌕</span>
+        <span class="text">Search ${this.searchName} for “${this.typed.trim()}”</span><span></span>
+      </li>
+    </ul>`;
+  }
+
+  private listShown = false;
+
+  private closeSuggestions(): void {
+    this.suggestTicket += 1;
+    this.suggestions = [];
+    this.selected = -1;
+    this.listShown = false;
+    this.inline = null;
+  }
+
+  private readonly onInput = (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    const value = input.value;
+    this.typed = value;
+    this.inline = null;
+    this.selected = -1;
+    const deleting = (e as InputEvent).inputType?.startsWith('delete') ?? false;
+    if (value.trim() === '') {
+      this.closeSuggestions();
+      return;
+    }
+    this.listShown = true;
+    void this.askSuggestions(value, !deleting);
+  };
+
+  private async askSuggestions(value: string, complete: boolean): Promise<void> {
+    if (!this.suggest) return;
+    const ticket = ++this.suggestTicket;
+    let found: Suggestions;
+    try {
+      found = await this.suggest(value);
+    } catch {
+      return;
+    }
+    const input = this.addressInput;
+    if (ticket !== this.suggestTicket || !input || input.value !== value) return;
+    this.suggestions = found.items;
+    if (found.inline) this.offered.set(found.inline.key, found.inline.url);
+    for (const item of found.items) this.offered.set(typedKey(item.url), item.url);
+    // Complete the rest of the site in place, selected, so typing goes on over it.
+    if (complete && found.inline && input.selectionStart === value.length) {
+      const key = typedKey(value);
+      if (found.inline.key.startsWith(key) && found.inline.key.length > key.length) {
+        input.value = value + found.inline.key.slice(key.length);
+        input.setSelectionRange(value.length, input.value.length);
+        this.inline = found.inline;
+      }
+    }
+  }
+
+  private refreshSuggestions(): void {
+    const input = this.addressInput;
+    if (input) input.value = this.typed;
+    void this.askSuggestions(this.typed, false);
+  }
+
+  private go(url: string): void {
+    this.closeSuggestions();
+    this.fire('hs-navigate', url);
+    this.addressInput?.blur();
+  }
+
+  private searchTyped(): void {
+    const text = this.typed.trim();
+    this.closeSuggestions();
+    if (text) this.fire('hs-search', text);
+    this.addressInput?.blur();
+  }
+
+  /** Arrow keys move through the list, showing each row's address in the bar. */
+  private moveSelection(step: 1 | -1): void {
+    const input = this.addressInput;
+    const count = this.suggestions.length + 1;
+    if (!input || !this.listShown) return;
+    let next = this.selected + step;
+    if (next < -1) next = count - 1;
+    if (next >= count) next = -1;
+    this.selected = next;
+    this.inline = null;
+    input.value = next >= 0 && next < this.suggestions.length ? this.suggestions[next]!.url : this.typed;
+    input.setSelectionRange(input.value.length, input.value.length);
   }
 
   private siteButton() {
@@ -621,21 +859,39 @@ export class HsToolbar extends LitElement {
     </button>`;
   }
 
-  private readonly onOutside = (e: PointerEvent) => {
-    if (e.composedPath().includes(this)) return;
-    if (this.menuOpen) this.menuOpen = false;
-    if (this.plusOpen) this.plusOpen = false;
-  };
-
   private readonly onKey = (e: KeyboardEvent) => {
     const input = e.target as HTMLInputElement;
-    if (e.key === 'Enter') {
-      const text = input.value.trim();
-      if (text !== '') {
-        this.fire('hs-navigate', text);
-        input.blur();
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      if (!this.listShown) return;
+      e.preventDefault();
+      this.moveSelection(e.key === 'ArrowDown' ? 1 : -1);
+    } else if (e.key === 'Enter') {
+      const picked = this.selected;
+      if (picked >= 0 && picked < this.suggestions.length) {
+        this.go(this.suggestions[picked]!.url);
+        return;
       }
+      if (picked === this.suggestions.length && this.listShown) {
+        this.searchTyped();
+        return;
+      }
+      // A completed site goes to the address it was visited at.
+      const known = input.value !== this.typed ? this.offered.get(typedKey(input.value)) : undefined;
+      const text = input.value.trim();
+      this.closeSuggestions();
+      this.offered.clear();
+      if (known) this.fire('hs-navigate', known);
+      else if (text !== '') this.fire('hs-navigate', text);
+      else return;
+      input.blur();
     } else if (e.key === 'Escape') {
+      if (this.listShown || this.inline) {
+        // First Escape: drop the completion and the list, keep what was typed.
+        input.value = this.typed;
+        this.closeSuggestions();
+        e.stopPropagation();
+        return;
+      }
       input.value = this.url;
       input.select();
     }

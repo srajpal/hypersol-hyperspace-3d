@@ -216,7 +216,8 @@ export interface ShellHooks {
   sleepNow(): number;
   economy(): { on: boolean; pixelRatio: number; devicePixelRatio: number; frames: number };
   tabDisplay(): { scale: number; display: string; revealed: boolean; railVisible: boolean; strip: boolean };
-  revealRail(): void;
+  view(): { direction: number; margin: number; parallax: number };
+  showSetting(id: string): Promise<boolean>;
   notice(): { text: string; kind: string; actions: { id: string; label: string }[] } | null;
   sitePanel(): { open: boolean; site: { origin: string; private: boolean; states: Record<string, string>; given: string[] } | null };
   downloads(): { id: number; filename: string; path: string; received: number; total: number; state: string }[];
@@ -554,3 +555,13 @@ export async function clickCard(h: Harness, key: number | 'plus', part: 'body' |
 }
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Shows the Settings section that holds a control (milestone 11: Settings
+ * has sections, one page each), as a person would pick it from the list.
+ * Settings must be open.
+ */
+export async function settingsTo(h: Harness, controlId: string): Promise<void> {
+  const found = await shellCall(h, 'showSetting', controlId);
+  if (!found) throw new Error(`No setting has the control ${controlId}`);
+}

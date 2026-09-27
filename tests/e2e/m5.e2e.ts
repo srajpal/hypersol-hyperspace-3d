@@ -26,6 +26,7 @@ import {
   waitFor,
   waitForPage,
   type Harness,
+  settingsTo,
 } from './harness';
 
 let server: FixtureServer;
@@ -171,7 +172,9 @@ describe('G4 to G6: switching, settings, and image rectangles', () => {
     try {
       await waitForPage(h, 'link-a');
       await openSettings(h);
+      await settingsTo(h, 'set-layers-on-open');
       expect(await h.shell.locator(SET('set-layers-on-open')).isChecked()).toBe(true);
+      await settingsTo(h, 'set-layers-on-open');
       await h.shell.click(SET('set-layers-on-open'));
       await waitFor('saved', () => Promise.resolve(JSON.parse(readFileSync(join(profile, 'settings.json'), 'utf8')).layersOnOpen), (v) => v === false);
       await pressInShell(h, 'Escape');
@@ -191,8 +194,11 @@ describe('G4 to G6: switching, settings, and image rectangles', () => {
       await waitForPage(h, PAGE);
       await waitFor('site choice wins after a restart', () => layersOn(h), (on) => on);
       await openSettings(h);
+      await settingsTo(h, 'set-layers-on-open');
       expect(await h.shell.locator(SET('set-layers-on-open')).isChecked()).toBe(false);
+      await settingsTo(h, 'set-layers-sites');
       expect(await h.shell.locator(SET('set-layers-sites')).textContent()).toContain('1 site has');
+      await settingsTo(h, 'set-layers-forget');
       await h.shell.click(SET('set-layers-forget'));
       await waitFor('forgotten', () => Promise.resolve(JSON.parse(readFileSync(join(profile, 'settings.json'), 'utf8')).layersSites), (s) =>
         Object.keys(s ?? { x: 1 }).length === 0);

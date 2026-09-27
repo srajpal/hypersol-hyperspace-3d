@@ -252,6 +252,30 @@ it('captures the main screens', async () => {
     await capture(h, '33-economy-and-tabs-settings');
     await pressInShell(h, 'Escape');
     await setSettings({ economy: 'battery' });
+
+    // Milestone 11: the wider page, address bar completion, the new Settings.
+    await h.shell.evaluate(() => (document.querySelector('hs-notice') as unknown as { hide(): void }).hide());
+    await navigateTo(h, server.url('link-a.html'));
+    await waitForPage(h, 'link-a');
+    await capture(h, '34-wider-page');
+    const input = h.shell.locator('hs-toolbar [data-testid="address"]');
+    await input.click();
+    await input.pressSequentially('127.0.0.1');
+    await waitFor('suggestions', () => h.shell.locator('hs-toolbar [data-testid="suggestion"]').count(), (n) => n > 0);
+    await sleep(300);
+    await capture(h, '35-address-completion');
+    await input.press('Escape');
+    await input.press('Escape');
+    await pressInShell(h, ',', ['control']);
+    await h.shell.click('hs-settings [data-testid="set-nav-appearance"]');
+    await capture(h, '36-settings-appearance');
+    await h.shell.fill('hs-settings [data-testid="set-search"]', 'camera');
+    await sleep(300);
+    await capture(h, '37-settings-search');
+    await h.shell.fill('hs-settings [data-testid="set-search"]', '');
+    await h.shell.click('hs-settings [data-testid="set-nav-shortcuts"]');
+    await capture(h, '38-settings-shortcuts');
+    await pressInShell(h, 'Escape');
   } finally {
     await h.close();
     await server.close();

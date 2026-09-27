@@ -25,6 +25,7 @@ import {
   waitFor,
   waitForPage,
   type Harness,
+  settingsTo,
 } from './harness';
 
 let server: FixtureServer;
@@ -76,6 +77,8 @@ const testLog = <T>(h: Harness, key: string) =>
 async function openSettings(h: Harness): Promise<void> {
   if ((await shellCall(h, 'openPanel')) !== 'settings') await pressInShell(h, ',', ['control']);
   await waitFor('settings open', () => shellCall(h, 'openPanel'), (p) => p === 'settings');
+  // DNS and the filter lists are in Settings > Privacy and security (milestone 11).
+  await settingsTo(h, 'set-filters-status');
 }
 
 async function openPopover(h: Harness): Promise<void> {
@@ -199,7 +202,9 @@ describe('F7 and F8: encrypted DNS', () => {
     try {
       expect(await testLog<unknown[]>(h, 'dnsApplied')).toEqual([{ mode: 'secure', resolver: QUAD9 }]);
       await openSettings(h);
+      await settingsTo(h, 'set-dns-secure');
       expect(await h.shell.locator(SET('set-dns-secure')).isChecked()).toBe(true);
+      await settingsTo(h, 'set-dns-automatic');
       await h.shell.click(SET('set-dns-automatic'));
       await waitFor('automatic applied', () => testLog<{ mode: string }[]>(h, 'dnsApplied'), (a) => a.at(-1)?.mode === 'automatic');
     } finally {
@@ -224,7 +229,9 @@ describe('F7 and F8: encrypted DNS', () => {
       // The name still does not exist: now it is simply "not found".
       await waitFor('not-found card', () => h.shell.locator(CARD).getAttribute('data-kind'), (k) => k === 'not-found');
       await openSettings(h);
+      await settingsTo(h, 'set-dns-session');
       await waitFor('session note', () => h.shell.locator(SET('set-dns-session')).isVisible(), (v) => v);
+      await settingsTo(h, 'set-dns-secure');
       expect(await h.shell.locator(SET('set-dns-secure')).isChecked()).toBe(true); // the saved setting is unchanged
     } finally {
       await h.close();
@@ -275,6 +282,7 @@ describe('F9 and F10: the filter lists', () => {
       await openSettings(h);
       await waitFor('starter lists', () => statusText(h), (t) => t?.includes('included with the app') ?? false);
       const before = filterHits('/filters/');
+      await settingsTo(h, 'set-filters-update');
       await h.shell.click(SET('set-filters-update'));
       await waitFor('lists updated', () => statusText(h), (t) => t?.startsWith('Lists updated') ?? false, 30_000);
       expect(filterHits('/filters/') - before).toBe(listUrls(base).length);
@@ -302,7 +310,9 @@ describe('F9 and F10: the filter lists', () => {
     try {
       await readShieldPage(h);
       await openSettings(h);
+      await settingsTo(h, 'set-filters-update');
       await h.shell.click(SET('set-filters-update'));
+      await settingsTo(h, 'set-filters-error');
       await waitFor('error shown', () => h.shell.locator(SET('set-filters-error')).textContent(), (t) =>
         Boolean(t?.includes('The current lists are still in use')),
       );

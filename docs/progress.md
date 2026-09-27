@@ -129,3 +129,23 @@ visits.
 ![Tabs as a list in the top bar](screenshots/m10/32-tab-list.png)
 
 ![Economy mode on (ECO), with the Tabs and Economy settings](screenshots/m10/33-economy-and-tabs-settings.png)
+
+**Milestone 11: your feedback** (built; waiting for the owner's
+acceptance). The address bar completes sites you have visited as you
+type and lists the best matches. The leaning page now reaches both
+sides of the window, and Settings > Appearance and view sets how far
+and which way it leans, how much the room moves, and the space around
+it, or "Flat and still" in one step. Settings has sections and a
+search; every shortcut is listed and can be changed. Menus close when
+you click elsewhere, "Cards that hide" is gone, and the Library's
+search empties between tabs.
+
+![The page reaching both sides of the window](screenshots/m11/34-wider-page.png)
+
+![Address bar completion and suggestions](screenshots/m11/35-address-completion.png)
+
+![Settings: sections, and the page view](screenshots/m11/36-settings-appearance.png)
+
+![Settings search finds a setting in another section](screenshots/m11/37-settings-search.png)
+
+![Keyboard shortcuts, each changeable](screenshots/m11/38-settings-shortcuts.png)

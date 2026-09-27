@@ -9,6 +9,7 @@ import {
 } from '../../shared/permissions';
 import type { PermissionsClient } from '../data';
 import { siteName } from './prompts';
+import { watchDismiss } from './dismiss';
 
 /**
  * The site panel (milestone 9), opened from the site button in the top
@@ -132,14 +133,18 @@ export class HsSitePanel extends LitElement {
     }
   }
 
+  private stopDismiss: (() => void) | null = null;
+
   override connectedCallback(): void {
     super.connectedCallback();
-    document.addEventListener('pointerdown', this.onOutside);
+    // The site button opens and closes the panel itself.
+    this.stopDismiss = watchDismiss(this, () => this.open, () => this.close(), (path) =>
+      path.some((t) => t instanceof HTMLElement && t.dataset['testid'] === 'site-button'));
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    document.removeEventListener('pointerdown', this.onOutside);
+    this.stopDismiss?.();
   }
 
   override render() {
@@ -188,14 +193,6 @@ export class HsSitePanel extends LitElement {
       this.message = e instanceof Error ? e.message : String(e);
     }
   }
-
-  private readonly onOutside = (e: PointerEvent) => {
-    if (!this.open) return;
-    const path = e.composedPath();
-    // The site button toggles the panel itself.
-    if (path.includes(this) || path.some((t) => t instanceof HTMLElement && t.dataset['testid'] === 'site-button')) return;
-    this.close();
-  };
 
   private readonly onKey = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {

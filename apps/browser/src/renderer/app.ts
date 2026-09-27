@@ -1,7 +1,8 @@
 import type { PageStatus } from '@hypersol/scene-core';
 import { daylight, nebula, themeById, type Theme } from '@hypersol/themes';
 import type { ShellBridge, ShellCommand, ShortcutName } from '../shared/commands';
-import { DEFAULT_SETTINGS, defaults, searchUrlFor, type Settings } from '../shared/settings';
+import { DEFAULT_SETTINGS, defaults, SEARCH_ENGINES, searchUrlFor, type Settings } from '../shared/settings';
+import { bindings, describeCombo } from '../shared/shortcuts';
 import { DataClient, PasswordsClient, PermissionsClient, PrivacyClient } from './data';
 import type { HsPrompts } from './hud/prompts';
 import type { HsSitePanel } from './hud/site-panel';
@@ -160,6 +161,8 @@ export class App {
     options.sitePanel.client = this.permissions;
     options.sitePanel.tab = () => (this.focusedView?.isStart === false ? this.focusedView.webContentsId : null);
     options.settingsPanel.client = this.data;
+    options.settingsPanel.platform = options.bridge.platform;
+    options.settingsPanel.captureKeys = (on) => options.bridge.captureKeys(on);
     options.settingsPanel.privacy = this.privacy;
     options.shield.client = this.privacy;
     options.shield.tab = () => this.focusedView?.webContentsId ?? null;
@@ -671,8 +674,8 @@ export class App {
 
   // ---- Panels -------------------------------------------------------------
 
-  private togglePanel(name: PanelName): void {
-    if (this.openPanelName === name) {
+  private togglePanel(name: PanelName, settingsSection?: 'shortcuts'): void {
+    if (this.openPanelName === name && !settingsSection) {
       this.panel(name).close();
       return;
     }
@@ -686,7 +689,7 @@ export class App {
     this.openPanelName = name;
     if (name === 'library') this.options.library.show();
     else if (name === 'downloads') this.options.downloads.show();
-    else this.options.settingsPanel.show();
+    else this.options.settingsPanel.show(settingsSection);
   }
 
   private panel(name: PanelName): HsLibrary | HsSettings | HsDownloads {
@@ -716,6 +719,11 @@ export class App {
     settingsPanel.addEventListener('hs-settings-changed', (e) => {
       this.settings = (e as CustomEvent<Settings>).detail;
       this.applyLook();
+    });
+    // Settings > Privacy > Passwords opens the Library's Passwords tab.
+    settingsPanel.addEventListener('hs-open-passwords', () => {
+      library.view = 'passwords';
+      this.togglePanel('library');
     });
     // Escape closes an open panel even when the focus is elsewhere in the shell.
     document.addEventListener('keydown', (e) => {
@@ -840,9 +848,21 @@ export class App {
       const id = this.store.focusedId;
       if (this.layersOn.get(id)) this.views.get(id)?.sendLayers(this.layersState(id, false));
     }
+    this.options.toolbar.searchName = SEARCH_ENGINES[this.settings.searchEngine].name;
+    // The menus' key hints follow the person's own shortcuts (milestone 11).
+    const platform = this.options.bridge.platform;
+    const keys: Record<string, string> = {};
+    for (const [name, combos] of bindings(this.settings.shortcuts, platform)) keys[name] = combos[0] ? describeCombo(combos[0], platform) : '';
+    this.options.toolbar.keys = keys;
     this.options.themeButton.scheme = theme.scheme;
     this.options.themeButton.themeName = theme.name;
     if (!this.options.tiltFixed) this.room.setTilt(this.settings.pageTilt);
+    // The view (milestone 11): which way the page leans, space around it, movement.
+    this.room.setView({
+      direction: this.settings.tiltDirection === 'left' ? -1 : 1,
+      margin: this.settings.pageMargin,
+      parallax: this.settings.parallax,
+    });
     this.instruments.setSettings(this.settings);
     this.options.toolbar.instruments = this.settings.instruments;
     this.applyTabsAndEconomy();
@@ -978,6 +998,17 @@ export class App {
   private wireToolbar(): void {
     const t = this.options.toolbar;
     t.addEventListener('hs-navigate', (e) => this.navigate(this.store.focusedId, (e as CustomEvent<string>).detail));
+    // Address bar completion (milestone 11): suggestions from history (in its
+    // worker) and bookmarks; "Search ... for" always searches, even for text
+    // that looks like an address.
+    t.suggest = (text) => this.data.get({ op: 'history.suggest', text, limit: 6 });
+    t.forget = async (url) => {
+      await this.data.get({ op: 'history.forget-url', url });
+    };
+    t.addEventListener('hs-search', (e) => {
+      const text = (e as CustomEvent<string>).detail;
+      this.navigate(this.store.focusedId, this.searchUrl.replace('%s', encodeURIComponent(text)));
+    });
     t.addEventListener('hs-back', () => this.focusedView?.goBack());
     t.addEventListener('hs-forward', () => this.focusedView?.goForward());
     t.addEventListener('hs-reload', () => this.focusedView?.reload());
@@ -1004,6 +1035,7 @@ export class App {
     else if (action === 'search-tabs') this.searchTabs();
     else if (action === 'mute-tab') this.toggleMute(this.store.focusedId);
     else if (action === 'library' || action === 'settings') this.togglePanel(action);
+    else if (action === 'shortcuts') this.togglePanel('settings', 'shortcuts');
     else if (action === 'about') this.options.about.open = true;
   }
 
@@ -1128,11 +1160,9 @@ export class App {
         this.options.toolbar.focusAddress();
         break;
       case 'next-tab':
-        this.room.reveal();
         s.cycle(1);
         break;
       case 'prev-tab':
-        this.room.reveal();
         s.cycle(-1);
         break;
       case 'reopen-tab':
