@@ -23,19 +23,23 @@ Plan approved 2026-09-24.
 | 9 | Passwords and site permissions | A password manager (offer to save on sign-in, fill on return, a Passwords tab in the Library, encrypted with the system's keychain) and a site permissions panel (camera, microphone, location: per-site prompts and choices to review and revoke); plus the milestone 8 feedback (download finished notice, private tab under "+", printing) | Done (accepted, prompt 50) |
 | 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Done (accepted, prompt 50) |
 | 11 | Owner feedback: address bar, view, settings, shortcuts | Two ways to show tabs; address bar completion; a wider page and view settings; menus that close; reorganized Settings with search; shortcut list and remapping; Library search reset | Done (accepted, prompt 54) |
-| 12 | First release v0.1 | Installers for Windows, macOS, Linux; per-OS checks; the app logo and icons; continuous integration (GitHub issue #5); holoml first-result scope (SPEC.md outline, parser package with one test); full regression pass | Later |
-| 13 | HoloML v0.1 language | Spec, schema, parser, conformance samples | Later |
+| 12 | Developer preview 0.9.0 | Source release for developers: privacy and proofreading pass, legal and project files, automatic builds and tests on Windows and Linux (GitHub issue #5), Electron check, trademark and `.holo` checks, version 0.9.0 | In progress (prompt 58) |
+| 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Later (H1 a, H2 a, prompt 58) |
 | 14 | HoloML in the browser | `.holo` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
 | 15 | Car showroom demo | Demo site with walk-around 3D cars | Later |
-| 16 | Free camera and room navigation | Move freely around the room | Later |
-| 17 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
-| 18 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
+| 16 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
+| 17 | macOS release | Signing, notarization, Mac checks | Later |
+| 18 | Free camera and room navigation | Move freely around the room | Later |
+| 19 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
+| 20 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS and Android | Later |
 
-Milestones 1 to 12 make up the first useful result in BRIEF.md
-(milestone 11, the owner's feedback, was added on 2026-09-26, prompt 51;
-the first release is now milestone 12, and entries below that say
-"milestone 11" for the release now mean 12). The
+Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
+the owner chose to release it as source for developers first (milestone
+12, a 0.9.0 developer preview), follow the HoloML path (13 to 15), and
+ship installers as 1.0 afterwards (16 for Windows and Linux, 17 for
+macOS; mobile later). Entries below that say "milestone 11" or "12" for
+the installer release now mean 16. The
 instrument panel was added as milestone 7 on 2026-09-26 (prompt 35); on
 the same day the everyday browser features moved ahead of the first
 release as milestone 8, with a Passwords milestone 9 (prompt 37); then
@@ -1700,6 +1704,72 @@ Changed checks, because their requirement changed (documented here):
 - The owner has tried the address bar, the wider page and View
   settings, the new Settings, and shortcut remapping, and accepts.
 
+## Milestone 12 — Developer preview 0.9.0
+
+Status: In progress. Plan and build approved 2026-09-26 (prompt 58),
+after the answers in prompts 54 to 58 (recorded above: A a, B a, C a,
+D1 to D4 a, E a, F a, P1 a, P2 b, P3 b). Pushed before the build started.
+
+Goal: the browser released as source that developers can build, test,
+and contribute to on Windows and Linux, with the record of how it was
+made cleaned for privacy and spelling.
+
+### Decisions (prompts 54 to 58)
+
+- Source only, tagged 0.9.0 "developer preview"; 1.0 comes with
+  installers and HoloML (B a).
+- Privacy (P1 a): the current files are cleaned; the history is left as
+  it is. PROMPTS.md becomes an edited record: every prompt in order with
+  its meaning unchanged, spelling fixed, tool bookkeeping (token counts,
+  session tags, renumbering notes) summarised once at the top; the
+  AGENTS.md logging rule changes from "verbatim" to "lightly edited".
+  The README keeps both founders' names (P2 b). Commits keep the
+  current author email (P3 b).
+- Legal (D1 to D4 a): copyright "The HyperSpace 3D Authors" and "The
+  HoloML Authors", with AUTHORS files; the name stays, with a README
+  line that HyperSol, the company, no longer exists and this is a
+  personal project honouring it; contributions come under Apache 2.0's
+  own terms.
+- Security reports through GitHub's private vulnerability reporting,
+  switched on in both repositories (F a).
+- GitHub Actions builds and tests every push on Windows and Linux (C a).
+- Trademark and `.holo` checks now, with the searches and results
+  recorded (E a).
+
+### Tasks
+
+- [ ] 1. PROMPTS.md as an edited record; the logging rule updated.
+- [ ] 2. Proofreading of every document in both repositories; machine
+      details and the private session setup taken out of HANDOFF.md.
+- [ ] 3. Legal files: copyright lines, NOTICE, AUTHORS, the README note,
+      the naming rules in AGENTS.md (both repositories).
+- [ ] 4. THIRD-PARTY.md: the licences of every package the app ships
+      and of the filter lists.
+- [ ] 5. SECURITY.md and CONTRIBUTING.md (both repositories); private
+      vulnerability reporting switched on.
+- [ ] 6. Trademark and `.holo` checks, recorded in docs/name-checks.md.
+- [ ] 7. Electron: the newest stable version, and the security check.
+- [ ] 8. GitHub Actions: lint, types, unit tests, and end-to-end checks on
+      Windows and Linux; Linux problems it finds fixed.
+- [ ] 9. Version 0.9.0; the README's developer section; the release notes.
+      Tagging and publishing the release wait for the owner's go.
+
+### Checks
+
+| # | Check | Expected result |
+|---|---|---|
+| N1 | Builds and tests on GitHub | The workflow passes on Windows and Linux: lint, types, unit tests, end-to-end checks |
+| N2 | Privacy | No personal email, machine details, or private session setup in the current files of either repository; PROMPTS.md reads as an edited record |
+| N3 | Spelling | Every document in both repositories proofread |
+| N4 | Legal and project files | LICENSE, NOTICE, AUTHORS, THIRD-PARTY.md, SECURITY.md, CONTRIBUTING.md present and consistent in both repositories |
+| N5 | From source | A fresh clone builds and runs with the README's steps (checked on Windows here and on Linux through GitHub) |
+| N6 | Regression | C to M pass locally, and the unit tests |
+
+### Done when
+
+- N1 to N6 pass, the owner has read the edited PROMPTS.md and the new
+  project files, and says go for the 0.9.0 tag and release.
+
 ## Release path and milestone 12: owner's answers so far (2026-09-26, prompts 54 to 56)
 
 - Release order (prompt 54): Windows and Linux first, macOS second,
@@ -1728,6 +1798,10 @@ Changed checks, because their requirement changed (documented here):
   exists and this is a personal project honouring it. D3 a: outside
   contributions come under Apache 2.0's own terms, no paperwork. D4 a:
   the holoml repository the same ("The HoloML Authors").
+- Privacy (prompt 58): P1 a (clean the current files, leave the history),
+  P2 b (keep both founders' names in the README), P3 b (keep the commit
+  email). HoloML (prompt 58): H1 a (HTML-like tags), H2 a (glTF 2.0
+  models).
 
 ## GitHub issues #8 to #15 (2026-09-26, prompt 39)
 
