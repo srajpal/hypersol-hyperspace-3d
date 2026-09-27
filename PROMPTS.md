@@ -1031,3 +1031,16 @@ pull request #13 was still open on GitHub.
 ```text
 PR 13 merged.
 ```
+
+## 91 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Acceptance of milestone 17 (Blockworld, the first part of HoloML 0.2,
+the HoloML examples section, and the fixes after the report), with the
+instruction to push; then a question about walking speed in HoloML
+scenes.
+
+```text
+Milestone 17 accepted, push.
+Movement was a little slow. Is that something that can be tweaked in
+the tags?
+```

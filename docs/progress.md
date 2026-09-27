@@ -192,8 +192,8 @@ published from the holoml repository, and the start panel links to it.
 
 ![A car's own page: walk around it, and choose another colour](screenshots/m16/48-showroom-car.png)
 
-**Milestone 17: Blockworld and the HoloML examples** (built 2026-09-27,
-waiting for acceptance). Blockworld, a small block game written in the
+**Milestone 17: Blockworld and the HoloML examples** (accepted
+2026-09-27). Blockworld, a small block game written in the
 first part of HoloML 0.2: a script, sound, text on the screen, walls and
 gravity, and a day that turns to night. The browser gains a HoloML
 examples section with a picture of each example.

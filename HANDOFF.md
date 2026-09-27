@@ -1,10 +1,10 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-09-27 (milestones 1 to 16 accepted; milestone 17,
+Last updated 2026-09-27 (milestones 1 to 17 accepted; milestone 17,
 Blockworld, the first part of HoloML 0.2, and the HoloML examples
-section, is built, checked (T1 to T10 pass), and waiting for the
-owner's acceptance; plan and results in TODO.md).
+section, accepted 2026-09-27, prompt 91; the next step is milestone
+18's plan, the sofa studio; the roadmap is in TODO.md).
 
 ## Where things stand
 
@@ -33,8 +33,8 @@ state; this is a summary.
   https://srajpal.github.io/holoml/showroom/; the browser's copy is
   synced from holoml's main); 17 to 21 five more HoloML example sites,
   one milestone each, growing HoloML 0.2 (prompts 84 and 85: 17
-  Blockworld with the browser's examples section, built and waiting for
-  acceptance: HoloML 0.2's first part and Blockworld are merged in
+  Blockworld with the browser's examples section, accepted 2026-09-27,
+  prompt 91: HoloML 0.2's first part and Blockworld are merged in
   holoml (pull request #13, prompt 90) and published at
   https://srajpal.github.io/holoml/blockworld/, and the browser's copy
   (packages/holoml and tests/fixtures/holoml) is synced from holoml's
