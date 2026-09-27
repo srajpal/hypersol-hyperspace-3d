@@ -923,3 +923,16 @@ page.
 ```text
 Merged holoml #12, but it is blank when I load it in HyperSpace 3D.
 ```
+
+## 83 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Acceptance of milestone 16 (the HoloML car showroom, published with
+GitHub Pages and linked from the start panel; checks S1 to S9, with the
+development-run fix), the owner having checked it on their own computer,
+and approval to push.
+
+```text
+Milestone 16 accepted, push. Verified it worked on my PC.
+
+What is the next step?
+```
