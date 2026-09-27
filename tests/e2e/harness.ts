@@ -417,12 +417,17 @@ export async function waitForPage(h: Harness, page: PageRef): Promise<void> {
 }
 
 /**
- * Starts watching for stalls: long tasks in the shell's page, and gaps
- * over 60 ms in the main process's event loop. The returned function
- * stops and describes them, for the message of a responsiveness check
- * that fails (a slow answer on GitHub's machines says where the time went).
+ * Starts watching for stalls: long tasks in the shell's page, gaps over
+ * 60 ms in the main process's event loop, and a CPU profile of the shell.
+ * The returned function stops and describes them, for the message of a
+ * responsiveness check that fails (a slow answer on GitHub's machines
+ * says where the time went, and in which of the shell's code).
  */
 export async function watchStalls(h: Harness): Promise<() => Promise<string>> {
+  const cdp = await h.shell.context().newCDPSession(h.shell);
+  await cdp.send('Profiler.enable');
+  await cdp.send('Profiler.setSamplingInterval', { interval: 1000 });
+  await cdp.send('Profiler.start');
   await h.shell.evaluate(() => {
     const w = window as unknown as { __stalls?: { at: number; ms: number }[]; __stallWatch?: PerformanceObserver };
     w.__stallWatch?.disconnect();
@@ -455,7 +460,29 @@ export async function watchStalls(h: Harness): Promise<() => Promise<string>> {
       return g.__gaps ?? [];
     });
     const list = (xs: { at: number; ms: number }[]) => (xs.length ? xs.map((x) => `${x.ms} ms at ${x.at}`).join(', ') : 'none');
-    return `long tasks in the shell: ${list(shell)}; main process gaps over 60 ms: ${list(main)}`;
+    // The shell's busiest code while watched: self time by function, idle left out.
+    let busiest = 'no profile';
+    try {
+      const { profile } = await cdp.send('Profiler.stop');
+      const self = new Map<number, number>();
+      profile.samples?.forEach((id, i) => self.set(id, (self.get(id) ?? 0) + (profile.timeDeltas?.[i] ?? 0)));
+      const byName = new Map<string, number>();
+      for (const n of profile.nodes) {
+        const name = n.callFrame.functionName || '(anonymous)';
+        if (name === '(idle)') continue;
+        const key = `${name} ${n.callFrame.url.split('/').pop() ?? ''}:${n.callFrame.lineNumber}`;
+        byName.set(key, (byName.get(key) ?? 0) + (self.get(n.id) ?? 0) / 1000);
+      }
+      busiest = [...byName.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([k, ms]) => `${Math.round(ms)} ms ${k}`)
+        .join(', ');
+      await cdp.detach();
+    } catch (e) {
+      busiest = `no profile (${String(e)})`;
+    }
+    return `long tasks in the shell: ${list(shell)}; main process gaps over 60 ms: ${list(main)}; the shell's busiest code: ${busiest}`;
   };
 }
 

@@ -52,6 +52,8 @@ afterAll(async () => {
 });
 
 type Vec = [number, number, number];
+/** Blockworld's longer checks: drawn in software (GitHub's machines) they take minutes, not seconds. Not a requirement. */
+const BLOCKWORLD_TIME = 240_000;
 const url = (page: string) => server.url(`holoml/${page}`);
 
 function holo<T>(h: Harness, expression: string, page: string): Promise<T> {
@@ -342,7 +344,7 @@ describe('T5 to T7: Blockworld', () => {
     await waitFor('placed with Q', () => kind(onFace(a)), (k) => k === 'planks');
     await pressInPage(h, '1', [], PAGE);
     await waitFor('grass chosen', () => hud('hand'), (t) => t.startsWith('Placing: Grass'));
-  });
+  }, BLOCKWORLD_TIME);
 
   it('T6 five gems, found in the stone and brought to the chest, win the game', async () => {
     const gems = await bw<Vec[]>('gems');
@@ -369,7 +371,7 @@ describe('T5 to T7: Blockworld', () => {
     await waitFor('won', () => bw<boolean>('won'), (v) => v === true);
     expect(await hud('score')).toMatch(/In the chest: 5 of 5/);
     expect(await hud('message')).toMatch(/You won/);
-  });
+  }, BLOCKWORLD_TIME);
 
   it('T4 the chest is solid: the walker stands on it', async () => {
     const chest = await bw<Vec>('chest');
@@ -432,7 +434,7 @@ describe('T5 to T7: Blockworld', () => {
     await inPage(h, `holoml.find("torch-1").intensity = ${intensity}, true`, 'hour=22');
     const brighter = lit.filter((v, i) => v >= dark[i]! * 1.3).length;
     expect(brighter, `cells at least 30% brighter with the torch's light: ${brighter} of ${lit.length}`).toBeGreaterThanOrEqual(lit.length / 4);
-  });
+  }, BLOCKWORLD_TIME);
 
   it('T7 the screen text is in the text view and the accessibility tree', async () => {
     const NIGHT = 'hour=22';
@@ -477,7 +479,7 @@ describe('T5 to T7: Blockworld', () => {
         for (const w of webContents.getAllWebContents()) if (w.getType() === 'webview' && w.debugger.isAttached()) w.debugger.detach();
       });
     }
-  });
+  }, BLOCKWORLD_TIME);
 
   it('T7 the keyboard alone: the arrows turn, Page Down looks down, and E breaks the block under the crosshair', async () => {
     // Walking (W), jumping (Space), placing (Q), and choosing (1 to 5) by key are in T4 and T6.
@@ -504,7 +506,7 @@ describe('T5 to T7: Blockworld', () => {
     // E breaks it.
     await pressInPage(h, 'e', [], KEYS);
     await waitFor('broken with E', () => bw<string | null>(`blockAt(${x}, ${y}, ${z})`, KEYS), (k) => k === null || k === 'water');
-  });
+  }, BLOCKWORLD_TIME);
 });
 
 describe('T8: the HoloML examples section', () => {
