@@ -26,18 +26,20 @@ Plan approved 2026-09-24.
 | 12 | Developer preview 0.9.0 | Source release for developers: privacy and proofreading pass, legal and project files, automatic builds and tests on Windows and Linux (GitHub issue #5), Electron check, trademark and `.holo` checks, version 0.9.0 | Done (accepted, prompt 61; released as v0.9.0) |
 | 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Done (accepted, prompt 64) |
 | 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Built; waiting for acceptance (prompt 65) |
-| 15 | Car showroom demo | Demo site with walk-around 3D cars | Later |
-| 16 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
-| 17 | macOS release | Signing, notarization, Mac checks | Later |
-| 18 | Free camera and room navigation | Move freely around the room | Later |
-| 19 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
-| 20 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
+| 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Later (prompt 67, Q1 a) |
+| 16 | Car showroom demo | Demo site with walk-around 3D cars | Later |
+| 17 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a) |
+| 18 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
+| 19 | macOS release | Signing, notarization, Mac checks | Later |
+| 20 | Free camera and room navigation | Move freely around the room | Later |
+| 21 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
+| 22 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS and Android | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
 the owner chose to release it as source for developers first (milestone
 12, a 0.9.0 developer preview), follow the HoloML path (13 to 15), and
-ship installers as 1.0 afterwards (16 for Windows and Linux, 17 for
+ship installers as 1.0 afterwards (then 16 for Windows and Linux, 17 for
 macOS; mobile later). Entries below that say "milestone 11" or "12" for
 the installer release now mean 16. The
 instrument panel was added as milestone 7 on 2026-09-26 (prompt 35); on
@@ -47,6 +49,13 @@ release as milestone 8, with a Passwords milestone 9 (prompt 37); then
 the tab requests and economy mode became milestone 10, and the first
 release is now milestone 11. Earlier entries below that say "milestone
 7", "8", or "10" for the release now mean 11.
+
+On 2026-09-27 (prompt 67) two milestones were added: HoloML hardening
+as 15 (issues #23, #25, #28) and privacy and data tools as 17 (#24,
+#26, #27). The car showroom moved from 15 to 16, the Windows and Linux
+release from 16 to 18, macOS from 17 to 19, and the later milestones
+from 18, 19, and 20 to 20, 21, and 22. Dated entries below keep the
+numbers they were written with.
 
 ### Where design work belongs
 
@@ -61,7 +70,7 @@ release is now milestone 11. Earlier entries below that say "milestone
   pass get their own milestone (6), because exact colours are still an
   open question and reviewing every real screen together keeps them
   consistent.
-- Later polish goes after the first release (20), so it cannot delay a
+- Later polish goes after the first release (22), so it cannot delay a
   working browser.
 
 ## Milestone 1 — Live page in the 3D room

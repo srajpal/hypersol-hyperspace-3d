@@ -24,9 +24,13 @@ state; this is a summary.
 - Milestone 12, accepted and released as v0.9.0 (a GitHub release,
   marked pre-release): the browser as source for developers, with a privacy and proofreading pass, legal and
   project files, and automatic builds and tests on Windows and Linux.
-- Then HoloML (milestones 13 to 15: the language, HoloML pages in the
-  browser, a car showroom demo), then installers as 1.0 (16 for Windows
-  and Linux, 17 for macOS), with mobile later.
+- Then HoloML: 13 the language and 14 HoloML pages in the browser (both
+  built), 15 HoloML hardening (resource limits, accessible scene
+  navigation, an inspector: GitHub issues #23, #25, #28), 16 a car
+  showroom demo; 17 privacy and data tools (HTTPS-only, per-site
+  storage, bookmark import and export: #24, #26, #27); then installers
+  as 1.0 (18 for Windows and Linux, 19 for macOS), with mobile later
+  (owner, prompt 67).
 - The logo direction is chosen (concept 4d in
   docs/branding/logo-concepts/); the real icons come with the installers.
 - HyperSol, the company founded in 2001, no longer exists. This is a
@@ -88,12 +92,12 @@ to this repository for rules and the prompt log.
 
 ## Open items (need an owner decision when their milestone comes)
 
-- With the installers (milestone 16): Windows signing (Microsoft's
+- With the installers (milestone 18): Windows signing (Microsoft's
   Artifact Signing recommended, or SignPath Foundation), updates
   (automatic from GitHub Releases recommended), Linux formats (AppImage
   and .deb recommended), the Windows installer type (per user
   recommended).
-- With the macOS release (milestone 17): the Apple Developer Program for
+- With the macOS release (milestone 19): the Apple Developer Program for
   signing and notarization.
 - Product gaps noted in the 2026-09-24 review and not yet scheduled:
   bookmark import and onboarding, a touch equivalent for closing tabs.
@@ -120,5 +124,5 @@ to this repository for rules and the prompt log.
 
 - HoloML's packages are not published to npm; the browser keeps a copy
   (packages/holoml, pnpm holoml:sync).
-- No installers, signing, or updates (milestones 16 and 17).
+- No installers, signing, or updates (milestones 18 and 19).
 - No installers attached to releases: v0.9.0 is source only.

@@ -755,3 +755,32 @@ Sent while milestone 14 was being built.
 ```text
 Next, address the issues in both repositories and open PRs to have them verified.
 ```
+
+## 67 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answers to where the feature requests go (GitHub issues #23 to #28). Q1,
+HoloML hardening: #23 resource limits for heavy scenes, #25 keyboard and
+screen-reader navigation of scenes, #28 a source and scene inspector (a:
+a milestone of their own right after milestone 14, before the car
+showroom). Q2, browser features: #24 HTTPS-only mode, #26 per-site
+storage management, #27 bookmark import and export (a: one milestone
+before the 1.0 installers).
+
+```text
+Q1: a, Q2: a.
+Checking the PR.
+```
+
+## 68 — 2026-09-27 · Claude Opus 5.5, low effort
+
+```text
+In the meantime, the README for HyperSpace 3D says "Status: milestones 1 to 8 done." at the top, and that seems out of sync with the progress. Check the README for any other issues as well and update it. Always include the newest version or milestone screenshot in the README, but make it a nice screenshot (pick a nice site to put in there until the HoloML sites are ready).
+```
+
+## 69 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Sent while the README was being updated.
+
+```text
+Check the comments on the PRs for both repos and address them.
+```
