@@ -59,6 +59,8 @@ export interface LaunchOptions {
   noKeychain?: boolean;
   /** How long a "minute" is for sleeping tabs (test mode switch, milestone 10). */
   sleepMinuteMs?: number;
+  /** Start Chromium with WebGL switched off, as on a computer that cannot draw the room (milestone 12). */
+  noWebGL?: boolean;
 }
 
 /**
@@ -109,7 +111,8 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
   // only a software GL, which Chromium blocks for WebGL 2, so the room
   // cannot start. This lets Chromium draw WebGL with its own software
   // renderer instead; with a graphics card it changes nothing (milestone 12).
-  if (process.platform === 'linux') args.push('--enable-unsafe-swiftshader');
+  if (opts.noWebGL) args.push('--test-no-webgl');
+  else if (process.platform === 'linux') args.push('--enable-unsafe-swiftshader');
   // Without a desktop session, Chromium would pick its fixed-key password
   // store, which the app counts as no keychain; the password checks need
   // the real one, so ask for the secret service (GNOME Keyring) by name.
@@ -210,6 +213,7 @@ export interface ShellHooks {
   openPanel(): 'library' | 'settings' | 'downloads' | null;
   ignorePrepareClose(): void;
   frames(): number;
+  drawsRoom(): boolean;
   layout(): { panelWidth: number; panelHeight: number; cameraZ: number; viewportWidth: number; viewportHeight: number };
   cameraOffset(): Point;
   parallaxPaused(): boolean;
@@ -482,6 +486,23 @@ export async function setContentSize(h: Harness, width: number, height: number):
   );
   // As after a load: wait until the resized page is on screen.
   await onScreen(h, page);
+  // On screen is not yet reachable: on GitHub's Linux machines the first
+  // click after a resize was lost while one a second later landed
+  // (milestone 12). Wait until the pointer, moved over the page's middle,
+  // reaches the page. Over the page the camera holds still.
+  await inPage(h, `window.__hsInputProbe = 0; window.__hsProbeFn = () => { window.__hsInputProbe += 1; }; addEventListener('pointermove', window.__hsProbeFn, true)`, page);
+  const middle = await project(h, layout.panelWidth / 2, layout.panelHeight / 2);
+  let nudge = 0;
+  await waitFor(
+    'the pointer to reach the resized page',
+    async () => {
+      nudge = nudge === 0 ? 1 : 0;
+      await h.shell.mouse.move(middle.x + nudge, middle.y);
+      return inPage<number>(h, 'window.__hsInputProbe', page);
+    },
+    (n) => n > 0,
+  );
+  await inPage(h, `removeEventListener('pointermove', window.__hsProbeFn, true)`, page);
 }
 
 /**
