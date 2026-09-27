@@ -141,7 +141,7 @@ In use now: Electron 44 (the current supported stable line), TypeScript,
 Three.js, Lit, SQLite through Node's built-in node:sqlite, and Ghostery's
 open-source ad-blocking engine with open filter lists; Vite and
 electron-vite to build; Vitest and Playwright to test.
-Planned, not yet installed: electron-builder for installers (milestone 16).
+Planned, not yet installed: electron-builder for installers (milestone 18).
 Reasons for each choice are in ARCHITECTURE.md.
 
 Known limitations: Electron ships no DRM module, so video from Netflix

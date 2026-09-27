@@ -220,7 +220,8 @@ milestone; the current milestone's checks are defined in TODO.md):
   walk, links, labels, lights, animation, mistakes, safety, browser
   features, files from the computer, efficiency, and without WebGL 2.
   The copy of HoloML's packages is checked by packages/holoml's test.
-- Later milestones add: the car showroom (15) and installers (16 and 17).
+- Later milestones add: HoloML hardening (15), the car showroom (16),
+  privacy and data tools (17), and installers (18 and 19).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that
