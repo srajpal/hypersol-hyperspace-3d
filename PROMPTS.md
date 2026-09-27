@@ -12,6 +12,10 @@ How this record is kept:
   included (there was none to remove beyond the founders' names, which
   the README tells as history). Short approvals such as "approved" are
   kept, because they show how each step was steered.
+- Where a prompt only answers the agent's questions ("Q1: a") or
+  approves a draft, a note above it says what was asked or approved,
+  taken from the session records and the decisions in TODO.md (owner,
+  prompt 61). The notes are not part of the prompt.
 - Each entry gives the date, the AI model, and the effort level the tool
   was set to. Images and pasted output are summarised in a line.
 - From 2026-09-24 to 2026-09-26 two agent sessions sometimes ran side by
@@ -55,6 +59,11 @@ Show me the draft. After I approve it, save BRIEF.md. Do not write app code or s
 
 ## 3 — 2026-09-24 · Claude Fable 5.1, high effort
 
+Approval of the brief (BRIEF.md). This also approved the two choices the
+agent recommended in it: the Apache 2.0 license for both repositories,
+and the name HoloML for the language, because the name 3DML was already
+taken.
+
 ```text
 Approved.
 ```
@@ -72,6 +81,15 @@ Explain unfamiliar terms. Mark run and test steps "not checked yet" unless they 
 ```
 
 ## 5 — 2026-09-24 · Claude Fable 5.1, high effort
+
+Answers to the questions on the ARCHITECTURE.md draft. 1, the layout
+(approved: the page in the centre, tab cards in an arc on the left, a
+sharp 2D top bar, and panels that slide in from the right). 3, the
+camera (agree: a fixed desk view with a slight mouse parallax; free
+movement comes later). 4, filter-list updates (agree: fetch updated
+block lists, on by default, with a switch in Settings). 5, the default
+search engine (agree: DuckDuckGo). Question 2, the default theme
+(Nebula, a dark theme), got no answer here.
 
 ```text
 Layout: approved.
@@ -95,6 +113,9 @@ Add a testing section: where tests are kept, how to run them, and which earlier 
 ```
 
 ## 7 — 2026-09-24 · Claude Fable 5.1, high effort
+
+Approval of the drafted project rules: AGENTS.md, a CLAUDE.md that
+points to it, and the format of this prompt log.
 
 ```text
 Approve.
@@ -144,6 +165,12 @@ When a new session is started and CLAUDE.md is read, make the session a remote c
 
 ## 12 — 2026-09-24 · Claude Opus 5.5, high effort
 
+Answers to the milestone 1 plan's questions. Q1, the fallback if clicks
+or typing fail on the tilted page (a: show the page flat and sharp, with
+the 3D room around it). Q2, the parallax, the view shifting with the
+mouse (a: pause it while the pointer is over the page). Q3, the window
+frame (a: the standard system title bar for now).
+
 ```text
 Q1: a
 Q2: a
@@ -151,6 +178,9 @@ Q3: a
 ```
 
 ## 13 — 2026-09-24 · Claude Opus 5.5, high effort
+
+Approval of the milestone 1 plan (a live page in the 3D room), to be
+saved in TODO.md with the matching doc updates, and committed.
 
 ```text
 Approved to save and commit.
@@ -209,6 +239,14 @@ Push your changes, move on to the next milestone, and run the tests.
 
 ## 19 — 2026-09-25 · Claude Opus 5.5, high effort
 
+Answers to the milestone 2 plan's questions. Q1, links that ask for a
+new window (a: open as a new tab in front; Ctrl-click or middle-click
+opens it behind). Q2, more tabs than fit in the arc (a: the arc scrolls,
+and cards stay full size). Q3, a right-click menu and a card for
+certificate errors (a: add both). The other assumptions: the focused tab
+card always shows its close button, the menu holds New tab, Close tab,
+and About, and cards open and close in 250 ms.
+
 ```text
 Q1: a
 Q2: a
@@ -226,11 +264,21 @@ The look and feel are good; approved. Pin the + card. Keep some screenshots from
 
 ## 21 — 2026-09-25 · Claude Opus 5.5, high effort
 
+Answers to the milestone 3 plan's questions. Q1, how to bookmark a page
+(a: a star in the address bar and Ctrl+D, one flat list). Q2, how long
+history is kept (a: until you clear it). Q3, what goes in Settings (a:
+the search engine, what opens at startup, and clearing browsing data).
+"Add the rule" approves the proposed AGENTS.md rule: save screenshots at
+the end of each milestone.
+
 ```text
 Q1: a, Q2: a, Q3: a. Add the rule.
 ```
 
 ## 22 — 2026-09-25 · Claude Opus 5.5, high effort
+
+Approval of the final milestone 3 plan (bookmarks, history, and the
+Library and Settings panels), to be saved in TODO.md and built.
 
 ```text
 Approved; build. Commit and push at the end.
@@ -276,6 +324,14 @@ Merged the PR; continue with milestone 4.
 
 ## 29 — 2026-09-26 · Claude Opus 5.5, low effort
 
+Answers to the milestone 4 plan's questions (ad and tracker blocking).
+Q1, which filter lists (a: ads and trackers, from EasyList, EasyPrivacy,
+uBlock Origin's lists, and Peter Lowe's list). Q2, protection before any
+list is downloaded (a: ship a starter copy of the lists, refreshed
+before each release). Q3, what to do when a site breaks (a: a "Pause on
+this site" switch in the shield popover). E11 is milestone 3's look-and-
+feel check. "Build" also approved installing the ad-blocking package.
+
 ```text
 Q1: a
 Q2: a
@@ -295,6 +351,12 @@ Do some tests, and then continue to the next milestone.
 ```
 
 ## 31 — 2026-09-26 · Claude Opus 5.5, low effort
+
+Answers to the milestone 5 plan's questions (depth layering). Q1, what
+depth looks like (b: a layers view on demand that breaks the page apart;
+the other options were subtle depth always on, or both). Q2, when it is
+on (the owner's own answer, as written). Q3, image positions (a: record
+them for a later milestone, with no visible feature yet).
 
 ```text
 Q1: b, to start.
@@ -331,6 +393,15 @@ Don't change the aesthetics to match the image I sent; create controls that matc
 
 ## 35 — 2026-09-26 · Claude Opus 5.5, low effort
 
+Answers to the questions on the new instrument panel, a panel of live
+readouts like a light DevTools. Q1, where it goes in the roadmap (a: a
+new milestone 7, before the first release). Q2, what it shows (the
+options were page readouts, a console and network list, and browser
+gauges). Q3, where it sits (the options were a dock at the bottom, a
+dock on the right, or floating panels in the 3D room). The other
+assumptions: off by default; turned on from Settings, a top-bar button,
+or Ctrl+Shift+I; and a button that opens the full DevTools.
+
 ```text
 Q1: a
 Q2: all, with settings to manage them all
@@ -351,6 +422,12 @@ Continue to the next milestone.
 
 ## 37 — 2026-09-26 · Claude Opus 5.5, low effort
 
+Answers to the questions on the next milestones. Q1, their order (a:
+everyday browser features next, including zoom, then passwords, then the
+first release). Q2, downloads (a: save straight to the Downloads folder,
+with a downloads panel). Q3, private browsing (a: private tabs in the
+same window, clearly marked).
+
 ```text
 Q1: a
 Q2: a
@@ -359,6 +436,12 @@ Push first, and then start the next milestone. Always push before and after a mi
 ```
 
 ## 38 — 2026-09-26 · Claude Opus 5.5, low effort
+
+Answers to the milestone 9 questions on passwords. Q1, how passwords are
+protected (a: encrypted with the system's own keychain, with no master
+password). Q2, where they are managed (a: a Passwords tab in the
+Library). Q3, importing from another browser (a: not now). The rest is
+feedback on milestone 8.
 
 ```text
 Q1: a
@@ -430,6 +513,14 @@ Keep HoloML, and update its README. Plan the next milestone. But I could not see
 
 ## 45 — 2026-09-26 · Claude Opus 5.5, low effort
 
+Answers to the milestone 9 plan's questions. Q1, how passwords are
+filled (b: only when you click the sign-in field and pick the account,
+never automatically as the page loads). Q2, the buttons on the
+permission prompt for camera, microphone, and location (a: Allow, Allow
+this time, and Block). Q3, passwords on plain http sites (a: save and
+fill them, with a "not secure" warning). The logo notes refer to three
+logo sketches the agent drew from the early concept screen in prompt 42.
+
 ```text
 Q1: b
 Q2: a
@@ -485,6 +576,14 @@ Commit and push the current work if it is not pushed, and show me a plan for the
 
 ## 51 — 2026-09-26 · Claude Opus 5.5, low effort
 
+Answers to the milestone 11 plan's questions, which came from the
+feedback in prompt 50. Q1, address bar completion (a: fill in the rest
+of a visited site as you type, with a list of matches under the bar,
+like Chrome). Q2, the Settings layout (a: sections listed on the left,
+one page each, with search across all of them). Q3, the view settings
+(a: how far and which way the page leans, how much the room moves, and
+the space around the page, plus a "Flat and still" preset).
+
 ```text
 Q1: a
 Q2: a
@@ -492,6 +591,9 @@ Q3: a
 ```
 
 ## 52 — 2026-09-26 · Claude Opus 5.5, low effort
+
+Approval to build milestone 11, the owner's feedback from prompt 50 with
+the answers in prompt 51.
 
 ```text
 Build.
@@ -523,6 +625,15 @@ What if we don't do builds and leave it to developers while we follow the HoloML
 
 ## 56 — 2026-09-26 · Claude Opus 5.5, low effort
 
+Answers to the milestone 12 questions, after the owner chose a source-
+only release for developers (prompt 55). A, the roadmap (a: a small
+developer preview as milestone 12, then HoloML). B, the version tag (a:
+0.9.0, "developer preview"). C, automatic builds and tests on GitHub (a:
+GitHub Actions on Windows and Linux). E, a trademark and `.holo` check
+(a: now, with the results recorded). F, security reports (a: GitHub's
+private vulnerability reporting). D, the legal identity, is discussed in
+the rest of the prompt.
+
 ```text
 A: a, B: a, C: a, E: a, F: a.
 
@@ -530,6 +641,15 @@ But let's discuss legal identity. HyperSol, the company, no longer exists. This 
 ```
 
 ## 57 — 2026-09-26 · Claude Opus 5.5, low effort
+
+Answers to the legal questions. D1, the copyright line (a: "The
+HyperSpace 3D Authors", with an AUTHORS file). D2, the HyperSol name (a:
+keep "HyperSol HyperSpace 3D", with a README line that the company no
+longer exists and this is a personal project honouring it). D3, how
+outside contributions are licensed (a: Apache 2.0's own terms, with no
+extra paperwork). D4, the HoloML repository (a: the same, "The HoloML
+Authors"). "Delete the folder" refers to an empty folder a graphics
+driver had left in the project.
 
 ```text
 D1: a, D2: a, D3: a, D4: a. Delete the folder.
@@ -541,6 +661,13 @@ Then let's kick off whatever we need to finish HyperSpace 3D and to start on Hol
 
 ## 58 — 2026-09-26 · Claude Opus 5.5, low effort
 
+Answers to the privacy and HoloML questions. P1, old text already public
+in the git history (a: clean the current files only, and leave the
+history). P2, names in the README story (b: keep both founders' names).
+P3, the commit email from now on (b: keep the current address, not
+GitHub's private one). H1, HoloML's syntax (a: HTML-like tags). H2, 3D
+model files (a: glTF 2.0).
+
 ```text
 P1: a, P2: b, P3: b, H1: a, H2: a.
 Push and build.
@@ -548,7 +675,11 @@ Push and build.
 
 ## 59 — 2026-09-26 · Claude Opus 5.5, low effort
 
-Answer to the question on check C9 (the frame rate on GitHub's test machines, which have no graphics card).
+Answer to the question on check C9, the frame-rate test, on GitHub's
+test machines, which have no graphics card. The owner chose a: skip only
+the frame-rate part where Chromium draws in software, and say so in the
+log; local runs keep the full check. The other options were to keep it
+strict and let the Windows run fail, or to lower the bar there.
 
 ```text
 A
@@ -556,8 +687,16 @@ A
 
 ## 60 — 2026-09-26 · Claude Opus 5.5, low effort
 
-Answer to the question on computers where Chromium cannot draw WebGL 2 (the app showed an empty window).
+Answer to the question on computers where Chromium cannot draw WebGL 2
+(the app showed an empty window).
 
 ```text
 Add the message: a clear "can't draw the 3D room".
+```
+
+## 61 — 2026-09-26 · Claude Opus 5.5, low effort
+
+```text
+I accept milestone 12. Tag and release 0.9.0.
+The only issue with PROMPTS.md is that some prompts are just the answers to questions I was asked, like "Q1-a" or just "A". That is not helpful for instructive purposes, so where still available, annotate them with the question that was asked, and if not available, remove the ones where the information does not provide anything useful.
 ```

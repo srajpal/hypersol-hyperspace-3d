@@ -1,8 +1,9 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-09-26 (milestone 12, the 0.9.0 developer preview, in
-progress).
+Last updated 2026-09-26 (milestone 12, the 0.9.0 developer preview,
+accepted and released; milestone 13, HoloML, is next and not yet
+planned).
 
 ## Where things stand
 
@@ -19,8 +20,8 @@ state; this is a summary.
   passwords, site permissions, tab tools, economy mode, sleeping tabs,
   history in a worker thread, address bar completion, view settings,
   reorganized Settings, and remappable shortcuts.
-- Milestone 12 is a 0.9.0 developer preview: the browser released as
-  source for developers, with a privacy and proofreading pass, legal and
+- Milestone 12, accepted and released as v0.9.0 (a GitHub release,
+  marked pre-release): the browser as source for developers, with a privacy and proofreading pass, legal and
   project files, and automatic builds and tests on Windows and Linux.
 - Then HoloML (milestones 13 to 15: the language, HoloML pages in the
   browser, a car showroom demo), then installers as 1.0 (16 for Windows
@@ -117,5 +118,4 @@ to this repository for rules and the prompt log.
 
 - No code in the holoml repository yet (milestone 13).
 - No installers, signing, or updates (milestones 16 and 17).
-- No git tags or GitHub releases yet; the 0.9.0 tag waits for the
-  owner's go.
+- No installers attached to releases: v0.9.0 is source only.

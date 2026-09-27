@@ -23,7 +23,7 @@ Plan approved 2026-09-24.
 | 9 | Passwords and site permissions | A password manager (offer to save on sign-in, fill on return, a Passwords tab in the Library, encrypted with the system's keychain) and a site permissions panel (camera, microphone, location: per-site prompts and choices to review and revoke); plus the milestone 8 feedback (download finished notice, private tab under "+", printing) | Done (accepted, prompt 50) |
 | 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Done (accepted, prompt 50) |
 | 11 | Owner feedback: address bar, view, settings, shortcuts | Two ways to show tabs; address bar completion; a wider page and view settings; menus that close; reorganized Settings with search; shortcut list and remapping; Library search reset | Done (accepted, prompt 54) |
-| 12 | Developer preview 0.9.0 | Source release for developers: privacy and proofreading pass, legal and project files, automatic builds and tests on Windows and Linux (GitHub issue #5), Electron check, trademark and `.holo` checks, version 0.9.0 | In progress (prompt 58) |
+| 12 | Developer preview 0.9.0 | Source release for developers: privacy and proofreading pass, legal and project files, automatic builds and tests on Windows and Linux (GitHub issue #5), Electron check, trademark and `.holo` checks, version 0.9.0 | Done (accepted, prompt 61; released as v0.9.0) |
 | 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Later (H1 a, H2 a, prompt 58) |
 | 14 | HoloML in the browser | `.holo` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
 | 15 | Car showroom demo | Demo site with walk-around 3D cars | Later |
@@ -1706,7 +1706,8 @@ Changed checks, because their requirement changed (documented here):
 
 ## Milestone 12 — Developer preview 0.9.0
 
-Status: In progress. Plan and build approved 2026-09-26 (prompt 58),
+Status: Done. Accepted 2026-09-26 (prompt 61), and released as the
+0.9.0 developer preview (tag v0.9.0). Plan and build approved (prompt 58),
 after the answers in prompts 54 to 58 (recorded below: A a, B a, C a,
 D1 to D4 a, E a, F a, P1 a, P2 b, P3 b). Pushed before the build started.
 
@@ -1751,7 +1752,7 @@ made cleaned for privacy and spelling.
 - [x] 7. Electron: the newest stable version, and the security check.
 - [x] 8. GitHub Actions: lint, types, unit tests, and end-to-end checks on
       Windows and Linux; Linux problems it finds fixed.
-- [ ] 9. Version 0.9.0; the README's developer section; the release notes.
+- [x] 9. Version 0.9.0; the README's developer section; the release notes.
       Tagging and publishing the release wait for the owner's go.
 
 ### Progress (2026-09-26)
@@ -1844,7 +1845,7 @@ made cleaned for privacy and spelling.
 | N3 | Pass. Every document in both repositories proofread (task 2) |
 | N4 | Pass. LICENSE, NOTICE, AUTHORS, THIRD-PARTY.md (browser), SECURITY.md, CONTRIBUTING.md in both repositories; private vulnerability reporting on in both |
 | N5 | Pass on Windows: a fresh clone of the pushed main, in a short folder path, installed with `pnpm install --frozen-lockfile`, built, passed lint, types, and the unit tests, and launched (checks C1). A clone under a very long folder path failed: pnpm could not write a file past Windows' 260-character path limit (now noted in CONTRIBUTING.md). Linux through GitHub Actions (N1) |
-| N6 | Pending one rerun. Full local run with N7: 166 of 170 passed; D8's copy and paste (3) and K2's copy failed because the Windows clipboard was failing for every program on the machine at the time (PowerShell's Set-Clipboard failed too). The same checks pass in GitHub Actions. To rerun locally when the clipboard works |
+| N6 | Pass. Full local run with N7: 166 of 170 passed; the other four (D8's copy and paste, K2's copy) failed while the Windows clipboard was failing for every program on the machine (PowerShell's Set-Clipboard too). Rerun once it worked again: D8 and K1 to K3, 10 of 10 passed |
 | N7 | Pass, locally and in GitHub Actions on Windows and Linux |
 
 ### Done when

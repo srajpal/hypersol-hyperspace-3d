@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.9.0 — developer preview (not yet released)
+## 0.9.0 — developer preview (2026-09-26)
 
 The first public version of HyperSol HyperSpace 3D, released as source
 for developers. There are no installers yet: build and run it from

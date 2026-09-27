@@ -149,8 +149,8 @@ search empties between tabs.
 
 ![Keyboard shortcuts, each changeable](screenshots/m11/38-settings-shortcuts.png)
 
-**Milestone 12: developer preview 0.9.0** (built 2026-09-26, waiting
-for the owner's acceptance). The browser is ready to share as source:
+**Milestone 12: developer preview 0.9.0** (accepted and released
+2026-09-26). The browser is ready to share as source:
 project and legal files, version 0.9.0, and automatic builds and tests
 on Windows and Linux. Where a computer cannot draw the 3D room, the
 browser now still works and says why.
