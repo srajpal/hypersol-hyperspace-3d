@@ -151,10 +151,12 @@ see .github/workflows/ci.yml; macOS not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
 - Toolchain: Node 22.13 or newer; pnpm 12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 252 tests passed on 2026-09-27)
+- Unit: `pnpm test` (Vitest; 261 tests passed on 2026-09-27)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about eight minutes; 222 checks in the full run on 2026-09-27, then 223 with the development-run check; its files M14 to M16 rerun, 47 passed). Needs openssl on PATH for
+  against it (about ten minutes; 238 checks in the full run on 2026-09-27
+  at the end of milestone 17, 234 passed and the 4 clipboard checks
+  waiting for a working clipboard, see TODO.md). Needs openssl on PATH for
   the certificate-error check (Git for Windows includes one). Every
   host except 127.0.0.1 is blocked during the run, and the test windows
   ignore the real mouse, so a resting cursor cannot disturb results. See
@@ -193,6 +195,9 @@ milestone; the current milestone's checks are defined in TODO.md):
   check runs with it on.
 - README screenshot: `pnpm screenshots:readme` (HoloML's showroom from
   the local copy, no network; first run 2026-09-27; not a test).
+- The HoloML examples' pictures: `pnpm screenshots:examples` (from the
+  local copies, no network; first run 2026-09-27). They are part of the
+  browser: run it when an example changes, before `pnpm screenshots`.
 - Filter lists: `pnpm filters:update` rebuilds the starter copy from the
   internet (run before a release; first run 2026-09-26).
 - Milestone 6 checks H1 to H7 (same command): theme switch, Settings >
@@ -237,10 +242,19 @@ milestone; the current milestone's checks are defined in TODO.md):
 - Milestone 16 checks S2 to S7 (same command, tests/e2e/m16.e2e.ts):
   HoloML's showroom, a copy from the holoml repository in
   tests/fixtures/holoml/showroom (`pnpm holoml:sync`; its test checks
-  the copy): the start panel link, loading within budget, walking,
+  the copy, and from milestone 17 every example's): the start panel link, loading within budget, walking,
   links and colours, the keyboard and text view, reduced motion,
-  efficiency, and credits. S1 is holoml's own unit test.
-- Later milestones add: the HoloML example sites (17 to 21), privacy
+  efficiency, and credits. S1 is holoml's own unit test. Also a HoloML
+  page in a development run (the viewer from the dev server).
+- Milestone 17 checks T2 to T8 (same command, tests/e2e/m17.e2e.ts):
+  HoloML 0.2 scripts (the scene API; inline, other-site, failing, and
+  never-ending scripts), sound (nothing before the first click or key,
+  the tab's mute, the limits), walls and gravity, and Blockworld (a copy
+  in tests/fixtures/holoml/blockworld): loading and drawing, breaking and
+  placing, the five gems, night and torches, the keyboard, the text view
+  and the accessibility tree, reduced motion; and the HoloML examples
+  section. T1 is holoml's own tests.
+- Later milestones add: the HoloML example sites (18 to 21), privacy
   and data tools (22), and installers (23 and 24).
 
 Rules for tests: a failing test is reported, not deleted. A test is

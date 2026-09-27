@@ -93,6 +93,9 @@ const WALK_SPEED = 2.2; // metres a second
 /** Shift held: walking goes this much faster (milestone 17). */
 const RUN = 2;
 const LOOK_SPEED = 0.005; // radians a pixel
+/** Turning, and looking up and down, from the keyboard (milestone 17): radians a second. */
+const KEY_TURN_SPEED = 1.6;
+const KEY_LOOK_SPEED = 1.2;
 
 /** Walls and gravity (HoloML 0.2): the walker, and the solid boxes around it. */
 export interface WalkPhysics {
@@ -101,9 +104,11 @@ export interface WalkPhysics {
 }
 
 /**
- * Walk: the eyes stay at the starting height. Arrow keys or W, A, S, D to
- * move, drag to look around; on a touch screen, drag one finger to look
- * and two to move forward and back. Shift walks faster.
+ * Walk: the eyes stay at the starting height. W, A, S, D, or the up and
+ * down arrows, to move; drag to look around; on a touch screen, drag one
+ * finger to look and two to move forward and back. Shift walks faster.
+ * From the keyboard alone (milestone 17), the left and right arrows turn,
+ * and Page Up and Page Down look up and down, so the crosshair can aim.
  *
  * With physics (HoloML 0.2), solid things stop the walker; with gravity
  * it falls and stands on them, and Space jumps if the page allows it.
@@ -163,12 +168,14 @@ export function walkControls(camera: PerspectiveCamera, element: HTMLElement, lo
     ArrowDown: 'b',
     s: 'b',
     S: 'b',
-    ArrowLeft: 'l',
     a: 'l',
     A: 'l',
-    ArrowRight: 'r',
     d: 'r',
     D: 'r',
+    ArrowLeft: 'turn-left',
+    ArrowRight: 'turn-right',
+    PageUp: 'look-up',
+    PageDown: 'look-down',
   };
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Shift') running = true;
@@ -226,6 +233,10 @@ export function walkControls(camera: PerspectiveCamera, element: HTMLElement, lo
     step(dt) {
       // With gravity, every frame checks the ground: a block under the feet may be gone.
       if (held.size === 0 && !airborne && !physics?.walker.gravity) return false;
+      const turn = (KEY_TURN_SPEED * dt) / 1000;
+      const look = (KEY_LOOK_SPEED * dt) / 1000;
+      yaw += (held.has('turn-left') ? turn : 0) - (held.has('turn-right') ? turn : 0);
+      pitch = Math.max(-1.4, Math.min(1.4, pitch + (held.has('look-up') ? look : 0) - (held.has('look-down') ? look : 0)));
       const d = (WALK_SPEED * (running ? RUN : 1) * dt) / 1000;
       move((held.has('f') ? d : 0) - (held.has('b') ? d : 0), (held.has('r') ? d : 0) - (held.has('l') ? d : 0), dt / 1000);
       return held.size > 0 || airborne;

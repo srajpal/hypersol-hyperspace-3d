@@ -379,32 +379,45 @@ it('captures the main screens', async () => {
     await waitForPage(game, BW);
     await inGame(BW);
     await landed(BW);
-    await inPage(game, 'holoml.viewer.lookAt([3, 6.2, -8]), true', BW);
-    await sleep(2500);
+    // The whole island from above one corner, standing on a pillar of stone
+    // blocks there (as a player could build), once the welcome has gone.
+    const pillar = Array.from({ length: 11 }, (_, y) => `<model src="models/stone.gltf" position="12.5 ${y + 0.5} 12.5" solid />`).join(' ');
+    await inPage(game, `holoml.add(${JSON.stringify(pillar)}), true`, BW);
+    await sleep(300);
+    await inPage(game, 'holoml.viewer.position = [12.5, 12.7, 12.5], true', BW);
+    await sleep(900);
+    await inPage(game, 'holoml.viewer.lookAt([0, 2, 0]), true', BW);
+    await waitFor('the welcome gone', () => inPage<boolean>(game, "holoml.find('message').text === ''", BW), (v) => v, 15_000);
+    await sleep(1500);
     await capture(game, '51-blockworld');
-    // At night, with torches placed on the ground ahead.
+    // At night, with three torches placed on the slope, seen from a lower
+    // pillar at the same corner.
     const NIGHT = `${BW}?hour=21.5`;
     await shellCall(game, 'showUrl', server.url(`holoml/${NIGHT}`));
     await waitForPage(game, 'hour=21.5');
     await inGame('hour=21.5');
     await landed('hour=21.5');
     await pressInPage(game, '5', [], 'hour=21.5');
-    for (const [x, z] of [[-2, -3], [3, -2], [0, -6]] as [number, number][]) {
-      // Stand near each place, and put a torch on the ground there.
+    for (const [x, z] of [[8, 7], [-3, 6], [4, -1]] as [number, number][]) {
+      // Stand uphill of the place, two blocks toward the middle, and put a
+      // torch on its top.
+      const [ux, uz] = [x - Math.sign(x) * 2, z - Math.sign(z) * 2];
+      const up = await inPage<number>(game, `window.blockworld.top(${ux}, ${uz})`, 'hour=21.5');
       const top = await inPage<number>(game, `window.blockworld.top(${x}, ${z})`, 'hour=21.5');
-      await inPage(game, `holoml.viewer.position = [${x + 0.5}, ${top + 1.7}, ${z + 3.5}], true`, 'hour=21.5');
-      await sleep(700);
-      await inPage(game, `holoml.viewer.lookAt([${x + 0.5}, ${top - 0.5}, ${z + 0.5}]), true`, 'hour=21.5');
+      await inPage(game, `holoml.viewer.position = [${ux + 0.5}, ${up + 1.7}, ${uz + 0.5}], true`, 'hour=21.5');
+      await sleep(600);
+      await inPage(game, `holoml.viewer.lookAt([${x + 0.5}, ${top - 0.05}, ${z + 0.5}]), true`, 'hour=21.5');
       await sleep(200);
       await pressInPage(game, 'q', [], 'hour=21.5');
       await sleep(200);
     }
-    // Then back, to see them from a distance.
-    const back = await inPage<number>(game, 'window.blockworld.top(0, 5)', 'hour=21.5');
-    await inPage(game, `holoml.viewer.position = [0.5, ${back + 1.7}, 5.5], true`, 'hour=21.5');
+    const low = Array.from({ length: 6 }, (_, y) => `<model src="models/stone.gltf" position="12.5 ${y + 0.5} 12.5" solid />`).join(' ');
+    await inPage(game, `holoml.add(${JSON.stringify(low)}), true`, 'hour=21.5');
+    await sleep(300);
+    await inPage(game, 'holoml.viewer.position = [12.5, 7.7, 12.5], true', 'hour=21.5');
     await sleep(900);
-    await inPage(game, 'holoml.viewer.lookAt([0.5, 4.5, -5]), true', 'hour=21.5');
-    await sleep(2000);
+    await inPage(game, 'holoml.viewer.lookAt([2, 3, 2]), true', 'hour=21.5');
+    await sleep(1500);
     await capture(game, '52-blockworld-night');
   } finally {
     await game.close();

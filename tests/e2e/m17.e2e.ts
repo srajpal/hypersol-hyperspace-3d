@@ -371,7 +371,43 @@ describe('T5 to T7: Blockworld', () => {
     await pressInPage(h, 'q', [], 'hour=22');
     const torches = await waitFor('a torch', () => bw<Vec[]>('torches', 'hour=22'), (t) => t.length === 1);
     expect(torches[0]![1]).toBeCloseTo(top + 0.8, 1);
-    expect(await inPage<number>(h, 'holoml.find("torch-1").intensity', 'hour=22')).toBeGreaterThan(1);
+    const intensity = await inPage<number>(h, 'holoml.find("torch-1").intensity', 'hour=22');
+    expect(intensity).toBeGreaterThan(0);
+    // It lights its surroundings: from a view that stands still, compare the page's own pixels
+    // with the torch's light and without it, in a grid of 10 by 6 cells less the top and bottom
+    // rows (the screen text). Faces toward the torch get brighter; faces away from it do not.
+    const cells = () =>
+      h.app.evaluate(async ({ webContents }) => {
+        const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes('hour=22')).pop()!;
+        const image = (await guest.capturePage()).resize({ width: 200, height: 120 });
+        const { width, height } = image.getSize();
+        const px = image.toBitmap(); // BGRA
+        const out: number[] = [];
+        for (let cy = 1; cy < 5; cy++) {
+          for (let cx = 0; cx < 10; cx++) {
+            let sum = 0;
+            let n = 0;
+            for (let y = Math.floor((cy * height) / 6); y < Math.floor(((cy + 1) * height) / 6); y++) {
+              for (let x = Math.floor((cx * width) / 10); x < Math.floor(((cx + 1) * width) / 10); x++) {
+                const i = (y * width + x) * 4;
+                sum += 0.114 * px[i]! + 0.587 * px[i + 1]! + 0.299 * px[i + 2]!;
+                n++;
+              }
+            }
+            out.push(sum / n);
+          }
+        }
+        return out;
+      });
+    await waitFor('standing', () => walker(h, 'hour=22'), (w) => w?.onGround === true, 5000);
+    await sleep(300);
+    const lit = await cells();
+    await inPage(h, 'holoml.find("torch-1").intensity = 0, true', 'hour=22');
+    await sleep(300);
+    const dark = await cells();
+    await inPage(h, `holoml.find("torch-1").intensity = ${intensity}, true`, 'hour=22');
+    const brighter = lit.filter((v, i) => v >= dark[i]! * 1.3).length;
+    expect(brighter, `cells at least 30% brighter with the torch's light: ${brighter} of ${lit.length}`).toBeGreaterThanOrEqual(lit.length / 4);
   });
 
   it('T7 the screen text is in the text view and the accessibility tree', async () => {
@@ -417,6 +453,33 @@ describe('T5 to T7: Blockworld', () => {
         for (const w of webContents.getAllWebContents()) if (w.getType() === 'webview' && w.debugger.isAttached()) w.debugger.detach();
       });
     }
+  });
+
+  it('T7 the keyboard alone: the arrows turn, Page Down looks down, and E breaks the block under the crosshair', async () => {
+    // Walking (W), jumping (Space), placing (Q), and choosing (1 to 5) by key are in T4 and T6.
+    const KEYS = '?keys';
+    await shellCall(h, 'showUrl', url(`${PAGE}${KEYS}`));
+    await waitForPage(h, KEYS);
+    await ready(h, KEYS, 30_000);
+    await waitFor('standing', () => walker(h, KEYS), (w) => w?.onGround === true, 15_000);
+    const view = () => inPage<{ position: Vec; direction: Vec }>(h, '({ position: holoml.viewer.position, direction: holoml.viewer.direction })', KEYS);
+    const yawOf = (d: Vec) => Math.atan2(-d[0], -d[2]);
+    const before = await view();
+    // The left arrow turns, without moving.
+    await hold(h, KEYS, 'Left', 600);
+    const turned = await view();
+    const change = Math.abs(yawOf(turned.direction) - yawOf(before.direction));
+    expect(Math.min(change, 2 * Math.PI - change)).toBeGreaterThan(0.4);
+    expect(Math.hypot(turned.position[0] - before.position[0], turned.position[2] - before.position[2])).toBeLessThan(0.05);
+    // Page Down looks down, at the ground in front.
+    await hold(h, KEYS, 'PageDown', 1500);
+    expect((await view()).direction[1]).toBeLessThan(-0.8);
+    const aimed = await waitFor('a block under the crosshair', () => inPage<Vec | null>(h, 'holoml.aim()?.thing?.position ?? null', KEYS), (p) => p !== null);
+    const [x, y, z] = aimed!.map(Math.floor) as Vec;
+    expect(await bw<string | null>(`blockAt(${x}, ${y}, ${z})`, KEYS)).not.toBeNull();
+    // E breaks it.
+    await pressInPage(h, 'e', [], KEYS);
+    await waitFor('broken with E', () => bw<string | null>(`blockAt(${x}, ${y}, ${z})`, KEYS), (k) => k === null || k === 'water');
   });
 });
 

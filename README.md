@@ -22,8 +22,11 @@ been written down in its own repository (milestone 13), and this browser
 shows HoloML pages (milestones 14 to 16, accepted; not yet in a
 release), with limits for heavy scenes, keyboard and screen-reader
 access, a scene inspector, and a HoloML car showroom to try from the
-start panel. Next: privacy and data tools, then
-installers as 1.0. See [Progress](#progress),
+start panel. Milestone 17, built and waiting for acceptance, adds
+Blockworld, a small block game written in the first part of HoloML 0.2
+(scripts, sound, walls and gravity), and a HoloML examples section. Next:
+four more example sites, then privacy and data tools, then installers as
+1.0. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
 ## The story
@@ -108,6 +111,11 @@ An archived copy of the 2001 site is available through the
   reduced motion, and a Scene part in the instrument panel (milestone 15).
 - A HoloML showroom to try, linked from the start panel: five cars in a
   hall, each to walk around in three colours (milestone 16).
+- HoloML 0.2 pages (milestone 17): scripts from the page's own site,
+  sound after the first click or key, text on the screen, walls and
+  gravity for walking, and animated lights; Blockworld, a small block
+  game, shows them. A HoloML examples section (Ctrl+Shift+E) lists every
+  example with a picture, and links to the HoloML repository.
 - Mouse and keyboard throughout; touch for scenes.
 
 ## Built with the Buildwright approach
@@ -142,10 +150,9 @@ starts with a small prototype and the same habits of direction and checking.
 
 ## What comes next
 
-Milestones 17 to 21, five more HoloML example sites, each adding to
-the language: Blockworld (a small block game, with a HoloML examples
-section in the browser), a sofa studio, an apartment tour, a resort,
-and an aquarium. 22, privacy and data tools: HTTPS-only browsing,
+Milestones 18 to 21, four more HoloML example sites, each adding to
+the language: a sofa studio, an apartment tour, a resort, and an
+aquarium. 22, privacy and data tools: HTTPS-only browsing,
 per-site storage, and bookmark import and export. 23 and 24, installers
 as 1.0 for Windows and Linux, then macOS. Later: free camera
 movement, pictures and 3D models lifted out of ordinary pages, mobile,
@@ -166,7 +173,9 @@ own repository, and milestone 14 shows HoloML pages in the browser.
 Milestone 15 hardens them: limits for
 heavy scenes, keyboard and screen-reader access, a text view, and a
 scene inspector. Milestone 16 adds a HoloML car showroom, published with GitHub Pages and linked from the
-start panel.
+start panel. Milestone 17 (built, waiting for acceptance) adds
+Blockworld, a small block game in HoloML 0.2, and the HoloML examples
+section.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
@@ -176,16 +185,18 @@ HoloML is the 3D markup language developed alongside the browser, in its
 own repository so it stays independent and reusable:
 [github.com/srajpal/holoml](https://github.com/srajpal/holoml). Version
 0.1 is written down there (SPEC.md), with a parser, a checker, and
-sample pages; HoloML files use the extension `.holoml`. This browser
+sample pages, and version 0.2 is a draft that grows with the example
+sites; HoloML files use the extension `.holoml`. This browser
 shows HoloML pages (milestone 14): open a `.holoml` address, or a file
 with Ctrl+O, and walk or orbit around the scene. A page's size, models,
 pictures, and triangles have limits (milestone 15); what crosses one is
 left out and marked, and a notice says why.
 
-To try one, open a new tab and choose "HoloML showroom" under Try HoloML:
-five cars in a hall, published from the holoml repository at
-https://srajpal.github.io/holoml/showroom/ (milestone 16). The browser
-asks nothing of that site until you click the link.
+To try one, open a new tab and choose one under Try HoloML, or open the
+HoloML examples (the menu, or Ctrl+Shift+E): the showroom (milestone 16)
+and Blockworld (milestone 17), published from the holoml repository at
+https://srajpal.github.io/holoml/. The browser asks nothing of those
+sites until you choose one.
 
 ## Project documents
 
@@ -257,6 +268,10 @@ the top bar, or click a card on the left to switch tabs. The main keys
   window); a `.holoml` address shows as a 3D scene across the window.
   In a scene, Tab moves through its links and named things, Esc stops
   models still loading, and Ctrl+Shift+V switches the text view.
+  Walking in a scene: W, A, S, D or the up and down arrows move, the
+  left and right arrows turn, Page Up and Page Down look up and down,
+  Shift runs, and Space jumps where the page allows.
+  Ctrl+Shift+E shows the HoloML examples.
 
 What the browser stores and sends is listed in
 [docs/privacy.md](docs/privacy.md). Development runs use a throwaway

@@ -1,7 +1,7 @@
 {
   "repository": "https://github.com/srajpal/holoml",
   "tag": "holoml-0.2",
-  "commit": "6fd57e1b60f97bd64980d8bf764c7fb6a334c117",
+  "commit": "dfd0b546c5864c1516188619bc87e5278272214b",
   "files": {
     "src/parser.ts": "69afee372506a02251836835317252466a43a6066e5d90e56bf4cdc4438a0e01",
     "src/rules.ts": "c09dd8cd5340336409b97f080663e2c79f532ca6ad2879758fb92fdec59b9df1",
@@ -9,7 +9,7 @@
   },
   "examples": {
     "ref": "holoml-0.2",
-    "commit": "6fd57e1b60f97bd64980d8bf764c7fb6a334c117",
+    "commit": "dfd0b546c5864c1516188619bc87e5278272214b",
     "files": {
       "showroom/README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
       "showroom/about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",
@@ -39,10 +39,10 @@
       "showroom/veyl-night.holoml": "49e737bbb72d5591a150e54e8200aaeb174ea95386c747de59d83a66cfb844cb",
       "showroom/veyl-violet.holoml": "f7f0be88e16e9600de9cfc066b167b985b062592328446c7d126515967909203",
       "showroom/veyl.holoml": "8065ef5ebd9ebd07173ded3703d665e79ff6b119ff6742af6be048e27b38cd6a",
-      "blockworld/README.md": "05a464a7f4f403c99077eaa2a4a7d4f0c39c1bbbc37d9cc895f09d6a60a9cbd2",
+      "blockworld/README.md": "f4e4ba4a026ecbb9ac8394ff00f2cce33b88f0d9f24b3be1536af503d060b29f",
       "blockworld/game.js": "29bce3d5fe8c42dccab1cf31aa093bcde6f32f145e0efb1c53826339570e1e82",
-      "blockworld/index.holoml": "7af9562dba2cfc9e63c68915f30cd2a7cd42a7af5682847fe7c2a25ffb76c8f1",
-      "blockworld/index.html": "48628b442845a069387047b8a798d278e3cf7bc7a7d7328499f6bdab68697eb9",
+      "blockworld/index.holoml": "ece9706cf82702bfc288344ec4c7cbc340a03e1cfc57787dc8bc1dd4ba2511ed",
+      "blockworld/index.html": "f737dace3c5c606be2e3c8a7cb7c7725eff077c708e0f403df41538065388d59",
       "blockworld/models/CREDITS.md": "504c1912b1c2b21abfffbf7d1b2c1bb73ee85068aa8fbdab7ad48f0f13892748",
       "blockworld/models/chest.gltf": "6457136d9f2f79128bc579ea3fd8db43a163f8d9fe71e6b4789d3f4979ec2c35",
       "blockworld/models/dirt.gltf": "a2092605d353da26da865858fcbd066614ad64b02912350e9e7836ef1d60bafe",

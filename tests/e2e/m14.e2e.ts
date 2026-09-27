@@ -284,7 +284,8 @@ describe('P3 walk, P5 animation, P10 drawing only while moving', () => {
     const walked = await holo<View>(h, 'window.__holoml.view()', PAGE);
     expect(walked.position[2]).toBeLessThan(start.position[2] - 0.3); // forward is toward the car
     expect(walked.position[1]).toBeCloseTo(1.7, 5);
-    await holdKey(h, PAGE, 'Right', 400);
+    // D moves sideways (the right arrow did too until milestone 17; now it turns, see below).
+    await holdKey(h, PAGE, 'D', 400);
     const aside = await holo<View>(h, 'window.__holoml.view()', PAGE);
     expect(aside.position[0]).toBeGreaterThan(walked.position[0] + 0.2);
     const a = await project(h, 300, 300);
@@ -297,7 +298,16 @@ describe('P3 walk, P5 animation, P10 drawing only while moving', () => {
     expect(looked.position).toEqual(aside.position);
     expect(looked.target[0]).not.toBeCloseTo(aside.target[0], 2);
     await touchDrag(h, PAGE, { x: 300, y: 300 }, { x: 300, y: 380 });
-    await waitFor('touch look', () => holo<View>(h, 'window.__holoml.view()', PAGE), (v) => Math.abs(v.target[1] - looked.target[1]) > 0.01);
+    const touched = await waitFor('touch look', () => holo<View>(h, 'window.__holoml.view()', PAGE), (v) => Math.abs(v.target[1] - looked.target[1]) > 0.01);
+    // From the keyboard (milestone 17): the right arrow turns without moving, Page Up looks up.
+    await holdKey(h, PAGE, 'Right', 400);
+    const turned = await holo<View>(h, 'window.__holoml.view()', PAGE);
+    expect(turned.position).toEqual(touched.position);
+    expect(turned.target[0]).not.toBeCloseTo(touched.target[0], 1);
+    await holdKey(h, PAGE, 'PageUp', 400);
+    const up = await holo<View>(h, 'window.__holoml.view()', PAGE);
+    expect(up.position).toEqual(touched.position);
+    expect(up.target[1]).toBeGreaterThan(turned.target[1] + 0.1);
   });
 
   it('P5 animate turns and moves things; a model plays its own animation, or holds its first frame', async () => {

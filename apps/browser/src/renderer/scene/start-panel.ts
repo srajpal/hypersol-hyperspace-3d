@@ -57,8 +57,7 @@ export class StartPanel {
     this.recent = section('Recent', 'start-recent');
     const holoml = section('Try HoloML', 'start-holoml');
     const rows = EXAMPLES.map((ex) => {
-      const title = ex.id === 'showroom' ? 'HoloML showroom: five cars to walk around in 3D' : `${ex.name}: ${ex.line}`;
-      const row = this.link(exampleUrl(ex.id), title, 'hs-start-row');
+      const row = this.link(exampleUrl(ex.id), ex.row, 'hs-start-row');
       row.dataset['testid'] = ex.id === 'showroom' ? 'start-showroom' : `start-example-${ex.id}`;
       return row;
     });

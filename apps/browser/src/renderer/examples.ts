@@ -13,6 +13,8 @@ export interface Example {
   name: string;
   /** One line about it. */
   line: string;
+  /** Its row under the start panel's "Try HoloML". */
+  row: string;
   /** What it shows of HoloML. */
   features: string;
   picture: string;
@@ -34,13 +36,15 @@ export const EXAMPLES: readonly Example[] = [
     id: 'showroom',
     name: 'Showroom',
     line: 'Five cars in a round hall: walk around each, and see it in three colours.',
+    row: 'HoloML showroom: five cars to walk around in 3D',
     features: 'HoloML 0.1: models, materials, lights, labels, links, a turntable',
     picture: showroomPicture,
   },
   {
     id: 'blockworld',
     name: 'Blockworld',
-    line: 'A small block game: break and place blocks, and find five gems before night falls.',
+    line: 'A small block game: break and place blocks, find five gems in the stone, and see day turn to night.',
+    row: 'Blockworld: a small block game to play',
     features: 'HoloML 0.2: a script, sound, walls and gravity, day and night',
     picture: blockworldPicture,
   },

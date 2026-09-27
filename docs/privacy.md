@@ -156,18 +156,28 @@ the list updates can be turned off:
   page names (fetched through that page's own session, as a browser tab
   does; at most 256 KB, given up after 5 seconds, and cancelled when you
   leave the page).
-- HoloML pages (`.holoml` addresses) and the 3D models they name: only
-  from the page's own site (the page's content policy allows nothing
-  else), through the page's own session, so the shield and encrypted DNS
-  apply as for any page. The browser's HoloML viewer itself comes from
-  the app, not the network. Every model file counts against the page's
-  limits as it arrives (milestone 15); a model that crosses one is not
-  fetched further. The instrument panel's Scene part reads the scene
-  from the page in memory only, and keeps nothing.
-- The start panel's "HoloML showroom" link (milestone 16) opens
-  `https://srajpal.github.io/holoml/showroom/index.holoml`, HoloML's
-  showroom published with GitHub Pages, only when you click it; it is
-  then an ordinary HoloML page. The start panel itself fetches nothing.
+- HoloML pages (`.holoml` addresses) and the 3D models, sounds, and
+  scripts they name: only from the page's own site (the page's content
+  policy allows nothing else), through the page's own session, so the
+  shield and encrypted DNS apply as for any page. The browser's HoloML
+  viewer itself comes from the app, not the network. Every model and
+  sound file counts against the page's limits as it arrives (milestones
+  15 and 17); a file that crosses one is not fetched further. A HoloML
+  0.2 page's scripts (milestone 17) run in the page's own sandboxed
+  process like a web page's, and can reach only its own site; their
+  scene API gives them the scene, where you look in it, and your
+  clicks and keys on the page, nothing else. Its sounds play only after your first click or key on the page,
+  and the tab's mute applies. The instrument panel's Scene part reads
+  the scene from the page in memory only, and keeps nothing.
+- HoloML's examples: the start panel's "Try HoloML" links (milestones 16
+  and 17) and the HoloML examples section (the menu, or Ctrl+Shift+E)
+  open the example sites HoloML publishes with GitHub Pages at
+  `https://srajpal.github.io/holoml/` (the showroom, Blockworld), only
+  when you choose one; each is then an ordinary HoloML page. The
+  section's links to HoloML's repository, its specification, and each
+  example's source open `https://github.com/srajpal/holoml` pages the
+  same way. The start panel and the section fetch nothing themselves:
+  their pictures are part of the app.
 - Searches typed in the address bar or start panel go to the search engine
   chosen in Settings (DuckDuckGo by default).
 - DNS lookups for the sites you open go encrypted (DNS over HTTPS) to

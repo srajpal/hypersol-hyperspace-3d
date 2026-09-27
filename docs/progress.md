@@ -191,3 +191,17 @@ published from the holoml repository, and the start panel links to it.
 ![The showroom's hall: five cars on plinths, the middle one turning](screenshots/m16/47-showroom-hall.png)
 
 ![A car's own page: walk around it, and choose another colour](screenshots/m16/48-showroom-car.png)
+
+**Milestone 17: Blockworld and the HoloML examples** (built 2026-09-27,
+waiting for acceptance). Blockworld, a small block game written in the
+first part of HoloML 0.2: a script, sound, text on the screen, walls and
+gravity, and a day that turns to night. The browser gains a HoloML
+examples section with a picture of each example.
+
+![The start panel's "Try HoloML": the showroom, Blockworld, and all the examples](screenshots/m17/49-start-panel-examples.png)
+
+![The HoloML examples: a card for each, with Open and Source, and links to HoloML's repository and specification](screenshots/m17/50-examples.png)
+
+![Blockworld in the morning: the island from a pillar of stone at one corner](screenshots/m17/51-blockworld.png)
+
+![Blockworld at night: three torches light the slope](screenshots/m17/52-blockworld-night.png)
