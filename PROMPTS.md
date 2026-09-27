@@ -869,3 +869,12 @@ reaches in a scene (a: links and named things, in page order).
 ```text
 Use the recommendations for the questions.
 ```
+
+## 78 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Approval to build milestone 15 (HoloML hardening), with the answers in
+prompt 77.
+
+```text
+Build.
+```

@@ -26,7 +26,7 @@ Plan approved 2026-09-24.
 | 12 | Developer preview 0.9.0 | Source release for developers: privacy and proofreading pass, legal and project files, automatic builds and tests on Windows and Linux (GitHub issue #5), Electron check, trademark and `.holo` checks, version 0.9.0 | Done (accepted, prompt 61; released as v0.9.0) |
 | 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Done (accepted, prompt 64) |
 | 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Done (accepted, prompt 76) |
-| 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Planned; answers in (prompt 77: Q1 to Q5 a); waiting for the go to build |
+| 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | In progress (prompts 77 and 78) |
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Later |
 | 17 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a) |
 | 18 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
@@ -2184,9 +2184,9 @@ listen on the canvas itself.
 
 ## Milestone 15 — HoloML hardening
 
-Status: Planned 2026-09-27 (prompt 76). Answers 2026-09-27 (prompt 77):
-Q1 to Q5 a, as recommended. Waiting for the owner's go to build.
-Pushed before planning. Rule 13 check done
+Status: In progress. Plan answered (prompt 77: Q1 to Q5 a, as
+recommended) and build approved (prompt 78), 2026-09-27. Pushed before
+the build. Rule 13 check done
 (ARCHITECTURE.md section 3).
 
 Goal: HoloML pages stay safe and usable at any size and for anyone. A
