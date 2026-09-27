@@ -298,7 +298,15 @@ describe('HoloML pages in a development run (pnpm dev)', () => {
     // Vite belongs to the browser package (tests do not import it directly).
     type DevServer = { listen(): Promise<unknown>; close(): Promise<void>; resolvedUrls: { local: string[] } | null };
     const vite = (await import(pathToFileURL(req.resolve('vite')).href)) as { createServer(options: object): Promise<DevServer> };
-    const dev = await vite.createServer({ root: join(APP_DIR, 'src/renderer'), configFile: false, logLevel: 'warn', server: { port: 0, host: '127.0.0.1' } });
+    // As electron.vite.config.ts sets it up: the viewer's imports prepared at start.
+    const { VIEWER_DEPS } = (await import(pathToFileURL(join(APP_DIR, 'viewer-deps.mjs')).href)) as { VIEWER_DEPS: string[] };
+    const dev = await vite.createServer({
+      root: join(APP_DIR, 'src/renderer'),
+      configFile: false,
+      logLevel: 'warn',
+      optimizeDeps: { include: VIEWER_DEPS },
+      server: { port: 0, host: '127.0.0.1' },
+    });
     await dev.listen();
     const devUrl = dev.resolvedUrls!.local[0]!.replace(/\/$/, '');
     const profile = mkdtempSync(join(tmpdir(), 'hypersol-e2e-dev-'));

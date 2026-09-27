@@ -21,6 +21,10 @@ const TYPES: Record<string, string> = {
   // HoloML's showroom (milestone 16): binary glTF models and their palette picture.
   '.glb': 'model/gltf-binary',
   '.png': 'image/png',
+  // HoloML 0.2 (milestone 17): sounds (scripts are .js, above).
+  '.ogg': 'audio/ogg',
+  '.wav': 'audio/wav',
+  '.mp3': 'audio/mpeg',
 };
 
 /** A solid-colour 16×16 PNG, built here so the fixture has no binary file. */
@@ -114,10 +118,36 @@ function page(title: string, body: string): string {
  *   /holoml/gen/claim.png?w=W&h=H       a PNG header claiming W by H pixels
  *   /holoml/gen/box.gltf?mb=N&tris=T&img=W,H
  *                                       a glTF of T triangles (default 1) whose buffer is zeros.bin, at least
- *                                       N MB (default: just what the triangles need); img adds a claim.png
+ *                                       N MB (default: just what the triangles need); img adds a claim.png;
+ *                                       ms=M answers after M milliseconds (up to 10 s)
+ *   /holoml/gen/late-car.gltf?ms=M      holoml/models/placeholder-car.gltf, after M milliseconds (up to 10 s)
  *   /holoml/gen/never.gltf              answers nothing, ever (a model that never finishes)
  *   /holoml/gen/many.holoml?n=N         a page of a label and N empty groups (up to 50,000)
+ *   /holoml/gen/tone.wav                a second of a quiet tone, as a WAV file (milestone 17)
+ *   /holoml/gen/big.wav?mb=N            N MB of silence named as a WAV file, without a declared length
  */
+/** A WAV file: 16-bit mono, 22,050 samples a second, of a 440 Hz tone. */
+function toneWav(seconds: number): Buffer {
+  const rate = 22050;
+  const n = Math.round(seconds * rate);
+  const data = Buffer.alloc(n * 2);
+  for (let i = 0; i < n; i++) data.writeInt16LE(Math.round(Math.sin((2 * Math.PI * 440 * i) / rate) * 6000), i * 2);
+  const head = Buffer.alloc(44);
+  head.write('RIFF', 0, 'ascii');
+  head.writeUInt32LE(36 + data.length, 4);
+  head.write('WAVEfmt ', 8, 'ascii');
+  head.writeUInt32LE(16, 16);
+  head.writeUInt16LE(1, 20);
+  head.writeUInt16LE(1, 22);
+  head.writeUInt32LE(rate, 24);
+  head.writeUInt32LE(rate * 2, 28);
+  head.writeUInt16LE(2, 32);
+  head.writeUInt16LE(16, 34);
+  head.write('data', 36, 'ascii');
+  head.writeUInt32LE(data.length, 40);
+  return Buffer.concat([head, data]);
+}
+
 /** A glTF of one mesh: T triangles, all at one point, over a buffer of zeros (see the route list above). */
 function boxGltf(params: URLSearchParams): string {
   const tris = Math.max(1, Math.min(50_000_000, Number(params.get('tris') ?? '1') || 1));
@@ -169,9 +199,15 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
     const what = path.slice('/holoml/gen/'.length);
     const p = url.searchParams;
     if (what === 'never.gltf') return; // Held open until the client gives up or the server closes.
-    if (what === 'zeros.bin') {
-      res.writeHead(200, { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' });
-      const total = Math.min(64 * 1024 * 1024, Math.max(0, Number(p.get('bytes') ?? '0') || 0));
+    if (what === 'tone.wav') {
+      res.writeHead(200, { 'content-type': 'audio/wav', 'cache-control': 'no-store' });
+      res.end(toneWav(1));
+      return;
+    }
+    if (what === 'zeros.bin' || what === 'big.wav') {
+      res.writeHead(200, { 'content-type': what === 'big.wav' ? 'audio/wav' : 'application/octet-stream', 'cache-control': 'no-store' });
+      const asked = what === 'big.wav' ? Number(p.get('mb') ?? '1') * 1024 * 1024 : Number(p.get('bytes') ?? '0');
+      const total = Math.min(64 * 1024 * 1024, Math.max(0, asked || 0));
       const piece = Buffer.alloc(256 * 1024);
       let sent = 0;
       const pump = () => {
@@ -190,9 +226,29 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
       res.end(pngClaiming(Number(p.get('w') ?? '16'), Number(p.get('h') ?? '16')));
       return;
     }
+    if (what === 'late-car.gltf') {
+      const wait = Math.min(10_000, Math.max(0, Number(p.get('ms') ?? '0') || 0));
+      setTimeout(() => {
+        readFile(join(FIXTURES_DIR, 'holoml', 'models', 'placeholder-car.gltf')).then(
+          (body) => {
+            if (res.destroyed) return;
+            res.writeHead(200, { 'content-type': TYPES['.gltf']!, 'cache-control': 'no-store' });
+            res.end(body);
+          },
+          () => res.writeHead(500).end(),
+        );
+      }, wait);
+      return;
+    }
     if (what === 'box.gltf') {
-      res.writeHead(200, { 'content-type': TYPES['.gltf']!, 'cache-control': 'no-store' });
-      res.end(boxGltf(p));
+      const send = () => {
+        if (res.destroyed) return;
+        res.writeHead(200, { 'content-type': TYPES['.gltf']!, 'cache-control': 'no-store' });
+        res.end(boxGltf(p));
+      };
+      const wait = Math.min(10_000, Math.max(0, Number(p.get('ms') ?? '0') || 0));
+      if (wait > 0) setTimeout(send, wait);
+      else send();
       return;
     }
     if (what === 'many.holoml') {

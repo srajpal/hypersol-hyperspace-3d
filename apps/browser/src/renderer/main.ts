@@ -1,6 +1,7 @@
 import './styles.css';
 import './hud/toolbar';
 import './hud/about';
+import './hud/examples';
 import './hud/library';
 import './hud/settings';
 import './hud/shield';
@@ -18,7 +19,7 @@ import { DEFAULT_TILT_DEG, clampTilt } from '@hypersol/scene-core';
 import { defaultTheme } from '@hypersol/themes';
 import type { ShellBridge } from '../shared/commands';
 import { App } from './app';
-import { setShowroomUrl } from './scene/start-panel';
+import { setExampleUrl, setExamplesBase } from './examples';
 import type { CardPart } from './scene/tab-card';
 import { applyThemeCss } from './themes/apply';
 
@@ -35,8 +36,11 @@ about.electron = bridge.versions.electron;
 about.chrome = bridge.versions.chrome;
 about.addEventListener('hs-about-closed', () => app.focusedView?.focusContent());
 
-// Test runs only: the start panel's showroom link goes to a local copy.
-if (params.get('showroomUrl')) setShowroomUrl(params.get('showroomUrl')!);
+// Test runs only: the HoloML examples (or just the showroom) from local copies.
+if (params.get('examplesBase')) setExamplesBase(params.get('examplesBase')!);
+if (params.get('showroomUrl')) setExampleUrl('showroom', params.get('showroomUrl')!);
+const examples = document.querySelector('hs-examples')!;
+examples.addEventListener('hs-examples-closed', () => app.focusedView?.focusContent());
 
 const app = new App({
   startUrl: params.get('startUrl') ?? '',
@@ -49,6 +53,7 @@ const app = new App({
   roomElement: document.getElementById('room') as HTMLElement,
   toolbar,
   about,
+  examples,
   library: document.querySelector('hs-library')!,
   settingsPanel: document.querySelector('hs-settings')!,
   shield: document.querySelector('hs-shield')!,
@@ -93,6 +98,7 @@ if (params.get('test') === '1') {
       panelQuad: () => room.screenQuad(),
       sceneColors: () => room.sceneColors(),
       status: () => app.focusedView?.status ?? null,
+      cardPicture: (tabId: number) => room.snapshotSrc(tabId),
       tabs: () =>
         store.tabs.map((t) => ({
           id: t.id,
@@ -101,6 +107,7 @@ if (params.get('test') === '1') {
           state: t.state,
           focused: t.id === store.focusedId,
           hasSnapshot: room.hasSnapshot(t.id),
+          snapshotAt: room.snapshotAt(t.id),
           hasFavicon: Boolean(t.favicon),
           canGoBack: t.canGoBack,
           private: t.private,

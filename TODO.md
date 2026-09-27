@@ -28,7 +28,7 @@ Plan approved 2026-09-24.
 | 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Done (accepted, prompt 76) |
 | 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Done (accepted, prompt 79) |
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
-| 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | In progress (prompt 86) |
+| 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
 | 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes | Later (prompt 85, Q4 a) |
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Later (prompt 85, Q4 a) |
 | 20 | Coral Bay | A resort: paths to ride, sounds by place, sky and environment light, loading by area | Later (prompt 85, Q4 a) |
@@ -1535,7 +1535,7 @@ that sleep when unused; and history work moved off the main process
 | L6 | Economy mode | On: lower resolution, effects off, at most 30 frames a second, "ECO" shown; "on battery" follows the power source |
 | L7 | Sleeping tabs | An unused tab sleeps (its page is gone, card kept); opening it wakes it with its history; tabs with sound, a download, or typed text stay awake |
 | L8 | History still works | History, search, and the start panel work through the worker; E checks pass |
-| L9 | History budget | Unit benchmark: 100,000 visits, search and recent within 50 ms, main thread held at most 20 ms (since prompt 88: the longest gap between two turns of the main process's event loop) |
+| L9 | History budget | Unit benchmark: 100,000 visits, search and recent within 50 ms, main thread held at most 20 ms (since prompt 93: the longest gap between two turns of the main process's event loop) |
 | L10 | Keyboard and menus | The new shortcuts and menu entries work from the page and the shell |
 
 ### Check results (Windows 11, 2026-09-26)
@@ -2506,9 +2506,10 @@ harness's `online` switch are gone, so no run uses the network.
 
 ## Milestone 17 — Blockworld, HoloML 0.2 (first part), and the examples section
 
-Status: In progress. Plan answered (prompt 86: Q1 to Q5 a, as
-recommended) and build approved (prompt 86), 2026-09-27. Pushed before
-the build. Rule 13 check done (ARCHITECTURE.md section 3).
+Status: Done. Accepted by the owner 2026-09-27 (prompt 91). Plan
+answered (prompt 86: Q1 to Q5 a, as recommended) and build approved
+(prompt 86), 2026-09-27. Pushed before the build and after acceptance.
+Rule 13 check done (ARCHITECTURE.md section 3). Results below.
 
 Goal: the first HoloML site you can play. Blockworld, a very small
 Minecraft-like game, needs HoloML to react (scripts), to make sound,
@@ -2614,22 +2615,22 @@ screenshot of each.
 
 ### Tasks
 
-- [ ] 1. HoloML spec 0.2 (first part): scripts and the scene API,
+- [x] 1. HoloML spec 0.2 (first part): scripts and the scene API,
       sound, screen text, walls and gravity, animated lights and
       background; parser and checker; conformance samples for each new
       element, attribute, and problem; 0.1 pages unchanged.
-- [ ] 2. The browser: 0.2 pages, the scene API, sound (after the first
+- [x] 2. The browser: 0.2 pages, the scene API, sound (after the first
       interaction, with the tab's mute and the limits), screen text,
       collision and gravity, animated lights, instancing; the content
       policy; the copy of the parser and checker (`pnpm holoml:sync`).
-- [ ] 3. Blockworld: the block models and sounds (downloads approved in
+- [x] 3. Blockworld: the block models and sounds (downloads approved in
       prompt 85, Q3 a), the ambience (per Q3), the page and its script,
       credits; published with GitHub Pages.
-- [ ] 4. The examples section (per Q2), with the showroom's and
+- [x] 4. The examples section (per Q2), with the showroom's and
       Blockworld's cards and screenshots.
-- [ ] 5. Checks T1 to T10 (tests/e2e/m17.e2e.ts, the holoml repository's
+- [x] 5. Checks T1 to T10 (tests/e2e/m17.e2e.ts, the holoml repository's
       tests).
-- [ ] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md
+- [x] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md
       (scripts and sound on HoloML pages; the examples section fetches
       nothing), THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the
       README screenshot.
@@ -2651,6 +2652,83 @@ Named T (milestone 16 used S).
 | T9 | Published | Blockworld opens from its public address in the built app (checked by hand, as S8) |
 | T10 | Regression | C to S pass, the unit tests, and holoml's tests |
 
+### Results (2026-09-27)
+
+HoloML 0.2's first part and Blockworld are in holoml pull request #13
+(https://github.com/srajpal/holoml/pull/13), merged by the owner
+(prompt 90); GitHub Pages publishes Blockworld at
+https://srajpal.github.io/holoml/blockworld/. The browser's copy
+(packages/holoml and tests/fixtures/holoml) is synced from holoml's main
+at the merge commit (`pnpm holoml:sync main --examples main`, 64d7e99),
+the same files as the branch the checks ran on. Checks are in
+tests/e2e/m17.e2e.ts.
+
+| # | Result |
+|---|---|
+| T1 | Pass. holoml's tests: 165 passed; lint and types clean. Every new element, attribute, and problem has a conformance sample (four valid 0.2 samples, five problem samples) and is in SPEC.md with an example (the tests check both); every 0.1 sample gives the result it gave before; a 0.2 page read by a 0.1 reader is refused (unsupported-version); the showroom's and Blockworld's pages are valid, and Blockworld's files stay under 2 MB, with their credits |
+| T2 | Pass (4 checks). A script from the page's own site changed the scene through the API: a label's words, a light's intensity, screen text, a model added from HoloML text (solid, in its group), and one removed; a wrong argument throws a clear error, and holoml.add refuses `<animate>` with a console message. An inline script and a script from another site did not run, and the console said why. A script that throws leaves the scene as it was. With a script that never stops, the browser answered each of 10 requests within 200 ms, and the tab closed |
+| T3 | Pass. Before the first input nothing played and the browser kept the tab muted; after a click in the page the sound played, and the tab was unmuted and audible; the tab's own mute silenced it. A sound file over 32 MB was left out ("larger than 32 MB") and listed with what was left out |
+| T4 | Pass (2 checks). On a page built from Blockworld's blocks (walls.holoml) the walker fell to the floor, stopped at a wall, was stopped by a step, jumped onto it with Space, and passed through leaves (not solid). In Blockworld the walker stands on the chest's lid |
+| T5 | Pass. Blockworld was ready within 5 s of opening from 127.0.0.1, with more than 1,000 blocks drawn as instances in fewer than 60 draw calls, at more than 30 frames a second with the graphics card. Measured during the build: ready in about 2.2 s, about 1,160 blocks shown (only blocks with a face that can be seen are added; the rest of the island is kept by the script), 14 draw calls, about 143 frames a second |
+| T6 | Pass (3 checks). A click broke a block and a right-click placed one; E broke and Q placed the block under the crosshair; keys 3 and 1 changed the screen text ("Placing: Stone", "Placing: Grass"), and after key 4 Q placed planks. Digging with E found all five gems (the count went from 1 to 5), and E at the chest put them in: "In the chest: 5 of 5" and "You won". At 22:00 the sun gives no light, and a torch placed with Q stands on the block with its light on; at least a quarter of the view is 30% brighter with the torch's light than without it (the page's own pixels, from a view that stands still) |
+| T7 | Pass (3 checks). From the keyboard alone: the left arrow turned the view without moving it, Page Down looked down, and E broke the block under the crosshair; walking (W), jumping (Space), placing (Q), and choosing blocks (1 to 5) by key are in T4 and T6. The screen text is in the text view ("Gems carried", "Placing") and the accessibility tree (the score and the clock). With reduced motion the clock reads "Day 1, 12:00 (the clock stands still)" and stays |
+| T8 | Pass. The examples section opened from the start panel, the menu, and Ctrl+Shift+E; it shows the showroom and Blockworld with their pictures, and links to HoloML's repository, its specification, and each example's source; the keyboard reaches Blockworld's Open, and Enter opened the local copy in the tab; opening the section fetched nothing |
+| T9 | Pass. After the merge, Blockworld opened in the built app from https://srajpal.github.io/holoml/blockworld/index.holoml (a one-off run with the network, not a test, as S8): HoloML 0.2, ready, every model and all nine sounds loaded, nothing left out, 1,161 blocks and five gems, and it draws the island with its trees and the chest |
+| T10 | Pass. Full run on the finished code, after the report's changes (prompt 89): 240 of 240 end-to-end checks passed (C to T), the clipboard checks included. In the first full runs that day the Windows clipboard was unavailable to every program (PowerShell's Get-Clipboard failed too), and the 4 checks that use it failed there: D8's copy link, copy text, and paste, and the passwords check K2 and K3; they passed once it worked again. One earlier full run also missed milestone 10's L9 budget by 0.02 ms (the main process held 20.02 ms against 20) while a type check ran alongside; it passed alone and in the final run. Unit tests: 261 passed; lint and type check clean; holoml's tests: 165 passed |
+
+Faults found along the way and fixed:
+- Walk mode could not turn or look up and down from the keyboard, so
+  Blockworld could not be played without a mouse (T7). The left and right
+  arrows now turn (they moved sideways before; A and D still do), and
+  Page Up and Page Down look up and down, in every HoloML version.
+  Milestone 14's P3 check moved sideways with the right arrow; it now
+  uses D, and also checks that the right arrow turns without moving and
+  that Page Up looks up. The requirement (walk moves with the keyboard)
+  is unchanged; SPEC.md now asks renderers for keyboard turning.
+- Blockworld's torches were toned down (light 1.6 to 0.9) for a darker
+  night during the build, after T6 was written to check a light above 1.
+  T6 now checks what the requirement says, that the torch lights its
+  surroundings, by comparing the view with and without its light.
+- Found while building: a finished animation kept the page drawing;
+  the walker could hang in the air after the block under it was broken;
+  the crosshair used the camera's place from the frame before; instanced
+  blocks were picked with stale bounds, so gems 2 to 5 could not be
+  found; night stayed bright because the scene's soft environment light
+  ignored the page's lights (it now follows the ambient lights in 0.2
+  pages); a development run missed a module the viewer loads late.
+
+The examples section's pictures come from `pnpm screenshots:examples`
+(the showroom's hall, and Blockworld's island from a pillar of stone at
+one corner); the milestone's screenshots are 49 to 52 in
+docs/screenshots/m17. The README's screenshot stays the showroom, as
+AGENTS.md says (prompt 81, Q5 a).
+
+Prompt 87 (elements for moving between scenes and for loading): proposed
+for the Harbour Loft and Coral Bay plans, below.
+
+After the report (prompts 89 and 90):
+- The owner's answers: the left and right arrows keep turning; the card
+  fix below is approved; the README's screenshot stays the showroom.
+- "Blockworld does not load in `pnpm dev`": the start panel and the
+  examples section open Blockworld's published address, and pull request
+  #13 was still open on GitHub when the owner tried (holoml's main ended
+  at the showroom), so that address did not exist yet. The development
+  run itself was not at fault: a new check starts the dev server and
+  points the built app at it, offline, and Blockworld's local copy
+  plays, its script and all. The owner then merged #13 (prompt 90).
+- The card fix: a HoloML page finishes loading before its models arrive,
+  so its tab card's picture showed an empty room or only its labels
+  (the README's screenshot showed it). The viewer now says when it has
+  drawn the scene with nothing left to load and the view still (a walker
+  that starts in the air has landed), after the scene is ready and after
+  each later loading such as a script's models; the shell takes the
+  card's picture again then. A new check opens a page whose car arrives
+  two seconds late: the card's first picture has no car, and a later one
+  shows its red paint. Without the fix it failed (the car never reached
+  the card). Screenshots 51 and 52 set the viewer's place and direction
+  together, so the card, which takes its picture when the viewer lands,
+  shows the same view.
+
 ### Done when
 
 - T1 to T10 pass, screenshots are saved, and the owner accepts.
@@ -2661,9 +2739,16 @@ Named T (milestone 16 used S).
   environment lighting, textured fabrics (Poly Haven), a price that
   changes.
 - 19 Harbour Loft: click actions without scripts (doors, switches),
-  paragraphs of text (#11), larger scenes, a floor plan.
+  paragraphs of text (#11), larger scenes, a floor plan. Proposed for
+  its plan (prompt 87): moving between pages as between rooms, a link
+  to a named viewpoint on the next page (`href="kitchen.holoml#window"`)
+  and a transition (a short fade instead of a cut).
 - 20 Coral Bay: movement along paths, positional sound, sky, loading by
-  area, simpler models far away.
+  area, simpler models far away. Proposed for its plan (prompt 87):
+  areas that load their models when the viewer comes near and let go of
+  them when far, counted against the page's limits only while loaded; a
+  simpler model to show far away; and loading progress a page's script
+  can show.
 - 21 Aquarium (prompt 85): 5 to 10 real-looking fish of different
   kinds that swim around the tank with their own animations (glTF
   skins), rocks, plants, bubbles, light through the water, and a Feed
@@ -2788,7 +2873,7 @@ On the answers, the first of the new milestones (per Q4) gets a full
 plan with its tasks and checks for approval, with the Rule 13 check at
 its start. The roadmap table is changed at that point, not before.
 
-## L9's measure of the main process (2026-09-27, prompts 87 and 88)
+## L9's measure of the main process (2026-09-27, prompts 92 and 93)
 
 L9 read the main process's event-loop delay with monitorEventLoopDelay
 and sat at 18 to 20 ms on Windows (once 20.005 ms, a failure). The cause
@@ -2800,7 +2885,7 @@ the searches, so searches in the worker, the 500 results passed back,
 and the reply to the shell each take well under that. The history code
 is unchanged. L9 now keeps the loop awake the same way while the
 searches run and fails if any gap between two turns reaches 20 ms
-(owner, prompt 88: option 1); the limit is unchanged. Local run
+(owner, prompt 93: option 1); the limit is unchanged. Local run
 (Windows 11): L9 in seven runs, longest gap 0.6 to 1.5 ms (three runs
 of the old measure on the same code read 16.1 to 18.2 ms); searches
 after the first 1 to 32 ms, as before; all nine m10 checks passed. A

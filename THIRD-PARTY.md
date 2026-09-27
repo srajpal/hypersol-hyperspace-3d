@@ -21,7 +21,7 @@ licence fields).
 | @remusao/guess-url-type, small, smaz, smaz-compress, smaz-decompress, trie (used by the adblocker) | 2.1 to 2.2 | MPL-2.0 | Parts of the adblocker |
 | [tldts](https://github.com/remusao/tldts) (tldts-experimental, tldts-core) | 7.4.15 | MIT | Site names for the adblocker |
 | @types/trusted-types | 2.0.7 | MIT | Type definitions used by Lit |
-| [HoloML](https://github.com/srajpal/holoml) parser and checker (packages/holoml, copied from its v0.1.1 tag) | 0.1.1 | Apache-2.0, The HoloML Authors | Reading and checking HoloML pages |
+| [HoloML](https://github.com/srajpal/holoml) parser and checker (packages/holoml, copied from the repository; the tag or branch and commit are in its SOURCE.json) | 0.2 draft | Apache-2.0, The HoloML Authors | Reading and checking HoloML pages |
 
 The Mozilla Public License 2.0 applies file by file: the adblocker's
 files stay under MPL-2.0 and their source is available from the link
@@ -30,11 +30,21 @@ code.
 
 ## Test fixtures
 
-Not part of the app. The end-to-end tests and screenshots use a copy of
-HoloML's showroom (tests/fixtures/holoml/showroom, copied by `pnpm
-holoml:sync`). Its cars are from Kenney's Car Kit (https://kenney.nl,
-CC0 1.0: no conditions; credited in its models/CREDITS.md); its pages,
-hall, and plinths are Apache-2.0, The HoloML Authors.
+Not part of the app. The end-to-end tests and screenshots use copies of
+HoloML's examples (tests/fixtures/holoml, copied by `pnpm holoml:sync`):
+
+- The showroom (tests/fixtures/holoml/showroom). Its cars are from
+  Kenney's Car Kit (https://kenney.nl, CC0 1.0: no conditions; credited
+  in its models/CREDITS.md); its pages, hall, and plinths are
+  Apache-2.0, The HoloML Authors.
+- Blockworld (tests/fixtures/holoml/blockworld). Its block textures are
+  from Kenney's Voxel Pack, and its footsteps, breaking, placing, gem,
+  chest, and winning sounds from Kenney's Impact Sounds, Interface
+  Sounds, and Music Jingles (https://kenney.nl, CC0 1.0; credited in its
+  models/CREDITS.md). Its page, script, block models, and the birds and
+  crickets (made by a script) are Apache-2.0, The HoloML Authors.
+- Some checks use Blockworld's blocks in pages of their own
+  (walls.holoml).
 
 ## Filter lists
 
@@ -55,3 +65,8 @@ Details, sources, and checksums: [apps/browser/resources/filters/NOTICE.md](apps
 The app uses the system's own fonts. The images in `docs/` are made for
 this project, except the 2001 to 2003 HyperSol concept screen in
 `docs/history/`, shown as history.
+
+The HoloML examples section shows a picture of each example
+(apps/browser/src/renderer/examples/), taken in HyperSpace 3D by `pnpm
+screenshots:examples` from the copies above; the showroom's cars and
+Blockworld's blocks in them are Kenney's (CC0).

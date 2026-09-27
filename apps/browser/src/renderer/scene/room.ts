@@ -456,6 +456,16 @@ export class Room {
     return this.cards.get(tabId)?.hasSnapshot ?? false;
   }
 
+  /** When a tab's card last got a picture (performance.now(); 0 for never), for the tests. */
+  snapshotAt(tabId: number): number {
+    return this.cards.get(tabId)?.snapshotAt ?? 0;
+  }
+
+  /** The picture on a tab's card (a data address), for the tests. */
+  snapshotSrc(tabId: number): string | null {
+    return this.cards.get(tabId)?.snapshotSrc ?? null;
+  }
+
   /**
    * Shows a tab's page in the centre. With animate, it grows out of its
    * card while the previous page shrinks back into its own card.

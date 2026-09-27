@@ -988,6 +988,65 @@ Use the recommendations for the questions, build.
 
 ## 87 — 2026-09-27 · Claude Opus 5.5, low effort
 
+A question during the milestone 17 build: whether HoloML should have
+elements for moving between scenes and for loading, given the limits on
+what one page may load.
+
+```text
+Since there is a cap on file size, should there be tags for scene
+transitions and loading?
+```
+
+## 88 — 2026-09-27 · Claude Opus 5.5, low effort
+
+A question during the milestone 17 build, about the browser's HoloML
+examples section.
+
+```text
+Will it be linked to the holoml repo inside HyperSpace 3D?
+```
+
+## 89 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answers to the milestone 17 report's questions: holoml pull request #13
+(HoloML 0.2's first part and Blockworld) merged; in walk mode the left
+and right arrows keep turning (rather than going back to moving
+sideways); and the fix for HoloML tabs' card pictures (taken before the
+scene had finished loading) approved. The question about the README's
+screenshot (the showroom, or Blockworld) was not answered, so it stays
+the showroom. Then a report: Blockworld did not load in a development
+run.
+
+```text
+Merged holoml #13, keep arrows turning, do the card fix.
+I could not load the block game when I ran pnpm dev. Is it not pushed
+to the holoml repo yet?
+```
+
+## 90 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Sent while the agent worked on prompt 89, after it reported that holoml
+pull request #13 was still open on GitHub.
+
+```text
+PR 13 merged.
+```
+
+## 91 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Acceptance of milestone 17 (Blockworld, the first part of HoloML 0.2,
+the HoloML examples section, and the fixes after the report), with the
+instruction to push; then a question about walking speed in HoloML
+scenes.
+
+```text
+Milestone 17 accepted, push.
+Movement was a little slow. Is that something that can be tweaked in
+the tags?
+```
+
+## 92 — 2026-09-27 · Claude Opus 5.5, low effort
+
 ```text
 End-to-end check L9 in tests/e2e/m10.e2e.ts ("with 100,000 visits,
 searches answer within 50 ms and the main process is never held 20 ms")
@@ -1006,7 +1065,7 @@ measurements and ask. Follow AGENTS.md (log owner prompts, commit after
 an approved change, keep TODO.md results current).
 ```
 
-## 88 — 2026-09-27 · Claude Opus 5.5, low effort
+## 93 — 2026-09-27 · Claude Opus 5.5, low effort
 
 Answer to the question of how L9 should measure "the main process is
 never held 20 ms", after the finding that its event-loop delay monitor
@@ -1019,15 +1078,15 @@ baseline).
 Go with option 1, measure the longest block directly.
 ```
 
-## 89 — 2026-09-27 · Claude Opus 5.5, low effort
+## 94 — 2026-09-27 · Claude Opus 5.5, low effort
 
-Approval to publish the L9 measurement change (prompts 87 and 88).
+Approval to publish the L9 measurement change (prompts 92 and 93).
 
 ```text
 Push it and open a PR.
 ```
 
-## 90 — 2026-09-27 · Claude Opus 5.5, low effort
+## 95 — 2026-09-27 · Claude Opus 5.5, low effort
 
 Approval to switch on the app's automatic fixing of CI failures for the
 L9 pull request (#33).
@@ -1036,7 +1095,7 @@ L9 pull request (#33).
 Turn on auto-fix
 ```
 
-## 91 — 2026-09-27 · Claude Opus 5.5, low effort
+## 96 — 2026-09-27 · Claude Opus 5.5, low effort
 
 Approval to start the suggested task for R3 (m15, a page of 20,000
 elements), which fails on both CI runners on main and on PR #33: find

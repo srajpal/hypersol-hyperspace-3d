@@ -16,6 +16,7 @@ import { CARD_SCALES } from './scene/room';
 import { ClosedTabs } from './state/closed-tabs';
 import { shouldSleep, sleepMinutes } from './state/sleep';
 import type { HsAbout } from './hud/about';
+import type { HsExamples } from './hud/examples';
 import type { HsLibrary } from './hud/library';
 import type { HsSettings } from './hud/settings';
 import type { HsShield } from './hud/shield';
@@ -47,6 +48,7 @@ export interface AppOptions {
   roomElement: HTMLElement;
   toolbar: HsToolbar;
   about: HsAbout;
+  examples: HsExamples;
   library: HsLibrary;
   settingsPanel: HsSettings;
   shield: HsShield;
@@ -565,6 +567,7 @@ export class App {
       onSettled: () => this.scheduleSnapshot(id),
       onStartSubmit: (text) => this.navigate(id, text),
       onStartOpen: (url) => this.navigate(id, url),
+      onStartExamples: () => this.showExamples(),
       allowOnce: async (url) => {
         const page = this.views.get(id)?.webContentsId;
         if (page === null || page === undefined) throw new Error('The page is not ready');
@@ -757,8 +760,17 @@ export class App {
     else this.focusedView?.focusContent();
   }
 
+  /** The HoloML examples (milestone 17), over everything; again to close. */
+  private showExamples(): void {
+    const examples = this.options.examples;
+    if (examples.open) examples.close();
+    else examples.open = true;
+  }
+
   private wirePanels(): void {
-    const { library, settingsPanel, downloads } = this.options;
+    const { library, settingsPanel, downloads, examples } = this.options;
+    // An example opens in the tab in front, as a bookmark does.
+    examples.addEventListener('hs-open-example', (e) => this.navigate(this.store.focusedId, (e as CustomEvent<string>).detail));
     for (const panel of [library, settingsPanel, downloads]) {
       panel.addEventListener('hs-panel-closed', () => this.onPanelClosed());
     }
@@ -1098,6 +1110,7 @@ export class App {
     else if (action === 'mute-tab') this.toggleMute(this.store.focusedId);
     else if (action === 'library' || action === 'settings') this.togglePanel(action);
     else if (action === 'shortcuts') this.togglePanel('settings', 'shortcuts');
+    else if (action === 'examples') this.showExamples();
     else if (action === 'about') this.options.about.open = true;
   }
 
@@ -1278,6 +1291,9 @@ export class App {
       case 'library':
       case 'settings':
         this.togglePanel(name);
+        break;
+      case 'examples':
+        this.showExamples();
         break;
     }
   }

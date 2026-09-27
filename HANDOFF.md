@@ -1,11 +1,10 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-09-27 (milestone 12, the 0.9.0 developer preview,
-accepted and released; milestone 13, HoloML v0.1 in the holoml
-repository, accepted; milestone 14, HoloML pages in the browser,
-accepted; HoloML 0.1.1 copied in; milestone 15, HoloML hardening, is
-being built; plan in TODO.md).
+Last updated 2026-09-27 (milestones 1 to 17 accepted; milestone 17,
+Blockworld, the first part of HoloML 0.2, and the HoloML examples
+section, accepted 2026-09-27, prompt 91; the next step is milestone
+18's plan, the sofa studio; the roadmap is in TODO.md).
 
 ## Where things stand
 
@@ -34,8 +33,14 @@ state; this is a summary.
   https://srajpal.github.io/holoml/showroom/; the browser's copy is
   synced from holoml's main); 17 to 21 five more HoloML example sites,
   one milestone each, growing HoloML 0.2 (prompts 84 and 85: 17
-  Blockworld with the browser's examples section, being planned; 18
-  Sofa studio; 19 Harbour Loft; 20 Coral Bay; 21 Aquarium); 22 privacy
+  Blockworld with the browser's examples section, accepted 2026-09-27,
+  prompt 91: HoloML 0.2's first part and Blockworld are merged in
+  holoml (pull request #13, prompt 90) and published at
+  https://srajpal.github.io/holoml/blockworld/, and the browser's copy
+  (packages/holoml and tests/fixtures/holoml) is synced from holoml's
+  main (`pnpm holoml:sync main --examples main`); 18
+  Sofa studio; 19 Harbour Loft; 20 Coral Bay; 21 Aquarium, where HoloML
+  0.2 is tagged); 22 privacy
   and data tools (HTTPS-only, per-site storage, bookmark import and
   export: #24, #26, #27); then installers as 1.0 (23 for Windows and
   Linux, 24 for macOS), with mobile later (owner, prompt 67).
@@ -100,12 +105,12 @@ to this repository for rules and the prompt log.
 
 ## Open items (need an owner decision when their milestone comes)
 
-- With the installers (milestone 18): Windows signing (Microsoft's
+- With the installers (milestone 23): Windows signing (Microsoft's
   Artifact Signing recommended, or SignPath Foundation), updates
   (automatic from GitHub Releases recommended), Linux formats (AppImage
   and .deb recommended), the Windows installer type (per user
   recommended).
-- With the macOS release (milestone 19): the Apple Developer Program for
+- With the macOS release (milestone 24): the Apple Developer Program for
   signing and notarization.
 - Product gaps noted in the 2026-09-24 review and not yet scheduled:
   bookmark import and onboarding, a touch equivalent for closing tabs.
@@ -132,5 +137,5 @@ to this repository for rules and the prompt log.
 
 - HoloML's packages are not published to npm; the browser keeps a copy
   (packages/holoml, pnpm holoml:sync).
-- No installers, signing, or updates (milestones 18 and 19).
+- No installers, signing, or updates (milestones 23 and 24).
 - No installers attached to releases: v0.9.0 is source only.

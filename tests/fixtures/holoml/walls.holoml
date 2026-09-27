@@ -1,0 +1,33 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML walls and gravity</title>
+  </head>
+  <scene>
+    <viewpoint position="0.5 6 0.5" look-at="3 5 0.5" mode="walk" gravity jump />
+    <!-- A floor of blocks (top at 1 m), a wall at x = 2 to 3, and a step to jump onto. -->
+    <group id="floor" solid>
+      <model src="blockworld/models/stone.gltf" position="-1.5 0.5 -1.5" />
+      <model src="blockworld/models/stone.gltf" position="-0.5 0.5 -1.5" />
+      <model src="blockworld/models/stone.gltf" position="0.5 0.5 -1.5" />
+      <model src="blockworld/models/stone.gltf" position="1.5 0.5 -1.5" />
+      <model src="blockworld/models/stone.gltf" position="-1.5 0.5 -0.5" />
+      <model src="blockworld/models/stone.gltf" position="-0.5 0.5 -0.5" />
+      <model src="blockworld/models/stone.gltf" position="0.5 0.5 -0.5" />
+      <model src="blockworld/models/stone.gltf" position="1.5 0.5 -0.5" />
+      <model src="blockworld/models/stone.gltf" position="-1.5 0.5 0.5" />
+      <model src="blockworld/models/stone.gltf" position="-0.5 0.5 0.5" />
+      <model src="blockworld/models/stone.gltf" position="0.5 0.5 0.5" />
+      <model src="blockworld/models/stone.gltf" position="1.5 0.5 0.5" />
+      <model src="blockworld/models/stone.gltf" position="-1.5 0.5 1.5" />
+      <model src="blockworld/models/stone.gltf" position="-0.5 0.5 1.5" />
+      <model src="blockworld/models/stone.gltf" position="0.5 0.5 1.5" />
+      <model src="blockworld/models/stone.gltf" position="1.5 0.5 1.5" />
+    </group>
+    <model src="blockworld/models/planks.gltf" position="2.5 1.5 -0.5" solid />
+    <model src="blockworld/models/planks.gltf" position="2.5 1.5 0.5" solid />
+    <model src="blockworld/models/planks.gltf" position="2.5 2.5 -0.5" solid />
+    <model src="blockworld/models/planks.gltf" position="2.5 2.5 0.5" solid />
+    <model id="step" src="blockworld/models/grass.gltf" position="-1.5 1.5 0.5" solid />
+    <model id="ghost" src="blockworld/models/leaves.gltf" position="0.5 1.5 -1.5" />
+  </scene>
+</holoml>

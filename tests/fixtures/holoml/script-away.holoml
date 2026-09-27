@@ -1,0 +1,9 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML script from another site</title>
+    <script src="http://localhost:1/away.js" />
+  </head>
+  <scene>
+    <label id="sign" position="0 2 0">Away</label>
+  </scene>
+</holoml>

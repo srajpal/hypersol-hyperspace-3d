@@ -8,11 +8,15 @@
  * Mistakes (owner, prompt 65, Q5 a): a syntax error shows a card with its
  * line and column; problems the checker finds go to the console (the
  * instrument panel's console lists them), and the rest of the scene shows.
+ *
+ * HoloML 0.2 (milestone 17): the page's own scripts run after the scene is
+ * built, with the scene API (api.ts), from the page's own site only.
  */
 import { HoloParseError, check, parse, type ElementNode, type Problem } from '@hypersol/holoml';
 import { HolomlView } from './scene';
+import { installApi } from './api';
 import { LIMITS } from './budget';
-import { text } from './values';
+import { attr, text } from './values';
 
 interface ViewerState {
   ready: boolean;
@@ -30,7 +34,8 @@ const state: ViewerState = { ready: false, error: null, problems: [], noWebGL: f
 /**
  * Read-only facts for the browser's own tests and for the instrument
  * panel's Scene part (the main process reads them only from pages it
- * marked as HoloML); the page has no scripts of its own.
+ * marked as HoloML, and checks what it reads: a 0.2 page's own scripts
+ * run in this same page).
  */
 Object.defineProperty(window, '__holoml', {
   value: {
@@ -62,6 +67,17 @@ Object.defineProperty(window, '__holoml', {
     lights: () => state.view?.lightsInfo() ?? [],
     leftOut: () => state.view?.leftOut ?? [],
     highlight: () => state.view?.highlightInfo ?? null,
+    /** HoloML 0.2 (milestone 17): sounds, whether sound may play yet, screen text, the walker, and how the scene is drawn. */
+    sounds: () => JSON.parse(JSON.stringify(state.view?.sounds.reports ?? [])),
+    get soundsActive() {
+      return state.view?.sounds.active ?? false;
+    },
+    huds: () => [...document.querySelectorAll<HTMLElement>('.holoml-hud')].map((h) => ({ id: h.dataset['id'] ?? null, text: h.innerText, hidden: h.hidden })),
+    walker: () => state.view?.walkerInfo ?? null,
+    stats: () => state.view?.stats ?? null,
+    get version() {
+      return state.view?.pageVersion ?? null;
+    },
     get textView() {
       return state.textView;
     },
@@ -120,6 +136,21 @@ const STYLE = `
     border: 1px solid #ffb36b; border-radius: 10px; padding: 10px 14px; font-size: 13px; line-height: 1.4; }
   #holoml-notice[hidden] { display: none; }
   #holoml-notice ul { margin: 6px 0 0; padding-left: 18px; }
+  /* HoloML 0.2: screen text in the corners, and the crosshair. */
+  #holoml-hud-layer { position: fixed; inset: 0; pointer-events: none; }
+  .holoml-hud-corner { position: absolute; display: flex; flex-direction: column; gap: 8px; max-width: min(46vw, 520px); }
+  .holoml-hud-corner[data-corner="top-left"] { left: 16px; top: 16px; }
+  .holoml-hud-corner[data-corner="top-right"] { right: 16px; top: 16px; align-items: flex-end; text-align: right; }
+  .holoml-hud-corner[data-corner="bottom-left"] { left: 16px; bottom: 16px; }
+  /* Clear of HyperSpace 3D's own buttons, which sit over the page's lower right corner. */
+  .holoml-hud-corner[data-corner="bottom-right"] { right: 16px; bottom: 72px; align-items: flex-end; text-align: right; }
+  .holoml-hud { color: #f2f4ff; font-weight: 600; line-height: 1.35; text-shadow: 0 1px 3px #000c, 0 0 1px #000; }
+  .holoml-hud[hidden] { display: none; }
+  .holoml-crosshair { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); }
+  .holoml-crosshair::before, .holoml-crosshair::after { content: ''; position: absolute; background: #ffffffd9; box-shadow: 0 0 2px #000; }
+  .holoml-crosshair::before { left: 10px; top: 0; width: 2px; height: 22px; }
+  .holoml-crosshair::after { left: 0; top: 10px; width: 22px; height: 2px; }
+  .holoml-crosshair[hidden] { display: none; }
   /* The text view (issue #25): the outline as a plain page, no 3D. */
   body.holoml-text-view #holoml-root { display: none; }
   body.holoml-text-view #holoml-outline-nav { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal;
@@ -128,6 +159,10 @@ const STYLE = `
   body.holoml-text-view #holoml-outline-nav h1 { font-size: 26px; }
   body.holoml-text-view #holoml-outline-nav button { all: unset; cursor: default; }
   body.holoml-text-view #holoml-outline-nav a { color: #7fd8ff; }
+  body.holoml-text-view #holoml-hud-layer { position: static; max-width: 760px; margin: 0 auto 32px; padding: 0 24px; }
+  body.holoml-text-view .holoml-hud-corner { position: static; max-width: none; align-items: flex-start; text-align: left; }
+  body.holoml-text-view .holoml-hud { color: #eef1ff !important; text-shadow: none; font-size: 17px !important; }
+  body.holoml-text-view .holoml-crosshair { display: none; }
 `;
 
 function start(): void {
@@ -159,7 +194,10 @@ function start(): void {
   notice.setAttribute('role', 'status');
   notice.dataset['testid'] = 'holoml-notice';
   notice.hidden = true;
-  document.body.append(root, nav, labels, notice);
+  // HoloML 0.2: screen text and the crosshair, over the scene.
+  const hudLayer = document.createElement('div');
+  hudLayer.id = 'holoml-hud-layer';
+  document.body.append(root, nav, hudLayer, labels, notice);
 
   // The page's own text, over its limit, is not read at all (issue #23).
   const bytes = new TextEncoder().encode(source).length;
@@ -198,7 +236,7 @@ function start(): void {
   heading.textContent = title && text(title) ? text(title) : 'HoloML scene';
 
   try {
-    state.view = new HolomlView(doc.root, root, list);
+    state.view = new HolomlView(doc.root, root, list, hudLayer);
   } catch (e) {
     state.noWebGL = true;
     showCard(
@@ -213,14 +251,48 @@ function start(): void {
     return;
   }
   const view = state.view;
+  let whenReady: () => void = () => undefined;
+  const ready = new Promise<void>((resolve) => (whenReady = resolve));
+  // The tab card's picture (prompt 89): the shell takes it once the scene
+  // has been drawn with nothing left to load and the view still (a walker
+  // that starts in the air has landed), after it is ready and after each
+  // later loading (a script's models). The first frame can take a while
+  // to draw, so being ready is not enough.
+  let drawnToTell = false;
   view.onReady = () => {
     state.ready = true;
+    whenReady();
     showLeftOut(view, notice);
+    drawnToTell = true;
+  };
+  view.onDrawn = () => {
+    if (!drawnToTell || view.busy || !view.viewSettled) return;
+    drawnToTell = false;
+    window.postMessage({ hypersolHolomlDrawn: true }, '*');
   };
   view.onLeftOut = () => showLeftOut(view, notice);
-  view.onBusy = (busy) => window.postMessage({ hypersolHolomlBusy: busy }, '*');
+  // Loading a moment (a script adding a block) is not "loading" for the top
+  // bar: busy is told only when it lasts.
+  let busyTimer: number | undefined;
+  let told = false;
+  view.onBusy = (busy) => {
+    window.clearTimeout(busyTimer);
+    if (busy) {
+      busyTimer = window.setTimeout(() => {
+        told = true;
+        window.postMessage({ hypersolHolomlBusy: true }, '*');
+      }, 150);
+    } else if (told) {
+      told = false;
+      window.postMessage({ hypersolHolomlBusy: false }, '*');
+    }
+  };
   if (view.busy) view.onBusy(true);
   showLeftOut(view, notice);
+  if (view.pageVersion === '0.2') {
+    installApi(view, ready);
+    runScripts(doc.root, state.problems);
+  }
   // Esc stops whatever is still loading (issue #23).
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && view.busy) view.stop();
@@ -237,6 +309,48 @@ function start(): void {
     if (command === 'stop') view.stop();
     else if (command === 'text-view-on' || command === 'text-view-off') setTextView(command === 'text-view-on');
   });
+}
+
+/**
+ * The page's scripts (HoloML 0.2): JavaScript modules from the page's own
+ * site, in document order. A script element with a problem (no src, not
+ * a .js or .mjs file, code written inside it) is not run, and no script
+ * from another site is (the page's content policy refuses it too).
+ */
+function runScripts(root: ElementNode, problems: Problem[]): void {
+  const head = root.children.find((c): c is ElementNode => c.type === 'element' && c.name === 'head');
+  const scripts = head?.children.filter((c): c is ElementNode => c.type === 'element' && c.name === 'script') ?? [];
+  const origin = new URL(document.baseURI).origin;
+  for (const el of scripts) {
+    const at = `line ${el.start.line}, column ${el.start.column}`;
+    const src = attr(el, 'src');
+    const flawed = problems.some((p) => p.line === el.start.line || (el.children.length > 0 && p.code === 'text-not-allowed'));
+    if (!src || flawed || el.children.some((c) => c.type === 'text' && c.value.trim() !== '')) {
+      console.warn(`HoloML: the script at ${at} was not run: a script is a file named in "src", with nothing written inside it.`);
+      continue;
+    }
+    let url: URL;
+    try {
+      url = new URL(src.trim(), document.baseURI);
+    } catch {
+      console.warn(`HoloML: the script "${src}" was not run: its address is not valid.`);
+      continue;
+    }
+    if (url.origin !== origin) {
+      console.warn(`HoloML: the script "${src}" was not run: scripts load only from the page's own site.`);
+      continue;
+    }
+    if (!/\.(m?js)$/i.test(url.pathname)) {
+      console.warn(`HoloML: the script "${src}" was not run: a script must be a .js or .mjs file.`);
+      continue;
+    }
+    const script = document.createElement('script');
+    script.type = 'module';
+    // Added one after another, they run in document order.
+    script.async = false;
+    script.src = url.href;
+    document.head.append(script);
+  }
 }
 
 /** The notice of what was left out, and why (issue #23). */

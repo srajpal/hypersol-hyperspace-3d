@@ -1,0 +1,9 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML inline script</title>
+    <script src="script-basic.js">window.__inline = true</script>
+  </head>
+  <scene>
+    <label id="sign" position="0 2 0">Inline</label>
+  </scene>
+</holoml>

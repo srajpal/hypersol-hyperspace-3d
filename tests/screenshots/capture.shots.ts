@@ -359,6 +359,66 @@ it('captures the main screens', async () => {
     await capture(show, '48-showroom-car');
   } finally {
     await show.close();
+  }
+  // Milestone 17: Blockworld by day and at night, the examples, and the start panel.
+  const game = await launch(server.url('link-a.html'), { examplesBase: server.url('holoml/') });
+  const BW = 'blockworld/index.holoml';
+  const inGame = (page: string) => waitFor('the game', () => inPage<boolean>(game, 'window.__holoml?.ready === true', page), (r) => r, 30_000);
+  const landed = (page: string) => waitFor('standing', () => inPage<boolean>(game, 'window.__holoml.walker()?.onGround ?? false', page), (v) => v, 15_000);
+  try {
+    await waitForPage(game, 'link-a');
+    await pressInShell(game, 'T', ['control']);
+    await game.shell.locator('[data-testid="start-examples"]').waitFor({ state: 'visible' });
+    await settled(game);
+    await capture(game, '49-start-panel-examples');
+    await game.shell.click('[data-testid="start-examples"]');
+    await game.shell.locator('hs-examples [data-testid="examples"]').waitFor({ state: 'visible' });
+    await sleep(500);
+    await capture(game, '50-examples');
+    await game.shell.click('hs-examples [data-testid="example-open-blockworld"]');
+    await waitForPage(game, BW);
+    await inGame(BW);
+    await landed(BW);
+    // The whole island from above one corner, standing on a pillar of stone
+    // blocks there (as a player could build), once the welcome has gone.
+    // The place and the direction are set together, so the tab's card,
+    // which takes its picture once the viewer lands (prompt 89), shows it too.
+    const pillar = Array.from({ length: 11 }, (_, y) => `<model src="models/stone.gltf" position="12.5 ${y + 0.5} 12.5" solid />`).join(' ');
+    await inPage(game, `holoml.add(${JSON.stringify(pillar)}), true`, BW);
+    await sleep(300);
+    await inPage(game, 'holoml.viewer.position = [12.5, 12.7, 12.5], holoml.viewer.lookAt([0, 2, 0]), true', BW);
+    await waitFor('the welcome gone', () => inPage<boolean>(game, "holoml.find('message').text === ''", BW), (v) => v, 15_000);
+    await sleep(1500);
+    await capture(game, '51-blockworld');
+    // At night, with three torches placed on the slope, seen from a lower
+    // pillar at the same corner.
+    const NIGHT = `${BW}?hour=21.5`;
+    await shellCall(game, 'showUrl', server.url(`holoml/${NIGHT}`));
+    await waitForPage(game, 'hour=21.5');
+    await inGame('hour=21.5');
+    await landed('hour=21.5');
+    await pressInPage(game, '5', [], 'hour=21.5');
+    for (const [x, z] of [[8, 7], [-3, 6], [4, -1]] as [number, number][]) {
+      // Stand uphill of the place, two blocks toward the middle, and put a
+      // torch on its top.
+      const [ux, uz] = [x - Math.sign(x) * 2, z - Math.sign(z) * 2];
+      const up = await inPage<number>(game, `window.blockworld.top(${ux}, ${uz})`, 'hour=21.5');
+      const top = await inPage<number>(game, `window.blockworld.top(${x}, ${z})`, 'hour=21.5');
+      await inPage(game, `holoml.viewer.position = [${ux + 0.5}, ${up + 1.7}, ${uz + 0.5}], true`, 'hour=21.5');
+      await sleep(600);
+      await inPage(game, `holoml.viewer.lookAt([${x + 0.5}, ${top - 0.05}, ${z + 0.5}]), true`, 'hour=21.5');
+      await sleep(200);
+      await pressInPage(game, 'q', [], 'hour=21.5');
+      await sleep(200);
+    }
+    const low = Array.from({ length: 6 }, (_, y) => `<model src="models/stone.gltf" position="12.5 ${y + 0.5} 12.5" solid />`).join(' ');
+    await inPage(game, `holoml.add(${JSON.stringify(low)}), true`, 'hour=21.5');
+    await sleep(300);
+    await inPage(game, 'holoml.viewer.position = [12.5, 7.7, 12.5], holoml.viewer.lookAt([2, 3, 2]), true', 'hour=21.5');
+    await sleep(2400);
+    await capture(game, '52-blockworld-night');
+  } finally {
+    await game.close();
     await server.close();
   }
-}, 360_000);
+}, 480_000);

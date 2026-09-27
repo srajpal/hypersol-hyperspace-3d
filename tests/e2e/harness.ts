@@ -55,6 +55,8 @@ export interface LaunchOptions {
   dnsProbe?: string;
   /** The start panel's HoloML showroom link goes to this local copy (milestone 16). */
   showroomUrl?: string;
+  /** Every HoloML example from local copies under this address (milestone 17). */
+  examplesBase?: string;
   /** Save downloads here (test mode switch). */
   downloadsDir?: string;
   /** Act as if the system keychain were missing (test mode switch, milestone 9). */
@@ -108,6 +110,7 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
   if (opts.filtersBase !== undefined) args.push(`--filters-base=${opts.filtersBase}`);
   if (opts.dnsProbe !== undefined) args.push(`--dns-probe=${opts.dnsProbe}`);
   if (opts.showroomUrl !== undefined) args.push(`--showroom-url=${opts.showroomUrl}`);
+  if (opts.examplesBase !== undefined) args.push(`--examples-base=${opts.examplesBase}`);
   if (opts.downloadsDir !== undefined) args.push(`--downloads-dir=${opts.downloadsDir}`);
   if (opts.noKeychain) args.push('--test-no-keychain');
   if (opts.sleepMinuteMs !== undefined) args.push(`--test-sleep-minute-ms=${opts.sleepMinuteMs}`);
@@ -229,6 +232,8 @@ export interface ShellHooks {
   sceneColors(): Record<string, string>;
   status(): { state: string; url: string; title?: string; message?: string } | null;
   tabs(): TabInfo[];
+  /** The picture on a tab's card (a data address), or null. */
+  cardPicture(tabId: number): string | null;
   focusedTabId(): number;
   cardPoint(key: number | 'plus', part: 'body' | 'close' | 'audio'): Point | null;
   rail(): { scroll: number; maxScroll: number; fits: number };
@@ -275,6 +280,8 @@ export interface TabInfo {
   state: string;
   focused: boolean;
   hasSnapshot: boolean;
+  /** When the card last got a picture (the shell's performance.now(); 0 for never). */
+  snapshotAt: number;
   hasFavicon: boolean;
   canGoBack: boolean;
   canGoForward: boolean;

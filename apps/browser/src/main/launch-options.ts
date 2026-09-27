@@ -30,6 +30,8 @@ export interface LaunchOptions {
   dnsProbeUrl?: string;
   /** Test mode only: the start panel's HoloML showroom link goes to this local copy (milestone 16). */
   showroomUrl?: string;
+  /** Test mode only: every HoloML example from local copies under this address (milestone 17). */
+  examplesBase?: string;
   /** Test mode only: save downloads here instead of the Downloads folder. */
   downloadsDir?: string;
   /** Test mode only (--test-no-keychain): act as if the system keychain were unavailable (milestone 9, K5). */
@@ -82,6 +84,7 @@ export function parseLaunchOptions(
   const filtersBase = testMode ? localAddress(switchValue(argv, 'filters-base')) : undefined;
   const dnsProbeUrl = testMode ? localAddress(switchValue(argv, 'dns-probe')) : undefined;
   const showroomUrl = testMode ? localAddress(switchValue(argv, 'showroom-url')) : undefined;
+  const examplesBase = testMode ? localAddress(switchValue(argv, 'examples-base')) : undefined;
   const downloadsDir = testMode ? switchValue(argv, 'downloads-dir') : undefined;
   const sleepMinuteText = testMode ? switchValue(argv, 'test-sleep-minute-ms') : undefined;
   const sleepMinute = sleepMinuteText !== undefined && /^\d{2,6}$/.test(sleepMinuteText) ? Number(sleepMinuteText) : undefined;
@@ -100,6 +103,7 @@ export function parseLaunchOptions(
     ...(filtersBase ? { filtersBase } : {}),
     ...(dnsProbeUrl ? { dnsProbeUrl } : {}),
     ...(showroomUrl ? { showroomUrl } : {}),
+    ...(examplesBase ? { examplesBase } : {}),
     ...(downloadsDir ? { downloadsDir } : {}),
     testNoKeychain: testMode && argv.includes('--test-no-keychain'),
     testNoWebGL: testMode && argv.includes('--test-no-webgl'),

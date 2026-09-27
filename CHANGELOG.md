@@ -34,6 +34,38 @@
 - Fixed: a page could be drawn away from where the room placed it after
   focus moved into it (the page layer scrolled); most visible as a HoloML
   page opened from the start panel sitting over the tab rail.
+- HoloML 0.2 pages, the first part of the 0.2 draft (milestone 17):
+  - Scripts from the page's own site (`<script src>` in `head`), with a
+    small scene API, `holoml`: find, change, add, and remove things,
+    click, key, and frame events, the thing under the crosshair, the
+    viewer's place, and sounds. Inline scripts and scripts from other
+    sites do not run; a script that never stops leaves the browser
+    answering.
+  - Sound (`<sound>`): nothing plays before the first click or key on
+    the page, the tab's mute applies, and sound files count against the
+    page's limits.
+  - Text on the screen (`<hud>`), in the text view and read by screen
+    readers; a crosshair in walk mode.
+  - Walls and gravity: `solid` things stop the walker; `gravity` and
+    `jump` on the viewpoint (Space jumps, Shift runs).
+  - Walking from the keyboard alone: the left and right arrows now turn
+    (they moved sideways before; A and D still do), and Page Up and Page
+    Down look up and down.
+  - Lights' brightness, colour, and position, and the background, can
+    be animated; night can be dark.
+  - Models used many times are drawn together, so a scene of thousands
+    of blocks stays smooth. The model limit now counts model files (64).
+- Blockworld (milestone 17): a small block game published by HoloML at
+  https://srajpal.github.io/holoml/blockworld/: break and place blocks,
+  find five gems, bring them to the chest, and see day turn to night.
+- The HoloML examples section (milestone 17): a card with a picture for
+  each HoloML example, opened from the start panel's "Try HoloML", the
+  menu, or Ctrl+Shift+E, with links to HoloML's repository, its
+  specification, and each example's source. Nothing is fetched until a
+  link is chosen.
+- Fixed: a HoloML tab's card could show the page before its scene was
+  drawn (an empty room, or only its labels); the card's picture is now
+  taken again once the scene is drawn with nothing left to load.
 
 ## 0.9.0 — developer preview (2026-09-26)
 

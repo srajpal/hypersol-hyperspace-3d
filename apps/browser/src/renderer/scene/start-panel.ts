@@ -1,4 +1,5 @@
 import type { Bookmark, HistoryEntry } from '../../shared/data';
+import { EXAMPLES, exampleUrl } from '../examples';
 
 export interface StartData {
   bookmarks: Bookmark[];
@@ -11,22 +12,11 @@ const MAX_BOOKMARKS = 12;
 const MAX_RECENT = 8;
 
 /**
- * HoloML's showroom, published from the holoml repository with GitHub
- * Pages (milestone 16, owner prompt 81, Q1 a). Only a click on the start
- * panel's link opens it; the panel itself asks nothing of the network.
- */
-export const SHOWROOM_URL = 'https://srajpal.github.io/holoml/showroom/index.holoml';
-let showroomUrl = SHOWROOM_URL;
-
-/** Test runs only: a local copy in place of the published showroom. */
-export function setShowroomUrl(url: string): void {
-  showroomUrl = url;
-}
-
-/**
  * The new-tab start panel: a search box, then a grid of bookmarks and a
- * list of recent history, each with an empty state, and a link to try
- * HoloML's showroom.
+ * list of recent history, each with an empty state, and links to try
+ * HoloML's example sites (milestones 16 and 17), which are published from
+ * the holoml repository; only a click opens one, and the panel itself asks
+ * nothing of the network.
  */
 export class StartPanel {
   readonly element: HTMLDivElement;
@@ -37,6 +27,7 @@ export class StartPanel {
   constructor(
     onSubmit: (text: string) => void,
     private readonly onOpen: (url: string) => void,
+    onExamples: () => void = () => undefined,
   ) {
     this.element = document.createElement('div');
     this.element.className = 'hs-start';
@@ -65,9 +56,21 @@ export class StartPanel {
     this.bookmarks = section('Bookmarks', 'start-bookmarks');
     this.recent = section('Recent', 'start-recent');
     const holoml = section('Try HoloML', 'start-holoml');
-    const showroom = this.link(showroomUrl, 'HoloML showroom: five cars to walk around in 3D', 'hs-start-row');
-    showroom.dataset['testid'] = 'start-showroom';
-    holoml.append(showroom);
+    const rows = EXAMPLES.map((ex) => {
+      const row = this.link(exampleUrl(ex.id), ex.row, 'hs-start-row');
+      row.dataset['testid'] = ex.id === 'showroom' ? 'start-showroom' : `start-example-${ex.id}`;
+      return row;
+    });
+    const all = document.createElement('button');
+    all.type = 'button';
+    all.className = 'hs-start-row';
+    all.dataset['testid'] = 'start-examples';
+    const label = document.createElement('span');
+    label.className = 'hs-start-label';
+    label.textContent = 'All HoloML examples, with pictures…';
+    all.append(label);
+    all.addEventListener('click', () => onExamples());
+    holoml.append(...rows, all);
     this.element.append(title, form, this.bookmarks, this.recent, holoml);
     this.setData({ bookmarks: [], recent: [] });
   }

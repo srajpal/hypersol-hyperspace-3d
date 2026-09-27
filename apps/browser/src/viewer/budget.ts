@@ -5,6 +5,10 @@
  * pictures' sizes and triangles are read from the file's own description
  * before anything is decoded. A model that crosses a limit is left out;
  * the rest of the scene shows.
+ *
+ * Milestone 17 (HoloML 0.2 draft): a model file is loaded once however
+ * many models use it, so the limit is on model files; each model drawn
+ * counts its triangles; sound files count like model files.
  */
 
 export const LIMITS = {
@@ -12,17 +16,18 @@ export const LIMITS = {
   pageBytes: 2 * 1024 * 1024,
   /** Elements shown; later ones are left out. */
   elements: 10_000,
-  models: 64,
-  /** One file: a model or a file it names. */
+  /** Different model files (a file used by many models is loaded once). */
+  modelFiles: 64,
+  /** One file: a model, a file it names, or a sound. */
   fileBytes: 32 * 1024 * 1024,
-  /** All of a page's model files together. */
+  /** All of a page's model and sound files together. */
   totalBytes: 128 * 1024 * 1024,
   /** A picture's width and height. */
   pictureSide: 4096,
-  /** Triangles in all the page's models. */
+  /** Triangles in all the page's models, each model counted as drawn. */
   triangles: 2_000_000,
-  /** One model, from asking to shown. */
-  modelMs: 30_000,
+  /** One file (a model with the files it names, or a sound), from asking to arrived. */
+  fileMs: 30_000,
 } as const;
 
 /** Why a model was left out, in words for the notice and the inspector. */
@@ -52,9 +57,13 @@ export class Budget {
   private readonly controllers = new Set<AbortController>();
   private stopped = false;
 
-  /** Stops every load in progress (Esc, the stop button, leaving the page). */
-  stop(): void {
-    this.stopped = true;
+  /**
+   * Stops every load in progress (Esc, the stop button). Leaving the page
+   * stops for good (permanent): nothing starts after it. A plain stop lets
+   * a script's later additions load.
+   */
+  stop(permanent = false): void {
+    if (permanent) this.stopped = true;
     for (const c of this.controllers) c.abort(new LeftOut('stopped before it finished loading'));
     this.controllers.clear();
   }
@@ -72,7 +81,7 @@ export class Budget {
     if (this.stopped) throw new LeftOut('stopped before it finished loading');
     const controller = new AbortController();
     this.controllers.add(controller);
-    const timer = setTimeout(() => controller.abort(new LeftOut(`still loading after ${LIMITS.modelMs / 1000} s`)), LIMITS.modelMs);
+    const timer = setTimeout(() => controller.abort(new LeftOut(`still loading after ${LIMITS.fileMs / 1000} s`)), LIMITS.fileMs);
     const blobs = new Map<string, string>();
     // This model's bytes so far (the file and those it names).
     const tally = { bytes: 0 };
@@ -108,6 +117,47 @@ export class Budget {
       this.triangles -= reserved;
       const reason = controller.signal.aborted ? controller.signal.reason : e;
       // A limit or a stop leaves the model out; anything else (a missing file, a broken answer) is a failure.
+      throw reason instanceof LeftOut || reason instanceof Error ? reason : new Error(String(reason));
+    } finally {
+      clearTimeout(timer);
+      this.controllers.delete(controller);
+    }
+  }
+
+  /**
+   * Another model drawn from a file already loaded: its triangles count
+   * again (they are drawn again). Throws LeftOut past the limit.
+   */
+  useTriangles(n: number): void {
+    if (this.triangles + n > LIMITS.triangles) {
+      throw new LeftOut(`${n.toLocaleString('en')} more triangles would pass the page's ${LIMITS.triangles.toLocaleString('en')}`);
+    }
+    this.triangles += n;
+  }
+
+  /** A model removed by a script: its triangles no longer count. */
+  releaseTriangles(n: number): void {
+    this.triangles = Math.max(0, this.triangles - n);
+  }
+
+  /**
+   * A file other than a model (a sound), counted like a model's files.
+   * Rejects with LeftOut for a limit or a stop, or with an Error when it
+   * cannot be fetched.
+   */
+  async file(url: URL, origin: string): Promise<{ data: ArrayBuffer; bytes: number }> {
+    if (this.stopped) throw new LeftOut('stopped before it finished loading');
+    if (url.origin !== origin) throw new LeftOut(`it is from another site (${url.origin})`);
+    const controller = new AbortController();
+    this.controllers.add(controller);
+    const timer = setTimeout(() => controller.abort(new LeftOut(`still loading after ${LIMITS.fileMs / 1000} s`)), LIMITS.fileMs);
+    const tally = { bytes: 0 };
+    try {
+      const data = await this.fetchCounted(url, controller.signal, tally);
+      return { data, bytes: tally.bytes };
+    } catch (e) {
+      this.release(tally);
+      const reason = controller.signal.aborted ? controller.signal.reason : e;
       throw reason instanceof LeftOut || reason instanceof Error ? reason : new Error(String(reason));
     } finally {
       clearTimeout(timer);
