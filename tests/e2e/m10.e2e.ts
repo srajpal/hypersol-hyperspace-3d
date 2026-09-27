@@ -375,11 +375,30 @@ describe('L8 and L9: history through the worker', () => {
     h = await launch('', { userDataDir: profile });
     try {
       expect(await h.app.evaluate(() => (globalThis as unknown as { __hypersolTest: { historyWorker(): boolean } }).__hypersolTest.historyWorker())).toBe(true);
-      // The longest time the main process is held: a chain of setImmediate
-      // calls keeps its event loop turning, and the longest gap between two
-      // turns is the longest piece of work in between. (An event-loop delay
-      // timer cannot be used: an idle Windows process wakes only every
-      // 15.6 ms, so it read 16 to 24 ms with no work at all; prompt 83.)
+      const searches = () =>
+        h.shell.evaluate(async () => {
+          const w = window as unknown as { hypersol: { data(r: object): Promise<{ ok: boolean; value: unknown[] }> } };
+          const out: number[] = [];
+          for (const query of ['charlie', 'page 99', 'hotel', 'site42', 'go', '', 'juliet page', 'echo']) {
+            const start = performance.now();
+            const reply = await w.hypersol.data({ op: 'history.search', query, limit: 500 });
+            out.push(performance.now() - start);
+            if (!reply.ok) throw new Error('search failed');
+          }
+          const start = performance.now();
+          await w.hypersol.data({ op: 'history.recent', limit: 8 });
+          out.push(performance.now() - start);
+          return out;
+        });
+      // First the answer times, with nothing else running.
+      const timings = await searches();
+      // Then the same searches again for the longest time the main process
+      // is held: a chain of setImmediate calls keeps its event loop turning,
+      // and the longest gap between two turns is the longest piece of work
+      // in between. (An event-loop delay timer cannot be used: an idle
+      // Windows process wakes only every 15.6 ms, so it read 16 to 24 ms
+      // with no work at all; prompt 83.) The probe keeps a processor busy,
+      // so the answer times are not taken while it runs.
       await h.app.evaluate(() => {
         const probe = { max: 0, stop: false };
         let last = performance.now();
@@ -392,26 +411,13 @@ describe('L8 and L9: history through the worker', () => {
         setImmediate(turn);
         (globalThis as unknown as { __lag: typeof probe }).__lag = probe;
       });
-      const timings = await h.shell.evaluate(async () => {
-        const w = window as unknown as { hypersol: { data(r: object): Promise<{ ok: boolean; value: unknown[] }> } };
-        const out: number[] = [];
-        for (const query of ['charlie', 'page 99', 'hotel', 'site42', 'go', '', 'juliet page', 'echo']) {
-          const start = performance.now();
-          const reply = await w.hypersol.data({ op: 'history.search', query, limit: 500 });
-          out.push(performance.now() - start);
-          if (!reply.ok) throw new Error('search failed');
-        }
-        const start = performance.now();
-        await w.hypersol.data({ op: 'history.recent', limit: 8 });
-        out.push(performance.now() - start);
-        return out;
-      });
+      const probed = await searches();
       const lagMs = await h.app.evaluate(() => {
         const probe = (globalThis as unknown as { __lag: { max: number; stop: boolean } }).__lag;
         probe.stop = true;
         return probe.max;
       });
-      writeFileSync(join(tmpdir(), 'hypersol-l9-timings.json'), JSON.stringify({ timings, lagMs }));
+      writeFileSync(join(tmpdir(), 'hypersol-l9-timings.json'), JSON.stringify({ timings, probed, lagMs }));
       // The first search warms the page cache (a person's first search after starting the app).
       for (const ms of timings.slice(1)) expect(ms).toBeLessThan(50);
       expect(lagMs).toBeLessThan(20);

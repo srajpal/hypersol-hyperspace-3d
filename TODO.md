@@ -2474,6 +2474,17 @@ after the first 1 to 32 ms, as before; all nine m10 checks passed. A 25 ms busy 
 process during the searches read 26.5 ms and failed L9, so the probe
 catches a real hold.
 
+CI on the pull request (#33): the probe keeps a processor busy, and on
+GitHub's Windows runner one search then took 59 ms (limit 50). L9 now
+runs the searches twice: first for the answer times with nothing else
+running (as before), then again with the probe for the longest hold.
+Both limits are unchanged. Local runs: holds 0.7 to 2.1 ms; one run's
+answer times went to 65 ms while another session's tests were using
+the machine, with the probe off, so that pass is as sensitive to a
+busy machine as it was before. R3 (m15) failed on both runners in the
+same CI run, as it does on main (run 36330814489); it is not part of
+this change.
+
 ## GitHub issue #30: lost clicks on Linux CI (2026-09-27, prompt 74)
 
 On GitHub's Linux runner a click sent right after a page appears or
