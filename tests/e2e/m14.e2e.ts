@@ -75,6 +75,16 @@ async function screenOf(h: Harness, which: string | number, page: string): Promi
   return project(h, p!.x, p!.y);
 }
 
+/** For a failed link click: what the viewer and the shell have at that point. */
+async function linkReport(h: Harness, which: number, page: string): Promise<string> {
+  const p = await holo<Point | null>(h, `window.__holoml.point(${which})`, page);
+  const at = p ? await holo<string | null>(h, `window.__holoml.linkAt(${p.x}, ${p.y})`, page) : null;
+  const view = await holo<View>(h, 'window.__holoml.view()', page);
+  const fill = await shellCall(h, 'holoml');
+  const size = await inPage<number[]>(h, '[innerWidth, innerHeight]', page);
+  return `link ${which} at page point ${JSON.stringify(p)}; the viewer's link there: ${at}; view ${JSON.stringify(view)}; fill ${JSON.stringify(fill)}; page size ${JSON.stringify(size)}`;
+}
+
 /** Holds a key in the page for a while (walking needs it held). */
 async function holdKey(h: Harness, page: string, keyCode: string, ms: number): Promise<void> {
   const send = (type: 'keyDown' | 'keyUp') =>
@@ -230,7 +240,14 @@ describe('P4: links', () => {
     await pressInShell(h, 'Left', ['alt']);
     await waitFor('back', async () => (await focusedTab(h)).url, (u) => u === server.url('holoml/still.holoml'));
     await sceneReady(h, PAGE);
-    await clickUntil(h, await screenOf(h, 1, PAGE), 'the label link', async () => (await focusedTab(h)).url === server.url('holoml/second.holoml#top'));
+    await clickUntil(
+      h,
+      await screenOf(h, 1, PAGE),
+      'the label link',
+      async () => (await focusedTab(h)).url === server.url('holoml/second.holoml#top'),
+      {},
+      () => linkReport(h, 1, PAGE),
+    );
   });
 
   it('Tab reaches a link from the keyboard, and Enter follows it', async () => {

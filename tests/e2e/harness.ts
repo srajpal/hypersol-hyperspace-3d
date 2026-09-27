@@ -478,6 +478,8 @@ export async function clickUntil(
   what: string,
   done: () => Promise<boolean>,
   options: { button?: 'left' | 'right' } = {},
+  /** More to say in the failure message, if every attempt fails. */
+  explain?: () => Promise<string>,
 ): Promise<void> {
   for (let attempt = 1; ; attempt++) {
     await clickAt(h, p, options);
@@ -485,7 +487,8 @@ export async function clickUntil(
       await waitFor(what, done, (v) => v, attempt < 3 ? 4000 : 15_000);
       return;
     } catch (e) {
-      if (attempt >= 3) throw e;
+      if (attempt >= 3) throw explain ? new Error(`${String(e)}
+${await explain().catch((x: unknown) => `(no details: ${String(x)})`)}`) : e;
       console.warn(`[harness] ${what}: the click did not reach the page; clicking again (attempt ${attempt + 1})`);
     }
   }
