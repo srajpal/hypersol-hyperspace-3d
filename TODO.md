@@ -1721,8 +1721,13 @@ Changed checks, because their requirement changed (documented here):
 - Deferred until the installers milestone: Windows signing, Linux
   formats, updates, the Windows installer type (questions Q2 to Q5 of
   prompt 54).
-- Being discussed (prompt 56): legal identity. HyperSol the company no
-  longer exists; this is a personal project, not marketed now.
+- Legal identity (prompts 56 and 57): HyperSol the company no longer
+  exists; this is a personal project, not marketed now. D1 a: copyright
+  "The HyperSpace 3D Authors", with an AUTHORS file. D2 a: keep the name
+  HyperSol HyperSpace 3D, with a README line that HyperSol no longer
+  exists and this is a personal project honouring it. D3 a: outside
+  contributions come under Apache 2.0's own terms, no paperwork. D4 a:
+  the holoml repository the same ("The HoloML Authors").
 
 ## GitHub issues #8 to #15 (2026-09-26, prompt 39)
 

@@ -641,3 +641,15 @@ Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b3
 A-a, B-a, C-a, E-a, F-a
 but lets discuss legal identity, hypersol the company no longer exists. this is a pet project and it is not for marketing the product at this time.
 ```
+
+## 57 — 2026-09-26
+
+Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b35 · Tokens: not captured
+
+```text
+D1-a, D2-a, D3-a, D4-a, delete the folder
+lets also review everything for privacy, not just the software but things like the PROMPTS.md. I wanted a full record of how this software was made as a demonstration of orchestrating a large software build but i don't want any esoteric, inane, or personal info on there. (also no typos)
+figure out  the best way to do this.
+then lets kick of whatever we need to finish hyperspace 3d and to start on holoml.
+ask questions about it if you need.
+```
