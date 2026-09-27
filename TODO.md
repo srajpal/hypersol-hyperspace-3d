@@ -2455,11 +2455,10 @@ repository and becomes the browser's showcase.
 ### Results (2026-09-27)
 
 The showroom is in holoml pull request #12
-(https://github.com/srajpal/holoml/pull/12), branch showroom. The
-browser's copy (tests/fixtures/holoml/showroom) is synced from that
-branch's commit (`pnpm holoml:sync v0.1.1 --showroom showroom`); after
-the merge it is synced again from holoml's main or a tag. Checks are in
-tests/e2e/m16.e2e.ts.
+(https://github.com/srajpal/holoml/pull/12), merged by the owner. The
+browser's copy (tests/fixtures/holoml/showroom) is synced from holoml's
+main at the merge commit (`pnpm holoml:sync v0.1.1 --showroom main`).
+Checks are in tests/e2e/m16.e2e.ts.
 
 | # | Result |
 |---|---|
@@ -2470,10 +2469,11 @@ tests/e2e/m16.e2e.ts.
 | S5 | Pass. Tab reaches the five cars by name and "About this showroom", each outlined; the text view lists the cars, their lines, and the title; with reduced motion the turntable stands still |
 | S6 | Pass. The hall keeps drawing while the turntable turns (at least 10 frames a second with a graphics card; in software only that it draws, as C9 and G9); an idle car page draws no frames for 1.5 s |
 | S7 | Pass. The about page credits "Kenney's Car Kit (kenney.nl, CC0)" and links to the spec; models/CREDITS.md is in the copy |
-| S8 | Partly done. The start panel's "Try HoloML" link points to https://srajpal.github.io/holoml/showroom/index.holoml (checked), and with the test switch it opens the local copy (checked). GitHub Pages is switched on for the holoml repository (build from the Pages workflow); the site goes live when pull request #12 is merged. Opening the published site is the owner's check by hand after that |
-| S9 | Pass. Full run: 222 of 222 end-to-end checks (C to S). Unit tests: 252 passed; lint and type check clean |
+| S8 | Pass after a fix. The start panel's "Try HoloML" link points to https://srajpal.github.io/holoml/showroom/index.holoml, and with the test switch it opens the local copy. After the merge the owner opened the published site in a development run (`pnpm dev`) and it stayed blank (prompt 82): the viewer's script came back as the dev server's HTML page. In development runs the viewer is served by the renderer's dev server, whose root is the shell's folder, so the viewer's address was wrong there, and the modules it imports could not come through the viewer's scheme; HoloML pages had never worked in `pnpm dev` (every test and screenshot uses the built app). Fixed in main/holoml.ts: in development runs every viewer request goes to the dev server, the entry by its file path. A new check starts the dev server on its own and points the built app at it, offline: the showroom draws (it timed out without the fix). The published site, opened once by hand in the built app, draws with all 11 models and no problems |
+| S9 | Pass. Full run: 222 of 222 end-to-end checks (C to S). After the development-run fix (S8), the HoloML files (M14 to M16, now 47 checks with the new one) passed again. Unit tests: 252 passed; lint and type check clean |
 
-A fault found along the way and fixed: after focus moved into a page,
+Faults found along the way and fixed: HoloML pages in development runs
+(see S8); and after focus moved into a page,
 Chromium scrolled the layer that holds the pages, so the page was drawn
 away from where the room placed it (a HoloML page opened from the
 start panel sat 89 pixels left, over the tab rail). The layer is now

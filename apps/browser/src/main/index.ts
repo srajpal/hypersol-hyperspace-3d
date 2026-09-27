@@ -333,7 +333,10 @@ if (!app.requestSingleInstanceLock()) {
 
     // HoloML pages (milestone 14, main/holoml.ts).
     const devServer = !app.isPackaged ? process.env['ELECTRON_RENDERER_URL'] : undefined;
-    const pages = new HolomlPages({ viewerFiles: devServer ? null : join(__dirname, '../renderer'), ...(devServer ? { devServer } : {}) });
+    const pages = new HolomlPages({
+      viewerFiles: devServer ? null : join(__dirname, '../renderer'),
+      ...(devServer ? { devServer, viewerSource: join(__dirname, '../../src/viewer/main.ts') } : {}),
+    });
     holoml = pages;
     pages.register(ses);
     pages.register(privateSes);

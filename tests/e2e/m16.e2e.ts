@@ -5,8 +5,12 @@
  * fixture. S1 (valid pages) is holoml's own unit test; S8 (the published
  * site) is checked by hand, since tests stay on this machine.
  */
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { _electron as electron } from 'playwright';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FIXTURES_DIR, startFixtureServer, type FixtureServer } from './fixture-server';
 import {
@@ -25,6 +29,9 @@ import {
   waitForPage,
   type Harness,
   type Point,
+  APP_DIR,
+  OFFLINE_RULES,
+  removeFolder,
 } from './harness';
 
 let server: FixtureServer;
@@ -278,4 +285,44 @@ describe('the published showroom', () => {
       await h.close();
     }
   });
+});
+
+describe('HoloML pages in a development run (pnpm dev)', () => {
+  // Found after milestone 16 (owner, prompt 82): in pnpm dev the viewer
+  // comes from the renderer's dev server, which answered its HTML page for
+  // the viewer's address, so every HoloML page stayed blank. Here the dev
+  // server is started on its own (Vite, as electron-vite starts it) and
+  // the built app is pointed at it, in a throwaway profile, offline.
+  it('the showroom draws with the viewer served by the dev server', async () => {
+    const req = createRequire(join(APP_DIR, 'package.json'));
+    // Vite belongs to the browser package (tests do not import it directly).
+    type DevServer = { listen(): Promise<unknown>; close(): Promise<void>; resolvedUrls: { local: string[] } | null };
+    const vite = (await import(pathToFileURL(req.resolve('vite')).href)) as { createServer(options: object): Promise<DevServer> };
+    const dev = await vite.createServer({ root: join(APP_DIR, 'src/renderer'), configFile: false, logLevel: 'warn', server: { port: 0, host: '127.0.0.1' } });
+    await dev.listen();
+    const devUrl = dev.resolvedUrls!.local[0]!.replace(/\/$/, '');
+    const profile = mkdtempSync(join(tmpdir(), 'hypersol-e2e-dev-'));
+    const env = { ...process.env, HYPERSOL_TEST: '1', HYPERSOL_TEST_BACKGROUND: '1', ELECTRON_RENDERER_URL: devUrl } as Record<string, string>;
+    delete env['ELECTRON_RUN_AS_NODE'];
+    const app = await electron.launch({
+      executablePath: req('electron') as unknown as string,
+      args: [APP_DIR, `--start-url=${url('index.holoml')}`, `--hypersol-user-data=${profile}`, OFFLINE_RULES],
+      env,
+    });
+    try {
+      await app.firstWindow();
+      const scene = () =>
+        app.evaluate(async ({ webContents }) => {
+          const page = webContents.getAllWebContents().find((w) => w.getType() === 'webview' && w.getURL().includes('index.holoml'));
+          return page ? ((await page.executeJavaScript('window.__holoml ? { ready: window.__holoml.ready, models: window.__holoml.models().map((m) => m.state) } : null')) as { ready: boolean; models: string[] } | null) : null;
+        });
+      const done = await waitFor('the showroom drawn in a development run', scene, (s) => s?.ready === true, 30_000);
+      expect(done!.models).toHaveLength(11);
+      expect(done!.models.every((m) => m === 'loaded')).toBe(true);
+    } finally {
+      await app.close();
+      await dev.close();
+      await removeFolder(profile);
+    }
+  }, 90_000);
 });

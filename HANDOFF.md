@@ -30,10 +30,10 @@ state; this is a summary.
   navigation, an inspector: GitHub issues #23, #25, #28; accepted
   2026-09-27, prompt 79; the holoml spec note is in holoml pull request
   #7), 16 a car
-  showroom demo (built 2026-09-27, waiting for the owner's acceptance:
-  the showroom is on the holoml branch showroom, pull request pending;
-  the browser's copy is synced from that branch until it is merged and
-  tagged); 17 privacy and data tools (HTTPS-only, per-site
+  showroom demo (built 2026-09-27, waiting for the owner's acceptance;
+  the showroom is merged in holoml (pull request #12) and published at
+  https://srajpal.github.io/holoml/showroom/; the browser's copy is
+  synced from holoml's main); 17 privacy and data tools (HTTPS-only, per-site
   storage, bookmark import and export: #24, #26, #27); then installers
   as 1.0 (18 for Windows and Linux, 19 for macOS), with mobile later
   (owner, prompt 67).

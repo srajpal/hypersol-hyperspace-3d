@@ -8,8 +8,8 @@
     "src/schema.ts": "0debd7b7fbfa58c69c52f2458c447b77eaeffe881740fba20e204e3008e0381a"
   },
   "showroom": {
-    "ref": "showroom",
-    "commit": "58846216195324b7c46a7b28658bb4bbb11a3c15",
+    "ref": "main",
+    "commit": "b78b055ff5a1539c923ce11533d8bf6dbe87a847",
     "files": {
       "README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
       "about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",

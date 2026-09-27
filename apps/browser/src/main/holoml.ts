@@ -110,6 +110,8 @@ export interface HolomlOptions {
   viewerFiles: string | null;
   /** Development runs: the renderer's dev server, which serves the viewer. */
   devServer?: string;
+  /** Development runs: the viewer's entry file on disk (src/viewer/main.ts), which the dev server serves by its path. */
+  viewerSource?: string;
 }
 
 export class HolomlPages {
@@ -160,9 +162,7 @@ export class HolomlPages {
   }
 
   private async serveViewer(request: Request): Promise<Response> {
-    const { pathname } = new URL(request.url);
-    // Only the viewer's scripts: other files of the browser are not served.
-    if (!/^\/assets\/[\w.-]+\.js$/.test(pathname)) return new Response('Not found', { status: 404 });
+    const { pathname, search } = new URL(request.url);
     const headers = {
       'content-type': 'text/javascript; charset=utf-8',
       'access-control-allow-origin': '*',
@@ -170,10 +170,22 @@ export class HolomlPages {
       'cache-control': 'no-cache',
     };
     if (this.options.viewerFiles === null) {
-      if (!this.options.devServer) return new Response('Not found', { status: 404 });
-      const res = await net.fetch(new URL(pathname.replace(/^\/assets\/viewer\.js$/, '/src/viewer/main.ts'), this.options.devServer).href);
+      // Development runs: the dev server serves the viewer as modules, and
+      // every module it imports (its own files, Three.js) comes through
+      // here too, by the dev server's own paths. The entry is the source
+      // file by its place on disk (/@fs/...): the dev server's root is the
+      // shell's folder, not the viewer's (found in milestone 16: it
+      // answered its HTML page, and HoloML pages stayed blank in pnpm dev).
+      const { devServer, viewerSource } = this.options;
+      if (!devServer || !viewerSource) return new Response('Not found', { status: 404 });
+      const path = pathname === '/assets/viewer.js' ? `/@fs/${viewerSource.replace(/\\/g, '/').replace(/^\/+/, '')}` : pathname;
+      const res = await net.fetch(new URL(path + search, devServer).href);
+      const type = res.headers.get('content-type') ?? '';
+      if (!/javascript/.test(type)) return new Response('Not found', { status: 404 });
       return new Response(res.body, { status: res.status, headers });
     }
+    // Only the viewer's scripts: other files of the browser are not served.
+    if (!/^\/assets\/[\w.-]+\.js$/.test(pathname)) return new Response('Not found', { status: 404 });
     try {
       const body = await readFile(join(this.options.viewerFiles, pathname));
       return new Response(body, { headers });

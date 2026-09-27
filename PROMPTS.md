@@ -912,3 +912,14 @@ the README note in AGENTS.md changed to say so).
 ```text
 Use the recommendations for the questions, build.
 ```
+
+## 82 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Owner merged holoml pull request #12 (the showroom) and reports that the
+published showroom opens blank. Screenshot: HyperSpace 3D at
+https://srajpal.github.io/holoml/showroom/index.holoml, an empty dark
+page.
+
+```text
+Merged holoml #12, but it is blank when I load it in HyperSpace 3D.
+```
