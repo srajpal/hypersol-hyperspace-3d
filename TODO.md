@@ -2948,6 +2948,53 @@ On the answers, the first of the new milestones (per Q4) gets a full
 plan with its tasks and checks for approval, with the Rule 13 check at
 its start. The roadmap table is changed at that point, not before.
 
+## The HoloML checks on GitHub's Linux machines (2026-09-27, prompt 93)
+
+The automatic builds on main had failed since milestone 16's build. On
+Windows, a unit test: the copied example sites got Windows line endings
+on checkout, so their hashes no longer matched (fixed in the owner's
+other session, browser pull request #33, with a .gitattributes rule).
+On Linux, most of milestone 17's checks and milestone 16's
+development-run check failed, and R3 (milestone 15) and K1 (milestone 9)
+now and then. The agent had run milestone 17's checks only on a machine
+with a graphics card, and had not looked at the automatic builds. The
+owner asked for the Linux failures to be fixed, in a pull request
+(prompt 93).
+
+What was wrong, and what changed (the requirements are unchanged):
+
+- GitHub's machines have no graphics card, so Chromium draws in software
+  (SwiftShader), and a scene as big as Blockworld draws a frame far more
+  slowly. The checks waited fixed times (a key held 0.6 s, a walker to
+  land within 5 s, 0.3 s before comparing pictures), and got a frame or
+  two in that time. They now wait for what they check: a key is held
+  until the view has turned or the walker has moved (holdKeyUntil),
+  waits for the walker to land are six times as long when drawing in
+  software (sceneWait), and pictures are compared after new frames have
+  been drawn (framesDrawn). Breaking and placing now aim at whatever
+  block is under the crosshair once the walker stands still, and check
+  that block and the face it points at.
+- Clicks sent right after a page changes are sometimes lost there
+  (issue #30): the checks that click Blockworld and the slider now click
+  again when a click has no effect (clickUntil), as the other checks do.
+- The two development-run checks start Electron themselves and missed
+  the switch the harness gives on Linux (--enable-unsafe-swiftshader),
+  so there was no WebGL 2 and the viewer showed its notice instead of
+  the scene. The switches now come from one place (graphicsSwitches).
+- The card check's car arrived after a fixed two seconds, which a slow
+  machine can take before the first picture; the fixture server now
+  holds the car until the check lets it through (a gate).
+- T8 read a picture's size before it had loaded; it now waits for it.
+- R3 and T2 (the browser answering within 200 ms) failed there with one
+  answer of 1.2 to 1.5 s. The cause is not known yet; both now report
+  the shell's long tasks and the main process's pauses when they fail,
+  and T2 measures once the shell's own switch animation has finished.
+- HYPERSOL_TEST_SOFTWARE=1 draws in software on any machine, as GitHub's
+  machines do: with it, milestones 15 to 18 failed here as on GitHub
+  (T6, T7, T8, S3), and pass after these changes (50 of 50).
+
+Results: see the pull request's automatic builds.
+
 ## GitHub issue #30: lost clicks on Linux CI (2026-09-27, prompt 74)
 
 On GitHub's Linux runner a click sent right after a page appears or

@@ -167,6 +167,13 @@ date given and grow with each milestone; TODO.md has the latest.
   example `HYPERSOL_TEST_SHOW=1 pnpm test:e2e`); then leave the machine
   alone while it runs. Check C1 confirms background windows are off
   every display and unfocused.
+- GitHub's Linux machines have no graphics card and draw in software. To
+  draw that way on any machine and find checks that pass only with a
+  graphics card, set HYPERSOL_TEST_SOFTWARE=1 (for example
+  `HYPERSOL_TEST_SOFTWARE=1 pnpm test:e2e`; first run 2026-09-27); the
+  frame-rate budgets are then skipped, as there. Checks of scenes wait
+  for what they check, not for fixed times (holdKeyUntil, framesDrawn,
+  and sceneWait in tests/e2e/harness.ts).
 
 What to recheck after any change (regression list; grows with each
 milestone; the current milestone's checks are defined in TODO.md):

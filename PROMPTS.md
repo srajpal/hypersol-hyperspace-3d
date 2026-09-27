@@ -1056,3 +1056,14 @@ Do the speed variable, and add a little slider in the game to change
 the speed, so that the code shows how to use it. Include it in
 milestone 18. Speed up the turning too, with the slider option.
 ```
+
+## 93 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answer to the agent's question: whether it should fix the end-to-end
+checks that fail on GitHub's Linux runner (most of milestone 17's, the
+milestone 16 development-run check, R3, and K1), with a branch and a
+pull request so the Linux checks run.
+
+```text
+Yes, fix the Linux failures, push a branch and open a PR.
+```

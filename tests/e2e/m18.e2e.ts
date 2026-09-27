@@ -8,7 +8,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
-import { clickAt, inPage, launch, pressInPage, project, shellCall, sleep, waitFor, waitForPage, type Harness } from './harness';
+import { clickUntil, inPage, launch, pressInPage, project, shellCall, sleep, waitFor, waitForPage, type Harness } from './harness';
 
 let server: FixtureServer;
 
@@ -191,8 +191,8 @@ describe('U2 to U5: speeds and sliders', () => {
       "(() => { const r = document.querySelector('[data-id=\"pace\"] input').getBoundingClientRect(); return { x: r.right - 3, y: r.top + r.height / 2 }; })()",
       PAGE,
     );
-    await clickAt(h, await project(h, end.x, end.y));
-    await waitFor('the slider at 2', () => inPage<number>(h, "holoml.find('pace').value", PAGE), (v) => v === 2);
+    // Clicked again if a click is lost (GitHub's Linux machines, issue #30).
+    await clickUntil(h, await project(h, end.x, end.y), 'the slider at 2', async () => (await inPage<number>(h, "holoml.find('pace').value", PAGE)) === 2);
     expect((await view(h, PAGE)).speed).toBe(8);
     expect(await inPage<number>(h, 'window.__clicks', PAGE)).toBe(0);
 

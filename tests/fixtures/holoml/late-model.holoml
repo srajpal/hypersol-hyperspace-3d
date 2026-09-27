@@ -6,8 +6,8 @@
     <viewpoint position="0 1.2 5" look-at="0 0.5 0" />
     <light type="ambient" intensity="0.8" />
     <light type="directional" position="4 8 5" look-at="0 0 0" intensity="1.2" />
-    <label id="note" position="0 2.2 0">The car arrives after two seconds</label>
-    <model id="late" src="gen/late-car.gltf?ms=2000" rotation="0 30 0" scale="1.4">
+    <label id="note" position="0 2.2 0">The car arrives when the check lets it</label>
+    <model id="late" src="gen/late-car.gltf?gate=late-car" rotation="0 30 0" scale="1.4">
       <material name="Paint" color="#d01010" metalness="0" roughness="0.6" />
     </model>
   </scene>

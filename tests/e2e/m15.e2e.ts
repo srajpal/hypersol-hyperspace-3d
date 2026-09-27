@@ -23,6 +23,7 @@ import {
   sleep,
   waitFor,
   waitForPage,
+  watchStalls,
   type Harness,
   type Point,
 } from './harness';
@@ -173,6 +174,7 @@ describe('R3: a page of 20,000 elements', () => {
     const PAGE = 'many.holoml';
     await shellCall(h, 'showUrl', server.url('holoml/gen/many.holoml?n=20000'));
     // While the page loads and builds, the browser's own controls answer at once.
+    const stalls = await watchStalls(h);
     const times: number[] = [];
     const until = Date.now() + 3000;
     while (Date.now() < until) {
@@ -181,9 +183,10 @@ describe('R3: a page of 20,000 elements', () => {
       times.push(performance.now() - t);
       await sleep(50);
     }
+    const why = await stalls();
     await waitForPage(h, PAGE);
     await sceneReady(h, PAGE);
-    expect(Math.max(...times), `shell answers took ${times.map((t) => t.toFixed(0)).join(', ')} ms`).toBeLessThan(200);
+    expect(Math.max(...times), `shell answers took ${times.map((t) => t.toFixed(0)).join(', ')} ms; ${why}`).toBeLessThan(200);
     expect(await holo<string[]>(h, 'window.__holoml.labels()', PAGE)).toContain('First of many');
     const out = await leftOut(h, PAGE);
     expect(out).toHaveLength(1);

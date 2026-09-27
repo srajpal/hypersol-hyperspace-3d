@@ -1,7 +1,7 @@
 {
   "repository": "https://github.com/srajpal/holoml",
   "tag": "speed-and-slider",
-  "commit": "ff08334c8c277ec0698ff983698041141350fc0c",
+  "commit": "38da28231e9cd1c356580066ecb3d904c8d057ba",
   "files": {
     "src/parser.ts": "f41e9b98a2a7bd30756d864d9e818620bb5ca480cfd3385184e991e231824526",
     "src/rules.ts": "7d716495bb441bf9a6b89d9914e4dc68250b5bea64dd184f92c32100c65ec6c7",
@@ -9,7 +9,7 @@
   },
   "examples": {
     "ref": "speed-and-slider",
-    "commit": "ff08334c8c277ec0698ff983698041141350fc0c",
+    "commit": "38da28231e9cd1c356580066ecb3d904c8d057ba",
     "files": {
       "showroom/README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
       "showroom/about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",
