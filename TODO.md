@@ -168,7 +168,7 @@ first use and checks it against checksums shipped in the package).
 | C6 | Hover and links | Automated | Hover reported; link loads the second page |
 | C7 | Page isolation | Automated: `node-probe.html` | No Node access; any page-requested preload is replaced by the trusted stub |
 | C8 | No unexpected traffic | Automated: log all requests during the run | Only 127.0.0.1 |
-| C9 | Idle efficiency | Automated: count frames | No redraws while idle; about 60 fps during parallax |
+| C9 | Idle efficiency | Automated: count frames | No redraws while idle; about 60 fps during parallax on graphics hardware (where Chromium draws in software, the rate is reported and that part is skipped, not passed; owner, prompt 59) |
 | C10 | Load failure | Automated: stop the server, then load a page | Plain "couldn't load" text; app does not crash |
 | C11 | Page crash | Automated: force the page's process to crash | App survives; message with Reload |
 | C12 | Layout and style code | Vitest (unit) | Panel position and tilt correct; parallax cap and pause hold; one theme value yields matching CSS and 3D colour |
@@ -1777,7 +1777,11 @@ made cleaned for privacy and spelling.
     before the fix and passes after.
   - C9's frame rate failed: 16.8 frames a second against at least 50.
     The runner has no graphics card, so Chromium draws in software.
-    Waiting for the owner's decision (rule 8).
+    Owner's decision (prompt 59, option a): where the room's WebGL
+    renderer is a software one (SwiftShader, llvmpipe, Microsoft Basic
+    Render Driver), C9 still measures and prints the rate, then marks
+    the frame-rate part skipped; on graphics hardware it must still
+    reach 50. The idle part of C9 runs everywhere.
   - End-to-end on Linux: every app launch timed out, and the run hit
     its 45-minute limit before errors were printed. The harness now
     prints a launch failure as it happens; under investigation.

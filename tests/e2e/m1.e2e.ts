@@ -399,6 +399,16 @@ describe('C8 no unexpected traffic', () => {
   });
 });
 
+/** The WebGL renderer's name when it is a software one, else null. */
+async function softwareRenderer(h: Harness): Promise<string | null> {
+  const name = await h.shell.evaluate(() => {
+    const gl = document.createElement('canvas').getContext('webgl2');
+    const info = gl?.getExtension('WEBGL_debug_renderer_info');
+    return gl && info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : '';
+  });
+  return /swiftshader|llvmpipe|softpipe|basic render|warp/i.test(name) ? name : null;
+}
+
 describe('C9 idle efficiency', () => {
   let h: Harness;
   beforeAll(async () => {
@@ -415,7 +425,7 @@ describe('C9 idle efficiency', () => {
     expect(await shellCall(h, 'frames')).toBe(before);
   });
 
-  it('draws about 60 frames a second while the camera follows the pointer', async () => {
+  it('draws about 60 frames a second while the camera follows the pointer', async (ctx) => {
     const room = await roomPoint(h);
     const before = await shellCall(h, 'frames');
     const start = Date.now();
@@ -427,6 +437,15 @@ describe('C9 idle efficiency', () => {
     const seconds = (Date.now() - start) / 1000;
     const fps = ((await shellCall(h, 'frames')) - before) / seconds;
     console.log(`C9: ${fps.toFixed(1)} frames per second during parallax`);
+    // The rate is a promise about graphics hardware. Where Chromium draws in
+    // software (GitHub's test machines have no graphics card), it is
+    // measured and reported, and the check is skipped, not passed (owner,
+    // prompt 59). The idle check above runs everywhere.
+    const software = await softwareRenderer(h);
+    if (software) {
+      console.log(`C9: frame rate not checked: drawing in software (${software})`);
+      ctx.skip();
+    }
     expect(fps).toBeGreaterThanOrEqual(50);
   });
 });
