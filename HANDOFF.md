@@ -32,10 +32,13 @@ state; this is a summary.
   #7), 16 a car
   showroom demo (accepted 2026-09-27, prompt 83; the showroom is merged in holoml (pull request #12) and published at
   https://srajpal.github.io/holoml/showroom/; the browser's copy is
-  synced from holoml's main); 17 privacy and data tools (HTTPS-only, per-site
-  storage, bookmark import and export: #24, #26, #27); then installers
-  as 1.0 (18 for Windows and Linux, 19 for macOS), with mobile later
-  (owner, prompt 67).
+  synced from holoml's main); 17 to 21 five more HoloML example sites,
+  one milestone each, growing HoloML 0.2 (prompts 84 and 85: 17
+  Blockworld with the browser's examples section, being planned; 18
+  Sofa studio; 19 Harbour Loft; 20 Coral Bay; 21 Aquarium); 22 privacy
+  and data tools (HTTPS-only, per-site storage, bookmark import and
+  export: #24, #26, #27); then installers as 1.0 (23 for Windows and
+  Linux, 24 for macOS), with mobile later (owner, prompt 67).
 - The logo direction is chosen (concept 4d in
   docs/branding/logo-concepts/); the real icons come with the installers.
 - HyperSol, the company founded in 2001, no longer exists. This is a

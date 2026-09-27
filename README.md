@@ -142,8 +142,12 @@ starts with a small prototype and the same habits of direction and checking.
 
 ## What comes next
 
-Milestone 17, privacy and data tools: HTTPS-only browsing, per-site storage, and bookmark import and export. 18 and 19,
-installers as 1.0 for Windows and Linux, then macOS. Later: free camera
+Milestones 17 to 21, five more HoloML example sites, each adding to
+the language: Blockworld (a small block game, with a HoloML examples
+section in the browser), a sofa studio, an apartment tour, a resort,
+and an aquarium. 22, privacy and data tools: HTTPS-only browsing,
+per-site storage, and bookmark import and export. 23 and 24, installers
+as 1.0 for Windows and Linux, then macOS. Later: free camera
 movement, pictures and 3D models lifted out of ordinary pages, mobile,
 and VR. The full roadmap is in [TODO.md](TODO.md).
 

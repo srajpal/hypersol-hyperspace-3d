@@ -28,12 +28,17 @@ Plan approved 2026-09-24.
 | 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Done (accepted, prompt 76) |
 | 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Done (accepted, prompt 79) |
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
-| 17 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a) |
-| 18 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
-| 19 | macOS release | Signing, notarization, Mac checks | Later |
-| 20 | Free camera and room navigation | Move freely around the room | Later |
-| 21 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
-| 22 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
+| 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Planning (prompt 85) |
+| 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes | Later (prompt 85, Q4 a) |
+| 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Later (prompt 85, Q4 a) |
+| 20 | Coral Bay | A resort: paths to ride, sounds by place, sky and environment light, loading by area | Later (prompt 85, Q4 a) |
+| 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
+| 22 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85) |
+| 23 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
+| 24 | macOS release | Signing, notarization, Mac checks | Later |
+| 25 | Free camera and room navigation | Move freely around the room | Later |
+| 26 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
+| 27 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS and Android | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
@@ -56,6 +61,13 @@ as 15 (issues #23, #25, #28) and privacy and data tools as 17 (#24,
 release from 16 to 18, macOS from 17 to 19, and the later milestones
 from 18, 19, and 20 to 20, 21, and 22. Dated entries below keep the
 numbers they were written with.
+
+On 2026-09-27 (prompts 84 and 85) five HoloML example sites were added
+before privacy and data tools, one milestone each: 17 Blockworld (with
+the browser's HoloML examples section), 18 Sofa studio, 19 Harbour Loft,
+20 Coral Bay, 21 Aquarium. Privacy and data tools moved from 17 to 22,
+the Windows and Linux release from 18 to 23, macOS from 19 to 24, and
+the later milestones from 20, 21, and 22 to 25, 26, and 27.
 
 ### Where design work belongs
 
@@ -2492,10 +2504,179 @@ harness's `online` switch are gone, so no run uses the network.
 
 - S1 to S9 pass, screenshots are saved, and the owner accepts.
 
+## Milestone 17 — Blockworld, HoloML 0.2 (first part), and the examples section
+
+Status: Plan drafted 2026-09-27 (prompt 85), waiting for the owner's
+answers and approval. Rule 13 check done (ARCHITECTURE.md section 3).
+
+Goal: the first HoloML site you can play. Blockworld, a very small
+Minecraft-like game, needs HoloML to react (scripts), to make sound,
+to stop the walker at walls and keep them on the ground, to animate
+lights, and the browser to draw thousands of blocks cheaply. And the
+browser gets a place to find and try every HoloML example, with a
+screenshot of each.
+
+### How it would work (proposed)
+
+- **HoloML 0.2, first part** (holoml repository: SPEC.md, parser,
+  checker, conformance samples). A page says `version="0.2"`; every 0.1
+  page stays valid, and a 0.1 reader refuses 0.2 pages, as the spec
+  already requires.
+  - `<script src="game.js" />` in `head`: JavaScript from the page's
+    own site (never inline, never another site), run after the scene is
+    shown, in the page's own sandboxed process, like any web page's
+    script. It gets a small scene API, `holoml` (Q1): find elements by
+    id; read and change position, rotation, scale, visibility, a
+    material's colour, a light's colour and brightness, and a label's
+    or screen text's words; add elements from HoloML text (checked, and
+    counted against the page's limits) and remove them; events: click
+    and right-click (with the element, the point, and the face hit),
+    keys, and every frame (with the time since the last); play and stop
+    sounds; where the viewer is and looks.
+  - `<sound id src loop volume />`: a sound file (Ogg, MP3, or WAV) to
+    play from a script or with `autoplay`. Nothing plays before the
+    viewer's first click or key on the page (prompt 85, Q5 a); the
+    tab's mute applies; sound files count against the page's limits
+    like models.
+  - `<hud>`: a few lines of text fixed to a corner of the screen (the
+    game's score and chosen block), which scripts can change; read by
+    screen readers and shown in the text view.
+  - Walls and gravity (holoml issue #10): a `solid` flag on `model`
+    and `group`; the walker cannot pass through solid things. On
+    `viewpoint`, `gravity` (the walker falls to the ground below and
+    stands on solid things) and `jump` (Space jumps).
+  - `animate` can also change a light's `intensity` and `color`, a
+    light's `position`, and the scene's `background`, so a day can turn
+    into night.
+- **The browser** renders 0.2 pages. The content policy of HoloML
+  pages also allows scripts from the page's own site. Models used many
+  times with the same materials are drawn as one (instancing), so an
+  island of a few thousand blocks stays smooth. A page's script that
+  never stops cannot stop the browser: its controls, Stop, and closing
+  the tab keep working, as for any web page.
+- **Blockworld** (holoml repository, examples/blockworld/, published
+  with GitHub Pages like the showroom). An island of about 24 by 24
+  blocks and 8 high, made by the page's script from a seed: grass,
+  dirt, stone, sand, wood, leaves, water, and a few trees.
+  - Walk with gravity; Space jumps; blocks stop you.
+  - Click a block to break it (a short crack animation and a sound);
+    right-click to place the chosen block on the face you clicked;
+    keys 1 to 5 choose the block. From the keyboard, E breaks and Q
+    places the block under the crosshair in the middle of the view.
+  - A day lasts about four minutes: the sun moves and changes colour,
+    the sky darkens, and night falls. Torches (block 5) give light.
+  - Five gems are hidden in the stone; bring them to the chest and the
+    screen text says you won.
+  - Sounds: footsteps, breaking, placing, a gem, winning (Kenney's CC0
+    sound packs); birds by day and crickets at night (Q3).
+  - The blocks are small models made from Kenney's CC0 Voxel Pack
+    textures by a script in the repository.
+- **The examples section** (prompt 85): a panel, "HoloML examples",
+  like the Library, opened from the start panel's "Try HoloML", from
+  the menu, and with Ctrl+Shift+E (Q2). A card for each example: its
+  screenshot, its name, a line about it, and Open. For now: the
+  showroom and Blockworld; each later example milestone adds its card.
+  The screenshots are part of the browser (made by `pnpm screenshots`
+  from the local copies), so the panel fetches nothing; an example's
+  site is asked for only when Open is clicked. Keyboard and screen
+  readers can use it like the other panels.
+
+### Questions
+
+- Q1, the scene API. a: a small `holoml` object (find, change, add,
+  remove, events, sound, screen text), written down in the spec with an
+  example for each part (recommended: small enough to learn in an
+  afternoon, and the browser can check everything a script asks for).
+  b: a DOM-like API over HoloML elements, like HTML's
+  `document.querySelector` (familiar, but much larger to specify and to
+  keep safe).
+- Q2, the examples section. a: a panel like the Library, opened from
+  the start panel, the menu, and Ctrl+Shift+E, with a card per example
+  (recommended: room for screenshots and descriptions as the list
+  grows to six). b: the cards shown directly on the start panel, below
+  Recent.
+- Q3, birds and crickets. Kenney's CC0 packs have effects but no
+  outdoor ambience. a: made by a script in the repository (simple
+  generated chirps and trills; ours, no download) (recommended). b: CC0
+  recordings from Freesound or OpenGameArt, credited (another source,
+  so it needs your approval). c: no ambience.
+- Q4, looking around in Blockworld. a: drag to look, as walk mode does
+  now, with a crosshair in the middle for the keyboard (recommended:
+  the mouse is never captured). b: pointer lock, as most first-person
+  games do: the mouse turns the view until Esc.
+- Q5, HoloML versions. a: this is the first part of HoloML 0.2; the spec
+  grows with each example milestone (17 to 21), pages written for it
+  say `version="0.2"`, and 0.2 is tagged when milestone 21 ends
+  (recommended: one version for the features the examples need). b:
+  0.2 is finished and tagged at the end of milestone 17; later
+  features become 0.3, 0.4, and so on.
+
+### Tasks
+
+- [ ] 1. HoloML spec 0.2 (first part): scripts and the scene API,
+      sound, screen text, walls and gravity, animated lights and
+      background; parser and checker; conformance samples for each new
+      element, attribute, and problem; 0.1 pages unchanged.
+- [ ] 2. The browser: 0.2 pages, the scene API, sound (after the first
+      interaction, with the tab's mute and the limits), screen text,
+      collision and gravity, animated lights, instancing; the content
+      policy; the copy of the parser and checker (`pnpm holoml:sync`).
+- [ ] 3. Blockworld: the block models and sounds (downloads approved in
+      prompt 85, Q3 a), the ambience (per Q3), the page and its script,
+      credits; published with GitHub Pages.
+- [ ] 4. The examples section (per Q2), with the showroom's and
+      Blockworld's cards and screenshots.
+- [ ] 5. Checks T1 to T10 (tests/e2e/m17.e2e.ts, the holoml repository's
+      tests).
+- [ ] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md
+      (scripts and sound on HoloML pages; the examples section fetches
+      nothing), THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the
+      README screenshot.
+
+### Checks
+
+Named T (milestone 16 used S).
+
+| # | Check | Expected result |
+|---|---|---|
+| T1 | The language | holoml's tests: every new element, attribute, and problem has a conformance sample; all 0.1 samples and examples still pass; a 0.2 page read as 0.1 is refused |
+| T2 | Scripts | A page's script from its own site runs and changes the scene through the API; an inline script, or one from another site, does not run, and the console says why; a script error is shown in the console and the scene stays; a script that never stops leaves the browser's controls answering within 200 ms, and closing the tab works |
+| T3 | Sound | Nothing plays before the first click or key; after it, a sound plays (checked through the page's audio state); the tab's mute silences it; a sound file over the limits is left out like a model |
+| T4 | Walls and gravity | The walker falls to the ground, stands on blocks, jumps with Space, and cannot pass through solid blocks or walk through the chest |
+| T5 | Many blocks | Blockworld's island (several thousand blocks) loads within 5 s from 127.0.0.1 and draws at 30 frames a second or more with a graphics card (skipped in software, as C9) |
+| T6 | Playing | Breaking and placing by mouse and by keyboard; keys 1 to 5 change the block shown on screen; picking up a gem counts it; five gems in the chest show "You won"; night comes and a torch lights its surroundings |
+| T7 | For everyone | Blockworld can be played from the keyboard alone; the screen text is in the text view and the accessibility tree; with reduced motion the day stands still at noon |
+| T8 | The examples section | Opens from the start panel, the menu, and Ctrl+Shift+E; shows the showroom and Blockworld with their screenshots; Open goes to the example's address (a local copy in the test); usable from the keyboard; opening the panel fetches nothing (no unexpected traffic) |
+| T9 | Published | Blockworld opens from its public address in the built app (checked by hand, as S8) |
+| T10 | Regression | C to S pass, the unit tests, and holoml's tests |
+
+### Done when
+
+- T1 to T10 pass, screenshots are saved, and the owner accepts.
+
+### Later example milestones (outline; each gets a full plan in turn)
+
+- 18 Sofa studio: material choices in place (#9), shadows (#8),
+  environment lighting, textured fabrics (Poly Haven), a price that
+  changes.
+- 19 Harbour Loft: click actions without scripts (doors, switches),
+  paragraphs of text (#11), larger scenes, a floor plan.
+- 20 Coral Bay: movement along paths, positional sound, sky, loading by
+  area, simpler models far away.
+- 21 Aquarium (prompt 85): 5 to 10 real-looking fish of different
+  kinds that swim around the tank with their own animations (glTF
+  skins), rocks, plants, bubbles, light through the water, and a Feed
+  button: food falls and the fish swim to it and eat. Open question for
+  its plan: CC0 packs have few real-looking fish; if there are not
+  enough, CC BY models (credited) would need the owner's approval, as
+  prompt 85's Q3 a allows CC0 only.
+
 ## Proposal: four more HoloML example sites (2026-09-27, prompt 84)
 
-Status: Proposal drafted, waiting for the owner's answers. Nothing is
-built. Owner: before milestone 17, four more example sites: a small
+Status: Answered (prompt 85): Q1 to Q5 a, as recommended; a fifth site
+added, an aquarium (milestone 21); and a section in the browser to try
+the examples, with screenshots (milestone 17). The roadmap table is
+updated. Owner: before milestone 17, four more example sites: a small
 game (like a very small Minecraft) with movement, action, lighting,
 sound, and animation; then three commercial sites, all different, each
 more complex than the last, with better graphics and movement.

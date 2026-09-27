@@ -102,6 +102,10 @@ Rule 13 check, 2026-09-27 (start of milestone 16, car showroom): 44.4.5
 is still the newest stable release on npm ("latest"; 45 is in alpha),
 with no security release since. No upgrade needed.
 
+Rule 13 check, 2026-09-27 (start of milestone 17, Blockworld): 44.4.5 is
+still the newest stable release on npm, with no security release since.
+No upgrade needed.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |

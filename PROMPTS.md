@@ -948,3 +948,24 @@ HoloML.
    progressively more complex, with better graphics and usage including
    movement.
 ```
+
+## 85 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answers to the example-sites proposal's questions (prompt 84), all as
+recommended: Q1, how pages react (a: HoloML 0.2 adds scripts from the
+page's own site with a small scene API, plus declarative basics). Q2,
+the commercial sites (a: a sofa studio, an apartment tour, a resort).
+Q3, assets (a: CC0 packs only, Kenney, Quaternius, Poly Haven, credited;
+approves downloading them). Q4, the split (a: one milestone per site, 17
+Blockworld to 20 Coral Bay, then privacy and installers). Q5, sound (a:
+only after the viewer's first click or key; mute and limits apply).
+Then: plan milestone 17; add a fifth site, an aquarium; and a section in
+the browser to try the examples, with screenshots.
+
+```text
+Use the recommendations for the questions, plan milestone 17. Add one
+more site: an aquarium with at least 5 to 10 real-looking fishes that
+swim around, and a feed button or something like that. There should be
+a dedicated section in HyperSpace 3D to try these examples, with
+screenshots.
+```

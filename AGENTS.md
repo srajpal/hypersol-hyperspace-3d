@@ -240,8 +240,8 @@ milestone; the current milestone's checks are defined in TODO.md):
   the copy): the start panel link, loading within budget, walking,
   links and colours, the keyboard and text view, reduced motion,
   efficiency, and credits. S1 is holoml's own unit test.
-- Later milestones add:
-  privacy and data tools (17), and installers (18 and 19).
+- Later milestones add: the HoloML example sites (17 to 21), privacy
+  and data tools (22), and installers (23 and 24).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that
