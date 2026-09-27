@@ -149,7 +149,7 @@ export class Permissions {
         if (!contents || !origin) return null;
         this.remember(contents, origin, [r.kind], r.state === 'ask' ? null : r.state);
         this.grantsFor(contents, origin)?.once.delete(r.kind);
-        if (r.state === 'block') this.revoke(origin, r.kind);
+        if (r.state === 'block') this.revoke(origin, r.kind, contents.session);
         return this.site(contents);
       }
     }
@@ -176,12 +176,14 @@ export class Permissions {
   /**
    * Blocking a site's camera or microphone ends what its pages are already
    * capturing, in every tab on that site, not only new requests (GitHub
-   * issue #22); the in-use marker goes with it.
+   * issue #22); the in-use marker goes with it. Only in the session the
+   * choice was made in: normal and private tabs keep separate choices
+   * (PR #29 review).
    */
-  private revoke(origin: string, kind: PermissionKind): void {
+  private revoke(origin: string, kind: PermissionKind, session: Session): void {
     const track = kind === 'camera' ? 'video' : kind === 'microphone' ? 'audio' : null;
     for (const [contents, grants] of this.tabs) {
-      if (grants.origin !== origin || contents.isDestroyed()) continue;
+      if (grants.origin !== origin || contents.isDestroyed() || contents.session !== session) continue;
       if (track) contents.send(CAPTURE_STOP_CHANNEL, [track]);
       if (grants.given.delete(kind)) this.deps.send(contents, { type: 'site-access', webContentsId: contents.id, kinds: [...grants.given] });
     }

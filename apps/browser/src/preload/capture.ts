@@ -1,8 +1,9 @@
 /**
  * Live camera, microphone, and screen capture in this page (GitHub issues
  * #18 and #22). A small script in the page's own world counts the tracks
- * that getUserMedia and getDisplayMedia hand out, until they end or are
- * stopped, and says so by a window message; this preload passes it to the
+ * that getUserMedia and getDisplayMedia hand out, and every clone made of
+ * them (track.clone(), stream.clone(); PR #29 review), until they end or
+ * are stopped, and says so by a window message; this preload passes it to the
  * shell, so a tab that is capturing is not put to sleep (#18). When the
  * person blocks the camera or microphone for the site, the main process
  * asks here to stop those tracks at once (#22).
@@ -29,23 +30,56 @@ function tracker(): void {
     }
     window.postMessage({ hypersolCapture: { audio, video } }, '*');
   };
+  /** Counts one track until it ends or is stopped. */
+  const adopt = (t: MediaStreamTrack) => {
+    if (live.has(t)) return;
+    live.add(t);
+    t.addEventListener('ended', () => {
+      live.delete(t);
+      report();
+    });
+    const stop = t.stop.bind(t);
+    t.stop = () => {
+      stop();
+      live.delete(t);
+      report();
+    };
+  };
   const follow = (stream: MediaStream): MediaStream => {
-    for (const t of stream.getTracks()) {
-      live.add(t);
-      t.addEventListener('ended', () => {
-        live.delete(t);
-        report();
-      });
-      const stop = t.stop.bind(t);
-      t.stop = () => {
-        stop();
-        live.delete(t);
-        report();
-      };
-    }
+    for (const t of stream.getTracks()) adopt(t);
     report();
     return stream;
   };
+  // A clone keeps the camera or microphone on by itself: count it too.
+  const trackClone = MediaStreamTrack.prototype.clone;
+  Object.defineProperty(MediaStreamTrack.prototype, 'clone', {
+    configurable: true,
+    writable: true,
+    value: function (this: MediaStreamTrack) {
+      const copy = trackClone.call(this);
+      if (live.has(this)) {
+        adopt(copy);
+        report();
+      }
+      return copy;
+    },
+  });
+  const streamClone = MediaStream.prototype.clone;
+  Object.defineProperty(MediaStream.prototype, 'clone', {
+    configurable: true,
+    writable: true,
+    value: function (this: MediaStream) {
+      const originals = this.getTracks();
+      const copy = streamClone.call(this);
+      // The copy's tracks are clones of the original's, in the same order.
+      copy.getTracks().forEach((t, i) => {
+        const from = originals[i];
+        if (from && live.has(from)) adopt(t);
+      });
+      report();
+      return copy;
+    },
+  });
   for (const name of ['getUserMedia', 'getDisplayMedia'] as const) {
     const original = md[name] as ((...args: unknown[]) => Promise<MediaStream>) | undefined;
     if (typeof original !== 'function') continue;

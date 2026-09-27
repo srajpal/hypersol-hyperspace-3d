@@ -137,8 +137,14 @@ describe('issue #18: live capture keeps a tab awake', () => {
       expect(all.find((x) => x.id === camera)!.asleep).toBe(false);
       expect(all.find((x) => x.id === microphone)!.asleep).toBe(false);
       expect(all.find((x) => x.id === microphone)!.audible).toBe(false); // silent: kept awake by the capture alone
-      // The camera stops: that tab may sleep again.
-      await inPage(h, 'window.keep.getTracks().forEach((t) => t.stop()); true', 'media.html?camera');
+      // A clone of the camera keeps it on after the original stops (PR #29 review).
+      await inPage(h, 'window.copy = window.keep.getVideoTracks()[0].clone(); window.keep.getTracks().forEach((t) => t.stop()); true', 'media.html?camera');
+      await sleep(300);
+      await shellCall(h, 'sleepNow');
+      await sleep(500);
+      expect((await tabs(h)).find((x) => x.id === camera)!.asleep).toBe(false);
+      // The clone stops too: that tab may sleep again.
+      await inPage(h, 'window.copy.stop(); true', 'media.html?camera');
       await sleep(300);
       await shellCall(h, 'sleepNow');
       all = await waitFor('the camera tab asleep', () => tabs(h), (t) => t.find((x) => x.id === camera)?.asleep === true);
@@ -189,6 +195,8 @@ describe('issue #22: blocking the camera stops it', () => {
       const first = start(one);
       await allow(h);
       expect(await first).toBe('live');
+      // Clones, of a track and of a whole stream, keep the camera on too (PR #29 review).
+      await inPage(h, 'window.trackCopy = window.keep.getVideoTracks()[0].clone(); window.streamCopy = window.keep.clone(); true', one);
       // Another tab on the same site, allowed by the remembered choice.
       await openTab(h, 'media.html?two');
       const two = await focusedPage(h);
@@ -202,6 +210,7 @@ describe('issue #22: blocking the camera stops it', () => {
       await h.shell.selectOption(SITE('site-camera'), 'block');
       const state = (page: { id: number }) => inPage<string>(h, 'window.keep.getVideoTracks()[0].readyState', page);
       await waitFor('first tab stopped', () => state(one), (s) => s === 'ended');
+      await waitFor('clones stopped', () => inPage<string>(h, '[window.trackCopy.readyState, window.streamCopy.getVideoTracks()[0].readyState].join()', one), (s) => s === 'ended,ended');
       await waitFor('second tab stopped', () => state(two), (s) => s === 'ended');
       await waitFor('marker gone', () => shellCall(h, 'accessOf', tabOne), (k) => !k.includes('camera'));
       expect(await h.shell.locator(SITE('site-given-camera')).count()).toBe(0);
@@ -210,4 +219,46 @@ describe('issue #22: blocking the camera stops it', () => {
       await h.close();
     }
   });
+
+  for (const blockIn of ['private', 'normal'] as const) {
+    it(`Block in a ${blockIn} tab leaves the other kind of tab's capture alone (PR #29 review)`, async () => {
+      const h = await launch(server.url('media.html?normal'), { userDataDir: newProfile() });
+      try {
+        await waitForPage(h, 'media.html?normal');
+        const normal = await focusedPage(h);
+        const normalTab = (await focusedTab(h)).id;
+        const start = (page: { id: number }) =>
+          inPage<string>(h, 'navigator.mediaDevices.getUserMedia({ video: true }).then((s) => { window.keep = s; return "live"; }, (e) => e.name)', page);
+        const a = start(normal);
+        await allow(h);
+        expect(await a).toBe('live');
+        await pressInShell(h, 'N', ['control', 'shift']);
+        await waitFor('private tab', () => focusedTab(h), (t) => t.private);
+        const privateTab = (await focusedTab(h)).id;
+        await navigateTo(h, server.url('media.html?private'));
+        await waitForPage(h, 'media.html?private');
+        const secret = await focusedPage(h);
+        const b = start(secret);
+        await allow(h);
+        expect(await b).toBe('live');
+        // Block from the chosen tab's site panel.
+        const [blocking, other] = blockIn === 'private' ? [secret, normal] : [normal, secret];
+        if (blockIn === 'normal') {
+          await pressInShell(h, 'Tab', ['control']);
+          await waitFor('normal tab', () => focusedTab(h), (t) => t.id === normalTab);
+        } else {
+          await waitFor('private tab in front', () => focusedTab(h), (t) => t.id === privateTab);
+        }
+        await h.shell.click(BAR('site-button'));
+        await waitFor('site panel', () => shellCall(h, 'sitePanel'), (s) => s.open && s.site !== null);
+        await h.shell.selectOption(SITE('site-camera'), 'block');
+        const state = (page: { id: number }) => inPage<string>(h, 'window.keep.getVideoTracks()[0].readyState', page);
+        await waitFor('the blocking tab stopped', () => state(blocking), (s) => s === 'ended');
+        await sleep(500);
+        expect(await state(other)).toBe('live');
+      } finally {
+        await h.close();
+      }
+    });
+  }
 });
