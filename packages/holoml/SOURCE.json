@@ -6,5 +6,39 @@
     "src/parser.ts": "f36a7c56fb556b9c01cbb0a1f3d993f8c13cd2fe39b6f7773b12ee05c91e705c",
     "src/rules.ts": "ea5ddc3326e73b61d27d25f34425a1d0af785de3f0fd4826919f005b5251e42a",
     "src/schema.ts": "0debd7b7fbfa58c69c52f2458c447b77eaeffe881740fba20e204e3008e0381a"
+  },
+  "showroom": {
+    "ref": "main",
+    "commit": "b78b055ff5a1539c923ce11533d8bf6dbe87a847",
+    "files": {
+      "README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
+      "about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",
+      "index.holoml": "2f50a278d27a3c1f364c86efe370969e7a84ce0a83fcdd0e423b421692d7d67b",
+      "index.html": "c8d9403d71f030e5264f9949f51cc61b4f53590436f03a7b2a8363d5411318c5",
+      "models/CREDITS.md": "bc736a1ce41fdb34da62294b993c5a05599e41f16912dd86f777a16c2ba172e8",
+      "models/colormap.png": "f3622a03a20c6696065cae9cbe391351be873508af190c2ebd1d420c055787a5",
+      "models/hall.gltf": "5c52a6a508d663b1f20c5e80cc1f538b89a58d51583ed83535852c791973f5c0",
+      "models/pippet.glb": "2d8e6061f48048031b4beaf9d324a8b43da69dc4fa58ad5252c497c43ef9e04c",
+      "models/plinth.gltf": "c1618453de8455af4f6ab98d1446f5007af214eae2b2cf109ac991160f1faf46",
+      "models/quellis.glb": "3faef1a81f423d942b7e96a45bdc97b380983aad28366953bba778635c49ed97",
+      "models/strafe.glb": "2836bfd01e583030b27688186effd9266ffd9d413dd1172322bc5b12c4dc4e23",
+      "models/tallberg.glb": "379ce5f9712009c3faff0e000fd4ac1999d2c11161960bfcdb280bc639590e32",
+      "models/veyl.glb": "7e9641fc427709c20ddbeca638a668bdc06e860c9b91d7f4596a8d28022a1d3f",
+      "pippet-chalk.holoml": "cb225f2ec2f9146b54711ae27e00dd3166043ca2b1429108609da15bd95c28d5",
+      "pippet-sunflower.holoml": "8a6ea4e2b48553799ba8695c38ee1ed84dcff3daa50b3c0fc1c5302f3c6a6a5f",
+      "pippet.holoml": "6cd16b8c937ebc06154fb0aadceb5fa14efbfd389a2e5ab0781a0e769795744f",
+      "quellis-ocean-blue.holoml": "ea1e1001c0d3b4014f2a25b1d0e1c02cc934aedd2d214e72bc9ba6194129dcb2",
+      "quellis-silver.holoml": "d0e98b451302255fbdae35a0f079789634671f84de9462627fe713948a95d3b3",
+      "quellis.holoml": "040ac9c179fd3daf9e3691f1e9f05c387d50226d4e4f7bb7521923abe83dd164",
+      "strafe-lagoon.holoml": "e8384493ba98a1616ea40c98eb7e47f738f141f4050c719d563afa6befe333c2",
+      "strafe-tangerine.holoml": "47359c1ef2dc579159b41bd0ce5abed4e117a266302c519c49ca3964a96e8567",
+      "strafe.holoml": "6555eedd90fe5fe4971ba336ebf40d5cd48f9bec940098863086f183a0dbe921",
+      "tallberg-glacier.holoml": "009aa270af2748b506528dae9dd1758794ddfdf62092120425516e4a0f3dc91c",
+      "tallberg-graphite.holoml": "3d834653137bc12e707683e9de18c944930356fd1e5424471bbe7cf007416e32",
+      "tallberg.holoml": "720dcbc136701cd46a47abe1e39241438f03eda88661f0dc5e802abbbecb6ac9",
+      "veyl-night.holoml": "49e737bbb72d5591a150e54e8200aaeb174ea95386c747de59d83a66cfb844cb",
+      "veyl-violet.holoml": "f7f0be88e16e9600de9cfc066b167b985b062592328446c7d126515967909203",
+      "veyl.holoml": "8065ef5ebd9ebd07173ded3703d665e79ff6b119ff6742af6be048e27b38cd6a"
+    }
   }
 }

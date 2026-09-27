@@ -164,6 +164,10 @@ the list updates can be turned off:
   limits as it arrives (milestone 15); a model that crosses one is not
   fetched further. The instrument panel's Scene part reads the scene
   from the page in memory only, and keeps nothing.
+- The start panel's "HoloML showroom" link (milestone 16) opens
+  `https://srajpal.github.io/holoml/showroom/index.holoml`, HoloML's
+  showroom published with GitHub Pages, only when you click it; it is
+  then an ordinary HoloML page. The start panel itself fetches nothing.
 - Searches typed in the address bar or start panel go to the search engine
   chosen in Settings (DuckDuckGo by default).
 - DNS lookups for the sites you open go encrypted (DNS over HTTPS) to

@@ -915,6 +915,30 @@ Use the recommendations for the questions, build.
 
 ## 82 — 2026-09-27 · Claude Opus 5.5, low effort
 
+Owner merged holoml pull request #12 (the showroom) and reports that the
+published showroom opens blank. Screenshot: HyperSpace 3D at
+https://srajpal.github.io/holoml/showroom/index.holoml, an empty dark
+page.
+
+```text
+Merged holoml #12, but it is blank when I load it in HyperSpace 3D.
+```
+
+## 83 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Acceptance of milestone 16 (the HoloML car showroom, published with
+GitHub Pages and linked from the start panel; checks S1 to S9, with the
+development-run fix), the owner having checked it on their own computer,
+and approval to push.
+
+```text
+Milestone 16 accepted, push. Verified it worked on my PC.
+
+What is the next step?
+```
+
+## 84 — 2026-09-27 · Claude Opus 5.5, low effort
+
 ```text
 End-to-end check L9 in tests/e2e/m10.e2e.ts ("with 100,000 visits,
 searches answer within 50 ms and the main process is never held 20 ms")
@@ -933,7 +957,7 @@ measurements and ask. Follow AGENTS.md (log owner prompts, commit after
 an approved change, keep TODO.md results current).
 ```
 
-## 83 — 2026-09-27 · Claude Opus 5.5, low effort
+## 85 — 2026-09-27 · Claude Opus 5.5, low effort
 
 Answer to the question of how L9 should measure "the main process is
 never held 20 ms", after the finding that its event-loop delay monitor
@@ -946,15 +970,15 @@ baseline).
 Go with option 1, measure the longest block directly.
 ```
 
-## 84 — 2026-09-27 · Claude Opus 5.5, low effort
+## 86 — 2026-09-27 · Claude Opus 5.5, low effort
 
-Approval to publish the L9 measurement change (prompts 82 and 83).
+Approval to publish the L9 measurement change (prompts 84 and 85).
 
 ```text
 Push it and open a PR.
 ```
 
-## 85 — 2026-09-27 · Claude Opus 5.5, low effort
+## 87 — 2026-09-27 · Claude Opus 5.5, low effort
 
 Approval to switch on the app's automatic fixing of CI failures for the
 L9 pull request (#33).
@@ -963,7 +987,7 @@ L9 pull request (#33).
 Turn on auto-fix
 ```
 
-## 86 — 2026-09-27 · Claude Opus 5.5, low effort
+## 88 — 2026-09-27 · Claude Opus 5.5, low effort
 
 Approval to start the suggested task for R3 (m15, a page of 20,000
 elements), which fails on both CI runners on main and on PR #33: find

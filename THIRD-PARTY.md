@@ -28,6 +28,14 @@ files stay under MPL-2.0 and their source is available from the link
 above; using them does not change the licence of HyperSpace 3D's own
 code.
 
+## Test fixtures
+
+Not part of the app. The end-to-end tests and screenshots use a copy of
+HoloML's showroom (tests/fixtures/holoml/showroom, copied by `pnpm
+holoml:sync`). Its cars are from Kenney's Car Kit (https://kenney.nl,
+CC0 1.0: no conditions; credited in its models/CREDITS.md); its pages,
+hall, and plinths are Apache-2.0, The HoloML Authors.
+
 ## Filter lists
 
 The privacy shield's starter engine is built from public filter lists,

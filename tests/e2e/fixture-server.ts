@@ -18,6 +18,9 @@ const TYPES: Record<string, string> = {
   // HoloML pages and their glTF models (milestone 14).
   '.holoml': 'model/vnd.holoml',
   '.gltf': 'model/gltf+json',
+  // HoloML's showroom (milestone 16): binary glTF models and their palette picture.
+  '.glb': 'model/gltf-binary',
+  '.png': 'image/png',
 };
 
 /** A solid-colour 16×16 PNG, built here so the fixture has no binary file. */

@@ -24,6 +24,16 @@
     tree, the selected one's line of text, bounds, position, rotation,
     scale, triangles, and pictures, a pick button, and every problem and
     left-out model with its line and column.
+- HoloML showroom (milestone 16): the start panel's new "Try HoloML"
+  section links to HoloML's showroom, five cars in a hall to walk around
+  in three colours each, published at
+  https://srajpal.github.io/holoml/showroom/ (nothing is fetched until
+  the link is clicked). The README's screenshot now shows it.
+- Fixed: HoloML pages stayed blank in development runs (`pnpm dev`): the
+  viewer is now served through the renderer's dev server there.
+- Fixed: a page could be drawn away from where the room placed it after
+  focus moved into it (the page layer scrolled); most visible as a HoloML
+  page opened from the start panel sitting over the tab rail.
 
 ## 0.9.0 — developer preview (2026-09-26)
 

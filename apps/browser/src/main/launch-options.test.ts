@@ -70,6 +70,11 @@ describe('parseLaunchOptions', () => {
     expect(parseLaunchOptions([arg], { HYPERSOL_TEST: '1' }).searchUrl).toBe('http://127.0.0.1:5000/search?q=%s');
     expect(parseLaunchOptions(['--search-url=http://x.example/'], { HYPERSOL_TEST: '1' }).searchUrl).toBeUndefined();
     expect(parseLaunchOptions(['--search-url=file:///%s'], { HYPERSOL_TEST: '1' }).searchUrl).toBeUndefined();
+    // The showroom link's local stand-in (milestone 16): test mode and 127.0.0.1 only.
+    const showroom = '--showroom-url=http://127.0.0.1:5000/holoml/showroom/index.holoml';
+    expect(parseLaunchOptions([showroom], {}).showroomUrl).toBeUndefined();
+    expect(parseLaunchOptions([showroom], { HYPERSOL_TEST: '1' }).showroomUrl).toBe('http://127.0.0.1:5000/holoml/showroom/index.holoml');
+    expect(parseLaunchOptions(['--showroom-url=https://x.example/index.holoml'], { HYPERSOL_TEST: '1' }).showroomUrl).toBeUndefined();
   });
 });
 

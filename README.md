@@ -5,12 +5,12 @@ dimensions. Ordinary websites float as panels in a 3D room, page sections
 lift into layered depth, and a companion markup language, HoloML, lets
 anyone publish a fully 3D website as easily as writing HTML.
 
-![HyperSpace 3D showing Wikipedia's "Hyperspace" article on a tilted page in the 3D room, with the layers view lifting its picture, and three tabs as cards on the left](docs/screenshots/readme.png)
+![HyperSpace 3D showing the HoloML showroom: five cars on plinths in a round hall, the middle one on a turntable, with two car pages as tabs on the left](docs/screenshots/readme.png)
 
-*The newest build, showing Wikipedia's article
-[Hyperspace](https://en.wikipedia.org/wiki/Hyperspace) (text by
-Wikipedia's contributors, CC BY-SA 4.0; the picture under its own
-licence, see the article). Made with `pnpm screenshots:readme`.*
+*The newest build, showing
+[HoloML's showroom](https://github.com/srajpal/holoml/tree/main/examples/showroom),
+a 3D site written in HoloML (cars from Kenney's Car Kit, CC0). Made with
+`pnpm screenshots:readme`.*
 
 For Windows and Linux (checked by automatic tests on both); macOS is
 planned but untested. Apache 2.0. No telemetry.
@@ -19,10 +19,11 @@ planned but untested. Apache 2.0. No telemetry.
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
 as source for developers (no installers yet). Since then, HoloML 0.1 has
 been written down in its own repository (milestone 13), and this browser
-shows HoloML pages (milestones 14 and 15, accepted; not yet in a
+shows HoloML pages (milestones 14 to 16, accepted; not yet in a
 release), with limits for heavy scenes, keyboard and screen-reader
-access, and a scene inspector. Next: a car showroom, and privacy and data tools, then installers as
-1.0. See [Progress](#progress),
+access, a scene inspector, and a HoloML car showroom to try from the
+start panel. Next: privacy and data tools, then
+installers as 1.0. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
 ## The story
@@ -105,6 +106,8 @@ An archived copy of the 2001 site is available through the
   with limits that keep a heavy scene from exhausting memory, Tab and
   screen-reader access to a scene's links and named things, a text view,
   reduced motion, and a Scene part in the instrument panel (milestone 15).
+- A HoloML showroom to try, linked from the start panel: five cars in a
+  hall, each to walk around in three colours (milestone 16).
 - Mouse and keyboard throughout; touch for scenes.
 
 ## Built with the Buildwright approach
@@ -139,15 +142,14 @@ starts with a small prototype and the same habits of direction and checking.
 
 ## What comes next
 
-Milestone 16, a car showroom built in HoloML. 17, privacy and data tools: HTTPS-only
-browsing, per-site storage, and bookmark import and export. 18 and 19,
+Milestone 17, privacy and data tools: HTTPS-only browsing, per-site storage, and bookmark import and export. 18 and 19,
 installers as 1.0 for Windows and Linux, then macOS. Later: free camera
 movement, pictures and 3D models lifted out of ordinary pages, mobile,
 and VR. The full roadmap is in [TODO.md](TODO.md).
 
 ## Progress
 
-Fifteen milestones are done and accepted.
+Sixteen milestones are done and accepted.
 Milestones 1 to 11 built the browser: a live page on a tilted panel in
 the 3D room, tabs as cards, bookmarks and history, ad and tracker
 blocking with encrypted DNS, the layers view, two themes, an instrument
@@ -159,7 +161,8 @@ tests on Windows and Linux. Milestone 13 wrote HoloML 0.1 down in its
 own repository, and milestone 14 shows HoloML pages in the browser.
 Milestone 15 hardens them: limits for
 heavy scenes, keyboard and screen-reader access, a text view, and a
-scene inspector.
+scene inspector. Milestone 16 adds a HoloML car showroom, published with GitHub Pages and linked from the
+start panel.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
@@ -174,6 +177,11 @@ shows HoloML pages (milestone 14): open a `.holoml` address, or a file
 with Ctrl+O, and walk or orbit around the scene. A page's size, models,
 pictures, and triangles have limits (milestone 15); what crosses one is
 left out and marked, and a notice says why.
+
+To try one, open a new tab and choose "HoloML showroom" under Try HoloML:
+five cars in a hall, published from the holoml repository at
+https://srajpal.github.io/holoml/showroom/ (milestone 16). The browser
+asks nothing of that site until you click the link.
 
 ## Project documents
 

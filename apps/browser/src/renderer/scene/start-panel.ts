@@ -11,8 +11,22 @@ const MAX_BOOKMARKS = 12;
 const MAX_RECENT = 8;
 
 /**
+ * HoloML's showroom, published from the holoml repository with GitHub
+ * Pages (milestone 16, owner prompt 81, Q1 a). Only a click on the start
+ * panel's link opens it; the panel itself asks nothing of the network.
+ */
+export const SHOWROOM_URL = 'https://srajpal.github.io/holoml/showroom/index.holoml';
+let showroomUrl = SHOWROOM_URL;
+
+/** Test runs only: a local copy in place of the published showroom. */
+export function setShowroomUrl(url: string): void {
+  showroomUrl = url;
+}
+
+/**
  * The new-tab start panel: a search box, then a grid of bookmarks and a
- * list of recent history, each with an empty state.
+ * list of recent history, each with an empty state, and a link to try
+ * HoloML's showroom.
  */
 export class StartPanel {
   readonly element: HTMLDivElement;
@@ -50,7 +64,11 @@ export class StartPanel {
 
     this.bookmarks = section('Bookmarks', 'start-bookmarks');
     this.recent = section('Recent', 'start-recent');
-    this.element.append(title, form, this.bookmarks, this.recent);
+    const holoml = section('Try HoloML', 'start-holoml');
+    const showroom = this.link(showroomUrl, 'HoloML showroom: five cars to walk around in 3D', 'hs-start-row');
+    showroom.dataset['testid'] = 'start-showroom';
+    holoml.append(showroom);
+    this.element.append(title, form, this.bookmarks, this.recent, holoml);
     this.setData({ bookmarks: [], recent: [] });
   }
 

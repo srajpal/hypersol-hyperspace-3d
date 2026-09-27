@@ -27,7 +27,7 @@ Plan approved 2026-09-24.
 | 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Done (accepted, prompt 64) |
 | 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Done (accepted, prompt 76) |
 | 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Done (accepted, prompt 79) |
-| 16 | Car showroom demo | Demo site with walk-around 3D cars | In progress (prompt 81) |
+| 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
 | 17 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a) |
 | 18 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
 | 19 | macOS release | Signing, notarization, Mac checks | Later |
@@ -1523,7 +1523,7 @@ that sleep when unused; and history work moved off the main process
 | L6 | Economy mode | On: lower resolution, effects off, at most 30 frames a second, "ECO" shown; "on battery" follows the power source |
 | L7 | Sleeping tabs | An unused tab sleeps (its page is gone, card kept); opening it wakes it with its history; tabs with sound, a download, or typed text stay awake |
 | L8 | History still works | History, search, and the start panel work through the worker; E checks pass |
-| L9 | History budget | Unit benchmark: 100,000 visits, search and recent within 50 ms, main thread held at most 20 ms (since prompt 83: the longest gap between two turns of the main process's event loop) |
+| L9 | History budget | Unit benchmark: 100,000 visits, search and recent within 50 ms, main thread held at most 20 ms (since prompt 85: the longest gap between two turns of the main process's event loop) |
 | L10 | Keyboard and menus | The new shortcuts and menu entries work from the page and the shell |
 
 ### Check results (Windows 11, 2026-09-26)
@@ -2334,9 +2334,10 @@ the fix. HoloML's spec note (task 6) is in holoml pull request #7
 
 ## Milestone 16 — Car showroom demo
 
-Status: In progress. Plan answered (prompt 81: Q1 to Q5 a, as
-recommended) and build approved (prompt 81), 2026-09-27. Pushed before
-the build. Rule 13 check done (ARCHITECTURE.md section 3).
+Status: Done. Accepted by the owner 2026-09-27 (prompt 83), after
+checking it on their own computer. Plan answered (prompt 81: Q1 to Q5
+a, as recommended) and build approved (prompt 81), 2026-09-27. Pushed before the build. Rule 13 check done
+(ARCHITECTURE.md section 3).
 
 Goal: a small HoloML site that shows what HoloML 0.1 can do, the one the
 brief describes: a showroom where every car is a 3D model you walk
@@ -2421,19 +2422,19 @@ repository and becomes the browser's showcase.
 
 ### Tasks
 
-- [ ] 1. The hall model: a script that writes the floor, plinths, and
+- [x] 1. The hall model: a script that writes the floor, plinths, and
       back wall as glTF.
-- [ ] 2. The cars (per Q2): download, check the licence and the files,
+- [x] 2. The cars (per Q2): download, check the licence and the files,
       choose five, keep the licence and credits beside them, and find
       each car's paint material by name.
-- [ ] 3. The pages (per Q3): hall, car pages, colour pages, about; the
+- [x] 3. The pages (per Q3): hall, car pages, colour pages, about; the
       holoml repository's tests check that every page is valid.
-- [ ] 4. The browser's copy: `pnpm holoml:sync` also brings the
+- [x] 4. The browser's copy: `pnpm holoml:sync` also brings the
       showroom into the test fixtures; end-to-end checks S1 to S7.
-- [ ] 5. Publishing (per Q1): GitHub Pages for the holoml repository and
+- [x] 5. Publishing (per Q1): GitHub Pages for the holoml repository and
       the start panel link (Q1 a), or the instructions to open it (b).
-- [ ] 6. The gaps (per Q4): an issue per missing feature in holoml.
-- [ ] 7. Documents: both READMEs, ARCHITECTURE, docs/privacy.md (the
+- [x] 6. The gaps (per Q4): an issue per missing feature in holoml.
+- [x] 7. Documents: both READMEs, ARCHITECTURE, docs/privacy.md (the
       start panel link, if Q1 a), credits, HANDOFF; screenshots and the
       README screenshot (per Q5).
 
@@ -2451,11 +2452,47 @@ repository and becomes the browser's showcase.
 | S8 | Published (Q1 a) | The site opens from its public address, and the start panel link opens it (checked by hand: the tests stay on 127.0.0.1) |
 | S9 | Regression | C to R pass, the unit tests, and HoloML's tests |
 
+### Results (2026-09-27)
+
+The showroom is in holoml pull request #12
+(https://github.com/srajpal/holoml/pull/12), merged by the owner. The
+browser's copy (tests/fixtures/holoml/showroom) is synced from holoml's
+main at the merge commit (`pnpm holoml:sync v0.1.1 --showroom main`).
+Checks are in tests/e2e/m16.e2e.ts.
+
+| # | Result |
+|---|---|
+| S1 | Pass. holoml's tests: all 21 pages valid; every link and every material a page changes exists; the hall under 10 MB and 200,000 triangles; the credits present. 139 passed; lint and types clean |
+| S2 | Pass. The hall is ready within 5 s from 127.0.0.1; all 11 models (hall, five plinths, five cars) load; no problems, nothing left out; the Scene part's totals are about 0.8 MB and 13,000 triangles |
+| S3 | Pass. Each car page starts in walk mode at 1.7 m; holding W walks more than 0.3 m at the same height |
+| S4 | Pass. A mouse click on the Quellis in the hall opens its page (paint #c8243a); Tab and Enter open "Ocean blue" (#2c5fbf); Alt+Left returns; "Back to the hall" goes to the hall. All five cars' three colour pages load with their paint |
+| S5 | Pass. Tab reaches the five cars by name and "About this showroom", each outlined; the text view lists the cars, their lines, and the title; with reduced motion the turntable stands still |
+| S6 | Pass. The hall keeps drawing while the turntable turns (at least 10 frames a second with a graphics card; in software only that it draws, as C9 and G9); an idle car page draws no frames for 1.5 s |
+| S7 | Pass. The about page credits "Kenney's Car Kit (kenney.nl, CC0)" and links to the spec; models/CREDITS.md is in the copy |
+| S8 | Pass after a fix. The start panel's "Try HoloML" link points to https://srajpal.github.io/holoml/showroom/index.holoml, and with the test switch it opens the local copy. After the merge the owner opened the published site in a development run (`pnpm dev`) and it stayed blank (prompt 82): the viewer's script came back as the dev server's HTML page. In development runs the viewer is served by the renderer's dev server, whose root is the shell's folder, so the viewer's address was wrong there, and the modules it imports could not come through the viewer's scheme; HoloML pages had never worked in `pnpm dev` (every test and screenshot uses the built app). Fixed in main/holoml.ts: in development runs every viewer request goes to the dev server, the entry by its file path. A new check starts the dev server on its own and points the built app at it, offline: the showroom draws (it timed out without the fix). The published site, opened once by hand in the built app, draws with all 11 models and no problems |
+| S9 | Pass. Full run: 222 of 222 end-to-end checks (C to S). After the development-run fix (S8), the HoloML files (M14 to M16, now 47 checks with the new one) passed again. Unit tests: 252 passed; lint and type check clean |
+
+Faults found along the way and fixed: HoloML pages in development runs
+(see S8); and after focus moved into a page,
+Chromium scrolled the layer that holds the pages, so the page was drawn
+away from where the room placed it (a HoloML page opened from the
+start panel sat 89 pixels left, over the tab rail). The layer is now
+`overflow: clip`; m16.e2e.ts checks the drawn page against the room's
+placement, and that check failed before the fix (209 pixels off).
+
+HoloML 0.1 gaps filed as ideas for 0.2 (Q4 a): holoml issues #8
+shadows, #9 changing a material in place, #10 walk mode that stops at
+walls, #11 text of more than one line.
+
+The README's screenshot is now the showroom, served locally
+(tests/screenshots/readme.capture.ts); the Wikipedia run and the test
+harness's `online` switch are gone, so no run uses the network.
+
 ### Done when
 
 - S1 to S9 pass, screenshots are saved, and the owner accepts.
 
-## L9's measure of the main process (2026-09-27, prompts 82 and 83)
+## L9's measure of the main process (2026-09-27, prompts 84 and 85)
 
 L9 read the main process's event-loop delay with monitorEventLoopDelay
 and sat at 18 to 20 ms on Windows (once 20.005 ms, a failure). The cause
@@ -2467,7 +2504,7 @@ the searches, so searches in the worker, the 500 results passed back,
 and the reply to the shell each take well under that. The history code
 is unchanged. L9 now keeps the loop awake the same way while the
 searches run and fails if any gap between two turns reaches 20 ms
-(owner, prompt 83: option 1); the limit is unchanged. Local run
+(owner, prompt 85: option 1); the limit is unchanged. Local run
 (Windows 11): L9 in seven runs, longest gap 0.6 to 1.5 ms (three runs
 of the old measure on the same code read 16.1 to 18.2 ms); searches
 after the first 1 to 32 ms, as before; all nine m10 checks passed. A 25 ms busy wait put into the main

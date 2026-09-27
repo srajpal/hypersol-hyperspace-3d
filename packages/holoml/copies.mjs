@@ -9,6 +9,13 @@ export const COPIES = [
   { from: 'packages/schema/src/index.ts', to: 'src/schema.ts' },
 ];
 
+/**
+ * HoloML's showroom (milestone 16), copied byte for byte into the browser's
+ * test fixtures, so the end-to-end checks serve it from 127.0.0.1. The
+ * scripts that make it stay in the holoml repository.
+ */
+export const SHOWROOM = { from: 'examples/showroom/', to: '../../tests/fixtures/holoml/showroom/', skip: /^tools\// };
+
 export function transform(text, from, tag) {
   const body = text
     .replace(/\r\n/g, '\n')
@@ -22,6 +29,7 @@ export function transform(text, from, tag) {
   );
 }
 
+/** Accepts text or bytes. */
 export function sha256(text) {
   return createHash('sha256').update(text).digest('hex');
 }

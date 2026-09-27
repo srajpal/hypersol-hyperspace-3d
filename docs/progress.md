@@ -181,3 +181,13 @@ motion, and the instrument panel shows how it is built.
 ![The text view: the scene's names and links as a plain page](screenshots/m15/44-holoml-text-view.png)
 
 ![The Scene part of the instrument panel: the tree, the selected object, and the problems](screenshots/m15/45-holoml-inspector.png)
+
+**Milestone 16: car showroom demo** (accepted 2026-09-27). HoloML's own showroom: five cars in a round hall, one on a
+turntable, each with a page to walk around it in three colours. It is
+published from the holoml repository, and the start panel links to it.
+
+![The start panel's new "Try HoloML" link](screenshots/m16/46-start-panel-showroom.png)
+
+![The showroom's hall: five cars on plinths, the middle one turning](screenshots/m16/47-showroom-hall.png)
+
+![A car's own page: walk around it, and choose another colour](screenshots/m16/48-showroom-car.png)
