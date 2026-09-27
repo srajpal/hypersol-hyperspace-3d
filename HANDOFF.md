@@ -65,7 +65,14 @@ to this repository for rules and the prompt log.
 - Privacy by default: ad and tracker blocking, DNS over HTTPS through
   Quad9, no telemetry, no crash reporter, spellchecker off. Default
   search: DuckDuckGo. docs/privacy.md lists everything stored and sent.
-- Known limitation: no DRM video (Electron ships no Widevine).
+- Known limitations: no DRM video (Electron ships no Widevine); the 3D
+  room needs WebGL 2, and without it pages still work and a notice says
+  so (owner, prompt 60).
+- Automatic builds and tests: GitHub Actions on Windows and Linux for
+  every push (.github/workflows/ci.yml). The runners have no graphics
+  card: C9's frame rate is measured but skipped there (owner, prompt
+  59); Linux runs use SwiftShader for WebGL and a throwaway GNOME
+  Keyring for the password checks.
 - The language is HoloML, file extension `.holo` ("3DML" was taken;
   "HSML" was checked and advised against). Its syntax uses HTML-like
   tags, and its 3D models are glTF 2.0 (owner, prompt 58).
@@ -83,6 +90,8 @@ to this repository for rules and the prompt log.
   recommended).
 - With the macOS release (milestone 17): the Apple Developer Program for
   signing and notarization.
+- With HoloML (milestone 13): whether to keep the `.holo` extension,
+  which two other formats already use (docs/name-checks.md).
 - Product gaps noted in the 2026-09-24 review and not yet scheduled:
   bookmark import and onboarding, a touch equivalent for closing tabs.
 

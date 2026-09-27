@@ -144,8 +144,10 @@ pages still work without the room, and a notice says so.
 
 ## Building and running
 
-Early development. Checked on Windows 11 only; macOS and Linux have not
-been checked yet, so treat them as untested.
+A developer preview (0.9.0): no installers yet, so build and run it from
+source. Checked on Windows 11 here, and on Windows and Linux (Ubuntu) by
+GitHub Actions for every push; macOS is untested.
+[CONTRIBUTING.md](CONTRIBUTING.md) has the full setup, including Linux.
 
 You need Node 22.13 or newer and pnpm 12.4.1. The pnpm version is pinned
 in package.json (`packageManager`), so pnpm, or `corepack enable`, uses

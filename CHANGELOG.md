@@ -44,8 +44,8 @@ For developers:
 
 Known limits:
 
-- Checked on Windows 11. Linux (Ubuntu, through GitHub Actions) is still
-  being brought up. macOS is untested.
+- Checked on Windows 11, and on Windows and Linux (Ubuntu) by GitHub
+  Actions. macOS is untested.
 - The 3D room needs WebGL 2. Where Chromium cannot start it (no graphics
   driver, some virtual machines), pages still work without the room and
   a notice says so.

@@ -1749,7 +1749,7 @@ made cleaned for privacy and spelling.
       vulnerability reporting switched on.
 - [x] 6. Trademark and `.holo` checks, recorded in docs/name-checks.md.
 - [x] 7. Electron: the newest stable version, and the security check.
-- [ ] 8. GitHub Actions: lint, types, unit tests, and end-to-end checks on
+- [x] 8. GitHub Actions: lint, types, unit tests, and end-to-end checks on
       Windows and Linux; Linux problems it finds fixed.
 - [ ] 9. Version 0.9.0; the README's developer section; the release notes.
       Tagging and publishing the release wait for the owner's go.
@@ -1835,9 +1835,21 @@ made cleaned for privacy and spelling.
 | N6 | Regression | C to M pass locally, and the unit tests |
 | N7 | Without WebGL 2 | Started without WebGL (test mode), the app says "This computer can't draw the 3D room" and why; pages still load and take clicks; OK closes the notice; with WebGL there is no notice (owner, prompt 60) |
 
+### Results (2026-09-26)
+
+| # | Result |
+|---|---|
+| N1 | Pass. Run 36290367588 (commit 6e6d0af): Windows and Linux each passed lint, types, 235 unit tests, and 169 end-to-end checks; C9's frame rate skipped on both, as decided (software drawing: 18.0 and 14.1 frames a second) |
+| N2 | Pass. No personal email, private names beyond the two founders, or private session setup in the current files; the test hardware stays described in general terms (a laptop with a discrete graphics card, one 1920x1080 display), as test context. The history is left as it is (P1 a) |
+| N3 | Pass. Every document in both repositories proofread (task 2) |
+| N4 | Pass. LICENSE, NOTICE, AUTHORS, THIRD-PARTY.md (browser), SECURITY.md, CONTRIBUTING.md in both repositories; private vulnerability reporting on in both |
+| N5 | Pass on Windows: a fresh clone of the pushed main, in a short folder path, installed with `pnpm install --frozen-lockfile`, built, passed lint, types, and the unit tests, and launched (checks C1). A clone under a very long folder path failed: pnpm could not write a file past Windows' 260-character path limit (now noted in CONTRIBUTING.md). Linux through GitHub Actions (N1) |
+| N6 | Pending one rerun. Full local run with N7: 166 of 170 passed; D8's copy and paste (3) and K2's copy failed because the Windows clipboard was failing for every program on the machine at the time (PowerShell's Set-Clipboard failed too). The same checks pass in GitHub Actions. To rerun locally when the clipboard works |
+| N7 | Pass, locally and in GitHub Actions on Windows and Linux |
+
 ### Done when
 
-- N1 to N6 pass, the owner has read the edited PROMPTS.md and the new
+- N1 to N7 pass, the owner has read the edited PROMPTS.md and the new
   project files, and says go for the 0.9.0 tag and release.
 
 ## Release path and milestone 12: owner's answers so far (2026-09-26, prompts 54 to 56)

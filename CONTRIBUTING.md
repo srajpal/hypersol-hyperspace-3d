@@ -33,8 +33,10 @@ Electron's GitHub releases) and checks it against the checksums in the
 electron package. Development runs keep their data in the `userData/`
 folder of the repository, never in your normal browser profile.
 
-Checked for development on Windows 11. Linux runs in GitHub Actions and
-is still being brought up (see TODO.md, milestone 12); macOS is untested.
+Checked for development on Windows 11, and on Windows and Linux (Ubuntu)
+by GitHub Actions for every push; macOS is untested. On Windows, keep
+the clone in a short folder path (such as `C:\dev\hyperspace`): pnpm
+fails on file paths over Windows' 260-character limit.
 
 ## Test
 
