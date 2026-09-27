@@ -288,7 +288,7 @@ hypersol-hyperspace-3d/
                                contrast helpers
     holoml/                    @hypersol/holoml: a copy of HoloML's parser
                                and checker from the holoml repository's
-                               v0.1.0 tag (SOURCE.json), made by sync.mjs
+                               v0.1.1 tag (SOURCE.json), made by sync.mjs
                                (pnpm holoml:sync); a test checks the copy
   docs/
     screens.md                 (planned) layout notes and states

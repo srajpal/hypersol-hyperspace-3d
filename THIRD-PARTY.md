@@ -21,7 +21,7 @@ licence fields).
 | @remusao/guess-url-type, small, smaz, smaz-compress, smaz-decompress, trie (used by the adblocker) | 2.1 to 2.2 | MPL-2.0 | Parts of the adblocker |
 | [tldts](https://github.com/remusao/tldts) (tldts-experimental, tldts-core) | 7.4.15 | MIT | Site names for the adblocker |
 | @types/trusted-types | 2.0.7 | MIT | Type definitions used by Lit |
-| [HoloML](https://github.com/srajpal/holoml) parser and checker (packages/holoml, copied from its v0.1.0 tag) | 0.1.0 | Apache-2.0, The HoloML Authors | Reading and checking HoloML pages |
+| [HoloML](https://github.com/srajpal/holoml) parser and checker (packages/holoml, copied from its v0.1.1 tag) | 0.1.1 | Apache-2.0, The HoloML Authors | Reading and checking HoloML pages |
 
 The Mozilla Public License 2.0 applies file by file: the adblocker's
 files stay under MPL-2.0 and their source is available from the link
