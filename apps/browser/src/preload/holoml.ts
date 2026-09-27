@@ -48,6 +48,17 @@ if (isHolomlDocument) {
   ipcRenderer.on(HOLOML_COMMAND_CHANNEL, (_event, command: unknown) => {
     if (command === 'stop' || command === 'text-view-on' || command === 'text-view-off') window.postMessage({ hypersolHolomlCommand: command }, '*');
   });
+  // The first real click, tap, or key on the page lets it play sound (HoloML
+  // 0.2, milestone 17). Heard here, in the preload's own world: a page's
+  // script cannot make a trusted event, nor reach this message.
+  const activated = (e: Event) => {
+    if (!e.isTrusted) return;
+    window.removeEventListener('pointerdown', activated, true);
+    window.removeEventListener('keydown', activated, true);
+    ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { activated: true });
+  };
+  window.addEventListener('pointerdown', activated, true);
+  window.addEventListener('keydown', activated, true);
 }
 
 if (window === window.top) {

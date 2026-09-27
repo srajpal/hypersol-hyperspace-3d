@@ -6,6 +6,7 @@
  */
 import { PerspectiveCamera, Spherical, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import type { Solids, Walker } from './physics';
 
 export interface ViewControls {
   /** Moves on by dt milliseconds; true while still moving (keys held). */
@@ -13,6 +14,10 @@ export interface ViewControls {
   /** The point the orbit turns around, or the point ahead when walking. */
   readonly target: Vector3;
   readonly mode: 'orbit' | 'walk';
+  /** Puts the viewer's eyes at a point (a script moved the viewer), looking the same way. */
+  moveTo(eye: [number, number, number]): void;
+  /** Turns the viewer toward a point. */
+  lookAt(point: [number, number, number]): void;
   dispose(): void;
 }
 
@@ -69,6 +74,14 @@ export function orbitControls(camera: PerspectiveCamera, element: HTMLElement, t
     mode: 'orbit',
     target: controls.target,
     step: () => false,
+    moveTo: (eye) => {
+      camera.position.set(...eye);
+      controls.update();
+    },
+    lookAt: (point) => {
+      controls.target.set(...point);
+      controls.update();
+    },
     dispose: () => {
       window.removeEventListener('keydown', onKey);
       controls.dispose();
@@ -77,20 +90,34 @@ export function orbitControls(camera: PerspectiveCamera, element: HTMLElement, t
 }
 
 const WALK_SPEED = 2.2; // metres a second
+/** Shift held: walking goes this much faster (milestone 17). */
+const RUN = 2;
 const LOOK_SPEED = 0.005; // radians a pixel
+
+/** Walls and gravity (HoloML 0.2): the walker, and the solid boxes around it. */
+export interface WalkPhysics {
+  walker: Walker;
+  solids(): Solids;
+}
 
 /**
  * Walk: the eyes stay at the starting height. Arrow keys or W, A, S, D to
  * move, drag to look around; on a touch screen, drag one finger to look
- * and two to move forward and back.
+ * and two to move forward and back. Shift walks faster.
+ *
+ * With physics (HoloML 0.2), solid things stop the walker; with gravity
+ * it falls and stands on them, and Space jumps if the page allows it.
  */
-export function walkControls(camera: PerspectiveCamera, element: HTMLElement, lookAt: Vector3, changed: () => void): ViewControls {
+export function walkControls(camera: PerspectiveCamera, element: HTMLElement, lookAt: Vector3, changed: () => void, physics?: WalkPhysics): ViewControls {
   const eye = camera.position.y;
   const dir = new Vector3().subVectors(lookAt, camera.position);
   let yaw = Math.atan2(-dir.x, -dir.z);
   let pitch = Math.atan2(dir.y, Math.hypot(dir.x, dir.z));
   const held = new Set<string>();
   const target = new Vector3();
+  let running = false;
+  /** The walker is falling or in a jump: keep stepping until it lands. */
+  let airborne = physics?.walker.gravity ?? false;
 
   const aim = () => {
     camera.rotation.set(pitch, yaw, 0, 'YXZ');
@@ -144,6 +171,15 @@ export function walkControls(camera: PerspectiveCamera, element: HTMLElement, lo
     D: 'r',
   };
   const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Shift') running = true;
+    if (e.key === ' ' && physics && !e.altKey && !e.ctrlKey && !e.metaKey && !isTyping(e)) {
+      e.preventDefault();
+      if (physics.walker.jump()) {
+        airborne = true;
+        changed();
+      }
+      return;
+    }
     const k = KEYS[e.key];
     if (!k || e.altKey || e.ctrlKey || e.metaKey || isTyping(e)) return;
     e.preventDefault();
@@ -153,15 +189,27 @@ export function walkControls(camera: PerspectiveCamera, element: HTMLElement, lo
     }
   };
   const onKeyUp = (e: KeyboardEvent) => {
+    if (e.key === 'Shift') running = false;
     const k = KEYS[e.key];
     if (k) held.delete(k);
   };
-  const onBlur = () => held.clear();
+  const onBlur = () => {
+    held.clear();
+    running = false;
+  };
 
-  function move(forward: number, right: number) {
-    camera.position.x += -Math.sin(yaw) * forward + Math.cos(yaw) * right;
-    camera.position.z += -Math.cos(yaw) * forward - Math.sin(yaw) * right;
-    camera.position.y = eye;
+  /** Moves across the floor; with physics, walls stop it and gravity pulls (dt in seconds). */
+  function move(forward: number, right: number, dt = 0) {
+    const dx = -Math.sin(yaw) * forward + Math.cos(yaw) * right;
+    const dz = -Math.cos(yaw) * forward - Math.sin(yaw) * right;
+    if (physics) {
+      airborne = physics.walker.step(dx, dz, dt, physics.solids());
+      camera.position.set(...physics.walker.eye);
+    } else {
+      camera.position.x += dx;
+      camera.position.z += dz;
+      camera.position.y = eye;
+    }
     aim();
   }
 
@@ -176,10 +224,24 @@ export function walkControls(camera: PerspectiveCamera, element: HTMLElement, lo
     mode: 'walk',
     target,
     step(dt) {
-      if (held.size === 0) return false;
-      const d = (WALK_SPEED * dt) / 1000;
-      move((held.has('f') ? d : 0) - (held.has('b') ? d : 0), (held.has('r') ? d : 0) - (held.has('l') ? d : 0));
-      return true;
+      if (held.size === 0 && !airborne) return false;
+      const d = (WALK_SPEED * (running ? RUN : 1) * dt) / 1000;
+      move((held.has('f') ? d : 0) - (held.has('b') ? d : 0), (held.has('r') ? d : 0) - (held.has('l') ? d : 0), dt / 1000);
+      return held.size > 0 || airborne;
+    },
+    moveTo(eyeAt) {
+      if (physics) {
+        physics.walker.placeEye(eyeAt);
+        airborne = physics.walker.gravity;
+      }
+      camera.position.set(...eyeAt);
+      aim();
+    },
+    lookAt(point) {
+      const d = new Vector3(...point).sub(camera.position);
+      yaw = Math.atan2(-d.x, -d.z);
+      pitch = Math.max(-1.4, Math.min(1.4, Math.atan2(d.y, Math.hypot(d.x, d.z))));
+      aim();
     },
     dispose() {
       element.removeEventListener('pointerdown', onDown);

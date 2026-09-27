@@ -30,7 +30,8 @@ export const HOLOML_MEDIA_TYPE = 'model/vnd.holoml';
  */
 export const HOLOML_CSP = [
   "default-src 'none'",
-  `script-src ${VIEWER_SCHEME}:`,
+  // The viewer, and (HoloML 0.2) the page's own scripts from its own site.
+  `script-src ${VIEWER_SCHEME}: 'self'`,
   "connect-src 'self' data: blob:",
   "img-src 'self' data: blob:",
   "style-src 'unsafe-inline'",
@@ -103,6 +104,12 @@ const LOCAL_TYPES: Record<string, string> = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
+  // HoloML 0.2 (milestone 17): scripts and sounds next to the page.
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.ogg': 'audio/ogg',
+  '.mp3': 'audio/mpeg',
+  '.wav': 'audio/wav',
 };
 
 export interface HolomlOptions {

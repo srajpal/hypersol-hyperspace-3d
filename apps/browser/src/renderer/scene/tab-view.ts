@@ -73,6 +73,13 @@ export class TabView implements PagePanel {
   private holomlBusy = false;
   private holomlTextView = false;
   /**
+   * A HoloML page stays muted until its first real click or key (HoloML
+   * 0.2, milestone 17; owner, prompt 85, Q5 a): the address it is for, or
+   * null. Its page preload, where the page's scripts cannot reach, says
+   * when that input came; the tab's own mute is kept apart.
+   */
+  private soundGateUrl: string | null = null;
+  /**
    * Asleep (milestone 10): the page is closed to save memory; the tab keeps
    * its address and title, and the page whose history comes back on waking.
    */
@@ -194,7 +201,21 @@ export class TabView implements PagePanel {
 
   setMuted(muted: boolean): void {
     this.mutedByUser = muted;
-    if (this.webview && this.ready) this.webview.setAudioMuted(muted);
+    if (this.webview && this.ready) this.applyMute(this.webview);
+  }
+
+  /** The tab's mute, and a HoloML page's sound gate. */
+  private applyMute(wv: WebviewTag): void {
+    try {
+      wv.setAudioMuted(this.mutedByUser || this.soundGateUrl !== null);
+    } catch {
+      // Not attached yet: dom-ready applies it.
+    }
+  }
+
+  /** A HoloML page that may not play sound yet (for the tests). */
+  get soundGated(): boolean {
+    return this.soundGateUrl !== null;
   }
 
   /**
@@ -428,7 +449,7 @@ export class TabView implements PagePanel {
     if (url === '' || url.startsWith('about:') || wv.isLoading()) return;
     this.ready = true;
     this.shimmer.removeAttribute('data-visible');
-    if (this.mutedByUser) wv.setAudioMuted(true);
+    this.applyMute(wv);
     this.events.onNavState({ canGoBack: wv.canGoBack(), canGoForward: wv.canGoForward() });
     if (this.failed) return;
     const title = wv.getTitle();
@@ -463,7 +484,7 @@ export class TabView implements PagePanel {
       if (this.restoring) this.finishRestore(wv);
     });
     wv.addEventListener('dom-ready', () => {
-      if (this.mutedByUser) wv.setAudioMuted(true);
+      this.applyMute(wv);
       if (!this.ready) {
         this.ready = true;
         if (this.pendingUrl && this.pendingUrl !== wv.getURL()) {
@@ -486,13 +507,20 @@ export class TabView implements PagePanel {
         this.holomlUrl = typeof e.args[0] === 'string' ? withoutHash(e.args[0]) : null;
         this.holomlBusy = false;
         this.holomlTextView = false;
+        // A new HoloML document: no sound until its first click or key.
+        this.soundGateUrl = this.holomlUrl;
+        this.applyMute(wv);
         this.events.onHoloml?.();
         return;
       }
       if (e.channel === HOLOML_STATE_CHANNEL) {
-        const change = e.args[0] as { busy?: unknown; textView?: unknown } | undefined;
+        const change = e.args[0] as { busy?: unknown; textView?: unknown; activated?: unknown } | undefined;
         if (typeof change?.busy === 'boolean') this.holomlBusy = change.busy;
         if (typeof change?.textView === 'boolean') this.holomlTextView = change.textView;
+        if (change?.activated === true && this.soundGateUrl !== null) {
+          this.soundGateUrl = null;
+          this.applyMute(wv);
+        }
         this.events.onHoloml?.();
         return;
       }
@@ -515,6 +543,11 @@ export class TabView implements PagePanel {
       this.emit({ ...this.currentStatus, state: 'loading', message: undefined });
     });
     wv.addEventListener('did-navigate', (e) => {
+      // Another document: a HoloML page's sound gate goes with the page it was for.
+      if (this.soundGateUrl !== null && withoutHash(e.url) !== this.soundGateUrl) {
+        this.soundGateUrl = null;
+        this.applyMute(wv);
+      }
       if (this.restoring && e.url !== 'about:blank' && e.url !== RESTORE_BLANK) this.restoring = null;
       // A new document starts with nothing typed and nothing captured.
       this.typedInForm = false;

@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
+import { VIEWER_DEPS } from './viewer-deps.mjs';
 
 export default defineConfig({
   main: {
@@ -28,6 +29,8 @@ export default defineConfig({
     },
   },
   renderer: {
+    // The viewer's imports, prepared at start in development runs (viewer-deps.mjs).
+    optimizeDeps: { include: VIEWER_DEPS },
     build: {
       rollupOptions: {
         input: {
