@@ -48,17 +48,23 @@ jobs:
         run: pnpm test
 
       # Electron's sandbox needs unprivileged user namespaces, which Ubuntu
-      # restricts by default; the end-to-end checks also need a display.
+      # restricts by default; the end-to-end checks also need a display
+      # and, for the password checks, a system keychain (GNOME Keyring).
       - name: Prepare Linux for Electron
         if: runner.os == 'Linux'
         run: |
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           sudo apt-get update
-          sudo apt-get install -y xvfb
+          sudo apt-get install -y xvfb gnome-keyring dbus-x11
 
+      # A session bus and a throwaway keyring, unlocked with a throwaway
+      # password; both disappear with the runner.
       - name: End-to-end checks (Linux)
         if: runner.os == 'Linux'
-        run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" pnpm test:e2e
+        run: |
+          dbus-run-session -- bash -c '
+            echo -n throwaway | gnome-keyring-daemon --unlock --components=secrets > /dev/null
+            xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" pnpm test:e2e'
 
       - name: End-to-end checks (Windows)
         if: runner.os == 'Windows'

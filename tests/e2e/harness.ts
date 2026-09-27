@@ -80,6 +80,8 @@ function cleanEnv(keepRunning = false): Record<string, string> {
     // Linux displays: XAUTHORITY lets the app use a display that asks for
     // authorization, as the virtual one in automatic test runs does.
     'DISPLAY', 'WAYLAND_DISPLAY', 'XDG_RUNTIME_DIR', 'XAUTHORITY',
+    // Linux keychain: the secret service is reached over the session bus.
+    'DBUS_SESSION_BUS_ADDRESS',
   ];
   const env: Record<string, string> = { HYPERSOL_TEST: '1' };
   if (!SHOW_WINDOWS) env['HYPERSOL_TEST_BACKGROUND'] = '1';
@@ -108,6 +110,10 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
   // cannot start. This lets Chromium draw WebGL with its own software
   // renderer instead; with a graphics card it changes nothing (milestone 12).
   if (process.platform === 'linux') args.push('--enable-unsafe-swiftshader');
+  // Without a desktop session, Chromium would pick its fixed-key password
+  // store, which the app counts as no keychain; the password checks need
+  // the real one, so ask for the secret service (GNOME Keyring) by name.
+  if (process.platform === 'linux') args.push('--password-store=gnome-libsecret');
   // Launch failures are printed at once as well as thrown: a run stopped
   // early (as GitHub stops one at its time limit) never reaches the
   // summary where thrown errors appear (milestone 12).
@@ -413,6 +419,36 @@ export async function clickAt(h: Harness, p: Point, options: { button?: 'left' |
   await h.shell.mouse.move(p.x, p.y);
   await h.shell.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(true)))));
   await h.shell.mouse.click(p.x, p.y, options);
+}
+
+/**
+ * For failure messages: what the shell has at a screen point (the
+ * element, and the page's webview box), and whether a second click there,
+ * a second later, reaches the page. Tells a click that went to the wrong
+ * element from one that was lost in routing (milestone 12, Linux).
+ */
+export async function describeMissedClick(h: Harness, p: Point, registered: () => Promise<boolean>): Promise<string> {
+  const at = await h.shell.evaluate(([x, y]) => {
+    const name = (el: Element | null) =>
+      el ? `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${el.getAttribute('data-testid') ? `[${el.getAttribute('data-testid')}]` : ''}` : 'nothing';
+    let el = document.elementFromPoint(x!, y!);
+    const path = [name(el)];
+    while (el?.shadowRoot) {
+      const inner = el.shadowRoot.elementFromPoint(x!, y!);
+      if (!inner || inner === el) break;
+      path.push(name(inner));
+      el = inner;
+    }
+    const views = [...document.querySelectorAll('webview')].map((v) => {
+      const r = v.getBoundingClientRect();
+      return `${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)} ${getComputedStyle(v).transform.slice(0, 60)}`;
+    });
+    return `shell element at the point: ${path.join(' > ')}; webviews: ${views.join(' | ') || 'none'}`;
+  }, [p.x, p.y]);
+  await sleep(1000);
+  await clickAt(h, p);
+  await sleep(1000);
+  return `${at}; a second click a second later ${(await registered()) ? 'reached the page' : 'was lost too'}`;
 }
 
 /** Resizes the window's content area and waits for the page to follow. */

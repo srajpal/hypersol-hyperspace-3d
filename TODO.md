@@ -1791,6 +1791,17 @@ made cleaned for privacy and spelling.
     launches now pass `--enable-unsafe-swiftshader`, so Chromium draws
     WebGL with its own software renderer (tests only; no change with a
     graphics card).
+  - Next run: Windows passed (167 checks, C9's rate skipped as
+    decided: 15.7 frames a second on Microsoft's software renderer).
+    Linux: 159 passed, 8 failed. K1 to K4: the runner has no desktop,
+    so Chromium chose its fixed-key password store, which the app
+    rightly counts as no keychain; the Linux test launches now ask for
+    GNOME Keyring by name, and the workflow starts a throwaway unlocked
+    one on a session bus. C2 at 1024x700 (three tilts) and H6: after the
+    page's shape changes (a resize, a new tilt), the next click did not
+    reach the page. Not reproduced on Windows, even drawing in software;
+    the harness now reports what the shell has under a missed click and
+    whether a second click gets through.
   - Found by this: without WebGL 2 the app shows an empty window rather
     than an explanation (apps/browser/src/renderer/scene/room.ts creates
     the renderer unguarded). Not in this milestone's plan; raised with

@@ -15,7 +15,9 @@ You need:
 - Git.
 - For the end-to-end tests: `openssl` on your PATH (Git for Windows
   includes one; Linux has it), and on Linux a display (a desktop session,
-  or a virtual one with `xvfb-run`).
+  or a virtual one with `xvfb-run`) and, for the password checks, GNOME
+  Keyring (the tests ask for it by name; see the workflow for a
+  throwaway one without a desktop).
 
 Then:
 

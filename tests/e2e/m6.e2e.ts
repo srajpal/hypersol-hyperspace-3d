@@ -12,6 +12,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
   clickAt,
+  describeMissedClick,
   inPage,
   launch,
   pressInShell,
@@ -159,8 +160,12 @@ describe('H6: page tilt', () => {
     let h = await launch(server.url('form.html'), { userDataDir: profile });
     const clickField = async () => {
       await inPage(h, 'document.activeElement && document.activeElement.blur()', 'form');
-      await clickAt(h, await screenPointOf(h, '#name', 'form'));
-      await waitFor('field focused', () => inPage<string>(h, 'document.activeElement.id', 'form'), (id) => id === 'name');
+      const p = await screenPointOf(h, '#name', 'form');
+      await clickAt(h, p);
+      const focused = async () => (await inPage<string>(h, 'document.activeElement.id', 'form')) === 'name';
+      await waitFor('field focused', focused, (f) => f).catch(async (e: unknown) => {
+        throw new Error(`${String(e)}\n${await describeMissedClick(h, p, focused)}`);
+      });
     };
     try {
       await waitForPage(h, 'form');

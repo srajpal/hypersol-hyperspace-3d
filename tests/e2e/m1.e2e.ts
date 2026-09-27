@@ -17,6 +17,7 @@ import {
   ADDRESS,
   SHOW_WINDOWS,
   clickAt,
+  describeMissedClick,
   inPage,
   launch,
   navigateTo,
@@ -85,10 +86,12 @@ async function clickGrid(h: Harness): Promise<{ expected: Record<string, Point>;
     } catch (e) {
       const events = await inPage<string[]>(h, 'window.__fixture.events', 'click-grid');
       const shellFocus = await h.shell.evaluate(() => document.activeElement?.tagName ?? 'none');
+      const count = GRID_IDS.indexOf(id) + 1;
+      const more = await describeMissedClick(h, screen, async () => (await inPage<number>(h, 'window.__fixture.clicks.length', 'click-grid')) >= count);
       throw new Error(
         `${String(e)}\nClicked screen point ${screen.x.toFixed(1)},${screen.y.toFixed(1)} for page point ` +
           `${centre.x.toFixed(1)},${centre.y.toFixed(1)}.\nPage events so far: ${events.join(' ')}\n` +
-          `Shell focus: ${shellFocus}`,
+          `Shell focus: ${shellFocus}\n${more}`,
       );
     }
   }
