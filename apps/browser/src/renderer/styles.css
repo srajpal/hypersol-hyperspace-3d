@@ -44,6 +44,11 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* Never scrolled: with the renderer's own "hidden", Chromium scrolled the
+     layer to bring a focused page into view, and the drawn page slid away
+     from where the room placed it (found in milestone 16: a HoloML page
+     opened from the start panel sat 89 pixels left, over the tab rail). */
+  overflow: clip !important;
 }
 
 .hs-panel {

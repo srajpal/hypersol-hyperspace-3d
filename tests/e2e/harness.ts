@@ -39,12 +39,6 @@ export interface Harness {
 }
 
 export interface LaunchOptions {
-  /**
-   * Real network access, for the README's screenshot only (pnpm
-   * screenshots:readme; owner, prompt 68). Tests never set it: they reach
-   * only 127.0.0.1.
-   */
-  online?: boolean;
   tilt?: number;
   /** Search address with %s (a local stand-in for DuckDuckGo). */
   searchUrl?: string;
@@ -59,6 +53,8 @@ export interface LaunchOptions {
   filtersBase?: string;
   /** A local stand-in for the encrypted DNS resolver's reachability check. */
   dnsProbe?: string;
+  /** The start panel's HoloML showroom link goes to this local copy (milestone 16). */
+  showroomUrl?: string;
   /** Save downloads here (test mode switch). */
   downloadsDir?: string;
   /** Act as if the system keychain were missing (test mode switch, milestone 9). */
@@ -106,11 +102,12 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
   const keepProfile = opts.userDataDir !== undefined;
   const userDataDir = opts.userDataDir ?? (await mkdtemp(join(tmpdir(), 'hypersol-e2e-')));
   const args = [APP_DIR, `--start-url=${startUrl}`, `--hypersol-user-data=${userDataDir}`];
-  if (!opts.online) args.push(OFFLINE_RULES);
+  args.push(OFFLINE_RULES);
   if (opts.tilt !== undefined) args.push(`--tilt=${opts.tilt}`);
   if (opts.searchUrl !== undefined) args.push(`--search-url=${opts.searchUrl}`);
   if (opts.filtersBase !== undefined) args.push(`--filters-base=${opts.filtersBase}`);
   if (opts.dnsProbe !== undefined) args.push(`--dns-probe=${opts.dnsProbe}`);
+  if (opts.showroomUrl !== undefined) args.push(`--showroom-url=${opts.showroomUrl}`);
   if (opts.downloadsDir !== undefined) args.push(`--downloads-dir=${opts.downloadsDir}`);
   if (opts.noKeychain) args.push('--test-no-keychain');
   if (opts.sleepMinuteMs !== undefined) args.push(`--test-sleep-minute-ms=${opts.sleepMinuteMs}`);

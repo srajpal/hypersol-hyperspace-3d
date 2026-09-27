@@ -173,6 +173,8 @@ with no security release since. No upgrade needed.
 | HoloML pages | A `.holoml` address or the `model/vnd.holoml` media type marks a HoloML page (main/holoml.ts, through the shield's one onHeadersReceived listener). Its headers become `text/plain; charset=utf-8` with HoloML's content policy (only the `hypersol-viewer:` script; connect and images from the page's own site, data:, blob:). The page preload confirms it with the main process, hides the text, and adds the viewer's script (`hypersol-viewer://app/assets/viewer.js`, served from out/renderer only to pages that ask); the viewer draws the scene in the tab's own sandboxed page process with Three.js and its glTF loader. The page keeps its own address in the tab, history, bookmarks, and reopened tabs. The tab in front fills the window flat (room.setFill); zoom and the layers view are off for it. Files from the computer: Ctrl+O, the menu, or a drop; each opened folder gets a random name for this run (`hypersol-file://<name>/<file>`); only that folder and those inside it are served, never history, and only the person opens such an address | Milestone 14 (owner, prompt 65: Q1 a fill the window, Q2 a models from the page's own site, Q3 a files by Ctrl+O and drop, Q4 a a tagged copy of the parser, Q5 a errors on a card, problems in the console). Nothing from a page runs in a privileged process. |
 | HoloML limits and access | The viewer fetches each model and every file its glTF names itself (viewer/budget.ts), counting bytes as they arrive: one file 32 MB, a page's models 128 MB in all; a model left out stops counting at once. Triangles (each mesh as often as the scene uses it) and picture sizes (PNG, JPEG, WebP headers) are read from the files before anything is decoded: 2 million triangles in all, pictures up to 4096 by 4096. Also 2 MB of page text, 10,000 elements, 64 models, and 30 seconds a model. What crosses a limit is left out and marked with a red box, and a notice (role status) says what and why. Esc or the top bar's stop button stops pending loads (the page tells the shell it is busy through its preload); leaving the page releases the scene. A hidden outline in the page lists the title, links, and named things (models, groups, labels) in page order: Tab moves through it and outlines the object in the scene; focus moves to the next item if its object is left out. The text view (top-bar button, Ctrl+Shift+V) shows that outline as a plain page. With reduced motion, animations show their end state | Milestone 15 (owner, prompt 77: Q1 a the limits, Q2 a leave out and mark, Q3 a reduced motion and a text view, Q5 a links and named things). The limits keep one page from exhausting memory; the browser's own controls are in another process. |
 | Scene inspector | With a HoloML page in front, the instrument panel's right column gains a Scene part: the objects as a tree (the first 2,000; the rest counted), the selected one's line of text, bounds, position, rotation, scale, triangles, and pictures, a pick button (a click in the scene selects rather than follows a link), and every problem and left-out model with line and column. The main process reads it once a second with executeJavaScript, only for pages it marked as HoloML, and keeps only known fields within fixed sizes (parseSceneReadout in shared/inspect.ts) | Milestone 15 (Q4 a, one place for developer tools). The page's facts are checked, never trusted; nothing is stored. |
+| HoloML showroom | HoloML's showroom lives in the holoml repository (examples/showroom: the hall, a page per car and colour, an about page; Kenney's Car Kit cars, CC0, split into Paint, Glass, Lights, Trim, and Wheels by tools/prepare-cars.mjs; hall and plinths made by a script), published by GitHub Pages at https://srajpal.github.io/holoml/showroom/. The start panel's "Try HoloML" section links to its index.holoml; nothing is fetched until the link is clicked. `pnpm holoml:sync` copies the showroom byte for byte into tests/fixtures/holoml/showroom from a tag, branch, or commit (`--showroom <ref>`), recorded in packages/holoml/SOURCE.json with each file's hash; the copy test checks it. The README's screenshot is the showroom, served locally | Milestone 16 (owner, prompt 81: Q1 a GitHub Pages and the start panel link, Q2 a Kenney's Car Kit, Q3 a the full site, Q4 a gaps as holoml issues #8 to #11, Q5 a the README screenshot). |
+| Page layer never scrolls | The CSS layer that holds the pages is `overflow: clip` (styles.css). With the 3D renderer's own `hidden`, Chromium scrolled the layer to bring a focused page into view, and the page was drawn away from where the room placed it | Found in milestone 16 (a HoloML page opened from the start panel sat 89 pixels left, over the tab rail); m16.e2e.ts checks the drawn page matches the room's placement. |
 | Window frame, reconsidered | Standard OS frame kept | Considered in milestone 6: a custom frame would lose native dragging, snapping, and accessibility; the theme now sets the frame's light or dark scheme. |
 | Bookmarks and history | SQLite through Node's built-in node:sqlite (owner decision 2026-09-25, prompt 20) | Fast search over thousands of rows; standard for browsers. Built into Electron's Node, so no native module and no extra package. |
 | UI widgets (address bar, menus) | Lit web components | Tiny, standards-based, no framework lock-in; themed with CSS variables. |
@@ -308,8 +310,10 @@ hypersol-hyperspace-3d/
     screenshots/               progress screenshots, one folder per milestone
     privacy.md                 what is blocked, what is stored, what is fetched
   tests/
-    e2e/                       Playwright drives the built app (m1 to m8 checks)
-    fixtures/                  sample pages served from 127.0.0.1
+    e2e/                       Playwright drives the built app (m1 to m16 checks)
+    fixtures/                  sample pages served from 127.0.0.1;
+                               holoml/showroom/ is HoloML's showroom,
+                               copied by pnpm holoml:sync (milestone 16)
     screenshots/               progress screenshots (pnpm screenshots)
 ```
 
@@ -329,10 +333,13 @@ holoml/
                                .holoml with the .expected.json any reader
                                must give (pnpm conformance:update writes
                                them, for review)
-  examples/showroom/           three cars to orbit, one to walk around; a
-                               placeholder car made of boxes by
-                               make-model.mjs
+  examples/showroom/           the showroom (milestone 16): a hall of five
+                               cars, a page per car and colour, an about
+                               page, index.html for other browsers; tools/
+                               writes the pages, hall, and cars (from
+                               Kenney's Car Kit, CC0)
   .github/workflows/ci.yml     lint, types, and tests on Windows and Linux
+  .github/workflows/pages.yml  publishes examples/ with GitHub Pages
 ```
 
 Decisions (milestone 13, owner prompt 63): files are `.holoml`, served

@@ -18,6 +18,7 @@ import { DEFAULT_TILT_DEG, clampTilt } from '@hypersol/scene-core';
 import { defaultTheme } from '@hypersol/themes';
 import type { ShellBridge } from '../shared/commands';
 import { App } from './app';
+import { setShowroomUrl } from './scene/start-panel';
 import type { CardPart } from './scene/tab-card';
 import { applyThemeCss } from './themes/apply';
 
@@ -33,6 +34,9 @@ about.appVersion = params.get('appVersion') ?? '';
 about.electron = bridge.versions.electron;
 about.chrome = bridge.versions.chrome;
 about.addEventListener('hs-about-closed', () => app.focusedView?.focusContent());
+
+// Test runs only: the start panel's showroom link goes to a local copy.
+if (params.get('showroomUrl')) setShowroomUrl(params.get('showroomUrl')!);
 
 const app = new App({
   startUrl: params.get('startUrl') ?? '',

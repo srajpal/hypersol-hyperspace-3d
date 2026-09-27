@@ -191,6 +191,7 @@ function createWindow(): void {
   if (process.argv.some((a) => a.startsWith('--tilt='))) query['tilt'] = String(options.tiltDeg);
   if (options.testMode) query['test'] = '1';
   if (options.searchUrl) query['searchUrl'] = options.searchUrl;
+  if (options.showroomUrl) query['showroomUrl'] = options.showroomUrl;
   if (options.testSleepMinuteMs) query['sleepMinuteMs'] = String(options.testSleepMinuteMs);
 
   const devServer = process.env['ELECTRON_RENDERER_URL'];

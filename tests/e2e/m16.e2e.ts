@@ -1,0 +1,281 @@
+/**
+ * Milestone 16 end-to-end checks S2 to S7 (TODO.md): HoloML's showroom in
+ * the browser. The showroom is a byte-for-byte copy from the holoml
+ * repository (pnpm holoml:sync), served from 127.0.0.1 like every
+ * fixture. S1 (valid pages) is holoml's own unit test; S8 (the published
+ * site) is checked by hand, since tests stay on this machine.
+ */
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { FIXTURES_DIR, startFixtureServer, type FixtureServer } from './fixture-server';
+import {
+  clickUntil,
+  describeMissedClick,
+  focusedTab,
+  inPage,
+  launch,
+  pressInPage,
+  pressInShell,
+  project,
+  shellCall,
+  sleep,
+  softwareRenderer,
+  waitFor,
+  waitForPage,
+  type Harness,
+  type Point,
+} from './harness';
+
+let server: FixtureServer;
+
+beforeAll(async () => {
+  server = await startFixtureServer();
+});
+
+afterAll(async () => {
+  await server?.close();
+});
+
+type Vec = [number, number, number];
+interface Model {
+  src: string;
+  state: string;
+  materials: Record<string, { color: string }>;
+}
+
+const CARS = ['Quellis', 'Pippet', 'Veyl', 'Tallberg', 'Strafe'];
+const url = (page: string) => server.url(`holoml/showroom/${page}`);
+
+function holo<T>(h: Harness, expression: string, page: string): Promise<T> {
+  return inPage<T>(h, `window.__holoml ? (${expression}) : undefined`, page);
+}
+
+async function ready(h: Harness, page: string, timeoutMs = 20_000): Promise<void> {
+  await waitFor(`${page} ready`, () => holo<boolean>(h, 'window.__holoml.ready', page), (r) => r === true, timeoutMs);
+}
+
+async function open(h: Harness, page: string): Promise<void> {
+  await shellCall(h, 'showUrl', url(page));
+  await waitForPage(h, page);
+  await ready(h, page);
+}
+
+const models = (h: Harness, page: string) => holo<Model[]>(h, 'window.__holoml.models()', page);
+const paint = async (h: Harness, page: string) => (await models(h, page)).find((m) => m.src.endsWith('.glb'))!.materials['Paint']!.color;
+const focused = (h: Harness, page: string) => inPage<string>(h, 'document.activeElement?.textContent ?? ""', page);
+
+/** Presses Tab in the page until the outline item with this text has focus. */
+async function tabTo(h: Harness, page: string, text: string): Promise<void> {
+  const outline = await holo<string[]>(h, 'window.__holoml.outline()', page);
+  const at = outline.findIndex((s) => s.slice(s.indexOf(':') + 1) === text);
+  expect(at, `${text} in ${JSON.stringify(outline)}`).toBeGreaterThanOrEqual(0);
+  await inPage(h, 'document.activeElement?.blur(), true', page);
+  for (let i = 0; i <= at; i++) await pressInPage(h, 'Tab', [], page);
+  await waitFor(`${text} in focus`, () => focused(h, page), (t) => t === text);
+}
+
+async function holdKey(h: Harness, page: string, keyCode: string, ms: number): Promise<void> {
+  const send = (type: 'keyDown' | 'keyUp') =>
+    h.app.evaluate(
+      ({ webContents }, { page, keyCode, type }) => {
+        const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes(page)).pop();
+        guest?.sendInputEvent({ type, keyCode });
+      },
+      { page, keyCode, type },
+    );
+  await send('keyDown');
+  await sleep(ms);
+  await send('keyUp');
+}
+
+describe('S2 to S7: the showroom', () => {
+  let h: Harness;
+  beforeAll(async () => {
+    h = await launch(server.url('link-a.html'), { showroomUrl: url('index.holoml') });
+    await waitForPage(h, 'link-a.html');
+  });
+  afterAll(async () => h?.close());
+
+  it('the start panel links to the showroom, and the link opens it', async () => {
+    await pressInShell(h, 'T', ['control']);
+    const link = h.shell.locator('[data-testid="start-showroom"]');
+    await link.waitFor({ state: 'visible' });
+    expect(await link.getAttribute('data-url')).toBe(url('index.holoml'));
+    await link.click();
+    await waitFor('the hall', async () => (await focusedTab(h)).url, (u) => u === url('index.holoml'));
+    await waitForPage(h, 'index.holoml');
+    // The page is drawn where the room placed it, beside the tab rail. Before
+    // the fix, focus scrolled the page layer and the page sat 89 pixels left.
+    const quad = await shellCall(h, 'panelQuad');
+    const left = await h.shell.evaluate(() => Math.max(...[...document.querySelectorAll('webview')].map((v) => (getComputedStyle(v).visibility === 'visible' ? v.getBoundingClientRect().left : -1))));
+    expect(Math.abs(left - quad[0]!.x)).toBeLessThan(2);
+  });
+
+  it('S2 the hall loads whole within 5 seconds, inside the budget', async () => {
+    const PAGE = 'index.holoml';
+    const started = Date.now();
+    await shellCall(h, 'showUrl', url(`${PAGE}?s2`));
+    await waitForPage(h, `${PAGE}?s2`);
+    await ready(h, `${PAGE}?s2`, 5000);
+    expect(Date.now() - started).toBeLessThan(5000);
+    const states = (await models(h, PAGE)).map((m) => m.state);
+    expect(states.length).toBe(11); // the hall, five plinths, five cars
+    expect(states.every((s) => s === 'loaded'), JSON.stringify(states)).toBe(true);
+    expect(await holo<unknown[]>(h, 'window.__holoml.problems', PAGE)).toEqual([]);
+    expect(await holo<unknown[]>(h, 'window.__holoml.leftOut()', PAGE)).toEqual([]);
+    // What the instrument panel's Scene part shows as the totals.
+    const { totals } = await holo<{ totals: { bytes: number; triangles: number } }>(h, 'window.__holoml.scene()', PAGE);
+    expect(totals.bytes).toBeGreaterThan(0);
+    expect(totals.bytes).toBeLessThan(10 * 1024 * 1024);
+    expect(totals.triangles).toBeGreaterThan(5000);
+    expect(totals.triangles).toBeLessThan(200_000);
+    expect(await holo<string>(h, 'document.title', PAGE)).toBe('HoloML showroom');
+  });
+
+  it('S4 a car in the hall opens its page; its colours and the way back work', async () => {
+    const HALL = 'index.holoml';
+    // With the mouse, on the Quellis.
+    const quellis = (await holo<string[]>(h, 'window.__holoml.links()', HALL)).indexOf(url('quellis.holoml'));
+    expect(quellis).toBeGreaterThanOrEqual(0);
+    const p = await waitFor('Quellis on screen', () => holo<Point | null>(h, `window.__holoml.point(${quellis})`, HALL), (v) => v !== null);
+    const at = await project(h, p!.x, p!.y);
+    const reached = async () => (await focusedTab(h)).url === url('quellis.holoml');
+    await clickUntil(h, at, 'the Quellis link', reached, {}, () => describeMissedClick(h, at, reached));
+    await ready(h, 'quellis.holoml');
+    expect(await paint(h, 'quellis.holoml')).toBe('#c8243a');
+    // From the keyboard: another colour.
+    await tabTo(h, 'quellis.holoml', 'Ocean blue');
+    await pressInPage(h, 'Enter', [], 'quellis.holoml');
+    await waitFor('the blue page', async () => (await focusedTab(h)).url, (u) => u === url('quellis-ocean-blue.holoml'));
+    await ready(h, 'quellis-ocean-blue.holoml');
+    expect(await paint(h, 'quellis-ocean-blue.holoml')).toBe('#2c5fbf');
+    expect(await holo<string>(h, 'document.title', 'quellis-ocean-blue.holoml')).toBe('Quellis in ocean blue · HoloML showroom');
+    // Back returns; "Back to the hall" goes to the hall.
+    await pressInShell(h, 'Left', ['alt']);
+    await waitFor('back', async () => (await focusedTab(h)).url, (u) => u === url('quellis.holoml'));
+    await ready(h, 'quellis.holoml');
+    await tabTo(h, 'quellis.holoml', 'Back to the hall');
+    await pressInPage(h, 'Enter', [], 'quellis.holoml');
+    await waitFor('the hall', async () => (await focusedTab(h)).url, (u) => u === url('index.holoml'));
+  });
+
+  it('S4 every car has its three colours, each with its own paint', async () => {
+    const expected: Record<string, string[]> = {
+      quellis: ['#c8243a', '#2c5fbf', '#b8bcc6'],
+      pippet: ['#3aa56f', '#f2c230', '#e8e8ec'],
+      tallberg: ['#f09a3a', '#4a4d57', '#dfe7ee'],
+      veyl: ['#3f6fd6', '#8b5cf6', '#1b1c22'],
+      strafe: ['#e0472f', '#ff8a1f', '#1fa7a0'],
+    };
+    for (const [car, colours] of Object.entries(expected)) {
+      await open(h, `${car}.holoml`);
+      const links = (await holo<string[]>(h, 'window.__holoml.links()', `${car}.holoml`)).filter((l) => l.includes(`/${car}-`));
+      expect(links, car).toHaveLength(2);
+      expect(await paint(h, `${car}.holoml`)).toBe(colours[0]);
+      for (const [i, link] of links.entries()) {
+        const page = link.slice(link.lastIndexOf('/') + 1);
+        await open(h, page);
+        expect((await models(h, page)).every((m) => m.state === 'loaded'), page).toBe(true);
+        expect(await paint(h, page), page).toBe(colours[i + 1]);
+      }
+    }
+  }, 120_000);
+
+  it('S3 each car page starts in walk mode, and walking moves at eye height', async () => {
+    const PAGE = 'veyl.holoml';
+    await open(h, PAGE);
+    const before = await holo<{ mode: string; position: Vec }>(h, 'window.__holoml.view()', PAGE);
+    expect(before.mode).toBe('walk');
+    expect(before.position[1]).toBeCloseTo(1.7, 5);
+    await holdKey(h, PAGE, 'W', 600);
+    const after = await holo<{ position: Vec }>(h, 'window.__holoml.view()', PAGE);
+    expect(Math.hypot(after.position[0] - before.position[0], after.position[2] - before.position[2])).toBeGreaterThan(0.3);
+    expect(after.position[1]).toBeCloseTo(1.7, 5);
+  });
+
+  it('S5 Tab reaches every car by name; the text view lists the cars and links', async () => {
+    const PAGE = 'index.holoml';
+    await open(h, PAGE);
+    const outline = await holo<string[]>(h, 'window.__holoml.outline()', PAGE);
+    for (const name of CARS) expect(outline, name).toContain(`a:${name}`);
+    expect(outline).toContain('a:About this showroom');
+    await tabTo(h, PAGE, 'Tallberg');
+    const box = await holo<{ visible: boolean }>(h, 'window.__holoml.highlight()', PAGE);
+    expect(box.visible).toBe(true);
+    await h.shell.click('hs-toolbar [data-testid="text-view"]');
+    await waitFor('the text view', () => holo<boolean>(h, 'window.__holoml.textView', PAGE), (v) => v === true);
+    const text = await inPage<string>(h, 'document.getElementById("holoml-outline-nav").innerText', PAGE);
+    for (const name of CARS) expect(text).toContain(name);
+    expect(text).toContain('A tall seven-seater for the mountains');
+    expect(text).toContain('HoloML showroom');
+    await h.shell.click('hs-toolbar [data-testid="text-view"]');
+    await waitFor('3D again', () => holo<boolean>(h, 'window.__holoml.textView', PAGE), (v) => v === false);
+  });
+
+  it('S6 the hall draws while its turntable turns; an idle car page draws nothing', async () => {
+    const HALL = 'index.holoml';
+    await open(h, HALL);
+    const f1 = await holo<number>(h, 'window.__holoml.frames', HALL);
+    const r1 = (await holo<{ rotation: Vec }>(h, 'window.__holoml.object("turntable")', HALL))!.rotation[1];
+    await sleep(1000);
+    // With a graphics card, at least 10 frames a second; drawn in software
+    // (GitHub's machines), only that it keeps drawing, as C9 and G9 do.
+    const software = await softwareRenderer(h);
+    expect(await holo<number>(h, 'window.__holoml.frames', HALL)).toBeGreaterThan(software ? f1 : f1 + 10);
+    expect((await holo<{ rotation: Vec }>(h, 'window.__holoml.object("turntable")', HALL))!.rotation[1]).not.toBe(r1);
+    const CAR = 'pippet.holoml';
+    await open(h, CAR);
+    await sleep(500);
+    const f2 = await holo<number>(h, 'window.__holoml.frames', CAR);
+    await sleep(1500);
+    expect(await holo<number>(h, 'window.__holoml.frames', CAR)).toBe(f2);
+  });
+
+  it('S5 with reduced motion, the turntable stands still', async () => {
+    const HALL = 'index.holoml';
+    await open(h, HALL);
+    await h.app.evaluate(async ({ webContents }) => {
+      const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes('index.holoml')).pop()!;
+      guest.debugger.attach('1.3');
+      await guest.debugger.sendCommand('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+    });
+    try {
+      await open(h, `${HALL}?still`);
+      const r1 = (await holo<{ rotation: Vec }>(h, 'window.__holoml.object("turntable")', `${HALL}?still`))!.rotation[1];
+      await sleep(800);
+      expect((await holo<{ rotation: Vec }>(h, 'window.__holoml.object("turntable")', `${HALL}?still`))!.rotation[1]).toBe(r1);
+    } finally {
+      await h.app.evaluate(({ webContents }) => {
+        for (const w of webContents.getAllWebContents()) if (w.getType() === 'webview' && w.debugger.isAttached()) w.debugger.detach();
+      });
+    }
+  });
+
+  it('S7 the about page credits the models, and the credits file is there', async () => {
+    const PAGE = 'about.holoml';
+    await open(h, PAGE);
+    const labels = await holo<string[]>(h, 'window.__holoml.labels()', PAGE);
+    expect(labels.some((l) => l.includes("Kenney's Car Kit (kenney.nl, CC0)"))).toBe(true);
+    expect(existsSync(join(FIXTURES_DIR, 'holoml/showroom/models/CREDITS.md'))).toBe(true);
+    const links = await holo<string[]>(h, 'window.__holoml.links()', PAGE);
+    expect(links).toContain('https://github.com/srajpal/holoml/blob/main/SPEC.md');
+    expect(links).toContain(url('index.holoml'));
+  });
+});
+
+describe('the published showroom', () => {
+  it('the start panel links to the showroom on GitHub Pages (opened only by a click)', async () => {
+    const h = await launch(server.url('link-a.html'));
+    try {
+      await waitForPage(h, 'link-a.html');
+      await pressInShell(h, 'T', ['control']);
+      const link = h.shell.locator('[data-testid="start-showroom"]');
+      await link.waitFor({ state: 'visible' });
+      expect(await link.getAttribute('data-url')).toBe('https://srajpal.github.io/holoml/showroom/index.holoml');
+      expect(await link.innerText()).toContain('HoloML showroom');
+    } finally {
+      await h.close();
+    }
+  });
+});

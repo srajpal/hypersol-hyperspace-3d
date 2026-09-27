@@ -336,6 +336,29 @@ it('captures the main screens', async () => {
     await capture(inspect, '45-holoml-inspector');
   } finally {
     await inspect.close();
+  }
+  // Milestone 16: HoloML's showroom (the local copy), from the start panel's link.
+  const showroom = (page: string) => server.url(`holoml/showroom/${page}`);
+  const show = await launch(server.url('link-a.html'), { showroomUrl: showroom('index.holoml') });
+  const shown = (page: string) =>
+    waitFor('the scene', () => inPage<boolean>(show, 'window.__holoml?.ready === true', page), (r) => r, 30_000);
+  try {
+    await waitForPage(show, 'link-a');
+    await pressInShell(show, 'T', ['control']);
+    await show.shell.locator('[data-testid="start-showroom"]').waitFor({ state: 'visible' });
+    await settled(show);
+    await capture(show, '46-start-panel-showroom');
+    await show.shell.click('[data-testid="start-showroom"]');
+    await waitForPage(show, 'index.holoml');
+    await shown('index.holoml');
+    await sleep(2500);
+    await capture(show, '47-showroom-hall');
+    await shellCall(show, 'showUrl', showroom('tallberg-glacier.holoml'));
+    await waitForPage(show, 'tallberg-glacier.holoml');
+    await shown('tallberg-glacier.holoml');
+    await capture(show, '48-showroom-car');
+  } finally {
+    await show.close();
     await server.close();
   }
-}, 300_000);
+}, 360_000);

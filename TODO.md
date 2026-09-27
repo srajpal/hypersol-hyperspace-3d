@@ -2334,9 +2334,10 @@ the fix. HoloML's spec note (task 6) is in holoml pull request #7
 
 ## Milestone 16 — Car showroom demo
 
-Status: In progress. Plan answered (prompt 81: Q1 to Q5 a, as
-recommended) and build approved (prompt 81), 2026-09-27. Pushed before
-the build. Rule 13 check done (ARCHITECTURE.md section 3).
+Status: Built, waiting for the owner's acceptance (2026-09-27). Plan
+answered (prompt 81: Q1 to Q5 a, as recommended) and build approved
+(prompt 81), 2026-09-27. Pushed before the build. Rule 13 check done
+(ARCHITECTURE.md section 3).
 
 Goal: a small HoloML site that shows what HoloML 0.1 can do, the one the
 brief describes: a showroom where every car is a 3D model you walk
@@ -2421,19 +2422,19 @@ repository and becomes the browser's showcase.
 
 ### Tasks
 
-- [ ] 1. The hall model: a script that writes the floor, plinths, and
+- [x] 1. The hall model: a script that writes the floor, plinths, and
       back wall as glTF.
-- [ ] 2. The cars (per Q2): download, check the licence and the files,
+- [x] 2. The cars (per Q2): download, check the licence and the files,
       choose five, keep the licence and credits beside them, and find
       each car's paint material by name.
-- [ ] 3. The pages (per Q3): hall, car pages, colour pages, about; the
+- [x] 3. The pages (per Q3): hall, car pages, colour pages, about; the
       holoml repository's tests check that every page is valid.
-- [ ] 4. The browser's copy: `pnpm holoml:sync` also brings the
+- [x] 4. The browser's copy: `pnpm holoml:sync` also brings the
       showroom into the test fixtures; end-to-end checks S1 to S7.
-- [ ] 5. Publishing (per Q1): GitHub Pages for the holoml repository and
+- [x] 5. Publishing (per Q1): GitHub Pages for the holoml repository and
       the start panel link (Q1 a), or the instructions to open it (b).
-- [ ] 6. The gaps (per Q4): an issue per missing feature in holoml.
-- [ ] 7. Documents: both READMEs, ARCHITECTURE, docs/privacy.md (the
+- [x] 6. The gaps (per Q4): an issue per missing feature in holoml.
+- [x] 7. Documents: both READMEs, ARCHITECTURE, docs/privacy.md (the
       start panel link, if Q1 a), credits, HANDOFF; screenshots and the
       README screenshot (per Q5).
 
@@ -2450,6 +2451,42 @@ repository and becomes the browser's showcase.
 | S7 | Credits | The models' licence and credits are in the repository and shown on the about page |
 | S8 | Published (Q1 a) | The site opens from its public address, and the start panel link opens it (checked by hand: the tests stay on 127.0.0.1) |
 | S9 | Regression | C to R pass, the unit tests, and HoloML's tests |
+
+### Results (2026-09-27)
+
+The showroom is in holoml pull request #12
+(https://github.com/srajpal/holoml/pull/12), branch showroom. The
+browser's copy (tests/fixtures/holoml/showroom) is synced from that
+branch's commit (`pnpm holoml:sync v0.1.1 --showroom showroom`); after
+the merge it is synced again from holoml's main or a tag. Checks are in
+tests/e2e/m16.e2e.ts.
+
+| # | Result |
+|---|---|
+| S1 | Pass. holoml's tests: all 21 pages valid; every link and every material a page changes exists; the hall under 10 MB and 200,000 triangles; the credits present. 139 passed; lint and types clean |
+| S2 | Pass. The hall is ready within 5 s from 127.0.0.1; all 11 models (hall, five plinths, five cars) load; no problems, nothing left out; the Scene part's totals are about 0.8 MB and 13,000 triangles |
+| S3 | Pass. Each car page starts in walk mode at 1.7 m; holding W walks more than 0.3 m at the same height |
+| S4 | Pass. A mouse click on the Quellis in the hall opens its page (paint #c8243a); Tab and Enter open "Ocean blue" (#2c5fbf); Alt+Left returns; "Back to the hall" goes to the hall. All five cars' three colour pages load with their paint |
+| S5 | Pass. Tab reaches the five cars by name and "About this showroom", each outlined; the text view lists the cars, their lines, and the title; with reduced motion the turntable stands still |
+| S6 | Pass. The hall keeps drawing while the turntable turns (at least 10 frames a second with a graphics card; in software only that it draws, as C9 and G9); an idle car page draws no frames for 1.5 s |
+| S7 | Pass. The about page credits "Kenney's Car Kit (kenney.nl, CC0)" and links to the spec; models/CREDITS.md is in the copy |
+| S8 | Partly done. The start panel's "Try HoloML" link points to https://srajpal.github.io/holoml/showroom/index.holoml (checked), and with the test switch it opens the local copy (checked). GitHub Pages is switched on for the holoml repository (build from the Pages workflow); the site goes live when pull request #12 is merged. Opening the published site is the owner's check by hand after that |
+| S9 | Pass. Full run: 222 of 222 end-to-end checks (C to S). Unit tests: 252 passed; lint and type check clean |
+
+A fault found along the way and fixed: after focus moved into a page,
+Chromium scrolled the layer that holds the pages, so the page was drawn
+away from where the room placed it (a HoloML page opened from the
+start panel sat 89 pixels left, over the tab rail). The layer is now
+`overflow: clip`; m16.e2e.ts checks the drawn page against the room's
+placement, and that check failed before the fix (209 pixels off).
+
+HoloML 0.1 gaps filed as ideas for 0.2 (Q4 a): holoml issues #8
+shadows, #9 changing a material in place, #10 walk mode that stops at
+walls, #11 text of more than one line.
+
+The README's screenshot is now the showroom, served locally
+(tests/screenshots/readme.capture.ts); the Wikipedia run and the test
+harness's `online` switch are gone, so no run uses the network.
 
 ### Done when
 
