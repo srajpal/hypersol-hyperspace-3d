@@ -613,3 +613,14 @@ Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b3
 default button for appearance in settings (next to flat and still)
 after that commit and push and what is left to finish version 1?
 ```
+
+## 54 — 2026-09-26
+
+Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b35 · Tokens: not captured
+
+```text
+I tested milestone 11 and accept, plan milestone 12
+why did we do v0.1, it should either be 1.0 or .8 as it has everything but the holoml integration, right?
+we should do a windows and linux release first, mac second, and then mobile.
+give me the best way to do code signing and more info on the updates and lets discuss the other things one at a time. give me questions and options for all those decisions.
+```

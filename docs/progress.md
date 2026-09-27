@@ -130,8 +130,7 @@ visits.
 
 ![Economy mode on (ECO), with the Tabs and Economy settings](screenshots/m10/33-economy-and-tabs-settings.png)
 
-**Milestone 11: your feedback** (built; waiting for the owner's
-acceptance). The address bar completes sites you have visited as you
+**Milestone 11: your feedback** (accepted 2026-09-26). The address bar completes sites you have visited as you
 type and lists the best matches. The leaning page now reaches both
 sides of the window, and Settings > Appearance and view sets how far
 and which way it leans, how much the room moves, and the space around

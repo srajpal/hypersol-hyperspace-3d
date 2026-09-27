@@ -22,7 +22,7 @@ Plan approved 2026-09-24.
 | 8 | Everyday browser features | Zoom (buttons, shortcuts, per site), find in page, downloads panel, printing, private tabs | Done (accepted 2026-09-26, with follow-ups below) |
 | 9 | Passwords and site permissions | A password manager (offer to save on sign-in, fill on return, a Passwords tab in the Library, encrypted with the system's keychain) and a site permissions panel (camera, microphone, location: per-site prompts and choices to review and revoke); plus the milestone 8 feedback (download finished notice, private tab under "+", printing) | Done (accepted, prompt 50) |
 | 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Done (accepted, prompt 50) |
-| 11 | Owner feedback: address bar, view, settings, shortcuts | Two ways to show tabs; address bar completion; a wider page and view settings; menus that close; reorganized Settings with search; shortcut list and remapping; Library search reset | Built, waiting for acceptance |
+| 11 | Owner feedback: address bar, view, settings, shortcuts | Two ways to show tabs; address bar completion; a wider page and view settings; menus that close; reorganized Settings with search; shortcut list and remapping; Library search reset | Done (accepted, prompt 54) |
 | 12 | First release v0.1 | Installers for Windows, macOS, Linux; per-OS checks; the app logo and icons; continuous integration (GitHub issue #5); holoml first-result scope (SPEC.md outline, parser package with one test); full regression pass | Later |
 | 13 | HoloML v0.1 language | Spec, schema, parser, conformance samples | Later |
 | 14 | HoloML in the browser | `.holo` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
@@ -1579,7 +1579,7 @@ Changed checks, because their requirement changed (documented here):
 
 ## Milestone 11 — Owner feedback: address bar, view, settings, shortcuts
 
-Status: Built, waiting for the owner's acceptance (checks below). Build approved 2026-09-26 (prompt 52). The owner's
+Status: Done. Accepted by the owner 2026-09-26 (prompt 54). Build approved 2026-09-26 (prompt 52). The owner's
 feedback (prompt 50) with the answers Q1 a, Q2 a, Q3 a (prompt 51).
 Electron security check at the start: 44.4.5 still newest (2026-09-26).
 
