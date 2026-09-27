@@ -624,3 +624,20 @@ why did we do v0.1, it should either be 1.0 or .8 as it has everything but the h
 we should do a windows and linux release first, mac second, and then mobile.
 give me the best way to do code signing and more info on the updates and lets discuss the other things one at a time. give me questions and options for all those decisions.
 ```
+
+## 55 — 2026-09-26
+
+Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b35 · Tokens: not captured
+
+```text
+what if we dont do builds and leave it for devs while we do the holoml path. hw does that effect the questions asked
+```
+
+## 56 — 2026-09-26
+
+Model: Claude Opus 5.5 (claude-opus-5-5) · Effort: low · Session: opus-6ff60b35 · Tokens: not captured
+
+```text
+A-a, B-a, C-a, E-a, F-a
+but lets discuss legal identity, hypersol the company no longer exists. this is a pet project and it is not for marketing the product at this time.
+```

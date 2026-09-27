@@ -1700,6 +1700,30 @@ Changed checks, because their requirement changed (documented here):
 - The owner has tried the address bar, the wider page and View
   settings, the new Settings, and shortcut remapping, and accepts.
 
+## Release path and milestone 12: owner's answers so far (2026-09-26, prompts 54 to 56)
+
+- Release order (prompt 54): Windows and Linux first, macOS second,
+  mobile later. Then (prompt 55): no installers for now; the browser is
+  released as source for developers while the work follows the HoloML
+  path.
+- A a: milestone 12 is a small developer preview (automatic builds and
+  tests on GitHub, contributor docs, legal and project files, an
+  Electron upgrade, Linux checked from source, a version tag), then the
+  HoloML milestones, then Windows and Linux installers, then macOS.
+- B a: the source release is tagged 0.9.0, "developer preview"; 1.0 is
+  installers plus HoloML.
+- C a: GitHub Actions approved for automatic builds and tests on
+  Windows and Linux (GitHub issue #5).
+- E a: a recorded trademark search for the names and a check of the
+  `.holo` extension, done now.
+- F a: security reports through GitHub's private vulnerability
+  reporting; no personal email published.
+- Deferred until the installers milestone: Windows signing, Linux
+  formats, updates, the Windows installer type (questions Q2 to Q5 of
+  prompt 54).
+- Being discussed (prompt 56): legal identity. HyperSol the company no
+  longer exists; this is a personal project, not marketed now.
+
 ## GitHub issues #8 to #15 (2026-09-26, prompt 39)
 
 QA of milestone 8 by the owner. Fixed on branch fix/github-issues-8-15,
