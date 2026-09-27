@@ -12,7 +12,7 @@ plus HoloML, a 3D markup language kept in its own repository.
 - Brief: BRIEF.md (user, problem, idea, first result, later features)
 - Architecture: ARCHITECTURE.md (parts, files, decisions, screens, open questions)
 - Roadmap and current plan: TODO.md (milestones, tasks, checks)
-- Prompt log: PROMPTS.md (every prompt the owner gives, verbatim)
+- Prompt log: PROMPTS.md (every prompt the owner gives, lightly edited)
 - Handoff: HANDOFF.md (current state and how to resume; keep it current)
 - Browser repo: https://github.com/srajpal/hypersol-hyperspace-3d
   (renamed from hypersol-websurfer-3d on 2026-09-26; GitHub redirects
@@ -27,8 +27,13 @@ plus HoloML, a 3D markup language kept in its own repository.
 
 ## Naming conventions
 
-- The company is "HyperSol", with no "LLC" or "Inc." after it.
+- The company is "HyperSol", with no "LLC" or "Inc." after it. It was
+  founded in 2001 and no longer exists; this is a personal project
+  honouring it, not marketed for now (owner, prompt 56).
 - The founders are named without job titles.
+- Copyright: "The HyperSpace 3D Authors" (this repository) and "The
+  HoloML Authors" (holoml), each with an AUTHORS file. Contributions come
+  under Apache 2.0's own terms; no contributor agreement (prompt 57).
 - The browser is "HyperSol HyperSpace 3D"; its short display name, used
   in the app's own interface, is "HyperSpace 3D" (renamed 2026-09-26,
   owner, prompt 42; it was "HyperSol WebSurfer 3D" before).
@@ -83,8 +88,7 @@ plus HoloML, a 3D markup language kept in its own repository.
     Never rewrite published history.
 12. One active agent session per working tree at a time. If two sessions
     must run at once, they work in different folders. Before appending to
-    PROMPTS.md, read its last heading and use the next number. Every
-    entry carries a session tag.
+    PROMPTS.md, read its last heading and use the next number.
 13. Security cadence: at the start of each milestone, check Electron's
     release notes for security releases. Upgrade to the current supported
     stable line before any public release. Record the version and the
@@ -93,20 +97,17 @@ plus HoloML, a 3D markup language kept in its own repository.
 ## Prompt log
 
 Applies to the project owner's sessions only; contributors do not log
-prompts. Every prompt from the owner is appended to PROMPTS.md, verbatim,
-in order, before the work for it begins. Each entry records: number,
-date, model, effort level, session tag (model name plus the first eight
-characters of the session id), and the session context tokens reported
-by the tool at logging time (per-prompt token counts are not available;
-say so rather than estimate).
+prompts. PROMPTS.md is a public record of how the software was built.
+Every prompt from the owner is added to it in order, before the work for
+it begins, as `## N — date · model, effort` followed by the prompt.
 
-Redaction: secrets, keys, and personal data (addresses, phone numbers,
-non-public names) are replaced with placeholders such as
-`[redacted-token]` and the replacement is noted under the entry. Images
-and attachments are summarised in one line, never embedded.
+The text is lightly edited (owner, prompt 57): spelling and typing slips
+are fixed and the meaning is kept; nothing personal, private, or secret
+goes in (no keys, passwords, addresses, phone numbers, or non-public
+names), and no tool bookkeeping (token counts, session ids). Images and
+pasted output are summarised in one line. Short approvals are kept.
 
-Do not edit earlier entries except to correct a factual error, and note
-the correction.
+Do not change earlier entries except to correct an error.
 
 ## Working agreement
 
@@ -125,8 +126,7 @@ the correction.
   page split out 2026-09-26, prompt 47.)
 - Owner-only automation (Remote Control at session start, the prompt-log
   reminder) lives in CLAUDE.local.md, which is gitignored, so
-  contributors' sessions never inherit it. HANDOFF.md holds a copy for
-  recreating it on a new machine.
+  contributors' sessions never inherit it.
 
 ## Testing
 

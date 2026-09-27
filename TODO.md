@@ -178,9 +178,9 @@ first use and checks it against checksums shipped in the package).
 
 ### Check results (Windows 11, 2026-09-24)
 
-Machine: NVIDIA GeForce RTX 4050 Laptop GPU plus AMD Radeon integrated
-graphics, one 1920×1080 display at 100% scaling, touchpad, no touch
-screen. Clicks in the automated checks are sent with Playwright's mouse
+Machine: a Windows 11 laptop with a discrete graphics card and
+integrated graphics, one 1920×1080 display at 100% scaling, a touchpad,
+and no touch screen. Clicks in the automated checks are sent with Playwright's mouse
 (Chrome DevTools Protocol, entering at the window), not OS input.
 
 Latest results, 2026-09-25: 35 unit tests pass; lint and type check

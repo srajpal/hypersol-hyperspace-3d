@@ -78,9 +78,13 @@ Rule 13 check, 2026-09-26 (start of milestone 10, tabs and economy):
 Rule 13 check, 2026-09-26 (start of milestone 11, the owner's feedback):
 44.4.5 still the newest stable release. No upgrade needed.
 
-Graphics on the build machine: NVIDIA GeForce RTX 4050 Laptop GPU and
-AMD Radeon integrated graphics; one 1920×1080 display at 100% scaling;
-touchpad, no touch screen.
+The build machine: a Windows 11 laptop with a discrete graphics card
+and integrated graphics, one 1920×1080 display at 100% scaling, a
+touchpad, and no touch screen.
+
+Rule 13 check, 2026-09-26 (start of milestone 12, the developer
+preview): 44.4.5 still the newest stable release on npm ("latest";
+45 is in alpha). No upgrade needed.
 
 ## 4. Decisions and reasons
 

@@ -57,11 +57,18 @@ describe('history index (milestone 10, GitHub issue #4)', () => {
       }
     };
     insert();
+    // The middle of five runs, after a warm-up: what a person's searches
+    // feel like. One run alone can catch a pause of the machine's own (seen
+    // on GitHub's shared test machines, milestone 12).
     const time = (fn: () => unknown) => {
-      fn(); // the first run warms the page cache, as a person's second search would
-      const start = performance.now();
       fn();
-      return performance.now() - start;
+      const runs: number[] = [];
+      for (let i = 0; i < 5; i++) {
+        const start = performance.now();
+        fn();
+        runs.push(performance.now() - start);
+      }
+      return runs.sort((a, b) => a - b)[2]!;
     };
     const timings = {
       searchCommon: time(() => store.searchHistory('charlie', 500)),

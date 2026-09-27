@@ -77,7 +77,9 @@ function cleanEnv(keepRunning = false): Record<string, string> {
   const keep = [
     'PATH', 'Path', 'SystemRoot', 'SYSTEMROOT', 'windir', 'TEMP', 'TMP', 'TMPDIR',
     'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'HOME', 'USER', 'LANG',
-    'DISPLAY', 'WAYLAND_DISPLAY', 'XDG_RUNTIME_DIR',
+    // Linux displays: XAUTHORITY lets the app use a display that asks for
+    // authorization, as the virtual one in automatic test runs does.
+    'DISPLAY', 'WAYLAND_DISPLAY', 'XDG_RUNTIME_DIR', 'XAUTHORITY',
   ];
   const env: Record<string, string> = { HYPERSOL_TEST: '1' };
   if (!SHOW_WINDOWS) env['HYPERSOL_TEST_BACKGROUND'] = '1';
