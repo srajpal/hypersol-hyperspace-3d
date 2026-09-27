@@ -275,6 +275,10 @@ describe('F9 and F10: the filter lists', () => {
   it('F9 "Update now" downloads only the named lists, puts them in use, and keeps them after a restart', async () => {
     const base = server.url('filters/');
     const profile = newProfile();
+    // Only "Update now" here: with daily updates on, the built-in lists
+    // (built more than a day ago) would also refresh on schedule and
+    // double the count (GitHub issue #20). The schedule has its own check below.
+    writeFileSync(join(profile, 'settings.json'), JSON.stringify({ filterRefresh: false }));
     let h = await launch(shieldPage(), { userDataDir: profile, filtersBase: base });
     try {
       await readShieldPage(h);

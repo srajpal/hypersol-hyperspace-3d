@@ -9,6 +9,11 @@ export type Vec3 = [number, number, number];
 
 const NUMBER = /^-?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
 
+/** A number the scene can use: written as one, and finite (1e999 is not; holoml issue #3). */
+function finite(p: string): boolean {
+  return NUMBER.test(p) && Number.isFinite(Number(p));
+}
+
 export function attr(el: ElementNode, name: string): string | null | undefined {
   return el.attributes.find((a) => a.name === name)?.value;
 }
@@ -19,21 +24,21 @@ export function has(el: ElementNode, name: string): boolean {
 
 export function num(el: ElementNode, name: string, fallback: number, min = -Infinity, max = Infinity): number {
   const v = attr(el, name)?.trim();
-  if (!v || !NUMBER.test(v)) return fallback;
+  if (!v || !finite(v)) return fallback;
   const n = Number(v);
   return n < min || n > max ? fallback : n;
 }
 
 export function vec3(el: ElementNode, name: string, fallback: Vec3): Vec3 {
   const parts = attr(el, name)?.trim().split(/\s+/);
-  if (!parts || parts.length !== 3 || !parts.every((p) => NUMBER.test(p))) return fallback;
+  if (!parts || parts.length !== 3 || !parts.every(finite)) return fallback;
   return parts.map(Number) as Vec3;
 }
 
 /** One number (the same on every axis) or three. */
 export function scale(el: ElementNode, fallback: Vec3 = [1, 1, 1]): Vec3 {
   const parts = attr(el, 'scale')?.trim().split(/\s+/);
-  if (!parts || !parts.every((p) => NUMBER.test(p))) return fallback;
+  if (!parts || !parts.every(finite)) return fallback;
   if (parts.length === 1) return [Number(parts[0]), Number(parts[0]), Number(parts[0])];
   return parts.length === 3 ? (parts.map(Number) as Vec3) : fallback;
 }
@@ -51,14 +56,14 @@ export function duration(el: ElementNode, name: string): number | null {
   const m = /^(\d+(?:\.\d+)?|\.\d+)(ms|s)$/.exec(attr(el, name)?.trim() ?? '');
   if (!m) return null;
   const ms = Number(m[1]) * (m[2] === 's' ? 1000 : 1);
-  return ms > 0 ? ms : null;
+  return ms > 0 && Number.isFinite(ms) ? ms : null;
 }
 
 /** How many runs: a whole number of 1 or more, or Infinity for "indefinite". */
 export function repeat(el: ElementNode): number {
   const v = attr(el, 'repeat')?.trim();
   if (v === 'indefinite') return Infinity;
-  return v && /^\d+$/.test(v) && Number(v) >= 1 ? Number(v) : 1;
+  return v && /^\d+$/.test(v) && Number(v) >= 1 && Number.isSafeInteger(Number(v)) ? Number(v) : 1;
 }
 
 /** Text content with whitespace collapsed, as in title and label. */

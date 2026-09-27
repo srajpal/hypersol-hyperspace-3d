@@ -2173,6 +2173,29 @@ listen on the canvas itself.
   email). HoloML (prompt 58): H1 a (HTML-like tags), H2 a (glTF 2.0
   models).
 
+## GitHub issues #17 to #22, #4, #5 (2026-09-27, prompt 66)
+
+Owner: address the issues in both repositories and open pull requests to
+have them verified. The browser's bug and document issues are fixed on
+the branch fix/issues-17-to-22; the feature requests #23 to #28 wait for
+the owner (rule 2). The holoml issues #1 to #5 are fixed in that
+repository's pull request #6; its v0.1.1 tag and the copy into this
+repository follow the merge.
+
+| Issue | Fix | Check |
+|---|---|---|
+| #17 Sleeping tabs lose unsent edits in frames, shadow roots, stopped submits | preload/form-state.ts watches same-site frames at any depth and shadow roots (composedPath); a field counts while it differs from how the page first showed it; a submit no longer clears it by itself | issues-17-to-22.e2e.ts: frame, shadow root, stopped submit stay awake with their drafts; a field the page clears lets the tab sleep |
+| #18 Sleeping interrupts capture | preload/capture.ts counts live camera, microphone, and screen tracks in the page's world; the sleep rule skips capturing tabs | Video-only and silent microphone tabs stay awake; a stopped stream lets the tab sleep; unit test in sleep.test.ts |
+| #19 requestSubmit() makes an offer | Submit reports need the person's activation; the main process needs real input within 5 s | No offer from the script alone; a real sign-in still offers |
+| #20 Filter tests depend on the build date | F9 turns daily updates off (the request count stays exact; the schedule keeps its own check); I6 derives the age from the built-in lists' date and waits for the tab count | F9, F10, I6 pass on their own and in the suite |
+| #21 Status out of step across documents | README status and platforms, ARCHITECTURE's later screens | Read through README, ARCHITECTURE, HANDOFF, TODO |
+| #22 Block leaves capture live | Block ends the site's live tracks in every tab and clears the marker | Through the site panel, two tabs on one site: both tracks end, the marker goes, a new request is refused |
+| #4 History off the main process | Done in milestone 10 (history worker, L8, L9) | Closed with this pull request |
+| #5 Pinned toolchain, reproducible checks | Done in milestones 11 and 12 (pnpm pinned, frozen lockfile, GitHub Actions) | Closed with this pull request |
+
+Also: the HoloML viewer ignores numbers too large to draw and survives
+a checker failure, until HoloML 0.1.1 (holoml #1, #3) is copied in.
+
 ## GitHub issues #8 to #15 (2026-09-26, prompt 39)
 
 QA of milestone 8 by the owner. Fixed on branch fix/github-issues-8-15,

@@ -5,16 +5,19 @@ dimensions. Ordinary websites float as panels in a 3D room, page sections
 lift into layered depth, and a companion markup language, HoloML, lets
 anyone publish a fully 3D website as easily as writing HTML.
 
-Windows, macOS, and Linux. Apache 2.0. No telemetry.
+For Windows and Linux (checked by automatic tests); macOS is planned
+but untested. Apache 2.0. No telemetry.
 
-**Status: milestones 1 to 8 done.** A browser in a 3D room that remembers and protects:
-tabs as cards on an arc, a top bar with address, search, and a bookmark
-star, bookmarks and history in a Library panel, a Settings panel, a
-start panel with your data, error cards, a right-click menu, ad and
-tracker blocking with a shield, encrypted DNS, and a layers view that
-breaks pages apart into depth, in two themes: Nebula, a synthwave
-night, and Daylight, a pastel 1990s day. See [Progress](#progress), TODO.md, and
-[Project documents](#project-documents).
+**Status (2026-09-27).** Released: the
+[0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
+source only, with no installers: a browser in a 3D room with tabs as
+cards or a list, bookmarks, history, passwords, site permissions, ad and
+tracker blocking, encrypted DNS, the layers view, two themes, the
+instrument panel, downloads, find in page, printing, and private tabs.
+Since then: HoloML 0.1 is written down in its own repository (milestone
+13), and this browser shows HoloML pages (milestone 14, built, waiting
+for acceptance, not yet in a release). Installers come with 1.0. See
+[Progress](#progress), TODO.md, and [Project documents](#project-documents).
 
 ## The story
 
