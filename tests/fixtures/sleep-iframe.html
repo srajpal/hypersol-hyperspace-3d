@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Draft in a frame</title>
+    <style>
+      body { margin: 0; padding: 20px; background: #fff; }
+      iframe { width: 600px; height: 200px; border: 1px solid #888; }
+    </style>
+  </head>
+  <body>
+    <!-- GitHub issue #17: a draft typed into a frame of the same site must
+         keep the tab awake. -->
+    <iframe id="frame" src="sleep-frame.html"></iframe>
+  </body>
+</html>

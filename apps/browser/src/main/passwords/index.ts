@@ -76,6 +76,11 @@ export class Passwords {
   private page(contents: WebContents, origin: string, r: PagePasswordRequest): unknown {
     switch (r.op) {
       case 'submitted': {
+        // Only a sign-in the person made: real input to this page just
+        // before, as for filling. A script's requestSubmit() alone makes a
+        // trusted submit event, but no input (GitHub issue #19).
+        const input = this.lastGesture.get(contents);
+        if (input === undefined || Date.now() - input > FILL_GESTURE_MS) return null;
         const problem = this.vault.problem();
         const kind = this.vault.consider(origin, r.username, r.password);
         if (!kind) return null;
