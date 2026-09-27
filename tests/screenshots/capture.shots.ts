@@ -276,8 +276,24 @@ it('captures the main screens', async () => {
     await h.shell.click('hs-settings [data-testid="set-nav-shortcuts"]');
     await capture(h, '38-settings-shortcuts');
     await pressInShell(h, 'Escape');
+
+    // Milestone 12: the version and copyright in About, and the notice on
+    // a computer that cannot draw the 3D room.
+    await h.shell.click('hs-toolbar [data-testid="menu"]');
+    await h.shell.click('hs-toolbar [data-testid="menu-about"]');
+    await waitFor('about', () => h.shell.locator('hs-about [data-testid="about"]').isVisible(), (v) => v);
+    await capture(h, '39-about-0.9.0');
+    await pressInShell(h, 'Escape');
   } finally {
     await h.close();
+  }
+  const flat = await launch(server.url('link-a.html'), { noWebGL: true });
+  try {
+    await waitForPage(flat, 'link-a');
+    await flat.shell.locator('hs-room-message [data-testid="room-message"]').waitFor({ state: 'visible' });
+    await capture(flat, '40-no-webgl-notice');
+  } finally {
+    await flat.close();
     await server.close();
   }
-}, 120_000);
+}, 180_000);

@@ -148,3 +148,13 @@ search empties between tabs.
 ![Settings search finds a setting in another section](screenshots/m11/37-settings-search.png)
 
 ![Keyboard shortcuts, each changeable](screenshots/m11/38-settings-shortcuts.png)
+
+**Milestone 12: developer preview 0.9.0** (built 2026-09-26, waiting
+for the owner's acceptance). The browser is ready to share as source:
+project and legal files, version 0.9.0, and automatic builds and tests
+on Windows and Linux. Where a computer cannot draw the 3D room, the
+browser now still works and says why.
+
+![About: version 0.9.0 and the copyright line](screenshots/m12/39-about-0.9.0.png)
+
+![Without WebGL 2: pages still work, and a notice explains](screenshots/m12/40-no-webgl-notice.png)
