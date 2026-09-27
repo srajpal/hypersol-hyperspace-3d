@@ -8,7 +8,8 @@
  * for a paused site), and the layers view with image discovery
  * (preload/layers.ts, milestone 5), and the password manager's page side
  * (preload/passwords.ts, milestone 9), and whether a form has typed text
- * (preload/form-state.ts, milestone 10), and hands HoloML pages to the
+ * (preload/form-state.ts, milestone 10), and whether it is capturing from
+ * the camera or microphone (preload/capture.ts), and hands HoloML pages to the
  * browser's HoloML viewer (preload/holoml.ts, milestone 14). It exposes
  * nothing to pages.
  */
@@ -17,3 +18,4 @@ import './holoml';
 import './layers';
 import './passwords';
 import './form-state';
+import './capture';

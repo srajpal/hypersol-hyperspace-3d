@@ -9,6 +9,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FIXTURES_DIR, startFixtureServer, startHttpsFixtureServer, type FixtureServer } from './fixture-server';
+import { formatAge } from '../../apps/browser/src/renderer/inspect-format';
+
+const STARTER_DIR = join(FIXTURES_DIR, '..', '..', 'apps', 'browser', 'resources', 'filters');
 import {
   clickAt,
   focusedPage,
@@ -266,10 +269,13 @@ describe('I2, I4 to I6, I8: the readouts on a test page', () => {
   });
 
   it('I6 the browser gauges show tabs, memory, filter lists, and DNS', async () => {
-    const s = await waitFor('gauges', () => inst(h), (x) => x.gauges.dns !== '' && x.gauges.filtersAge !== '');
+    // Every gauge filled in, including the tab count (GitHub issue #20: it could still be 0).
+    const s = await waitFor('gauges', () => inst(h), (x) => x.gauges.dns !== '' && x.gauges.filtersAge !== '' && x.gauges.tabs > 0);
     expect(s.gauges.tabs).toBe((await shellCall(h, 'tabs')).length);
     expect(s.gauges.dns).toBe('SECURE · QUAD9');
-    expect(s.gauges.filtersAge).toContain('today');
+    // The built-in lists' age follows their build date, not today's (issue #20).
+    const built = Date.parse((JSON.parse(readFileSync(join(STARTER_DIR, 'starter.json'), 'utf8')) as { built: string }).built);
+    expect(s.gauges.filtersAge).toBe(`${formatAge(built, Date.now())} (built in)`);
     expect(s.gauges.clock).toMatch(/^\d{1,2}:\d{2}:\d{2}/);
     expect(await h.shell.locator(`${INST('inst-memory')}`).getAttribute('aria-valuenow')).not.toBe('0');
   });

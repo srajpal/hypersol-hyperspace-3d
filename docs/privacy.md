@@ -132,6 +132,11 @@ inside it, for as long as the app runs; the permission is kept in memory
 only. These pages are not added to history, and a tab reopened after a
 restart asks you to open the file again.
 
+To keep a tab awake while it has unsent text or uses the camera or
+microphone, the page's own process notes that it does (never the text
+or the pictures) and tells the browser only yes or no; nothing is
+stored.
+
 Not stored: other form entries, the downloads list (the files
 themselves are, in the Downloads folder), and anything about how you
 use the browser itself.
