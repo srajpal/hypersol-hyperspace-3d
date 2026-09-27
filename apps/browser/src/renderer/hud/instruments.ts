@@ -196,8 +196,9 @@ export class HsInstruments extends LitElement {
     }
     header {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 8px;
+      gap: 6px 8px;
     }
     h2 {
       margin: 0;
@@ -267,8 +268,10 @@ export class HsInstruments extends LitElement {
       outline-offset: 1px;
     }
     input {
+      /* In a narrow panel the controls wrap to a second line rather than
+         run under the next panel (a 1024-pixel screen, milestone 12). */
       min-width: 0;
-      flex: 1;
+      flex: 1 1 64px;
       padding: 2px 6px;
       border-radius: 6px;
       border: 1px solid color-mix(in srgb, var(--hs-accent) 30%, transparent);

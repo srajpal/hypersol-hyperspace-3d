@@ -24,6 +24,7 @@ import {
   waitForPage,
   type Harness,
   settingsTo,
+  setContentSize,
 } from './harness';
 
 let server: FixtureServer;
@@ -136,6 +137,24 @@ describe('I1 and I7: switching the panel and its parts', () => {
   });
 });
 
+/** The header controls of an instrument panel that stick out of it or are covered. */
+function reachProblems(h: Harness, panel: string): Promise<string[]> {
+  return h.shell.evaluate((id) => {
+    const root = document.querySelector('hs-instruments')!.shadowRoot!;
+    const section = root.querySelector(`[data-testid="${id}"]`)!;
+    const box = section.getBoundingClientRect();
+    const out: string[] = [];
+    for (const el of section.querySelectorAll('header button, header select, header input')) {
+      const r = el.getBoundingClientRect();
+      const hit = root.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      const label = el.getAttribute('data-testid') ?? el.getAttribute('aria-label') ?? el.tagName;
+      if (r.width < 1 || r.left < box.left - 1 || r.right > box.right + 1) out.push(`${label} outside`);
+      else if (hit !== el && !el.contains(hit)) out.push(`${label} covered`);
+    }
+    return out;
+  }, panel);
+}
+
 describe('I2, I4 to I6, I8: the readouts on a test page', () => {
   let h: Harness;
   beforeAll(async () => {
@@ -210,6 +229,40 @@ describe('I2, I4 to I6, I8: the readouts on a test page', () => {
     await waitFor('console large', () => h.shell.locator(INST('inst-console-max')).count(), (n) => n === 1);
     await h.shell.click(INST('inst-console-max') + ' [data-testid="inst-max-console"]');
     await waitFor('console back in the strip', () => h.shell.locator(INST('inst-console-max')).count(), (n) => n === 0);
+  });
+
+  it('I5c in a small window with the tab rail showing, every control in the console and network headers stays inside its panel and takes clicks', async () => {
+    // Found by GitHub's Windows test machine (a 1024x768 screen, milestone
+    // 12): the console's buttons ran under the network panel.
+    const [w0, h0] = await h.shell.evaluate(() => [window.innerWidth, window.innerHeight]);
+    const tabs = (await shellCall(h, 'tabs')).length;
+    if (tabs < 2) {
+      // A second tab shows the rail; then back to the test page.
+      await pressInShell(h, 'T', ['control']);
+      await waitFor('two tabs', async () => (await shellCall(h, 'tabs')).length, (n) => n >= 2);
+      await pressInShell(h, 'Tab', ['control', 'shift']);
+      await waitFor('the test page in front', () => focusedPage(h).then(() => true, () => false), (ok) => ok);
+    }
+    try {
+      await setContentSize(h, 1000, 640);
+      for (const panel of ['inst-console', 'inst-network']) {
+        const ok = await waitFor(`${panel} controls reachable`, () => reachProblems(h, panel), (l) => l.length === 0, 5000).catch(() => null);
+        // After a timeout, read once more so the failure names the controls.
+        expect(ok ?? (await reachProblems(h, panel))).toEqual([]);
+      }
+      await h.shell.click(INST('inst-max-console'));
+      await waitFor('console large', () => h.shell.locator(INST('inst-console-max')).count(), (n) => n === 1);
+      await h.shell.click(INST('inst-console-max') + ' [data-testid="inst-max-console"]');
+      await waitFor('console back in the strip', () => h.shell.locator(INST('inst-console-max')).count(), (n) => n === 0);
+    } finally {
+      await setContentSize(h, w0!, h0!);
+      if (tabs < 2) {
+        await pressInShell(h, 'Tab', ['control']);
+        await waitFor('the new tab in front', () => focusedPage(h).then(() => false, () => true), (blank) => blank);
+        await pressInShell(h, 'W', ['control']);
+        await waitFor('tabs as before', async () => (await shellCall(h, 'tabs')).length, (n) => n === tabs);
+      }
+    }
   });
 
   it('I6 the browser gauges show tabs, memory, filter lists, and DNS', async () => {
