@@ -189,7 +189,7 @@ describe('M3 and M4: the page and the view', () => {
     }
   });
 
-  it('M4 direction, movement, and space change the view; "Flat and still" sets both; saved', async () => {
+  it('M4 direction, movement, and space change the view; "Flat and still" and "Default view"; saved', async () => {
     const profile = newProfile();
     const h = await launch(server.url('link-a.html'), { userDataDir: profile });
     try {
@@ -217,6 +217,15 @@ describe('M3 and M4: the page and the view', () => {
       expect(Math.abs(e.left - e.right)).toBeLessThan(1);
       const s = saved(profile);
       expect([s['pageTilt'], s['parallax'], s['tiltDirection'], s['pageMargin']]).toEqual([0, 'off', 'left', 'roomy']);
+      // "Default view" (owner, prompt 53) puts all four back.
+      await h.shell.click(SET('set-view-default'));
+      await waitFor('default view', async () => {
+        const d = saved(profile);
+        return [d['pageTilt'], d['parallax'], d['tiltDirection'], d['pageMargin']];
+      }, (v) => JSON.stringify(v) === JSON.stringify([10, 'normal', 'right', 'normal']));
+      expect(await shellCall(h, 'tilt')).toBe(10);
+      expect(await shellCall(h, 'view')).toMatchObject({ direction: 1, margin: 36, parallax: 24 });
+      expect((await shellCall(h, 'layout')).panelWidth).toBe(normalWidth);
     } finally {
       await h.close();
     }

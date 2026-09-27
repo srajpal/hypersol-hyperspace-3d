@@ -3,6 +3,7 @@ import { live } from 'lit/directives/live.js';
 import type { ShortcutName } from '../../shared/commands';
 import type { DnsStatus, FilterStatus } from '../../shared/privacy';
 import {
+  DEFAULT_SETTINGS,
   defaults,
   MAX_TILT,
   MIN_TILT,
@@ -447,8 +448,8 @@ export class HsSettings extends LitElement {
         id: 'view',
         section: 'appearance',
         title: 'Page view',
-        words: 'tilt angle lean direction page movement parallax motion margin space width flat still view',
-        ids: ['set-tilt', 'set-tilt-value', 'set-tilt-direction', 'set-parallax', 'set-page-margin', 'set-flat'],
+        words: 'tilt angle lean direction page movement parallax motion margin space width flat still view default reset',
+        ids: ['set-tilt', 'set-tilt-value', 'set-tilt-direction', 'set-parallax', 'set-page-margin', 'set-flat', 'set-view-default'],
         render: () => html`<label class="tilt">
             How far the page leans
             <input type="range" data-testid="set-tilt" min=${MIN_TILT} max=${MAX_TILT} step="1" .value=${live(String(s.pageTilt))}
@@ -484,7 +485,11 @@ export class HsSettings extends LitElement {
           </label>
           <div class="actions">
             <button data-testid="set-flat" @click=${() => this.save({ pageTilt: 0, parallax: 'off' })}>Flat and still</button>
-            <span class="note">No lean and no movement, in one step.</span>
+            <button data-testid="set-view-default"
+              @click=${() => this.save({ pageTilt: DEFAULT_SETTINGS.pageTilt, tiltDirection: DEFAULT_SETTINGS.tiltDirection, parallax: DEFAULT_SETTINGS.parallax, pageMargin: DEFAULT_SETTINGS.pageMargin })}>
+              Default view
+            </button>
+            <span class="note">"Flat and still": no lean and no movement. "Default view": the lean, direction, movement, and space the app starts with.</span>
           </div>`,
       },
       {

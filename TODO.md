@@ -1658,16 +1658,16 @@ clean. End-to-end: M1 to M8 passed. The full suite (167 checks) passed
 163; the 4 that failed all read the clipboard (D8 copy a link, copy
 selected text, paste; K3's Copy inside K2), and the Windows clipboard
 was failing machine-wide at the time: PowerShell's own Set-Clipboard
-failed with "Requested Clipboard operation did not succeed". They are
-to be run again when the clipboard works; nothing in this milestone
-touches the clipboard.
+failed with "Requested Clipboard operation did not succeed". Run again
+once the clipboard worked (same day): D8 5 of 5 and K2 passed, so all
+167 checks have passed on this build.
 
 | # | Result |
 |---|---|
 | M1 | Pass. Settings offers Cards and List in the top bar only; a saved "autohide" opened as Cards (also L5, rewritten, and a unit test) |
 | M2 | Pass (and four runs in a row after a fix, below). Visits on a named test site: "sho" completed to the site, selected; typing on completed to a page, and Enter went to its real address; Backspace dropped the completion without completing again; Escape dropped the list and kept the typing; the arrows picked a row and Enter went there; a removed match left the list and history; the "Search ... for" row searched even for address-like text |
 | M3 | Pass. At 10 degrees the page's outline was within 3 px of both sides of the free area (36 px margins, one tab); unit tests check 5, 10, and 20 degrees both ways within 2 px |
-| M4 | Pass. Left edge back made the left edge the shorter one; Subtle halved the movement; Roomy (72 px) narrowed the page; "Flat and still" set no lean and no movement; all saved |
+| M4 | Pass. Left edge back made the left edge the shorter one; Subtle halved the movement; Roomy (72 px) narrowed the page; "Flat and still" set no lean and no movement; all saved. Added after the build (owner, prompt 53): a "Default view" button next to it, which put all four back to the defaults (M4 extended; 8 of 8 M checks passed again) |
 | M5 | Pass. The dots menu, the "+" menu, the site panel, and tab search closed on a click in the page and on a card |
 | M6 | Pass. Eight sections; Privacy showed DNS and not Theme; "camera" found Site permissions and "lean" the page view from other sections, with working controls; a search with no match said so; Escape cleared the search, then closed |
 | M7 | Pass. 22 shortcuts listed; Reopen closed tab remapped to Ctrl+Alt+R and saved; a clash (Ctrl+T) and a reserved key (Ctrl+V) were refused with the reason; the menu showed Ctrl+Alt+R; after a restart Ctrl+Alt+R reopened a tab from the page and Ctrl+Shift+T did nothing; Reset returned the default |
