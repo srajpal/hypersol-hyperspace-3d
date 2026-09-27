@@ -103,6 +103,36 @@ An archived copy of the 2001 site is available through the
 - HoloML pages: fully 3D sites you orbit or walk around (milestone 14).
 - Mouse and keyboard throughout; touch for scenes.
 
+## Built with the Buildwright approach
+
+Sunny Rajpal developed this project through agentic coding: directing AI
+coding agents to implement software while retaining responsibility for
+scope, decisions, review, and acceptance. It applies the concepts taught
+in [Buildwright](https://buildwrightcourses.com), organized around five
+repeatable moves:
+
+| Move | What it means |
+| --- | --- |
+| **Brief** | Define who the software helps, the problem it solves, and the first useful result. |
+| **Architect** | Decide how the parts fit together, including the screens, data, constraints, and boundaries. |
+| **Decompose** | Break the work into small tasks, each with a result that can be checked. |
+| **Delegate** | Give an AI coding agent a focused task, review its plan, and guide its implementation. |
+| **Verify** | Try the result, inspect the evidence, and correct what does not meet the brief. |
+
+In HyperSpace 3D, the [brief](BRIEF.md) turned a broad vision for a 3D web
+into a first useful browsing experience. The [architecture](ARCHITECTURE.md)
+separated the desktop shell, page rendering, and supporting components,
+using Chromium through Electron rather than building a browser engine
+from scratch. The [roadmap](TODO.md) divided that work into milestones
+with explicit checks. Focused prompts and approvals directed implementation;
+automated tests, visual checks, and owner feedback informed corrections.
+The [lightly edited owner prompt log](PROMPTS.md) and
+[milestone records](docs/progress.md) show that process in practice.
+
+This is a sustained personal project informed by Sunny's software
+engineering experience, not a promised beginner-course outcome. Buildwright
+starts with a small prototype and the same habits of direction and checking.
+
 ## What comes next
 
 Milestone 15, HoloML hardening: limits for heavy scenes, keyboard and

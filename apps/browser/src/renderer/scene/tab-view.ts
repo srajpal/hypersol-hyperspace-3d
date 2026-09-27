@@ -65,6 +65,8 @@ export class TabView implements PagePanel {
   private mutedByUser = false;
   /** Text typed into a form on the page (milestone 10), from its preload. */
   private typedInForm = false;
+  /** The page is capturing from the camera, microphone, or screen (GitHub issue #18). */
+  private capturingMedia = false;
   /** The address of the HoloML page this tab shows, as its preload reported it (milestone 14). */
   private holomlUrl: string | null = null;
   /**
@@ -148,6 +150,11 @@ export class TabView implements PagePanel {
     return this.typedInForm;
   }
 
+  /** Live camera, microphone, or screen capture on the page. */
+  get capturing(): boolean {
+    return this.capturingMedia;
+  }
+
   get muted(): boolean {
     return this.mutedByUser;
   }
@@ -171,6 +178,7 @@ export class TabView implements PagePanel {
     this.ready = false;
     this.restoring = null;
     this.typedInForm = false;
+    this.capturingMedia = false;
     this.pageImages = [];
     this.shimmer.removeAttribute('data-visible');
     this.asleepFrom = { url, from };
@@ -448,7 +456,10 @@ export class TabView implements PagePanel {
       }
       if (e.channel === PAGE_STATE_CHANNEL) {
         const state = parsePageState(e.args[0]);
-        if (state) this.typedInForm = state.typed;
+        if (state) {
+          this.typedInForm = state.typed;
+          this.capturingMedia = state.capturing;
+        }
         return;
       }
       if (e.channel !== PAGE_IMAGES_CHANNEL) return;
@@ -463,8 +474,9 @@ export class TabView implements PagePanel {
     });
     wv.addEventListener('did-navigate', (e) => {
       if (this.restoring && e.url !== 'about:blank' && e.url !== RESTORE_BLANK) this.restoring = null;
-      // A new document starts with nothing typed.
+      // A new document starts with nothing typed and nothing captured.
       this.typedInForm = false;
+      this.capturingMedia = false;
       const wasHoloml = this.isHoloml;
       this.emit({ ...this.currentStatus, url: e.url });
       if (wasHoloml !== this.isHoloml) this.events.onHoloml?.();

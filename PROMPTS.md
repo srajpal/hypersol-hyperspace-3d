@@ -785,7 +785,40 @@ Sent while the README was being updated.
 Check the comments on the PRs for both repos and address them.
 ```
 
-## 70 — 2026-09-27 · Claude Opus 5.5, low effort
+## 70 — 2026-09-27 · Codex, effort not recorded
+
+```text
+HyperSpace 3D and HoloML are examples of what can be made using agentic
+coding, especially the concepts taught in Buildwright. Add a professional
+README section to both that credits those concepts, links to
+buildwrightcourses.com, defines the Five Moves, and briefly explains how
+they were used in each project. Put it before "What comes next" in
+HyperSpace and in an appropriate place in HoloML. Add HoloML to the
+website's ideas section. Critically assess whether this is a good move.
+```
+
+The domain spelling is normalized to the owner's existing website materials.
+
+## 71 — 2026-09-27 · Codex, effort not recorded
+
+```text
+Also credit Codex as a contributor in the commits, as Claude is credited.
+```
+
+## 72 — 2026-09-27 · Codex, effort not recorded
+
+Approval to push the completed Buildwright README updates to both public
+repositories, following the summary of the changes and the repository's
+explicit-push rule.
+
+```text
+Push.
+```
+
+## 73 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Logged after entries 70 to 72, which a Codex session running at the same
+time added first.
 
 ```text
 HoloML PR #6: ready to merge. All 122 unit tests and both platform CI runs pass. The performance blocker is fixed: roughly 13 ms instead of 12–15 seconds.
@@ -794,7 +827,7 @@ HyperSpace PR #29: hold for now. The previous capture blockers are fixed; 238 un
 What is the best way to proceed?
 ```
 
-## 71 — 2026-09-27 · Claude Opus 5.5, low effort
+## 74 — 2026-09-27 · Claude Opus 5.5, low effort
 
 Approval of the three steps proposed after the review: (1) tag HoloML
 v0.1.1 and copy it into the browser in a small pull request; (2) merge

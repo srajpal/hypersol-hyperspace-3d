@@ -1,7 +1,8 @@
 /**
  * Which tabs may sleep (milestone 10): a tab that has been out of view
  * long enough, unless it is in front, still starting or loading, making
- * sound, downloading, or holding text typed into a form. Pure, so the
+ * sound, downloading, holding text typed into a form, or capturing from
+ * the camera, microphone, or screen (GitHub issue #18). Pure, so the
  * rules are unit tested.
  */
 
@@ -13,6 +14,8 @@ export interface SleepCandidate {
   audible: boolean;
   downloading: boolean;
   typed: boolean;
+  /** Live camera, microphone, or screen capture, even when silent (GitHub issue #18). */
+  capturing: boolean;
   /** When it was last in front (ms). */
   lastSeen: number;
 }
@@ -25,6 +28,6 @@ export function sleepMinutes(setting: number, economy: boolean): number {
 
 export function shouldSleep(tab: SleepCandidate, now: number, minutes: number, minuteMs = 60_000): boolean {
   if (minutes <= 0) return false;
-  if (tab.focused || tab.busy || tab.asleep || tab.audible || tab.downloading || tab.typed) return false;
+  if (tab.focused || tab.busy || tab.asleep || tab.audible || tab.downloading || tab.typed || tab.capturing) return false;
   return now - tab.lastSeen >= minutes * minuteMs;
 }

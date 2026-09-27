@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ClosedTabs, MAX_CLOSED } from './closed-tabs';
 import { shouldSleep, sleepMinutes, type SleepCandidate } from './sleep';
 
-const idle: SleepCandidate = { focused: false, busy: false, asleep: false, audible: false, downloading: false, typed: false, lastSeen: 0 };
+const idle: SleepCandidate = { focused: false, busy: false, asleep: false, audible: false, downloading: false, typed: false, capturing: false, lastSeen: 0 };
 
 describe('sleeping tabs (milestone 10)', () => {
   it('sleep after the chosen minutes out of view', () => {
@@ -12,9 +12,10 @@ describe('sleeping tabs (milestone 10)', () => {
     expect(shouldSleep(idle, 1000, 5, 200)).toBe(true);
   });
 
-  it('never the tab in front, a busy, sounding, downloading, or typed-in tab, or one already asleep', () => {
+  it('never the tab in front, a busy, sounding, downloading, typed-in, or capturing tab, or one already asleep', () => {
     const late = 10 ** 9;
-    for (const key of ['focused', 'busy', 'asleep', 'audible', 'downloading', 'typed'] as const) {
+    // capturing: a camera or microphone in use, even silent (GitHub issue #18).
+    for (const key of ['focused', 'busy', 'asleep', 'audible', 'downloading', 'typed', 'capturing'] as const) {
       expect(shouldSleep({ ...idle, [key]: true }, late, 5), key).toBe(false);
     }
   });

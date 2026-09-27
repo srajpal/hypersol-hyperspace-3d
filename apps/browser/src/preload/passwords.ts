@@ -183,7 +183,9 @@ function start(): void {
   window.addEventListener(
     'submit',
     (e) => {
-      if (e.isTrusted && e.target instanceof HTMLFormElement) report(e.target);
+      // requestSubmit() from a script makes a trusted event too: only a
+      // submit during the person's own click or key press counts (issue #19).
+      if (e.isTrusted && e.target instanceof HTMLFormElement && navigator.userActivation.isActive) report(e.target);
     },
     true,
   );

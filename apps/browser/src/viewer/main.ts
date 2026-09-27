@@ -95,7 +95,13 @@ function start(): void {
     state.ready = true;
     return;
   }
-  state.problems = check(doc);
+  // A checker failure must not blank the page: the scene still shows
+  // (holoml issue #1, fixed in HoloML 0.1.1).
+  try {
+    state.problems = check(doc);
+  } catch (e) {
+    console.warn(`HoloML: the page could not be fully checked (${e instanceof Error ? e.message : String(e)}).`);
+  }
   for (const p of state.problems) console.warn(`HoloML: line ${p.line}, column ${p.column}: ${p.message}`);
 
   const title = doc.root.children.find((c): c is ElementNode => c.type === 'element' && c.name === 'head')

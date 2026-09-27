@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Draft in a shadow root</title>
+    <style>
+      body { margin: 0; padding: 20px; background: #fff; }
+    </style>
+  </head>
+  <body>
+    <!-- GitHub issue #17: a draft typed into a field inside a shadow root
+         must keep the tab awake. -->
+    <draft-box id="box"></draft-box>
+    <script>
+      customElements.define(
+        'draft-box',
+        class extends HTMLElement {
+          constructor() {
+            super();
+            this.attachShadow({ mode: 'open' }).innerHTML = '<textarea id="draft" rows="4" cols="30"></textarea>';
+          }
+        },
+      );
+    </script>
+  </body>
+</html>
