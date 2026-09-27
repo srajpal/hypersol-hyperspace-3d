@@ -255,7 +255,11 @@ describe('P4: links', () => {
     await waitFor('back', async () => (await focusedTab(h)).url, (u) => u === server.url('holoml/still.holoml'));
     await sceneReady(h, PAGE);
     await clickAt(h, await project(h, 20, 20));
-    await pressInPage(h, 'Tab', [], PAGE);
+    // Since milestone 15 (Q5 a) Tab also reaches named things, in page order:
+    // the link comes after the car, the stand, and the stand's model.
+    const before = (await inPage<string[]>(h, 'window.__holoml.outline()', PAGE)).findIndex((s) => s.startsWith('a:'));
+    expect(before).toBe(3);
+    for (let i = 0; i <= before; i++) await pressInPage(h, 'Tab', [], PAGE);
     await waitFor('a link focused', () => inPage<string>(h, 'document.activeElement?.getAttribute("href") ?? ""', PAGE), (href) => href.endsWith('second.holoml'));
     await pressInPage(h, 'Enter', [], PAGE);
     await waitFor('followed', async () => (await focusedTab(h)).url, (u) => u === server.url('holoml/second.holoml'));

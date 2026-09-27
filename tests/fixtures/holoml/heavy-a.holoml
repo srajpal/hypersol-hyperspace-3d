@@ -1,0 +1,13 @@
+<holoml version="0.1">
+  <head>
+    <title>Heavy page a</title>
+  </head>
+  <scene>
+    <model id="h1" src="gen/box.gltf?mb=20&amp;n=a1" position="-2 0 0" />
+    <model id="h2" src="gen/box.gltf?mb=20&amp;n=a2" position="0 0 0" />
+    <model id="h3" src="gen/box.gltf?mb=20&amp;n=a3" position="2 0 0" />
+    <a href="heavy-b.holoml">
+      <label id="next" position="0 2 0">Next heavy page</label>
+    </a>
+  </scene>
+</holoml>

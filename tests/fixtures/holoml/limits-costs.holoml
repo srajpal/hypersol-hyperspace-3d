@@ -1,0 +1,11 @@
+<holoml version="0.1">
+  <head>
+    <title>HoloML picture and triangle limits</title>
+  </head>
+  <scene>
+    <model id="ok" src="gen/box.gltf" position="0 0 0" />
+    <model id="picture" src="gen/box.gltf?img=8192,8192" position="-2 0 0" />
+    <model id="tri-a" src="gen/box.gltf?tris=1200000&amp;n=a" position="2 0 0" />
+    <model id="tri-b" src="gen/box.gltf?tris=1200000&amp;n=b" position="4 0 0" />
+  </scene>
+</holoml>

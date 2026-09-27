@@ -7,6 +7,23 @@
   links, animation, and orbit or walk movement by mouse, keyboard, and
   touch. Ctrl+O, the menu, or dropping a file opens one from the
   computer. Mistakes show a card with their line and column.
+- HoloML hardening (milestone 15):
+  - Limits per page (GitHub issue #23): 2 MB of text, 10,000 elements,
+    64 models, 32 MB for one model file and 128 MB for all of them,
+    pictures up to 4096 by 4096 pixels, 2 million triangles, and 30
+    seconds for a model to load. What crosses a limit is left out and
+    marked; the rest shows, and a notice says why.
+  - Esc, or the top bar's stop button, stops models still loading.
+  - Tab moves through a scene's links and named things in page order,
+    with an outline in the scene; a hidden outline of the scene is there
+    for screen readers (#25).
+  - A text view (a top-bar button, or Ctrl+Shift+V) shows the scene as a
+    plain page of names and links. With the system's reduced motion on,
+    animations show their end at once.
+  - The instrument panel's Scene part (#28): the scene's objects as a
+    tree, the selected one's line of text, bounds, position, rotation,
+    scale, triangles, and pictures, a pick button, and every problem and
+    left-out model with its line and column.
 
 ## 0.9.0 — developer preview (2026-09-26)
 

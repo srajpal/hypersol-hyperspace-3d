@@ -106,7 +106,42 @@ function page(title: string, body: string): string {
  *   /download/broken.bin       an attachment whose connection breaks part way (a failed download)
  *   /holoml/by-type            holoml/still.holoml, known only by its media type (no .holoml in the address)
  *   /holoml/as-text.holoml     holoml/second.holoml sent as text/plain, known only by its address
+ * Generated for HoloML's limits (milestone 15), so the repository holds no large file:
+ *   /holoml/gen/zeros.bin?bytes=N       N zero bytes (up to 64 MB), sent in pieces without a declared length
+ *   /holoml/gen/claim.png?w=W&h=H       a PNG header claiming W by H pixels
+ *   /holoml/gen/box.gltf?mb=N&tris=T&img=W,H
+ *                                       a glTF of T triangles (default 1) whose buffer is zeros.bin, at least
+ *                                       N MB (default: just what the triangles need); img adds a claim.png
+ *   /holoml/gen/never.gltf              answers nothing, ever (a model that never finishes)
+ *   /holoml/gen/many.holoml?n=N         a page of a label and N empty groups (up to 50,000)
  */
+/** A glTF of one mesh: T triangles, all at one point, over a buffer of zeros (see the route list above). */
+function boxGltf(params: URLSearchParams): string {
+  const tris = Math.max(1, Math.min(50_000_000, Number(params.get('tris') ?? '1') || 1));
+  const mb = Number(params.get('mb') ?? '0');
+  // Three corners (36 bytes), then 16-bit indices: 6 bytes a triangle.
+  const needed = 36 + tris * 6;
+  const byteLength = Math.max(needed, Math.round(mb * 1024 * 1024));
+  const img = params.get('img')?.split(',').map(Number);
+  return JSON.stringify({
+    asset: { version: '2.0' },
+    scene: 0,
+    scenes: [{ nodes: [0] }],
+    nodes: [{ mesh: 0 }],
+    meshes: [{ primitives: [{ attributes: { POSITION: 0 }, indices: 1 }] }],
+    accessors: [
+      { bufferView: 0, componentType: 5126, count: 3, type: 'VEC3', min: [0, 0, 0], max: [0, 0, 0] },
+      { bufferView: 1, componentType: 5123, count: tris * 3, type: 'SCALAR' },
+    ],
+    bufferViews: [
+      { buffer: 0, byteOffset: 0, byteLength: 36 },
+      { buffer: 0, byteOffset: 36, byteLength: tris * 6 },
+    ],
+    buffers: [{ uri: `zeros.bin?bytes=${byteLength}`, byteLength }],
+    ...(img && img.length === 2 ? { images: [{ uri: `claim.png?w=${img[0]}&h=${img[1]}` }] } : {}),
+  });
+}
+
 function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
   const url = new URL(req.url ?? '/', 'http://x');
   const path = decodeURIComponent(url.pathname);
@@ -125,6 +160,48 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
       (body) => res.writeHead(200, { 'content-type': typed ? 'model/vnd.holoml' : 'text/plain', 'cache-control': 'no-store' }).end(body),
       () => res.writeHead(404).end(),
     );
+    return;
+  }
+  if (path.startsWith('/holoml/gen/')) {
+    const what = path.slice('/holoml/gen/'.length);
+    const p = url.searchParams;
+    if (what === 'never.gltf') return; // Held open until the client gives up or the server closes.
+    if (what === 'zeros.bin') {
+      res.writeHead(200, { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' });
+      const total = Math.min(64 * 1024 * 1024, Math.max(0, Number(p.get('bytes') ?? '0') || 0));
+      const piece = Buffer.alloc(256 * 1024);
+      let sent = 0;
+      const pump = () => {
+        while (sent < total && !res.destroyed) {
+          const part = piece.subarray(0, Math.min(piece.length, total - sent));
+          sent += part.length;
+          if (!res.write(part)) return void res.once('drain', pump);
+        }
+        if (!res.destroyed) res.end();
+      };
+      pump();
+      return;
+    }
+    if (what === 'claim.png') {
+      res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'no-store' });
+      res.end(pngClaiming(Number(p.get('w') ?? '16'), Number(p.get('h') ?? '16')));
+      return;
+    }
+    if (what === 'box.gltf') {
+      res.writeHead(200, { 'content-type': TYPES['.gltf']!, 'cache-control': 'no-store' });
+      res.end(boxGltf(p));
+      return;
+    }
+    if (what === 'many.holoml') {
+      const n = Math.min(50_000, Math.max(0, Number(p.get('n') ?? '20000')));
+      const groups = Array.from({ length: n }, (_, i) => `    <group position="${i % 100} 0 ${Math.floor(i / 100)}" />`).join('\n');
+      res.writeHead(200, { 'content-type': TYPES['.holoml']!, 'cache-control': 'no-store' });
+      res.end(
+        `<holoml version="0.1">\n  <head>\n    <title>Many elements</title>\n  </head>\n  <scene>\n    <label id="first" position="0 2 0">First of many</label>\n${groups}\n  </scene>\n</holoml>\n`,
+      );
+      return;
+    }
+    res.writeHead(404).end();
     return;
   }
   if (path === '/favicon/declared-huge.png' || path === '/favicon/error-body.png') {

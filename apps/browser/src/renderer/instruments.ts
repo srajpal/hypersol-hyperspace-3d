@@ -15,6 +15,8 @@ export interface InstrumentsDeps {
   privacy: PrivacyClient;
   /** The focused tab's page (web contents id), or null for a start tab. */
   focusedPage(): number | null;
+  /** The focused tab shows a HoloML page (its scene is read for the Scene part, milestone 15). */
+  focusedHoloml(): boolean;
   focusedHost(): string;
   tabCount(): number;
   /** Frames the room has drawn so far. */
@@ -57,6 +59,17 @@ export class InstrumentsController {
       this.consoleEntries = [];
       el.consoleEntries = [];
       if (tab !== null) void this.ask({ op: 'inspect.clear-console', tab });
+    });
+    // The Scene part (milestone 15): selecting in the tree, and picking in the scene.
+    el.addEventListener('hs-scene-select', (e) => {
+      const tab = deps.focusedPage();
+      const index = (e as CustomEvent<number>).detail;
+      if (tab !== null) void this.ask({ op: 'inspect.scene-select', tab, index }).then(() => this.refreshScene(tab));
+    });
+    el.addEventListener('hs-scene-pick', (e) => {
+      const tab = deps.focusedPage();
+      const on = (e as CustomEvent<boolean>).detail;
+      if (tab !== null) void this.ask({ op: 'inspect.scene-pick', tab, on }).then(() => this.refreshScene(tab));
     });
     el.addEventListener('hs-console-level', (e) => deps.saveSetting({ consoleLevel: (e as CustomEvent<Settings['consoleLevel']>).detail }));
   }
@@ -121,6 +134,7 @@ export class InstrumentsController {
     this.consoleEntries = [];
     this.el.net = [];
     this.el.consoleEntries = [];
+    this.el.scene = null;
   }
 
   private reportInsets(): void {
@@ -162,6 +176,7 @@ export class InstrumentsController {
     el.host = deps.focusedHost();
     if (tab === null) {
       el.page = null;
+      el.scene = null;
       return;
     }
     if (tab !== this.page) {
@@ -183,6 +198,17 @@ export class InstrumentsController {
     el.net = this.net;
     el.consoleEntries = this.consoleEntries;
     el.gauges = { ...el.gauges, uptime: formatDuration(snap.browser.uptime) };
+    await this.refreshScene(tab);
+  }
+
+  /** The Scene part: read from the page only while it is a HoloML page and the part shows. */
+  private async refreshScene(tab: number): Promise<void> {
+    if (!this.deps.focusedHoloml() || !this.el.parts.readouts) {
+      this.el.scene = null;
+      return;
+    }
+    const scene = await this.ask({ op: 'inspect.scene', tab });
+    if (this.page === tab) this.el.scene = scene;
   }
 
   private async slowGauges(): Promise<void> {

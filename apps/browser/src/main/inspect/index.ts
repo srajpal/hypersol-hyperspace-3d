@@ -7,6 +7,8 @@ import {
   type InspectReply,
   type InspectRequest,
   type InspectSnapshot,
+  parseSceneReadout,
+  type SceneReadout,
 } from '../../shared/inspect';
 import { declaredBytes, PageMonitor } from './monitor';
 
@@ -18,6 +20,8 @@ const LEVELS: readonly ConsoleLevel[] = ['debug', 'info', 'warning', 'error'];
 export interface InspectorOptions {
   /** Is this the app's own shell (the only one allowed to ask)? */
   isShell(contents: WebContents): boolean;
+  /** Is this page a HoloML page, marked by the main process (milestone 15)? Only those are asked for a scene. */
+  isHolomlPage?(contents: WebContents): boolean;
 }
 
 /**
@@ -107,10 +111,33 @@ export class Inspector {
     const parsed = parseInspectRequest(raw);
     if ('error' in parsed) return { ok: false, error: parsed.error };
     try {
-      return { ok: true, value: this.run(event.sender, parsed.request) } as InspectReply<InspectOp>;
+      const r = parsed.request;
+      if (r.op === 'inspect.scene' || r.op === 'inspect.scene-select' || r.op === 'inspect.scene-pick') {
+        return { ok: true, value: await this.scene(event.sender, r) } as InspectReply<InspectOp>;
+      }
+      return { ok: true, value: this.run(event.sender, r) } as InspectReply<InspectOp>;
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : String(e) };
     }
+  }
+
+  /**
+   * The instrument panel's Scene part (milestone 15, GitHub issue #28):
+   * the HoloML viewer's facts, read only from pages the main process
+   * marked as HoloML, and checked field by field (parseSceneReadout).
+   */
+  private async scene(shell: WebContents, r: Extract<InspectRequest, { op: 'inspect.scene' | 'inspect.scene-select' | 'inspect.scene-pick' }>): Promise<SceneReadout | null> {
+    const contents = webContents.fromId(r.tab);
+    if (!contents || !this.tabs.has(r.tab) || contents.hostWebContents !== shell) throw new Error('Not one of your tabs');
+    if (!this.options.isHolomlPage?.(contents)) return null;
+    const call =
+      r.op === 'inspect.scene'
+        ? 'window.__holoml ? window.__holoml.scene() : null'
+        : r.op === 'inspect.scene-select'
+          ? `window.__holoml && window.__holoml.select(${r.index}), null`
+          : `window.__holoml && window.__holoml.pick(${r.on}), null`;
+    const raw: unknown = await contents.executeJavaScript(call, false).catch(() => null);
+    return r.op === 'inspect.scene' ? parseSceneReadout(raw) : null;
   }
 
   private run(shell: WebContents, r: InspectRequest): unknown {

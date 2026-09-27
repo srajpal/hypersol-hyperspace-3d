@@ -191,6 +191,16 @@ export class App {
       });
     };
     options.themeButton.addEventListener('hs-theme-toggle', () => void this.toggleTheme());
+    // Ctrl+Shift+V: the text view, only with a HoloML page in front and
+    // not while typing (elsewhere it stays "paste as plain text").
+    document.addEventListener('keydown', (e) => {
+      const view = this.focusedView;
+      if (!view?.isHoloml || !(e.ctrlKey || e.metaKey) || !e.shiftKey || e.altKey || e.key.toLowerCase() !== 'v') return;
+      const typing = e.composedPath().some((n) => n instanceof HTMLInputElement || n instanceof HTMLTextAreaElement);
+      if (typing) return;
+      e.preventDefault();
+      view.setTextView(!view.textView);
+    });
     // A .holoml file dropped on the window outside the page opens in the tab in front.
     document.addEventListener('dragover', (e) => {
       if (e.dataTransfer?.types.includes('Files')) e.preventDefault();
@@ -206,6 +216,7 @@ export class App {
       bridge: options.bridge,
       privacy: this.privacy,
       focusedPage: () => (this.focusedView?.isStart === false ? this.focusedView.webContentsId : null),
+      focusedHoloml: () => this.focusedView?.isHoloml ?? false,
       focusedHost: () => hostOf(this.store.focusedTab?.url ?? ''),
       tabCount: () => this.store.tabs.length,
       frames: () => this.room.frames,
@@ -781,7 +792,8 @@ export class App {
     t.canGoBack = tab.canGoBack;
     t.canGoForward = tab.canGoForward;
     t.canReload = tab.state !== 'start';
-    t.loading = tab.state === 'loading';
+    // A HoloML page still loading its models counts as loading: Stop stops them (milestone 15).
+    t.loading = tab.state === 'loading' || (this.focusedView?.sceneBusy ?? false);
     t.layers = this.layersOn.get(tab.id) ?? false;
     t.private = tab.private;
     // A HoloML page is a 3D scene: no page zoom or layers view (milestone 14).
@@ -789,6 +801,8 @@ export class App {
     t.canZoom = isWeb(tab.url) && tab.state !== 'start' && !scene;
     t.zoom = this.focusedView?.zoom ?? 1;
     t.canLayers = isWeb(tab.url) && tab.state !== 'start' && tab.state !== 'failed' && !scene;
+    t.holoml = scene;
+    t.textView = this.focusedView?.textView ?? false;
     t.site = !isWeb(tab.url) || tab.state === 'start' ? 'none' : /^https:/i.test(tab.url) ? 'secure' : 'insecure';
     t.access = this.access.get(tab.id) ?? [];
     t.muted = tab.muted;
@@ -1059,6 +1073,11 @@ export class App {
     t.addEventListener('hs-zoom', (e) => void this.zoom((e as CustomEvent<1 | -1 | 0>).detail));
     t.addEventListener('hs-instruments', () => void this.saveSettings({ instruments: !this.settings.instruments }));
     t.addEventListener('hs-layers', () => void this.toggleLayers());
+    t.addEventListener('hs-stop', () => this.focusedView?.stop());
+    t.addEventListener('hs-text-view', () => {
+      const view = this.focusedView;
+      view?.setTextView(!view.textView);
+    });
     t.addEventListener('hs-menu', (e) => this.onMenu((e as CustomEvent<MenuAction>).detail));
     t.addEventListener('hs-site', () => {
       const panel = this.options.sitePanel;

@@ -26,8 +26,10 @@ state; this is a summary.
   marked pre-release): the browser as source for developers, with a privacy and proofreading pass, legal and
   project files, and automatic builds and tests on Windows and Linux.
 - Then HoloML: 13 the language and 14 HoloML pages in the browser (both
-  built), 15 HoloML hardening (resource limits, accessible scene
-  navigation, an inspector: GitHub issues #23, #25, #28), 16 a car
+  accepted), 15 HoloML hardening (resource limits, accessible scene
+  navigation, an inspector: GitHub issues #23, #25, #28; built
+  2026-09-27, waiting for the owner's acceptance; the holoml spec note
+  is on the holoml branch spec/renderer-limits, not pushed), 16 a car
   showroom demo; 17 privacy and data tools (HTTPS-only, per-site
   storage, bookmark import and export: #24, #26, #27); then installers
   as 1.0 (18 for Windows and Linux, 19 for macOS), with mobile later

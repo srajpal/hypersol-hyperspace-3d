@@ -19,8 +19,10 @@ planned but untested. Apache 2.0. No telemetry.
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
 as source for developers (no installers yet). Since then, HoloML 0.1 has
 been written down in its own repository (milestone 13), and this browser
-shows HoloML pages (milestone 14, accepted; not yet in a release). Next: HoloML hardening, a car showroom, and privacy and
-data tools, then installers as 1.0. See [Progress](#progress),
+shows HoloML pages (milestone 14, accepted; not yet in a release).
+Milestone 15, HoloML hardening, is built and waiting for acceptance.
+Next: a car showroom, and privacy and data tools, then installers as
+1.0. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
 ## The story
@@ -99,7 +101,10 @@ An archived copy of the 2001 site is available through the
   day), an instrument panel with live readouts, zoom, find in page,
   downloads, printing, remappable shortcuts, and an economy mode with
   sleeping tabs.
-- HoloML pages: fully 3D sites you orbit or walk around (milestone 14).
+- HoloML pages: fully 3D sites you orbit or walk around (milestone 14),
+  with limits that keep a heavy scene from exhausting memory, Tab and
+  screen-reader access to a scene's links and named things, a text view,
+  reduced motion, and a Scene part in the instrument panel (milestone 15).
 - Mouse and keyboard throughout; touch for scenes.
 
 ## Built with the Buildwright approach
@@ -134,9 +139,7 @@ starts with a small prototype and the same habits of direction and checking.
 
 ## What comes next
 
-Milestone 15, HoloML hardening: limits for heavy scenes, keyboard and
-screen-reader navigation of scenes, and a scene inspector. 16, a car
-showroom built in HoloML. 17, privacy and data tools: HTTPS-only
+Milestone 16, a car showroom built in HoloML. 17, privacy and data tools: HTTPS-only
 browsing, per-site storage, and bookmark import and export. 18 and 19,
 installers as 1.0 for Windows and Linux, then macOS. Later: free camera
 movement, pictures and 3D models lifted out of ordinary pages, mobile,
@@ -154,6 +157,9 @@ address bar completion, view settings, and remappable shortcuts.
 Milestone 12 released it as the 0.9.0 developer preview, with automatic
 tests on Windows and Linux. Milestone 13 wrote HoloML 0.1 down in its
 own repository, and milestone 14 shows HoloML pages in the browser.
+Milestone 15 (built, waiting for acceptance) hardens them: limits for
+heavy scenes, keyboard and screen-reader access, a text view, and a
+scene inspector.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
@@ -165,7 +171,9 @@ own repository so it stays independent and reusable:
 0.1 is written down there (SPEC.md), with a parser, a checker, and
 sample pages; HoloML files use the extension `.holoml`. This browser
 shows HoloML pages (milestone 14): open a `.holoml` address, or a file
-with Ctrl+O, and walk or orbit around the scene.
+with Ctrl+O, and walk or orbit around the scene. A page's size, models,
+pictures, and triangles have limits (milestone 15); what crosses one is
+left out and marked, and a notice says why.
 
 ## Project documents
 
@@ -235,6 +243,8 @@ the top bar, or click a card on the left to switch tabs. The main keys
   prints.
 - Ctrl+O opens a HoloML file from the computer (or drop one on the
   window); a `.holoml` address shows as a 3D scene across the window.
+  In a scene, Tab moves through its links and named things, Esc stops
+  models still loading, and Ctrl+Shift+V switches the text view.
 
 What the browser stores and sends is listed in
 [docs/privacy.md](docs/privacy.md). Development runs use a throwaway

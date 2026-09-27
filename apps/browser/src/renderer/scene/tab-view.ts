@@ -4,7 +4,7 @@ import { BLOCKED_CARD, CRASHED_CARD, DNS_BLOCKED_CARD, describeLoadError, isLook
 import { PRIVATE_PARTITION, RESTORE_BLANK } from '../../shared/commands';
 import { LAYERS_CHANNEL, PAGE_IMAGES_CHANNEL, parseImageReport, type LayersState, type PageImage } from '../../shared/layers';
 import { PAGE_STATE_CHANNEL, parsePageState } from '../../shared/page-state';
-import { HOLOML_SHOWN_CHANNEL } from '../../shared/holoml-page';
+import { HOLOML_COMMAND_CHANNEL, HOLOML_SHOWN_CHANNEL, HOLOML_STATE_CHANNEL } from '../../shared/holoml-page';
 import { StartPanel, type StartData } from './start-panel';
 
 /** Chromium's code for a load that was cancelled by a newer one. */
@@ -69,6 +69,9 @@ export class TabView implements PagePanel {
   private capturingMedia = false;
   /** The address of the HoloML page this tab shows, as its preload reported it (milestone 14). */
   private holomlUrl: string | null = null;
+  /** The HoloML page is still loading models; its text view is on (milestone 15). */
+  private holomlBusy = false;
+  private holomlTextView = false;
   /**
    * Asleep (milestone 10): the page is closed to save memory; the tab keeps
    * its address and title, and the page whose history comes back on waking.
@@ -143,6 +146,36 @@ export class TabView implements PagePanel {
   /** The tab shows a HoloML page (milestone 14): its preload said so for the current address. */
   get isHoloml(): boolean {
     return this.holomlUrl !== null && this.webview !== null && this.holomlUrl === withoutHash(this.currentStatus.url);
+  }
+
+  /** A HoloML page still loading its models. */
+  get sceneBusy(): boolean {
+    return this.isHoloml && this.holomlBusy;
+  }
+
+  /** A HoloML page shown as text (milestone 15). */
+  get textView(): boolean {
+    return this.isHoloml && this.holomlTextView;
+  }
+
+  /** Switches a HoloML page's text view. */
+  setTextView(on: boolean): void {
+    if (this.isHoloml) this.sendHoloml(on ? 'text-view-on' : 'text-view-off');
+  }
+
+  /** Stops loading: the page's own load, or a HoloML page's models. */
+  stop(): void {
+    if (!this.webview || !this.ready) return;
+    if (this.sceneBusy) this.sendHoloml('stop');
+    else this.webview.stop();
+  }
+
+  private sendHoloml(command: string): void {
+    try {
+      this.webview?.send(HOLOML_COMMAND_CHANNEL, command);
+    } catch {
+      // Between documents: nothing to stop or switch.
+    }
   }
 
   /** Text typed into a form on the page, not yet sent. */
@@ -451,6 +484,15 @@ export class TabView implements PagePanel {
     wv.addEventListener('ipc-message', (e) => {
       if (e.channel === HOLOML_SHOWN_CHANNEL) {
         this.holomlUrl = typeof e.args[0] === 'string' ? withoutHash(e.args[0]) : null;
+        this.holomlBusy = false;
+        this.holomlTextView = false;
+        this.events.onHoloml?.();
+        return;
+      }
+      if (e.channel === HOLOML_STATE_CHANNEL) {
+        const change = e.args[0] as { busy?: unknown; textView?: unknown } | undefined;
+        if (typeof change?.busy === 'boolean') this.holomlBusy = change.busy;
+        if (typeof change?.textView === 'boolean') this.holomlTextView = change.textView;
         this.events.onHoloml?.();
         return;
       }

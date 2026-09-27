@@ -1,5 +1,5 @@
 import { LitElement, css, html, nothing } from 'lit';
-import type { BrowserReadout, ConsoleEntry, NetEntry, PageReadout } from '../../shared/inspect';
+import type { BrowserReadout, ConsoleEntry, NetEntry, PageReadout, SceneReadout } from '../../shared/inspect';
 import type { ConsoleFilter } from '../../shared/settings';
 import {
   filterNet,
@@ -53,7 +53,12 @@ const KINDS: { kind: NetKind; label: string }[] = [
  * (the page's console and network list). The shell's controller
  * (renderer/instruments.ts) fills in the data.
  *
- * Events: hs-inspect-devtools, hs-inspect-clear, hs-console-level (detail: ConsoleFilter).
+ * With a HoloML page in front, the right column also has a Scene part
+ * (milestone 15): the scene's objects as a tree, the selected one's facts,
+ * and the page's problems.
+ *
+ * Events: hs-inspect-devtools, hs-inspect-clear, hs-console-level (detail: ConsoleFilter),
+ * hs-scene-select (detail: entry index), hs-scene-pick (detail: boolean).
  */
 export class HsInstruments extends LitElement {
   static override properties = {
@@ -62,6 +67,7 @@ export class HsInstruments extends LitElement {
     consoleLevel: { type: String },
     railShown: { type: Boolean },
     page: { attribute: false },
+    scene: { attribute: false },
     host: { type: String },
     net: { attribute: false },
     consoleEntries: { attribute: false },
@@ -79,6 +85,8 @@ export class HsInstruments extends LitElement {
   /** The tab rail is showing on the left: the bottom strip starts after it. */
   declare railShown: boolean;
   declare page: PageReadout | null;
+  /** The HoloML page's scene, or null for other pages. */
+  declare scene: SceneReadout | null;
   declare host: string;
   declare net: NetEntry[];
   declare consoleEntries: ConsoleEntry[];
@@ -97,6 +105,7 @@ export class HsInstruments extends LitElement {
     this.consoleLevel = 'all';
     this.railShown = false;
     this.page = null;
+    this.scene = null;
     this.host = '';
     this.net = [];
     this.consoleEntries = [];
@@ -377,6 +386,74 @@ export class HsInstruments extends LitElement {
       width: 26px;
       padding: 2px 0;
     }
+    /* The Scene part comes first for room: the page and browser panels scroll instead. */
+    .column .scene {
+      flex: 3 1 0;
+      min-height: 340px;
+      overflow: hidden;
+    }
+    .scene .tree {
+      flex: 1 1 0;
+      min-height: 48px;
+    }
+    .tree li {
+      display: block;
+      padding: 0;
+    }
+    .tree button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: 0;
+      border-radius: 4px;
+      padding: 1px 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .tree button[aria-current='true'] {
+      background: color-mix(in srgb, var(--hs-accent) 26%, transparent);
+      color: var(--hs-accent);
+    }
+    .detail,
+    .problems {
+      margin: 0;
+      font-family: var(--hs-font-mono);
+      font-size: 11px;
+      max-height: 34%;
+      overflow: auto;
+      flex: 0 0 auto;
+    }
+    .detail dl {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 1px 8px;
+      margin: 4px 0 0;
+    }
+    .detail dt {
+      color: var(--hs-text-muted);
+    }
+    .detail dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+    .detail code {
+      display: block;
+      white-space: pre;
+      overflow-x: auto;
+      padding: 2px 4px;
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--hs-background-bottom) 55%, transparent);
+    }
+    .problems ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .problems li {
+      padding: 1px 0;
+      color: var(--hs-warning);
+    }
   `;
 
   override updated(): void {
@@ -398,7 +475,8 @@ export class HsInstruments extends LitElement {
         : nothing}
       ${readouts || gauges
         ? html`<div class="column" data-testid="inst-column">
-            ${readouts ? this.pagePanel() : nothing} ${gauges ? this.browserPanel() : nothing}
+            ${readouts ? this.pagePanel() : nothing} ${readouts && this.scene ? this.scenePanel(this.scene) : nothing}
+            ${gauges ? this.browserPanel() : nothing}
           </div>`
         : nothing}
       ${showConsole || network
@@ -442,6 +520,79 @@ export class HsInstruments extends LitElement {
         : html`<p class="empty">No web page in this tab.</p>`}
     </section>`;
   }
+
+  private scenePanel(s: SceneReadout) {
+    const d = s.detail;
+    const num = (v: number[]) => v.map((n) => (Math.abs(n) >= 1000 ? n.toFixed(0) : n.toFixed(2))).join(', ');
+    const deg = (v: number[]) => v.map((n) => `${Math.round(n)}°`).join(', ');
+    const stateName = (st: string) => (st === 'left-out' ? 'left out' : st);
+    // What went wrong, each at its place in the page's text.
+    const trouble = [
+      ...(s.error ? [{ at: `${s.error.line}:${s.error.column}`, text: `${s.error.code}: ${s.error.message}` }] : []),
+      ...s.problems.map((p) => ({ at: `${p.line}:${p.column}`, text: `${p.code}: ${p.message}` })),
+      ...s.entries
+        .filter((e) => e.state === 'failed' || e.state === 'left-out' || e.state === 'refused')
+        .map((e) => ({ at: `${e.line}:${e.column}`, text: `${e.kind} ${e.name} ${stateName(e.state ?? '')}${e.reason ? `: ${e.reason}` : ''}` })),
+      ...(s.leftOutElements > 0 ? [{ at: '', text: `${s.leftOutElements.toLocaleString()} elements left out (limit 10,000)` }] : []),
+    ];
+    return html`<section class="panel scene" aria-label="Scene" data-testid="inst-scene">
+      <header>
+        <h2>Scene</h2>
+        <span class="host" data-testid="inst-scene-totals">${formatBytes(s.totals.bytes)} · ${s.totals.triangles.toLocaleString()} tri</span>
+        <button data-testid="inst-scene-pick" aria-pressed=${s.picking ? 'true' : 'false'}
+          title="Pick: a click in the scene selects an object instead of following a link"
+          @click=${() => this.fire('hs-scene-pick', !s.picking)}>Pick</button>
+      </header>
+      <ul class="log tree" data-testid="inst-scene-tree" aria-label="Scene objects" @keydown=${this.onTreeKey}>
+        ${s.entries.map(
+          (e) => html`<li>
+            <button data-index=${e.index} aria-current=${e.index === s.selected ? 'true' : 'false'}
+              style=${`padding-left:${4 + Math.min(e.depth, 12) * 10}px`}
+              @click=${() => this.fire('hs-scene-select', e.index)}>${e.kind}${e.name ? html` <span class="muted">${e.name}</span>` : nothing}${e.state && e.state !== 'loaded'
+                ? html` <span data-state="bad">(${stateName(e.state)})</span>`
+                : nothing}</button>
+          </li>`,
+        )}
+        ${s.entryCount > s.entries.length ? html`<li class="muted">and ${(s.entryCount - s.entries.length).toLocaleString()} more</li>` : nothing}
+      </ul>
+      ${d
+        ? html`<div class="detail" data-testid="inst-scene-detail">
+            <div>Line ${d.line}, column ${d.column}</div>
+            <code data-testid="inst-scene-source">${d.source}</code>
+            <dl>
+              ${d.bounds ? html`<dt>Bounds</dt><dd data-testid="inst-scene-bounds">${num(d.bounds[0])} to ${num(d.bounds[1])}</dd>` : nothing}
+              <dt>Position</dt><dd data-testid="inst-scene-position">${num(d.position)}</dd>
+              <dt>Rotation</dt><dd>${deg(d.rotation)}</dd>
+              <dt>Scale</dt><dd>${num(d.scale)}</dd>
+              ${d.triangles !== null ? html`<dt>Triangles</dt><dd data-testid="inst-scene-triangles">${d.triangles.toLocaleString()}</dd>` : nothing}
+              ${d.pictures.length ? html`<dt>Pictures</dt><dd>${d.pictures.map((p) => `${p.width}×${p.height}`).join(', ')}</dd>` : nothing}
+            </dl>
+          </div>`
+        : html`<p class="empty">Select an object, or Pick one in the scene.</p>`}
+      <div class="problems" data-testid="inst-scene-problems">
+        ${trouble.length
+          ? html`<ul>
+              ${trouble.map((t) => html`<li>${t.at ? html`<span class="muted">${t.at}</span> ` : nothing}${t.text}</li>`)}
+            </ul>`
+          : html`<span class="muted">No problems.</span>`}
+      </div>
+    </section>`;
+  }
+
+  /** Up and down (and Home, End) move through the tree's objects, selecting as they go. */
+  private readonly onTreeKey = (e: KeyboardEvent) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Home' && e.key !== 'End') return;
+    const buttons = [...(e.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>('button[data-index]')];
+    if (buttons.length === 0) return;
+    const at = buttons.indexOf(e.composedPath()[0] as HTMLButtonElement);
+    const next =
+      e.key === 'Home' ? 0 : e.key === 'End' ? buttons.length - 1 : Math.max(0, Math.min(buttons.length - 1, at + (e.key === 'ArrowDown' ? 1 : -1)));
+    e.preventDefault();
+    e.stopPropagation();
+    const target = buttons[next]!;
+    target.focus();
+    this.fire('hs-scene-select', Number(target.dataset['index']));
+  };
 
   private browserPanel() {
     const b = this.browser;

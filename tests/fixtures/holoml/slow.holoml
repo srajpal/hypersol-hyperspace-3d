@@ -1,0 +1,12 @@
+<holoml version="0.1">
+  <head>
+    <title>HoloML slow model</title>
+  </head>
+  <scene>
+    <viewpoint position="0 1.6 7" look-at="0 0.5 0" />
+    <label id="first" position="-2 2 0">First</label>
+    <model id="slow" src="gen/never.gltf" position="0 0 0" />
+    <model id="small" src="gen/box.gltf" position="2 0 0" />
+    <label id="after" position="2 2 0">After</label>
+  </scene>
+</holoml>

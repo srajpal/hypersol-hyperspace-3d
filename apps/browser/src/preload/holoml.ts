@@ -10,7 +10,7 @@
  * Every page also accepts a dropped .holoml file: it opens in the tab.
  */
 import { ipcRenderer, webFrame, webUtils } from 'electron';
-import { HOLOML_DOCUMENT_CHANNEL, HOLOML_DROP_CHANNEL, HOLOML_SHOWN_CHANNEL, VIEWER_ENTRY } from '../shared/holoml-page';
+import { HOLOML_COMMAND_CHANNEL, HOLOML_DOCUMENT_CHANNEL, HOLOML_DROP_CHANNEL, HOLOML_SHOWN_CHANNEL, HOLOML_STATE_CHANNEL, VIEWER_ENTRY } from '../shared/holoml-page';
 
 function detect(): boolean {
   // Only a main frame's plain-text document can be one; ask no more for others.
@@ -37,6 +37,17 @@ if (isHolomlDocument) {
   };
   if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', addViewer, { once: true });
   else addViewer();
+  // The viewer's state out to the shell (loading models, the text view),
+  // and the shell's commands in (milestone 15).
+  window.addEventListener('message', (e) => {
+    if (e.source !== window || typeof e.data !== 'object' || e.data === null) return;
+    const data = e.data as { hypersolHolomlBusy?: unknown; hypersolHolomlTextView?: unknown };
+    if (typeof data.hypersolHolomlBusy === 'boolean') ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { busy: data.hypersolHolomlBusy });
+    if (typeof data.hypersolHolomlTextView === 'boolean') ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { textView: data.hypersolHolomlTextView });
+  });
+  ipcRenderer.on(HOLOML_COMMAND_CHANNEL, (_event, command: unknown) => {
+    if (command === 'stop' || command === 'text-view-on' || command === 'text-view-off') window.postMessage({ hypersolHolomlCommand: command }, '*');
+  });
 }
 
 if (window === window.top) {

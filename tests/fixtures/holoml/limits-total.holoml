@@ -1,0 +1,12 @@
+<holoml version="0.1">
+  <head>
+    <title>HoloML total limit</title>
+  </head>
+  <scene>
+    <model id="m1" src="gen/box.gltf?mb=30&amp;n=1" position="-4 0 0" />
+    <model id="m2" src="gen/box.gltf?mb=30&amp;n=2" position="-2 0 0" />
+    <model id="m3" src="gen/box.gltf?mb=30&amp;n=3" position="0 0 0" />
+    <model id="m4" src="gen/box.gltf?mb=30&amp;n=4" position="2 0 0" />
+    <model id="m5" src="gen/box.gltf?mb=30&amp;n=5" position="4 0 0" />
+  </scene>
+</holoml>

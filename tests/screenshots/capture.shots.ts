@@ -309,6 +309,33 @@ it('captures the main screens', async () => {
     await capture(holo, '42-holoml-mistake');
   } finally {
     await holo.close();
+  }
+  // Milestone 15: a model left out with its notice, the text view, and the Scene inspector.
+  const profile = mkdtempSync(join(tmpdir(), 'hypersol-shots-profile-'));
+  writeFileSync(join(profile, 'settings.json'), JSON.stringify({ layersOnOpen: false, instruments: true }));
+  const hard = await launch(server.url('holoml/limits-files.holoml'));
+  try {
+    await waitForPage(hard, 'limits-files.holoml');
+    await waitFor('left out', () => inPage<number>(hard, 'window.__holoml?.leftOut().length ?? 0', 'limits-files.holoml'), (n) => n === 1, 30_000);
+    await capture(hard, '43-holoml-left-out');
+    await shellCall(hard, 'showUrl', server.url('holoml/still.holoml'));
+    await waitForPage(hard, 'still.holoml');
+    await waitFor('the scene', () => inPage<boolean>(hard, 'window.__holoml?.ready === true', 'still.holoml'), (r) => r, 20_000);
+    await hard.shell.click('hs-toolbar [data-testid="text-view"]');
+    await waitFor('the text view', () => inPage<boolean>(hard, 'window.__holoml.textView', 'still.holoml'), (v) => v);
+    await capture(hard, '44-holoml-text-view');
+  } finally {
+    await hard.close();
+  }
+  const inspect = await launch(server.url('holoml/still.holoml'), { userDataDir: profile });
+  try {
+    await waitForPage(inspect, 'still.holoml');
+    await waitFor('the scene', () => inPage<boolean>(inspect, 'window.__holoml?.ready === true', 'still.holoml'), (r) => r, 20_000);
+    await inspect.shell.locator('hs-instruments [data-testid="inst-scene-tree"] button', { hasText: 'model car' }).click();
+    await inspect.shell.locator('hs-instruments [data-testid="inst-scene-detail"]').waitFor({ state: 'visible' });
+    await capture(inspect, '45-holoml-inspector');
+  } finally {
+    await inspect.close();
     await server.close();
   }
-}, 240_000);
+}, 300_000);

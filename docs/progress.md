@@ -170,3 +170,15 @@ page with a mistake says where it is.
 ![A HoloML page: cars, labels, and a linked model](screenshots/m14/41-holoml-scene.png)
 
 ![A HoloML page with a mistake: the line and column](screenshots/m14/42-holoml-mistake.png)
+
+**Milestone 15: HoloML hardening** (built 2026-09-27, waiting for
+acceptance). A heavy or hostile scene cannot exhaust memory: what
+crosses a limit is left out, marked, and explained. A scene can be used
+from the keyboard, with a screen reader, as plain text, or without
+motion, and the instrument panel shows how it is built.
+
+![A model over 32 MB left out: marked in the scene, and a notice says why](screenshots/m15/43-holoml-left-out.png)
+
+![The text view: the scene's names and links as a plain page](screenshots/m15/44-holoml-text-view.png)
+
+![The Scene part of the instrument panel: the tree, the selected object, and the problems](screenshots/m15/45-holoml-inspector.png)

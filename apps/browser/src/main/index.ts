@@ -506,7 +506,7 @@ if (!app.requestSingleInstanceLock()) {
     const log = testLog;
     // The instrument panel's readouts (milestone 7): in memory only.
     const isShell = (contents: Electron.WebContents) => mainWindow !== null && contents === mainWindow.webContents;
-    const inspect = new Inspector(ses, { isShell });
+    const inspect = new Inspector(ses, { isShell, isHolomlPage: (c) => pages.isDocument(c.id, c.getURL()) });
     inspector = inspect;
     inspect.setPrivateSession(privateSes);
     inspect.start();

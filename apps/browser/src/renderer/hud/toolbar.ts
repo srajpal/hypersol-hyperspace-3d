@@ -30,6 +30,8 @@ const icon = {
   plus: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>`,
   back: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>`,
   forward: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>`,
+  text: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 10h14M5 14h10M5 18h8" /></svg>`,
+  stop: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>`,
   reload: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95M19 4v4h-4" /></svg>`,
   menu: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6h.01M12 12h.01M12 18h.01" /></svg>`,
   layers: html`<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -75,6 +77,8 @@ export class HsToolbar extends LitElement {
     private: { type: Boolean },
     downloading: { type: Boolean },
     canLayers: { type: Boolean },
+    holoml: { type: Boolean },
+    textView: { type: Boolean },
     site: { type: String },
     access: { attribute: false },
     economy: { type: Boolean },
@@ -98,6 +102,9 @@ export class HsToolbar extends LitElement {
   /** The layers view is on for the page in front (milestone 5). */
   declare layers: boolean;
   declare canLayers: boolean;
+  /** A HoloML page in front (milestone 15): the text view button shows. */
+  declare holoml: boolean;
+  declare textView: boolean;
   /** The instrument panel is showing (milestone 7). */
   declare instruments: boolean;
   /** The page's zoom factor (milestone 8). */
@@ -148,6 +155,8 @@ export class HsToolbar extends LitElement {
     this.canGoBack = false;
     this.canGoForward = false;
     this.canReload = false;
+    this.holoml = false;
+    this.textView = false;
     this.loading = false;
     this.bookmarked = false;
     this.canBookmark = false;
@@ -590,9 +599,11 @@ export class HsToolbar extends LitElement {
         <button data-testid="forward" aria-label="Forward" title="Forward" ?disabled=${!this.canGoForward} @click=${() => this.fire('hs-forward')}>
           ${icon.forward}
         </button>
-        <button data-testid="reload" aria-label="Reload" title="Reload" ?disabled=${!this.canReload} @click=${() => this.fire('hs-reload')}>
+        ${this.loading
+          ? html`<button data-testid="stop" aria-label="Stop" title="Stop loading (Esc)" @click=${() => this.fire('hs-stop')}>${icon.stop}</button>`
+          : html`<button data-testid="reload" aria-label="Reload" title="Reload" ?disabled=${!this.canReload} @click=${() => this.fire('hs-reload')}>
           ${icon.reload}
-        </button>
+        </button>`}
         ${this.private ? html`<span class="private-pill" data-testid="private-pill" title="Private tab: nothing is kept">PRIVATE</span>` : nothing}
         ${this.site === 'none' ? nothing : this.siteButton()}
         ${this.economy
@@ -652,6 +663,17 @@ export class HsToolbar extends LitElement {
         >
           ${icon.layers}
         </button>
+        ${this.holoml
+          ? html`<button
+              data-testid="text-view"
+              aria-label="Text view"
+              title="Text view: the scene as a plain page (Ctrl+Shift+V)"
+              aria-pressed=${this.textView ? 'true' : 'false'}
+              @click=${() => this.fire('hs-text-view')}
+            >
+              ${icon.text}
+            </button>`
+          : nothing}
         <button
           class="star"
           data-testid="star"

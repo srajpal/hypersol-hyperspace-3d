@@ -3,6 +3,12 @@
  * groups, lights, labels, links, the viewpoint, and animation. The scene
  * draws only when something changes (a model arrives, the view moves, an
  * animation runs), so an idle page costs nothing.
+ *
+ * Milestone 15: models load within the page's limits (budget.ts; issue
+ * #23); links and named things are reached with Tab, and an outline of
+ * the scene is in the page for screen readers and the text view (#25);
+ * reduced motion is followed; the instrument panel's Scene part reads
+ * the tree, the selection, and the costs from here (#28).
  */
 import {
   AmbientLight,
@@ -37,6 +43,8 @@ import {
   type Material,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { LoadingManager, Texture } from 'three';
+import { Budget, LeftOut, LIMITS } from './budget';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { ElementNode, HoloNode } from '@hypersol/holoml';
 import { orbitControls, walkControls, type ViewControls } from './controls';
@@ -63,9 +71,26 @@ interface Animation {
 
 export interface ModelReport {
   src: string;
-  state: 'loading' | 'loaded' | 'failed' | 'refused';
+  /** refused: another site; left-out: over a limit, stopped, or failed to load (see reason). */
+  state: 'loading' | 'loaded' | 'failed' | 'refused' | 'left-out';
+  reason?: string;
+  bytes?: number;
+  triangles?: number;
+  pictures?: { width: number; height: number }[];
   materials: Record<string, { color: string; metalness: number; roughness: number; opacity: number }>;
   animation: { name: string; playing: boolean; time: number } | null;
+}
+
+/** One element of the scene, for the outline, keyboard, and inspector. */
+interface Entry {
+  el: ElementNode;
+  kind: string;
+  name: string;
+  depth: number;
+  object: Object3D | null;
+  /** Its place in the outline (Tab order), if it is a link or a named thing. */
+  item: HTMLElement | null;
+  report?: ModelReport;
 }
 
 export class HolomlView {
@@ -88,12 +113,27 @@ export class HolomlView {
   private hovered: Link | null = null;
   private readonly highlight = new Box3Helper(new Box3(), LINK_HIGHLIGHT);
   private readonly raycaster = new Raycaster();
-  private readonly loader = new GLTFLoader();
   private readonly base = document.baseURI;
   private readonly textColor: string;
+  readonly budget = new Budget();
+  readonly entries: Entry[] = [];
+  /** Elements past the page's limit, not shown. */
+  leftOutElements = 0;
+  private modelCount = 0;
+  private selected = -1;
+  private picking = false;
+  private readonly reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  private readonly outline: HTMLElement;
   onReady: (() => void) | null = null;
+  /** Loading began or ended (the shell's stop button and loading strip). */
+  onBusy: ((busy: boolean) => void) | null = null;
+  /** Something was left out or failed: the notice. */
+  onLeftOut: (() => void) | null = null;
 
-  constructor(root: ElementNode, container: HTMLElement, linkList: HTMLElement) {
+  constructor(root: ElementNode, container: HTMLElement, outline: HTMLElement) {
+    this.outline = outline;
+    // Lines are hit only where they are, not a metre around them.
+    this.raycaster.params.Line.threshold = 0.02;
     // Throws where Chromium cannot start WebGL 2; main.ts says so on the page.
     this.renderer = new WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -117,32 +157,50 @@ export class HolomlView {
     let lights = 0;
     let viewpoint: ElementNode | null = null;
     const animates: ElementNode[] = [];
-    const build = (node: HoloNode, parent: Object3D, link: string | null) => {
+    let elements = 2; // holoml and scene
+    const build = (node: HoloNode, parent: Object3D, link: string | null, depth: number) => {
       if (node.type !== 'element') return;
+      // The page's limit on elements: later ones are left out (issue #23).
+      elements += 1;
+      if (elements > LIMITS.elements) {
+        this.leftOutElements += 1 + countElements(node);
+        return;
+      }
+      const entry: Entry = { el: node, kind: node.name, name: nameOf(node), depth, object: null, item: null };
+      this.entries.push(entry);
       switch (node.name) {
         case 'group': {
           const g = this.place(new Object3D(), node);
           parent.add(g);
-          for (const c of node.children) build(c, g, link);
+          entry.object = g;
+          if (attr(node, 'id') && !link) entry.item = this.addItem(entry, 'Group');
+          for (const c of node.children) build(c, g, link, depth + 1);
           this.track(g, node, link);
           break;
         }
         case 'model':
-          this.track(this.model(node, parent), node, link);
+          if (!link) entry.item = this.addItem(entry, 'Model');
+          entry.object = this.model(node, parent, entry);
+          this.track(entry.object, node, link);
           break;
         case 'light':
-          if (this.light(node, parent)) lights += 1;
+          entry.object = this.light(node, parent);
+          if (entry.object) lights += 1;
           break;
         case 'label':
-          this.track(this.label(node, parent), node, link);
+          entry.object = this.label(node, parent);
+          if (!link) entry.item = this.addItem(entry, 'Label');
+          this.track(entry.object, node, link);
           break;
         case 'a': {
           const href = resolveAddress(attr(node, 'href'), this.base);
           const holder = new Object3D();
           parent.add(holder);
+          entry.object = holder;
+          // In the outline before what it holds, in page order.
+          if (href && !link) entry.item = this.addLink(href.href, holder, node);
           // A link inside a link is not followed (the checker reports it).
-          for (const c of node.children) build(c, holder, link ?? href?.href ?? null);
-          if (href && !link) this.addLink(href.href, holder, linkList, node);
+          for (const c of node.children) build(c, holder, link ?? href?.href ?? null, depth + 1);
           break;
         }
         case 'animate':
@@ -153,7 +211,10 @@ export class HolomlView {
           break;
       }
     };
-    if (scene) for (const c of scene.children) build(c, this.scene, null);
+    if (scene) for (const c of scene.children) build(c, this.scene, null, 0);
+    if (this.leftOutElements > 0) {
+      console.warn(`HoloML: ${this.leftOutElements.toLocaleString('en')} elements past the page's limit of ${LIMITS.elements.toLocaleString('en')} were left out.`);
+    }
     if (lights === 0) {
       // No light on the page: light it softly, so models still show.
       const soft = new AmbientLight(0xffffff, 0.6);
@@ -166,9 +227,55 @@ export class HolomlView {
     this.setUpView(viewpoint);
     this.wirePointer();
     window.addEventListener('resize', () => this.resize());
+    // Reduced motion: animations show their end at once (issue #25).
+    this.reducedMotion.addEventListener('change', () => {
+      this.applyMotion();
+      this.requestFrame();
+    });
+    // Leaving the page releases everything, unless the back-forward cache keeps it to show again.
+    window.addEventListener('pagehide', (e) => {
+      if (!e.persisted) this.dispose();
+    });
     this.resize();
     this.started = performance.now();
+    this.applyMotion();
     if (this.pending === 0) queueMicrotask(() => this.onReady?.());
+  }
+
+  /** Stops every model still loading (Esc, the stop button). */
+  stop(): void {
+    this.budget.stop();
+  }
+
+  get stillMoving(): boolean {
+    return !this.reducedMotion.matches;
+  }
+
+  /** With reduced motion, model animations hold their first frame and animate shows its end. */
+  private applyMotion(): void {
+    const still = this.reducedMotion.matches;
+    for (const m of this.mixers) {
+      for (const a of this.playing) {
+        a.paused = still;
+        if (still) a.time = 0;
+      }
+      m.update(0);
+    }
+  }
+
+  /** Everything the page drew, released when the page goes. */
+  dispose(): void {
+    this.budget.stop();
+    this.controls?.dispose();
+    this.scene.traverse((o) => {
+      const mesh = o as Object3D & { geometry?: { dispose(): void }; material?: Material | Material[] };
+      mesh.geometry?.dispose();
+      for (const m of Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : []) {
+        for (const value of Object.values(m)) if (value instanceof Texture) value.dispose();
+        m.dispose();
+      }
+    });
+    this.renderer.dispose();
   }
 
   /** Where the viewer is and what it looks at. */
@@ -179,13 +286,15 @@ export class HolomlView {
   }
 
   /** An element's world position, rotation (degrees), and scale, by its id. */
-  objectInfo(id: string): { position: Vec3; rotation: Vec3; scale: Vec3 } | null {
+  objectInfo(id: string): { position: Vec3; rotation: Vec3; scale: Vec3; marked: boolean } | null {
     const o = this.ids.get(id);
     if (!o) return null;
     const p = new Vector3();
     o.getWorldPosition(p);
     const r = o.rotation;
-    return { position: [p.x, p.y, p.z], rotation: [r.x / DEG, r.y / DEG, r.z / DEG], scale: [o.scale.x, o.scale.y, o.scale.z] };
+    // Marked: a model left out shows the "missing" box where it would be.
+    const marked = o.children.some((c) => c.userData['missing'] === true);
+    return { position: [p.x, p.y, p.z], rotation: [r.x / DEG, r.y / DEG, r.z / DEG], scale: [o.scale.x, o.scale.y, o.scale.z], marked };
   }
 
   /** Where an object (by id) or a link (by index) is on the page, in CSS pixels, if in view. */
@@ -216,6 +325,15 @@ export class HolomlView {
     return this.pending > 0;
   }
 
+  /** What was left out, and why, for the notice. */
+  get leftOut(): { what: string; why: string }[] {
+    const out = this.models.filter((m) => m.state === 'left-out' || m.state === 'refused' || m.state === 'failed').map((m) => ({ what: m.src, why: m.reason ?? m.state }));
+    if (this.leftOutElements > 0) {
+      out.push({ what: `${this.leftOutElements.toLocaleString('en')} elements`, why: `past the page's limit of ${LIMITS.elements.toLocaleString('en')}` });
+    }
+    return out;
+  }
+
   // ---- Building --------------------------------------------------------------
 
   private place(o: Object3D, el: ElementNode): Object3D {
@@ -232,25 +350,58 @@ export class HolomlView {
     if (link) o.userData['link'] = link;
   }
 
-  private model(el: ElementNode, parent: Object3D): Object3D {
+  private model(el: ElementNode, parent: Object3D, entry: Entry): Object3D {
     const holder = this.place(new Object3D(), el);
     parent.add(holder);
     const src = attr(el, 'src') ?? '';
     const report: ModelReport = { src, state: 'loading', materials: {}, animation: null };
     this.models.push(report);
+    entry.report = report;
+    // The page's limit on models (issue #23).
+    this.modelCount += 1;
+    if (this.modelCount > LIMITS.models) {
+      this.leaveOut(holder, report, entry, `more than ${LIMITS.models} models on the page`);
+      return holder;
+    }
     const url = resolveAddress(src, this.base);
     // Models come from the page's own site only (owner, prompt 65, Q2 a);
     // the page's content policy enforces the same.
     if (!url || url.origin !== new URL(this.base).origin) {
       report.state = 'refused';
+      report.reason = "models load only from the page's own site";
       console.warn(`HoloML: the model "${src}" was not loaded: models load only from the page's own site.`);
       holder.add(missingMarker());
+      this.onLeftOut?.();
       return holder;
     }
     this.pending += 1;
-    this.loader
-      .loadAsync(url.href)
-      .then((gltf) => {
+    if (this.pending === 1) this.onBusy?.(true);
+    let blobs: Map<string, string> = new Map();
+    this.budget
+      .load(url, new URL(this.base).origin)
+      .then(async (files) => {
+        blobs = files.blobs;
+        report.bytes = files.bytes;
+        report.triangles = files.triangles;
+        report.pictures = files.pictures;
+        // The loader reads the counted files only, never the network.
+        const manager = new LoadingManager();
+        manager.setURLModifier((u) => blobs.get(new URL(u, url).href) ?? (u.startsWith('data:') || u.startsWith('blob:') ? u : 'blob:uncounted'));
+        const gltf = await new GLTFLoader(manager).parseAsync(files.main, url.href.slice(0, url.href.lastIndexOf('/') + 1));
+        // After decoding, the pictures' real sizes too (a backstop for unknown formats).
+        let tooBig: string | null = null;
+        gltf.scene.traverse((o) => {
+          const m = (o as Mesh).material;
+          for (const mat of Array.isArray(m) ? m : m ? [m] : []) {
+            for (const value of Object.values(mat)) {
+              const img = value instanceof Texture ? (value.image as { width?: number; height?: number } | null) : null;
+              if (img && ((img.width ?? 0) > LIMITS.pictureSide || (img.height ?? 0) > LIMITS.pictureSide)) {
+                tooBig = `a picture of ${img.width} by ${img.height} pixels is larger than ${LIMITS.pictureSide} by ${LIMITS.pictureSide}`;
+              }
+            }
+          }
+        });
+        if (tooBig) throw new LeftOut(tooBig);
         holder.add(gltf.scene);
         this.changeMaterials(el, gltf.scene, report);
         const clipName = attr(el, 'animation');
@@ -271,18 +422,33 @@ export class HolomlView {
           }
         }
         report.state = 'loaded';
+        this.applyMotion();
       })
       .catch((e: unknown) => {
-        report.state = 'failed';
-        console.warn(`HoloML: the model "${src}" could not be loaded (${e instanceof Error ? e.message : String(e)}).`);
-        holder.add(missingMarker());
+        if (e instanceof LeftOut) this.leaveOut(holder, report, entry, e.reason);
+        else this.leaveOut(holder, report, entry, `could not be loaded (${e instanceof Error ? e.message : String(e)})`, 'failed');
       })
       .finally(() => {
+        for (const b of blobs.values()) URL.revokeObjectURL(b);
         this.pending -= 1;
         this.requestFrame();
-        if (this.pending === 0) this.onReady?.();
+        if (this.pending === 0) {
+          this.onBusy?.(false);
+          this.onReady?.();
+        }
       });
     return holder;
+  }
+
+  /** A model not shown: marked where it would be, reported, and out of the Tab order. */
+  private leaveOut(holder: Object3D, report: ModelReport, entry: Entry, reason: string, state: 'left-out' | 'failed' = 'left-out'): void {
+    report.state = state;
+    report.reason = reason;
+    console.warn(state === 'failed' ? `HoloML: the model "${report.src}" ${reason}.` : `HoloML: the model "${report.src}" was left out: ${reason}.`);
+    holder.clear();
+    holder.add(missingMarker());
+    if (entry.item) this.removeItem(entry);
+    this.onLeftOut?.();
   }
 
   /** <material> children: change the named materials, only what is given. */
@@ -326,7 +492,7 @@ export class HolomlView {
     }
   }
 
-  private light(el: ElementNode, parent: Object3D): boolean {
+  private light(el: ElementNode, parent: Object3D): Object3D | null {
     const type = attr(el, 'type');
     const c = color(el, 'color') ?? '#ffffff';
     const intensity = num(el, 'intensity', 1, 0);
@@ -350,10 +516,10 @@ export class HolomlView {
       s.target.position.set(...vec3(el, 'look-at', [0, 0, 0]));
       parent.add(s.target);
       light = s;
-    } else return false;
+    } else return null;
     parent.add(light);
     this.track(light, el, null);
-    return true;
+    return light;
   }
 
   private label(el: ElementNode, parent: Object3D): Object3D {
@@ -390,7 +556,7 @@ export class HolomlView {
     return sprite;
   }
 
-  private addLink(href: string, object: Object3D, list: HTMLElement, el: ElementNode): void {
+  private addLink(href: string, object: Object3D, el: ElementNode): HTMLElement {
     const anchor = document.createElement('a');
     anchor.href = href;
     const words: string[] = [];
@@ -405,8 +571,57 @@ export class HolomlView {
     // Keyboard: Tab reaches each link, which lights up in the scene; Enter follows it.
     anchor.addEventListener('focus', () => this.setHovered(link));
     anchor.addEventListener('blur', () => this.setHovered(null));
-    list.append(anchor);
+    const li = document.createElement('li');
+    li.className = 'holoml-link';
+    li.append(anchor);
+    this.outline.append(li);
     this.links.push(link);
+    return anchor;
+  }
+
+  /**
+   * A named thing in the outline (issue #25): reached with Tab in page
+   * order, outlined in the scene while in focus, and named for screen
+   * readers.
+   */
+  private addItem(entry: Entry, kind: string): HTMLElement {
+    const li = document.createElement('li');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = `${kind}: ${entry.name}`;
+    button.addEventListener('focus', () => this.outlineObject(entry.object));
+    button.addEventListener('blur', () => this.outlineObject(null));
+    li.append(button);
+    this.outline.append(li);
+    return button;
+  }
+
+  /** Removes a thing from the outline; if it had focus, the next one (or the one before) takes it. */
+  private removeItem(entry: Entry): void {
+    const item = entry.item;
+    if (!item) return;
+    const li = item.parentElement!;
+    if (document.activeElement === item) {
+      const next = (li.nextElementSibling ?? li.previousElementSibling)?.querySelector<HTMLElement>('a, button');
+      next?.focus();
+    }
+    li.remove();
+    entry.item = null;
+  }
+
+  /** The focus outline in the scene around an object (null hides it). */
+  /** The outline drawn around the object in focus or under the pointer, in world space. */
+  get highlightInfo(): { visible: boolean; min: Vec3; max: Vec3 } {
+    const { min, max } = this.highlight.box;
+    return { visible: this.highlight.visible, min: [min.x, min.y, min.z], max: [max.x, max.y, max.z] };
+  }
+
+  private outlineObject(object: Object3D | null): void {
+    if (object) {
+      this.highlight.box.setFromObject(object).expandByScalar(0.05);
+      this.highlight.visible = !this.highlight.box.isEmpty();
+    } else if (!this.hovered) this.highlight.visible = false;
+    this.requestFrame();
   }
 
   private addAnimation(el: ElementNode): void {
@@ -461,6 +676,57 @@ export class HolomlView {
     return null;
   }
 
+  /** The inspector's pick mode. */
+  setPicking(on: boolean): void {
+    this.picking = on;
+    this.renderer.domElement.style.cursor = on ? 'crosshair' : '';
+  }
+
+  get pickingNow(): boolean {
+    return this.picking;
+  }
+
+  /** Selects an entry by its index (-1: none), and outlines it. */
+  select(index: number): void {
+    this.selected = index >= 0 && index < this.entries.length ? index : -1;
+    this.outlineObject(this.entries[this.selected]?.object ?? null);
+  }
+
+  get selectedIndex(): number {
+    return this.selected;
+  }
+
+  /** The innermost entry whose object is under a point of the page. */
+  private entryAt(x: number, y: number): number {
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    this.raycaster.setFromCamera(new Vector2(((x - rect.left) / rect.width) * 2 - 1, 1 - ((y - rect.top) / rect.height) * 2), this.camera);
+    const hit = this.raycaster.intersectObjects(this.scene.children, true).find((h) => h.object !== this.highlight);
+    if (!hit) return -1;
+    for (let o: Object3D | null = hit.object; o; o = o.parent) {
+      const i = this.entries.findIndex((e) => e.object === o && e.kind !== 'a');
+      if (i >= 0) return i;
+    }
+    return -1;
+  }
+
+  /** What the inspector shows for one entry: its bounds, place, and costs. */
+  entryInfo(index: number): { bounds: [Vec3, Vec3] | null; position: Vec3; rotation: Vec3; scale: Vec3; triangles: number | null; pictures: { width: number; height: number }[] } | null {
+    const e = this.entries[index];
+    if (!e) return null;
+    const o = e.object;
+    const box = o ? new Box3().setFromObject(o) : null;
+    const p = new Vector3();
+    o?.getWorldPosition(p);
+    return {
+      bounds: box && !box.isEmpty() ? [[box.min.x, box.min.y, box.min.z], [box.max.x, box.max.y, box.max.z]] : null,
+      position: [p.x, p.y, p.z],
+      rotation: o ? [o.rotation.x / DEG, o.rotation.y / DEG, o.rotation.z / DEG] : [0, 0, 0],
+      scale: o ? [o.scale.x, o.scale.y, o.scale.z] : [1, 1, 1],
+      triangles: e.report?.triangles ?? null,
+      pictures: e.report?.pictures ?? [],
+    };
+  }
+
   private setHovered(link: Link | null): void {
     if (this.hovered === link) return;
     this.hovered = link;
@@ -486,6 +752,11 @@ export class HolomlView {
       down = null;
       // A drag moves the view; only a click (or tap) follows a link.
       if (!start || Math.hypot(e.clientX - start.x, e.clientY - start.y) > 6) return;
+      // The inspector's pick: a click selects instead of following a link (issue #28).
+      if (this.picking) {
+        this.select(this.entryAt(e.clientX, e.clientY));
+        return;
+      }
       const link = this.linkAt(e.clientX, e.clientY);
       if (!link) return;
       if (e.button === 1 || e.ctrlKey || e.metaKey) window.open(link.href, '_blank');
@@ -517,7 +788,7 @@ export class HolomlView {
     this.last = time;
     let moving = this.controls?.step(dt) ?? false;
     if (this.stepAnimations(performance.now())) moving = true;
-    if (this.playing.size > 0) {
+    if (this.playing.size > 0 && !this.reducedMotion.matches) {
       for (const m of this.mixers) m.update(dt / 1000);
       for (const report of this.models) {
         const a = (report as ModelReport & { action?: AnimationAction }).action;
@@ -534,10 +805,12 @@ export class HolomlView {
   /** Moves every animate element on; true while any still runs. */
   private stepAnimations(now: number): boolean {
     let running = false;
+    const still = this.reducedMotion.matches;
     for (const a of this.animations) {
       const elapsed = now - this.started;
       const runs = elapsed / a.duration;
-      const done = runs >= a.repeat;
+      // With reduced motion, every animation shows its end at once (issue #25).
+      const done = still || runs >= a.repeat;
       const t = done ? 1 : runs - Math.floor(runs);
       const from = a.from ?? a.start;
       const v = from.map((f, i) => f + (a.to[i]! - f) * t) as Vec3;
@@ -553,6 +826,24 @@ function current(o: Object3D, attribute: 'position' | 'rotation' | 'scale'): Vec
   if (attribute === 'rotation') return [MathUtils.radToDeg(o.rotation.x), MathUtils.radToDeg(o.rotation.y), MathUtils.radToDeg(o.rotation.z)];
   const v = o[attribute];
   return [v.x, v.y, v.z];
+}
+
+/** How many elements a node holds, at any depth. */
+function countElements(node: ElementNode): number {
+  let n = 0;
+  for (const c of node.children) if (c.type === 'element') n += 1 + countElements(c);
+  return n;
+}
+
+/** A name for the outline and the inspector: the text, the id, or the file. */
+function nameOf(el: ElementNode): string {
+  if (el.name === 'label') return text(el) || 'label';
+  const id = attr(el, 'id');
+  if (id) return id;
+  if (el.name === 'model') return (attr(el, 'src') ?? '').split(/[?#]/)[0]!.split('/').pop() || 'model';
+  if (el.name === 'a') return attr(el, 'href') ?? 'link';
+  if (el.name === 'light') return `${attr(el, 'type') ?? ''} light`.trim();
+  return el.name;
 }
 
 function isInside(o: Object3D, ancestor: Object3D): boolean {

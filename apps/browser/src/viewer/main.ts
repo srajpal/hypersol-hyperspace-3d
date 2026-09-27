@@ -11,6 +11,7 @@
  */
 import { HoloParseError, check, parse, type ElementNode, type Problem } from '@hypersol/holoml';
 import { HolomlView } from './scene';
+import { LIMITS } from './budget';
 import { text } from './values';
 
 interface ViewerState {
@@ -19,11 +20,18 @@ interface ViewerState {
   problems: Problem[];
   noWebGL: boolean;
   view: HolomlView | null;
+  textView: boolean;
+  source: string[];
+  title: string;
 }
 
-const state: ViewerState = { ready: false, error: null, problems: [], noWebGL: false, view: null };
+const state: ViewerState = { ready: false, error: null, problems: [], noWebGL: false, view: null, textView: false, source: [], title: '' };
 
-/** Read-only facts for the browser's own tests; the page has no scripts of its own. */
+/**
+ * Read-only facts for the browser's own tests and for the instrument
+ * panel's Scene part (the main process reads them only from pages it
+ * marked as HoloML); the page has no scripts of its own.
+ */
 Object.defineProperty(window, '__holoml', {
   value: {
     get ready() {
@@ -52,6 +60,48 @@ Object.defineProperty(window, '__holoml', {
     point: (which: string | number) => state.view?.screenPoint(which) ?? null,
     linkAt: (x: number, y: number) => state.view?.linkHrefAt(x, y) ?? null,
     lights: () => state.view?.lightsInfo() ?? [],
+    leftOut: () => state.view?.leftOut ?? [],
+    highlight: () => state.view?.highlightInfo ?? null,
+    get textView() {
+      return state.textView;
+    },
+    /** The Tab order: each outline item's kind of element and its text. */
+    outline: () => [...document.querySelectorAll('#holoml-outline li > a, #holoml-outline li > button')].map((e) => `${e.tagName.toLowerCase()}:${e.textContent}`),
+    /** The inspector's picture of the scene (issue #28). */
+    scene: () => {
+      const v = state.view;
+      const sel = v?.selectedIndex ?? -1;
+      const e = v?.entries[sel];
+      return JSON.parse(
+        JSON.stringify({
+          title: state.title,
+          // The first 2,000 go to the inspector's tree each second; the rest are counted.
+          entryCount: v?.entries.length ?? 0,
+          entries: (v?.entries ?? []).slice(0, 2_000).map((x, i) => ({
+            index: i,
+            kind: x.kind,
+            name: x.name,
+            depth: x.depth,
+            line: x.el.start.line,
+            column: x.el.start.column,
+            state: x.report?.state,
+            reason: x.report?.reason,
+          })),
+          selected: sel,
+          picking: v?.pickingNow ?? false,
+          detail: e
+            ? { ...v!.entryInfo(sel), line: e.el.start.line, column: e.el.start.column, source: state.source[e.el.start.line - 1] ?? '' }
+            : null,
+          problems: state.problems,
+          error: state.error,
+          models: (v?.models ?? []).map(({ src, state: st, reason, bytes, triangles }) => ({ src, state: st, reason, bytes, triangles })),
+          totals: { bytes: v?.budget.bytes ?? 0, triangles: v?.budget.triangles ?? 0 },
+          leftOutElements: v?.leftOutElements ?? 0,
+        }),
+      );
+    },
+    select: (index: number) => state.view?.select(index),
+    pick: (on: boolean) => state.view?.setPicking(on),
   },
 });
 
@@ -66,24 +116,60 @@ const STYLE = `
   .holoml-card h1 { font-size: 18px; margin: 0 0 8px; color: #ff9aaa; }
   .holoml-card p { margin: 6px 0; line-height: 1.45; }
   .holoml-card pre { background: #0b0e1c; padding: 10px 12px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+  #holoml-notice { position: fixed; left: 16px; bottom: 16px; max-width: min(520px, calc(100vw - 32px)); background: #161a2ee6; color: #eef1ff;
+    border: 1px solid #ffb36b; border-radius: 10px; padding: 10px 14px; font-size: 13px; line-height: 1.4; }
+  #holoml-notice[hidden] { display: none; }
+  #holoml-notice ul { margin: 6px 0 0; padding-left: 18px; }
+  /* The text view (issue #25): the outline as a plain page, no 3D. */
+  body.holoml-text-view #holoml-root { display: none; }
+  body.holoml-text-view #holoml-outline-nav { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal;
+    max-width: 760px; margin: 32px auto; padding: 0 24px; color: #eef1ff; font-size: 17px; line-height: 1.6; }
+  body.holoml-text-view { overflow: auto !important; }
+  body.holoml-text-view #holoml-outline-nav h1 { font-size: 26px; }
+  body.holoml-text-view #holoml-outline-nav button { all: unset; cursor: default; }
+  body.holoml-text-view #holoml-outline-nav a { color: #7fd8ff; }
 `;
 
 function start(): void {
   const source = document.querySelector('body > pre')?.textContent ?? '';
   document.querySelector('body > pre')?.remove();
+  state.source = source.split(/\r\n|\r|\n/);
   const style = document.createElement('style');
   style.textContent = STYLE;
   document.head.append(style);
   const root = document.createElement('div');
   root.id = 'holoml-root';
-  const links = document.createElement('nav');
-  links.className = 'holoml-hidden';
-  links.setAttribute('aria-label', 'Links in this scene');
-  links.dataset['testid'] = 'holoml-links';
+  // The outline (issue #25): the scene's title, links, and named things in
+  // page order. Tab moves through it; screen readers read it; the text
+  // view shows it as a page.
+  const nav = document.createElement('nav');
+  nav.id = 'holoml-outline-nav';
+  nav.className = 'holoml-hidden';
+  nav.setAttribute('aria-label', 'Scene outline');
+  nav.dataset['testid'] = 'holoml-links';
+  const heading = document.createElement('h1');
+  const list = document.createElement('ul');
+  list.id = 'holoml-outline';
+  nav.append(heading, list);
   const labels = document.createElement('div');
   labels.id = 'holoml-labels';
   labels.className = 'holoml-hidden';
-  document.body.append(root, links, labels);
+  const notice = document.createElement('section');
+  notice.id = 'holoml-notice';
+  notice.setAttribute('role', 'status');
+  notice.dataset['testid'] = 'holoml-notice';
+  notice.hidden = true;
+  document.body.append(root, nav, labels, notice);
+
+  // The page's own text, over its limit, is not read at all (issue #23).
+  const bytes = new TextEncoder().encode(source).length;
+  if (bytes > LIMITS.pageBytes) {
+    document.title = 'HoloML page too large';
+    showCard('This HoloML page is too large', [`It is ${(bytes / 1048576).toFixed(1)} MB; a HoloML page may be at most ${LIMITS.pageBytes / 1048576} MB.`], null);
+    state.error = { code: 'page-too-large', message: 'The page is larger than 2 MB', line: 1, column: 1 };
+    state.ready = true;
+    return;
+  }
 
   let doc;
   try {
@@ -108,9 +194,11 @@ function start(): void {
   const title = doc.root.children.find((c): c is ElementNode => c.type === 'element' && c.name === 'head')
     ?.children.find((c): c is ElementNode => c.type === 'element' && c.name === 'title');
   if (title && text(title)) document.title = text(title);
+  state.title = document.title;
+  heading.textContent = title && text(title) ? text(title) : 'HoloML scene';
 
   try {
-    state.view = new HolomlView(doc.root, root, links);
+    state.view = new HolomlView(doc.root, root, list);
   } catch (e) {
     state.noWebGL = true;
     showCard(
@@ -124,9 +212,55 @@ function start(): void {
     state.ready = true;
     return;
   }
-  state.view.onReady = () => {
+  const view = state.view;
+  view.onReady = () => {
     state.ready = true;
+    showLeftOut(view, notice);
   };
+  view.onLeftOut = () => showLeftOut(view, notice);
+  view.onBusy = (busy) => window.postMessage({ hypersolHolomlBusy: busy }, '*');
+  if (view.busy) view.onBusy(true);
+  showLeftOut(view, notice);
+  // Esc stops whatever is still loading (issue #23).
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && view.busy) view.stop();
+    // Ctrl+Shift+V (Cmd+Shift+V on macOS): the text view, on HoloML pages only.
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && e.key.toLowerCase() === 'v') {
+      e.preventDefault();
+      setTextView(!state.textView);
+    }
+  });
+  // From the browser, through the page's preload: stop, and the text view.
+  window.addEventListener('message', (e) => {
+    const command = (e.data as { hypersolHolomlCommand?: unknown } | null)?.hypersolHolomlCommand;
+    if (e.source !== window || typeof command !== 'string') return;
+    if (command === 'stop') view.stop();
+    else if (command === 'text-view-on' || command === 'text-view-off') setTextView(command === 'text-view-on');
+  });
+}
+
+/** The notice of what was left out, and why (issue #23). */
+function showLeftOut(view: HolomlView, notice: HTMLElement): void {
+  const items = view.leftOut;
+  notice.hidden = items.length === 0;
+  if (items.length === 0) return;
+  const head = document.createElement('strong');
+  head.textContent = items.length === 1 ? 'One thing on this page was left out' : `${items.length} things on this page were left out`;
+  const list = document.createElement('ul');
+  for (const { what, why } of items.slice(0, 20)) {
+    const li = document.createElement('li');
+    li.textContent = `${what}: ${why}`;
+    list.append(li);
+  }
+  notice.replaceChildren(head, list);
+}
+
+/** The text view (issue #25): the outline as a plain page. */
+function setTextView(on: boolean): void {
+  state.textView = on;
+  document.body.classList.toggle('holoml-text-view', on);
+  state.view?.requestFrame();
+  window.postMessage({ hypersolHolomlTextView: on }, '*');
 }
 
 function showSyntaxError(e: HoloParseError, source: string): void {

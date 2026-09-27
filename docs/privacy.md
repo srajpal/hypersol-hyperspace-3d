@@ -160,7 +160,10 @@ the list updates can be turned off:
   from the page's own site (the page's content policy allows nothing
   else), through the page's own session, so the shield and encrypted DNS
   apply as for any page. The browser's HoloML viewer itself comes from
-  the app, not the network.
+  the app, not the network. Every model file counts against the page's
+  limits as it arrives (milestone 15); a model that crosses one is not
+  fetched further. The instrument panel's Scene part reads the scene
+  from the page in memory only, and keeps nothing.
 - Searches typed in the address bar or start panel go to the search engine
   chosen in Settings (DuckDuckGo by default).
 - DNS lookups for the sites you open go encrypted (DNS over HTTPS) to

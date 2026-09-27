@@ -1,0 +1,11 @@
+<holoml version="0.1">
+  <head>
+    <title>HoloML file limits</title>
+  </head>
+  <scene>
+    <viewpoint position="0 1.6 7" look-at="0 0.5 0" />
+    <model id="small" src="gen/box.gltf?mb=1" position="-2 0 0" />
+    <model id="huge" src="gen/box.gltf?mb=40" position="2 0 0" />
+    <label id="sign" position="0 2 0">Still here</label>
+  </scene>
+</holoml>
