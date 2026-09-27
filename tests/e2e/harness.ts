@@ -487,22 +487,36 @@ export async function setContentSize(h: Harness, width: number, height: number):
   // As after a load: wait until the resized page is on screen.
   await onScreen(h, page);
   // On screen is not yet reachable: on GitHub's Linux machines the first
-  // click after a resize was lost while one a second later landed
-  // (milestone 12). Wait until the pointer, moved over the page's middle,
-  // reaches the page. Over the page the camera holds still.
-  await inPage(h, `window.__hsInputProbe = 0; window.__hsProbeFn = () => { window.__hsInputProbe += 1; }; addEventListener('pointermove', window.__hsProbeFn, true)`, page);
-  const middle = await project(h, layout.panelWidth / 2, layout.panelHeight / 2);
-  let nudge = 0;
-  await waitFor(
-    'the pointer to reach the resized page',
-    async () => {
-      nudge = nudge === 0 ? 1 : 0;
-      await h.shell.mouse.move(middle.x + nudge, middle.y);
-      return inPage<number>(h, 'window.__hsInputProbe', page);
-    },
-    (n) => n > 0,
+  // click after a resize was lost while one a second later landed, even
+  // after pointer moves had reached the page (milestone 12). So press on
+  // an empty spot of the page (nothing but the page's background under
+  // it) until the page sees the press.
+  const spot = await inPage<[number, number] | null>(
+    h,
+    `(() => {
+      const w = innerWidth, h = innerHeight;
+      for (const [x, y] of [[6, 6], [w - 6, 6], [6, h - 6], [w - 6, h - 6], [w / 2, h - 6], [w / 2, 6]]) {
+        const el = document.elementFromPoint(x, y);
+        if (el === document.body || el === document.documentElement) return [x, y];
+      }
+      return null;
+    })()`,
+    page,
   );
-  await inPage(h, `removeEventListener('pointermove', window.__hsProbeFn, true)`, page);
+  if (!spot) return; // no empty spot on this page: nothing safe to press
+  await inPage(h, `window.__hsInputProbe = 0; window.__hsProbeFn = () => { window.__hsInputProbe += 1; }; addEventListener('pointerdown', window.__hsProbeFn, true)`, page);
+  const at = await project(h, spot[0], spot[1]);
+  await waitFor(
+    'a press to reach the resized page',
+    async () => {
+      if ((await inPage<number>(h, 'window.__hsInputProbe', page)) > 0) return true;
+      await clickAt(h, at);
+      await sleep(300);
+      return (await inPage<number>(h, 'window.__hsInputProbe', page)) > 0;
+    },
+    (reached) => reached,
+  );
+  await inPage(h, `removeEventListener('pointerdown', window.__hsProbeFn, true)`, page);
 }
 
 /**
@@ -615,6 +629,27 @@ export async function focusedTab(h: Harness): Promise<TabInfo> {
   const tab = (await tabs(h)).find((t) => t.focused);
   if (!tab) throw new Error('No focused tab');
   return tab;
+}
+
+/**
+ * Brings a tab to the front with Ctrl+Tab, one confirmed step at a time.
+ * Pressing again before the last press has taken effect overshoots on a
+ * slow machine (found on GitHub's Linux machines, milestone 12).
+ */
+export async function cycleToTab(h: Harness, id: number): Promise<void> {
+  for (let step = 0; (await focusedTab(h)).id !== id; step++) {
+    if (step > (await tabs(h)).length) throw new Error(`Ctrl+Tab never reached tab ${id}`);
+    const before = (await focusedTab(h)).id;
+    await pressInShell(h, 'Tab', ['control']);
+    await waitFor('the next tab in front', async () => (await focusedTab(h)).id, (f) => f !== before);
+  }
+}
+
+/** Closes the tab in front with Ctrl+W and waits until it is gone. */
+export async function closeFocusedTab(h: Harness): Promise<void> {
+  const { id } = await focusedTab(h);
+  await pressInShell(h, 'W', ['control']);
+  await waitFor(`tab ${id} closed`, () => tabs(h), (list) => !list.some((t) => t.id === id));
 }
 
 /** Clicks a tab card (or the "+" card), on its body or its close button. */

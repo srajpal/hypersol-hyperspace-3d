@@ -8,6 +8,8 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
+  closeFocusedTab,
+  cycleToTab,
   focusedPage,
   focusedTab,
   inPage,
@@ -296,15 +298,17 @@ describe('GitHub issues #8 and #10', () => {
 
       // A blank private tab keeps the private session (and its choices) alive (PR #16 review).
       const loaded = (await tabs(h)).filter((x) => x.private).map((x) => x.id);
+      const count = (await tabs(h)).length;
       await pressInShell(h, 'N', ['control', 'shift']);
+      await waitFor('the blank private tab', async () => (await tabs(h)).length, (n) => n === count + 1);
       const blank = (await focusedTab(h)).id;
       for (const id of loaded) {
-        while ((await focusedTab(h)).id !== id) await pressInShell(h, 'Tab', ['control']);
-        await pressInShell(h, 'W', ['control']);
+        await cycleToTab(h, id);
+        await closeFocusedTab(h);
       }
       await waitFor('only the blank private tab left', () => tabs(h), (t) => t.filter((x) => x.private).map((x) => x.id).join() === String(blank));
       await sleep(500);
-      while ((await focusedTab(h)).id !== blank) await pressInShell(h, 'Tab', ['control']);
+      await cycleToTab(h, blank);
       const adBefore = server.hits.get('/ddm/ad.gif') ?? 0;
       await navigateTo(h, site);
       await waitForPage(h, 'shield.html');
@@ -314,8 +318,8 @@ describe('GitHub issues #8 and #10', () => {
 
       // Close every private tab: the choices go.
       for (const t of (await tabs(h)).filter((x) => x.private)) {
-        while ((await focusedTab(h)).id !== t.id) await pressInShell(h, 'Tab', ['control']);
-        await pressInShell(h, 'W', ['control']);
+        await cycleToTab(h, t.id);
+        await closeFocusedTab(h);
       }
       await waitFor('no private tabs', () => tabs(h), (t) => !t.some((x) => x.private));
       await sleep(500);

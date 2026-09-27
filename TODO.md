@@ -1811,8 +1811,14 @@ made cleaned for privacy and spelling.
     K1 to K4 pass, and H6 passed; C2 at 1024x700 still lost the first
     click after a resize, while a second click a second later landed.
     A person cannot click that soon after a resize, so the harness's
-    resize now also waits until the pointer, moved over the page,
-    reaches it.
+    resize now also waits until input reaches the page. Pointer moves
+    reaching it were not enough (fourth run: C2 still lost the click),
+    so it presses an empty spot of the page until the page sees the
+    press. The fourth run also showed a race in #8 (m8): Ctrl+Tab
+    pressed again before the last press took effect overshot and closed
+    the wrong tab; tab steps and closes are now each confirmed
+    (cycleToTab, closeFocusedTab in the harness). Windows passed in
+    full on the third and fourth runs (169, and C9's rate skipped).
 - Local regression (N6), Windows 11: 167 of 167 end-to-end checks
   passed (332 seconds) before I5c was added; milestone 7 with I5c: 11
   of 11.
