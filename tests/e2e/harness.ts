@@ -103,12 +103,21 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
   if (opts.downloadsDir !== undefined) args.push(`--downloads-dir=${opts.downloadsDir}`);
   if (opts.noKeychain) args.push('--test-no-keychain');
   if (opts.sleepMinuteMs !== undefined) args.push(`--test-sleep-minute-ms=${opts.sleepMinuteMs}`);
-  const app = await electron.launch({
-    executablePath: electronPath,
-    args,
-    env: cleanEnv(opts.keepRunning),
-    timeout: 30_000,
-  });
+  // Launch failures are printed at once as well as thrown: a run stopped
+  // early (as GitHub stops one at its time limit) never reaches the
+  // summary where thrown errors appear (milestone 12).
+  const loud = (e: unknown): never => {
+    console.error(`[harness] launch failed: ${e instanceof Error ? e.message : String(e)}`);
+    throw e;
+  };
+  const app = await electron
+    .launch({
+      executablePath: electronPath,
+      args,
+      env: cleanEnv(opts.keepRunning),
+      timeout: 30_000,
+    })
+    .catch(loud);
   const errors: string[] = [];
   const output: string[] = [];
   const proc = app.process();
@@ -116,14 +125,16 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
   app.on('console', (msg) => {
     if (msg.type() === 'error') errors.push(`main: ${msg.text()}`);
   });
-  const shell = await app.firstWindow({ timeout: 30_000 }).catch((e: unknown) => {
-    throw new Error(`No window appeared: ${String(e)}\nApp output:\n${output.join('')}`);
-  });
+  const shell = await app
+    .firstWindow({ timeout: 30_000 })
+    .catch((e: unknown) => loud(new Error(`No window appeared: ${String(e)}\nApp output:\n${output.join('')}`)));
   shell.on('console', (msg) => {
     if (msg.type() === 'error') errors.push(`shell: ${msg.text()}`);
   });
   shell.on('pageerror', (err) => errors.push(`shell: ${err.message}`));
-  await shell.waitForFunction(() => (window as unknown as ShellWindow).__hypersolShellTest?.ready === true);
+  await shell
+    .waitForFunction(() => (window as unknown as ShellWindow).__hypersolShellTest?.ready === true)
+    .catch((e: unknown) => loud(new Error(`The shell never became ready: ${String(e)}\nApp output:\n${output.join('')}`)));
   // The real mouse must not take part: a cursor resting over the test
   // window sends its own pointer events, which move the parallax and the
   // card hover (found 2026-09-25 as the cause of occasional C3 and D4
