@@ -553,3 +553,11 @@ Answer to the question on check C9 (the frame rate on GitHub's test machines, wh
 ```text
 A
 ```
+
+## 60 — 2026-09-26 · Claude Opus 5.5, low effort
+
+Answer to the question on computers where Chromium cannot draw WebGL 2 (the app showed an empty window).
+
+```text
+Add the message: a clear "can't draw the 3D room".
+```

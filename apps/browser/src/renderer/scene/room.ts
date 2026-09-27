@@ -109,7 +109,10 @@ export class Room {
   readonly parallax = new Parallax();
   /** Called on each frame the camera's parallax moves, with the offset as -1 to 1 on each axis (y up). */
   onCameraMove: ((offset: { x: number; y: number }) => void) | null = null;
-  private readonly webgl: WebGLRenderer;
+  /** Null where Chromium cannot start WebGL 2: the page and the top bar still work, the room is not drawn (milestone 12, owner prompt 60). */
+  private readonly webgl: WebGLRenderer | null;
+  /** The room's canvas, or a stand-in without WebGL, so the pointer wiring stays the same. */
+  private readonly canvas: HTMLCanvasElement;
   private readonly css: CSS3DRenderer;
   private readonly cameraElement: HTMLElement;
   private readonly scene = new Scene();
@@ -160,20 +163,30 @@ export class Room {
     private theme: Theme,
     private readonly options: RoomOptions,
   ) {
-    this.webgl = new WebGLRenderer({ antialias: true, alpha: true });
-    this.webgl.setPixelRatio(window.devicePixelRatio);
-    this.webgl.setClearColor(0x000000, 0);
-    container.append(this.webgl.domElement);
+    // Three.js throws when Chromium refuses WebGL 2 (no graphics driver, a
+    // virtual machine, or WebGL switched off); the browser still starts,
+    // without the room, and the app says so.
+    let webgl: WebGLRenderer | null = null;
+    try {
+      webgl = new WebGLRenderer({ antialias: true, alpha: true });
+      webgl.setPixelRatio(window.devicePixelRatio);
+      webgl.setClearColor(0x000000, 0);
+    } catch {
+      webgl = null;
+    }
+    this.webgl = webgl;
+    this.canvas = webgl?.domElement ?? document.createElement('canvas');
+    container.append(this.canvas);
     // A graphics reset (driver update, GPU switch, sleep) loses the WebGL
     // context. Nothing is drawn while it is lost; when it comes back, the
     // room draws again at once, without waiting for input (GitHub issue #12).
     // Three.js uploads the textures (room, cards, snapshots) again from
     // their images on that first frame.
-    this.webgl.domElement.addEventListener('webglcontextlost', (e) => {
+    this.canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault(); // allows the browser to restore it
       this.contextLost = true;
     });
-    this.webgl.domElement.addEventListener('webglcontextrestored', () => {
+    this.canvas.addEventListener('webglcontextrestored', () => {
       this.contextLost = false;
       this.lastFrameTime = 0;
       this.requestRender();
@@ -395,7 +408,7 @@ export class Room {
   setEconomy(on: boolean): void {
     if (on === this.economy) return;
     this.economy = on;
-    this.webgl.setPixelRatio(on ? Math.max(0.5, window.devicePixelRatio * 0.5) : window.devicePixelRatio);
+    this.webgl?.setPixelRatio(on ? Math.max(0.5, window.devicePixelRatio * 0.5) : window.devicePixelRatio);
     this.horizon.visible = !on;
     this.sun.visible = this.theme.room.sun && !on;
     if (on) this.parallax.setPointer(0, 0);
@@ -408,7 +421,12 @@ export class Room {
   }
 
   get pixelRatio(): number {
-    return this.webgl.getPixelRatio();
+    return this.webgl?.getPixelRatio() ?? window.devicePixelRatio;
+  }
+
+  /** False where Chromium could not start WebGL 2, so the room is not drawn. */
+  get drawsRoom(): boolean {
+    return this.webgl !== null;
   }
 
   setSnapshot(tabId: number, dataUrl: string): void {
@@ -492,7 +510,7 @@ export class Room {
     });
     const layout = this.currentLayout;
 
-    this.webgl.setSize(w, h);
+    this.webgl?.setSize(w, h);
     this.css.setSize(w, h);
     this.camera.aspect = w / h;
     this.camera.fov = layout.fovDeg;
@@ -632,7 +650,7 @@ export class Room {
     }
     this.applyCamera();
     this.placeGlow();
-    this.webgl.render(this.scene, this.camera);
+    this.webgl?.render(this.scene, this.camera);
     this.css.render(this.cssScene, this.camera);
     this.frames += 1;
     if (moving || this.tweens.length > 0 || spinning) this.requestRender();
@@ -762,6 +780,7 @@ export class Room {
   // ---- Pointer ------------------------------------------------------------
 
   private cardAt(x: number, y: number): { card: TabCard; part: CardPart } | null {
+    if (!this.webgl) return null; // cards that are not drawn take no clicks
     const ndc = new Vector2((x / window.innerWidth) * 2 - 1, 1 - (y / window.innerHeight) * 2);
     this.raycaster.setFromCamera(ndc, this.camera);
     const meshes = [...this.cards.values()].map((c) => c.mesh).filter((m) => m.visible);
@@ -778,7 +797,7 @@ export class Room {
     }
     this.hoveredCard = hit?.card ?? null;
     if (hit) changed = hit.card.setHover(true, hit.part === 'close') || changed;
-    this.webgl.domElement.style.cursor = hit ? 'pointer' : '';
+    this.canvas.style.cursor = hit ? 'pointer' : '';
     if (changed) this.requestRender();
   }
 
@@ -788,7 +807,7 @@ export class Room {
    * clicks, and the mouse wheel.
    */
   private wirePointer(): void {
-    const canvas = this.webgl.domElement;
+    const canvas = this.canvas;
     const focusedElement = () => this.views.get(this.focusedId)?.view.element;
     const overPage = (x: number, y: number, target: EventTarget | null): boolean => {
       const el = focusedElement();

@@ -137,8 +137,10 @@ electron-vite to build; Vitest and Playwright to test.
 Planned, not yet installed: electron-builder for installers (milestone 16).
 Reasons for each choice are in ARCHITECTURE.md.
 
-Known limitation: Electron ships no DRM module, so video from Netflix
-and similar services will not play.
+Known limitations: Electron ships no DRM module, so video from Netflix
+and similar services will not play. The 3D room needs WebGL 2; where
+Chromium cannot start it (no graphics driver, some virtual machines),
+pages still work without the room, and a notice says so.
 
 ## Building and running
 

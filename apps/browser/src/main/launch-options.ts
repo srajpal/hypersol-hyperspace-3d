@@ -32,6 +32,8 @@ export interface LaunchOptions {
   downloadsDir?: string;
   /** Test mode only (--test-no-keychain): act as if the system keychain were unavailable (milestone 9, K5). */
   testNoKeychain: boolean;
+  /** Test mode only (--test-no-webgl): the shell without WebGL, as on a computer that cannot draw the room (milestone 12, N7). */
+  testNoWebGL: boolean;
   /** Test mode only (--test-sleep-minute-ms=N): a "minute" for sleeping tabs, so the checks need not wait (milestone 10). */
   testSleepMinuteMs?: number;
 }
@@ -62,6 +64,7 @@ function localAddress(value: string | undefined): string | undefined {
  *   --filters-base=<address>        filter list downloads, test mode only (127.0.0.1)
  *   --dns-probe=<address>           DNS reachability check, test mode only (127.0.0.1)
  *   --test-no-keychain              passwords act as if the keychain were missing, test mode only
+ *   --test-no-webgl                 the shell without WebGL (no 3D room), test mode only
  * and HYPERSOL_TEST=1 for test mode, HYPERSOL_TEST_BACKGROUND=1 for
  * test windows that stay out of the way.
  */
@@ -95,6 +98,7 @@ export function parseLaunchOptions(
     ...(dnsProbeUrl ? { dnsProbeUrl } : {}),
     ...(downloadsDir ? { downloadsDir } : {}),
     testNoKeychain: testMode && argv.includes('--test-no-keychain'),
+    testNoWebGL: testMode && argv.includes('--test-no-webgl'),
     ...(sleepMinute !== undefined ? { testSleepMinuteMs: sleepMinute } : {}),
   };
 }

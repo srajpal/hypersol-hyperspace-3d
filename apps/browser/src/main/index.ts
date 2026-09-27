@@ -144,6 +144,8 @@ function createWindow(): void {
       nodeIntegration: false,
       webviewTag: true,
       spellcheck: false,
+      // Test mode only: as on a computer where Chromium cannot start WebGL.
+      ...(options.testNoWebGL ? { webgl: false } : {}),
     },
   });
   mainWindow = win;

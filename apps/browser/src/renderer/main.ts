@@ -13,6 +13,7 @@ import './hud/site-panel';
 import './hud/notice';
 import './hud/tab-strip';
 import './hud/tab-search';
+import './hud/room-message';
 import { DEFAULT_TILT_DEG, clampTilt } from '@hypersol/scene-core';
 import { defaultTheme } from '@hypersol/themes';
 import type { ShellBridge } from '../shared/commands';
@@ -61,6 +62,8 @@ const app = new App({
   tabList: document.getElementById('tab-list') as HTMLElement,
 });
 void app.start();
+// Without WebGL 2 the room is not drawn; say so plainly (owner, prompt 60).
+if (!app.room.drawsRoom) document.querySelector('hs-room-message')!.open = true;
 
 // Read-only hooks for the end-to-end tests; present only in test runs.
 if (params.get('test') === '1') {
@@ -75,6 +78,7 @@ if (params.get('test') === '1') {
         app.testIgnorePrepareClose = true;
       },
       frames: () => room.frames,
+      drawsRoom: () => room.drawsRoom,
       layout: () => room.layoutInfo,
       cameraOffset: () => room.parallax.offset,
       parallaxPaused: () => room.parallax.paused,

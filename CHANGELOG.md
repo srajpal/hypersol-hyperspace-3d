@@ -46,6 +46,9 @@ Known limits:
 
 - Checked on Windows 11. Linux (Ubuntu, through GitHub Actions) is still
   being brought up. macOS is untested.
+- The 3D room needs WebGL 2. Where Chromium cannot start it (no graphics
+  driver, some virtual machines), pages still work without the room and
+  a notice says so.
 - Electron ships no DRM module, so video from Netflix and similar
   services will not play.
 - Built on Electron 44.4.5 (Chromium 152).

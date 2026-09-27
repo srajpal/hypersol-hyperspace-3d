@@ -1802,10 +1802,17 @@ made cleaned for privacy and spelling.
     reach the page. Not reproduced on Windows, even drawing in software;
     the harness now reports what the shell has under a missed click and
     whether a second click gets through.
-  - Found by this: without WebGL 2 the app shows an empty window rather
-    than an explanation (apps/browser/src/renderer/scene/room.ts creates
-    the renderer unguarded). Not in this milestone's plan; raised with
-    the owner.
+  - Found by this: without WebGL 2 the app showed an empty window.
+    Owner (prompt 60): add a clear message. Now the room is skipped
+    where WebGL 2 cannot start, pages and panels still work, and a
+    notice says "This computer can't draw the 3D room", why, and how to
+    show tabs as a list. New check N7 (tests/e2e/m12.e2e.ts) passes.
+  - Third run: Windows passed; Linux 164 of 167: the keychain fix made
+    K1 to K4 pass, and H6 passed; C2 at 1024x700 still lost the first
+    click after a resize, while a second click a second later landed.
+    A person cannot click that soon after a resize, so the harness's
+    resize now also waits until the pointer, moved over the page,
+    reaches it.
 - Local regression (N6), Windows 11: 167 of 167 end-to-end checks
   passed (332 seconds) before I5c was added; milestone 7 with I5c: 11
   of 11.
@@ -1820,6 +1827,7 @@ made cleaned for privacy and spelling.
 | N4 | Legal and project files | LICENSE, NOTICE, AUTHORS, THIRD-PARTY.md, SECURITY.md, CONTRIBUTING.md present and consistent in both repositories |
 | N5 | From source | A fresh clone builds and runs with the README's steps (checked on Windows here and on Linux through GitHub) |
 | N6 | Regression | C to M pass locally, and the unit tests |
+| N7 | Without WebGL 2 | Started without WebGL (test mode), the app says "This computer can't draw the 3D room" and why; pages still load and take clicks; OK closes the notice; with WebGL there is no notice (owner, prompt 60) |
 
 ### Done when
 

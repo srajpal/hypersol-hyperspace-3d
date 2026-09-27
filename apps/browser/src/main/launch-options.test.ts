@@ -11,6 +11,7 @@ describe('parseLaunchOptions', () => {
       testBackground: false,
       testKeepRunning: false,
       testNoKeychain: false,
+      testNoWebGL: false,
     });
   });
 
@@ -27,12 +28,15 @@ describe('parseLaunchOptions', () => {
       testBackground: false,
       testKeepRunning: false,
       testNoKeychain: false,
+      testNoWebGL: false,
     });
   });
 
   it('turns the keychain off only in test mode (milestone 9, K5)', () => {
     expect(parseLaunchOptions(['--test-no-keychain'], {}).testNoKeychain).toBe(false);
     expect(parseLaunchOptions(['--test-no-keychain'], { HYPERSOL_TEST: '1' }).testNoKeychain).toBe(true);
+    expect(parseLaunchOptions(['--test-no-webgl'], {}).testNoWebGL).toBe(false);
+    expect(parseLaunchOptions(['--test-no-webgl'], { HYPERSOL_TEST: '1' }).testNoWebGL).toBe(true);
   });
 
   it('shortens the sleeping-tab minute only in test mode (milestone 10)', () => {
