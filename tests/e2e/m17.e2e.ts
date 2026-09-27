@@ -4,9 +4,18 @@
  * tests; T9 (the published site) is checked by hand; T10 is the full run.
  * Blockworld is the holoml repository's, copied by pnpm holoml:sync.
  */
+import { mkdtempSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { _electron as electron } from 'playwright';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
+  APP_DIR,
+  OFFLINE_RULES,
+  removeFolder,
   clickAt,
   closeFocusedTab,
   focusedTab,
@@ -549,4 +558,84 @@ describe('T8: the HoloML examples section', () => {
     await waitForPage(h, 'blockworld/index.holoml');
     await ready(h, 'blockworld/index.holoml', 30_000);
   });
+});
+
+describe('After the report (prompt 89)', () => {
+  it("a HoloML tab's card shows the scene once it is drawn, not only the page as it was when it loaded", async () => {
+    const h = await launch(server.url('link-a.html'));
+    // How much of a card's picture is the late car's red paint.
+    const redShare = async (tabId: number) => {
+      const src = await shellCall(h, 'cardPicture', tabId);
+      if (!src) return 0;
+      return h.shell.evaluate(async (s) => {
+        const img = new Image();
+        img.src = s;
+        await img.decode();
+        const c = document.createElement('canvas');
+        c.width = 160;
+        c.height = Math.max(1, Math.round((160 * img.height) / img.width));
+        const g = c.getContext('2d')!;
+        g.drawImage(img, 0, 0, c.width, c.height);
+        const d = g.getImageData(0, 0, c.width, c.height).data;
+        let red = 0;
+        for (let i = 0; i < d.length; i += 4) if (d[i]! > 110 && d[i + 1]! < 80 && d[i + 2]! < 80) red++;
+        return red / (d.length / 4);
+      }, src);
+    };
+    try {
+      await waitForPage(h, 'link-a.html');
+      const PAGE = 'late-model.holoml';
+      const tab = await focusedTab(h);
+      const before = tab.snapshotAt;
+      await shellCall(h, 'showUrl', url(PAGE));
+      await waitForPage(h, PAGE);
+      // The page itself loads at once and gets its picture; the car arrives two seconds later.
+      await waitFor('a picture of the page while the car is still coming', () => focusedTab(h), (t) => t.snapshotAt > before && t.url.endsWith(PAGE));
+      expect(await holo<boolean>(h, 'window.__holoml.ready', PAGE)).toBe(false);
+      expect(await redShare(tab.id)).toBeLessThan(0.002);
+      await ready(h, PAGE);
+      await waitFor('the car on the card', () => redShare(tab.id), (share) => share > 0.01, 6000);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('Blockworld plays in a development run (pnpm dev), its script and all', async () => {
+    // As milestone 16's development-run check: the dev server on its own,
+    // the built app pointed at it, in a throwaway profile, offline.
+    const req = createRequire(join(APP_DIR, 'package.json'));
+    type DevServer = { listen(): Promise<unknown>; close(): Promise<void>; resolvedUrls: { local: string[] } | null };
+    const vite = (await import(pathToFileURL(req.resolve('vite')).href)) as { createServer(options: object): Promise<DevServer> };
+    const { VIEWER_DEPS } = (await import(pathToFileURL(join(APP_DIR, 'viewer-deps.mjs')).href)) as { VIEWER_DEPS: string[] };
+    const dev = await vite.createServer({
+      root: join(APP_DIR, 'src/renderer'),
+      configFile: false,
+      logLevel: 'warn',
+      optimizeDeps: { include: VIEWER_DEPS },
+      server: { port: 0, host: '127.0.0.1' },
+    });
+    await dev.listen();
+    const devUrl = dev.resolvedUrls!.local[0]!.replace(/\/$/, '');
+    const profile = mkdtempSync(join(tmpdir(), 'hypersol-e2e-dev-'));
+    const env = { ...process.env, HYPERSOL_TEST: '1', HYPERSOL_TEST_BACKGROUND: '1', ELECTRON_RENDERER_URL: devUrl } as Record<string, string>;
+    delete env['ELECTRON_RUN_AS_NODE'];
+    const app = await electron.launch({
+      executablePath: req('electron') as unknown as string,
+      args: [APP_DIR, `--start-url=${url('blockworld/index.holoml')}`, `--hypersol-user-data=${profile}`, OFFLINE_RULES],
+      env,
+    });
+    try {
+      await app.firstWindow();
+      const blocks = () =>
+        app.evaluate(async ({ webContents }) => {
+          const page = webContents.getAllWebContents().find((w) => w.getType() === 'webview' && w.getURL().includes('blockworld'));
+          return page ? ((await page.executeJavaScript('window.blockworld ? window.blockworld.blocks : 0')) as number) : 0;
+        });
+      await waitFor('the island drawn by the script in a development run', blocks, (n) => n > 1000, 40_000);
+    } finally {
+      await app.close();
+      await dev.close();
+      await removeFolder(profile);
+    }
+  }, 120_000);
 });

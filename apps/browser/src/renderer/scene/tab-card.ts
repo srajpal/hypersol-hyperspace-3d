@@ -46,6 +46,8 @@ export class TabCard {
   private readonly texture: CanvasTexture;
   private model: CardModel;
   private snapshot: HTMLImageElement | null = null;
+  /** When the card last got a picture (performance.now()), for the tests. */
+  snapshotAt = 0;
   private favicon: HTMLImageElement | null = null;
   private faviconSrc: string | undefined;
   private hovered = false;
@@ -87,6 +89,11 @@ export class TabCard {
     return this.snapshot !== null;
   }
 
+  /** The picture on the card (a data address), for the tests. */
+  get snapshotSrc(): string | null {
+    return this.snapshot?.src ?? null;
+  }
+
   update(model: CardModel): void {
     const changed =
       model.title !== this.model.title ||
@@ -106,6 +113,7 @@ export class TabCard {
     const img = new Image();
     img.onload = () => {
       this.snapshot = img;
+      this.snapshotAt = performance.now();
       this.draw();
       this.onRedraw();
     };

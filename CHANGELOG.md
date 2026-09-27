@@ -63,6 +63,9 @@
   menu, or Ctrl+Shift+E, with links to HoloML's repository, its
   specification, and each example's source. Nothing is fetched until a
   link is chosen.
+- Fixed: a HoloML tab's card could show the page before its scene was
+  drawn (an empty room, or only its labels); the card's picture is now
+  taken again once the scene is drawn with nothing left to load.
 
 ## 0.9.0 — developer preview (2026-09-26)
 

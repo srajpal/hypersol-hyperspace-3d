@@ -118,7 +118,9 @@ function page(title: string, body: string): string {
  *   /holoml/gen/claim.png?w=W&h=H       a PNG header claiming W by H pixels
  *   /holoml/gen/box.gltf?mb=N&tris=T&img=W,H
  *                                       a glTF of T triangles (default 1) whose buffer is zeros.bin, at least
- *                                       N MB (default: just what the triangles need); img adds a claim.png
+ *                                       N MB (default: just what the triangles need); img adds a claim.png;
+ *                                       ms=M answers after M milliseconds (up to 10 s)
+ *   /holoml/gen/late-car.gltf?ms=M      holoml/models/placeholder-car.gltf, after M milliseconds (up to 10 s)
  *   /holoml/gen/never.gltf              answers nothing, ever (a model that never finishes)
  *   /holoml/gen/many.holoml?n=N         a page of a label and N empty groups (up to 50,000)
  *   /holoml/gen/tone.wav                a second of a quiet tone, as a WAV file (milestone 17)
@@ -224,9 +226,29 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
       res.end(pngClaiming(Number(p.get('w') ?? '16'), Number(p.get('h') ?? '16')));
       return;
     }
+    if (what === 'late-car.gltf') {
+      const wait = Math.min(10_000, Math.max(0, Number(p.get('ms') ?? '0') || 0));
+      setTimeout(() => {
+        readFile(join(FIXTURES_DIR, 'holoml', 'models', 'placeholder-car.gltf')).then(
+          (body) => {
+            if (res.destroyed) return;
+            res.writeHead(200, { 'content-type': TYPES['.gltf']!, 'cache-control': 'no-store' });
+            res.end(body);
+          },
+          () => res.writeHead(500).end(),
+        );
+      }, wait);
+      return;
+    }
     if (what === 'box.gltf') {
-      res.writeHead(200, { 'content-type': TYPES['.gltf']!, 'cache-control': 'no-store' });
-      res.end(boxGltf(p));
+      const send = () => {
+        if (res.destroyed) return;
+        res.writeHead(200, { 'content-type': TYPES['.gltf']!, 'cache-control': 'no-store' });
+        res.end(boxGltf(p));
+      };
+      const wait = Math.min(10_000, Math.max(0, Number(p.get('ms') ?? '0') || 0));
+      if (wait > 0) setTimeout(send, wait);
+      else send();
       return;
     }
     if (what === 'many.holoml') {

@@ -154,9 +154,8 @@ date given and grow with each milestone; TODO.md has the latest.
 - Unit: `pnpm test` (Vitest; 261 tests passed on 2026-09-27)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about ten minutes; 238 checks in the full run on 2026-09-27
-  at the end of milestone 17, 234 passed and the 4 clipboard checks
-  waiting for a working clipboard, see TODO.md). Needs openssl on PATH for
+  against it (about ten minutes; 240 checks, all passed, in the full run
+  on 2026-09-27 at the end of milestone 17). Needs openssl on PATH for
   the certificate-error check (Git for Windows includes one). Every
   host except 127.0.0.1 is blocked during the run, and the test windows
   ignore the real mouse, so a resting cursor cannot disturb results. See
@@ -253,7 +252,9 @@ milestone; the current milestone's checks are defined in TODO.md):
   in tests/fixtures/holoml/blockworld): loading and drawing, breaking and
   placing, the five gems, night and torches, the keyboard, the text view
   and the accessibility tree, reduced motion; and the HoloML examples
-  section. T1 is holoml's own tests.
+  section. T1 is holoml's own tests. After the milestone's report
+  (prompt 89): a HoloML tab's card shows its scene once drawn, and
+  Blockworld plays in a development run.
 - Later milestones add: the HoloML example sites (18 to 21), privacy
   and data tools (22), and installers (23 and 24).
 

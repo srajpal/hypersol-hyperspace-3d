@@ -253,10 +253,22 @@ function start(): void {
   const view = state.view;
   let whenReady: () => void = () => undefined;
   const ready = new Promise<void>((resolve) => (whenReady = resolve));
+  // The tab card's picture (prompt 89): the shell takes it once the scene
+  // has been drawn with nothing left to load and the view still (a walker
+  // that starts in the air has landed), after it is ready and after each
+  // later loading (a script's models). The first frame can take a while
+  // to draw, so being ready is not enough.
+  let drawnToTell = false;
   view.onReady = () => {
     state.ready = true;
     whenReady();
     showLeftOut(view, notice);
+    drawnToTell = true;
+  };
+  view.onDrawn = () => {
+    if (!drawnToTell || view.busy || !view.viewSettled) return;
+    drawnToTell = false;
+    window.postMessage({ hypersolHolomlDrawn: true }, '*');
   };
   view.onLeftOut = () => showLeftOut(view, notice);
   // Loading a moment (a script adding a block) is not "loading" for the top

@@ -381,12 +381,12 @@ it('captures the main screens', async () => {
     await landed(BW);
     // The whole island from above one corner, standing on a pillar of stone
     // blocks there (as a player could build), once the welcome has gone.
+    // The place and the direction are set together, so the tab's card,
+    // which takes its picture once the viewer lands (prompt 89), shows it too.
     const pillar = Array.from({ length: 11 }, (_, y) => `<model src="models/stone.gltf" position="12.5 ${y + 0.5} 12.5" solid />`).join(' ');
     await inPage(game, `holoml.add(${JSON.stringify(pillar)}), true`, BW);
     await sleep(300);
-    await inPage(game, 'holoml.viewer.position = [12.5, 12.7, 12.5], true', BW);
-    await sleep(900);
-    await inPage(game, 'holoml.viewer.lookAt([0, 2, 0]), true', BW);
+    await inPage(game, 'holoml.viewer.position = [12.5, 12.7, 12.5], holoml.viewer.lookAt([0, 2, 0]), true', BW);
     await waitFor('the welcome gone', () => inPage<boolean>(game, "holoml.find('message').text === ''", BW), (v) => v, 15_000);
     await sleep(1500);
     await capture(game, '51-blockworld');
@@ -414,10 +414,8 @@ it('captures the main screens', async () => {
     const low = Array.from({ length: 6 }, (_, y) => `<model src="models/stone.gltf" position="12.5 ${y + 0.5} 12.5" solid />`).join(' ');
     await inPage(game, `holoml.add(${JSON.stringify(low)}), true`, 'hour=21.5');
     await sleep(300);
-    await inPage(game, 'holoml.viewer.position = [12.5, 7.7, 12.5], true', 'hour=21.5');
-    await sleep(900);
-    await inPage(game, 'holoml.viewer.lookAt([2, 3, 2]), true', 'hour=21.5');
-    await sleep(1500);
+    await inPage(game, 'holoml.viewer.position = [12.5, 7.7, 12.5], holoml.viewer.lookAt([2, 3, 2]), true', 'hour=21.5');
+    await sleep(2400);
     await capture(game, '52-blockworld-night');
   } finally {
     await game.close();

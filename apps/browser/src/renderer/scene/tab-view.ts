@@ -517,7 +517,11 @@ export class TabView implements PagePanel {
         return;
       }
       if (e.channel === HOLOML_STATE_CHANNEL) {
-        const change = e.args[0] as { busy?: unknown; textView?: unknown; activated?: unknown } | undefined;
+        const change = e.args[0] as { busy?: unknown; textView?: unknown; activated?: unknown; drawn?: unknown } | undefined;
+        // The document finished loading before its models did: the card's
+        // picture is taken again once the viewer has drawn the scene with
+        // nothing left to load (prompt 89).
+        if (change?.drawn === true) this.events.onSettled();
         if (typeof change?.busy === 'boolean') this.holomlBusy = change.busy;
         if (typeof change?.textView === 'boolean') this.holomlTextView = change.textView;
         if (change?.activated === true && this.soundGateUrl !== null) {

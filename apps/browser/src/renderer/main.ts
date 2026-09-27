@@ -98,6 +98,7 @@ if (params.get('test') === '1') {
       panelQuad: () => room.screenQuad(),
       sceneColors: () => room.sceneColors(),
       status: () => app.focusedView?.status ?? null,
+      cardPicture: (tabId: number) => room.snapshotSrc(tabId),
       tabs: () =>
         store.tabs.map((t) => ({
           id: t.id,
@@ -106,6 +107,7 @@ if (params.get('test') === '1') {
           state: t.state,
           focused: t.id === store.focusedId,
           hasSnapshot: room.hasSnapshot(t.id),
+          snapshotAt: room.snapshotAt(t.id),
           hasFavicon: Boolean(t.favicon),
           canGoBack: t.canGoBack,
           private: t.private,

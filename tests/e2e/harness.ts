@@ -232,6 +232,8 @@ export interface ShellHooks {
   sceneColors(): Record<string, string>;
   status(): { state: string; url: string; title?: string; message?: string } | null;
   tabs(): TabInfo[];
+  /** The picture on a tab's card (a data address), or null. */
+  cardPicture(tabId: number): string | null;
   focusedTabId(): number;
   cardPoint(key: number | 'plus', part: 'body' | 'close' | 'audio'): Point | null;
   rail(): { scroll: number; maxScroll: number; fits: number };
@@ -278,6 +280,8 @@ export interface TabInfo {
   state: string;
   focused: boolean;
   hasSnapshot: boolean;
+  /** When the card last got a picture (the shell's performance.now(); 0 for never). */
+  snapshotAt: number;
   hasFavicon: boolean;
   canGoBack: boolean;
   canGoForward: boolean;

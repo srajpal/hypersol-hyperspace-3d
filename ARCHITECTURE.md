@@ -389,7 +389,11 @@ sample.
    presses, new-tab requests from pages, and favicons.
 5. Shortly after a page settles, and when switching away from it, the
    shell asks the main process for a snapshot (only of its own tabs) and
-   paints it onto the tab's card.
+   paints it onto the tab's card. A HoloML page settles before its models
+   arrive, so its viewer also says when it has drawn the scene with
+   nothing left to load and the view still (after it is ready, and after
+   each later loading, such as a script's models), and the shell takes the
+   picture again then (prompt 89).
 
 The shell's bridge (preload/shell.ts) is its only way to reach the main
 process. It exposes read-only facts (platform, versions) and:

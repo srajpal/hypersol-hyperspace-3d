@@ -201,6 +201,9 @@ export class HolomlView {
   onBusy: ((busy: boolean) => void) | null = null;
   /** Something was left out or failed: the notice. */
   onLeftOut: (() => void) | null = null;
+  /** A frame was drawn (the tab card's picture waits for one, prompt 89). */
+  onDrawn: (() => void) | null = null;
+  private viewMoving = false;
 
   constructor(root: ElementNode, container: HTMLElement, outline: HTMLElement, hudLayer: HTMLElement) {
     this.outline = outline;
@@ -387,6 +390,11 @@ export class HolomlView {
 
   get busy(): boolean {
     return this.pending > 0;
+  }
+
+  /** The view is not moving by itself or by held keys (a walker still falling moves it). */
+  get viewSettled(): boolean {
+    return !this.viewMoving;
   }
 
   /** What was left out, and why, for the notice. */
@@ -1461,6 +1469,7 @@ export class HolomlView {
     const dt = this.last === 0 ? 16 : Math.min(100, time - this.last);
     this.last = time;
     let moving = this.controls?.step(dt) ?? false;
+    this.viewMoving = moving;
     if (this.stepAnimations(performance.now())) moving = true;
     if (this.playing.size > 0 && !this.reducedMotion.matches) {
       for (const m of this.mixers) m.update(dt / 1000);
@@ -1482,6 +1491,7 @@ export class HolomlView {
     this.followAmbient();
     this.renderer.render(this.scene, this.camera);
     this.frames += 1;
+    this.onDrawn?.();
     if (moving) this.requestFrame();
     else this.last = 0;
   }

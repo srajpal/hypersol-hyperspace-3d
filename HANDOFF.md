@@ -3,8 +3,8 @@
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-09-27 (milestones 1 to 16 accepted; milestone 17,
 Blockworld, the first part of HoloML 0.2, and the HoloML examples
-section, is built and waiting for the owner's acceptance; plan and
-results in TODO.md).
+section, is built, checked (T1 to T10 pass), and waiting for the
+owner's acceptance; plan and results in TODO.md).
 
 ## Where things stand
 
@@ -34,12 +34,11 @@ state; this is a summary.
   synced from holoml's main); 17 to 21 five more HoloML example sites,
   one milestone each, growing HoloML 0.2 (prompts 84 and 85: 17
   Blockworld with the browser's examples section, built and waiting for
-  acceptance: HoloML 0.2's first part and Blockworld are on the holoml
-  branch `holoml-0.2`, in pull request #13, and the browser's copy
-  (packages/holoml and tests/fixtures/holoml) is synced from that
-  branch; after the merge, pull main in the holoml folder, sync again
-  from it (`pnpm holoml:sync main --examples main`), and open the
-  published Blockworld by hand (T9); 18
+  acceptance: HoloML 0.2's first part and Blockworld are merged in
+  holoml (pull request #13, prompt 90) and published at
+  https://srajpal.github.io/holoml/blockworld/, and the browser's copy
+  (packages/holoml and tests/fixtures/holoml) is synced from holoml's
+  main (`pnpm holoml:sync main --examples main`); 18
   Sofa studio; 19 Harbour Loft; 20 Coral Bay; 21 Aquarium, where HoloML
   0.2 is tagged); 22 privacy
   and data tools (HTTPS-only, per-site storage, bookmark import and

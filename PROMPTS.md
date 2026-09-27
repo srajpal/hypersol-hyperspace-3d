@@ -1005,3 +1005,29 @@ examples section.
 ```text
 Will it be linked to the holoml repo inside HyperSpace 3D?
 ```
+
+## 89 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answers to the milestone 17 report's questions: holoml pull request #13
+(HoloML 0.2's first part and Blockworld) merged; in walk mode the left
+and right arrows keep turning (rather than going back to moving
+sideways); and the fix for HoloML tabs' card pictures (taken before the
+scene had finished loading) approved. The question about the README's
+screenshot (the showroom, or Blockworld) was not answered, so it stays
+the showroom. Then a report: Blockworld did not load in a development
+run.
+
+```text
+Merged holoml #13, keep arrows turning, do the card fix.
+I could not load the block game when I ran pnpm dev. Is it not pushed
+to the holoml repo yet?
+```
+
+## 90 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Sent while the agent worked on prompt 89, after it reported that holoml
+pull request #13 was still open on GitHub.
+
+```text
+PR 13 merged.
+```

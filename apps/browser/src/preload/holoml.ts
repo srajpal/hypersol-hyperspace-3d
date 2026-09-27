@@ -41,9 +41,10 @@ if (isHolomlDocument) {
   // and the shell's commands in (milestone 15).
   window.addEventListener('message', (e) => {
     if (e.source !== window || typeof e.data !== 'object' || e.data === null) return;
-    const data = e.data as { hypersolHolomlBusy?: unknown; hypersolHolomlTextView?: unknown };
+    const data = e.data as { hypersolHolomlBusy?: unknown; hypersolHolomlTextView?: unknown; hypersolHolomlDrawn?: unknown };
     if (typeof data.hypersolHolomlBusy === 'boolean') ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { busy: data.hypersolHolomlBusy });
     if (typeof data.hypersolHolomlTextView === 'boolean') ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { textView: data.hypersolHolomlTextView });
+    if (data.hypersolHolomlDrawn === true) ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { drawn: true });
   });
   ipcRenderer.on(HOLOML_COMMAND_CHANNEL, (_event, command: unknown) => {
     if (command === 'stop' || command === 'text-view-on' || command === 'text-view-off') window.postMessage({ hypersolHolomlCommand: command }, '*');
