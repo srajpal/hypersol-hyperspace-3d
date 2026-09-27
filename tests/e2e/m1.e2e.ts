@@ -17,6 +17,7 @@ import {
   ADDRESS,
   SHOW_WINDOWS,
   clickAt,
+  softwareRenderer,
   describeMissedClick,
   inPage,
   launch,
@@ -401,16 +402,6 @@ describe('C8 no unexpected traffic', () => {
     expect(requests.filter((u) => !local(u))).toEqual([]);
   });
 });
-
-/** The WebGL renderer's name when it is a software one, else null. */
-async function softwareRenderer(h: Harness): Promise<string | null> {
-  const name = await h.shell.evaluate(() => {
-    const gl = document.createElement('canvas').getContext('webgl2');
-    const info = gl?.getExtension('WEBGL_debug_renderer_info');
-    return gl && info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : '';
-  });
-  return /swiftshader|llvmpipe|softpipe|basic render|warp/i.test(name) ? name : null;
-}
 
 describe('C9 idle efficiency', () => {
   let h: Harness;

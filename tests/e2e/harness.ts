@@ -494,6 +494,22 @@ ${await explain().catch((x: unknown) => `(no details: ${String(x)})`)}`) : e;
   }
 }
 
+/**
+ * The WebGL renderer's name when Chromium draws in software (no graphics
+ * card, as on GitHub's test machines), else null. Frame-rate budgets are
+ * promises about graphics hardware: where this is not null they are
+ * measured and logged, and skipped, not passed (owner, prompt 59: C9;
+ * prompt 76: G9).
+ */
+export async function softwareRenderer(h: Harness): Promise<string | null> {
+  const name = await h.shell.evaluate(() => {
+    const gl = document.createElement('canvas').getContext('webgl2');
+    const info = gl?.getExtension('WEBGL_debug_renderer_info');
+    return gl && info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : '';
+  });
+  return /swiftshader|llvmpipe|softpipe|basic render|warp/i.test(name) ? name : null;
+}
+
 /** Resizes the window's content area and waits for the page to follow. */
 export async function setContentSize(h: Harness, width: number, height: number): Promise<void> {
   // Adjust the outer size until the inside is right: off screen, Electron's

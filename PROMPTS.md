@@ -838,3 +838,19 @@ check (D8, a right-click lost on Linux) also fails on main without it;
 ```text
 Go ahead with 1, 2, and 3. I merged HoloML #6.
 ```
+
+## 75 — 2026-09-27 · Claude Opus 5.5, low effort
+
+```text
+Those PRs are ready to merge, but the workflows failed. Check, please.
+```
+
+## 76 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answers: whether check G9's frame-time budget follows C9's rule (skipped,
+not passed, where Chromium draws in software; prompt 59) is left to the
+agent; milestone 14 is accepted; pull requests #31 and #32 are merged.
+
+```text
+Your call on G9, and milestone 14 is accepted. PRs merged. Continue.
+```

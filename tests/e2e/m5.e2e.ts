@@ -27,6 +27,7 @@ import {
   waitForPage,
   type Harness,
   settingsTo,
+  softwareRenderer,
 } from './harness';
 
 let server: FixtureServer;
@@ -291,7 +292,12 @@ describe('G8 and G9: motion and efficiency', () => {
         PAGE,
       );
       console.log(`G9: scrolling with the layers view, ${timing.avg.toFixed(1)} ms per frame on average, ${timing.max.toFixed(1)} ms at most`);
-      expect(timing.avg).toBeLessThan(20);
+      // The budget is a promise about graphics hardware, as C9's frame rate
+      // (owner, prompt 76): where Chromium draws in software it is measured
+      // and logged above, and not held. The idle check above runs everywhere.
+      const software = await softwareRenderer(h);
+      if (software) console.log(`G9: frame-time budget not checked: drawing in software (${software})`);
+      else expect(timing.avg).toBeLessThan(20);
     } finally {
       await h.close();
     }

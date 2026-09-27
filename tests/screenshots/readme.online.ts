@@ -26,6 +26,12 @@ it('captures the README screenshot', async () => {
   const inView = '[...document.images].filter((i) => { const r = i.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }).every((i) => i.complete && i.naturalWidth > 0)';
   const ready = async (page: string) => {
     await waitForPage(h, page);
+    // Wikipedia's banners (donation drives come and go) are hidden, as a
+    // reader closing them would; the article itself is untouched.
+    await h.app.evaluate(({ webContents }, part) => {
+      const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes(part)).pop();
+      return guest?.insertCSS('#siteNotice, #centralNotice, .cn-fundraising, .frb { display: none !important; }');
+    }, page);
     await waitFor(`${page} images`, () => inPage<boolean>(h, inView, page), (v) => v, 30_000);
     await settled(h);
     await sleep(2000); // the tab's snapshot for its card

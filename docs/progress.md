@@ -163,8 +163,7 @@ browser now still works and says why.
 written down in the holoml repository, with a parser, a checker, and
 sample pages; no new browser screens.
 
-**Milestone 14: HoloML pages in the browser** (built 2026-09-27, waiting
-for acceptance). A `.holoml` page shows its 3D scene across the window,
+**Milestone 14: HoloML pages in the browser** (accepted 2026-09-27). A `.holoml` page shows its 3D scene across the window,
 flat and still, with models, labels, links, lights, and animation; a
 page with a mistake says where it is.
 

@@ -25,7 +25,7 @@ Plan approved 2026-09-24.
 | 11 | Owner feedback: address bar, view, settings, shortcuts | Two ways to show tabs; address bar completion; a wider page and view settings; menus that close; reorganized Settings with search; shortcut list and remapping; Library search reset | Done (accepted, prompt 54) |
 | 12 | Developer preview 0.9.0 | Source release for developers: privacy and proofreading pass, legal and project files, automatic builds and tests on Windows and Linux (GitHub issue #5), Electron check, trademark and `.holo` checks, version 0.9.0 | Done (accepted, prompt 61; released as v0.9.0) |
 | 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Done (accepted, prompt 64) |
-| 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Built; waiting for acceptance (prompt 65) |
+| 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Done (accepted, prompt 76) |
 | 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Later (prompt 67, Q1 a) |
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Later |
 | 17 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a) |
@@ -824,7 +824,7 @@ New, from the owner's answers:
 | G6 | Image rectangles | Reported for the page's images, and updated after scrolling and resizing |
 | G7 | Changing pages | Sections added later by the page are layered; nothing is left behind when switching off |
 | G8 | Reduced motion | The view switches without animation |
-| G9 | Efficiency | Idle and scrolling stay within the milestone 1 budget with the view on |
+| G9 | Efficiency | Idle and scrolling stay within the milestone 1 budget with the view on (on graphics hardware; where Chromium draws in software the scrolling time is logged and that part skipped, not passed, as C9; owner, prompt 76) |
 | G10 | Look and feel | Owner review; screenshots saved |
 | C, D, E, F | Regression | Still pass |
 
@@ -2016,8 +2016,8 @@ Windows line ends into a Unix one; the holoml repository's
 
 ## Milestone 14 — HoloML pages in the browser
 
-Status: Built 2026-09-27; waiting for the owner's acceptance. Plan and
-build approved 2026-09-27 (prompt 65) with Q1 to Q5 a. Pushed before the
+Status: Done. Accepted 2026-09-27 (prompt 76). Plan and build approved
+2026-09-27 (prompt 65) with Q1 to Q5 a. Pushed before the
 build. Rule 13 check done
 (ARCHITECTURE.md section 3).
 
