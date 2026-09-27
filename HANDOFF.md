@@ -2,9 +2,9 @@
 
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-09-26 (milestone 12, the 0.9.0 developer preview,
-accepted and released; milestone 13, HoloML v0.1, is built in the
-holoml repository and waits for the owner's acceptance; TODO.md has
-the results).
+accepted and released; milestone 13, HoloML v0.1 in the holoml
+repository, accepted; milestone 14, HoloML pages in the browser, is
+being planned).
 
 ## Where things stand
 

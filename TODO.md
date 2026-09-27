@@ -24,7 +24,7 @@ Plan approved 2026-09-24.
 | 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Done (accepted, prompt 50) |
 | 11 | Owner feedback: address bar, view, settings, shortcuts | Two ways to show tabs; address bar completion; a wider page and view settings; menus that close; reorganized Settings with search; shortcut list and remapping; Library search reset | Done (accepted, prompt 54) |
 | 12 | Developer preview 0.9.0 | Source release for developers: privacy and proofreading pass, legal and project files, automatic builds and tests on Windows and Linux (GitHub issue #5), Electron check, trademark and `.holo` checks, version 0.9.0 | Done (accepted, prompt 61; released as v0.9.0) |
-| 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Built; waiting for acceptance (prompt 63: Q1 to Q4 a) |
+| 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Done (accepted, prompt 64) |
 | 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
 | 15 | Car showroom demo | Demo site with walk-around 3D cars | Later |
 | 16 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
@@ -1855,7 +1855,7 @@ made cleaned for privacy and spelling.
 
 ## Milestone 13 — HoloML v0.1, the language
 
-Status: Built 2026-09-26; waiting for the owner's acceptance. Plan and
+Status: Done. Accepted 2026-09-27 (prompt 64). Plan and
 build approved 2026-09-26 (prompt 63) with Q1 a (`.holoml`), Q2 a
 (strict, HTML-like), Q3 a (everything milestone 14 shows), Q4 a (GitHub
 Actions). Pushed before the build; the holoml repository pushed at the
