@@ -1784,7 +1784,17 @@ made cleaned for privacy and spelling.
     reach 50. The idle part of C9 runs everywhere.
   - End-to-end on Linux: every app launch timed out, and the run hit
     its 45-minute limit before errors were printed. The harness now
-    prints a launch failure as it happens; under investigation.
+    prints a launch failure as it happens, which showed the cause:
+    "WebGL2 blocklisted". The runner has no graphics card, Chromium
+    blocks Linux's software GL for WebGL 2, and the room's renderer
+    cannot start, so the shell never becomes ready. On Linux the test
+    launches now pass `--enable-unsafe-swiftshader`, so Chromium draws
+    WebGL with its own software renderer (tests only; no change with a
+    graphics card).
+  - Found by this: without WebGL 2 the app shows an empty window rather
+    than an explanation (apps/browser/src/renderer/scene/room.ts creates
+    the renderer unguarded). Not in this milestone's plan; raised with
+    the owner.
 - Local regression (N6), Windows 11: 167 of 167 end-to-end checks
   passed (332 seconds) before I5c was added; milestone 7 with I5c: 11
   of 11.

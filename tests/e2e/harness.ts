@@ -103,6 +103,11 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
   if (opts.downloadsDir !== undefined) args.push(`--downloads-dir=${opts.downloadsDir}`);
   if (opts.noKeychain) args.push('--test-no-keychain');
   if (opts.sleepMinuteMs !== undefined) args.push(`--test-sleep-minute-ms=${opts.sleepMinuteMs}`);
+  // Linux machines without a graphics card (GitHub's test machines) offer
+  // only a software GL, which Chromium blocks for WebGL 2, so the room
+  // cannot start. This lets Chromium draw WebGL with its own software
+  // renderer instead; with a graphics card it changes nothing (milestone 12).
+  if (process.platform === 'linux') args.push('--enable-unsafe-swiftshader');
   // Launch failures are printed at once as well as thrown: a run stopped
   // early (as GitHub stops one at its time limit) never reaches the
   // summary where thrown errors appear (milestone 12).
