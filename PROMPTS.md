@@ -953,3 +953,12 @@ Approval to publish the L9 measurement change (prompts 82 and 83).
 ```text
 Push it and open a PR.
 ```
+
+## 85 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Approval to switch on the app's automatic fixing of CI failures for the
+L9 pull request (#33).
+
+```text
+Turn on auto-fix
+```
