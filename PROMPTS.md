@@ -940,6 +940,55 @@ What is the next step?
 ## 84 — 2026-09-27 · Claude Opus 5.5, low effort
 
 ```text
+Before milestone 17, let's come up with 4 other example sites using
+HoloML.
+1) A small game with movement, action, lighting, sound, animation.
+   Something simple like a very small Minecraft game.
+2-4) Other commercial examples, all different, but they should get
+   progressively more complex, with better graphics and usage including
+   movement.
+```
+
+## 85 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answers to the example-sites proposal's questions (prompt 84), all as
+recommended: Q1, how pages react (a: HoloML 0.2 adds scripts from the
+page's own site with a small scene API, plus declarative basics). Q2,
+the commercial sites (a: a sofa studio, an apartment tour, a resort).
+Q3, assets (a: CC0 packs only, Kenney, Quaternius, Poly Haven, credited;
+approves downloading them). Q4, the split (a: one milestone per site, 17
+Blockworld to 20 Coral Bay, then privacy and installers). Q5, sound (a:
+only after the viewer's first click or key; mute and limits apply).
+Then: plan milestone 17; add a fifth site, an aquarium; and a section in
+the browser to try the examples, with screenshots.
+
+```text
+Use the recommendations for the questions, plan milestone 17. Add one
+more site: an aquarium with at least 5 to 10 real-looking fishes that
+swim around, and a feed button or something like that. There should be
+a dedicated section in HyperSpace 3D to try these examples, with
+screenshots.
+```
+
+## 86 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answers to the milestone 17 plan's questions (Blockworld, HoloML 0.2
+first part, the examples section), all as recommended, and approval to
+build. Q1, the scene API (a: a small `holoml` object written down in the
+spec). Q2, the examples section (a: a panel like the Library, from the
+start panel, the menu, and Ctrl+Shift+E). Q3, birds and crickets (a:
+made by a script in the repository). Q4, looking around in Blockworld
+(a: drag to look, with a crosshair for the keyboard). Q5, HoloML
+versions (a: the first part of 0.2, which grows through milestones 17
+to 21 and is tagged when 21 ends).
+
+```text
+Use the recommendations for the questions, build.
+```
+
+## 87 — 2026-09-27 · Claude Opus 5.5, low effort
+
+```text
 End-to-end check L9 in tests/e2e/m10.e2e.ts ("with 100,000 visits,
 searches answer within 50 ms and the main process is never held 20 ms")
 measures the main process's longest event-loop delay with
@@ -957,7 +1006,7 @@ measurements and ask. Follow AGENTS.md (log owner prompts, commit after
 an approved change, keep TODO.md results current).
 ```
 
-## 85 — 2026-09-27 · Claude Opus 5.5, low effort
+## 88 — 2026-09-27 · Claude Opus 5.5, low effort
 
 Answer to the question of how L9 should measure "the main process is
 never held 20 ms", after the finding that its event-loop delay monitor
@@ -970,15 +1019,15 @@ baseline).
 Go with option 1, measure the longest block directly.
 ```
 
-## 86 — 2026-09-27 · Claude Opus 5.5, low effort
+## 89 — 2026-09-27 · Claude Opus 5.5, low effort
 
-Approval to publish the L9 measurement change (prompts 84 and 85).
+Approval to publish the L9 measurement change (prompts 87 and 88).
 
 ```text
 Push it and open a PR.
 ```
 
-## 87 — 2026-09-27 · Claude Opus 5.5, low effort
+## 90 — 2026-09-27 · Claude Opus 5.5, low effort
 
 Approval to switch on the app's automatic fixing of CI failures for the
 L9 pull request (#33).
@@ -987,7 +1036,7 @@ L9 pull request (#33).
 Turn on auto-fix
 ```
 
-## 88 — 2026-09-27 · Claude Opus 5.5, low effort
+## 91 — 2026-09-27 · Claude Opus 5.5, low effort
 
 Approval to start the suggested task for R3 (m15, a page of 20,000
 elements), which fails on both CI runners on main and on PR #33: find
