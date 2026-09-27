@@ -889,3 +889,9 @@ set resource limits) from its branch spec/renderer-limits.
 ```text
 Milestone 15 accepted, push the holoml branch and open a PR.
 ```
+
+## 80 — 2026-09-27 · Claude Opus 5.5, low effort
+
+```text
+Plan milestone 16.
+```

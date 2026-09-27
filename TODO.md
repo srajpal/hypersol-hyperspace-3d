@@ -26,8 +26,8 @@ Plan approved 2026-09-24.
 | 12 | Developer preview 0.9.0 | Source release for developers: privacy and proofreading pass, legal and project files, automatic builds and tests on Windows and Linux (GitHub issue #5), Electron check, trademark and `.holo` checks, version 0.9.0 | Done (accepted, prompt 61; released as v0.9.0) |
 | 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Done (accepted, prompt 64) |
 | 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Done (accepted, prompt 76) |
-| 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | In progress (prompts 77 and 78) |
-| 16 | Car showroom demo | Demo site with walk-around 3D cars | Later |
+| 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Done (accepted, prompt 79) |
+| 16 | Car showroom demo | Demo site with walk-around 3D cars | Planning (prompt 80) |
 | 17 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a) |
 | 18 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
 | 19 | macOS release | Signing, notarization, Mac checks | Later |
@@ -2331,6 +2331,128 @@ the fix. HoloML's spec note (task 6) is in holoml pull request #7
 ### Done when
 
 - R1 to R10 pass, screenshots are saved, and the owner accepts.
+
+## Milestone 16 — Car showroom demo
+
+Status: Plan drafted 2026-09-27 (prompt 80), waiting for the owner's
+answers and approval. Rule 13 check done (ARCHITECTURE.md section 3).
+
+Goal: a small HoloML site that shows what HoloML 0.1 can do, the one the
+brief describes: a showroom where every car is a 3D model you walk
+around, with labels, links, lights, materials, and animation, written in
+plain markup. It replaces the placeholder example in the holoml
+repository and becomes the browser's showcase.
+
+### How it would work (proposed)
+
+- The site, in the holoml repository under examples/showroom/:
+  - The hall (index.holoml): five cars on plinths under spot lights,
+    the middle one on a slowly turning turntable, each with a label of
+    its name and one line about it. Car names are made up; no real
+    makes or logos.
+  - A page per car (for example comet.holoml): the car on its own, in
+    walk mode, with links to its colour pages and back to the hall.
+  - Colour pages (comet-blue.holoml and so on): the same car with
+    another paint, set with `<material>`. HoloML 0.1 has no scripts, so
+    each colour is its own page.
+  - An about page: what HoloML is, with links to the spec and both
+    repositories.
+- The hall itself (floor, plinths, back wall) is a glTF model written by
+  a script in the repository, as the placeholder car is now, so it is
+  ours to license.
+- The cars come from an openly licensed pack (Q2), with its licence file
+  and credits kept beside them.
+- Budget: the whole site well inside the milestone 15 limits (proposed
+  target: under 10 MB and 200,000 triangles for the hall), so it opens
+  in a moment on an ordinary computer.
+- The browser's tests use a copy of the site, brought in the way the
+  HoloML packages are (`pnpm holoml:sync` from a tag), served from
+  127.0.0.1 like every other fixture.
+- Anything the site needs that HoloML 0.1 cannot say (for example
+  shadows, a paint choice without separate pages) is written down, not
+  added (Q4).
+
+### Questions
+
+- Q1, where the site lives and how people reach it.
+  a: in the holoml repository, published with GitHub Pages at
+  srajpal.github.io/holoml/showroom/ (free static hosting on the GitHub
+  account both repositories already use), and the browser's start panel
+  gets a "HoloML showroom" link to it (recommended: anyone with the
+  browser can try it, and the source sits next to the language). The
+  browser sends nothing unless the person clicks the link.
+  b: in the holoml repository only, not published: opened from the
+  computer with Ctrl+O. No hosting.
+  c: built into the browser, opened from the start panel with no
+  network at all (a larger app, and a second copy to keep in step).
+- Q2, the car models.
+  a: Kenney's Car Kit (kenney.nl, CC0: no conditions; 45 low-poly
+  vehicles in one style, small files). Recommended: one consistent look,
+  tiny files, nothing to credit by law (credited anyway). If the kit has
+  no glTF files, I come back to you before converting anything.
+  b: Kenney's kit for the hall, plus the Khronos ToyCar (CC0, one
+  detailed car with clear-coat paint and glass) as the car on the
+  turntable. Nicer centrepiece; two styles side by side.
+  c: our own cars written by a script, like the placeholder: fully ours,
+  but plain boxes and wheels.
+  (Either a or b means downloading those files from kenney.nl or
+  GitHub; your answer is the approval for that download.)
+- Q3, how much site.
+  a: the hall, a page per car, colour pages, and the about page
+  (recommended).
+  b: the hall and one car page only.
+- Q4, what HoloML 0.1 cannot do.
+  a: stay within 0.1; each gap goes into the holoml repository as an
+  idea for 0.2 (an issue each), with the page that needed it
+  (recommended: the demo proves the language as it is).
+  b: extend the language in this milestone (a 0.2 draft).
+- Q5, the README's opening screenshot.
+  a: switch it to the showroom in the browser, taken from the local
+  copy (so that shot no longer uses the network), and change the README
+  note in AGENTS.md's working agreement to say so (recommended: it
+  shows the project's own work). Proposed wording: "The README always
+  opens with a screenshot of the newest version or milestone, and a
+  good-looking one: refresh docs/screenshots/readme.png with `pnpm
+  screenshots:readme` at the end of each milestone and each release,
+  and look at it. It shows the HoloML showroom (milestone 16), served
+  locally."
+  b: keep the Wikipedia shot.
+
+### Tasks
+
+- [ ] 1. The hall model: a script that writes the floor, plinths, and
+      back wall as glTF.
+- [ ] 2. The cars (per Q2): download, check the licence and the files,
+      choose five, keep the licence and credits beside them, and find
+      each car's paint material by name.
+- [ ] 3. The pages (per Q3): hall, car pages, colour pages, about; the
+      holoml repository's tests check that every page is valid.
+- [ ] 4. The browser's copy: `pnpm holoml:sync` also brings the
+      showroom into the test fixtures; end-to-end checks S1 to S7.
+- [ ] 5. Publishing (per Q1): GitHub Pages for the holoml repository and
+      the start panel link (Q1 a), or the instructions to open it (b).
+- [ ] 6. The gaps (per Q4): an issue per missing feature in holoml.
+- [ ] 7. Documents: both READMEs, ARCHITECTURE, docs/privacy.md (the
+      start panel link, if Q1 a), credits, HANDOFF; screenshots and the
+      README screenshot (per Q5).
+
+### Checks
+
+| # | Check | Expected result |
+|---|---|---|
+| S1 | Valid pages | Every showroom page passes HoloML's checker with no problems (holoml unit tests) |
+| S2 | Loads whole and fast | The hall is ready within 5 s from 127.0.0.1; no model is left out or fails; the Scene part's totals are under the budget |
+| S3 | Walk around | Each car page starts in walk mode; walking moves around the car at eye height |
+| S4 | Links and colours | Every link reaches its page and Back returns; each colour page shows its paint (the material's colour read back) |
+| S5 | For everyone | Tab reaches every car by name; the text view lists the cars and links; with reduced motion the turntable stands still |
+| S6 | Efficient | An idle car page draws no frames; the hall draws only while the turntable turns |
+| S7 | Credits | The models' licence and credits are in the repository and shown on the about page |
+| S8 | Published (Q1 a) | The site opens from its public address, and the start panel link opens it (checked by hand: the tests stay on 127.0.0.1) |
+| S9 | Regression | C to R pass, the unit tests, and HoloML's tests |
+
+### Done when
+
+- S1 to S9 pass, screenshots are saved, and the owner accepts.
 
 ## GitHub issue #30: lost clicks on Linux CI (2026-09-27, prompt 74)
 
