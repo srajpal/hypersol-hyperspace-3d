@@ -1,2 +1,5 @@
 # HoloML test pages are read byte for byte (their error positions are checked).
 *.holoml -text
+# The showroom is a byte-for-byte copy of HoloML's (checked by hash in
+# packages/holoml/src/copy.test.ts), so no line-ending conversion.
+tests/fixtures/holoml/showroom/** -text
