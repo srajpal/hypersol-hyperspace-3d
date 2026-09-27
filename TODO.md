@@ -2182,7 +2182,7 @@ listen on the canvas itself.
   email). HoloML (prompt 58): H1 a (HTML-like tags), H2 a (glTF 2.0
   models).
 
-## GitHub issue #30: lost clicks on Linux CI (2026-09-27, prompt 71)
+## GitHub issue #30: lost clicks on Linux CI (2026-09-27, prompt 74)
 
 On GitHub's Linux runner a click sent right after a page appears or
 changes sometimes never reaches the page (D8's right-click on main run
