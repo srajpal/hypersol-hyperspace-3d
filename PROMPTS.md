@@ -1067,3 +1067,13 @@ pull request so the Linux checks run.
 ```text
 Yes, fix the Linux failures, push a branch and open a PR.
 ```
+
+## 94 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answer to the agent's offer to turn on auto-fix for pull request #34
+(the HoloML checks on GitHub's Linux machines), so that failing checks
+are worked on as they report: yes.
+
+```text
+Go ahead. Let me know if something needs merging before the next step.
+```
