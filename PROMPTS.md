@@ -784,3 +784,24 @@ Sent while the README was being updated.
 ```text
 Check the comments on the PRs for both repos and address them.
 ```
+
+## 70 — 2026-09-27 · Claude Opus 5.5, low effort
+
+```text
+HoloML PR #6: ready to merge. All 122 unit tests and both platform CI runs pass. The performance blocker is fixed: roughly 13 ms instead of 12–15 seconds.
+HyperSpace PR #29: hold for now. The previous capture blockers are fixed; 238 unit tests, nine targeted checks, and Windows CI pass. Linux CI fails the selected-text right-click test. Its cause remains uncertain.
+
+What is the best way to proceed?
+```
+
+## 71 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Approval of the three steps proposed after the review: (1) tag HoloML
+v0.1.1 and copy it into the browser in a small pull request; (2) merge
+browser PR #29 once the Linux CI re-run is in, since its one failing
+check (D8, a right-click lost on Linux) also fails on main without it;
+(3) a separate issue and pull request for the Linux input flakiness.
+
+```text
+Go ahead with 1, 2, and 3. I merged HoloML #6.
+```
