@@ -71,6 +71,9 @@ The name comes from that early concept; the spirit comes from
 WebSurfer. The mission is the same. The third dimension, this time, is
 real. (Until 2026-09-26 this project was called HyperSol WebSurfer 3D.)
 
+HyperSol, the company, no longer exists. HyperSpace 3D is a personal
+project that honours it, not a commercial product.
+
 An archived copy of the 2001 site is available through the
 [Wayback Machine](https://web.archive.org/web/20010922111629/http://www.hypersol.com/).
 
@@ -117,8 +120,13 @@ own repository so it stays independent and reusable:
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Technical decisions, parts and files, screens and style, open questions |
 | [TODO.md](TODO.md) | Milestone roadmap and the current milestone's tasks and checks |
 | [AGENTS.md](AGENTS.md) | Rules for AI agents and contributors working in this repo |
-| [PROMPTS.md](PROMPTS.md) | Verbatim log of every owner prompt that shaped the project |
+| [PROMPTS.md](PROMPTS.md) | Every owner prompt that shaped the project, in order, lightly edited |
 | [HANDOFF.md](HANDOFF.md) | Current state, decisions made, open questions, how to resume |
+| [CHANGELOG.md](CHANGELOG.md) | What each release contains |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Setting up, testing, and sending changes |
+| [SECURITY.md](SECURITY.md) | Reporting a security problem privately |
+| [THIRD-PARTY.md](THIRD-PARTY.md) | The licences of the parts from other projects |
+| [docs/name-checks.md](docs/name-checks.md) | Trademark and file extension checks |
 
 ## Technology
 
@@ -126,7 +134,7 @@ In use now: Electron 44 (the current supported stable line), TypeScript,
 Three.js, Lit, SQLite through Node's built-in node:sqlite, and Ghostery's
 open-source ad-blocking engine with open filter lists; Vite and
 electron-vite to build; Vitest and Playwright to test.
-Planned, not yet installed: electron-builder for installers (milestone 12).
+Planned, not yet installed: electron-builder for installers (milestone 16).
 Reasons for each choice are in ARCHITECTURE.md.
 
 Known limitation: Electron ships no DRM module, so video from Netflix
@@ -164,7 +172,7 @@ throwaway profile in the `userData/` folder, never your normal browser
 data.
 
 Tests: `pnpm test` (unit), `pnpm lint`, `pnpm typecheck`, and
-`pnpm test:e2e` (builds the app and drives it for about two minutes;
+`pnpm test:e2e` (builds the app and drives it for about six minutes;
 needs openssl on PATH, which Git for Windows provides). Its windows stay
 off screen and never take focus, so you can keep working; set
 `HYPERSOL_TEST_SHOW=1` to watch instead. Current results are in
@@ -172,9 +180,13 @@ TODO.md.
 
 ## Contributing
 
-Read AGENTS.md first. Work happens one approved milestone at a time.
-Issues and pull requests are welcome once the first milestone lands.
+Issues and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md)
+for setup, tests, and how changes are reviewed. Rules for AI agents are
+in [AGENTS.md](AGENTS.md).
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE).
+Copyright 2026 The HyperSpace 3D Authors (see [AUTHORS](AUTHORS)).
+Licensed under the Apache License 2.0: see [LICENSE](LICENSE) and
+[NOTICE](NOTICE). The parts from other projects keep their own licences:
+see [THIRD-PARTY.md](THIRD-PARTY.md).

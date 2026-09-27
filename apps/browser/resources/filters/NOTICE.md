@@ -17,4 +17,5 @@ licence.
 All lists are fetched from Ghostery's copies at
 https://raw.githubusercontent.com/ghostery/adblocker/master/packages/adblocker/assets/.
 The full licence texts must ship alongside the app's installers
-(milestone 12).
+(milestone 16). THIRD-PARTY.md at the repository root lists these and
+the app's other third-party parts.

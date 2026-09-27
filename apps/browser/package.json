@@ -1,7 +1,7 @@
 {
   "name": "@hypersol/browser",
   "productName": "HyperSol HyperSpace 3D",
-  "version": "0.0.0",
+  "version": "0.9.0",
   "private": true,
   "description": "HyperSol HyperSpace 3D, the Electron app.",
   "license": "Apache-2.0",

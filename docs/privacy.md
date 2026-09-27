@@ -84,10 +84,9 @@ made for a site from a private tab (switching the layers view, pausing
 the shield) are kept in memory only: they apply to that site in every
 private tab while one is open, never to normal tabs, never reach
 `settings.json`, and are forgotten when the last private tab closes.
-Zooming in a private tab is not saved at all (the next page opens at
-the site's usual zoom). So
-are the certificates recorded for the instrument panel from private
-tabs. Files downloaded in a private tab are still saved to the
+So are the certificates recorded for the instrument panel from private
+tabs. Zooming in a private tab is not saved at all (the next page opens
+at the site's usual zoom). Files downloaded in a private tab are still saved to the
 Downloads folder, and bookmarks you add in one are kept, as in other
 browsers. The shield and encrypted DNS work the same in private tabs.
 

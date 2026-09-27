@@ -61,7 +61,7 @@ release is now milestone 11. Earlier entries below that say "milestone
   pass get their own milestone (6), because exact colours are still an
   open question and reviewing every real screen together keeps them
   consistent.
-- Later polish goes after the first release (14), so it cannot delay a
+- Later polish goes after the first release (20), so it cannot delay a
   working browser.
 
 ## Milestone 1 — Live page in the 3D room
@@ -1459,7 +1459,7 @@ that sleep when unused; and history work moved off the main process
 - Settings > Tabs, show tabs as: Cards (today: the rail appears with two
   or more tabs; the default), Cards that hide (the rail stays out of the
   way and slides in when the pointer rests at the left edge or with
-  Ctrl+Tab, and go 2 seconds after the pointer last moved over them,
+  Ctrl+Tab, and goes 2 seconds after the pointer last moved over them,
   since over the page the shell sees no pointer at all; a list of tabs
   shows in the top bar), or a List in the top
   bar only (no cards). The list is a row of small tabs under the top
@@ -1707,7 +1707,7 @@ Changed checks, because their requirement changed (documented here):
 ## Milestone 12 — Developer preview 0.9.0
 
 Status: In progress. Plan and build approved 2026-09-26 (prompt 58),
-after the answers in prompts 54 to 58 (recorded above: A a, B a, C a,
+after the answers in prompts 54 to 58 (recorded below: A a, B a, C a,
 D1 to D4 a, E a, F a, P1 a, P2 b, P3 b). Pushed before the build started.
 
 Goal: the browser released as source that developers can build, test,
@@ -1738,21 +1738,52 @@ made cleaned for privacy and spelling.
 
 ### Tasks
 
-- [ ] 1. PROMPTS.md as an edited record; the logging rule updated.
-- [ ] 2. Proofreading of every document in both repositories; machine
+- [x] 1. PROMPTS.md as an edited record; the logging rule updated.
+- [x] 2. Proofreading of every document in both repositories; machine
       details and the private session setup taken out of HANDOFF.md.
-- [ ] 3. Legal files: copyright lines, NOTICE, AUTHORS, the README note,
+- [x] 3. Legal files: copyright lines, NOTICE, AUTHORS, the README note,
       the naming rules in AGENTS.md (both repositories).
-- [ ] 4. THIRD-PARTY.md: the licences of every package the app ships
+- [x] 4. THIRD-PARTY.md: the licences of every package the app ships
       and of the filter lists.
-- [ ] 5. SECURITY.md and CONTRIBUTING.md (both repositories); private
+- [x] 5. SECURITY.md and CONTRIBUTING.md (both repositories); private
       vulnerability reporting switched on.
-- [ ] 6. Trademark and `.holo` checks, recorded in docs/name-checks.md.
-- [ ] 7. Electron: the newest stable version, and the security check.
+- [x] 6. Trademark and `.holo` checks, recorded in docs/name-checks.md.
+- [x] 7. Electron: the newest stable version, and the security check.
 - [ ] 8. GitHub Actions: lint, types, unit tests, and end-to-end checks on
       Windows and Linux; Linux problems it finds fixed.
 - [ ] 9. Version 0.9.0; the README's developer section; the release notes.
       Tagging and publishing the release wait for the owner's go.
+
+### Progress (2026-09-26)
+
+- Tasks 1 to 7 done. Proofreading (task 2) found no spelling slips in
+  either repository; it found stale milestone numbers, a stale test
+  duration, and two sentences about private tabs whose meaning had
+  drifted (ARCHITECTURE.md, docs/privacy.md), all corrected.
+- Version 0.9.0 in every package.json. Check D11 now reads the version
+  from the app's package.json instead of expecting "0.0.0" (the
+  requirement changed: the About box shows the real version). The About
+  box and README carry the new copyright line. Release notes started in
+  CHANGELOG.md.
+- GitHub Actions, first runs (task 8): lint, types, and the 235 unit
+  tests pass on Windows and Linux (after the history timing check took
+  the median of five runs; one run alone caught a pause of the shared
+  machine). End-to-end on Windows: 165 of 167 passed.
+  - I5b failed: on the runner's 1024x768 screen, with the tab rail
+    showing, the console's buttons ran under the network panel. Fixed:
+    the header controls wrap to a second line in a narrow panel. New
+    check I5c holds every header control of both panels inside its
+    panel, clickable, at 1000x640 with the rail showing; it failed
+    before the fix and passes after.
+  - C9's frame rate failed: 16.8 frames a second against at least 50.
+    The runner has no graphics card, so Chromium draws in software.
+    Waiting for the owner's decision (rule 8).
+  - End-to-end on Linux: every app launch timed out, and the run hit
+    its 45-minute limit before errors were printed. The harness now
+    prints a launch failure as it happens; under investigation.
+- Local regression (N6), Windows 11: 167 of 167 end-to-end checks
+  passed (332 seconds) before I5c was added; milestone 7 with I5c: 11
+  of 11.
 
 ### Checks
 

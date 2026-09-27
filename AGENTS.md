@@ -208,7 +208,9 @@ milestone; the current milestone's checks are defined in TODO.md):
   close, Settings sections and search, shortcut remapping, and the
   Library search reset. Checks that use a setting first show its
   section with settingsTo (tests/e2e/harness.ts).
-- Later milestones add: per-OS installers (12).
+- Milestone 12 adds checks N1 to N6 (TODO.md): documents, privacy,
+  legal files, version, and the automatic builds on Windows and Linux.
+- Later milestones add: HoloML (13 to 15) and installers (16 and 17).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

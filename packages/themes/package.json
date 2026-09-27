@@ -1,6 +1,6 @@
 {
   "name": "@hypersol/themes",
-  "version": "0.0.0",
+  "version": "0.9.0",
   "private": true,
   "description": "Theme schema and built-in themes for HyperSol HyperSpace 3D.",
   "license": "Apache-2.0",

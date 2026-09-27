@@ -80,7 +80,7 @@ export class HsAbout extends LitElement {
         <h2 id="about-title">HyperSol HyperSpace 3D</h2>
         <p data-testid="about-version">Version ${this.appVersion}</p>
         <p data-testid="about-engine">Electron ${this.electron} · Chromium ${this.chrome}</p>
-        <p>Open source under the Apache License 2.0. No telemetry.</p>
+        <p>Copyright 2026 The HyperSpace 3D Authors. Open source under the Apache License 2.0. No telemetry.</p>
         <p>A salute to HyperSol WebSurfer (2001) and the HyperSpace 3D concept (2001 to 2003).</p>
         <button data-testid="about-close" @click=${() => this.close()}>Close</button>
       </section>

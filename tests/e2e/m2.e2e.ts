@@ -3,10 +3,13 @@
  * shortcuts, start panel, new-window rules, loading, error cards, and the
  * right-click menu. Every host except 127.0.0.1 is blocked for the run.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, startHttpsFixtureServer, type FixtureServer } from './fixture-server';
 import {
   ADDRESS,
+  APP_DIR,
   clickAt,
   clickCard,
   focusedPage,
@@ -544,7 +547,10 @@ describe('D11 about', () => {
     await waitFor('about panel', () => about.isVisible(), (v) => v);
     const electron = await h.app.evaluate(() => process.versions.electron);
     expect(await h.shell.locator('hs-about [data-testid="about-engine"]').textContent()).toContain(`Electron ${electron}`);
-    expect(await h.shell.locator('hs-about [data-testid="about-version"]').textContent()).toContain('Version 0.0.0');
+    // The version the app is built as (0.9.0 from milestone 12 on), read from its package file.
+    const { version } = JSON.parse(readFileSync(join(APP_DIR, 'package.json'), 'utf8')) as { version: string };
+    expect(await h.shell.locator('hs-about [data-testid="about-version"]').textContent()).toContain(`Version ${version}`);
+    expect(version).toBe('0.9.0');
     await h.shell.keyboard.press('Escape');
     await waitFor('about closed', () => about.isVisible(), (v) => !v);
   });

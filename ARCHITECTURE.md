@@ -148,13 +148,13 @@ preview): 44.4.5 still the newest stable release on npm ("latest";
 | Shortcuts | One table (shared/shortcuts.ts) of actions and key combinations ("Mod" is Cmd on macOS, Ctrl elsewhere); the person's own combination replaces an action's defaults, saved in settings.json (shortcuts) and checked there: a modifier or a function key, not copy, paste, cut, undo, redo, or select all, and no combination used twice. While Settings waits for new keys, the shell tells the main process (hypersol:capture-keys), which then lets key presses through instead of acting on them. The menus' hints and tooltips follow the table | Milestone 11. |
 | Menus closing | The top bar's menus, the site panel, and tab search close on a press elsewhere, on the keyboard moving elsewhere, and when the window loses focus (hud/dismiss.ts). A click in a page never reaches the shell as a press, but it moves the focus to the page's webview, which the focus check sees | Milestone 11 (owner, prompt 50). |
 | Preload bundles | The shell's preload and the page preload share no project module (preload/preload-graph.test.ts): a shared module becomes a separate chunk file, which a sandboxed preload cannot load (found 2026-09-26: the shell's bridge failed to load). Page-side password messages live in shared/page-passwords.ts for this reason | Sandboxed preloads load one file. |
-| Private tabs | Ctrl/Cmd+Shift+N and the menu: a tab whose page uses an in-memory session (partition "hypersol-private"), with the same shield and readouts, and permission prompts whose choices stay in memory (milestone 9); no history; never saved for "reopen your tabs"; its cookies, storage, and cache are cleared when the last private tab closes; links from it open private; marked on its card, in the top bar, and on its start panel. Site choices made from private tabs (layers view, shield pause) stay in memory; zoom from a private tab is not saved at all, apply to every private tab on that site while one is open, and are forgotten with the last one; the shield's pause request names its tab so the main process can tell (GitHub issue #8). "The last private tab" includes blank private tabs, which have no page yet: the shell tells the main process when its last private tab closes, and only then are the private session's data, pauses, and certificates cleared. The main process also clears them itself when the window closes or its shell crashes (every tab goes with it), and a window reopened meanwhile (macOS keeps the app running) waits for that to finish (PR #16 follow-up review). The shell may only attach webviews to the default or this partition | Milestone 8, owner Q3 a. |
+| Private tabs | Ctrl/Cmd+Shift+N and the menu: a tab whose page uses an in-memory session (partition "hypersol-private"), with the same shield and readouts, and permission prompts whose choices stay in memory (milestone 9); no history; never saved for "reopen your tabs"; its cookies, storage, and cache are cleared when the last private tab closes; links from it open private; marked on its card, in the top bar, and on its start panel. Site choices made from private tabs (layers view, shield pause) stay in memory, apply to every private tab on that site while one is open, and are forgotten with the last one; zoom from a private tab is not saved at all; the shield's pause request names its tab so the main process can tell (GitHub issue #8). "The last private tab" includes blank private tabs, which have no page yet: the shell tells the main process when its last private tab closes, and only then are the private session's data, pauses, and certificates cleared. The main process also clears them itself when the window closes or its shell crashes (every tab goes with it), and a window reopened meanwhile (macOS keeps the app running) waits for that to finish (PR #16 follow-up review). The shell may only attach webviews to the default or this partition | Milestone 8, owner Q3 a. |
 | Page tilt | Settings > Page tilt, 0 to 20 degrees, default 10; a --tilt on the command line wins | Less tilt gives sharper text (milestone 1 note). |
 | Graphics resets | When the WebGL context is lost, the room stops drawing; when it is restored, it draws again at once and Three.js uploads its textures again (GitHub issue #12) | The room draws only on demand, so a restore must ask for a frame itself. |
 | Window frame, reconsidered | Standard OS frame kept | Considered in milestone 6: a custom frame would lose native dragging, snapping, and accessibility; the theme now sets the frame's light or dark scheme. |
 | Bookmarks and history | SQLite through Node's built-in node:sqlite (owner decision 2026-09-25, prompt 20) | Fast search over thousands of rows; standard for browsers. Built into Electron's Node, so no native module and no extra package. |
 | UI widgets (address bar, menus) | Lit web components | Tiny, standards-based, no framework lock-in; themed with CSS variables. |
-| Build | electron-vite (Vite) now; electron-builder planned for milestone 12 (not yet installed) | Fast dev reload; installers for Windows, macOS, Linux. |
+| Build | electron-vite (Vite) now; electron-builder planned for milestone 16 (not yet installed) | Fast dev reload; installers for Windows, macOS, Linux. |
 | Toolchain | Node 22.13 or newer; pnpm 12.4.1 pinned in package.json (`packageManager`, with the pnpm version recorded in the lockfile); installs use `--frozen-lockfile` | Reproducible installs (GitHub issue #5). |
 | Tests | Vitest (unit), Playwright (Electron end-to-end) | Standard, cross-platform. |
 | Repos | hypersol-hyperspace-3d (browser; renamed from hypersol-websurfer-3d on 2026-09-26), holoml (language) | Each useful on its own; browser depends on holoml packages via npm. |
@@ -493,15 +493,15 @@ checked yet):
 - Build: `pnpm build` (output in apps/browser/out)
 - Unit tests: `pnpm test`
 - Lint and type check: `pnpm lint`, `pnpm typecheck`
-- End-to-end: `pnpm test:e2e` (milestone 1 to 3 checks, about 120
-  seconds; needs openssl on PATH for the certificate-error check, which
+- End-to-end: `pnpm test:e2e` (every milestone's checks, about six
+  minutes; needs openssl on PATH for the certificate-error check, which
   Git for Windows provides)
 
 Progress screenshots: `MILESTONE=m3 pnpm screenshots` builds the app and
 saves its main screens to docs/screenshots/m3/ (Electron's own capture,
 local test pages only).
 
-Not checked yet: `pnpm package` (installers per OS, milestone 12).
+Not checked yet: `pnpm package` (installers per OS, milestone 16).
 
 Launch options, for development and tests: `--start-url=<address>`
 (default: a start tab), `--tilt=<0 to 20>`,
