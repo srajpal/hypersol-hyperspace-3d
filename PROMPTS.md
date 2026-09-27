@@ -969,3 +969,19 @@ swim around, and a feed button or something like that. There should be
 a dedicated section in HyperSpace 3D to try these examples, with
 screenshots.
 ```
+
+## 86 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answers to the milestone 17 plan's questions (Blockworld, HoloML 0.2
+first part, the examples section), all as recommended, and approval to
+build. Q1, the scene API (a: a small `holoml` object written down in the
+spec). Q2, the examples section (a: a panel like the Library, from the
+start panel, the menu, and Ctrl+Shift+E). Q3, birds and crickets (a:
+made by a script in the repository). Q4, looking around in Blockworld
+(a: drag to look, with a crosshair for the keyboard). Q5, HoloML
+versions (a: the first part of 0.2, which grows through milestones 17
+to 21 and is tagged when 21 ends).
+
+```text
+Use the recommendations for the questions, build.
+```

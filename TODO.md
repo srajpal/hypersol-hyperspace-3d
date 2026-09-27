@@ -28,7 +28,7 @@ Plan approved 2026-09-24.
 | 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Done (accepted, prompt 76) |
 | 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Done (accepted, prompt 79) |
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
-| 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Planning (prompt 85) |
+| 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | In progress (prompt 86) |
 | 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes | Later (prompt 85, Q4 a) |
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Later (prompt 85, Q4 a) |
 | 20 | Coral Bay | A resort: paths to ride, sounds by place, sky and environment light, loading by area | Later (prompt 85, Q4 a) |
@@ -2506,8 +2506,9 @@ harness's `online` switch are gone, so no run uses the network.
 
 ## Milestone 17 — Blockworld, HoloML 0.2 (first part), and the examples section
 
-Status: Plan drafted 2026-09-27 (prompt 85), waiting for the owner's
-answers and approval. Rule 13 check done (ARCHITECTURE.md section 3).
+Status: In progress. Plan answered (prompt 86: Q1 to Q5 a, as
+recommended) and build approved (prompt 86), 2026-09-27. Pushed before
+the build. Rule 13 check done (ARCHITECTURE.md section 3).
 
 Goal: the first HoloML site you can play. Blockworld, a very small
 Minecraft-like game, needs HoloML to react (scripts), to make sound,
