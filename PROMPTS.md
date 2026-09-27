@@ -912,3 +912,44 @@ the README note in AGENTS.md changed to say so).
 ```text
 Use the recommendations for the questions, build.
 ```
+
+## 82 — 2026-09-27 · Claude Opus 5.5, low effort
+
+```text
+End-to-end check L9 in tests/e2e/m10.e2e.ts ("with 100,000 visits,
+searches answer within 50 ms and the main process is never held 20 ms")
+measures the main process's longest event-loop delay with
+monitorEventLoopDelay while running history searches through the
+worker. On 2026-09-27 (Windows 11) it measured 18.4, 19.5, 19.5,
+19.9 ms when run alone, and failed at 20.005 ms in a full run, both with
+and without the milestone 15 changes, so it sits right at its limit.
+Find what in the main process takes about 18 to 20 ms during those
+searches (e.g. structured-clone of 500 results, IPC reply size, SQLite
+on the main thread) using the existing history worker code in
+apps/browser/src/main, and reduce it so the check passes with margin.
+Do not raise or loosen the 20 ms limit without the owner's approval
+(AGENTS.md rule 8); if the limit itself seems wrong, report the
+measurements and ask. Follow AGENTS.md (log owner prompts, commit after
+an approved change, keep TODO.md results current).
+```
+
+## 83 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answer to the question of how L9 should measure "the main process is
+never held 20 ms", after the finding that its event-loop delay monitor
+reads about 16 ms on an idle Windows machine (the system timer tick):
+option 1, keep the loop awake during the searches and fail if any gap
+between its turns reaches 20 ms (option 2 was to subtract an idle
+baseline).
+
+```text
+Go with option 1, measure the longest block directly.
+```
+
+## 84 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Approval to publish the L9 measurement change (prompts 82 and 83).
+
+```text
+Push it and open a PR.
+```

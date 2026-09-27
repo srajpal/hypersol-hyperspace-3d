@@ -1523,7 +1523,7 @@ that sleep when unused; and history work moved off the main process
 | L6 | Economy mode | On: lower resolution, effects off, at most 30 frames a second, "ECO" shown; "on battery" follows the power source |
 | L7 | Sleeping tabs | An unused tab sleeps (its page is gone, card kept); opening it wakes it with its history; tabs with sound, a download, or typed text stay awake |
 | L8 | History still works | History, search, and the start panel work through the worker; E checks pass |
-| L9 | History budget | Unit benchmark: 100,000 visits, search and recent within 50 ms, main thread held at most 20 ms |
+| L9 | History budget | Unit benchmark: 100,000 visits, search and recent within 50 ms, main thread held at most 20 ms (since prompt 83: the longest gap between two turns of the main process's event loop) |
 | L10 | Keyboard and menus | The new shortcuts and menu entries work from the page and the shell |
 
 ### Check results (Windows 11, 2026-09-26)
@@ -2454,6 +2454,25 @@ repository and becomes the browser's showcase.
 ### Done when
 
 - S1 to S9 pass, screenshots are saved, and the owner accepts.
+
+## L9's measure of the main process (2026-09-27, prompts 82 and 83)
+
+L9 read the main process's event-loop delay with monitorEventLoopDelay
+and sat at 18 to 20 ms on Windows (once 20.005 ms, a failure). The cause
+was the measure, not history work: an idle Windows process wakes only
+every 15.6 ms (the system timer tick), so the monitor read 16.3 ms with
+no requests at all, and once 24.3 ms. Kept awake with a chain of
+setImmediate calls, the main thread showed no gap over 1.5 ms during
+the searches, so searches in the worker, the 500 results passed back,
+and the reply to the shell each take well under that. The history code
+is unchanged. L9 now keeps the loop awake the same way while the
+searches run and fails if any gap between two turns reaches 20 ms
+(owner, prompt 83: option 1); the limit is unchanged. Local run
+(Windows 11): L9 in seven runs, longest gap 0.6 to 1.5 ms (three runs
+of the old measure on the same code read 16.1 to 18.2 ms); searches
+after the first 1 to 32 ms, as before; all nine m10 checks passed. A 25 ms busy wait put into the main
+process during the searches read 26.5 ms and failed L9, so the probe
+catches a real hold.
 
 ## GitHub issue #30: lost clicks on Linux CI (2026-09-27, prompt 74)
 

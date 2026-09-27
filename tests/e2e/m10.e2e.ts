@@ -375,11 +375,22 @@ describe('L8 and L9: history through the worker', () => {
     h = await launch('', { userDataDir: profile });
     try {
       expect(await h.app.evaluate(() => (globalThis as unknown as { __hypersolTest: { historyWorker(): boolean } }).__hypersolTest.historyWorker())).toBe(true);
+      // The longest time the main process is held: a chain of setImmediate
+      // calls keeps its event loop turning, and the longest gap between two
+      // turns is the longest piece of work in between. (An event-loop delay
+      // timer cannot be used: an idle Windows process wakes only every
+      // 15.6 ms, so it read 16 to 24 ms with no work at all; prompt 83.)
       await h.app.evaluate(() => {
-        const { monitorEventLoopDelay } = process.getBuiltinModule('node:perf_hooks');
-        const histogram = monitorEventLoopDelay({ resolution: 5 });
-        histogram.enable();
-        (globalThis as unknown as { __lag: typeof histogram }).__lag = histogram;
+        const probe = { max: 0, stop: false };
+        let last = performance.now();
+        const turn = () => {
+          const now = performance.now();
+          probe.max = Math.max(probe.max, now - last);
+          last = now;
+          if (!probe.stop) setImmediate(turn);
+        };
+        setImmediate(turn);
+        (globalThis as unknown as { __lag: typeof probe }).__lag = probe;
       });
       const timings = await h.shell.evaluate(async () => {
         const w = window as unknown as { hypersol: { data(r: object): Promise<{ ok: boolean; value: unknown[] }> } };
@@ -396,9 +407,9 @@ describe('L8 and L9: history through the worker', () => {
         return out;
       });
       const lagMs = await h.app.evaluate(() => {
-        const histogram = (globalThis as unknown as { __lag: { max: number; disable(): void } }).__lag;
-        histogram.disable();
-        return histogram.max / 1e6;
+        const probe = (globalThis as unknown as { __lag: { max: number; stop: boolean } }).__lag;
+        probe.stop = true;
+        return probe.max;
       });
       writeFileSync(join(tmpdir(), 'hypersol-l9-timings.json'), JSON.stringify({ timings, lagMs }));
       // The first search warms the page cache (a person's first search after starting the app).
