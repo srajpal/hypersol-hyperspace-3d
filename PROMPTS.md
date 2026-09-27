@@ -895,3 +895,20 @@ Milestone 15 accepted, push the holoml branch and open a PR.
 ```text
 Plan milestone 16.
 ```
+
+## 81 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answers to the milestone 16 plan's questions (car showroom), all as
+recommended, and approval to build. Q1, where the site lives (a: in the
+holoml repository, published with GitHub Pages at
+srajpal.github.io/holoml/showroom/, with a "HoloML showroom" link on the
+browser's start panel). Q2, the car models (a: Kenney's Car Kit, CC0,
+downloaded from kenney.nl). Q3, how much site (a: the hall, a page per
+car, colour pages, and an about page). Q4, what HoloML 0.1 cannot do
+(a: stay within 0.1 and file each gap as a holoml issue for 0.2). Q5,
+the README's opening screenshot (a: the showroom, served locally, with
+the README note in AGENTS.md changed to say so).
+
+```text
+Use the recommendations for the questions, build.
+```

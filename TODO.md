@@ -27,7 +27,7 @@ Plan approved 2026-09-24.
 | 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Done (accepted, prompt 64) |
 | 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Done (accepted, prompt 76) |
 | 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Done (accepted, prompt 79) |
-| 16 | Car showroom demo | Demo site with walk-around 3D cars | Planning (prompt 80) |
+| 16 | Car showroom demo | Demo site with walk-around 3D cars | In progress (prompt 81) |
 | 17 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a) |
 | 18 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
 | 19 | macOS release | Signing, notarization, Mac checks | Later |
@@ -2334,8 +2334,9 @@ the fix. HoloML's spec note (task 6) is in holoml pull request #7
 
 ## Milestone 16 — Car showroom demo
 
-Status: Plan drafted 2026-09-27 (prompt 80), waiting for the owner's
-answers and approval. Rule 13 check done (ARCHITECTURE.md section 3).
+Status: In progress. Plan answered (prompt 81: Q1 to Q5 a, as
+recommended) and build approved (prompt 81), 2026-09-27. Pushed before
+the build. Rule 13 check done (ARCHITECTURE.md section 3).
 
 Goal: a small HoloML site that shows what HoloML 0.1 can do, the one the
 brief describes: a showroom where every car is a 3D model you walk
