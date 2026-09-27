@@ -55,6 +55,8 @@ export interface LaunchOptions {
   dnsProbe?: string;
   /** The start panel's HoloML showroom link goes to this local copy (milestone 16). */
   showroomUrl?: string;
+  /** Every HoloML example from local copies under this address (milestone 17). */
+  examplesBase?: string;
   /** Save downloads here (test mode switch). */
   downloadsDir?: string;
   /** Act as if the system keychain were missing (test mode switch, milestone 9). */
@@ -108,6 +110,7 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
   if (opts.filtersBase !== undefined) args.push(`--filters-base=${opts.filtersBase}`);
   if (opts.dnsProbe !== undefined) args.push(`--dns-probe=${opts.dnsProbe}`);
   if (opts.showroomUrl !== undefined) args.push(`--showroom-url=${opts.showroomUrl}`);
+  if (opts.examplesBase !== undefined) args.push(`--examples-base=${opts.examplesBase}`);
   if (opts.downloadsDir !== undefined) args.push(`--downloads-dir=${opts.downloadsDir}`);
   if (opts.noKeychain) args.push('--test-no-keychain');
   if (opts.sleepMinuteMs !== undefined) args.push(`--test-sleep-minute-ms=${opts.sleepMinuteMs}`);

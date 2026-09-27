@@ -42,6 +42,8 @@ export const SHORTCUTS: readonly ShortcutInfo[] = [
   { name: 'settings', label: 'Settings', keys: ['Mod+,'] },
   { name: 'layers', label: 'Layers view', keys: ['Mod+Shift+L'] },
   { name: 'instruments', label: 'Instrument panel', keys: ['Mod+Shift+I'] },
+  // Milestone 17 (owner, prompt 86, Q2 a).
+  { name: 'examples', label: 'HoloML examples', keys: ['Mod+Shift+E'] },
 ];
 
 /** Kept for editing text everywhere; no shortcut may take them. */

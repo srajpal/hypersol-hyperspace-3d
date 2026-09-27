@@ -18,6 +18,7 @@
     "typecheck": "tsc -p packages/scene-core --noEmit && tsc -p packages/themes --noEmit && tsc -p packages/holoml --noEmit && tsc -p apps/browser --noEmit && tsc -p tests --noEmit",
     "screenshots": "pnpm build && vitest run --config vitest.shots.config.ts",
     "screenshots:readme": "pnpm build && vitest run --config vitest.readme.config.ts",
+    "screenshots:examples": "pnpm build && vitest run --config vitest.examples.config.ts",
     "filters:update": "pnpm --filter @hypersol/browser filters:update",
     "holoml:sync": "node packages/holoml/sync.mjs"
   },

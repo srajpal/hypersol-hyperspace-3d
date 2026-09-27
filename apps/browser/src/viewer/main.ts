@@ -142,7 +142,8 @@ const STYLE = `
   .holoml-hud-corner[data-corner="top-left"] { left: 16px; top: 16px; }
   .holoml-hud-corner[data-corner="top-right"] { right: 16px; top: 16px; align-items: flex-end; text-align: right; }
   .holoml-hud-corner[data-corner="bottom-left"] { left: 16px; bottom: 16px; }
-  .holoml-hud-corner[data-corner="bottom-right"] { right: 16px; bottom: 16px; align-items: flex-end; text-align: right; }
+  /* Clear of HyperSpace 3D's own buttons, which sit over the page's lower right corner. */
+  .holoml-hud-corner[data-corner="bottom-right"] { right: 16px; bottom: 72px; align-items: flex-end; text-align: right; }
   .holoml-hud { color: #f2f4ff; font-weight: 600; line-height: 1.35; text-shadow: 0 1px 3px #000c, 0 0 1px #000; }
   .holoml-hud[hidden] { display: none; }
   .holoml-crosshair { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); }

@@ -59,7 +59,8 @@ export type ShortcutName =
   | 'reload'
   | 'back'
   | 'forward'
-  | 'open-file';
+  | 'open-file'
+  | 'examples';
 
 export type ShellCommand =
   | { type: 'shortcut'; name: ShortcutName }

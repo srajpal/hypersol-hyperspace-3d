@@ -90,7 +90,13 @@ export class InstancePool {
         else p.mesh.setMatrixAt(i, HIDDEN);
       }
     }
-    for (const p of this.parts) p.mesh.instanceMatrix.needsUpdate = true;
+    for (const p of this.parts) {
+      p.mesh.instanceMatrix.needsUpdate = true;
+      // Picking keeps the bounds it measured first: instances added or moved
+      // since would never be hit (found in milestone 17). Measured again when next asked.
+      p.mesh.boundingSphere = null;
+      p.mesh.boundingBox = null;
+    }
   }
 
   dispose(): void {

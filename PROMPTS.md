@@ -985,3 +985,23 @@ to 21 and is tagged when 21 ends).
 ```text
 Use the recommendations for the questions, build.
 ```
+
+## 87 — 2026-09-27 · Claude Opus 5.5, low effort
+
+A question during the milestone 17 build: whether HoloML should have
+elements for moving between scenes and for loading, given the limits on
+what one page may load.
+
+```text
+Since there is a cap on file size, should there be tags for scene
+transitions and loading?
+```
+
+## 88 — 2026-09-27 · Claude Opus 5.5, low effort
+
+A question during the milestone 17 build, about the browser's HoloML
+examples section.
+
+```text
+Will it be linked to the holoml repo inside HyperSpace 3D?
+```

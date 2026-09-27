@@ -1,0 +1,10 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML script error</title>
+    <script src="script-error.js" />
+  </head>
+  <scene>
+    <model id="car" src="models/placeholder-car.gltf" />
+    <label id="sign" position="0 2 0">Still here</label>
+  </scene>
+</holoml>

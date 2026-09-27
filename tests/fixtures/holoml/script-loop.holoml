@@ -1,0 +1,9 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML script that never stops</title>
+    <script src="script-loop.js" />
+  </head>
+  <scene>
+    <label id="sign" position="0 2 0">Busy</label>
+  </scene>
+</holoml>

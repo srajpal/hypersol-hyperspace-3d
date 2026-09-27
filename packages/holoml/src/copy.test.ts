@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error: a plain JavaScript module shared with sync.mjs
-import { COPIES, SHOWROOM, sha256, transform } from '../copies.mjs';
+import { COPIES, EXAMPLES, sha256, transform } from '../copies.mjs';
 import { check, parse } from './index';
 
 const here = fileURLToPath(new URL('..', import.meta.url));
@@ -12,10 +12,10 @@ const source = JSON.parse(readFileSync(join(here, 'SOURCE.json'), 'utf8')) as {
   tag: string;
   commit: string;
   files: Record<string, string>;
-  showroom: { ref: string; commit: string; files: Record<string, string> };
+  examples: { ref: string; commit: string; files: Record<string, string> };
 };
 const copies = COPIES as { from: string; to: string }[];
-const showroom = SHOWROOM as { from: string; to: string; skip: RegExp };
+const examples = EXAMPLES as { from: string; to: string; names: string[]; skip: RegExp };
 const hash = sha256 as (t: string | Buffer) => string;
 
 describe('the copy of HoloML (owner, prompt 65, Q4 a)', () => {
@@ -38,22 +38,24 @@ describe('the copy of HoloML (owner, prompt 65, Q4 a)', () => {
     }
   });
 
-  it('has the showroom unchanged since it was copied (milestone 16)', () => {
-    const names = Object.keys(source.showroom.files);
-    expect(names).toContain('index.holoml');
-    for (const name of names) expect(hash(readFileSync(join(here, showroom.to, name))), name).toBe(source.showroom.files[name]);
+  it('has the example sites unchanged since they were copied (milestones 16 and 17)', () => {
+    const names = Object.keys(source.examples.files);
+    for (const site of examples.names) expect(names).toContain(`${site}/index.holoml`);
+    for (const name of names) expect(hash(readFileSync(join(here, examples.to, name))), name).toBe(source.examples.files[name]);
   });
 
-  it.skipIf(!existsSync(join(holoml, '.git')))(`has the showroom as the holoml repository has it at ${source.showroom.ref}`, () => {
-    const listed = execFileSync('git', ['-C', holoml, 'ls-tree', '-r', '--name-only', source.showroom.commit, showroom.from], { encoding: 'utf8' })
-      .split('\n')
-      .filter(Boolean)
-      .map((p) => p.slice(showroom.from.length))
-      .filter((n) => !showroom.skip.test(n));
-    expect(Object.keys(source.showroom.files).sort()).toEqual(listed.sort());
+  it.skipIf(!existsSync(join(holoml, '.git')))(`has the example sites as the holoml repository has them at ${source.examples.ref}`, () => {
+    const listed = examples.names.flatMap((site) =>
+      execFileSync('git', ['-C', holoml, 'ls-tree', '-r', '--name-only', source.examples.commit, `${examples.from}${site}/`], { encoding: 'utf8' })
+        .split('\n')
+        .filter(Boolean)
+        .map((p) => p.slice(examples.from.length))
+        .filter((n) => !examples.skip.test(n.slice(site.length + 1))),
+    );
+    expect(Object.keys(source.examples.files).sort()).toEqual(listed.sort());
     for (const name of listed) {
-      const original = execFileSync('git', ['-C', holoml, 'show', `${source.showroom.commit}:${showroom.from}${name}`]);
-      expect(hash(readFileSync(join(here, showroom.to, name))), name).toBe(hash(original));
+      const original = execFileSync('git', ['-C', holoml, 'show', `${source.examples.commit}:${examples.from}${name}`]);
+      expect(hash(readFileSync(join(here, examples.to, name))), name).toBe(hash(original));
     }
   });
 

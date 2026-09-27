@@ -149,6 +149,13 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
       t['play'] = () => (e.removed ? undefined : e.sound?.play());
       t['stop'] = () => (e.removed ? undefined : e.sound?.stop());
       define('playing', () => e.soundReport?.playing === true);
+      define(
+        'volume',
+        () => e.sound?.volume,
+        (v) => {
+          if (e.sound) e.sound.volume = unit(v, 'volume');
+        },
+      );
     }
     t['remove'] = () => view.removeEntry(e);
     const frozen = Object.freeze(t) as unknown as HolomlThing;

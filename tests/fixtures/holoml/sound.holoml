@@ -1,0 +1,10 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML sound</title>
+  </head>
+  <scene>
+    <label id="sign" position="0 2 0">Listen</label>
+    <sound id="tone" src="gen/tone.wav" loop autoplay volume="0.5" />
+    <sound id="big" src="gen/big.wav?mb=40" />
+  </scene>
+</holoml>

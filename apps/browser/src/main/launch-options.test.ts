@@ -75,6 +75,10 @@ describe('parseLaunchOptions', () => {
     expect(parseLaunchOptions([showroom], {}).showroomUrl).toBeUndefined();
     expect(parseLaunchOptions([showroom], { HYPERSOL_TEST: '1' }).showroomUrl).toBe('http://127.0.0.1:5000/holoml/showroom/index.holoml');
     expect(parseLaunchOptions(['--showroom-url=https://x.example/index.holoml'], { HYPERSOL_TEST: '1' }).showroomUrl).toBeUndefined();
+    // Every example's local stand-in (milestone 17): the same rules.
+    expect(parseLaunchOptions(['--examples-base=http://127.0.0.1:5000/holoml/'], { HYPERSOL_TEST: '1' }).examplesBase).toBe('http://127.0.0.1:5000/holoml/');
+    expect(parseLaunchOptions(['--examples-base=http://127.0.0.1:5000/holoml/'], {}).examplesBase).toBeUndefined();
+    expect(parseLaunchOptions(['--examples-base=https://srajpal.github.io/holoml/'], { HYPERSOL_TEST: '1' }).examplesBase).toBeUndefined();
   });
 });
 

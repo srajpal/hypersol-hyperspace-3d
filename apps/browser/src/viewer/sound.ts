@@ -74,6 +74,13 @@ export class SoundBank {
       },
       play: () => this.play(s),
       stop: () => this.stop(s),
+      get volume() {
+        return s.volume;
+      },
+      set volume(v: number) {
+        s.volume = v;
+        if (s.gain) s.gain.gain.value = v;
+      },
       remove: () => {
         this.stop(s);
         this.sounds.delete(s);
@@ -164,5 +171,7 @@ export interface SoundHandle {
   fail(state: 'failed' | 'left-out' | 'refused', reason: string): void;
   play(): void;
   stop(): void;
+  /** How loud, from 0 to 1; can be changed while it plays. */
+  volume: number;
   remove(): void;
 }

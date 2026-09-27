@@ -21,6 +21,7 @@ export type MenuAction =
   | 'library'
   | 'settings'
   | 'shortcuts'
+  | 'examples'
   | 'about';
 
 const icon = {
@@ -734,6 +735,9 @@ export class HsToolbar extends LitElement {
               </button>
               <button role="menuitem" data-testid="menu-shortcuts" @click=${() => this.menu('shortcuts')}>
                 Keyboard shortcuts
+              </button>
+              <button role="menuitem" data-testid="menu-examples" @click=${() => this.menu('examples')}>
+                HoloML examples <kbd>${this.keys['examples'] ?? ''}</kbd>
               </button>
               <button role="menuitem" data-testid="menu-about" @click=${() => this.menu('about')}>
                 About HyperSpace 3D

@@ -194,6 +194,8 @@ export class HolomlView {
   private readonly listeners = { click: new Set<(e: SceneEvent) => void>(), key: new Set<(e: SceneEvent) => void>(), frame: new Set<(e: SceneEvent) => void>() };
   private readonly version: string;
   private sceneId: string | null = null;
+  /** The page's own ambient lights (HoloML 0.2: the soft light from around follows them). */
+  private readonly ambients: AmbientLight[] = [];
   onReady: (() => void) | null = null;
   /** Loading began or ended (the shell's stop button and loading strip). */
   onBusy: ((busy: boolean) => void) | null = null;
@@ -715,6 +717,7 @@ export class HolomlView {
     if (type === 'ambient') {
       light = new AmbientLight(c, intensity);
       factor = 1;
+      this.ambients.push(light as AmbientLight);
     } else if (type === 'directional') {
       const d = new DirectionalLight(c, intensity * 2);
       d.position.set(...vec3(el, 'position', [0, 10, 10]));
@@ -1064,6 +1067,8 @@ export class HolomlView {
 
   /** What is in the middle of the view (under the crosshair). */
   aim(): Hit | null {
+    // The view may have turned since the last frame was drawn.
+    this.camera.updateMatrixWorld();
     this.scene.updateMatrixWorld();
     for (const pool of this.pools.values()) pool.sync();
     return this.hitAt(new Vector2(0, 0));
@@ -1227,13 +1232,13 @@ export class HolomlView {
     const into = parent?.object ?? this.scene;
     tops.forEach((node, i) => {
       const next = tops[i + 1];
+      if (!['group', 'model', 'light', 'label', 'sound'].includes(node.name)) {
+        console.warn(`HoloML: holoml.add adds groups, models, lights, labels, and sounds, not <${node.name}>.`);
+        return;
+      }
       const own = problems.filter((p) => after(p, node.start) && (!next || !after(p, next.start)));
       if (own.length > 0) {
         for (const p of own) console.warn(`HoloML: holoml.add: line ${p.line - 1}, column ${p.column}: ${p.message}; <${node.name}> left out.`);
-        return;
-      }
-      if (!['group', 'model', 'light', 'label', 'sound'].includes(node.name)) {
-        console.warn(`HoloML: holoml.add adds groups, models, lights, labels, and sounds, not <${node.name}>.`);
         return;
       }
       const entry = this.build(node, into, parent, parent?.link ?? null, (parent?.depth ?? -1) + 1, true, animates);
@@ -1474,10 +1479,23 @@ export class HolomlView {
       this.scene.updateMatrixWorld();
       for (const pool of this.pools.values()) pool.sync();
     }
+    this.followAmbient();
     this.renderer.render(this.scene, this.camera);
     this.frames += 1;
     if (moving) this.requestFrame();
     else this.last = 0;
+  }
+
+  /**
+   * The soft light from around the scene (the environment, for paint and
+   * metal) is the renderer's. In a 0.2 page that has ambient lights, it
+   * follows their brightness, so a page can make night (milestone 17);
+   * 0.1 pages look as they did.
+   */
+  private followAmbient(): void {
+    if (this.version !== '0.2' || this.ambients.length === 0) return;
+    const ambient = this.ambients.reduce((sum, l) => sum + (l.parent ? l.intensity : 0), 0);
+    this.scene.environmentIntensity = 0.45 * Math.min(1, ambient / 0.6);
   }
 
   /** Moves every animate element on; true while any still runs. */

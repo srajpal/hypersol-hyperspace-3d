@@ -224,7 +224,8 @@ export function walkControls(camera: PerspectiveCamera, element: HTMLElement, lo
     mode: 'walk',
     target,
     step(dt) {
-      if (held.size === 0 && !airborne) return false;
+      // With gravity, every frame checks the ground: a block under the feet may be gone.
+      if (held.size === 0 && !airborne && !physics?.walker.gravity) return false;
       const d = (WALK_SPEED * (running ? RUN : 1) * dt) / 1000;
       move((held.has('f') ? d : 0) - (held.has('b') ? d : 0), (held.has('r') ? d : 0) - (held.has('l') ? d : 0), dt / 1000);
       return held.size > 0 || airborne;

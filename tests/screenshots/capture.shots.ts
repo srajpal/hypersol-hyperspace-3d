@@ -359,6 +359,55 @@ it('captures the main screens', async () => {
     await capture(show, '48-showroom-car');
   } finally {
     await show.close();
+  }
+  // Milestone 17: Blockworld by day and at night, the examples, and the start panel.
+  const game = await launch(server.url('link-a.html'), { examplesBase: server.url('holoml/') });
+  const BW = 'blockworld/index.holoml';
+  const inGame = (page: string) => waitFor('the game', () => inPage<boolean>(game, 'window.__holoml?.ready === true', page), (r) => r, 30_000);
+  const landed = (page: string) => waitFor('standing', () => inPage<boolean>(game, 'window.__holoml.walker()?.onGround ?? false', page), (v) => v, 15_000);
+  try {
+    await waitForPage(game, 'link-a');
+    await pressInShell(game, 'T', ['control']);
+    await game.shell.locator('[data-testid="start-examples"]').waitFor({ state: 'visible' });
+    await settled(game);
+    await capture(game, '49-start-panel-examples');
+    await game.shell.click('[data-testid="start-examples"]');
+    await game.shell.locator('hs-examples [data-testid="examples"]').waitFor({ state: 'visible' });
+    await sleep(500);
+    await capture(game, '50-examples');
+    await game.shell.click('hs-examples [data-testid="example-open-blockworld"]');
+    await waitForPage(game, BW);
+    await inGame(BW);
+    await landed(BW);
+    await inPage(game, 'holoml.viewer.lookAt([3, 6.2, -8]), true', BW);
+    await sleep(2500);
+    await capture(game, '51-blockworld');
+    // At night, with torches placed on the ground ahead.
+    const NIGHT = `${BW}?hour=21.5`;
+    await shellCall(game, 'showUrl', server.url(`holoml/${NIGHT}`));
+    await waitForPage(game, 'hour=21.5');
+    await inGame('hour=21.5');
+    await landed('hour=21.5');
+    await pressInPage(game, '5', [], 'hour=21.5');
+    for (const [x, z] of [[-2, -3], [3, -2], [0, -6]] as [number, number][]) {
+      // Stand near each place, and put a torch on the ground there.
+      const top = await inPage<number>(game, `window.blockworld.top(${x}, ${z})`, 'hour=21.5');
+      await inPage(game, `holoml.viewer.position = [${x + 0.5}, ${top + 1.7}, ${z + 3.5}], true`, 'hour=21.5');
+      await sleep(700);
+      await inPage(game, `holoml.viewer.lookAt([${x + 0.5}, ${top - 0.5}, ${z + 0.5}]), true`, 'hour=21.5');
+      await sleep(200);
+      await pressInPage(game, 'q', [], 'hour=21.5');
+      await sleep(200);
+    }
+    // Then back, to see them from a distance.
+    const back = await inPage<number>(game, 'window.blockworld.top(0, 5)', 'hour=21.5');
+    await inPage(game, `holoml.viewer.position = [0.5, ${back + 1.7}, 5.5], true`, 'hour=21.5');
+    await sleep(900);
+    await inPage(game, 'holoml.viewer.lookAt([0.5, 4.5, -5]), true', 'hour=21.5');
+    await sleep(2000);
+    await capture(game, '52-blockworld-night');
+  } finally {
+    await game.close();
     await server.close();
   }
-}, 360_000);
+}, 480_000);

@@ -192,6 +192,7 @@ function createWindow(): void {
   if (options.testMode) query['test'] = '1';
   if (options.searchUrl) query['searchUrl'] = options.searchUrl;
   if (options.showroomUrl) query['showroomUrl'] = options.showroomUrl;
+  if (options.examplesBase) query['examplesBase'] = options.examplesBase;
   if (options.testSleepMinuteMs) query['sleepMinuteMs'] = String(options.testSleepMinuteMs);
 
   const devServer = process.env['ELECTRON_RENDERER_URL'];

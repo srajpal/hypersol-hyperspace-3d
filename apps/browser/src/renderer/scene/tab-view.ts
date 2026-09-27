@@ -19,6 +19,8 @@ export interface TabViewEvents {
   onStartSubmit(text: string): void;
   /** A bookmark or history entry chosen on the start panel. */
   onStartOpen(url: string): void;
+  /** "All HoloML examples" on the start panel (milestone 17). */
+  onStartExamples(): void;
   /** "Open anyway" on a blocked page: let this address through once in this tab. */
   allowOnce(url: string): Promise<void>;
   /** After a failed lookup: true if encrypted DNS is blocked on this network. */
@@ -111,6 +113,7 @@ export class TabView implements PagePanel {
       this.start = new StartPanel(
         (text) => this.events.onStartSubmit(text),
         (address) => this.events.onStartOpen(address),
+        () => this.events.onStartExamples(),
       );
       if (isPrivate) {
         const note = document.createElement('p');

@@ -1,6 +1,7 @@
 import './styles.css';
 import './hud/toolbar';
 import './hud/about';
+import './hud/examples';
 import './hud/library';
 import './hud/settings';
 import './hud/shield';
@@ -18,7 +19,7 @@ import { DEFAULT_TILT_DEG, clampTilt } from '@hypersol/scene-core';
 import { defaultTheme } from '@hypersol/themes';
 import type { ShellBridge } from '../shared/commands';
 import { App } from './app';
-import { setShowroomUrl } from './scene/start-panel';
+import { setExampleUrl, setExamplesBase } from './examples';
 import type { CardPart } from './scene/tab-card';
 import { applyThemeCss } from './themes/apply';
 
@@ -35,8 +36,11 @@ about.electron = bridge.versions.electron;
 about.chrome = bridge.versions.chrome;
 about.addEventListener('hs-about-closed', () => app.focusedView?.focusContent());
 
-// Test runs only: the start panel's showroom link goes to a local copy.
-if (params.get('showroomUrl')) setShowroomUrl(params.get('showroomUrl')!);
+// Test runs only: the HoloML examples (or just the showroom) from local copies.
+if (params.get('examplesBase')) setExamplesBase(params.get('examplesBase')!);
+if (params.get('showroomUrl')) setExampleUrl('showroom', params.get('showroomUrl')!);
+const examples = document.querySelector('hs-examples')!;
+examples.addEventListener('hs-examples-closed', () => app.focusedView?.focusContent());
 
 const app = new App({
   startUrl: params.get('startUrl') ?? '',
@@ -49,6 +53,7 @@ const app = new App({
   roomElement: document.getElementById('room') as HTMLElement,
   toolbar,
   about,
+  examples,
   library: document.querySelector('hs-library')!,
   settingsPanel: document.querySelector('hs-settings')!,
   shield: document.querySelector('hs-shield')!,
