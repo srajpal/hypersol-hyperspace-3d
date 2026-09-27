@@ -854,3 +854,18 @@ agent; milestone 14 is accepted; pull requests #31 and #32 are merged.
 ```text
 Your call on G9, and milestone 14 is accepted. PRs merged. Continue.
 ```
+
+## 77 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answers to the milestone 15 plan's questions (HoloML hardening), all as
+recommended. Q1, the limits per page (a: 2 MB of text, 10,000 elements,
+64 models, 32 MB a file, 128 MB of model files in all, pictures up to
+4096 by 4096, 2 million triangles, 30 s a model). Q2, a model over a
+limit (a: left out and marked, the rest shown, with a notice). Q3, a
+flat view (a: reduced motion followed, plus a text view switch). Q4, the
+inspector (a: a Scene part of the instrument panel). Q5, what Tab
+reaches in a scene (a: links and named things, in page order).
+
+```text
+Use the recommendations for the questions.
+```

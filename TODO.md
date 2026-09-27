@@ -26,7 +26,7 @@ Plan approved 2026-09-24.
 | 12 | Developer preview 0.9.0 | Source release for developers: privacy and proofreading pass, legal and project files, automatic builds and tests on Windows and Linux (GitHub issue #5), Electron check, trademark and `.holo` checks, version 0.9.0 | Done (accepted, prompt 61; released as v0.9.0) |
 | 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Done (accepted, prompt 64) |
 | 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Done (accepted, prompt 76) |
-| 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Later (prompt 67, Q1 a) |
+| 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Planned; answers in (prompt 77: Q1 to Q5 a); waiting for the go to build |
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Later |
 | 17 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a) |
 | 18 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
@@ -2181,6 +2181,126 @@ listen on the canvas itself.
   P2 b (keep both founders' names in the README), P3 b (keep the commit
   email). HoloML (prompt 58): H1 a (HTML-like tags), H2 a (glTF 2.0
   models).
+
+## Milestone 15 — HoloML hardening
+
+Status: Planned 2026-09-27 (prompt 76). Answers 2026-09-27 (prompt 77):
+Q1 to Q5 a, as recommended. Waiting for the owner's go to build.
+Pushed before planning. Rule 13 check done
+(ARCHITECTURE.md section 3).
+
+Goal: HoloML pages stay safe and usable at any size and for anyone. A
+heavy or hostile scene cannot exhaust memory or freeze the browser
+(GitHub issue #23). A scene can be used without precise mouse movement,
+without depth or motion, and with a screen reader (#25). An author can
+see why a scene looks the way it does (#28).
+
+### How it would work (proposed)
+
+- Limits (#23). The viewer loads each model through its own counted
+  fetch, including the files a glTF names (buffers, pictures), so every
+  byte counts against the page's limits before anything is decoded.
+  After decoding, it counts pictures' sizes and triangles. Proposed
+  limits per page:
+  - page text: 2 MB;
+  - elements: 10,000;
+  - models: 64;
+  - one file: 32 MB;
+  - all of a page's model files together: 128 MB;
+  - one picture: 4096 by 4096 pixels;
+  - triangles in all: 2 million;
+  - a model that has not loaded after 30 seconds is given up.
+- What a limit means (Q2): the model that crosses it is not shown and is
+  marked where it would be. The rest of the scene shows, and a notice
+  says what was left out and why.
+- Stopping. Esc, or the top bar's stop button while models load, stops
+  every pending load. Leaving the page disposes of everything; the
+  browser's own controls live in another process and stay responsive
+  whatever the page does.
+- Keyboard and screen readers (#25):
+  - Tab moves through the scene's links and named things (models,
+    groups, and labels with an id or text), in the order the page lists
+    them. The object in focus is outlined and its name is announced.
+  - Enter follows a link; the arrow keys still move the view.
+  - A text outline of the scene (title, each named thing with its label,
+    and its links) is in the page for screen readers.
+  - Focus stays on the same object when others appear or go; if its
+    object goes, focus moves to the next one.
+- Without depth and motion (Q3): with the system's "reduce motion" on,
+  animations show their end state and the view moves without gliding. A
+  "text view" switch shows the outline as a plain page: the same names
+  and links, with no 3D.
+- The inspector (#28, Q4): when a HoloML page is in front, the
+  instrument panel gains a Scene part. It shows:
+  - the scene's objects as a tree;
+  - for the selected one, its line of the page's text, its bounds,
+    position, rotation, and scale, and its triangles and picture sizes;
+  - every problem and every model that failed or was left out, with its
+    line and column.
+  - A pick button lets a click in the scene select an object instead of
+    following a link. All of it works from the keyboard.
+  - The browser reads these facts from the viewer only for pages the
+    main process marked as HoloML.
+
+### Questions
+
+- Q1, the limits. a: the ones above (recommended: roomy for a showroom
+  of detailed cars, far below what freezes a machine). b: stricter
+  (half of each). c: looser (double each).
+- Q2, a model over a limit. a: it is left out and marked, the rest of the
+  scene shows, and a notice says why (recommended, as the viewer already
+  treats a model that fails). b: the whole page is refused, with a card.
+- Q3, a flat view. a: reduced motion followed automatically, plus a text
+  view switch (a top-bar button, and Ctrl+Shift+V) that shows the scene
+  as a plain page of names and links (recommended). b: reduced motion
+  and the screen-reader outline only, with no visible text view.
+- Q4, where the inspector lives. a: a Scene part of the instrument panel,
+  beside the page readouts, console, and network list (recommended: one
+  place for developer tools). b: a panel of its own.
+- Q5, what Tab reaches in a scene. a: links and named things, in page
+  order (recommended). b: links only, as now.
+
+### Tasks
+
+- [ ] 1. Limits: counted loading of models and the files they name,
+      picture and triangle checks, the page's limits, the notice, and
+      marks for what was left out.
+- [ ] 2. Stopping: Esc and the stop button while loading; everything
+      disposed of when the page goes.
+- [ ] 3. Keyboard: Tab through links and named things, the focus
+      outline, announcements, and focus kept steady.
+- [ ] 4. The outline for screen readers, and the text view (per Q3);
+      reduced motion.
+- [ ] 5. The inspector's Scene part (per Q4): tree, selection and pick,
+      source line, bounds, transforms, costs, and diagnostics.
+- [ ] 6. HoloML's own spec (holoml repository): a note that renderers
+      may set resource limits, with the browser's as an example. Wording
+      only; no change to the language.
+- [ ] 7. Documents: README, ARCHITECTURE, docs/privacy.md (nothing new is
+      sent), the Testing section, HANDOFF; screenshots, and the README
+      screenshot.
+
+### Checks
+
+Named R: Q is skipped, so that checks are not confused with the
+questions.
+
+| # | Check | Expected result |
+|---|---|---|
+| R1 | Oversized files | A model file over 32 MB, and a page whose models add up to more than 128 MB, are left out with a mark and a notice; the rest shows |
+| R2 | Big pictures, many triangles | A 8192 by 8192 picture, and models over 2 million triangles in all, are left out the same way |
+| R3 | Many elements | A page of 20,000 elements shows the first part and says the rest was left out; the browser stays responsive (a shell action answers within 200 ms) |
+| R4 | Slow and stopped | A model that never finishes is given up after 30 s; Esc and the stop button stop pending loads at once |
+| R5 | Repeated visits | Ten visits back and forth between two heavy pages leave the page process's memory where it was after the first |
+| R6 | Keyboard | Tab reaches every link and named thing in page order with a visible outline; Enter follows links; focus holds when objects appear or go |
+| R7 | Screen readers | The accessibility tree has the outline: the page title, each named thing with its name, and each link with its text and address |
+| R8 | Without motion | With reduced motion, animations show their end at once; the text view shows the same names and links as a plain page |
+| R9 | Inspector | Picking an object shows its source line, bounds, transforms, and costs; problems and failed models are listed with line and column; it all works from the keyboard |
+| R10 | Regression | C to P pass, the unit tests, and the HoloML conformance samples |
+
+### Done when
+
+- R1 to R10 pass, screenshots are saved, and the owner accepts.
 
 ## GitHub issue #30: lost clicks on Linux CI (2026-09-27, prompt 74)
 

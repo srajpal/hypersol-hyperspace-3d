@@ -5,7 +5,8 @@ Last updated 2026-09-27 (milestone 12, the 0.9.0 developer preview,
 accepted and released; milestone 13, HoloML v0.1 in the holoml
 repository, accepted; milestone 14, HoloML pages in the browser,
 accepted; HoloML 0.1.1 copied in; milestone 15, HoloML hardening, is
-next).
+planned in TODO.md (answers in: Q1 to Q5 a) and waits for the go to
+build).
 
 ## Where things stand
 
