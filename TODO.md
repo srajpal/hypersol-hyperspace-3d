@@ -2204,6 +2204,9 @@ repository follow the merge.
 
 Also: the HoloML viewer ignores numbers too large to draw and survives
 a checker failure, until HoloML 0.1.1 (holoml #1, #3) is copied in.
+HoloML 0.1.1 (holoml v0.1.1, commit 307315b) is now copied in with pnpm
+holoml:sync (branch sync/holoml-0.1.1); the viewer keeps both guards as
+a second line.
 
 ## GitHub issues #8 to #15 (2026-09-26, prompt 39)
 
