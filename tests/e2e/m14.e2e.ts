@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FIXTURES_DIR, startFixtureServer, type FixtureServer } from './fixture-server';
 import {
   clickAt,
+  clickUntil,
   focusedTab,
   inPage,
   launch,
@@ -224,14 +225,12 @@ describe('P4: links', () => {
 
   it('a click on a linked model opens its page, Back returns, and a linked label works too', async () => {
     expect(await holo<string[]>(h, 'window.__holoml.links()', PAGE)).toEqual([server.url('holoml/second.holoml'), server.url('holoml/second.holoml#top')]);
-    await clickAt(h, await screenOf(h, 0, PAGE));
-    await waitFor('the second page', async () => (await focusedTab(h)).url, (u) => u === server.url('holoml/second.holoml'));
+    await clickUntil(h, await screenOf(h, 0, PAGE), 'the second page', async () => (await focusedTab(h)).url === server.url('holoml/second.holoml'));
     await sceneReady(h, 'second.holoml');
     await pressInShell(h, 'Left', ['alt']);
     await waitFor('back', async () => (await focusedTab(h)).url, (u) => u === server.url('holoml/still.holoml'));
     await sceneReady(h, PAGE);
-    await clickAt(h, await screenOf(h, 1, PAGE));
-    await waitFor('the label link', async () => (await focusedTab(h)).url, (u) => u === server.url('holoml/second.holoml#top'));
+    await clickUntil(h, await screenOf(h, 1, PAGE), 'the label link', async () => (await focusedTab(h)).url === server.url('holoml/second.holoml#top'));
   });
 
   it('Tab reaches a link from the keyboard, and Enter follows it', async () => {
@@ -455,8 +454,7 @@ describe('P9: HoloML files on the computer', () => {
     const models = await holo<Model[]>(h, 'window.__holoml.models()', 'local.holoml');
     expect(models.map((m) => m.state)).toEqual(['loaded', 'failed']);
     // A link to another file in the folder works.
-    await clickAt(h, await screenOf(h, 0, 'local.holoml'));
-    await waitFor('next file', async () => (await focusedTab(h)).url, (u) => u === url.replace('local.holoml', 'second.holoml'));
+    await clickUntil(h, await screenOf(h, 0, 'local.holoml'), 'next file', async () => (await focusedTab(h)).url === url.replace('local.holoml', 'second.holoml'));
     await sceneReady(h, 'hypersol-file');
   });
 
