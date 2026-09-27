@@ -784,3 +784,33 @@ Sent while the README was being updated.
 ```text
 Check the comments on the PRs for both repos and address them.
 ```
+
+## 70 — 2026-09-27 · Codex, effort not recorded
+
+```text
+HyperSpace 3D and HoloML are examples of what can be made using agentic
+coding, especially the concepts taught in Buildwright. Add a professional
+README section to both that credits those concepts, links to
+buildwrightcourses.com, defines the Five Moves, and briefly explains how
+they were used in each project. Put it before "What comes next" in
+HyperSpace and in an appropriate place in HoloML. Add HoloML to the
+website's ideas section. Critically assess whether this is a good move.
+```
+
+The domain spelling is normalized to the owner's existing website materials.
+
+## 71 — 2026-09-27 · Codex, effort not recorded
+
+```text
+Also credit Codex as a contributor in the commits, as Claude is credited.
+```
+
+## 72 — 2026-09-27 · Codex, effort not recorded
+
+Approval to push the completed Buildwright README updates to both public
+repositories, following the summary of the changes and the repository's
+explicit-push rule.
+
+```text
+Push.
+```
