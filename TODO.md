@@ -2455,7 +2455,7 @@ repository and becomes the browser's showcase.
 | # | Check | Expected result |
 |---|---|---|
 | S1 | Valid pages | Every showroom page passes HoloML's checker with no problems (holoml unit tests) |
-| S2 | Loads whole and fast | The hall is ready within 5 s from 127.0.0.1; no model is left out or fails; the Scene part's totals are under the budget |
+| S2 | Loads whole and fast | The hall is ready within 5 s from 127.0.0.1 with a graphics card (drawn in software, measured and logged instead, prompt 95); no model is left out or fails; the Scene part's totals are under the budget |
 | S3 | Walk around | Each car page starts in walk mode; walking moves around the car at eye height |
 | S4 | Links and colours | Every link reaches its page and Back returns; each colour page shows its paint (the material's colour read back) |
 | S5 | For everyone | Tab reaches every car by name; the text view lists the cars and links; with reduced motion the turntable stands still |
@@ -2645,7 +2645,7 @@ Named T (milestone 16 used S).
 | T2 | Scripts | A page's script from its own site runs and changes the scene through the API; an inline script, or one from another site, does not run, and the console says why; a script error is shown in the console and the scene stays; a script that never stops leaves the browser's controls answering within 200 ms, and closing the tab works |
 | T3 | Sound | Nothing plays before the first click or key; after it, a sound plays (checked through the page's audio state); the tab's mute silences it; a sound file over the limits is left out like a model |
 | T4 | Walls and gravity | The walker falls to the ground, stands on blocks, jumps with Space, and cannot pass through solid blocks or walk through the chest |
-| T5 | Many blocks | Blockworld's island (several thousand blocks) loads within 5 s from 127.0.0.1 and draws at 30 frames a second or more with a graphics card (skipped in software, as C9) |
+| T5 | Many blocks | Blockworld's island (several thousand blocks) loads within 5 s from 127.0.0.1 and draws at 30 frames a second or more, both with a graphics card (drawn in software, as on GitHub's machines, both are measured and logged instead: the frame rate as C9, prompt 59; the load time since prompt 95) |
 | T6 | Playing | Breaking and placing by mouse and by keyboard; keys 1 to 5 change the block shown on screen; picking up a gem counts it; five gems in the chest show "You won"; night comes and a torch lights its surroundings |
 | T7 | For everyone | Blockworld can be played from the keyboard alone; the screen text is in the text view and the accessibility tree; with reduced motion the day stands still at noon |
 | T8 | The examples section | Opens from the start panel, the menu, and Ctrl+Shift+E; shows the showroom and Blockworld with their screenshots; Open goes to the example's address (a local copy in the test); usable from the keyboard; opening the panel fetches nothing (no unexpected traffic) |
@@ -2992,6 +2992,13 @@ What was wrong, and what changed (the requirements are unchanged):
 - HYPERSOL_TEST_SOFTWARE=1 draws in software on any machine, as GitHub's
   machines do: with it, milestones 15 to 18 failed here as on GitHub
   (T6, T7, T8, S3), and pass after these changes (50 of 50).
+
+Load budgets (owner, prompt 95): on the pull request's Linux run the
+showroom took 9.3 s and Blockworld 5.7 s to load, against the 5-second
+budgets of S2 and T5 (with a graphics card both load well under that).
+The owner chose to treat them like the frame-rate budgets (prompt 59):
+drawn in software, the load time is measured and logged, not checked;
+with a graphics card, 5 s still applies.
 
 Results: see the pull request's automatic builds.
 

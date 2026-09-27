@@ -1077,3 +1077,17 @@ are worked on as they report: yes.
 ```text
 Go ahead. Let me know if something needs merging before the next step.
 ```
+
+## 95 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answer to the agent's question about the 5-second load budgets (checks
+S2 and T5) on machines that draw in software, such as GitHub's Linux
+machines, where the showroom took 9.3 s and Blockworld 5.7 s. The
+choices were: as with the frame-rate budgets (prompt 59), measured and
+logged but not checked there, still 5 s with a graphics card; 5 s
+everywhere; or a larger budget in software. Chosen: like the frame-rate
+budgets.
+
+```text
+Like frame rates (recommended).
+```

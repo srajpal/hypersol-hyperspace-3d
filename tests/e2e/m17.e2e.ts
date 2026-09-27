@@ -293,7 +293,11 @@ describe('T5 to T7: Blockworld', () => {
   afterAll(async () => h?.close());
 
   it('T5 the island of blocks loads within 5 s and draws smoothly, with few draw calls', async () => {
-    expect(loadMs).toBeLessThan(5000);
+    const software = await softwareRenderer(h);
+    // Within 5 s with a graphics card. Drawn in software (GitHub's machines), the time is
+    // logged, not checked, as the frame rate below is (owner, prompts 59 and 95).
+    if (software) console.log(`T5: loaded in ${loadMs} ms; the 5-second budget not checked: drawing in software (${software})`);
+    else expect(loadMs).toBeLessThan(5000);
     const blocks = await bw<number>('blocks');
     expect(blocks).toBeGreaterThan(1000);
     const stats = await holo<{ calls: number; pools: { src: string; count: number }[] }>(h, 'window.__holoml.stats()', PAGE);
@@ -302,7 +306,6 @@ describe('T5 to T7: Blockworld', () => {
     const f0 = await holo<number>(h, 'window.__holoml.frames', PAGE);
     await sleep(2000);
     const fps = ((await holo<number>(h, 'window.__holoml.frames', PAGE)) - f0) / 2;
-    const software = await softwareRenderer(h);
     // With a graphics card, 30 frames a second or more; drawn in software (GitHub's machines), only that it draws, as C9.
     expect(fps).toBeGreaterThan(software ? 0 : 30);
   });

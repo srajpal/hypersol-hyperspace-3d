@@ -109,11 +109,16 @@ describe('S2 to S7: the showroom', () => {
 
   it('S2 the hall loads whole within 5 seconds, inside the budget', async () => {
     const PAGE = 'index.holoml';
+    const software = await softwareRenderer(h);
     const started = Date.now();
     await shellCall(h, 'showUrl', url(`${PAGE}?s2`));
     await waitForPage(h, `${PAGE}?s2`);
-    await ready(h, `${PAGE}?s2`, 5000);
-    expect(Date.now() - started).toBeLessThan(5000);
+    await ready(h, `${PAGE}?s2`, software ? 60_000 : 5000);
+    const loadMs = Date.now() - started;
+    // Within 5 s with a graphics card. Drawn in software (GitHub's machines), the time is
+    // logged, not checked, as the frame-rate budgets are (owner, prompts 59 and 95).
+    if (software) console.log(`S2: loaded in ${loadMs} ms; the 5-second budget not checked: drawing in software (${software})`);
+    else expect(loadMs).toBeLessThan(5000);
     const states = (await models(h, PAGE)).map((m) => m.state);
     expect(states.length).toBe(11); // the hall, five plinths, five cars
     expect(states.every((s) => s === 'loaded'), JSON.stringify(states)).toBe(true);
