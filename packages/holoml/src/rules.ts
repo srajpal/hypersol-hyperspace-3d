@@ -1,5 +1,5 @@
 // Copied from the holoml repository (https://github.com/srajpal/holoml),
-// packages/schema/src/rules.ts at main. Apache License 2.0, The HoloML Authors.
+// packages/schema/src/rules.ts at speed-and-slider. Apache License 2.0, The HoloML Authors.
 // Do not edit here: change HoloML there and run pnpm holoml:sync.
 
 /**
@@ -98,7 +98,7 @@ export const ELEMENTS: Readonly<Record<string, ElementRule>> = {
     attributes: { src: { value: { kind: 'url', for: 'script' }, required: true } },
   },
   scene: {
-    children: [...SCENE_CONTENT, 'viewpoint', 'hud'],
+    children: [...SCENE_CONTENT, 'viewpoint', 'hud', 'slider'],
     once: ['viewpoint'],
     attributes: {
       id: { value: { kind: 'id' }, since: '0.2' },
@@ -138,6 +138,8 @@ export const ELEMENTS: Readonly<Record<string, ElementRule>> = {
       gravity: { value: { kind: 'flag' }, since: '0.2' },
       jump: { value: { kind: 'flag' }, since: '0.2' },
       crosshair: { value: { kind: 'flag' }, since: '0.2' },
+      speed: { value: { kind: 'number', min: 0.5, max: 10 }, since: '0.2' },
+      'turn-speed': { value: { kind: 'number', min: 10, max: 720 }, since: '0.2' },
     },
   },
   light: {
@@ -206,6 +208,19 @@ export const ELEMENTS: Readonly<Record<string, ElementRule>> = {
       corner: { value: { kind: 'choice', values: ['top-left', 'top-right', 'bottom-left', 'bottom-right'] } },
       size: { value: { kind: 'number', positive: true } },
       color: { value: { kind: 'color' } },
+    },
+  },
+  /** A number to choose on the screen; its text is its label (checked in index.ts: min < max, value between). */
+  slider: {
+    since: '0.2',
+    children: 'text',
+    attributes: {
+      id: { value: { kind: 'id' } },
+      corner: { value: { kind: 'choice', values: ['top-left', 'top-right', 'bottom-left', 'bottom-right'] } },
+      min: { value: { kind: 'number' } },
+      max: { value: { kind: 'number' } },
+      step: { value: { kind: 'number', positive: true } },
+      value: { value: { kind: 'number' } },
     },
   },
 };

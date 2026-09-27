@@ -1044,3 +1044,15 @@ Milestone 17 accepted, push.
 Movement was a little slow. Is that something that can be tweaked in
 the tags?
 ```
+
+## 92 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answer to the agent's proposal after prompt 91: a `speed` attribute on
+`<viewpoint>` and `holoml.viewer.speed` in the scene API (walking is fixed
+at 2.2 metres a second), to be done at once or in milestone 18's plan.
+
+```text
+Do the speed variable, and add a little slider in the game to change
+the speed, so that the code shows how to use it. Include it in
+milestone 18. Speed up the turning too, with the slider option.
+```

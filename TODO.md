@@ -29,7 +29,7 @@ Plan approved 2026-09-24.
 | 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Done (accepted, prompt 79) |
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
 | 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
-| 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes | Later (prompt 85, Q4 a) |
+| 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | In progress: part 1 (speeds and sliders) built; the sofa studio to be planned |
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Later (prompt 85, Q4 a) |
 | 20 | Coral Bay | A resort: paths to ride, sounds by place, sky and environment light, loading by area | Later (prompt 85, Q4 a) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
@@ -2756,6 +2756,81 @@ After the report (prompts 89 and 90):
   its plan: CC0 packs have few real-looking fish; if there are not
   enough, CC BY models (credited) would need the owner's approval, as
   prompt 85's Q3 a allows CC0 only.
+
+## Milestone 18 — Sofa studio, with walking speeds and sliders
+
+Status: In progress. Part 1 (walking and turning speeds, and sliders)
+approved by the owner and built, 2026-09-27 (prompt 92); the sofa
+studio, the milestone's example site, is still to be planned (outline
+under milestone 17, "Later example milestones"). Pushed before the
+milestone (after milestone 17's acceptance). Rule 13 check done
+(ARCHITECTURE.md section 3).
+
+### Part 1: walking and turning speeds, and sliders (prompt 92)
+
+Walking felt slow in Blockworld (prompt 91): it was fixed at 2.2 metres
+a second, and nothing in HoloML could change it. The owner asked for a
+speed setting, a slider in the game to change it, so that the game's
+code shows how to use it, and faster turning with it (prompt 92).
+
+- HoloML 0.2 (holoml pull request #14): `speed` (metres a second, 0.5 to
+  10, default 2.2) and `turn-speed` (degrees a second, 10 to 720, default
+  90) on `viewpoint`; `slider`, a number the viewer chooses on the
+  screen (`min`, `max`, `step`, `value`, a corner, and its label); in
+  the scene API, `holoml.viewer.speed` and `turnSpeed`, slider things
+  (`value`, `min`, `max`, `step`, `text`), and the `change` event.
+- The browser: walk mode goes at the page's speeds; looking up and down
+  from the keyboard goes as fast as turning (it was a little slower,
+  69 degrees a second). A slider is the page's own range control in its
+  screen corner, so the mouse, touch, the keyboard, and screen readers
+  use it as on any web page, and the text view shows it; while it has
+  the keyboard it keeps only its own keys (arrows, Home, End, Page Up,
+  Page Down), so the other keys still walk and reach the page's script.
+- Blockworld walks at 4.3 metres a second (Minecraft's walking pace)
+  and turns at 120 degrees a second; its Speed slider, under the block
+  choices, goes from half to twice both, and the "Speed" part of
+  game.js shows how.
+
+Tasks:
+
+- [x] 1. The language: SPEC.md, the checker, conformance samples
+      (holoml).
+- [x] 2. The browser: the speeds, the slider, the scene API; the copy of
+      the parser and checker (`pnpm holoml:sync`).
+- [x] 3. Blockworld's speeds and Speed slider; its picture in the
+      examples section.
+- [x] 4. Checks U1 to U7 (tests/e2e/m18.e2e.ts, holoml's tests).
+- [x] 5. Documents.
+
+Checks (named U; milestone 17 used T):
+
+| # | Check | Expected result |
+|---|---|---|
+| U1 | The language | holoml's tests: `speed`, `turn-speed`, and `slider` have valid and problem samples; the checker reports speeds out of range, a `max` not above `min`, and a `value` outside the range; a 0.1 page may not use them |
+| U2 | Walking speed | A page's `speed` is how fast the viewer walks (within 20%, measured while the key is held); a 0.2 page that says nothing walks at 2.2 metres a second and turns at 90 degrees a second |
+| U3 | Turning speed | A page's `turn-speed` is how fast the arrow keys turn the viewer (within 20%), without moving them |
+| U4 | Scripts | `holoml.viewer.speed` and `turnSpeed` can be read and set, and change how fast the viewer goes; a value out of range is an error and changes nothing |
+| U5 | Sliders | In their corners, with their labels, and the defaults SPEC.md gives; the keyboard (arrows, Home, End) and the mouse move them, and the script hears `change`; a script's `value` moves a slider without an event, and a value out of range is an error; while a slider has the keyboard it keeps its own keys and the others still walk; a click on it is not a click in the scene; screen readers find it, named by its label; the text view shows it |
+| U6 | Blockworld | 4.3 metres a second and 120 degrees a second; its Speed slider sets both from half to twice, and its label follows |
+| U7 | Regression | The HoloML checks (milestones 14 to 17), the unit tests, and the full end-to-end run |
+
+### Part 1 results (2026-09-27)
+
+The browser's copy is synced from holoml's branch `speed-and-slider`
+(`pnpm holoml:sync speed-and-slider --examples speed-and-slider`); after
+the owner merges pull request #14 it is synced again from main. Checks
+are in tests/e2e/m18.e2e.ts, with the test page
+tests/fixtures/holoml/speed.holoml and its script.
+
+| # | Result |
+|---|---|
+| U1 | Pass. holoml's tests: 170 passed (a valid sample, v02-speed-and-slider; a problem sample, bad-slider; newer-than-declared uses both in a 0.1 page); lint and types clean |
+| U2 | Pass. At `speed="4"` the viewer walked within 20% of 4 metres a second, measured between two moments while W was held; walls.holoml, a 0.2 page without speeds, reads 2.2 and 90 |
+| U3 | Pass. At `turn-speed="180"` the left arrow turned within 20% of 180 degrees a second, without moving |
+| U4 | Pass. Five values out of range were refused with their messages and changed nothing; at 8 metres a second and 30 degrees a second the viewer went within 20% of both |
+| U5 | Pass. Both sliders in their corners with their labels; the second shows the defaults (0 to 10 in steps of 0.1, starting at 0). The right arrow moved "pace" to 1.25: the script heard it, set 5 metres a second and 225 degrees a second, and changed the label; the left arrow moved it back without turning the viewer, and W still walked. A click at its right end set 2, with no scene click. A script's value 0.5 moved it without an event; 3 was refused. The accessibility tree has two sliders, "Pace 2×" (value 0.5) and "Plain"; the text view shows both |
+| U6 | Pass. Blockworld reads 4.3 and 120; End on its slider gave 8.6 and 240 and the label "Speed 2×", Home gave 2.15 and 60 and "Speed 0.5×" |
+| U7 | Pass, with one timing miss. Full run: 244 of 245 end-to-end checks passed (C to U); milestone 10's L9 answered one search in 70 ms (limit 50) during the run and passed alone right after (9 of 9); L9's measure is being reworked in the owner's other session (browser pull request #33). The HoloML checks (milestones 14 to 17) passed again with the new walk controls (64 of 64); unit tests 261; holoml's tests 170 |
 
 ## Proposal: four more HoloML example sites (2026-09-27, prompt 84)
 

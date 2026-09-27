@@ -1,10 +1,11 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-09-27 (milestones 1 to 17 accepted; milestone 17,
-Blockworld, the first part of HoloML 0.2, and the HoloML examples
-section, accepted 2026-09-27, prompt 91; the next step is milestone
-18's plan, the sofa studio; the roadmap is in TODO.md).
+Last updated 2026-09-27 (milestones 1 to 17 accepted; milestone 18 in
+progress: its first part, walking and turning speeds and sliders
+(prompt 92), is built, with holoml pull request #14 waiting for the
+owner's merge; the sofa studio, the rest of milestone 18, is to be
+planned next; the roadmap is in TODO.md).
 
 ## Where things stand
 

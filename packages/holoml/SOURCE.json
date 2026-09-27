@@ -1,15 +1,15 @@
 {
   "repository": "https://github.com/srajpal/holoml",
-  "tag": "main",
-  "commit": "64d7e995abf5d4c7f84c5ff47fd2fcc197026463",
+  "tag": "speed-and-slider",
+  "commit": "ff08334c8c277ec0698ff983698041141350fc0c",
   "files": {
-    "src/parser.ts": "68f232f3c7bcc299dd477596ec62fcb9681dbd4f330ed9e55d50846626a4e526",
-    "src/rules.ts": "5bbbc35c347c1912ceede83ed14e3f7f4199596929a7268f8ae4e051237b6824",
-    "src/schema.ts": "f28a441e95a039230351048196cf9879c72370c53cb8e1ae1a57f9097ba43584"
+    "src/parser.ts": "f41e9b98a2a7bd30756d864d9e818620bb5ca480cfd3385184e991e231824526",
+    "src/rules.ts": "7d716495bb441bf9a6b89d9914e4dc68250b5bea64dd184f92c32100c65ec6c7",
+    "src/schema.ts": "f023a8486df5095a13f95f5219e9bc95dafa2eb15cf1365b4f263c368d624b46"
   },
   "examples": {
-    "ref": "main",
-    "commit": "64d7e995abf5d4c7f84c5ff47fd2fcc197026463",
+    "ref": "speed-and-slider",
+    "commit": "ff08334c8c277ec0698ff983698041141350fc0c",
     "files": {
       "showroom/README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
       "showroom/about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",
@@ -39,9 +39,9 @@
       "showroom/veyl-night.holoml": "49e737bbb72d5591a150e54e8200aaeb174ea95386c747de59d83a66cfb844cb",
       "showroom/veyl-violet.holoml": "f7f0be88e16e9600de9cfc066b167b985b062592328446c7d126515967909203",
       "showroom/veyl.holoml": "8065ef5ebd9ebd07173ded3703d665e79ff6b119ff6742af6be048e27b38cd6a",
-      "blockworld/README.md": "f4e4ba4a026ecbb9ac8394ff00f2cce33b88f0d9f24b3be1536af503d060b29f",
-      "blockworld/game.js": "29bce3d5fe8c42dccab1cf31aa093bcde6f32f145e0efb1c53826339570e1e82",
-      "blockworld/index.holoml": "ece9706cf82702bfc288344ec4c7cbc340a03e1cfc57787dc8bc1dd4ba2511ed",
+      "blockworld/README.md": "f0bdcbcef86accfc10d3d15e7e5c2342c1f34fc171ab409285a8e46ac9d7f853",
+      "blockworld/game.js": "e23aa46d272d87f0c0e760df76ea405ab686d672089577f7bf16b21cbceefe6c",
+      "blockworld/index.holoml": "61c855a3f360142f065d5a94c6bc241476a9a8d5c4c87a8359af0a76dd7bf9a2",
       "blockworld/index.html": "f737dace3c5c606be2e3c8a7cb7c7725eff077c708e0f403df41538065388d59",
       "blockworld/models/CREDITS.md": "504c1912b1c2b21abfffbf7d1b2c1bb73ee85068aa8fbdab7ad48f0f13892748",
       "blockworld/models/chest.gltf": "6457136d9f2f79128bc579ea3fd8db43a163f8d9fe71e6b4789d3f4979ec2c35",

@@ -255,7 +255,13 @@ milestone; the current milestone's checks are defined in TODO.md):
   section. T1 is holoml's own tests. After the milestone's report
   (prompt 89): a HoloML tab's card shows its scene once drawn, and
   Blockworld plays in a development run.
-- Later milestones add: the HoloML example sites (18 to 21), privacy
+- Milestone 18 checks U2 to U6 (same command, tests/e2e/m18.e2e.ts),
+  first part: walking and turning speeds (the page's, the default, and
+  a script's), sliders (keyboard, mouse, the script's change event,
+  the keys a slider keeps, screen readers, the text view), and
+  Blockworld's Speed slider. U1 is holoml's own tests.
+- Later milestones add: the HoloML example sites (the rest of 18, and 19
+  to 21), privacy
   and data tools (22), and installers (23 and 24).
 
 Rules for tests: a failing test is reported, not deleted. A test is
