@@ -25,7 +25,7 @@ Plan approved 2026-09-24.
 | 11 | Owner feedback: address bar, view, settings, shortcuts | Two ways to show tabs; address bar completion; a wider page and view settings; menus that close; reorganized Settings with search; shortcut list and remapping; Library search reset | Done (accepted, prompt 54) |
 | 12 | Developer preview 0.9.0 | Source release for developers: privacy and proofreading pass, legal and project files, automatic builds and tests on Windows and Linux (GitHub issue #5), Electron check, trademark and `.holo` checks, version 0.9.0 | Done (accepted, prompt 61; released as v0.9.0) |
 | 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Done (accepted, prompt 64) |
-| 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
+| 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | In progress (prompt 65: Q1 to Q5 a) |
 | 15 | Car showroom demo | Demo site with walk-around 3D cars | Later |
 | 16 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
 | 17 | macOS release | Signing, notarization, Mac checks | Later |
@@ -2004,6 +2004,118 @@ Windows line ends into a Unix one; the holoml repository's
 
 - O1 to O9 pass and the owner accepts. Then milestone 14 shows HoloML
   pages in the browser.
+
+## Milestone 14 — HoloML pages in the browser
+
+Status: In progress. Plan and build approved 2026-09-27 (prompt 65)
+with Q1 to Q5 a. Pushed before the build. Rule 13 check done
+(ARCHITECTURE.md section 3).
+
+Goal: opening a HoloML page (a `.holoml` address) shows its 3D scene in
+the browser, as HoloML 0.1 (the holoml repository's SPEC.md) describes:
+models with their material changes, the viewpoint with orbit and walk,
+lights, labels, links, and animation. Everything else keeps working
+around it: tabs, history, bookmarks, back and forward, private tabs,
+the shield, and the instrument panel.
+
+### How it would work (proposed)
+
+- A navigation whose response is a HoloML document (the `.holoml`
+  extension, or the `model/vnd.holoml` media type) is shown by the
+  browser's own HoloML viewer instead of as text or a download.
+- The viewer runs inside that tab's page process, which is sandboxed
+  like any web page, so a page's content never runs in the browser's
+  own privileged process. It draws with Three.js, which the browser
+  already has, including its glTF loader: no new package.
+- The address bar, the tab, history, bookmarks, and reopened tabs all
+  show and keep the page's own `.holoml` address.
+- Models and the page itself load through the tab's own network
+  session, so the shield, encrypted DNS, and private tabs apply as for
+  any page.
+- The scene draws only when something changes (moving the view, an
+  animation, a model loading), like the room, so an idle scene costs
+  nothing.
+
+### Questions
+
+- Q1, how a HoloML page appears. a: the scene fills the window below
+  the top bar; the tilted panel and the room step aside while that tab
+  is in front, and come back for other tabs (recommended: a 3D page
+  shown in full, not flattened onto a tilted panel). b: on the tilted
+  panel like any other page. c: merged into the room itself (not
+  recommended: the page's content would have to run in the browser's
+  own privileged process).
+- Q2, where a page's models may come from. a: the page's own site only,
+  for now (recommended: simple and safe; the showroom needs no more).
+  b: any http or https site, with the shield blocking trackers as for
+  other pages.
+- Q3, HoloML files on the computer. a: open them too, with Ctrl+O (an
+  Open file item in the menu) or by dragging a `.holoml` file onto the
+  window; their models load only from the same folder and the folders
+  inside it (recommended: people can try the examples without a web
+  server). b: web pages only for now.
+- Q4, how the browser gets the HoloML parser and checker. a: tag the
+  holoml repository v0.1.0 and keep a copy of its two packages in this
+  repository, made by a script from that tag, with a test that the copy
+  still matches it (recommended: installs and builds need nothing new).
+  b: pnpm installs them straight from the holoml repository on GitHub at
+  the tag (a new install-time dependency on GitHub). c: publish them to
+  npm (needs an npm account; a separate approval).
+- Q5, mistakes in a page. a: a syntax error shows a card with the
+  message, the line and column, and that line of the page; problems the
+  checker finds are listed in the instrument panel's console, and the
+  rest of the scene is shown (recommended: as browsers treat HTML). b:
+  any mistake shows only the card.
+
+Assumed unless the owner says otherwise: the layers view and page zoom
+do not apply to HoloML pages (their buttons are off for them); Find in
+page searches labels; printing a HoloML page prints what is on screen;
+`view-source:` is not added in this milestone.
+
+### Tasks
+
+- [ ] 1. The viewer: recognise HoloML responses, show them with the
+      viewer in the tab's page process, keep the page's address
+      everywhere (tab, address bar, history, bookmarks, reopening,
+      restoring tabs).
+- [ ] 2. The scene: models (glTF 2.0) with position, rotation, scale,
+      and material changes; groups; lights, with a soft default light
+      when a page has none; the background.
+- [ ] 3. The viewpoint: orbit (drag, wheel, pinch) and walk (arrow keys
+      and W, A, S, D, drag to look), with keyboard and touch
+      equivalents; the start position and look-at point.
+- [ ] 4. Labels that face the viewer; links on models, groups, and
+      labels (pointer, highlight, click or tap, and Tab and Enter from
+      the keyboard); a model's own glTF animations (animation,
+      autoplay); animate, with repeat and indefinite.
+- [ ] 5. Mistakes (per Q5), and safety: only http, https, and relative
+      addresses; models only from where Q2 allows; no scripts.
+- [ ] 6. Files on the computer (if Q3 a).
+- [ ] 7. The parser and checker in the browser (per Q4).
+- [ ] 8. The HoloML showroom example as a test fixture, and screenshots.
+- [ ] 9. Documents: README, ARCHITECTURE, docs/privacy.md (what a
+      HoloML page may load), the Testing section, and HANDOFF.
+
+### Checks
+
+| # | Check | Expected result |
+|---|---|---|
+| P1 | Opens | A `.holoml` page served from 127.0.0.1 shows its scene; the tab and title show its `<title>`; the address bar shows its address |
+| P2 | Models | Each model loads in its place, turned and scaled as written; a material change sets the named material's colour, metalness, roughness, and opacity (read back from the scene) |
+| P3 | Viewpoint | The view starts where the page says; orbit and walk move it with the mouse, the keyboard, and touch |
+| P4 | Links | Clicking a linked model or label opens its page; Back returns; Tab and Enter reach links from the keyboard |
+| P5 | Labels, lights, animation | Labels face the viewer; lights change what is lit; `animate` and a model's own animation move things over time and stop when they should |
+| P6 | Mistakes | A syntax error shows the card with its line and column; problems appear in the instrument panel's console; the rest of the scene shows |
+| P7 | Safety | A `javascript:` link and a model from a site Q2 does not allow are refused; the page cannot reach Node or the browser's own bridge; the shield counts blocked requests as for other pages |
+| P8 | Browser features | History, bookmarks, reopening a closed tab, restoring tabs after a restart, and private tabs all keep the `.holoml` address |
+| P9 | Files | (if Q3 a) A `.holoml` file opened from the computer shows its scene with models from its folder; a model outside that folder is refused |
+| P10 | Efficiency | An idle scene draws no frames; an animated one draws only while it moves |
+| P11 | Without WebGL 2 | A HoloML page says it cannot be shown, instead of an empty window (as N7) |
+| P12 | Regression | C to O still pass, and the unit tests |
+
+### Done when
+
+- P1 to P12 pass, screenshots are saved, and the owner accepts.
 
 ## Release path and milestone 12: owner's answers so far (2026-09-26, prompts 54 to 56)
 

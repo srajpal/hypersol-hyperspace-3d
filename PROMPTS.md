@@ -728,3 +728,22 @@ Confirm the repository and what will go there.
 ```text
 I accept milestone 13. Plan milestone 14.
 ```
+
+## 65 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answers to the milestone 14 plan's questions (HoloML pages in the
+browser). Q1, how a HoloML page appears (a: the scene fills the window
+below the top bar, and the tilted panel and the room step aside while
+that tab is in front). Q2, where a page's models may come from (a: the
+page's own site only, for now). Q3, HoloML files on the computer (a:
+open them too, with Ctrl+O or by dragging a file onto the window, with
+models only from the file's folder and the folders inside it). Q4, how
+the browser gets the parser and checker (a: tag the holoml repository
+v0.1.0 and keep a copy of its packages here, made by a script, with a
+test that the copy matches the tag). Q5, mistakes in a page (a: a syntax
+error shows a card with the line and column; other problems go to the
+instrument panel's console, and the rest of the scene is shown).
+
+```text
+Q1: a, Q2: a, Q3: a, Q4: a, Q5: a. Build.
+```

@@ -90,6 +90,10 @@ Rule 13 check, 2026-09-26 (start of milestone 13, HoloML): 44.4.5
 (2026-09-23) is still the newest stable release; no 45 stable yet, and
 no security release since. No upgrade needed.
 
+Rule 13 check, 2026-09-27 (start of milestone 14, HoloML in the
+browser): 44.4.5 is still the newest stable release, with no security
+release since. No upgrade needed.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |
