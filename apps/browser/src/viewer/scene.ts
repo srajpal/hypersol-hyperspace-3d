@@ -442,6 +442,11 @@ export class HolomlView {
 
   // ---- Pointer and links ----------------------------------------------------
 
+  /** The link under a point of the page, in CSS pixels (for the tests' failure reports). */
+  linkHrefAt(x: number, y: number): string | null {
+    return this.linkAt(x, y)?.href ?? null;
+  }
+
   private linkAt(x: number, y: number): Link | null {
     const rect = this.renderer.domElement.getBoundingClientRect();
     const ndc = new Vector2(((x - rect.left) / rect.width) * 2 - 1, 1 - ((y - rect.top) / rect.height) * 2);

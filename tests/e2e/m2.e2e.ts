@@ -11,6 +11,7 @@ import {
   ADDRESS,
   APP_DIR,
   clickAt,
+  clickUntil,
   clickCard,
   focusedPage,
   focusedTab,
@@ -393,15 +394,13 @@ describe('D8 right-click menu', () => {
   afterAll(async () => h?.close());
 
   async function rightClick(selector: string, page = 'link-a'): Promise<string[]> {
-    const count = await h.app.evaluate(() => (globalThis as unknown as MainLog).__hypersolTest.menus.length);
+    const menus = () => h.app.evaluate(() => (globalThis as unknown as MainLog).__hypersolTest.menus.map((m) => m.labels));
+    const count = (await menus()).length;
     const p = await screenPointOf(h, selector, page);
-    await clickAt(h, p, { button: 'right' });
-    const menus = await waitFor(
-      'a right-click menu',
-      () => h.app.evaluate(() => (globalThis as unknown as MainLog).__hypersolTest.menus.map((m) => m.labels)),
-      (m) => m.length > count,
-    );
-    return menus[menus.length - 1]!;
+    // A right-click lost on its way to the page brings no menu at all (issue #30).
+    await clickUntil(h, p, 'a right-click menu', async () => (await menus()).length > count, { button: 'right' });
+    const all = await menus();
+    return all[all.length - 1]!;
   }
 
   function choose(label: string): Promise<void> {

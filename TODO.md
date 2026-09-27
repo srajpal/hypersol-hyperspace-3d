@@ -2182,6 +2182,19 @@ listen on the canvas itself.
   email). HoloML (prompt 58): H1 a (HTML-like tags), H2 a (glTF 2.0
   models).
 
+## GitHub issue #30: lost clicks on Linux CI (2026-09-27, prompt 74)
+
+On GitHub's Linux runner a click sent right after a page appears or
+changes sometimes never reaches the page (D8's right-click on main run
+36294462404 and PR #29's first run; P4's label link on main run
+36295974386; earlier C2 after a resize). A new harness helper,
+clickUntil, clicks until the click's effect shows (up to three
+attempts, each retry logged as "[harness] ... clicking again"); D8's
+right-click and the link clicks in P4 and P9 use it. What each check
+asserts is unchanged: the menu's entries, the page reached. C2, which
+checks that clicks land, is left as it is. Local run: P4, P9, and D8
+pass (9 of 9) with no retry.
+
 ## GitHub issues #17 to #22, #4, #5 (2026-09-27, prompt 66)
 
 Owner: address the issues in both repositories and open pull requests to

@@ -464,6 +464,36 @@ export async function describeMissedClick(h: Harness, p: Point, registered: () =
   return `${at}; a second click a second later ${(await registered()) ? 'reached the page' : 'was lost too'}`;
 }
 
+/**
+ * Clicks at a page point until the click's effect shows (GitHub issue
+ * #30). On GitHub's Linux machines a click sent right after a page
+ * appears or changes sometimes never reaches it: nothing at all happens,
+ * and a second click lands. A lost click has no effect, so clicking again
+ * is safe; each retry is logged, so how often it happens stays visible.
+ * For checks about what a click does; C2 checks delivery itself.
+ */
+export async function clickUntil(
+  h: Harness,
+  p: Point,
+  what: string,
+  done: () => Promise<boolean>,
+  options: { button?: 'left' | 'right' } = {},
+  /** More to say in the failure message, if every attempt fails. */
+  explain?: () => Promise<string>,
+): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    await clickAt(h, p, options);
+    try {
+      await waitFor(what, done, (v) => v, attempt < 3 ? 4000 : 15_000);
+      return;
+    } catch (e) {
+      if (attempt >= 3) throw explain ? new Error(`${String(e)}
+${await explain().catch((x: unknown) => `(no details: ${String(x)})`)}`) : e;
+      console.warn(`[harness] ${what}: the click did not reach the page; clicking again (attempt ${attempt + 1})`);
+    }
+  }
+}
+
 /** Resizes the window's content area and waits for the page to follow. */
 export async function setContentSize(h: Harness, width: number, height: number): Promise<void> {
   // Adjust the outer size until the inside is right: off screen, Electron's

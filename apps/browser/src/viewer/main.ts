@@ -50,6 +50,7 @@ Object.defineProperty(window, '__holoml', {
     links: () => state.view?.links.map((l) => l.href) ?? [],
     object: (id: string) => state.view?.objectInfo(id) ?? null,
     point: (which: string | number) => state.view?.screenPoint(which) ?? null,
+    linkAt: (x: number, y: number) => state.view?.linkHrefAt(x, y) ?? null,
     lights: () => state.view?.lightsInfo() ?? [],
   },
 });
