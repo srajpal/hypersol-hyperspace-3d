@@ -1,5 +1,6 @@
 import { webContents as allContents, type IpcMainInvokeEvent, type Session, type WebContents } from 'electron';
 import type { ShellCommand } from '../shared/commands';
+import { CAPTURE_STOP_CHANNEL } from '../shared/page-state';
 import {
   PERMISSION_KINDS,
   decide,
@@ -148,6 +149,7 @@ export class Permissions {
         if (!contents || !origin) return null;
         this.remember(contents, origin, [r.kind], r.state === 'ask' ? null : r.state);
         this.grantsFor(contents, origin)?.once.delete(r.kind);
+        if (r.state === 'block') this.revoke(origin, r.kind, contents.session);
         return this.site(contents);
       }
     }
@@ -169,6 +171,22 @@ export class Permissions {
     if (granted) this.given(p.contents, p.origin, p.kinds);
     p.callback(granted);
     if (!p.contents.isDestroyed()) this.deps.send(p.contents, { type: 'permission-ended', id: p.id });
+  }
+
+  /**
+   * Blocking a site's camera or microphone ends what its pages are already
+   * capturing, in every tab on that site, not only new requests (GitHub
+   * issue #22); the in-use marker goes with it. Only in the session the
+   * choice was made in: normal and private tabs keep separate choices
+   * (PR #29 review).
+   */
+  private revoke(origin: string, kind: PermissionKind, session: Session): void {
+    const track = kind === 'camera' ? 'video' : kind === 'microphone' ? 'audio' : null;
+    for (const [contents, grants] of this.tabs) {
+      if (grants.origin !== origin || contents.isDestroyed() || contents.session !== session) continue;
+      if (track) contents.send(CAPTURE_STOP_CHANNEL, [track]);
+      if (grants.given.delete(kind)) this.deps.send(contents, { type: 'site-access', webContentsId: contents.id, kinds: [...grants.given] });
+    }
   }
 
   private given(contents: WebContents, origin: string, kinds: PermissionKind[]): void {

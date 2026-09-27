@@ -530,6 +530,7 @@ export class App {
         audible: tab.audible,
         downloading: page !== null && this.downloadItems.some((d) => !d.finished && d.webContentsId === page),
         typed: view.typed,
+        capturing: view.capturing,
         lastSeen: this.lastSeen.get(tab.id) ?? now,
       };
       if (!this.lastSeen.has(tab.id)) this.lastSeen.set(tab.id, now);
