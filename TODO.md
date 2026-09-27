@@ -2492,6 +2492,120 @@ harness's `online` switch are gone, so no run uses the network.
 
 - S1 to S9 pass, screenshots are saved, and the owner accepts.
 
+## Proposal: four more HoloML example sites (2026-09-27, prompt 84)
+
+Status: Proposal drafted, waiting for the owner's answers. Nothing is
+built. Owner: before milestone 17, four more example sites: a small
+game (like a very small Minecraft) with movement, action, lighting,
+sound, and animation; then three commercial sites, all different, each
+more complex than the last, with better graphics and movement.
+
+### What HoloML 0.1 can and cannot do
+
+0.1 has models, groups, lights, labels, links, material changes, simple
+animation of position, rotation, and scale, and orbit or walk. It has no
+sound, no way to react to a click other than following a link, no state
+(nothing on a page can change because of what the viewer did), and walk
+mode passes through everything. None of the four sites is possible
+without adding to the language; the gaps the showroom found (holoml
+issues #8 shadows, #9 changing a material in place, #10 walls that stop
+the walker, #11 text of more than one line) are needed too. So this
+work is also HoloML 0.2.
+
+### The four sites (proposed)
+
+1. **Blockworld** (the game). A small island of blocks, about 24 by 24
+   and 8 high: grass, dirt, stone, sand, wood, leaves, water, with
+   trees. First person: walk with gravity and a jump, blocked by
+   blocks. Click to break a block (a crack animation and a sound);
+   right-click to place the chosen block (keys 1 to 5 choose). A day
+   and night cycle of a few minutes moves the sun and changes the
+   light; torches can be placed at night (point lights). Sounds:
+   footsteps, breaking, placing, birds by day, crickets at night. A
+   small goal: find five gems in the stone and bring them to a chest,
+   and the page says you won. Needs: sound, scripts (to add and remove
+   blocks and keep score), collision and gravity, animated lights, and
+   a renderer that draws thousands of identical blocks cheaply.
+2. **Sofa studio** (small, commercial: a furniture shop). One sofa in a
+   styled room to orbit around. Choose the fabric and the leg finish in
+   place (no new page), open the sofa bed (an animation with a sound),
+   see the price change with the choice, and a link to "add to cart"
+   on an ordinary web page. Better graphics: textured fabrics, soft
+   shadows, and a lit room. Needs: changing a material in place (#9),
+   shadows (#8), sound, and text that changes (a script or a
+   declarative choice).
+3. **Harbour Loft** (medium: an apartment to tour for an estate
+   agent). Walk through a furnished two-bedroom flat; walls and
+   furniture stop you (#10). Doors open when clicked, with a sound;
+   light switches turn lamps on and off; a daylight and evening
+   switch; information panels with paragraphs (#11) in each room; a
+   small floor plan showing where you are; a link to book a viewing.
+   Needs: collision, click actions, light changes, multi-line text,
+   and larger scenes.
+4. **Coral Bay** (largest: a resort). An island resort outdoors and
+   in: terrain, water with moving waves, palms swaying, boats sailing
+   on paths, a golf cart you ride along a path between the beach, the
+   pool, and the hotel lobby, rooms to tour, sunset lighting, and
+   sounds that change with where you are (waves, pool, lobby music).
+   Needs: movement along paths, positional sound, a sky and
+   environment lighting, and the renderer's limits and loading kept in
+   hand for a big scene (loading by area, simpler models far away).
+
+All four live in the holoml repository next to the showroom, are
+published with GitHub Pages, and are listed under the start panel's
+"Try HoloML", as the showroom is. Each gets its own end-to-end checks
+in the browser, like milestone 16.
+
+### Questions
+
+- Q1, how pages react. a: HoloML 0.2 adds scripts: JavaScript from the
+  page's own site, run in the page's own sandboxed process (as any web
+  page's script is), with a small documented scene API (find and change
+  elements, add and remove them, events such as click, key, and enter
+  an area, sound, a timer), plus a few declarative basics for common
+  cases without a script (sound, click to play an animation or toggle a
+  light, a material choice). Recommended: the game needs real logic,
+  and HoloML stays readable for the simple cases. b: declarative only,
+  no scripts: the commercial sites work, but the game shrinks to a fixed
+  world where blocks can only be hidden and shown. c: scripts only.
+- Q2, the three commercial sites. a: the sofa studio, the apartment
+  tour, and the resort, as above (recommended: three different trades,
+  and each adds movement and graphics the one before did not have).
+  b: a museum gallery, a concert venue with a seat preview, and a theme
+  park. c: name your own.
+- Q3, where the models, textures, and sounds come from. a: CC0 packs
+  only, credited anyway: Kenney (blocks, furniture, sounds), Quaternius
+  (nature, buildings, people), and Poly Haven (skies, textured
+  materials, some models) (recommended: free of conditions, and good
+  enough for "better graphics"). b: also CC BY models (for example
+  from Sketchfab) for more realism, each credited as its licence asks.
+  c: our own, made by scripts (plain look).
+  (Either a or b means downloading those files; your answer approves
+  it for these sites.)
+- Q4, how to split the work. a: one milestone per site, in the order
+  of the owner's list, each adding the HoloML 0.2 features that site
+  needs (spec, parser, checker, conformance, browser support, the site,
+  checks): 17 Blockworld (sound, scripts, collision and gravity,
+  animated lights, drawing many blocks), 18 Sofa studio (material
+  choice, shadows, changing text), 19 Harbour Loft (click actions,
+  multi-line text, larger scenes), 20 Coral Bay (paths, positional
+  sound, sky, loading by area). Privacy and data tools move to 21,
+  installers to 22 and 23. Recommended: each milestone ends with
+  something to try. b: first one milestone for all of HoloML 0.2 in
+  the language and the browser, then one for the four sites. c: the
+  commercial sites first (17 to 19) and the game last (20), so scripts
+  come after the simpler declarative features.
+- Q5, sound. a: a page's sounds start only after the viewer's first
+  click or key on it (as browsers require for web pages), the tab's
+  mute and the shield apply, and sound files count against the page's
+  limits like models (recommended). b: sounds may start at once.
+
+### What happens next
+
+On the answers, the first of the new milestones (per Q4) gets a full
+plan with its tasks and checks for approval, with the Rule 13 check at
+its start. The roadmap table is changed at that point, not before.
+
 ## GitHub issue #30: lost clicks on Linux CI (2026-09-27, prompt 74)
 
 On GitHub's Linux runner a click sent right after a page appears or

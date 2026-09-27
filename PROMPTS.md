@@ -936,3 +936,15 @@ Milestone 16 accepted, push. Verified it worked on my PC.
 
 What is the next step?
 ```
+
+## 84 — 2026-09-27 · Claude Opus 5.5, low effort
+
+```text
+Before milestone 17, let's come up with 4 other example sites using
+HoloML.
+1) A small game with movement, action, lighting, sound, animation.
+   Something simple like a very small Minecraft game.
+2-4) Other commercial examples, all different, but they should get
+   progressively more complex, with better graphics and usage including
+   movement.
+```
