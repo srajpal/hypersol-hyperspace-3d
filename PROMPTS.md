@@ -770,3 +770,17 @@ before the 1.0 installers).
 Q1: a, Q2: a.
 Checking the PR.
 ```
+
+## 68 — 2026-09-27 · Claude Opus 5.5, low effort
+
+```text
+In the meantime, the README for HyperSpace 3D says "Status: milestones 1 to 8 done." at the top, and that seems out of sync with the progress. Check the README for any other issues as well and update it. Always include the newest version or milestone screenshot in the README, but make it a nice screenshot (pick a nice site to put in there until the HoloML sites are ready).
+```
+
+## 69 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Sent while the README was being updated.
+
+```text
+Check the comments on the PRs for both repos and address them.
+```

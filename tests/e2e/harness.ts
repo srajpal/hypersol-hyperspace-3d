@@ -39,6 +39,12 @@ export interface Harness {
 }
 
 export interface LaunchOptions {
+  /**
+   * Real network access, for the README's screenshot only (pnpm
+   * screenshots:readme; owner, prompt 68). Tests never set it: they reach
+   * only 127.0.0.1.
+   */
+  online?: boolean;
   tilt?: number;
   /** Search address with %s (a local stand-in for DuckDuckGo). */
   searchUrl?: string;
@@ -99,7 +105,8 @@ function cleanEnv(keepRunning = false): Record<string, string> {
 export async function launch(startUrl: string, opts: LaunchOptions = {}): Promise<Harness> {
   const keepProfile = opts.userDataDir !== undefined;
   const userDataDir = opts.userDataDir ?? (await mkdtemp(join(tmpdir(), 'hypersol-e2e-')));
-  const args = [APP_DIR, `--start-url=${startUrl}`, `--hypersol-user-data=${userDataDir}`, OFFLINE_RULES];
+  const args = [APP_DIR, `--start-url=${startUrl}`, `--hypersol-user-data=${userDataDir}`];
+  if (!opts.online) args.push(OFFLINE_RULES);
   if (opts.tilt !== undefined) args.push(`--tilt=${opts.tilt}`);
   if (opts.searchUrl !== undefined) args.push(`--search-url=${opts.searchUrl}`);
   if (opts.filtersBase !== undefined) args.push(`--filters-base=${opts.filtersBase}`);

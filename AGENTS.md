@@ -127,6 +127,12 @@ Do not change earlier entries except to correct an error.
   add them to docs/progress.md; the README keeps a short progress
   paragraph that links there. (Added 2026-09-25, prompt 21; the progress
   page split out 2026-09-26, prompt 47.)
+- The README always opens with a screenshot of the newest version or
+  milestone, and a good-looking one: refresh docs/screenshots/readme.png
+  with `pnpm screenshots:readme` at the end of each milestone and each
+  release, look at it, and credit the site shown. Until HoloML sites are
+  ready it shows a real website (Wikipedia, CC BY-SA); this is the only
+  run that uses the network. (Owner, prompt 68.)
 - Owner-only automation (Remote Control at session start, the prompt-log
   reminder) lives in CLAUDE.local.md, which is gitignored, so
   contributors' sessions never inherit it.
@@ -186,6 +192,8 @@ milestone; the current milestone's checks are defined in TODO.md):
   per-site settings, image rectangles, pages that change, reduced
   motion, efficiency. The layers view is on by default, so every earlier
   check runs with it on.
+- README screenshot: `pnpm screenshots:readme` (loads real Wikipedia
+  pages; first run 2026-09-27; not a test).
 - Filter lists: `pnpm filters:update` rebuilds the starter copy from the
   internet (run before a release; first run 2026-09-26).
 - Milestone 6 checks H1 to H7 (same command): theme switch, Settings >

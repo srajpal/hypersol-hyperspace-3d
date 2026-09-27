@@ -5,16 +5,24 @@ dimensions. Ordinary websites float as panels in a 3D room, page sections
 lift into layered depth, and a companion markup language, HoloML, lets
 anyone publish a fully 3D website as easily as writing HTML.
 
-Windows, macOS, and Linux. Apache 2.0. No telemetry.
+![HyperSpace 3D showing Wikipedia's "Hyperspace" article on a tilted page in the 3D room, with the layers view lifting its picture, and three tabs as cards on the left](docs/screenshots/readme.png)
 
-**Status: milestones 1 to 8 done.** A browser in a 3D room that remembers and protects:
-tabs as cards on an arc, a top bar with address, search, and a bookmark
-star, bookmarks and history in a Library panel, a Settings panel, a
-start panel with your data, error cards, a right-click menu, ad and
-tracker blocking with a shield, encrypted DNS, and a layers view that
-breaks pages apart into depth, in two themes: Nebula, a synthwave
-night, and Daylight, a pastel 1990s day. See [Progress](#progress), TODO.md, and
-[Project documents](#project-documents).
+*The newest build, showing Wikipedia's article
+[Hyperspace](https://en.wikipedia.org/wiki/Hyperspace) (text by
+Wikipedia's contributors, CC BY-SA 4.0; the picture under its own
+licence, see the article). Made with `pnpm screenshots:readme`.*
+
+For Windows and Linux (checked by automatic tests on both); macOS is
+planned but untested. Apache 2.0. No telemetry.
+
+**Status (2026-09-27).** Released: the
+[0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
+as source for developers (no installers yet). Since then, HoloML 0.1 has
+been written down in its own repository (milestone 13), and this browser
+shows HoloML pages (milestone 14, built, waiting for acceptance, not yet
+in a release). Next: HoloML hardening, a car showroom, and privacy and
+data tools, then installers as 1.0. See [Progress](#progress),
+[TODO.md](TODO.md), and [Project documents](#project-documents).
 
 ## The story
 
@@ -77,35 +85,47 @@ project that honours it, not a commercial product.
 An archived copy of the 2001 site is available through the
 [Wayback Machine](https://web.archive.org/web/20010922111629/http://www.hypersol.com/).
 
-## What it will do
+## What it does
 
-First useful result (see BRIEF.md):
+- Any normal website, live on a tilted page in a 3D room, with tabs as
+  cards (or a list in the top bar), an address bar that completes and
+  searches, bookmarks, history, and a Library.
+- A layers view that lifts a page's sections and pictures to different
+  depths.
+- Privacy on by default: ad and tracker blocking with a shield, encrypted
+  DNS, private tabs, and no telemetry.
+- A password manager using the system's keychain, and site permissions
+  for the camera, microphone, and location.
+- Two themes, Nebula (a synthwave night) and Daylight (a pastel 1990s
+  day), an instrument panel with live readouts, zoom, find in page,
+  downloads, printing, remappable shortcuts, and an economy mode with
+  sleeping tabs.
+- HoloML pages: fully 3D sites you orbit or walk around (milestone 14).
+- Mouse and keyboard throughout; touch for scenes.
 
-- Open any normal website in a 3D browser interface, with tabs as
-  floating cards, address bar, bookmarks, and history.
-- Page sections lifted into layered depth.
-- At least two themes, Nebula (dark) and Daylight (light).
-- Privacy on by default: ad and tracker blocking, encrypted DNS, zero
-  telemetry.
-- Mouse, keyboard, and touch.
+## What comes next
 
-Later: HoloML page mode with a car showroom demo, images and 3D models
-lifted out of ordinary pages, free camera movement, mobile, VR, and more.
+Milestone 15, HoloML hardening: limits for heavy scenes, keyboard and
+screen-reader navigation of scenes, and a scene inspector. 16, a car
+showroom built in HoloML. 17, privacy and data tools: HTTPS-only
+browsing, per-site storage, and bookmark import and export. 18 and 19,
+installers as 1.0 for Windows and Linux, then macOS. Later: free camera
+movement, pictures and 3D models lifted out of ordinary pages, mobile,
+and VR. The full roadmap is in [TODO.md](TODO.md).
 
 ## Progress
 
-Twelve milestones are done: a live page on a tilted panel in the 3D room,
-tabs as cards, bookmarks and history, ad and tracker blocking with
-encrypted DNS, a layers view that lifts a page's parts to different
-depths, two themes in a 1980s and 1990s look, an instrument panel, the
-everyday tools (zoom, find, downloads, printing, private tabs), a
-password manager with site permissions, and tab tools with an economy
-mode and sleeping tabs. Milestone 11 added address bar completion, a
-wider page with view settings, reorganized Settings, and shortcut
-remapping. Milestone 12 made it ready to share as the 0.9.0 developer
-preview, built from source, with automatic tests on Windows and Linux.
-Milestone 13 wrote HoloML 0.1 down in its own repository, and milestone
-14 (built, waiting for acceptance) shows HoloML pages in the browser.
+Thirteen milestones are done and accepted, and the fourteenth is built.
+Milestones 1 to 11 built the browser: a live page on a tilted panel in
+the 3D room, tabs as cards, bookmarks and history, ad and tracker
+blocking with encrypted DNS, the layers view, two themes, an instrument
+panel, the everyday tools (zoom, find, downloads, printing, private
+tabs), passwords and site permissions, tab tools with an economy mode,
+address bar completion, view settings, and remappable shortcuts.
+Milestone 12 released it as the 0.9.0 developer preview, with automatic
+tests on Windows and Linux. Milestone 13 wrote HoloML 0.1 down in its
+own repository, and milestone 14 (built, waiting for acceptance) shows
+HoloML pages in the browser.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
@@ -133,14 +153,17 @@ with Ctrl+O, and walk or orbit around the scene.
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Setting up, testing, and sending changes |
 | [SECURITY.md](SECURITY.md) | Reporting a security problem privately |
 | [THIRD-PARTY.md](THIRD-PARTY.md) | The licences of the parts from other projects |
+| [docs/progress.md](docs/progress.md) | Each milestone, with screenshots |
+| [docs/privacy.md](docs/privacy.md) | Everything the browser stores and sends |
 | [docs/name-checks.md](docs/name-checks.md) | Trademark and file extension checks |
 
 ## Technology
 
 In use now: Electron 44 (the current supported stable line), TypeScript,
-Three.js, Lit, SQLite through Node's built-in node:sqlite, and Ghostery's
-open-source ad-blocking engine with open filter lists; Vite and
-electron-vite to build; Vitest and Playwright to test.
+Three.js (with its glTF loader, for HoloML pages), Lit, SQLite through
+Node's built-in node:sqlite, and Ghostery's open-source ad-blocking
+engine with open filter lists; Vite and electron-vite to build; Vitest
+and Playwright to test.
 Planned, not yet installed: electron-builder for installers (milestone 18).
 Reasons for each choice are in ARCHITECTURE.md.
 
@@ -170,19 +193,24 @@ Electron's GitHub releases) and checks it against the checksums shipped
 in the electron package. The end-to-end tests also need `openssl` on
 PATH, which Git for Windows provides.
 
-`pnpm dev` opens the app on a start tab. Type an address or a search
-in the top bar; Ctrl+T opens a tab, Ctrl+W closes one, Ctrl+Tab moves
-between them, and the cards on the left switch tabs. Ctrl+D bookmarks a
-page, Ctrl+Shift+O opens the Library, Ctrl+, opens Settings, and
-Ctrl+Shift+L (or the layers button) switches the layers view, and
-Ctrl+Shift+I the instrument panel. Ctrl+plus and minus zoom, Ctrl+F
-finds, Ctrl+J shows downloads, Ctrl+P prints, and Ctrl+Shift+N opens a
-private tab. A HoloML page (a `.holoml` address) shows as a 3D scene
-across the window; Ctrl+O, or dropping a `.holoml` file on the window,
-opens one from the computer. What
-the browser stores and sends is listed in [docs/privacy.md](docs/privacy.md). Development runs use a
-throwaway profile in the `userData/` folder, never your normal browser
-data.
+`pnpm dev` opens the app on a start tab. Type an address or a search in
+the top bar, or click a card on the left to switch tabs. The main keys
+(all listed, and changeable, in Settings > Shortcuts):
+
+- Ctrl+T, Ctrl+W, Ctrl+Tab: open, close, and move between tabs;
+  Ctrl+Shift+N opens a private tab.
+- Ctrl+D bookmarks the page; Ctrl+Shift+O opens the Library; Ctrl+,
+  opens Settings.
+- Ctrl+Shift+L switches the layers view; Ctrl+Shift+I the instrument
+  panel.
+- Ctrl+plus and minus zoom; Ctrl+F finds; Ctrl+J shows downloads; Ctrl+P
+  prints.
+- Ctrl+O opens a HoloML file from the computer (or drop one on the
+  window); a `.holoml` address shows as a 3D scene across the window.
+
+What the browser stores and sends is listed in
+[docs/privacy.md](docs/privacy.md). Development runs use a throwaway
+profile in the `userData/` folder, never your normal browser data.
 
 Tests: `pnpm test` (unit), `pnpm lint`, `pnpm typecheck`, and
 `pnpm test:e2e` (builds the app and drives it for about six minutes;
