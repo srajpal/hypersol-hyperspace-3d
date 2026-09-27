@@ -19,9 +19,9 @@ planned but untested. Apache 2.0. No telemetry.
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
 as source for developers (no installers yet). Since then, HoloML 0.1 has
 been written down in its own repository (milestone 13), and this browser
-shows HoloML pages (milestone 14, accepted; not yet in a release).
-Milestone 15, HoloML hardening, is built and waiting for acceptance.
-Next: a car showroom, and privacy and data tools, then installers as
+shows HoloML pages (milestones 14 and 15, accepted; not yet in a
+release), with limits for heavy scenes, keyboard and screen-reader
+access, and a scene inspector. Next: a car showroom, and privacy and data tools, then installers as
 1.0. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
@@ -147,7 +147,7 @@ and VR. The full roadmap is in [TODO.md](TODO.md).
 
 ## Progress
 
-Fourteen milestones are done and accepted.
+Fifteen milestones are done and accepted.
 Milestones 1 to 11 built the browser: a live page on a tilted panel in
 the 3D room, tabs as cards, bookmarks and history, ad and tracker
 blocking with encrypted DNS, the layers view, two themes, an instrument
@@ -157,7 +157,7 @@ address bar completion, view settings, and remappable shortcuts.
 Milestone 12 released it as the 0.9.0 developer preview, with automatic
 tests on Windows and Linux. Milestone 13 wrote HoloML 0.1 down in its
 own repository, and milestone 14 shows HoloML pages in the browser.
-Milestone 15 (built, waiting for acceptance) hardens them: limits for
+Milestone 15 hardens them: limits for
 heavy scenes, keyboard and screen-reader access, a text view, and a
 scene inspector.
 See [docs/progress.md](docs/progress.md) for each milestone with

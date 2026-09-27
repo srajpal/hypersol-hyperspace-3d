@@ -878,3 +878,14 @@ prompt 77.
 ```text
 Build.
 ```
+
+## 79 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Acceptance of milestone 15 (HoloML hardening: limits, keyboard and
+screen-reader access, the text view, and the Scene inspector; checks R1
+to R10), and the go-ahead to publish the holoml spec note (renderers may
+set resource limits) from its branch spec/renderer-limits.
+
+```text
+Milestone 15 accepted, push the holoml branch and open a PR.
+```

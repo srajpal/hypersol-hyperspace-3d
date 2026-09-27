@@ -2184,7 +2184,7 @@ listen on the canvas itself.
 
 ## Milestone 15 — HoloML hardening
 
-Status: Built, waiting for the owner's acceptance (2026-09-27). Plan
+Status: Done. Accepted by the owner 2026-09-27 (prompt 79). Plan
 answered (prompt 77: Q1 to Q5 a, as recommended) and build approved
 (prompt 78), 2026-09-27. Pushed before the build. Rule 13 check done
 (ARCHITECTURE.md section 3).
@@ -2325,8 +2325,8 @@ side could pass the triangle limit together (the triangles are now
 held at the check), and a model left out kept counting against the
 page's 128 MB until the others had also crossed it (now released at
 once). Both have unit tests (viewer/budget.test.ts) that failed before
-the fix. HoloML's spec note (task 6) is committed in the holoml
-repository on the branch spec/renderer-limits, not yet pushed.
+the fix. HoloML's spec note (task 6) is in holoml pull request #7
+(https://github.com/srajpal/holoml/pull/7), opened on acceptance.
 
 ### Done when
 

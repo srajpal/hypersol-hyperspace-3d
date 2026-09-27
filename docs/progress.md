@@ -171,8 +171,7 @@ page with a mistake says where it is.
 
 ![A HoloML page with a mistake: the line and column](screenshots/m14/42-holoml-mistake.png)
 
-**Milestone 15: HoloML hardening** (built 2026-09-27, waiting for
-acceptance). A heavy or hostile scene cannot exhaust memory: what
+**Milestone 15: HoloML hardening** (accepted 2026-09-27). A heavy or hostile scene cannot exhaust memory: what
 crosses a limit is left out, marked, and explained. A scene can be used
 from the keyboard, with a screen reader, as plain text, or without
 motion, and the instrument panel shows how it is built.
