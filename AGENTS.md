@@ -106,6 +106,9 @@ are fixed and the meaning is kept; nothing personal, private, or secret
 goes in (no keys, passwords, addresses, phone numbers, or non-public
 names), and no tool bookkeeping (token counts, session ids). Images and
 pasted output are summarised in one line. Short approvals are kept.
+A prompt that only answers the agent's questions ("Q1: a") or approves
+a draft gets a note above it saying what was asked, with the chosen
+options spelled out, or what was approved (owner, prompts 61 and 63).
 
 Do not change earlier entries except to correct an error.
 

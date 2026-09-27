@@ -24,7 +24,7 @@ Plan approved 2026-09-24.
 | 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Done (accepted, prompt 50) |
 | 11 | Owner feedback: address bar, view, settings, shortcuts | Two ways to show tabs; address bar completion; a wider page and view settings; menus that close; reorganized Settings with search; shortcut list and remapping; Library search reset | Done (accepted, prompt 54) |
 | 12 | Developer preview 0.9.0 | Source release for developers: privacy and proofreading pass, legal and project files, automatic builds and tests on Windows and Linux (GitHub issue #5), Electron check, trademark and `.holo` checks, version 0.9.0 | Done (accepted, prompt 61; released as v0.9.0) |
-| 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Later (H1 a, H2 a, prompt 58) |
+| 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | In progress (prompt 63: Q1 to Q4 a) |
 | 14 | HoloML in the browser | `.holo` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
 | 15 | Car showroom demo | Demo site with walk-around 3D cars | Later |
 | 16 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
@@ -1852,6 +1852,133 @@ made cleaned for privacy and spelling.
 
 - N1 to N7 pass, the owner has read the edited PROMPTS.md and the new
   project files, and says go for the 0.9.0 tag and release.
+
+## Milestone 13 — HoloML v0.1, the language
+
+Status: In progress. Plan and build approved 2026-09-26 (prompt 63)
+with Q1 a (`.holoml`), Q2 a (strict, HTML-like), Q3 a (everything
+milestone 14 shows), Q4 a (GitHub Actions). Pushed before the build.
+Rule 13 check done (ARCHITECTURE.md section 3).
+
+Goal: HoloML exists as a small, written language that a person can
+hand-write, with a parser and a checker that any renderer can use, and
+sample files that pin down what every element means. The browser shows
+HoloML pages in milestone 14; nothing in the browser changes here.
+
+The work happens in the holoml repository; this plan, the prompt log,
+and the handoff stay in this one.
+
+### The language, as proposed (owner, prompt 58: H1 a, H2 a)
+
+HTML-like tags; 3D models are glTF 2.0 (`.gltf` or `.glb`). A first
+sketch, for judging, not final:
+
+```
+<holoml version="0.1">
+  <head>
+    <title>Showroom</title>
+  </head>
+  <scene background="#0b0f1e">
+    <viewpoint position="0 1.6 6" look-at="0 0.8 0" mode="orbit" />
+    <light type="ambient" intensity="0.4" />
+    <light type="directional" position="4 8 5" intensity="1.2" />
+    <a href="coupe.holoml">
+      <model id="coupe" src="models/coupe.glb" rotation="0 30 0">
+        <material name="Paint" color="#c0182a" metalness="0.8" roughness="0.3" />
+      </model>
+    </a>
+    <label position="0 2.1 0">The coupe: click to walk around it</label>
+    <animate target="#coupe" attribute="rotation" to="0 390 0" duration="20s" repeat="indefinite" />
+  </scene>
+</holoml>
+```
+
+- Units: metres and degrees; y is up (glTF's own convention).
+- Elements in v0.1: `holoml`, `head`, `title`, `meta`, `scene`,
+  `group` (moves several things together), `model`, `material` (changes
+  a named material inside a model), `viewpoint` (where the viewer
+  starts, and orbit or walk), `light` (ambient, directional, point,
+  spot), `label` (text in the scene), `a` (a link around a model or a
+  label), and `animate` (changes an attribute over time). A model's own
+  glTF animations play by name.
+- Links go to other HoloML pages or to ordinary web pages.
+- Media type, for pages served over the web: `model/vnd.holoml`, in the
+  same family as X3D's `model/x3d+xml`; unregistered until the language
+  has users.
+
+### Questions
+
+- Q1, the file extension (owner, prompt 62). a: `.holoml`, which
+  nothing else uses and which matches the name (recommended). b:
+  `.hlml`, shorter, but already used by "High Level Mindustry Logic"
+  (docs/name-checks.md). c: keep `.holo`, used by two other formats.
+- Q2, how strict the syntax is. a: strict and HTML-like: every element
+  closed (`<model ... />` or `</model>`), attribute values quoted,
+  boolean attributes may stand alone (`autoplay`), and any mistake stops
+  with its line, column, and a plain message (recommended: a small
+  parser, clear errors, and room to loosen later). b: exactly XML, so
+  XML tools can read it (no standalone boolean attributes). c: forgiving
+  like HTML, repairing mistakes as browsers do (much larger; later, if
+  ever).
+- Q3, what v0.1 covers. a: everything milestone 14 will show: models,
+  groups, the viewpoint with orbit and walk, lights, labels, links,
+  material changes, and simple animation (recommended: one spec for one
+  renderer milestone). b: the core only (models, viewpoint, labels,
+  links); lights, materials, and animation in v0.2.
+- Q4, automatic tests for the holoml repository. a: GitHub Actions on
+  Windows and Linux, as the browser has (recommended). b: none yet.
+
+Assumed unless the owner says otherwise: the packages stay in the
+repository and are not published to npm (publishing needs its own
+approval); the spec text is CC BY 4.0 and the code Apache 2.0, as now.
+
+### Tasks
+
+- [ ] 1. SPEC.md: the syntax, every element and attribute with its
+      meaning, units and coordinates, links, errors, the media type, and
+      the file extension; written like a small HTML spec, with examples.
+- [ ] 2. @holoml/parser: text to a node tree, with the line and column
+      of every node, and clear errors; no dependencies.
+- [ ] 3. @holoml/schema: checks a tree against the spec (known elements,
+      allowed children, attribute types such as numbers, vectors,
+      colours, durations, and links) and lists every problem with its
+      place.
+- [ ] 4. Conformance samples in conformance/: valid files with the tree
+      each must give (JSON), and invalid files with the error each must
+      give; every element and attribute has at least one sample.
+- [ ] 5. The same tool setup as the browser (pnpm workspace, TypeScript,
+      Vitest, ESLint), and the README, AGENTS.md, and CONTRIBUTING.md
+      updated with the commands that ran.
+- [ ] 6. GitHub Actions for the holoml repository (if Q4 a).
+- [ ] 7. examples/: a small showroom page, with a simple placeholder
+      model made for the project (no third-party models), that the
+      checker accepts; the real showroom is milestone 15.
+
+### Software to install (holoml repository, with plan approval)
+
+The same tools and versions the browser uses: typescript 6.0, vitest
+5.0, eslint 10 with typescript-eslint 8, and @types/node; pnpm 12.4.1
+pinned. Nothing at run time: the parser and checker have no
+dependencies.
+
+### Checks
+
+| # | Check | Expected result |
+|---|---|---|
+| O1 | Spec | SPEC.md covers every element and attribute in v0.1, each with an example |
+| O2 | Parser | Every valid sample gives exactly its expected tree, with positions |
+| O3 | Errors | Every invalid sample fails with its expected error, line, and column |
+| O4 | Checker | Wrong children, unknown attributes, and bad values (vectors, colours, durations, links) are each reported with their place |
+| O5 | Coverage | Every element and attribute in the spec has at least one valid sample; a unit test enforces it |
+| O6 | Round trip | Writing a parsed tree back out and parsing it again gives the same tree, for every valid sample |
+| O7 | Speed | A 1 MB file parses in under 100 ms on the test machine |
+| O8 | Automatic tests | Lint, types, and unit tests pass locally and (if Q4 a) on GitHub on Windows and Linux |
+| O9 | Browser unchanged | The browser's checks still pass (only its documents change) |
+
+### Done when
+
+- O1 to O9 pass and the owner accepts. Then milestone 14 shows HoloML
+  pages in the browser.
 
 ## Release path and milestone 12: owner's answers so far (2026-09-26, prompts 54 to 56)
 

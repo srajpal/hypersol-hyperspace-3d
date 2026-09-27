@@ -15,6 +15,8 @@ lawyer are worth it before any commercial use.
 | HyperSol | Web search for "HyperSol" trademarks at the USPTO | No registration found. HyperSol was the owner's company, founded in 2001, which no longer exists |
 | HoloML | Web search for "HoloML" as a markup language or trademark | Only this project (github.com/srajpal/holoml); no trademark found |
 | `.holo` | Web search for the ".holo" file extension | Already used by two formats: a digital holography data format (holofile.org, with ImageJ, MATLAB, and Python readers) and HoloBuilder project files |
+| `.hlml` | Web search for the ".hlml" file extension (2026-09-26, milestone 13, owner prompt 62) | Already used: "High Level Mindustry Logic", a scripting language for the game Mindustry, with a Visual Studio Code extension |
+| `.holoml` | Web search for the ".holoml" file extension (same day) | Nothing found using it |
 
 ## What it means
 
@@ -26,7 +28,8 @@ lawyer are worth it before any commercial use.
   should not rely on the extension alone: a HoloML page is identified by
   its media type when served over the web (to be defined in the HoloML
   spec, milestone 13) and by its root element when opened from disk.
-  Choosing the extension again is an open question for milestone 13.
+  Choosing the extension again is an open question for milestone 13;
+  `.holoml` is free and matches the name (owner asked, prompt 62).
 
 ## Sources
 
@@ -35,4 +38,5 @@ lawyer are worth it before any commercial use.
 - https://www.trademarkia.com/hyperspace-modeler-74043559 (HYPERSPACE MODELER, abandoned)
 - http://www.holofile.org/ (the .holo digital holography format)
 - https://github.com/DigitalHolography/HoloFile (readers for that format)
+- https://marketplace.visualstudio.com/items?itemName=calestialgem.hlml (.hlml, High Level Mindustry Logic)
 - https://help.holobuilder.com/en/articles/3580036-how-to-open-add-a-shared-offline-holoviewer-project-in-the-holoviewer-desktop-app-as-a-handover (HoloBuilder .holo projects)

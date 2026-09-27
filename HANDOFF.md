@@ -2,8 +2,8 @@
 
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-09-26 (milestone 12, the 0.9.0 developer preview,
-accepted and released; milestone 13, HoloML, is next and not yet
-planned).
+accepted and released; milestone 13, HoloML v0.1, is being built
+in the holoml repository; plan in TODO.md).
 
 ## Where things stand
 

@@ -700,3 +700,25 @@ Add the message: a clear "can't draw the 3D room".
 I accept milestone 12. Tag and release 0.9.0.
 The only issue with PROMPTS.md is that some prompts are just the answers to questions I was asked, like "Q1-a" or just "A". That is not helpful for instructive purposes, so where still available, annotate them with the question that was asked, and if not available, remove the ones where the information does not provide anything useful.
 ```
+
+## 62 — 2026-09-26 · Claude Opus 5.5, low effort
+
+```text
+Let's continue with milestone 13. Can you use the extension .hlml or .holoml?
+```
+
+## 63 — 2026-09-26 · Claude Opus 5.5, low effort
+
+Answers to the milestone 13 plan's questions (HoloML v0.1). Q1, the file
+extension (a: `.holoml`, which nothing else uses; `.hlml` was taken).
+Q2, how strict the syntax is (a: strict and HTML-like, every mistake
+stopping with its line and column). Q3, what v0.1 covers (a: everything
+milestone 14 will show: models, groups, the viewpoint, lights, labels,
+links, material changes, and simple animation). Q4, automatic tests for
+the holoml repository (a: GitHub Actions on Windows and Linux).
+
+```text
+Q1: a, Q2: a, Q3: a, Q4: a. Build.
+Remember what we discussed about annotating the prompts that are only answers.
+Confirm the repository and what will go there.
+```
