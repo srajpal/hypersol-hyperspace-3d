@@ -2,8 +2,9 @@
 
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-09-26 (milestone 12, the 0.9.0 developer preview,
-accepted and released; milestone 13, HoloML v0.1, is being built
-in the holoml repository; plan in TODO.md).
+accepted and released; milestone 13, HoloML v0.1, is built in the
+holoml repository and waits for the owner's acceptance; TODO.md has
+the results).
 
 ## Where things stand
 
@@ -74,9 +75,12 @@ to this repository for rules and the prompt log.
   card: C9's frame rate is measured but skipped there (owner, prompt
   59); Linux runs use SwiftShader for WebGL and a throwaway GNOME
   Keyring for the password checks.
-- The language is HoloML, file extension `.holo` ("3DML" was taken;
-  "HSML" was checked and advised against). Its syntax uses HTML-like
-  tags, and its 3D models are glTF 2.0 (owner, prompt 58).
+- The language is HoloML, file extension `.holoml` ("3DML" was taken;
+  "HSML" was checked and advised against; `.holo` and `.hlml` are used
+  by other formats). Its syntax is strict and HTML-like, and its 3D
+  models are glTF 2.0 (owner, prompts 58 and 63). Version 0.1 is written
+  down in the holoml repository's SPEC.md, with a parser, a checker,
+  and conformance samples (milestone 13).
 - License: Apache 2.0 for both repositories; the HoloML spec text also
   CC BY 4.0. Contributions come under Apache 2.0's own terms.
 - Versions: 0.9.0 is the source-only developer preview; 1.0 is
@@ -91,8 +95,6 @@ to this repository for rules and the prompt log.
   recommended).
 - With the macOS release (milestone 17): the Apple Developer Program for
   signing and notarization.
-- With HoloML (milestone 13): whether to keep the `.holo` extension,
-  which two other formats already use (docs/name-checks.md).
 - Product gaps noted in the 2026-09-24 review and not yet scheduled:
   bookmark import and onboarding, a touch equivalent for closing tabs.
 
@@ -116,6 +118,7 @@ to this repository for rules and the prompt log.
 
 ## Not done yet, on purpose
 
-- No code in the holoml repository yet (milestone 13).
+- HoloML is not shown in the browser yet (milestone 14), and its
+  packages are not published to npm.
 - No installers, signing, or updates (milestones 16 and 17).
 - No installers attached to releases: v0.9.0 is source only.

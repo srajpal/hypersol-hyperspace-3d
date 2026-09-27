@@ -111,7 +111,10 @@ screenshots, and [TODO.md](TODO.md) for the roadmap.
 
 HoloML is the 3D markup language developed alongside the browser, in its
 own repository so it stays independent and reusable:
-[github.com/srajpal/holoml](https://github.com/srajpal/holoml).
+[github.com/srajpal/holoml](https://github.com/srajpal/holoml). Version
+0.1 is written down there (SPEC.md), with a parser, a checker, and
+sample pages; HoloML files use the extension `.holoml`. Showing HoloML
+pages in this browser is the next milestone.
 
 ## Project documents
 

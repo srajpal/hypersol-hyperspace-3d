@@ -40,7 +40,7 @@ plus HoloML, a 3D markup language kept in its own repository.
 - The original 2001 product is "HyperSol WebSurfer". "HyperSpace 3D" was
   also the title of an early HyperSol concept screen (2001 to 2003); do
   not claim that concept shipped. The language is "HoloML", file
-  extension `.holo`.
+  extension `.holoml` (owner, prompt 63; `.holo` and `.hlml` were taken).
 - Internal identifiers keep their names: the `@hypersol/` package scope,
   `hypersol:` IPC channels, `HYPERSOL_*` environment switches,
   `hypersol.sqlite`, and the "hypersol-private" partition.

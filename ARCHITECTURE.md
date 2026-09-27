@@ -285,18 +285,31 @@ hypersol-hyperspace-3d/
 
 ```
 holoml/
-  SPEC.md                      the language, written like a small HTML spec
+  SPEC.md                      the language, version 0.1 (milestone 13)
   LICENSE, LICENSE-SPEC        Apache 2.0 and CC BY 4.0
   packages/
-    parser/                    @holoml/parser: text to a node tree; zero deps
-    schema/                    @holoml/schema: element and attribute rules
-  examples/
-    showroom/                  the car showroom demo (later milestone)
-  conformance/                 sample files and expected trees for any renderer
+    parser/                    @holoml/parser: text to a tree with line and
+                               column; strict syntax; no dependencies
+    schema/                    @holoml/schema: the element and attribute
+                               rules as data (rules.ts), and check(), which
+                               lists every problem with its place
+  conformance/                 valid/, syntax-errors/, problems/: each
+                               .holoml with the .expected.json any reader
+                               must give (pnpm conformance:update writes
+                               them, for review)
+  examples/showroom/           three cars to orbit, one to walk around; a
+                               placeholder car made of boxes by
+                               make-model.mjs
+  .github/workflows/ci.yml     lint, types, and tests on Windows and Linux
 ```
 
-First result scope for this repo: README, SPEC.md outline, empty parser
-package with one passing test. Language design itself is a later milestone.
+Decisions (milestone 13, owner prompt 63): files are `.holoml`, served
+as `model/vnd.holoml`; the syntax is strict (the first mistake stops the
+parse, with its line and column); version 0.1 covers everything
+milestone 14 shows; the packages stay in the repository, unpublished.
+Tests hold SPEC.md and the code together: every code, element, and
+attribute in the code must be in SPEC.md with an example and in a valid
+sample.
 
 ## 7. Data flow
 

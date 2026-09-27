@@ -28,8 +28,9 @@ lawyer are worth it before any commercial use.
   should not rely on the extension alone: a HoloML page is identified by
   its media type when served over the web (to be defined in the HoloML
   spec, milestone 13) and by its root element when opened from disk.
-  Choosing the extension again is an open question for milestone 13;
-  `.holoml` is free and matches the name (owner asked, prompt 62).
+  The owner chose `.holoml`, which nothing else uses and which matches
+  the name (prompt 63); the media type is `model/vnd.holoml` (HoloML
+  SPEC.md, section 2).
 
 ## Sources
 

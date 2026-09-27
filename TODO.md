@@ -24,8 +24,8 @@ Plan approved 2026-09-24.
 | 10 | Tabs and economy | Reopen a closed tab, search tabs, mute a tab, tab card options (small, medium, large, auto-hide, or a list in the top bar); economy mode (lower rendering resolution, fewer effects, a frame cap, sleeping inactive tabs while protecting forms, audio, and downloads); history work off the main process (GitHub issue #4) | Done (accepted, prompt 50) |
 | 11 | Owner feedback: address bar, view, settings, shortcuts | Two ways to show tabs; address bar completion; a wider page and view settings; menus that close; reorganized Settings with search; shortcut list and remapping; Library search reset | Done (accepted, prompt 54) |
 | 12 | Developer preview 0.9.0 | Source release for developers: privacy and proofreading pass, legal and project files, automatic builds and tests on Windows and Linux (GitHub issue #5), Electron check, trademark and `.holo` checks, version 0.9.0 | Done (accepted, prompt 61; released as v0.9.0) |
-| 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | In progress (prompt 63: Q1 to Q4 a) |
-| 14 | HoloML in the browser | `.holo` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
+| 13 | HoloML v0.1 language | Spec (HTML-like tags, glTF models), schema, parser, conformance samples | Built; waiting for acceptance (prompt 63: Q1 to Q4 a) |
+| 14 | HoloML in the browser | `.holoml` page mode: models, orbit and walk, labels, links, lights, materials, animation | Later |
 | 15 | Car showroom demo | Demo site with walk-around 3D cars | Later |
 | 16 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
 | 17 | macOS release | Signing, notarization, Mac checks | Later |
@@ -1855,9 +1855,11 @@ made cleaned for privacy and spelling.
 
 ## Milestone 13 — HoloML v0.1, the language
 
-Status: In progress. Plan and build approved 2026-09-26 (prompt 63)
-with Q1 a (`.holoml`), Q2 a (strict, HTML-like), Q3 a (everything
-milestone 14 shows), Q4 a (GitHub Actions). Pushed before the build.
+Status: Built 2026-09-26; waiting for the owner's acceptance. Plan and
+build approved 2026-09-26 (prompt 63) with Q1 a (`.holoml`), Q2 a
+(strict, HTML-like), Q3 a (everything milestone 14 shows), Q4 a (GitHub
+Actions). Pushed before the build; the holoml repository pushed at the
+end (commit 553e497).
 Rule 13 check done (ARCHITECTURE.md section 3).
 
 Goal: HoloML exists as a small, written language that a person can
@@ -1934,23 +1936,23 @@ approval); the spec text is CC BY 4.0 and the code Apache 2.0, as now.
 
 ### Tasks
 
-- [ ] 1. SPEC.md: the syntax, every element and attribute with its
+- [x] 1. SPEC.md: the syntax, every element and attribute with its
       meaning, units and coordinates, links, errors, the media type, and
       the file extension; written like a small HTML spec, with examples.
-- [ ] 2. @holoml/parser: text to a node tree, with the line and column
+- [x] 2. @holoml/parser: text to a node tree, with the line and column
       of every node, and clear errors; no dependencies.
-- [ ] 3. @holoml/schema: checks a tree against the spec (known elements,
+- [x] 3. @holoml/schema: checks a tree against the spec (known elements,
       allowed children, attribute types such as numbers, vectors,
       colours, durations, and links) and lists every problem with its
       place.
-- [ ] 4. Conformance samples in conformance/: valid files with the tree
+- [x] 4. Conformance samples in conformance/: valid files with the tree
       each must give (JSON), and invalid files with the error each must
       give; every element and attribute has at least one sample.
-- [ ] 5. The same tool setup as the browser (pnpm workspace, TypeScript,
+- [x] 5. The same tool setup as the browser (pnpm workspace, TypeScript,
       Vitest, ESLint), and the README, AGENTS.md, and CONTRIBUTING.md
       updated with the commands that ran.
-- [ ] 6. GitHub Actions for the holoml repository (if Q4 a).
-- [ ] 7. examples/: a small showroom page, with a simple placeholder
+- [x] 6. GitHub Actions for the holoml repository (if Q4 a).
+- [x] 7. examples/: a small showroom page, with a simple placeholder
       model made for the project (no third-party models), that the
       checker accepts; the real showroom is milestone 15.
 
@@ -1974,6 +1976,29 @@ dependencies.
 | O7 | Speed | A 1 MB file parses in under 100 ms on the test machine |
 | O8 | Automatic tests | Lint, types, and unit tests pass locally and (if Q4 a) on GitHub on Windows and Linux |
 | O9 | Browser unchanged | The browser's checks still pass (only its documents change) |
+
+### Results (2026-09-26)
+
+| # | Result |
+|---|---|
+| O1 | Pass. SPEC.md describes every element and attribute, each element with an example; a unit test (spec.test.ts) holds its tables of error and problem codes, its element sections, and their attribute rows to the code |
+| O2 | Pass. 11 valid samples give exactly their expected trees, with positions |
+| O3 | Pass. 22 syntax-error samples each give their expected code, line, and column; the positions were counted by hand for every one, and the parser's own tests have hand-written expectations |
+| O4 | Pass. 18 problem samples, covering every problem code, each give their expected problems and places |
+| O5 | Pass. A unit test finds every element and attribute of the rules in a valid sample |
+| O6 | Pass. Every valid sample written out by serialize() and read again gives the same tree (text compared with whitespace collapsed, as the spec shows it) |
+| O7 | Pass. A 1.00 MB document reads in 22.0 ms (median of five, after a warm-up) on the Windows 11 test machine |
+| O8 | Pass. Lint, types, and 105 tests clean locally; GitHub Actions run 36293453877 passed on Windows and Linux (105 tests each) |
+| O9 | Pass. In the browser repository only documents changed; its 235 unit tests pass. The end-to-end checks were not rerun, since no code changed |
+
+Found while building: an attribute value missing its closing quote was
+first reported as a "<" inside the value, on the next line; it now has
+its own error, unclosed-value, at the opening quote. Text in the wrong
+place is reported at its first visible character, not at the whitespace
+before it. Git on this machine converts line ends on commit
+(core.autocrlf input), which would have turned the sample that tests
+Windows line ends into a Unix one; the holoml repository's
+.gitattributes keeps every .holoml file byte for byte.
 
 ### Done when
 
