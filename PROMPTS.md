@@ -1284,3 +1284,30 @@ Can you check PR #33: what do we have to do with it to merge it?
 ```text
 Merged #33. Push it, and plan milestone 19.
 ```
+
+## 114 — 2026-09-28 · Claude Opus 5.5, low effort
+
+Answers to the milestone 19 plan's questions (Harbour Loft), all as
+recommended, approval to build, and to close the GitHub issues already
+built. Q1, paragraphs (a: a new `panel` element, a flat board of wrapped
+text). Q2, doors and switches (a: click actions in the language, each a
+button in the outline). Q3, rooms and pages (a: the whole flat on one
+page, and the roof terrace as a second page reached with a fade and a
+named viewpoint). Q4, the view outside (a: `sky`, a panorama behind
+everything). Q5, the floor plan (a: a `plan` element). Q6, the models (a:
+Poly Haven, with the kitchen and bathroom made by the site's script
+from Poly Haven textures). The issues: holoml #8, #9, and #10, and the
+browser's #23, #25, and #28.
+
+```text
+Use the recommendations and build, and close the issues.
+```
+
+## 115 — 2026-09-28 · Claude Opus 5.5, low effort
+
+(Sent during the milestone 19 build.)
+
+```text
+Milestone 22 should be creating documentation for HoloML using some
+standards.
+```

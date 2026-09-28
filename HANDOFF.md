@@ -46,10 +46,11 @@ state; this is a summary.
   main (`pnpm holoml:sync main --examples main`); 18
   Sofa studio; 19 Harbour Loft; 20 a sneaker store (in place of Coral
   Bay, a resort, prompts 101 and 102); 21 Aquarium, where HoloML 0.2 is
-  tagged); 22 privacy
-  and data tools (HTTPS-only, per-site storage, bookmark import and
-  export: #24, #26, #27); then installers as 1.0 (23 for Windows and
-  Linux, 24 for macOS), with mobile later (owner, prompt 67).
+  tagged); 22 documentation for HoloML to recognised standards (prompt
+  115); 23 privacy and data tools (HTTPS-only, per-site storage,
+  bookmark import and export: #24, #26, #27); then installers as 1.0
+  (24 for Windows and Linux, 25 for macOS), with mobile later (owner,
+  prompt 67).
 - The logo direction is chosen (concept 4d in
   docs/branding/logo-concepts/); the real icons come with the installers.
 - HyperSol, the company founded in 2001, no longer exists. This is a
@@ -111,12 +112,12 @@ to this repository for rules and the prompt log.
 
 ## Open items (need an owner decision when their milestone comes)
 
-- With the installers (milestone 23): Windows signing (Microsoft's
+- With the installers (milestone 24): Windows signing (Microsoft's
   Artifact Signing recommended, or SignPath Foundation), updates
   (automatic from GitHub Releases recommended), Linux formats (AppImage
   and .deb recommended), the Windows installer type (per user
   recommended).
-- With the macOS release (milestone 24): the Apple Developer Program for
+- With the macOS release (milestone 25): the Apple Developer Program for
   signing and notarization.
 - Product gaps noted in the 2026-09-24 review and not yet scheduled:
   bookmark import and onboarding, a touch equivalent for closing tabs.
@@ -143,5 +144,5 @@ to this repository for rules and the prompt log.
 
 - HoloML's packages are not published to npm; the browser keeps a copy
   (packages/holoml, pnpm holoml:sync).
-- No installers, signing, or updates (milestones 23 and 24).
+- No installers, signing, or updates (milestones 24 and 25).
 - No installers attached to releases: v0.9.0 is source only.

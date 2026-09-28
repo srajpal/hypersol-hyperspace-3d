@@ -198,7 +198,7 @@ upgrade needed.
 | Window frame, reconsidered | Standard OS frame kept | Considered in milestone 6: a custom frame would lose native dragging, snapping, and accessibility; the theme now sets the frame's light or dark scheme. |
 | Bookmarks and history | SQLite through Node's built-in node:sqlite (owner decision 2026-09-25, prompt 20) | Fast search over thousands of rows; standard for browsers. Built into Electron's Node, so no native module and no extra package. |
 | UI widgets (address bar, menus) | Lit web components | Tiny, standards-based, no framework lock-in; themed with CSS variables. |
-| Build | electron-vite (Vite) now; electron-builder planned for the installers (milestones 23 and 24; not yet installed) | Fast dev reload; installers for Windows, macOS, Linux. |
+| Build | electron-vite (Vite) now; electron-builder planned for the installers (milestones 24 and 25; not yet installed) | Fast dev reload; installers for Windows, macOS, Linux. |
 | Toolchain | Node 22.13 or newer; pnpm 12.4.1 pinned in package.json (`packageManager`, with the pnpm version recorded in the lockfile); installs use `--frozen-lockfile` | Reproducible installs (GitHub issue #5). |
 | Tests | Vitest (unit), Playwright (Electron end-to-end); `pnpm test:linux` runs them in a Docker container that copies GitHub's Linux machines (tests/linux/, prompts 103 and 104) | Standard, cross-platform. The container finds Linux problems on this computer; the automatic builds on GitHub stay the check a pull request is merged on. |
 | Repos | hypersol-hyperspace-3d (browser; renamed from hypersol-websurfer-3d on 2026-09-26), holoml (language) | Each useful on its own; browser depends on holoml packages via npm. |
@@ -601,7 +601,7 @@ Progress screenshots: `MILESTONE=m3 pnpm screenshots` builds the app and
 saves its main screens to docs/screenshots/m3/ (Electron's own capture,
 local test pages only).
 
-Not checked yet: `pnpm package` (installers per OS, milestones 23 and 24).
+Not checked yet: `pnpm package` (installers per OS, milestones 24 and 25).
 
 Launch options, for development and tests: `--start-url=<address>`
 (default: a start tab), `--tilt=<0 to 20>`,

@@ -33,12 +33,13 @@ Plan approved 2026-09-24.
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Planned (prompt 113), waiting for approval |
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Later (prompts 101 and 102) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
-| 22 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85) |
-| 23 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
-| 24 | macOS release | Signing, notarization, Mac checks | Later |
-| 25 | Free camera and room navigation | Move freely around the room | Later |
-| 26 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
-| 27 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
+| 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Later (prompt 115) |
+| 23 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85, and from 22, prompt 115) |
+| 24 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
+| 25 | macOS release | Signing, notarization, Mac checks | Later |
+| 26 | Free camera and room navigation | Move freely around the room | Later |
+| 27 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
+| 28 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS and Android | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
@@ -76,6 +77,12 @@ Of the HoloML features Coral Bay was to bring, loading by area moves to
 the store (many shoes, each loaded when the viewer comes near);
 movement along paths, sounds by place, and a sky wait until a site
 needs them (the aquarium's fish may take paths).
+
+On 2026-09-28 (prompt 115) documentation for HoloML to recognised
+standards became milestone 22, after the example sites and HoloML 0.2's
+tag: privacy and data tools moved from 22 to 23, the Windows and Linux
+release from 23 to 24, macOS from 24 to 25, and the later milestones
+from 25, 26, and 27 to 26, 27, and 28.
 
 ### Where design work belongs
 

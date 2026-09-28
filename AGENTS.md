@@ -293,8 +293,9 @@ milestone; the current milestone's checks are defined in TODO.md):
   software), every fabric and wood, the price, the cart page, the
   keyboard alone, and no frames while idle. U1 and U8 are holoml's own
   tests.
-- Later milestones add: the HoloML example sites (19 to 21), privacy
-  and data tools (22), and installers (23 and 24).
+- Later milestones add: the HoloML example sites (19 to 21), HoloML's
+  documentation (22), privacy and data tools (23), and installers (24
+  and 25).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that
