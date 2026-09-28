@@ -36,7 +36,7 @@ planned but untested. Apache 2.0. No telemetry.
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
 as source for developers (no installers yet). Since then, HoloML 0.1 has
 been written down in its own repository (milestone 13), and this browser
-shows HoloML pages (milestones 14 to 17, accepted; not yet in a
+shows HoloML pages (milestones 14 to 18, accepted; not yet in a
 release), with limits for heavy scenes, keyboard and screen-reader
 access, a scene inspector, and a HoloML car showroom to try from the
 start panel. Milestone 17 adds Blockworld, a small block game written in
@@ -44,8 +44,7 @@ the first part of HoloML 0.2 (scripts, sound, walls and gravity), and a
 HoloML examples section. Milestone 18 adds walking and turning speeds a
 page can set, sliders on the screen (Blockworld's Speed slider), and the
 sofa studio, a shop page with shadows, textured fabrics, and choices
-that change the sofa in place (built; waiting for acceptance). Then
-three more example sites,
+that change the sofa in place. Then three more example sites,
 privacy and data tools, and installers as 1.0. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 

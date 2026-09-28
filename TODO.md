@@ -29,7 +29,7 @@ Plan approved 2026-09-24.
 | 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Done (accepted, prompt 79) |
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
 | 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
-| 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | Built: part 1 (speeds and sliders) merged (pull request #34); part 2, the sofa studio (prompt 98), merged in holoml (#15) and published, the browser's side in a pull request; waiting for acceptance |
+| 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | Done (accepted, prompt 112) |
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Later (prompt 85, Q4 a) |
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Later (prompts 101 and 102) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
@@ -2773,7 +2773,8 @@ After the report (prompts 89 and 90):
 
 ## Milestone 18 — Sofa studio, with walking speeds and sliders
 
-Status: In progress. Part 1 (walking and turning speeds, and sliders)
+Status: Done. Accepted by the owner on 2026-09-28 (prompt 112), after
+browser pull request #35 merged. Part 1 (walking and turning speeds, and sliders)
 approved by the owner and built, 2026-09-27 (prompt 92), in browser pull
 request #34 with the fixes for GitHub's Linux machines. Part 2, the sofa
 studio, the milestone's example site: planned below (prompt 97); the

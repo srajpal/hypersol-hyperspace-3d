@@ -1,18 +1,15 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-09-27 (milestones 1 to 17 accepted; milestone 18 in
-progress: its first part, walking and turning speeds and sliders
-(prompt 92), is built and merged in holoml (pull request #14); the
-browser's side and the fixes for GitHub's Linux machines are in browser
-pull request #34 (merged). The second part, the sofa studio (prompt 98:
-shadows, material pictures, choices, light from the surroundings, and
-the shop page), is built: holoml's side merged (pull request #15) and
-published at https://srajpal.github.io/holoml/sofa-studio/; the
-browser's on branch m18-sofa-studio, on main, with the copy synced from
-holoml's main, in a pull request. The README shows four pictures
-(prompt 99). The milestone waits for the owner's acceptance. The
-roadmap is in TODO.md).
+Last updated 2026-09-28 (milestones 1 to 18 accepted; 18, accepted in
+prompt 112: walking and turning speeds and sliders, and the sofa
+studio, with shadows, material pictures, choices, and light from the
+surroundings, merged in holoml (#14 to #16) and the browser (#34, #35),
+and published at https://srajpal.github.io/holoml/sofa-studio/. The
+README shows four pictures (prompt 99), and `pnpm test:linux` runs the
+checks on Linux on this computer (prompts 103 and 104). Next:
+milestone 19, Harbour Loft, to plan; milestone 20 is now a sneaker
+store (prompts 101 and 102). The roadmap is in TODO.md).
 
 ## Where things stand
 

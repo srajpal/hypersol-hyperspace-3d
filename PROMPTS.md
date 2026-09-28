@@ -1271,3 +1271,16 @@ Start the R3 task
 ```text
 Try #33 again, it should pass now I think, then I can merge it.
 ```
+
+## 112 — 2026-09-28 · Claude Opus 5.5, low effort
+
+```text
+Merged #35; milestone 18 accepted.
+Can you check PR #33: what do we have to do with it to merge it?
+```
+
+## 113 — 2026-09-28 · Claude Opus 5.5, low effort
+
+```text
+Merged #33. Push it, and plan milestone 19.
+```

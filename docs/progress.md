@@ -206,7 +206,7 @@ examples section with a picture of each example.
 
 ![Blockworld at night: three torches light the slope](screenshots/m17/52-blockworld-night.png)
 
-**Milestone 18: sofa studio** (built 2026-09-27; waiting for acceptance).
+**Milestone 18: sofa studio** (accepted 2026-09-28).
 First, a page says how fast the viewer walks and turns, and sliders go
 on the screen (Blockworld's Speed slider). Then the sofa studio,
 HoloML's first shop page: shadows, the fabrics' own pictures, choices
