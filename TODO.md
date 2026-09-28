@@ -29,7 +29,7 @@ Plan approved 2026-09-24.
 | 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Done (accepted, prompt 79) |
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
 | 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
-| 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | In progress: part 1 (speeds and sliders) built; the sofa studio to be planned |
+| 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | In progress: part 1 (speeds and sliders) built, in pull request #34; part 2, the sofa studio, planned, waiting for approval |
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Later (prompt 85, Q4 a) |
 | 20 | Coral Bay | A resort: paths to ride, sounds by place, sky and environment light, loading by area | Later (prompt 85, Q4 a) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
@@ -2760,9 +2760,10 @@ After the report (prompts 89 and 90):
 ## Milestone 18 — Sofa studio, with walking speeds and sliders
 
 Status: In progress. Part 1 (walking and turning speeds, and sliders)
-approved by the owner and built, 2026-09-27 (prompt 92); the sofa
-studio, the milestone's example site, is still to be planned (outline
-under milestone 17, "Later example milestones"). Pushed before the
+approved by the owner and built, 2026-09-27 (prompt 92), in browser pull
+request #34 with the fixes for GitHub's Linux machines. Part 2, the sofa
+studio, the milestone's example site: planned below (prompt 97),
+waiting for the owner's answers and approval. Pushed before the
 milestone (after milestone 17's acceptance). Rule 13 check done
 (ARCHITECTURE.md section 3).
 
@@ -2832,6 +2833,132 @@ tests/fixtures/holoml/speed.holoml and its script.
 | U5 | Pass. Both sliders in their corners with their labels; the second shows the defaults (0 to 10 in steps of 0.1, starting at 0). The right arrow moved "pace" to 1.25: the script heard it, set 5 metres a second and 225 degrees a second, and changed the label; the left arrow moved it back without turning the viewer, and W still walked. A click at its right end set 2, with no scene click. A script's value 0.5 moved it without an event; 3 was refused. The accessibility tree has two sliders, "Pace 2×" (value 0.5) and "Plain"; the text view shows both |
 | U6 | Pass. Blockworld reads 4.3 and 120; End on its slider gave 8.6 and 240 and the label "Speed 2×", Home gave 2.15 and 60 and "Speed 0.5×" |
 | U7 | Pass, with one timing miss. Full run: 244 of 245 end-to-end checks passed (C to U); milestone 10's L9 answered one search in 70 ms (limit 50) during the run and passed alone right after (9 of 9); L9's measure is being reworked in the owner's other session (browser pull request #33). The HoloML checks (milestones 14 to 17) passed again with the new walk controls (64 of 64); unit tests 261; holoml's tests 170 |
+
+### Part 2: the sofa studio (plan, waiting for approval)
+
+Goal: HoloML's first shop, with realistic graphics. A furniture shop's
+page for one sofa in a lit room: the viewer walks around it, chooses the
+fabric and the legs in place (no new page), sees soft shadows and a room
+that looks real, watches the price follow the choice, and goes on to an
+ordinary web page to "add it to the cart". It needs what the showroom
+found missing (holoml issues #8 shadows and #9 changing a material in
+place), textured materials, and light from the surroundings.
+
+#### How it would work (proposed)
+
+- **HoloML 0.2, second part** (holoml repository: SPEC.md, the checker,
+  conformance samples; 0.1 pages unchanged):
+  - Shadows (#8): a `shadows` flag on `light` (it casts shadows) and on
+    `model` and `group` (they cast and receive them). The renderer
+    chooses how soft and how detailed, and may leave shadows out when it
+    must (as with its other limits), saying so.
+  - Textured materials: `material` gains `map` (a colour picture),
+    `normal-map` (fine bumps), `roughness-map`, and `repeat` (how many
+    times the picture tiles, such as "3 3"). Pictures come from the
+    page's own site and count against the page's limits like models'.
+  - A choice in place (#9): `choice`, a set of options on the screen, in
+    a corner like `hud` and `slider`. It names a model's material
+    (`target="#sofa" material="Fabric"`); each `option` gives the
+    material's new colour, pictures, and roughness, and its label.
+    Picking an option changes the material at once, without a script;
+    the keyboard (arrow keys, as a group of radio buttons) and screen
+    readers use it, and the text view shows it. Scripts hear `change`
+    with the option's value, and can read and set the chosen option.
+  - Light from the surroundings: `environment` on `scene`, a picture of
+    the surroundings (an HDR or JPEG panorama from the page's own site)
+    that lights shiny and soft materials alike, and can also be the
+    background. Without it, the renderer's own soft light, as now.
+- **The browser**: soft shadow maps (Three.js), sized within the limits;
+  texture maps and tiling; choices as the page's own radio buttons in
+  their corner, as sliders are; the environment picture through
+  Three.js's own HDR loader (already part of three; no new package);
+  the limits count every picture.
+- **The sofa studio** (holoml repository, examples/sofa-studio/,
+  published with GitHub Pages like the others), from Poly Haven's CC0
+  models, textures, and HDRIs (downloads approved in prompt 85, Q3 a):
+  - A room with a wood floor, a rug, walls, a coffee table, a side
+    table, and a lamp; a studio HDRI for the light; soft shadows under
+    everything. The sofa is one of Poly Haven's Sofa 01 to 03 (per Q2),
+    chosen for a fabric that is its own material.
+  - Orbit around the sofa (it is a product page, not a walk).
+  - Two choices, bottom left: Fabric (five, such as rough linen, velour
+    velvet, wool bouclé, poly-wool herringbone, and brown leather) and
+    Legs (oak, walnut, black metal).
+  - The price, top right, follows the choices (per Q6), and "Add to
+    cart" opens cart.html, an ordinary page in the example that lists
+    the chosen fabric and legs from its address (there is no shop
+    behind it).
+  - An "Evening" slider or choice for the lamp and the window light
+    (per Q3), and credits on an about page, as the showroom has.
+- **The examples section and the start panel** gain the sofa studio,
+  with its picture.
+
+#### Questions
+
+- Q1, the material choice. a: the declarative `choice` and `option`
+  above: no script needed for the common case, the keyboard and screen
+  readers use it, and scripts can listen (recommended: issue #9's idea,
+  the smallest useful step; the aquarium and the apartment can reuse
+  it). b: screen buttons (`button`) and a script that changes the
+  material (more flexible, but every shop page needs code).
+- Q2, the sofa. a: one of Poly Haven's three sofas (realistic, 2,700 to
+  8,000 triangles, CC0), the one whose fabric separates best
+  (recommended). b: all three, with a Model choice too (a larger page).
+  c: Kenney's Furniture Kit (low-poly, as the showroom's cars; smaller,
+  less real).
+- Q3, the sofa bed from the proposal (prompt 84). None of the CC0 sofas
+  opens into a bed. a: drop it, and let the viewer switch the room
+  between day and evening light instead (recommended). b: a script-made
+  mattress that slides out (would look crude).
+- Q4, light from the surroundings. a: the `environment` attribute and a
+  1k studio HDRI from Poly Haven (about 1.5 MB; recommended: reflections
+  and soft light are most of "looks real"). b: keep the renderer's own
+  soft light (no new attribute, less real).
+- Q5, shadows when drawing in software (GitHub's machines). a: the
+  renderer may leave them out when it must; drawn in software, the
+  checks log that and check the rest, as the other budgets (prompts 59,
+  95, 96) (recommended). b: always draw shadows, however slow.
+- Q6, the price. a: the page's script computes it from the two choices
+  and shows it in a `hud` (shows choices and scripts working together)
+  (recommended). b: each option declares its price and the renderer
+  adds them up (a shop-only idea in the language).
+
+#### Tasks
+
+- [ ] 1. HoloML 0.2, second part: shadows, texture maps and tiling,
+      `choice` and `option`, `environment`; SPEC.md, the checker,
+      conformance samples for each new element, attribute, and problem.
+- [ ] 2. The browser: shadows, textures, choices, the environment, the
+      limits; the copy of the parser and checker (`pnpm holoml:sync`).
+- [ ] 3. The sofa studio: the models, textures, and HDRI (checked CC0,
+      sizes, credits), the room, the pages, the price script, the cart
+      page, the about page; published with GitHub Pages.
+- [ ] 4. The examples section and the start panel: its card, its
+      picture, and its row.
+- [ ] 5. Checks U8 to U16 (tests/e2e/m18.e2e.ts, holoml's tests).
+- [ ] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
+      THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the README
+      screenshot.
+
+#### Checks
+
+| # | Check | Expected result |
+|---|---|---|
+| U8 | The language | holoml's tests: shadows, texture maps, repeat, choice and option, and environment have valid and problem samples; a 0.1 page may not use them |
+| U9 | Shadows | With a graphics card, a lit model with shadows darkens the floor under it (the page's pixels, with and without); drawn in software, per Q5 |
+| U10 | Textures | A material's pictures load within the page's limits, show on the model (the page's pixels take the picture's colours), and tile as `repeat` says |
+| U11 | Choices | In their corner with their labels; mouse, keyboard, and screen readers pick an option; the material changes in place (read back) without loading a page; the script hears `change`; the text view shows the choices |
+| U12 | Environment | The page's panorama lights the scene (a shiny test sphere reflects its colours) and counts against the limits |
+| U13 | The sofa studio | Ready within 5 s from 127.0.0.1 with a graphics card (logged in software); every model and picture loaded, no problems; each fabric and leg choice changes the sofa; the price follows; "Add to cart" opens the cart page with the choices |
+| U14 | For everyone | The whole page from the keyboard (choices, the evening switch, the cart link); screen readers name the choices; the text view; with reduced motion nothing moves by itself |
+| U15 | Efficient | An idle sofa studio draws no frames |
+| U16 | Published | The sofa studio opens from its public address in the built app (by hand, as S8 and T9) |
+| U17 | Regression | C to U pass, the unit tests, and holoml's tests |
+
+#### Done when
+
+- Part 1 is merged (browser pull request #34), U8 to U17 pass,
+  screenshots are saved, and the owner accepts.
 
 ## Proposal: four more HoloML example sites (2026-09-27, prompt 84)
 
