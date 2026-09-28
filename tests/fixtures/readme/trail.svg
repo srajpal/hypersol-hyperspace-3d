@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250">
+  <!-- Green hills and a winding path (made up for the sample page). -->
+  <rect width="400" height="250" fill="#d7e8cb"/>
+  <circle cx="318" cy="62" r="26" fill="#fbe9a8"/>
+  <path d="M0 150 Q100 90 200 140 T400 120 V250 H0 Z" fill="#96c47f"/>
+  <path d="M0 190 Q120 140 240 190 T400 170 V250 H0 Z" fill="#5f9d5d"/>
+  <path d="M170 250 C200 214 146 196 188 166 S252 144 232 122" stroke="#eedcab" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <g fill="#3f7a47">
+    <path d="M52 176 l12 -38 l12 38 z"/>
+    <path d="M78 170 l14 -46 l14 46 z"/>
+    <path d="M318 160 l12 -40 l12 40 z"/>
+  </g>
+</svg>

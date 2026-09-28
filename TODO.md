@@ -29,7 +29,7 @@ Plan approved 2026-09-24.
 | 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Done (accepted, prompt 79) |
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
 | 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
-| 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | In progress: part 1 (speeds and sliders) built, in pull request #34; part 2, the sofa studio, built (prompt 98), waiting for its pull requests and acceptance |
+| 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | Built: part 1 (speeds and sliders) merged (pull request #34); part 2, the sofa studio (prompt 98), merged in holoml (#15) and published, the browser's side in a pull request; waiting for acceptance |
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Later (prompt 85, Q4 a) |
 | 20 | Coral Bay | A resort: paths to ride, sounds by place, sky and environment light, loading by area | Later (prompt 85, Q4 a) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
@@ -2764,7 +2764,8 @@ approved by the owner and built, 2026-09-27 (prompt 92), in browser pull
 request #34 with the fixes for GitHub's Linux machines. Part 2, the sofa
 studio, the milestone's example site: planned below (prompt 97); the
 owner answered Q1 to Q6 with the recommendations and approved the build
-(prompt 98); built, see Part 2 results. Pushed before the
+(prompt 98); built, see Part 2 results. The owner merged #34 and holoml
+#15 (prompt 99); the studio is published. Pushed before the
 milestone (after milestone 17's acceptance). Rule 13 check done
 (ARCHITECTURE.md section 3).
 
@@ -2938,9 +2939,10 @@ place), textured materials, and light from the surroundings.
 - [x] 4. The examples section and the start panel: its card, its
       picture, and its row.
 - [x] 5. Checks U8 to U16 (tests/e2e/m18.e2e.ts, holoml's tests).
-- [ ] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
-      THIRD-PARTY, AGENTS testing, HANDOFF (done); screenshots and the
-      README screenshot (at the milestone's end).
+- [x] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
+      THIRD-PARTY, AGENTS testing, HANDOFF; screenshots
+      (docs/screenshots/m18) and the README's pictures (four since
+      prompt 99).
 
 #### Checks
 
@@ -3026,8 +3028,35 @@ the sofa studio's copy in tests/fixtures/holoml/sofa-studio.
 | U13 | Pass. Ready within 5 s with a graphics card (drawn in software, logged: 7,003 ms); no problems, nothing left out, 8 models and the panorama loaded, 2 shadow lights and 8 models with shadows; each fabric and the ebony wood changed the sofa's material (read back by its picture's address) and the price; a click on "Add to cart" in the scene opened cart.html, which listed Linden two-seat sofa, Red velvet, Ebony, $1,650; back in the studio, the choices were as before |
 | U14 | Pass. Tab went through the scene's models and links ("Add to cart", "About this studio") to the Fabric choice; the arrow keys chose the next fabric, then (after Tab) the next wood, then Evening (the lamp on, the fill below 0.1); screen readers find three groups, Fabric, Wood, and Light, with the chosen options checked; the text view showed the price, the choices, and the links; Shift+Tab reached "Add to cart", and Enter opened the cart page with those choices ($1,660) |
 | U15 | Pass. No frames drawn in 2 s while idle, and none with reduced motion (nothing on the page moves by itself) |
-| U16 | Not checked yet: after holoml's pull request merges and GitHub Pages publishes the studio, by hand in the built app (as S8 and T9) |
-| U17 | Full run, 2026-09-27: 247 of 252 checks passed. P2 failed because the material report now also names a material's colour picture and tiling; its expected object gains those two fields (null for that car; the check is otherwise the same), and milestone 14's checks passed again (19 of 19). D8's three copy and paste checks and K3's password copy failed: this computer's clipboard refused every use during the run and after it (PowerShell's Set-Clipboard and Get-Clipboard failed 10 of 10 tries), so they could not pass here; nothing in this change touches the clipboard, and they passed in milestone 17's full run and in pull request #34's automatic builds. To run again when the clipboard works. After the last changes, the HoloML checks (milestones 14 to 18) passed again, 76 of 76, and milestone 18's drawn in software, 12 of 12; unit tests 261; holoml's tests 182; lint and types clean. Screenshots: docs/screenshots/m18/ (53 and 54 are the sofa studio) and the README screenshot, refreshed |
+| U16 | Pass (2026-09-28, prompt 99). After holoml #15 merged, the built app opened https://srajpal.github.io/holoml/sofa-studio/index.holoml (a one-off run with the network, not a test, as S8 and T9): HoloML 0.2, ready in 3.1 s, no problems, nothing left out, all 8 models and the panorama loaded, 2 shadow lights and 8 models with shadows; choosing Wool check changed the sofa (its picture from the published site) and the price to $1,600 |
+| U17 | Full run, 2026-09-27: 247 of 252 checks passed. P2 failed because the material report now also names a material's colour picture and tiling; its expected object gains those two fields (null for that car; the check is otherwise the same), and milestone 14's checks passed again (19 of 19). D8's three copy and paste checks and K3's password copy failed: this computer's clipboard refused every use during the run and after it (PowerShell's Set-Clipboard and Get-Clipboard failed 10 of 10 tries), so they could not pass here; nothing in this change touches the clipboard, and they passed in milestone 17's full run and in pull request #34's automatic builds. Run again on 2026-09-28, with the clipboard working: D8 5 of 5, K1 to K3 3 of 3. After the last changes, the HoloML checks (milestones 14 to 18) passed again, 76 of 76, and milestone 18's drawn in software, 12 of 12; unit tests 261; holoml's tests 182; lint and types clean. Screenshots: docs/screenshots/m18/ (53 and 54 are the sofa studio) and the README screenshot, refreshed |
+
+## The README: a broken link, and four pictures (2026-09-28, prompt 99)
+
+The owner merged browser pull request #34 and holoml #15, found that the
+README's link to https://srajpal.github.io/holoml/ did not work (GitHub
+Pages has no page there, only one per example), and asked for four
+pictures at the top of the README to show the variety of what the
+browser does.
+
+- The link now goes to the holoml repository,
+  https://github.com/srajpal/holoml, with each example's published
+  address beside it.
+- Every link in both READMEs was checked on 2026-09-28: the web
+  addresses answer 200 (the Pages root 404 before the fix), and every
+  file and heading they name exists. The three examples' published
+  sites answer 200, and so do the sofa studio's pages, models, pictures,
+  and panorama; its tools are not published, as intended.
+- Four pictures, in a two-by-two table with a line under each, all made
+  by `pnpm screenshots:readme` in one window with four tabs, from local
+  copies (no network): the sofa studio (readme.png, the newest), Blockworld
+  (readme-game.png), a made-up sample page in the Daylight theme and the
+  layers view (readme-layers.png), and the same page with the instrument
+  panel (readme-instruments.png). The sample page and its pictures,
+  "Field Notes", are made for this in tests/fixtures/readme/ (the
+  fixture server now serves .svg).
+- AGENTS.md's working agreement still says the README opens with one
+  picture, of the showroom; its new wording is proposed to the owner.
 
 ## Proposal: four more HoloML example sites (2026-09-27, prompt 84)
 

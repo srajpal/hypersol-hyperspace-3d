@@ -29,6 +29,8 @@ const TYPES: Record<string, string> = {
   '.bin': 'application/octet-stream',
   '.jpg': 'image/jpeg',
   '.hdr': 'image/vnd.radiance',
+  // The README's sample page (prompt 99): its pictures.
+  '.svg': 'image/svg+xml',
 };
 
 /** A solid-colour 16×16 PNG, built here so the fixture has no binary file. */

@@ -5,17 +5,34 @@ dimensions. Ordinary websites float as panels in a 3D room, page sections
 lift into layered depth, and a companion markup language, HoloML, lets
 anyone publish a fully 3D website as easily as writing HTML.
 
-![HyperSpace 3D showing the HoloML showroom: five cars on plinths in a round hall, the middle one on a turntable, with two car pages as tabs on the left](docs/screenshots/readme.png)
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/readme.png" alt="HyperSpace 3D showing HoloML's sofa studio: a red velvet sofa in a sunlit room, with the fabric and wood choices and the price, and four tabs as cards on the left"></td>
+    <td width="50%"><img src="docs/screenshots/readme-game.png" alt="Blockworld, a small block game written in HoloML: an island of grass blocks and trees, seen from above one corner"></td>
+  </tr>
+  <tr>
+    <td><b>3D websites.</b> <a href="https://github.com/srajpal/holoml/tree/main/examples/sofa-studio">The sofa studio</a>, written in HoloML: choose a fabric and a wood, and the sofa changes in place, with soft shadows and a studio's light.</td>
+    <td><b>Games, too.</b> <a href="https://github.com/srajpal/holoml/tree/main/examples/blockworld">Blockworld</a>: walk, break and place blocks, and find five gems, with the mouse or the keyboard alone.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/readme-layers.png" alt="An ordinary web page on a tilted panel in the light Daylight theme, its sections and picture lifted into layers"></td>
+    <td><img src="docs/screenshots/readme-instruments.png" alt="The same page beside the instrument panel: gauges for load, requests, and memory, the console, and the network list"></td>
+  </tr>
+  <tr>
+    <td><b>Ordinary websites, in depth.</b> Any page on a tilted panel, its sections and pictures lifted into layers; tabs as cards; a dark and a light theme.</td>
+    <td><b>An instrument panel.</b> The page's load, requests, and blocked trackers, the browser's own gauges, the console, and the network.</td>
+  </tr>
+</table>
 
-*The newest build, showing
-[HoloML's showroom](https://github.com/srajpal/holoml/tree/main/examples/showroom),
-a 3D site written in HoloML (cars from Kenney's Car Kit, CC0). Made with
-`pnpm screenshots:readme`.*
+*The newest build, made with `pnpm screenshots:readme` from local
+copies: HoloML's examples (the sofa studio's furniture, fabrics, and
+light from Poly Haven, CC0; Blockworld's blocks from Kenney, CC0) and a
+made-up sample page.*
 
 For Windows and Linux (checked by automatic tests on both); macOS is
 planned but untested. Apache 2.0. No telemetry.
 
-**Status (2026-09-27).** Released: the
+**Status (2026-09-28).** Released: the
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
 as source for developers (no installers yet). Since then, HoloML 0.1 has
 been written down in its own repository (milestone 13), and this browser
@@ -203,10 +220,12 @@ left out and marked, and a notice says why.
 
 To try one, open a new tab and choose one under Try HoloML, or open the
 HoloML examples (the menu, or Ctrl+Shift+E): the showroom (milestone 16),
-Blockworld (milestone 17), and the sofa studio (milestone 18), published
-from the holoml repository at
-https://srajpal.github.io/holoml/. The browser asks nothing of those
-sites until you choose one.
+Blockworld (milestone 17), and the sofa studio (milestone 18). They come
+from the holoml repository, https://github.com/srajpal/holoml, which
+publishes each with GitHub Pages: https://srajpal.github.io/holoml/showroom/,
+https://srajpal.github.io/holoml/blockworld/, and
+https://srajpal.github.io/holoml/sofa-studio/. The browser asks nothing
+of those sites until you choose one.
 
 ## Project documents
 

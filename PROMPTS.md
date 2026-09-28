@@ -1129,3 +1129,17 @@ computes it from the choices and shows it in a `hud`).
 ```text
 Use the recommendations and build.
 ```
+
+## 99 — 2026-09-28 · Claude Opus 5.5, low effort
+
+(A screenshot of the README's HoloML section, with an arrow at the link
+https://srajpal.github.io/holoml/.)
+
+```text
+Merged #34 and holoml #15, continue.
+But also this link in the HyperSpace README does not work; it should be
+https://github.com/srajpal/holoml. Please check both the READMEs and
+check everything works.
+Also use 4 images on the HyperSpace README now to show the variety of
+things it can do.
+```

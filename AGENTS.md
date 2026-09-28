@@ -202,8 +202,10 @@ milestone; the current milestone's checks are defined in TODO.md):
   per-site settings, image rectangles, pages that change, reduced
   motion, efficiency. The layers view is on by default, so every earlier
   check runs with it on.
-- README screenshot: `pnpm screenshots:readme` (HoloML's showroom from
-  the local copy, no network; first run 2026-09-27; not a test).
+- README screenshots: `pnpm screenshots:readme` (four since 2026-09-28,
+  prompt 99: the sofa studio, Blockworld, a made-up sample page in the
+  layers view, and the instrument panel; from local copies in
+  tests/fixtures, no network; first run 2026-09-27; not a test).
 - The HoloML examples' pictures: `pnpm screenshots:examples` (from the
   local copies, no network; first run 2026-09-27). They are part of the
   browser: run it when an example changes, before `pnpm screenshots`.
