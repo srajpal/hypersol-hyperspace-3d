@@ -13,6 +13,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
   clickAt,
+  clickUntil,
   focusedPage,
   focusedTab,
   inPage,
@@ -81,15 +82,30 @@ function logins(profile: string): { origin: string; username: string; secret: Ui
   }
 }
 
-async function clickIn(h: Harness, selector: string, page: PageRef): Promise<void> {
-  await clickAt(h, await screenPointOf(h, selector, page));
+/**
+ * Clicks an element in the page with a real click, and again if a click
+ * is lost (GitHub's Linux machines, issue #30). Done when `landed` says
+ * so; by default when the element has the keyboard (the focus is cleared
+ * first, so an earlier focus does not count).
+ */
+async function clickIn(h: Harness, selector: string, page: PageRef, landed?: () => Promise<boolean>): Promise<void> {
+  const q = JSON.stringify(selector);
+  if (!landed) await inPage(h, 'document.activeElement?.blur(), true', page);
+  const hasFocus = () => inPage<boolean>(h, `document.activeElement === document.querySelector(${q})`, page);
+  await clickUntil(h, await screenPointOf(h, selector, page), `a click on ${selector}`, landed ?? hasFocus);
 }
+
+/** The test page says it signed in (its answer to the button). */
+const signedIn = (h: Harness, page: PageRef) => async () => (await inPage<string>(h, `document.getElementById('state').textContent`, page)) === 'Signed in';
 
 /** Puts test values in the form and presses its button with a real click. */
 async function signIn(h: Harness, user: string, pass: string, page: PageRef): Promise<void> {
-  await inPage(h, `document.getElementById('user').value = ${JSON.stringify(user)}; document.getElementById('pass').value = ${JSON.stringify(pass)}; true`, page);
-  await clickIn(h, '#go', page);
-  await waitFor('signed in', () => inPage<string>(h, `document.getElementById('state').textContent`, page), (t) => t === 'Signed in');
+  await inPage(
+    h,
+    `document.getElementById('user').value = ${JSON.stringify(user)}; document.getElementById('pass').value = ${JSON.stringify(pass)}; document.getElementById('state').textContent = 'Sign in'; true`,
+    page,
+  );
+  await clickIn(h, '#go', page, signedIn(h, page));
 }
 
 const offer = async (h: Harness) => (await shellCall(h, 'prompts')).offer;
@@ -121,7 +137,7 @@ describe('K1 to K3: passwords', () => {
       await typeInPage(h, 'ada', page);
       await clickIn(h, '#pass', page);
       await typeInPage(h, 'test-pass-1', page);
-      await clickIn(h, '#go', page);
+      await clickIn(h, '#go', page, signedIn(h, page));
       const first = await waitFor('an offer to save', () => offer(h), (o) => o !== null);
       expect(first).toMatchObject({ origin: origin(server), username: 'ada', update: false, insecure: true });
       expect(await h.shell.locator(PROMPT('password-insecure')).isVisible()).toBe(true);
