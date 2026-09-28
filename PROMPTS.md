@@ -1112,3 +1112,20 @@ Like the other budgets (recommended).
 ```text
 Merged holoml #14. Continue with the next milestone.
 ```
+
+## 98 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answers to the milestone 18 part 2 plan's questions (the sofa studio),
+all as recommended, and approval to build. Q1, the material choice (a:
+the declarative `choice` and `option`). Q2, the sofa (a: one of Poly
+Haven's three CC0 sofas, the one whose fabric separates best). Q3, the
+sofa bed (a: dropped; the viewer switches the room between day and
+evening light instead). Q4, light from the surroundings (a: the
+`environment` attribute and a studio HDRI from Poly Haven). Q5, shadows
+drawn in software (a: the renderer may leave them out there; the checks
+log that and check the rest). Q6, the price (a: the page's script
+computes it from the choices and shows it in a `hud`).
+
+```text
+Use the recommendations and build.
+```

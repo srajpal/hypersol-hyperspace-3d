@@ -24,9 +24,11 @@ release), with limits for heavy scenes, keyboard and screen-reader
 access, a scene inspector, and a HoloML car showroom to try from the
 start panel. Milestone 17 adds Blockworld, a small block game written in
 the first part of HoloML 0.2 (scripts, sound, walls and gravity), and a
-HoloML examples section. Milestone 18 has begun with walking and turning
-speeds a page can set and sliders on the screen (Blockworld's Speed
-slider); its sofa studio comes next. Then three more example sites,
+HoloML examples section. Milestone 18 adds walking and turning speeds a
+page can set, sliders on the screen (Blockworld's Speed slider), and the
+sofa studio, a shop page with shadows, textured fabrics, and choices
+that change the sofa in place (built; waiting for acceptance). Then
+three more example sites,
 privacy and data tools, and installers as 1.0. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
@@ -119,7 +121,9 @@ An archived copy of the 2001 site is available through the
   example with a picture, and links to the HoloML repository.
   Milestone 18: a page sets how fast the viewer walks and turns, and
   can put sliders on the screen for its script (Blockworld's Speed
-  slider).
+  slider); shadows, a material's own pictures (fabric, wood), choices
+  on the screen that change a material in place, and light from a
+  panorama of the surroundings, shown by the sofa studio.
 - Mouse and keyboard throughout; touch for scenes.
 
 ## Built with the Buildwright approach
@@ -178,7 +182,9 @@ Milestone 15 hardens them: limits for
 heavy scenes, keyboard and screen-reader access, a text view, and a
 scene inspector. Milestone 16 adds a HoloML car showroom, published with GitHub Pages and linked from the
 start panel. Milestone 17 adds Blockworld, a small block game in HoloML
-0.2, and the HoloML examples section.
+0.2, and the HoloML examples section. Milestone 18 adds walking speeds,
+sliders, and the sofa studio, a shop page with shadows, textured
+fabrics, and choices that change the sofa in place.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
@@ -196,8 +202,9 @@ pictures, and triangles have limits (milestone 15); what crosses one is
 left out and marked, and a notice says why.
 
 To try one, open a new tab and choose one under Try HoloML, or open the
-HoloML examples (the menu, or Ctrl+Shift+E): the showroom (milestone 16)
-and Blockworld (milestone 17), published from the holoml repository at
+HoloML examples (the menu, or Ctrl+Shift+E): the showroom (milestone 16),
+Blockworld (milestone 17), and the sofa studio (milestone 18), published
+from the holoml repository at
 https://srajpal.github.io/holoml/. The browser asks nothing of those
 sites until you choose one.
 
@@ -226,7 +233,7 @@ Three.js (with its glTF loader, for HoloML pages), Lit, SQLite through
 Node's built-in node:sqlite, and Ghostery's open-source ad-blocking
 engine with open filter lists; Vite and electron-vite to build; Vitest
 and Playwright to test.
-Planned, not yet installed: electron-builder for installers (milestone 18).
+Planned, not yet installed: electron-builder for installers (milestones 23 and 24).
 Reasons for each choice are in ARCHITECTURE.md.
 
 Known limitations: Electron ships no DRM module, so video from Netflix
@@ -275,7 +282,8 @@ the top bar, or click a card on the left to switch tabs. The main keys
   left and right arrows turn, Page Up and Page Down look up and down,
   Shift runs, and Space jumps where the page allows; the page chooses
   how fast. A slider on a scene's screen takes the arrow keys, Home, and
-  End while it has the keyboard (Tab reaches it).
+  End while it has the keyboard, and a choice's options the arrow keys
+  (Tab reaches both).
   Ctrl+Shift+E shows the HoloML examples.
 
 What the browser stores and sends is listed in

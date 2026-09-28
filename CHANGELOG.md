@@ -73,6 +73,25 @@
   (the `change` event). Blockworld walks faster (4.3 metres a second),
   turns faster (120 degrees a second), and has a Speed slider. Looking
   up and down from the keyboard now goes as fast as turning.
+- Shadows, textured materials, choices, and light from the surroundings
+  (milestone 18, second part), in HoloML 0.2 pages:
+  - Shadows: a light marked `shadows` casts soft shadows from the models
+    marked `shadows`. On a computer that draws 3D in software (no
+    graphics card), they are left out, and the console says so.
+  - A material's own pictures (`map`, `normal-map`, `roughness-map`),
+    tiled by `repeat`, from the page's own site; they count against the
+    page's limits like models.
+  - Choices (`choice` and `option`): options on the screen that change a
+    model's material in place, used with the mouse, touch, the keyboard
+    (the arrow keys, as radio buttons), and screen readers, and shown in
+    the text view; scripts hear each pick and can make one.
+  - `environment`: a panorama of the surroundings (HDR, PNG, or JPEG)
+    lights the scene.
+- The sofa studio (milestone 18): a HoloML shop page published at
+  https://srajpal.github.io/holoml/sofa-studio/: choose a sofa's fabric
+  and wood in place, watch the price follow, switch between day and
+  evening light, and go on to a cart page (there is no shop behind it).
+  It is in the HoloML examples section and the start panel.
 
 ## 0.9.0 — developer preview (2026-09-26)
 
