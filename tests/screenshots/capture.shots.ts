@@ -419,6 +419,26 @@ it('captures the main screens', async () => {
     await capture(game, '52-blockworld-night');
   } finally {
     await game.close();
+  }
+  // Milestone 18: the sofa studio by day (red velvet), and in the evening (brown leather on ebony).
+  const shop = await launch(server.url('link-a.html'));
+  const SOFA = 'sofa-studio/index.holoml';
+  const pick = (choice: string, value: string) => inPage(shop, `document.querySelector('[data-id="${choice}"] input[value="${value}"]').click(), true`, SOFA);
+  try {
+    await waitForPage(shop, 'link-a');
+    await shellCall(shop, 'showUrl', server.url(`holoml/${SOFA}`));
+    await waitForPage(shop, SOFA);
+    await waitFor('the studio', () => inPage<boolean>(shop, 'window.__holoml?.ready === true', SOFA), (r) => r, 30_000);
+    await pick('fabric', 'velvet');
+    await sleep(1500);
+    await capture(shop, '53-sofa-studio');
+    await pick('fabric', 'leather');
+    await pick('wood', 'ebony');
+    await pick('time', 'evening');
+    await sleep(1500);
+    await capture(shop, '54-sofa-studio-evening');
+  } finally {
+    await shop.close();
     await server.close();
   }
-}, 480_000);
+}, 600_000);
