@@ -104,6 +104,8 @@ const LOCAL_TYPES: Record<string, string> = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
+  // HoloML 0.2 (milestones 18 and 19): panoramas of the surroundings and the sky.
+  '.hdr': 'image/vnd.radiance',
   // HoloML 0.2 (milestone 17): scripts and sounds next to the page.
   '.js': 'text/javascript; charset=utf-8',
   '.mjs': 'text/javascript; charset=utf-8',

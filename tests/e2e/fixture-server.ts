@@ -174,6 +174,10 @@ function page(title: string, body: string): string {
  *                                       64 by 64 pixels of N pairs of upright stripes, colour a then b
  *                                       (default 2 pairs, ff2020 and 2040ff; milestone 18)
  *   /holoml/gen/panorama.hdr?rgb=R,G,B  a 64 by 32 HDR panorama of one colour (default 0,1,0: green)
+ *   /holoml/gen/sky.png?top=RGB&bottom=RGB
+ *                                       a 128 by 64 panorama, one colour above the horizon and one below
+ *                                       (default ff6010 and 1060ff; milestone 19)
+ *   /holoml/gen/plan.png                a 200 by 200 floor plan: pale, with a dark wall around (milestone 19)
  */
 /** A WAV file: 16-bit mono, 22,050 samples a second, of a 440 Hz tone. */
 function toneWav(seconds: number): Buffer {
@@ -276,6 +280,19 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
       const b = hex(p.get('b'), [0x20, 0x40, 0xff]);
       res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'no-store' });
       res.end(png(64, 64, (x) => (Math.floor((x * pairs * 2) / 64) % 2 === 0 ? a : b)));
+      return;
+    }
+    if (what === 'sky.png') {
+      const top = hex(p.get('top'), [0xff, 0x60, 0x10]);
+      const bottom = hex(p.get('bottom'), [0x10, 0x60, 0xff]);
+      res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'no-store' });
+      res.end(png(128, 64, (_x, y) => (y < 32 ? top : bottom)));
+      return;
+    }
+    if (what === 'plan.png') {
+      const wall = (v: number) => v < 6 || v >= 194;
+      res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'no-store' });
+      res.end(png(200, 200, (x, y) => (wall(x) || wall(y) ? [0x3a, 0x3a, 0x40] : [0xf2, 0xef, 0xe8])));
       return;
     }
     if (what === 'panorama.hdr') {

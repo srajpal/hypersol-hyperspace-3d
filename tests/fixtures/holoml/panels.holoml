@@ -1,0 +1,27 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML panels</title>
+  </head>
+  <!-- Milestone 19 (V2): a panel on a board facing the viewer, one without a board, and one in a link. -->
+  <scene background="#26303a">
+    <viewpoint position="0 1.5 2.2" look-at="0 1.5 0" />
+    <light type="ambient" intensity="0.8" />
+    <panel id="info" position="0 1.5 0" width="1.6" size="0.09" color="#1b1b1b" background="#f5f2eb">
+      Living room, 32 m²
+
+      Two tall windows face the harbour, and the oak floor runs through to the kitchen.
+
+      Evening light from the west.
+    </panel>
+    <panel id="plain" position="2.4 1.5 -1" rotation="0 -30 0" width="1" size="0.07">
+      Words without a board
+    </panel>
+    <a href="second.holoml">
+      <panel id="linked" position="-2.4 1.5 -1" rotation="0 30 0" width="1" size="0.07" background="#20406a">
+        Open the second page
+
+        A panel inside a link.
+      </panel>
+    </a>
+  </scene>
+</holoml>

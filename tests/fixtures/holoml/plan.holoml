@@ -1,0 +1,12 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML floor plan</title>
+  </head>
+  <!-- Milestone 19 (V7): a floor plan in the lower left corner, showing the ground from -5 -5 to 5 5. -->
+  <scene background="#1c2030">
+    <viewpoint position="0 1.6 2" look-at="0 1.6 -3" mode="walk" speed="2" turn-speed="90" />
+    <light type="ambient" intensity="0.8" />
+    <model src="blockworld/models/stone.gltf" position="0 0.5 -4" />
+    <plan src="gen/plan.png" area="-5 -5 5 5" corner="bottom-left" width="240" label="Floor plan of the test room" />
+  </scene>
+</holoml>

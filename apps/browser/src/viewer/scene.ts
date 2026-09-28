@@ -20,6 +20,11 @@
  * (left out when drawing in software); material pictures and tiling
  * (pictures.ts); choices that change a model's material in place; and
  * light from the page's own panorama of the surroundings.
+ *
+ * Milestone 19 (HoloML 0.2, third part): panels of wrapped text; click
+ * actions (a door that opens, a switch for a lamp), each a button in the
+ * outline; several viewpoints, as places an address names; a fade
+ * between HoloML pages of one site; a sky; and a floor plan on the screen.
  */
 import {
   AmbientLight,
@@ -65,17 +70,25 @@ import {
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneModel } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { check, HoloParseError, parse, type ElementNode, type HoloNode } from '@hypersol/holoml';
+import { check, CLICKABLE, HoloParseError, parse, type ElementNode, type HoloNode } from '@hypersol/holoml';
 import { Budget, LeftOut, LIMITS } from './budget';
 import { keptByControl, orbitControls, TURN_SPEED, walkControls, WALK_SPEED, type ViewControls } from './controls';
 import { InstancePool, countTriangles, worldBox, type Template } from './instances';
 import { SolidGrid, Walker, type Box } from './physics';
+import { disposePanel, drawPanel, type PanelLook } from './panels';
 import { Pictures, type PictureUse } from './pictures';
 import { SoundBank, type SoundHandle, type SoundReport } from './sound';
-import { attr, color, contrastText, duration, has, num, repeat, resolveAddress, scale, text, tiling, vec3, type Vec3 } from './values';
+import { area, attr, color, contrastText, duration, has, num, paragraphs, rawText, repeat, resolveAddress, scale, text, tiling, vec3, type Vec3 } from './values';
 
 const DEG = Math.PI / 180;
 const LINK_HIGHLIGHT = 0x5ce1ff;
+/** The fade between HoloML pages of one site (milestone 19): out as a link is followed, and in once the next page has drawn its scene. */
+const FADE_OUT_MS = 260;
+const FADE_IN_MS = 450;
+/** The next page fades in by then, even if it is still loading. */
+const ARRIVAL_WAIT_MS = 4000;
+/** Going to a place on the same page: out and in again. */
+const PLACE_FADE_MS = 180;
 
 interface Link {
   href: string;
@@ -94,6 +107,55 @@ interface Animation {
   duration: number;
   repeat: number;
   start: number[];
+  /** A click action (HoloML 0.2 begin="click"): it waits for its trigger. */
+  onClick: boolean;
+  /** Each click runs it forward, and the next back (`toggle`). */
+  toggle: boolean;
+  /** When its last click came (performance.now), or null before the first. */
+  clickedAt: number | null;
+  /** A toggle: where it was at the last click (0 at from, 1 at to), and which way it runs now. */
+  at: number;
+  way: 1 | -1;
+}
+
+/** What the pointer is over: a link, or a click action's trigger (both are outlined, with the hand pointer). */
+interface Hover {
+  object: Object3D;
+}
+
+/**
+ * A trigger (HoloML 0.2 click actions, milestone 19): the thing whose
+ * click runs its animations and plays its sounds, and its button in the
+ * outline, for the keyboard and screen readers.
+ */
+interface Trigger extends Hover {
+  entry: Entry;
+  animations: Animation[];
+  sounds: Entry[];
+  label: string;
+  button: HTMLButtonElement | null;
+}
+
+/** A click action waiting to join its trigger (once everything it may name is built). */
+interface PendingAction {
+  trigger: string;
+  animation?: Animation;
+  sound?: Entry;
+  label: string | null;
+}
+
+/** The floor plan (HoloML 0.2 `plan`, milestone 19): its picture, the ground it shows, and the viewer's marker. */
+interface PlanState {
+  src: string;
+  state: 'loading' | 'loaded' | 'failed' | 'refused' | 'left-out';
+  reason?: string;
+  box: HTMLElement;
+  img: HTMLImageElement;
+  marker: HTMLElement;
+  area: [number, number, number, number] | null;
+  /** Where the marker is (fractions of the picture's width and height) and which way it points (degrees clockwise from up). */
+  at: [number, number] | null;
+  angle: number;
 }
 
 export interface ModelReport {
@@ -198,6 +260,8 @@ export interface Entry {
   choice?: ChoiceState;
   /** A label's words and look, to draw it again when a script changes it. */
   labelLook?: { words: string; size: number; color: string; note: HTMLElement };
+  /** A panel's (HoloML 0.2, milestone 19). */
+  panelLook?: PanelLook;
 }
 
 /** What a click, a tap, or the crosshair hit. */
@@ -239,7 +303,7 @@ export class HolomlView {
   private started = 0;
   private frameRequested = false;
   private last = 0;
-  private hovered: Link | null = null;
+  private hovered: Hover | null = null;
   private readonly highlight = new Box3Helper(new Box3(), LINK_HIGHLIGHT);
   private readonly raycaster = new Raycaster();
   private readonly base = document.baseURI;
@@ -300,6 +364,28 @@ export class HolomlView {
   private readonly ownMaterials = new WeakMap<Mesh, Material[]>();
   /** The page's panorama of the surroundings, and whether it lights the scene yet. */
   private environment: EnvironmentState | null = null;
+  /** The page's sky (HoloML 0.2 `sky`, milestone 19) and its address; its background colour shows while there is none. */
+  private sky: EnvironmentState | null = null;
+  private skyUrl: string | null = null;
+  private readonly background: Color;
+  /** How sharp pictures stay when seen at a slant. */
+  private readonly anisotropy: number;
+  /** Click actions (HoloML 0.2, milestone 19): the triggers, and actions still to join theirs. */
+  private readonly triggers = new Map<Entry, Trigger>();
+  private readonly pendingActions: PendingAction[] = [];
+  /** The viewpoints; in a 0.2 page with several, the places the address names and the outline lists. */
+  private viewpoints: ElementNode[] = [];
+  private placesListed = false;
+  private startPlace: string | null = null;
+  private currentPlace: string | null = null;
+  /** The fade over everything, between places and between HoloML pages of one site (milestone 19). */
+  private readonly fader: HTMLElement;
+  private fadeLevel = 0;
+  private fadeUntil = 0;
+  private arriving = false;
+  private readonly fadeLog: { to: number; at: number }[] = [];
+  /** The floor plan (HoloML 0.2 `plan`). */
+  private planState: PlanState | null = null;
 
   constructor(root: ElementNode, container: HTMLElement, outline: HTMLElement, hudLayer: HTMLElement) {
     this.outline = outline;
@@ -323,11 +409,13 @@ export class HolomlView {
       this.renderer.shadowMap.enabled = true;
       this.renderer.shadowMap.type = PCFShadowMap;
     }
-    this.pictures = new Pictures(this.budget, this.origin, Math.min(8, this.renderer.capabilities.getMaxAnisotropy()));
+    this.anisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
+    this.pictures = new Pictures(this.budget, this.origin, this.anisotropy);
 
     const scene = root.children.find((c): c is ElementNode => c.type === 'element' && c.name === 'scene');
     const background = scene ? color(scene, 'background') : null;
-    this.scene.background = new Color(background ?? '#0b0f1e');
+    this.background = new Color(background ?? '#0b0f1e');
+    this.scene.background = this.background;
     this.textColor = contrastText(background ?? '#0b0f1e');
     this.sceneId = scene && this.version === '0.2' ? (attr(scene, 'id') ?? null) : null;
     // Soft reflections, so metal and paint look like themselves.
@@ -335,9 +423,12 @@ export class HolomlView {
     this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     this.scene.environmentIntensity = 0.45;
     pmrem.dispose();
-    // HoloML 0.2: the page's own surroundings light the scene once they arrive.
+    // HoloML 0.2: the page's own surroundings light the scene once they arrive, and its sky shows behind it (milestone 19).
     const surroundings = scene && this.version === '0.2' ? attr(scene, 'environment') : null;
+    const sky = scene && this.version === '0.2' ? attr(scene, 'sky') : null;
+    if (sky) this.skyUrl = resolveAddress(sky, this.base)?.href ?? null;
     if (surroundings) this.loadEnvironment(surroundings);
+    if (sky) this.loadSky(sky);
     // The models a choice changes get their own copies (not instances), so each is found before building.
     if (scene && this.version === '0.2') {
       for (const c of scene.children) {
@@ -351,15 +442,26 @@ export class HolomlView {
     this.crosshair.setAttribute('aria-hidden', 'true');
     this.crosshair.hidden = true;
     this.hudLayer.append(this.crosshair);
+    // Over everything, the page's own screen text included.
+    this.fader = document.createElement('div');
+    this.fader.id = 'holoml-fade';
+    this.fader.setAttribute('aria-hidden', 'true');
+    document.body.append(this.fader);
 
     this.highlight.visible = false;
     this.scene.add(this.highlight);
-    let viewpoint: ElementNode | null = null;
+    // HoloML 0.2 (milestone 19): several viewpoints are places, each named by the address (#name) and listed in the outline.
+    this.viewpoints = scene ? scene.children.filter((c): c is ElementNode => c.type === 'element' && c.name === 'viewpoint') : [];
+    this.placesListed = this.version === '0.2' && this.viewpoints.length > 1;
     const animates: ElementNode[] = [];
     if (scene) {
       for (const c of scene.children) {
         if (c.type !== 'element') continue;
-        if (c.name === 'viewpoint') viewpoint ??= c;
+        if (c.name === 'plan') {
+          // At most one (the checker reports a second, which is left out).
+          if (this.count(c) && this.version === '0.2' && !this.planState) this.plan(c);
+          continue;
+        }
         if (c.name === 'hud') {
           if (this.count(c)) this.hud(c, false);
           continue;
@@ -387,7 +489,25 @@ export class HolomlView {
       this.scene.add(soft, sun);
     }
     for (const a of animates) this.addAnimation(a);
-    this.setUpView(viewpoint);
+    this.wireActions();
+    // The address may name the place to start at; otherwise the first viewpoint.
+    const start = this.placeNamed(addressName()) ?? this.viewpoints[0] ?? null;
+    this.startPlace = this.currentPlace = start ? (attr(start, 'id') ?? null) : null;
+    this.setUpView(start);
+    if (this.placesListed) {
+      // A link to #name on this page, the outline's "Go to", Back and Forward: to that place, or to the first.
+      window.addEventListener('hashchange', () => this.goTo(this.placeNamed(addressName()) ?? this.viewpoints[0]!));
+    }
+    // Arriving from another HoloML page of the same site: the scene fades in once drawn (a cut with reduced motion).
+    if (this.version === '0.2' && !this.reducedMotion.matches && arrivedFromHolomlPage()) {
+      this.arriving = true;
+      void this.setFade(1, 0);
+      window.setTimeout(() => this.arrive(), ARRIVAL_WAIT_MS);
+    }
+    // Shown again from the back-forward cache after fading out: clear.
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) void this.setFade(0, 0);
+    });
     this.wirePointer();
     this.wireKeys();
     this.sounds.onChange = () => this.requestFrame();
@@ -493,6 +613,26 @@ export class HolomlView {
     return { x: rect.left + ((c.x + 1) / 2) * rect.width, y: rect.top + ((1 - c.y) / 2) * rect.height };
   }
 
+  /** The rectangle an object (by id) covers on the page, around its box's corners, in CSS pixels (for the tests). */
+  screenRect(id: string): { left: number; top: number; right: number; bottom: number } | null {
+    const o = this.entryById.get(id)?.object;
+    if (!o) return null;
+    const box = this.boxOf(o);
+    if (box.isEmpty()) return null;
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const out = { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity };
+    for (let i = 0; i < 8; i++) {
+      const c = new Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).project(this.camera);
+      const x = rect.left + ((c.x + 1) / 2) * rect.width;
+      const y = rect.top + ((1 - c.y) / 2) * rect.height;
+      out.left = Math.min(out.left, x);
+      out.right = Math.max(out.right, x);
+      out.top = Math.min(out.top, y);
+      out.bottom = Math.max(out.bottom, y);
+    }
+    return out;
+  }
+
   /** The scene's lights: their kind, colour, and brightness, and whether the viewer added them. */
   lightsInfo(): { type: string; color: string; intensity: number; default: boolean }[] {
     const out: { type: string; color: string; intensity: number; default: boolean }[] = [];
@@ -544,6 +684,70 @@ export class HolomlView {
         options: c.options.map(({ value, label }) => ({ value, label })),
       };
     });
+  }
+
+  /** The panels (milestone 19): their words, their lines as wrapped, their size in metres, and their picture's in pixels. */
+  get panelsInfo(): { id: string | null; paragraphs: string[]; lines: string[][]; width: number; height: number; size: number; color: string; background: string | null; pixels: [number, number] }[] {
+    return this.entries
+      .filter((e) => e.kind === 'panel' && e.panelLook && !e.removed)
+      .map((e) => {
+        const l = e.panelLook!;
+        return { id: e.id, paragraphs: [...l.paragraphs], lines: l.lines.map((x) => [...x]), width: l.width, height: l.height, size: l.size, color: l.color, background: l.background, pixels: [...l.pixels] };
+      });
+  }
+
+  /** The click actions (milestone 19): each trigger, its button, and where its animations are (0 at from, 1 at to). */
+  get actionsInfo(): { trigger: string | null; button: string | null; pressed: string | null; animations: { target: string | null; attribute: string; toggle: boolean; progress: number; running: boolean }[]; sounds: string[] }[] {
+    const now = performance.now();
+    return [...this.triggers.values()]
+      .filter((t) => !t.entry.removed)
+      .map((t) => ({
+        trigger: t.entry.id,
+        button: t.button?.textContent ?? null,
+        pressed: t.button?.getAttribute('aria-pressed') ?? null,
+        animations: t.animations.map((a) => {
+          const p = this.progress(a, now);
+          return { target: a.entry?.id ?? null, attribute: a.attribute, toggle: a.toggle, progress: p?.t ?? 0, running: p !== null && !p.done };
+        }),
+        sounds: t.sounds.map((e) => e.id ?? e.name),
+      }));
+  }
+
+  /** The places (milestone 19): where the viewer started and is now (by the viewpoints' ids), and every place's name. */
+  get placesInfo(): { start: string | null; current: string | null; places: { id: string; label: string }[] } {
+    const places = this.placesListed ? this.viewpoints.filter((v) => attr(v, 'id')).map((v) => ({ id: attr(v, 'id')!, label: placeName(v) })) : [];
+    return { start: this.startPlace, current: this.currentPlace, places };
+  }
+
+  /** The page's sky (milestone 19): its address, whether it arrived, and how brightly it is drawn. */
+  get skyInfo(): { src: string; state: string; reason?: string; intensity: number } | null {
+    return this.sky ? { ...this.sky, intensity: this.scene.backgroundIntensity } : null;
+  }
+
+  /** The floor plan (milestone 19): its corner, size, name, picture, and the viewer's marker. */
+  get planInfo(): { corner: string | null; width: number; label: string; src: string; state: string; reason?: string; marker: { shown: boolean; x: number; y: number; angle: number } } | null {
+    const p = this.planState;
+    if (!p) return null;
+    const shown = !p.marker.hidden && !p.box.hidden;
+    return {
+      corner: p.box.parentElement?.dataset['corner'] ?? null,
+      width: p.box.getBoundingClientRect().width,
+      label: p.img.alt,
+      src: p.src,
+      state: p.state,
+      ...(p.reason ? { reason: p.reason } : {}),
+      marker: { shown, x: p.at?.[0] ?? 0, y: p.at?.[1] ?? 0, angle: p.angle },
+    };
+  }
+
+  /** The fade (milestone 19): how dark it is now, whether a page is still arriving, and each fade's start. */
+  get fadeInfo(): { opacity: number; arriving: boolean; log: { to: number; at: number }[] } {
+    return { opacity: Number(getComputedStyle(this.fader).opacity), arriving: this.arriving, log: this.fadeLog.map((x) => ({ ...x })) };
+  }
+
+  /** A fade is under way, or the page is dark (the tab card waits for the scene itself). */
+  get fading(): boolean {
+    return this.fadeLevel > 0 || performance.now() < this.fadeUntil;
   }
 
   /** What was left out, and why, for the notice. */
@@ -622,6 +826,16 @@ export class HolomlView {
         if (listed) entry.item = this.addItem(entry, 'Label');
         this.track(entry.object!, link);
         break;
+      case 'panel':
+        if (this.version !== '0.2') break;
+        this.setObject(entry, this.panel(node, parent, entry));
+        if (listed) entry.item = this.addItem(entry, 'Panel');
+        this.panelWords(entry);
+        this.track(entry.object!, link);
+        break;
+      case 'viewpoint':
+        if (this.placesListed && entry.id) entry.item = this.addPlace(entry, node);
+        break;
       case 'a': {
         const href = resolveAddress(attr(node, 'href'), this.base);
         const holder = new Object3D();
@@ -637,7 +851,11 @@ export class HolomlView {
         animates.push(node);
         break;
       case 'sound':
-        if (this.version === '0.2') this.sound(node, entry);
+        if (this.version === '0.2') {
+          this.sound(node, entry);
+          // Plays when its trigger is clicked (milestone 19).
+          if (attr(node, 'begin') === 'click') this.pendingActions.push({ trigger: idOf(attr(node, 'trigger')), sound: entry, label: attr(node, 'label') ?? null });
+        }
         break;
     }
     return entry;
@@ -1119,7 +1337,8 @@ export class HolomlView {
         const pmrem = new PMREMGenerator(this.renderer);
         const lit = pmrem.fromEquirectangular(panorama).texture;
         pmrem.dispose();
-        panorama.dispose();
+        // The same file as the sky: kept, for the sky draws it.
+        if (url.href !== this.skyUrl) panorama.dispose();
         this.scene.environment?.dispose();
         this.scene.environment = lit;
         state.state = 'loaded';
@@ -1131,6 +1350,166 @@ export class HolomlView {
         this.pictureLeftOut(src, state.reason);
       })
       .finally(() => this.settle());
+  }
+
+  /**
+   * The page's sky (HoloML 0.2 `sky`, milestone 19): a panorama drawn
+   * behind everything in place of the background colour, once it
+   * arrives. It comes from the page's own site, within its limits, and
+   * its brightness follows the ambient lights, as the surroundings' does.
+   */
+  private loadSky(src: string): void {
+    const state: EnvironmentState = { src, state: 'loading' };
+    this.sky = state;
+    const url = resolveAddress(src, this.base);
+    if (!url || url.origin !== this.origin) {
+      state.state = 'refused';
+      state.reason = "the sky loads only from the page's own site";
+      this.pictureLeftOut(src, state.reason);
+      return;
+    }
+    this.pending += 1;
+    if (this.pending === 1) this.onBusy?.(true);
+    this.pictures
+      .environment(url)
+      .then((panorama) => {
+        this.scene.background = panorama;
+        state.state = 'loaded';
+        this.followAmbient();
+      })
+      .catch((e: unknown) => {
+        state.state = e instanceof LeftOut ? 'left-out' : 'failed';
+        state.reason = e instanceof LeftOut ? e.reason : `could not be loaded (${e instanceof Error ? e.message : String(e)})`;
+        this.pictureLeftOut(src, state.reason);
+      })
+      .finally(() => this.settle());
+  }
+
+  /**
+   * A panel (HoloML 0.2, milestone 19): wrapped text on a flat board,
+   * placed and turned like a model. Its words are in the page too, for
+   * Find in page, screen readers, and the text view.
+   */
+  private panel(el: ElementNode, parent: Object3D, entry: Entry): Object3D {
+    const holder = this.place(new Object3D(), el);
+    parent.add(holder);
+    const background = color(el, 'background');
+    const note = document.createElement('div');
+    document.getElementById('holoml-labels')?.append(note);
+    entry.panelLook = {
+      paragraphs: paragraphs(rawText(el)),
+      lines: [],
+      width: num(el, 'width', 1, Number.MIN_VALUE),
+      height: 0,
+      size: num(el, 'size', 0.06, Number.MIN_VALUE),
+      color: color(el, 'color') ?? (background ? contrastText(background) : this.textColor),
+      background,
+      pixels: [0, 0],
+      note,
+      words: null,
+    };
+    drawPanel(holder, entry.panelLook, this.anisotropy);
+    return holder;
+  }
+
+  /** A panel's words in the page (for Find in page) and in the outline after its button (for screen readers and the text view). */
+  private panelWords(entry: Entry): void {
+    const look = entry.panelLook;
+    if (!look) return;
+    const paras = (list: string[]) =>
+      list.map((words) => {
+        const p = document.createElement('p');
+        p.textContent = words;
+        return p;
+      });
+    look.note.replaceChildren(...paras(look.paragraphs));
+    // The first paragraph names its button; the rest follow it.
+    if (entry.item) {
+      if (!look.words) {
+        look.words = document.createElement('div');
+        look.words.className = 'holoml-panel-words';
+        entry.item.after(look.words);
+      }
+      look.words.replaceChildren(...paras(look.paragraphs.slice(1)));
+    }
+  }
+
+  /**
+   * The floor plan (HoloML 0.2 `plan`, milestone 19): the page's picture
+   * in a corner of the screen, with a marker for where the viewer is and
+   * which way they face. The picture comes from the page's own site,
+   * within its limits.
+   */
+  private plan(el: ElementNode): void {
+    const entry: Entry = { el, kind: 'plan', name: nameOf(el), depth: 0, object: null, item: null, id: null, parent: null, children: [], link: null, fromScript: false };
+    const id = attr(el, 'id') ?? null;
+    if (id && !this.entryById.has(id)) {
+      entry.id = id;
+      this.entryById.set(id, entry);
+    }
+    this.entries.push(entry);
+    const src = attr(el, 'src') ?? '';
+    const box = document.createElement('figure');
+    box.className = 'holoml-plan';
+    box.dataset['testid'] = 'holoml-plan';
+    box.style.width = `${num(el, 'width', 200, Number.MIN_VALUE)}px`;
+    const img = document.createElement('img');
+    img.alt = attr(el, 'label')?.replace(/\s+/g, ' ').trim() || 'Floor plan';
+    const marker = document.createElement('div');
+    marker.className = 'holoml-plan-marker';
+    marker.setAttribute('aria-hidden', 'true');
+    marker.hidden = true;
+    box.append(img, marker);
+    // Shown once its picture has arrived.
+    box.hidden = true;
+    this.corner(el, 'top-right').append(box);
+    entry.hud = box;
+    const plan: PlanState = { src, state: 'loading', box, img, marker, area: area(el), at: null, angle: 0 };
+    this.planState = plan;
+    const url = resolveAddress(src, this.base);
+    if (!url || url.origin !== this.origin) {
+      plan.state = 'refused';
+      plan.reason = "pictures load only from the page's own site";
+      this.pictureLeftOut(src, plan.reason);
+      return;
+    }
+    this.pending += 1;
+    if (this.pending === 1) this.onBusy?.(true);
+    this.pictures
+      .address(url)
+      .then(async (address) => {
+        img.src = address;
+        await img.decode();
+        plan.state = 'loaded';
+        box.hidden = false;
+        this.updatePlan();
+      })
+      .catch((e: unknown) => {
+        plan.state = e instanceof LeftOut ? 'left-out' : 'failed';
+        plan.reason = e instanceof LeftOut ? e.reason : `could not be loaded (${e instanceof Error ? e.message : String(e)})`;
+        this.pictureLeftOut(src, plan.reason);
+      })
+      .finally(() => this.settle());
+  }
+
+  /** The floor plan's marker: where the viewer is on it, and which way they face (hidden outside its area). */
+  private updatePlan(): void {
+    const plan = this.planState;
+    if (!plan) return;
+    const area = plan.area;
+    const p = this.camera.position;
+    const fx = area ? (p.x - area[0]) / (area[2] - area[0]) : -1;
+    const fz = area ? (p.z - area[1]) / (area[3] - area[1]) : -1;
+    const inside = plan.state === 'loaded' && fx >= 0 && fx <= 1 && fz >= 0 && fz <= 1;
+    plan.marker.hidden = !inside;
+    plan.at = inside ? [fx, fz] : null;
+    if (!inside) return;
+    const d = this.camera.getWorldDirection(new Vector3());
+    // Up on the picture is -z; the angle turns clockwise, as the view does seen from above.
+    plan.angle = Math.round((Math.atan2(d.x, -d.z) / DEG) * 10) / 10;
+    plan.marker.style.left = `${(fx * 100).toFixed(2)}%`;
+    plan.marker.style.top = `${(fz * 100).toFixed(2)}%`;
+    plan.marker.style.transform = `translate(-50%, -50%) rotate(${plan.angle}deg)`;
   }
 
   private label(el: ElementNode, parent: Object3D, entry: Entry): Object3D {
@@ -1175,8 +1554,8 @@ export class HolomlView {
   }
 
   /** The screen corner an element names, where its screen text and sliders stack in page order. */
-  private corner(el: ElementNode): HTMLElement {
-    const corner = ['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(attr(el, 'corner') ?? '') ? attr(el, 'corner')! : 'top-left';
+  private corner(el: ElementNode, fallback = 'top-left'): HTMLElement {
+    const corner = ['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(attr(el, 'corner') ?? '') ? attr(el, 'corner')! : fallback;
     let place = this.hudLayer.querySelector<HTMLElement>(`.holoml-hud-corner[data-corner="${corner}"]`);
     if (!place) {
       place = document.createElement('div');
@@ -1405,7 +1784,9 @@ export class HolomlView {
     const src = attr(el, 'src') ?? '';
     const report: SoundReport = { id: entry.id, src, state: 'loading', playing: false };
     entry.soundReport = report;
-    const handle = this.sounds.add(report, { loop: has(el, 'loop'), autoplay: has(el, 'autoplay'), volume: num(el, 'volume', 1, 0, 1) });
+    // A sound that begins on a click does not also play by itself (the checker reports both together).
+    const autoplay = has(el, 'autoplay') && attr(el, 'begin') !== 'click';
+    const handle = this.sounds.add(report, { loop: has(el, 'loop'), autoplay, volume: num(el, 'volume', 1, 0, 1) });
     entry.sound = handle;
     const url = resolveAddress(src, this.base);
     if (!url || url.origin !== this.origin) {
@@ -1438,6 +1819,8 @@ export class HolomlView {
     const collect = (n: HoloNode) => {
       if (n.type !== 'element') return;
       if (n.name === 'label') words.push(text(n));
+      // A panel's first paragraph (HoloML 0.2).
+      if (n.name === 'panel' && this.version === '0.2') words.push(paragraphs(rawText(n))[0] ?? '');
       n.children.forEach(collect);
     };
     collect(el);
@@ -1446,6 +1829,12 @@ export class HolomlView {
     // Keyboard: Tab reaches each link, which lights up in the scene; Enter follows it.
     anchor.addEventListener('focus', () => this.setHovered(link));
     anchor.addEventListener('blur', () => this.setHovered(null));
+    // To another HoloML page of the same site: through the fade, as a click in the scene is.
+    anchor.addEventListener('click', (e) => {
+      if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || !this.fadesTo(href)) return;
+      e.preventDefault();
+      this.follow(href);
+    });
     const li = document.createElement('li');
     li.className = 'holoml-link';
     li.append(anchor);
@@ -1546,9 +1935,224 @@ export class HolomlView {
       const f = color(el, 'from');
       from = f ? rgb(f) : null;
       to = rgb(color(el, 'to') ?? '#000000');
-      start = rgbOf(this.scene.background as Color);
+      start = rgbOf(this.background);
     } else return;
-    this.animations.push({ entry, object, attribute, from, to, duration: ms, repeat: repeat(el), start });
+    // HoloML 0.2 (milestone 19): a click action waits for its trigger (by default its target).
+    const onClick = v02 && attr(el, 'begin') === 'click';
+    const toggle = onClick && has(el, 'toggle');
+    const animation: Animation = { entry, object, attribute, from, to, duration: ms, repeat: toggle ? 1 : repeat(el), start, onClick, toggle, clickedAt: null, at: 0, way: 1 };
+    this.animations.push(animation);
+    if (onClick) this.pendingActions.push({ trigger: idOf(attr(el, 'trigger') ?? attr(el, 'target')), animation, label: attr(el, 'label') ?? null });
+  }
+
+  // ---- Click actions (HoloML 0.2, milestone 19) ----------------------------------
+
+  /**
+   * Each animation and sound that begins on a click joins its trigger, a
+   * thing that can be clicked, and each new trigger gets its button in
+   * the outline: in place of the trigger's own item, or after a panel's,
+   * whose words stay. (The checker has reported triggers that cannot be
+   * clicked; their actions never run.)
+   */
+  private wireActions(): void {
+    const touched = new Set<Trigger>();
+    for (const p of this.pendingActions.splice(0)) {
+      const entry = this.entryById.get(p.trigger);
+      if (!entry || entry.removed || !entry.object || !CLICKABLE.includes(entry.kind)) continue;
+      let t = this.triggers.get(entry);
+      if (!t) {
+        t = { entry, object: entry.object, animations: [], sounds: [], label: '', button: null };
+        this.triggers.set(entry, t);
+      }
+      if (p.animation) t.animations.push(p.animation);
+      if (p.sound) t.sounds.push(p.sound);
+      const label = p.label?.replace(/\s+/g, ' ').trim();
+      if (!t.label && label) t.label = label;
+      touched.add(t);
+    }
+    for (const t of touched) {
+      if (!t.button) this.addActionButton(t);
+      this.nameActionButton(t);
+    }
+  }
+
+  /** A trigger's button in the outline: Tab reaches it (the trigger lights up in the scene), and Enter or Space runs its actions. */
+  private addActionButton(t: Trigger): void {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'holoml-action';
+    button.addEventListener('focus', () => this.outlineObject(t.object));
+    button.addEventListener('blur', () => this.outlineObject(null));
+    button.addEventListener('click', () => {
+      if (t.entry.removed) return;
+      this.runTrigger(t);
+      // Scripts hear it as a click on the trigger, with no point (it came from the keyboard or the outline).
+      if (this.listeners.click.size > 0) this.emit({ type: 'click', hit: { entry: t.entry, point: null, normal: null }, button: 'left' });
+    });
+    t.button = button;
+    const item = t.entry.item;
+    if (item && t.entry.kind !== 'panel') {
+      item.replaceWith(button);
+      t.entry.item = button;
+      return;
+    }
+    const li = document.createElement('li');
+    li.className = 'holoml-action-item';
+    li.append(button);
+    if (item?.parentElement) item.parentElement.after(li);
+    else this.outline.append(li);
+  }
+
+  /** Names a trigger's button by its actions' label (or the trigger's name); a toggle's says whether it is on. */
+  private nameActionButton(t: Trigger): void {
+    if (!t.button) return;
+    t.button.textContent = t.label || t.entry.name;
+    const toggle = t.animations.find((a) => a.toggle);
+    if (toggle) t.button.setAttribute('aria-pressed', String(toggle.clickedAt !== null && toggle.way === 1));
+    else t.button.removeAttribute('aria-pressed');
+  }
+
+  /** The trigger under a point of the page: the innermost thing hit, or the nearest of what holds it, that has click actions. */
+  private triggerAt(x: number, y: number): Trigger | null {
+    if (this.triggers.size === 0) return null;
+    const hit = this.hitAt(this.ndc(x, y));
+    for (let e: Entry | null = hit?.entry ?? null; e; e = e.parent) {
+      const t = this.triggers.get(e);
+      if (t && !e.removed) return t;
+    }
+    return null;
+  }
+
+  /** A trigger was clicked, or its button pressed: its animations run (a toggle the other way, from where it is), and its sounds play. */
+  private runTrigger(t: Trigger): void {
+    const now = performance.now();
+    for (const a of t.animations) {
+      if (a.entry?.removed) continue;
+      if (a.toggle) {
+        a.at = this.toggleAt(a, now);
+        a.way = a.clickedAt === null ? 1 : a.way === 1 ? -1 : 1;
+      }
+      a.clickedAt = now;
+    }
+    for (const s of t.sounds) if (!s.removed) s.sound?.play();
+    this.nameActionButton(t);
+    this.requestFrame();
+  }
+
+  /** Where a toggle is now: 0 at `from`, 1 at `to`; with reduced motion, at the end it runs to. */
+  private toggleAt(a: Animation, now: number): number {
+    if (a.clickedAt === null) return 0;
+    if (this.reducedMotion.matches) return a.way === 1 ? 1 : 0;
+    return Math.min(1, Math.max(0, a.at + (a.way * (now - a.clickedAt)) / a.duration));
+  }
+
+  /** Where an animation is now (0 at from, 1 at to) and whether it has finished; null for a click action not yet clicked. */
+  private progress(a: Animation, now: number): { t: number; done: boolean } | null {
+    if (a.toggle) {
+      if (a.clickedAt === null) return null;
+      const t = this.toggleAt(a, now);
+      return { t, done: t === (a.way === 1 ? 1 : 0) };
+    }
+    if (a.onClick && a.clickedAt === null) return null;
+    const runs = (now - (a.clickedAt ?? this.started)) / a.duration;
+    // With reduced motion, every animation shows its end at once (issue #25).
+    const done = this.reducedMotion.matches || runs >= a.repeat;
+    return { t: done ? 1 : runs - Math.floor(runs), done };
+  }
+
+  // ---- Places and fades (HoloML 0.2, milestone 19) ---------------------------------
+
+  /** The viewpoint an address names (#name), in a 0.2 page with several; null for none, or a name the page does not have. */
+  private placeNamed(name: string | null): ElementNode | null {
+    if (!this.placesListed || !name) return null;
+    return this.viewpoints.find((v) => attr(v, 'id') === name) ?? null;
+  }
+
+  /** "Go to" a place, in the outline. */
+  private addPlace(entry: Entry, vp: ElementNode): HTMLElement {
+    const li = document.createElement('li');
+    li.className = 'holoml-place';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = `Go to: ${placeName(vp)}`;
+    button.addEventListener('click', () => this.visit(entry.id!));
+    li.append(button);
+    this.outline.append(li);
+    return button;
+  }
+
+  /** Goes to a place through the page's address, so that Back returns and the address names where the viewer is. */
+  private visit(id: string): void {
+    const vp = this.placeNamed(id);
+    if (!vp) return;
+    if (addressName() === id) this.goTo(vp);
+    else location.hash = id;
+  }
+
+  /** Goes to a place: a short fade out and in, or a cut with reduced motion. */
+  private goTo(vp: ElementNode): void {
+    const id = attr(vp, 'id') ?? null;
+    const position = vec3(vp, 'position', [0, 1.6, 5]);
+    const lookAt = vec3(vp, 'look-at', [0, 1, 0]);
+    const go = () => {
+      this.controls?.moveTo(position);
+      this.controls?.lookAt(lookAt);
+      this.currentPlace = id;
+      this.requestFrame();
+    };
+    if (this.reducedMotion.matches) {
+      go();
+      return;
+    }
+    void this.setFade(1, PLACE_FADE_MS).then(() => {
+      go();
+      return this.setFade(0, PLACE_FADE_MS);
+    });
+  }
+
+  /** Darkens or clears the page over some milliseconds; resolves when done. */
+  private setFade(to: number, ms: number): Promise<void> {
+    this.fadeLog.push({ to, at: performance.now() });
+    this.fadeLevel = to;
+    this.fadeUntil = performance.now() + ms;
+    const f = this.fader;
+    f.style.transition = ms > 0 ? `opacity ${ms}ms ease` : 'none';
+    // Read back, so a new transition applies before the new opacity.
+    void f.offsetWidth;
+    f.style.opacity = String(to);
+    return new Promise((resolve) => window.setTimeout(resolve, ms));
+  }
+
+  /** Whether following a link fades: to another HoloML page of the same site, from a 0.2 page, without reduced motion. */
+  private fadesTo(href: string): boolean {
+    if (this.version !== '0.2' || this.reducedMotion.matches) return false;
+    try {
+      const to = new URL(href);
+      return to.origin === location.origin && isHolomlPage(to) && !sameDocument(to, new URL(location.href));
+    } catch {
+      return false;
+    }
+  }
+
+  /** Follows a link: to another HoloML page of the same site through a fade, else at once. */
+  private follow(href: string): void {
+    if (!this.fadesTo(href)) {
+      location.assign(href);
+      return;
+    }
+    void this.setFade(1, FADE_OUT_MS).then(() => {
+      location.assign(href);
+      // Still here a while later (the page did not go): clear again.
+      window.setTimeout(() => void this.setFade(0, FADE_IN_MS), 5000);
+    });
+  }
+
+  /** The page arrived through a fade: once its scene is drawn (or after a while), it fades in. */
+  private arrive(): void {
+    if (!this.arriving) return;
+    this.arriving = false;
+    // Drawn once more when clear, so the tab's card shows the scene.
+    void this.setFade(0, FADE_IN_MS).then(() => this.requestFrame());
   }
 
   private setUpView(viewpoint: ElementNode | null): void {
@@ -1713,12 +2317,13 @@ export class HolomlView {
     };
   }
 
-  private setHovered(link: Link | null): void {
-    if (this.hovered === link) return;
-    this.hovered = link;
-    this.renderer.domElement.style.cursor = link ? 'pointer' : '';
-    if (link) {
-      this.highlight.box.copy(this.boxOf(link.object)).expandByScalar(0.05);
+  /** A link, or a click action's trigger (milestone 19), under the pointer or in focus: outlined, with the hand pointer. */
+  private setHovered(hover: Hover | null): void {
+    if (this.hovered === hover) return;
+    this.hovered = hover;
+    this.renderer.domElement.style.cursor = hover ? 'pointer' : '';
+    if (hover) {
+      this.highlight.box.copy(this.boxOf(hover.object)).expandByScalar(0.05);
       this.highlight.visible = true;
     } else this.highlight.visible = false;
     this.requestFrame();
@@ -1728,7 +2333,7 @@ export class HolomlView {
     const canvas = this.renderer.domElement;
     let down: { x: number; y: number } | null = null;
     canvas.addEventListener('pointermove', (e) => {
-      if (e.buttons === 0) this.setHovered(this.linkAt(e.clientX, e.clientY));
+      if (e.buttons === 0) this.setHovered(this.linkAt(e.clientX, e.clientY) ?? this.triggerAt(e.clientX, e.clientY));
     });
     canvas.addEventListener('pointerdown', (e) => {
       down = { x: e.clientX, y: e.clientY };
@@ -1749,10 +2354,13 @@ export class HolomlView {
         const hit = this.hitAt(this.ndc(e.clientX, e.clientY)) ?? { entry: null, point: null, normal: null };
         this.emit({ type: 'click', hit, button: e.button === 2 ? 'right' : e.button === 1 ? 'middle' : 'left' });
       }
+      // A click action's trigger (HoloML 0.2): a click or tap runs its actions.
+      const trigger = e.button === 0 ? this.triggerAt(e.clientX, e.clientY) : null;
+      if (trigger) this.runTrigger(trigger);
       const link = this.linkAt(e.clientX, e.clientY);
       if (!link) return;
       if (e.button === 1 || e.ctrlKey || e.metaKey) window.open(link.href, '_blank');
-      else if (e.button === 0) location.assign(link.href);
+      else if (e.button === 0) this.follow(link.href);
     });
     canvas.addEventListener('auxclick', (e) => e.preventDefault());
     // While a script listens for clicks, a right-click is the page's, not the browser's menu.
@@ -1875,6 +2483,17 @@ export class HolomlView {
           ((o as Sprite).material.map as Texture | null)?.dispose();
           (o as Sprite).material.dispose();
         }
+        if (e.kind === 'panel') {
+          e.panelLook?.note.remove();
+          e.panelLook?.words?.remove();
+          disposePanel(o);
+        }
+      }
+      // A trigger's button goes with it (in its own item, or after a panel's).
+      const trigger = this.triggers.get(e);
+      if (trigger) {
+        if (trigger.button && trigger.button !== e.item) trigger.button.closest('li')?.remove();
+        this.triggers.delete(e);
       }
       if (e.item) this.removeItem(e);
       e.sound?.remove();
@@ -1925,9 +2544,10 @@ export class HolomlView {
     this.requestFrame();
   }
 
-  /** A label's or screen text's words. */
+  /** A label's or screen text's words; a panel's paragraphs, separated by a blank line. */
   textOf(entry: Entry): string | undefined {
     if (entry.kind === 'label') return entry.labelLook?.words;
+    if (entry.kind === 'panel') return entry.panelLook?.paragraphs.join('\n\n');
     if (entry.kind === 'slider') return entry.slider?.label.textContent ?? '';
     if (entry.kind === 'choice') return entry.choice?.legend.textContent ?? '';
     if (entry.kind === 'hud') return [...(entry.hud?.children ?? [])].map((c) => c.textContent ?? '').join('\n');
@@ -1936,6 +2556,15 @@ export class HolomlView {
 
   setText(entry: Entry, value: string): void {
     if (entry.kind === 'hud') this.setHudText(entry, value);
+    else if (entry.kind === 'panel' && entry.panelLook && entry.object) {
+      entry.panelLook.paragraphs = paragraphs(value);
+      drawPanel(entry.object, entry.panelLook, this.anisotropy);
+      entry.name = entry.panelLook.paragraphs[0] ?? entry.id ?? 'panel';
+      if (entry.item && !this.triggers.get(entry)?.button?.isSameNode(entry.item)) entry.item.textContent = `Panel: ${entry.name}`;
+      this.panelWords(entry);
+      if (entry.object) this.markMoved(entry);
+      this.requestFrame();
+    }
     else if (entry.kind === 'slider' && entry.slider) entry.slider.label.textContent = value.replace(/\s+/g, ' ').trim();
     else if (entry.kind === 'choice' && entry.choice) {
       const legend = entry.choice.legend;
@@ -2021,12 +2650,13 @@ export class HolomlView {
     this.requestFrame();
   }
 
+  /** The background colour (behind everything unless the page has a sky). */
   get backgroundColor(): string {
-    return `#${(this.scene.background as Color).getHexString()}`;
+    return `#${this.background.getHexString()}`;
   }
 
   set backgroundColor(value: string) {
-    (this.scene.background as Color).set(value);
+    this.background.set(value);
     this.requestFrame();
   }
 
@@ -2113,6 +2743,9 @@ export class HolomlView {
     this.fitShadows();
     this.renderer.render(this.scene, this.camera);
     this.frames += 1;
+    this.updatePlan();
+    // Arrived through a fade: in once everything is drawn.
+    if (this.arriving && this.pending === 0) this.arrive();
     this.onDrawn?.();
     if (moving) this.requestFrame();
     else this.last = 0;
@@ -2127,25 +2760,25 @@ export class HolomlView {
    */
   private followAmbient(): void {
     const full = this.environment?.state === 'loaded' ? 1 : 0.45;
-    if (this.version !== '0.2' || this.ambients.length === 0) {
-      this.scene.environmentIntensity = full;
-      return;
+    let factor = 1;
+    if (this.version === '0.2' && this.ambients.length > 0) {
+      const ambient = this.ambients.reduce((sum, l) => sum + (l.parent ? l.intensity : 0), 0);
+      factor = Math.min(1, ambient / 0.6);
     }
-    const ambient = this.ambients.reduce((sum, l) => sum + (l.parent ? l.intensity : 0), 0);
-    this.scene.environmentIntensity = full * Math.min(1, ambient / 0.6);
+    this.scene.environmentIntensity = full * factor;
+    // The sky (milestone 19) as well: evening outside the windows too.
+    this.scene.backgroundIntensity = factor;
   }
 
   /** Moves every animate element on; true while any still runs. */
   private stepAnimations(now: number): boolean {
     let running = false;
-    const still = this.reducedMotion.matches;
     for (const a of this.animations) {
       if (a.entry?.removed) continue;
-      const elapsed = now - this.started;
-      const runs = elapsed / a.duration;
-      // With reduced motion, every animation shows its end at once (issue #25).
-      const done = still || runs >= a.repeat;
-      const t = done ? 1 : runs - Math.floor(runs);
+      // A click action not yet clicked leaves its element as it is.
+      const p = this.progress(a, now);
+      if (!p) continue;
+      const { t, done } = p;
       const from = a.from ?? a.start;
       const v = from.map((f, i) => f + (a.to[i]! - f) * t);
       switch (a.attribute) {
@@ -2163,13 +2796,55 @@ export class HolomlView {
           (a.object as Object3D & { color: Color }).color.setRGB(v[0]!, v[1]!, v[2]!, SRGBColorSpace);
           break;
         case 'background':
-          (this.scene.background as Color).setRGB(v[0]!, v[1]!, v[2]!, SRGBColorSpace);
+          this.background.setRGB(v[0]!, v[1]!, v[2]!, SRGBColorSpace);
           break;
       }
       if (a.entry && (a.attribute === 'position' || a.attribute === 'rotation' || a.attribute === 'scale')) this.markMoved(a.entry);
       if (!done) running = true;
     }
     return running;
+  }
+}
+
+/** An id reference ("#door") as the id itself. */
+function idOf(ref: string | null | undefined): string {
+  return (ref ?? '').trim().replace(/^#/, '');
+}
+
+/** The place the page's address names after #, if any. */
+function addressName(): string | null {
+  if (location.hash.length <= 1) return null;
+  try {
+    return decodeURIComponent(location.hash.slice(1));
+  } catch {
+    return location.hash.slice(1);
+  }
+}
+
+/** A place's name in the outline: its label, or its id. */
+function placeName(vp: ElementNode): string {
+  return attr(vp, 'label')?.replace(/\s+/g, ' ').trim() || attr(vp, 'id') || 'viewpoint';
+}
+
+/** A HoloML page, by its address. */
+function isHolomlPage(url: URL): boolean {
+  return /\.holoml$/i.test(url.pathname);
+}
+
+/** Two addresses of one document (they differ at most after #). */
+function sameDocument(a: URL, b: URL): boolean {
+  return a.origin === b.origin && a.pathname === b.pathname && a.search === b.search;
+}
+
+/** This page was opened from another HoloML page of the same site, by following a link (not Back, Forward, or reloading). */
+function arrivedFromHolomlPage(): boolean {
+  const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+  if (nav && nav.type !== 'navigate') return false;
+  try {
+    const from = new URL(document.referrer);
+    return from.origin === location.origin && isHolomlPage(from) && !sameDocument(from, new URL(location.href));
+  } catch {
+    return false;
   }
 }
 
@@ -2231,6 +2906,9 @@ function countElements(node: ElementNode): number {
 /** A name for the outline and the inspector: the text, the id, or the file. */
 function nameOf(el: ElementNode): string {
   if (el.name === 'label') return text(el) || 'label';
+  if (el.name === 'panel') return paragraphs(rawText(el))[0] || attr(el, 'id') || 'panel';
+  if (el.name === 'plan') return attr(el, 'label')?.replace(/\s+/g, ' ').trim() || attr(el, 'id') || 'plan';
+  if (el.name === 'viewpoint') return placeName(el);
   if (el.name === 'slider') return text(el) || attr(el, 'id') || 'slider';
   if (el.name === 'choice') return attr(el, 'label')?.trim() || attr(el, 'id') || 'choice';
   const id = attr(el, 'id');

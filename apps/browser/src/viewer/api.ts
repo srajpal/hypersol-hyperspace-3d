@@ -5,13 +5,13 @@
  * hear clicks, keys, frames, and sliders. Scripts get handles ("things"),
  * never the viewer's own objects, and every value is checked on the way
  * in. Milestone 18 (prompt 92): the viewer's speeds, and sliders; then
- * (prompt 98) choices.
+ * (prompt 98) choices. Milestone 19: panels.
  */
 import type { Entry, HolomlView, Hit, SceneEvent } from './scene';
 import type { Vec3 } from './values';
 
-type Kind = 'model' | 'group' | 'light' | 'label' | 'sound' | 'hud' | 'slider' | 'choice';
-const KINDS = new Set<string>(['model', 'group', 'light', 'label', 'sound', 'hud', 'slider', 'choice']);
+type Kind = 'model' | 'group' | 'light' | 'label' | 'panel' | 'sound' | 'hud' | 'slider' | 'choice';
+const KINDS = new Set<string>(['model', 'group', 'light', 'label', 'panel', 'sound', 'hud', 'slider', 'choice']);
 const COLOR = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 function vector(v: unknown, what: string): Vec3 {
@@ -60,7 +60,7 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
     define('id', () => e.id);
     define('kind', () => kind);
     define('parent', () => (e.parent && e.parent.kind === 'group' ? thing(e.parent) : null));
-    if (has('model', 'group', 'label', 'light')) {
+    if (has('model', 'group', 'label', 'panel', 'light')) {
       define(
         'position',
         () => {
@@ -73,7 +73,7 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
         },
       );
     }
-    if (has('model', 'group')) {
+    if (has('model', 'group', 'panel')) {
       define(
         'rotation',
         () => {
@@ -86,6 +86,8 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
           view.moved(e);
         },
       );
+    }
+    if (has('model', 'group')) {
       define(
         'scale',
         () => {
@@ -103,7 +105,7 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
         (v) => view.setSolid(e, v === true),
       );
     }
-    if (has('model', 'group', 'label')) {
+    if (has('model', 'group', 'label', 'panel')) {
       define(
         'visible',
         () => o()?.visible,
@@ -115,7 +117,7 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
         },
       );
     }
-    if (has('label', 'hud', 'slider', 'choice')) {
+    if (has('label', 'panel', 'hud', 'slider', 'choice')) {
       define(
         'text',
         () => view.textOf(e),

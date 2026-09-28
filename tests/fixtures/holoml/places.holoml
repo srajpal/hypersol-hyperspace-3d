@@ -1,0 +1,16 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML places</title>
+  </head>
+  <!-- Milestone 19 (V4): three places to go; the address names one after #. -->
+  <scene background="#1c2030">
+    <viewpoint id="hall" label="Hall" position="0 1.6 6" look-at="0 1.6 0" mode="walk" />
+    <viewpoint id="kitchen" label="Kitchen" position="4 1.6 1" look-at="4 1.6 -3" />
+    <viewpoint id="study" position="-4 1.6 1" look-at="-4 1.6 -3" />
+    <light type="ambient" intensity="0.8" />
+    <model id="marker" src="blockworld/models/stone.gltf" position="0 0.5 0" />
+    <a href="#kitchen">
+      <label id="to-kitchen" position="0 1.6 3" size="0.2">To the kitchen</label>
+    </a>
+  </scene>
+</holoml>
