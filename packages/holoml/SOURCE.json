@@ -1,15 +1,15 @@
 {
   "repository": "https://github.com/srajpal/holoml",
-  "tag": "main",
-  "commit": "eddc324098c231e32dd34dfc2b1d3a259583f2bd",
+  "tag": "sofa-studio-about-label",
+  "commit": "211f0eeb4af83b630e5f73ede66566b921282aad",
   "files": {
-    "src/parser.ts": "68f232f3c7bcc299dd477596ec62fcb9681dbd4f330ed9e55d50846626a4e526",
-    "src/rules.ts": "27d6320a358c2ab5e386f12b1b94066611207066ce1970509ba7585da57c06a6",
-    "src/schema.ts": "6e8072057d65039a5c340308e78749909c8934a16f40e93c3ab8a890fad9068d"
+    "src/parser.ts": "f9c9f959135af2c7df7f34b7c6aa4d814d9511f4668b1dbd0e5b73b4dece624a",
+    "src/rules.ts": "65b48c8acde942ac46c704acee6de53b6cf89e80b3a54383443cc0aedef4164f",
+    "src/schema.ts": "bab6ce107cefef9db148eced409a8b79588470b569b452f49d4e2631348a829f"
   },
   "examples": {
-    "ref": "main",
-    "commit": "eddc324098c231e32dd34dfc2b1d3a259583f2bd",
+    "ref": "sofa-studio-about-label",
+    "commit": "211f0eeb4af83b630e5f73ede66566b921282aad",
     "files": {
       "showroom/README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
       "showroom/about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",
@@ -67,7 +67,7 @@
       "sofa-studio/README.md": "6eb9da8b82a02053d6f8ead5de4829d57ba8eb978a7e80db89c677beae34f1ab",
       "sofa-studio/about.holoml": "2f2ff009f35732f50eda65f502ef8575630dc2ae9195db2a9d2b591cae87fd88",
       "sofa-studio/cart.html": "7a86e9ba89f92e82b793aeea2240b2af6c65513657347606df335f76c315a8c6",
-      "sofa-studio/index.holoml": "b51c5c2f8c0a87527dd95f6dcac9474507765f401304bb44c0518b83d4d72fb5",
+      "sofa-studio/index.holoml": "6aa1a23fa77a3412c23468f1e6c85cf9d74e3f401ac948b8cc5a83af3b298885",
       "sofa-studio/index.html": "d2ee781bb4e9cd8c48f6a6c8e72a3cfbe889ef31704b6bf20370eb56a4afff8e",
       "sofa-studio/light/studio.hdr": "469abc5e6035b6c450bae8adbb448f8d1fa7c51d9e384e501516c28352c91b58",
       "sofa-studio/models/CREDITS.md": "6aa6b5705695519a6984fa7acf15d17f7f86c12890fe096588e5c16e45b498c4",
@@ -87,7 +87,7 @@
       "sofa-studio/models/sofa.gltf": "ec9482cd1158ac7937b4a4911aabc9a7a203d8762914f1f7c9fd55015d4745e0",
       "sofa-studio/models/vase.bin": "56ffadcafff3f56538d04b0b43c06c9704baeec2ac3ec286ef01c313c82906f0",
       "sofa-studio/models/vase.gltf": "f5344dcf8eab72ae341a4390e9ddd12bd90cab59525a6de80314445b357e905d",
-      "sofa-studio/studio.js": "e029b1ad25f72ac618bf142cb2d100e35214c04bec49d7ee1c3cade49ceede2f",
+      "sofa-studio/studio.js": "e103b8d4e1b35e3f1b91e2ff82ed54e165ebb291a08bbfe454fdcd915dd10bb1",
       "sofa-studio/textures/boucle-color.jpg": "dae329408469f9a2610f40851d8b8917dee7d3925690cde7b5d784d329c4f5a5",
       "sofa-studio/textures/boucle-normal.jpg": "f396e16d21da5715d79999327c94b8252e7d51b0f8e97a4b7a295f00cdec0bbd",
       "sofa-studio/textures/boucle-rough.jpg": "ba9421410a32998c0dc6a1c2ad21c29da888ca568156de4ad6f5489872096276",
