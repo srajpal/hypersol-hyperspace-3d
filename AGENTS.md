@@ -127,11 +127,14 @@ Do not change earlier entries except to correct an error.
   add them to docs/progress.md; the README keeps a short progress
   paragraph that links there. (Added 2026-09-25, prompt 21; the progress
   page split out 2026-09-26, prompt 47.)
-- The README always opens with a screenshot of the newest version or
-  milestone, and a good-looking one: refresh docs/screenshots/readme.png
-  with `pnpm screenshots:readme` at the end of each milestone and each
-  release, and look at it. It shows the HoloML showroom (milestone 16),
-  served locally. (Owner, prompt 68; the showroom since prompt 81, Q5 a.)
+- The README always opens with four screenshots of the newest version
+  or milestone, good-looking ones that show the variety of what the
+  browser does: refresh docs/screenshots/readme*.png with `pnpm
+  screenshots:readme` at the end of each milestone and each release,
+  and look at them. They show the sofa studio, Blockworld, a sample page
+  in the layers view, and the instrument panel, all served locally.
+  (Owner, prompt 68; the showroom from prompt 81, Q5 a; four pictures
+  since prompt 99, the wording approved in prompt 100.)
 - Owner-only automation (Remote Control at session start, the prompt-log
   reminder) lives in CLAUDE.local.md, which is gitignored, so
   contributors' sessions never inherit it.

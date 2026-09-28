@@ -1143,3 +1143,16 @@ check everything works.
 Also use 4 images on the HyperSpace README now to show the variety of
 things it can do.
 ```
+
+## 100 — 2026-09-28 · Claude Opus 5.5, low effort
+
+Approves the proposed AGENTS.md wording for the README's pictures (four
+screenshots of the newest version, showing the variety of what the
+browser does, refreshed with `pnpm screenshots:readme` at the end of
+each milestone and release), and asks to move the sofa studio's "About
+this studio" label, which sat behind the Light choice in the README's
+first picture.
+
+```text
+Approve the AGENTS wording, and move the About label.
+```
