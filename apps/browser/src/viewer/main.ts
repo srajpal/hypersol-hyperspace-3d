@@ -87,6 +87,12 @@ Object.defineProperty(window, '__holoml', {
           corner: (s.parentElement as HTMLElement | null)?.dataset['corner'] ?? null,
         };
       }),
+    /** The choices (milestone 18): label, corner, options, and the chosen value. */
+    choices: () => JSON.parse(JSON.stringify(state.view?.choicesInfo ?? [])),
+    /** Shadows: the lights and meshes that cast them, and why a page's were left out, if they were. */
+    shadows: () => state.view?.shadowsInfo ?? null,
+    /** The page's panorama of the surroundings: its address, whether it arrived, and how brightly it lights the scene. */
+    environment: () => state.view?.environmentInfo ?? null,
     walker: () => state.view?.walkerInfo ?? null,
     stats: () => state.view?.stats ?? null,
     get version() {
@@ -164,6 +170,18 @@ const STYLE = `
     text-shadow: 0 1px 3px #000c, 0 0 1px #000; }
   .holoml-slider input { width: 150px; margin: 0; accent-color: #7fd8ff; cursor: pointer; }
   .holoml-slider input:focus-visible { outline: 2px solid #7fd8ff; outline-offset: 4px; border-radius: 4px; }
+  /* Choices (milestone 18): a group of radio buttons, drawn as a row of options; the buttons themselves stay for the keyboard and screen readers. */
+  .holoml-choice { pointer-events: auto; min-width: 0; margin: 0; padding: 8px 10px 10px; border: 1px solid #ffffff2e; border-radius: 12px;
+    background: #0d1124c7; color: #f2f4ff; font-size: 14px; backdrop-filter: blur(6px); }
+  .holoml-choice legend { float: left; width: 100%; padding: 0; margin: 0 0 6px; font-size: 13px; font-weight: 600; color: #c9d3ff; }
+  .holoml-choice legend[hidden] { display: none; }
+  .holoml-options { clear: both; display: flex; flex-wrap: wrap; gap: 6px; }
+  .holoml-options label { position: relative; display: inline-flex; align-items: center; padding: 5px 12px; border: 1px solid #ffffff40;
+    border-radius: 999px; font-weight: 600; cursor: pointer; user-select: none; }
+  .holoml-options label:hover { border-color: #ffffffa0; }
+  .holoml-options input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  .holoml-options label:has(input:checked) { background: #7fd8ff; border-color: #7fd8ff; color: #0b0f1e; }
+  .holoml-options label:has(input:focus-visible) { outline: 2px solid #7fd8ff; outline-offset: 2px; }
   .holoml-crosshair { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); }
   .holoml-crosshair::before, .holoml-crosshair::after { content: ''; position: absolute; background: #ffffffd9; box-shadow: 0 0 2px #000; }
   .holoml-crosshair::before { left: 10px; top: 0; width: 2px; height: 22px; }
@@ -181,6 +199,7 @@ const STYLE = `
   body.holoml-text-view .holoml-hud-corner { position: static; max-width: none; align-items: flex-start; text-align: left; }
   body.holoml-text-view .holoml-hud { color: #eef1ff !important; text-shadow: none; font-size: 17px !important; }
   body.holoml-text-view .holoml-crosshair { display: none; }
+  body.holoml-text-view .holoml-choice { background: none; backdrop-filter: none; font-size: 16px; }
 `;
 
 function start(): void {

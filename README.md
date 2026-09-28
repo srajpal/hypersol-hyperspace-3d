@@ -5,17 +5,34 @@ dimensions. Ordinary websites float as panels in a 3D room, page sections
 lift into layered depth, and a companion markup language, HoloML, lets
 anyone publish a fully 3D website as easily as writing HTML.
 
-![HyperSpace 3D showing the HoloML showroom: five cars on plinths in a round hall, the middle one on a turntable, with two car pages as tabs on the left](docs/screenshots/readme.png)
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/readme.png" alt="HyperSpace 3D showing HoloML's sofa studio: a red velvet sofa in a sunlit room, with the fabric and wood choices and the price, and four tabs as cards on the left"></td>
+    <td width="50%"><img src="docs/screenshots/readme-game.png" alt="Blockworld, a small block game written in HoloML: an island of grass blocks and trees, seen from above one corner"></td>
+  </tr>
+  <tr>
+    <td><b>3D websites.</b> <a href="https://github.com/srajpal/holoml/tree/main/examples/sofa-studio">The sofa studio</a>, written in HoloML: choose a fabric and a wood, and the sofa changes in place, with soft shadows and a studio's light.</td>
+    <td><b>Games, too.</b> <a href="https://github.com/srajpal/holoml/tree/main/examples/blockworld">Blockworld</a>: walk, break and place blocks, and find five gems, with the mouse or the keyboard alone.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/readme-layers.png" alt="An ordinary web page on a tilted panel in the light Daylight theme, its sections and picture lifted into layers"></td>
+    <td><img src="docs/screenshots/readme-instruments.png" alt="The same page beside the instrument panel: gauges for load, requests, and memory, the console, and the network list"></td>
+  </tr>
+  <tr>
+    <td><b>Ordinary websites, in depth.</b> Any page on a tilted panel, its sections and pictures lifted into layers; tabs as cards; a dark and a light theme.</td>
+    <td><b>An instrument panel.</b> The page's load, requests, and blocked trackers, the browser's own gauges, the console, and the network.</td>
+  </tr>
+</table>
 
-*The newest build, showing
-[HoloML's showroom](https://github.com/srajpal/holoml/tree/main/examples/showroom),
-a 3D site written in HoloML (cars from Kenney's Car Kit, CC0). Made with
-`pnpm screenshots:readme`.*
+*The newest build, made with `pnpm screenshots:readme` from local
+copies: HoloML's examples (the sofa studio's furniture, fabrics, and
+light from Poly Haven, CC0; Blockworld's blocks from Kenney, CC0) and a
+made-up sample page.*
 
 For Windows and Linux (checked by automatic tests on both); macOS is
 planned but untested. Apache 2.0. No telemetry.
 
-**Status (2026-09-27).** Released: the
+**Status (2026-09-28).** Released: the
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
 as source for developers (no installers yet). Since then, HoloML 0.1 has
 been written down in its own repository (milestone 13), and this browser
@@ -24,9 +41,11 @@ release), with limits for heavy scenes, keyboard and screen-reader
 access, a scene inspector, and a HoloML car showroom to try from the
 start panel. Milestone 17 adds Blockworld, a small block game written in
 the first part of HoloML 0.2 (scripts, sound, walls and gravity), and a
-HoloML examples section. Milestone 18 has begun with walking and turning
-speeds a page can set and sliders on the screen (Blockworld's Speed
-slider); its sofa studio comes next. Then three more example sites,
+HoloML examples section. Milestone 18 adds walking and turning speeds a
+page can set, sliders on the screen (Blockworld's Speed slider), and the
+sofa studio, a shop page with shadows, textured fabrics, and choices
+that change the sofa in place (built; waiting for acceptance). Then
+three more example sites,
 privacy and data tools, and installers as 1.0. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
@@ -119,7 +138,9 @@ An archived copy of the 2001 site is available through the
   example with a picture, and links to the HoloML repository.
   Milestone 18: a page sets how fast the viewer walks and turns, and
   can put sliders on the screen for its script (Blockworld's Speed
-  slider).
+  slider); shadows, a material's own pictures (fabric, wood), choices
+  on the screen that change a material in place, and light from a
+  panorama of the surroundings, shown by the sofa studio.
 - Mouse and keyboard throughout; touch for scenes.
 
 ## Built with the Buildwright approach
@@ -155,7 +176,7 @@ starts with a small prototype and the same habits of direction and checking.
 ## What comes next
 
 Milestones 18 to 21, four more HoloML example sites, each adding to
-the language: a sofa studio, an apartment tour, a resort, and an
+the language: a sofa studio, an apartment tour, a sneaker store, and an
 aquarium. 22, privacy and data tools: HTTPS-only browsing,
 per-site storage, and bookmark import and export. 23 and 24, installers
 as 1.0 for Windows and Linux, then macOS. Later: free camera
@@ -178,7 +199,9 @@ Milestone 15 hardens them: limits for
 heavy scenes, keyboard and screen-reader access, a text view, and a
 scene inspector. Milestone 16 adds a HoloML car showroom, published with GitHub Pages and linked from the
 start panel. Milestone 17 adds Blockworld, a small block game in HoloML
-0.2, and the HoloML examples section.
+0.2, and the HoloML examples section. Milestone 18 adds walking speeds,
+sliders, and the sofa studio, a shop page with shadows, textured
+fabrics, and choices that change the sofa in place.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
@@ -196,10 +219,13 @@ pictures, and triangles have limits (milestone 15); what crosses one is
 left out and marked, and a notice says why.
 
 To try one, open a new tab and choose one under Try HoloML, or open the
-HoloML examples (the menu, or Ctrl+Shift+E): the showroom (milestone 16)
-and Blockworld (milestone 17), published from the holoml repository at
-https://srajpal.github.io/holoml/. The browser asks nothing of those
-sites until you choose one.
+HoloML examples (the menu, or Ctrl+Shift+E): the showroom (milestone 16),
+Blockworld (milestone 17), and the sofa studio (milestone 18). They come
+from the holoml repository, https://github.com/srajpal/holoml, which
+publishes each with GitHub Pages: https://srajpal.github.io/holoml/showroom/,
+https://srajpal.github.io/holoml/blockworld/, and
+https://srajpal.github.io/holoml/sofa-studio/. The browser asks nothing
+of those sites until you choose one.
 
 ## Project documents
 
@@ -226,7 +252,7 @@ Three.js (with its glTF loader, for HoloML pages), Lit, SQLite through
 Node's built-in node:sqlite, and Ghostery's open-source ad-blocking
 engine with open filter lists; Vite and electron-vite to build; Vitest
 and Playwright to test.
-Planned, not yet installed: electron-builder for installers (milestone 18).
+Planned, not yet installed: electron-builder for installers (milestones 23 and 24).
 Reasons for each choice are in ARCHITECTURE.md.
 
 Known limitations: Electron ships no DRM module, so video from Netflix
@@ -275,7 +301,8 @@ the top bar, or click a card on the left to switch tabs. The main keys
   left and right arrows turn, Page Up and Page Down look up and down,
   Shift runs, and Space jumps where the page allows; the page chooses
   how fast. A slider on a scene's screen takes the arrow keys, Home, and
-  End while it has the keyboard (Tab reaches it).
+  End while it has the keyboard, and a choice's options the arrow keys
+  (Tab reaches both).
   Ctrl+Shift+E shows the HoloML examples.
 
 What the browser stores and sends is listed in
@@ -283,11 +310,12 @@ What the browser stores and sends is listed in
 profile in the `userData/` folder, never your normal browser data.
 
 Tests: `pnpm test` (unit), `pnpm lint`, `pnpm typecheck`, and
-`pnpm test:e2e` (builds the app and drives it for about six minutes;
+`pnpm test:e2e` (builds the app and drives it for about ten minutes;
 needs openssl on PATH, which Git for Windows provides). Its windows stay
 off screen and never take focus, so you can keep working; set
-`HYPERSOL_TEST_SHOW=1` to watch instead. Current results are in
-TODO.md.
+`HYPERSOL_TEST_SHOW=1` to watch instead. With Docker, `pnpm test:linux`
+runs them all on Linux, as GitHub's Linux machines do. Current results
+are in TODO.md.
 
 ## Contributing
 

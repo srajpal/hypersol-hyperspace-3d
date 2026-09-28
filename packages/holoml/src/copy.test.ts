@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +18,8 @@ const source = JSON.parse(readFileSync(join(here, 'SOURCE.json'), 'utf8')) as {
 const copies = COPIES as { from: string; to: string }[];
 const examples = EXAMPLES as { from: string; to: string; names: string[]; skip: RegExp };
 const hash = sha256 as (t: string | Buffer) => string;
+/** The id git gives a file's bytes (a blob's SHA-1), as git ls-tree lists it. */
+const gitObjectId = (bytes: Buffer) => createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
 
 describe('the copy of HoloML (owner, prompt 65, Q4 a)', () => {
   it('is unchanged since it was copied (edit HoloML in its own repository)', () => {
@@ -38,25 +41,26 @@ describe('the copy of HoloML (owner, prompt 65, Q4 a)', () => {
     }
   });
 
-  it('has the example sites unchanged since they were copied (milestones 16 and 17)', () => {
+  it('has the example sites unchanged since they were copied (milestones 16 to 18)', () => {
     const names = Object.keys(source.examples.files);
     for (const site of examples.names) expect(names).toContain(`${site}/index.holoml`);
     for (const name of names) expect(hash(readFileSync(join(here, examples.to, name))), name).toBe(source.examples.files[name]);
   });
 
   it.skipIf(!existsSync(join(holoml, '.git')))(`has the example sites as the holoml repository has them at ${source.examples.ref}`, () => {
+    // Each file's git object id (from one listing per site; a git process per file took over 5 s for the sofa studio's 66 files).
     const listed = examples.names.flatMap((site) =>
-      execFileSync('git', ['-C', holoml, 'ls-tree', '-r', '--name-only', source.examples.commit, `${examples.from}${site}/`], { encoding: 'utf8' })
+      execFileSync('git', ['-C', holoml, 'ls-tree', '-r', source.examples.commit, `${examples.from}${site}/`], { encoding: 'utf8' })
         .split('\n')
         .filter(Boolean)
-        .map((p) => p.slice(examples.from.length))
-        .filter((n) => !examples.skip.test(n.slice(site.length + 1))),
+        .map((line) => {
+          const [meta, path] = line.split('\t') as [string, string];
+          return { id: meta.split(' ')[2]!, name: path.slice(examples.from.length) };
+        })
+        .filter(({ name }) => !examples.skip.test(name.slice(site.length + 1))),
     );
-    expect(Object.keys(source.examples.files).sort()).toEqual(listed.sort());
-    for (const name of listed) {
-      const original = execFileSync('git', ['-C', holoml, 'show', `${source.examples.commit}:${examples.from}${name}`]);
-      expect(hash(readFileSync(join(here, examples.to, name))), name).toBe(hash(original));
-    }
+    expect(Object.keys(source.examples.files).sort()).toEqual(listed.map((f) => f.name).sort());
+    for (const { id, name } of listed) expect(gitObjectId(readFileSync(join(here, examples.to, name))), name).toBe(id);
   });
 
   it('parses and checks a page', () => {

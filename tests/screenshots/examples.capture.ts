@@ -37,6 +37,12 @@ const SHOTS: { id: string; page: string; steps?: [string, number][]; until?: str
     ],
     until: "holoml.find('message').text === ''",
   },
+  {
+    // In the day's light, with the blue linen chosen (as a visitor would).
+    id: 'sofa-studio',
+    page: 'sofa-studio/index.holoml',
+    steps: [[`document.querySelector('[data-id="fabric"] input[value="linen"]').click(), true`, 1500]],
+  },
 ];
 
 /** Stone blocks from the ground up to a height, at one column. */

@@ -46,7 +46,8 @@ for (const name of EXAMPLES.names) {
   for (const path of paths) {
     const inside = path.slice(from.length);
     if (EXAMPLES.skip.test(inside)) continue;
-    const bytes = execFileSync('git', ['-C', holoml, 'show', `${examplesCommit}:${path}`]);
+    // Room for the largest file (the sofa studio's panorama is 1.6 MB; the default is 1 MB).
+    const bytes = execFileSync('git', ['-C', holoml, 'show', `${examplesCommit}:${path}`], { maxBuffer: 64 * 1024 * 1024 });
     mkdirSync(dirname(join(target, inside)), { recursive: true });
     writeFileSync(join(target, inside), bytes);
     exampleFiles[`${name}/${inside}`] = sha256(bytes);

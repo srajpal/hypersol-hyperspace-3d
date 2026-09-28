@@ -29,9 +29,9 @@ Plan approved 2026-09-24.
 | 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Done (accepted, prompt 79) |
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
 | 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
-| 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | In progress: part 1 (speeds and sliders) built, in pull request #34; part 2, the sofa studio, planned, waiting for approval |
+| 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | Built: part 1 (speeds and sliders) merged (pull request #34); part 2, the sofa studio (prompt 98), merged in holoml (#15) and published, the browser's side in a pull request; waiting for acceptance |
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Later (prompt 85, Q4 a) |
-| 20 | Coral Bay | A resort: paths to ride, sounds by place, sky and environment light, loading by area | Later (prompt 85, Q4 a) |
+| 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Later (prompts 101 and 102) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
 | 22 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85) |
 | 23 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
@@ -68,6 +68,14 @@ the browser's HoloML examples section), 18 Sofa studio, 19 Harbour Loft,
 20 Coral Bay, 21 Aquarium. Privacy and data tools moved from 17 to 22,
 the Windows and Linux release from 18 to 23, macOS from 19 to 24, and
 the later milestones from 20, 21, and 22 to 25, 26, and 27.
+
+On 2026-09-28 (prompts 101 and 102) milestone 20 became a sneaker
+store in place of Coral Bay, a resort: a store where people buy
+products that are good in 3D shows the browser's general use better.
+Of the HoloML features Coral Bay was to bring, loading by area moves to
+the store (many shoes, each loaded when the viewer comes near);
+movement along paths, sounds by place, and a sky wait until a site
+needs them (the aquarium's fish may take paths).
 
 ### Where design work belongs
 
@@ -1535,7 +1543,7 @@ that sleep when unused; and history work moved off the main process
 | L6 | Economy mode | On: lower resolution, effects off, at most 30 frames a second, "ECO" shown; "on battery" follows the power source |
 | L7 | Sleeping tabs | An unused tab sleeps (its page is gone, card kept); opening it wakes it with its history; tabs with sound, a download, or typed text stay awake |
 | L8 | History still works | History, search, and the start panel work through the worker; E checks pass |
-| L9 | History budget | Unit benchmark: 100,000 visits, search and recent within 50 ms, main thread held at most 20 ms (since prompt 99: the longest gap between two turns of the main process's event loop) |
+| L9 | History budget | Unit benchmark: 100,000 visits, search and recent within 50 ms, main thread held at most 20 ms (since prompt 107: the longest gap between two turns of the main process's event loop) |
 | L10 | Keyboard and menus | The new shortcuts and menu entries work from the page and the shell |
 
 ### Check results (Windows 11, 2026-09-26)
@@ -2743,16 +2751,22 @@ After the report (prompts 89 and 90):
   its plan (prompt 87): moving between pages as between rooms, a link
   to a named viewpoint on the next page (`href="kitchen.holoml#window"`)
   and a transition (a short fade instead of a cut).
-- 20 Coral Bay: movement along paths, positional sound, sky, loading by
-  area, simpler models far away. Proposed for its plan (prompt 87):
-  areas that load their models when the viewer comes near and let go of
-  them when far, counted against the page's limits only while loaded; a
-  simpler model to show far away; and loading progress a page's script
-  can show.
+- 20 Sneaker store (in place of Coral Bay, prompts 101 and 102): a wall
+  of sneakers to pick up, turn, and see up close (the sole, the laces),
+  in their colourways (choices) and sizes, a cart across shoes, and a
+  checkout page (no real payment). From Coral Bay's list, loading by
+  area: proposed for its plan (prompt 87), areas that load their models
+  when the viewer comes near and let go of them when far, counted
+  against the page's limits only while loaded, a simpler model to show
+  far away, and loading progress a page's script can show. Open
+  question for its plan: good CC0 shoe models (prompt 85, Q3 a allows
+  CC0 only; CC BY ones, credited, would need the owner's approval).
 - 21 Aquarium (prompt 85): 5 to 10 real-looking fish of different
   kinds that swim around the tank with their own animations (glTF
   skins), rocks, plants, bubbles, light through the water, and a Feed
-  button: food falls and the fish swim to it and eat. Open question for
+  button: food falls and the fish swim to it and eat. It may take
+  movement along paths, from Coral Bay's list, for the fish (prompt
+  102). Open question for
   its plan: CC0 packs have few real-looking fish; if there are not
   enough, CC BY models (credited) would need the owner's approval, as
   prompt 85's Q3 a allows CC0 only.
@@ -2762,8 +2776,10 @@ After the report (prompts 89 and 90):
 Status: In progress. Part 1 (walking and turning speeds, and sliders)
 approved by the owner and built, 2026-09-27 (prompt 92), in browser pull
 request #34 with the fixes for GitHub's Linux machines. Part 2, the sofa
-studio, the milestone's example site: planned below (prompt 97),
-waiting for the owner's answers and approval. Pushed before the
+studio, the milestone's example site: planned below (prompt 97); the
+owner answered Q1 to Q6 with the recommendations and approved the build
+(prompt 98); built, see Part 2 results. The owner merged #34 and holoml
+#15 (prompt 99); the studio is published. Pushed before the
 milestone (after milestone 17's acceptance). Rule 13 check done
 (ARCHITECTURE.md section 3).
 
@@ -2834,7 +2850,7 @@ tests/fixtures/holoml/speed.holoml and its script.
 | U6 | Pass. Blockworld reads 4.3 and 120; End on its slider gave 8.6 and 240 and the label "Speed 2×", Home gave 2.15 and 60 and "Speed 0.5×" |
 | U7 | Pass, with one timing miss. Full run: 244 of 245 end-to-end checks passed (C to U); milestone 10's L9 answered one search in 70 ms (limit 50) during the run and passed alone right after (9 of 9); L9's measure is being reworked in the owner's other session (browser pull request #33). The HoloML checks (milestones 14 to 17) passed again with the new walk controls (64 of 64); unit tests 261; holoml's tests 170 |
 
-### Part 2: the sofa studio (plan, waiting for approval)
+### Part 2: the sofa studio (plan answered and build approved, prompt 98)
 
 Goal: HoloML's first shop, with realistic graphics. A furniture shop's
 page for one sofa in a lit room: the viewer walks around it, chooses the
@@ -2925,20 +2941,22 @@ place), textured materials, and light from the surroundings.
 
 #### Tasks
 
-- [ ] 1. HoloML 0.2, second part: shadows, texture maps and tiling,
+- [x] 1. HoloML 0.2, second part: shadows, texture maps and tiling,
       `choice` and `option`, `environment`; SPEC.md, the checker,
       conformance samples for each new element, attribute, and problem.
-- [ ] 2. The browser: shadows, textures, choices, the environment, the
+- [x] 2. The browser: shadows, textures, choices, the environment, the
       limits; the copy of the parser and checker (`pnpm holoml:sync`).
-- [ ] 3. The sofa studio: the models, textures, and HDRI (checked CC0,
+- [x] 3. The sofa studio: the models, textures, and HDRI (checked CC0,
       sizes, credits), the room, the pages, the price script, the cart
-      page, the about page; published with GitHub Pages.
-- [ ] 4. The examples section and the start panel: its card, its
+      page, the about page. Published with GitHub Pages when holoml's
+      pull request merges.
+- [x] 4. The examples section and the start panel: its card, its
       picture, and its row.
-- [ ] 5. Checks U8 to U16 (tests/e2e/m18.e2e.ts, holoml's tests).
-- [ ] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
-      THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the README
-      screenshot.
+- [x] 5. Checks U8 to U16 (tests/e2e/m18.e2e.ts, holoml's tests).
+- [x] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
+      THIRD-PARTY, AGENTS testing, HANDOFF; screenshots
+      (docs/screenshots/m18) and the README's pictures (four since
+      prompt 99).
 
 #### Checks
 
@@ -2959,6 +2977,109 @@ place), textured materials, and light from the surroundings.
 
 - Part 1 is merged (browser pull request #34), U8 to U17 pass,
   screenshots are saved, and the owner accepts.
+
+### Part 2 results (2026-09-27)
+
+Built as planned (prompt 98, Q1 to Q6 a). holoml: the language on its
+branch sofa-studio (commit b124c6c) and the sofa studio (d97207f), in a
+pull request; the browser on branch m18-sofa-studio, based on pull
+request #34's branch, with the copy synced from holoml's branch
+(`pnpm holoml:sync sofa-studio`). After both merge: sync from holoml's
+main, and U16.
+
+Decisions made while building (within the plan):
+
+- The sofa is Poly Haven's Sofa 01, a carved two-seater. All three of
+  Poly Haven's sofas have one material, so prepare.mjs splits it: each
+  triangle is Wood when at least three quarters of 21 points on it are
+  dark in the sofa's own picture (its wood is darker than 0.2, its
+  fabric lighter than 0.25). A first split ("mostly dark", at 0.32) put
+  some of the skirt's long triangles in the wood, which showed as a
+  zigzag of the old fabric once the fabric changed.
+- The plan's "Legs" choice became "Wood": the sofa's frame and legs are
+  one carved piece, so they change together (walnut, its own; oak and
+  ebony, its picture recoloured).
+- Fabrics: its own stone weave, and Poly Haven's rough linen (blue),
+  velour velvet (red), "wool boucle" (a glen check, so named "Wool
+  check"), and brown leather; herringbone was not among the CC0
+  textures that fit. Every option's pictures load with the page, so a
+  pick shows at once (about 12 MB in all, 100,000 triangles).
+- The rug's red jacquard is recoloured grey, so the sofa stays the
+  brightest thing; the walls are set warm grey in the page.
+- The cart page reads the choices from the tab's session storage, where
+  the page's script keeps them (a HoloML link's address cannot change),
+  and the script sets them again when the visitor comes back.
+- Evening: the fill light dims (and with it the light from the studio
+  panorama, which follows the ambient lights, as the renderer's own
+  soft light did in milestone 17; now in SPEC.md), the sun turns low and
+  orange, and the table lamp lights a warm spot, with its shadow.
+- Shadows: Three.js r186 removed PCFSoftShadowMap; its PCFShadowMap
+  with a radius gives the soft edges. The sun's shadow view is fitted to
+  the models marked `shadows` before each frame. Drawing in software,
+  a page's shadows are left out and the console says so once; the
+  notice is kept for things the page loses, since shadows change
+  nothing a page means.
+- A choice whose material the model does not have changes nothing, and
+  the console says so (SPEC.md, as for `material`).
+- For the tests: the fixture server serves .bin, .jpg, and .hdr, and
+  generates striped pictures and an HDR panorama; `pnpm holoml:sync`
+  reads files larger than 1 MB (the panorama is 1.6 MB), and the copy
+  test compares the examples by git object id, in one git call per
+  site (a git call per file took over 5 seconds for the sofa studio).
+
+Checks are in tests/e2e/m18.e2e.ts, with the test pages
+tests/fixtures/holoml/shadows.holoml, textures.holoml, choice.holoml
+(and choice.js), environment.holoml, and environment-large.holoml, and
+the sofa studio's copy in tests/fixtures/holoml/sofa-studio.
+
+| # | Result |
+|---|---|
+| U8 | Pass. holoml's tests: 182 passed (a valid sample, v02-shadows-textures-choice; a problem sample, bad-choice, with 12 problems; newer-than-declared uses the new elements in a 0.1 page; the examples test checks the sofa studio's files, size, choices, and credits); lint and types clean |
+| U9 | Pass. With a graphics card, the floor under the block marked `shadows` was darker than three quarters of the floor under the block without (one shadow light, two models with shadows). Drawn in software (HYPERSOL_TEST_SOFTWARE=1): no shadow lights, the console says why, and the check logged "shadows left out, drawing in software (ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) …)))" (Q5 a) |
+| U10 | Pass. The stripes' address and tiling (3 by 1) read back, and tiling alone tiled the model's own picture (2 by 2); on the page, red and blue stripes, crossed at least 3 times in 80 pixels; the picture from another site (never asked for) and the 8192 by 8192 picture were left out with their reasons, and those models kept their own; the page's byte total was the model file and the stripes, the refused picture counting nothing |
+| U11 | Pass. Both choices in their corners with their labels and options (an option without a value takes its label); the chosen option on the block at the start; a click on Red changed the material in place (the same page) and the script heard it; the right arrow picked Blue (the material's own roughness back: each option starts from the material's own look), then Striped (tiled 2); scripts read the value, the options, and the label, and set the value without an event; a value no option has is an error; the script-only choice was heard; screen readers find each choice as a group named by its label, with its options as radio buttons and the chosen one checked; the text view shows the choices |
+| U12 | Pass. The green panorama made the mirror-like block green (green above red and blue by more than 40); the surroundings loaded, at full brightness; the page's byte total included the panorama. A panorama over the picture limit was left out with its reason; the scene showed with the renderer's own light |
+| U13 | Pass. Ready within 5 s with a graphics card (drawn in software, logged: 7,003 ms); no problems, nothing left out, 8 models and the panorama loaded, 2 shadow lights and 8 models with shadows; each fabric and the ebony wood changed the sofa's material (read back by its picture's address) and the price; a click on "Add to cart" in the scene opened cart.html, which listed Linden two-seat sofa, Red velvet, Ebony, $1,650; back in the studio, the choices were as before |
+| U14 | Pass. Tab went through the scene's models and links ("Add to cart", "About this studio") to the Fabric choice; the arrow keys chose the next fabric, then (after Tab) the next wood, then Evening (the lamp on, the fill below 0.1); screen readers find three groups, Fabric, Wood, and Light, with the chosen options checked; the text view showed the price, the choices, and the links; Shift+Tab reached "Add to cart", and Enter opened the cart page with those choices ($1,660) |
+| U15 | Pass. No frames drawn in 2 s while idle, and none with reduced motion (nothing on the page moves by itself) |
+| U16 | Pass (2026-09-28, prompt 99). After holoml #15 merged, the built app opened https://srajpal.github.io/holoml/sofa-studio/index.holoml (a one-off run with the network, not a test, as S8 and T9): HoloML 0.2, ready in 3.1 s, no problems, nothing left out, all 8 models and the panorama loaded, 2 shadow lights and 8 models with shadows; choosing Wool check changed the sofa (its picture from the published site) and the price to $1,600 |
+| U17 | Full run, 2026-09-27: 247 of 252 checks passed. P2 failed because the material report now also names a material's colour picture and tiling; its expected object gains those two fields (null for that car; the check is otherwise the same), and milestone 14's checks passed again (19 of 19). D8's three copy and paste checks and K3's password copy failed: this computer's clipboard refused every use during the run and after it (PowerShell's Set-Clipboard and Get-Clipboard failed 10 of 10 tries), so they could not pass here; nothing in this change touches the clipboard, and they passed in milestone 17's full run and in pull request #34's automatic builds. Run again on 2026-09-28, with the clipboard working: D8 5 of 5, K1 to K3 3 of 3. After the last changes, the HoloML checks (milestones 14 to 18) passed again, 76 of 76, and milestone 18's drawn in software, 12 of 12; unit tests 261; holoml's tests 182; lint and types clean. Screenshots: docs/screenshots/m18/ (53 and 54 are the sofa studio) and the README screenshot, refreshed |
+
+## The README: a broken link, and four pictures (2026-09-28, prompt 99)
+
+The owner merged browser pull request #34 and holoml #15, found that the
+README's link to https://srajpal.github.io/holoml/ did not work (GitHub
+Pages has no page there, only one per example), and asked for four
+pictures at the top of the README to show the variety of what the
+browser does.
+
+- The link now goes to the holoml repository,
+  https://github.com/srajpal/holoml, with each example's published
+  address beside it.
+- Every link in both READMEs was checked on 2026-09-28: the web
+  addresses answer 200 (the Pages root 404 before the fix), and every
+  file and heading they name exists. The three examples' published
+  sites answer 200, and so do the sofa studio's pages, models, pictures,
+  and panorama; its tools are not published, as intended.
+- Four pictures, in a two-by-two table with a line under each, all made
+  by `pnpm screenshots:readme` in one window with four tabs, from local
+  copies (no network): the sofa studio (readme.png, the newest), Blockworld
+  (readme-game.png), a made-up sample page in the Daylight theme and the
+  layers view (readme-layers.png), and the same page with the instrument
+  panel (readme-instruments.png). The sample page and its pictures,
+  "Field Notes", are made for this in tests/fixtures/readme/ (the
+  fixture server now serves .svg).
+- AGENTS.md's working agreement said the README opens with one
+  picture, of the showroom; the owner approved its new wording (prompt
+  100), now in AGENTS.md.
+- The sofa studio's "About this studio" label sat in the upper left,
+  half behind the Light choice in the README's first picture; it is
+  now under "Add to cart", above the sofa, and both links grow lighter
+  in the evening, where dark blue and grey were hard to read (holoml
+  branch sofa-studio-about-label, merged as holoml #16; the browser's
+  copy synced from holoml's main at the merge, 660b082, and the
+  README's, the examples section's, and milestone 18's pictures taken
+  again). U13 to U15 and T8 pass again.
 
 ## Proposal: four more HoloML example sites (2026-09-27, prompt 84)
 
@@ -3012,7 +3133,8 @@ work is also HoloML 0.2.
    small floor plan showing where you are; a link to book a viewing.
    Needs: collision, click actions, light changes, multi-line text,
    and larger scenes.
-4. **Coral Bay** (largest: a resort). An island resort outdoors and
+4. **Coral Bay** (largest: a resort; replaced on 2026-09-28 by a
+   sneaker store, prompts 101 and 102). An island resort outdoors and
    in: terrain, water with moving waves, palms swaying, boats sailing
    on paths, a golf cart you ride along a path between the beach, the
    pool, and the hotel lobby, rooms to tour, sunset lighting, and
@@ -3142,7 +3264,48 @@ applies.
 
 Results: see the pull request's automatic builds.
 
-## L9's measure of the main process (2026-09-27, prompts 98 and 99)
+## Linux on this computer, and three checks that retry (2026-09-28, prompts 103 and 104)
+
+The owner asked whether to build a Linux VM to test everything instead
+of relying on the automatic builds (prompt 103). Recommended and
+approved (prompt 104): keep the automatic builds as the check pull
+requests are merged on, and add a Linux run on this computer that
+copies GitHub's Linux machines, with Docker (already installed here;
+Windows 11 Home has no Hyper-V manager for a full VM, and a runner of
+GitHub's builds on this computer would let anyone's pull request run
+code on it).
+
+- `pnpm test:linux` (tests/linux/): an Ubuntu 24.04 image with Node 22,
+  pnpm, a virtual display, a throwaway keyring, openssl, and Electron's
+  libraries; a fresh copy of the repository sent in for every run (the
+  committed files with changes to tracked files); the CI job's steps,
+  in a container of GitHub's size (4 processors, 16 GB), with no
+  graphics card, so Chromium draws in software. pnpm's store and
+  Electron's download stay in Docker volumes between runs. With
+  arguments it runs chosen end-to-end files only.
+- C4, C6, and D13, which failed once each on PR #35's Linux runs, retry
+  as issue #30's checks do: C4's clicks into the fields use clickUntil,
+  C6's hover a new moveUntil (a pointer move can be lost as a click
+  can), and D13 loads its page again when the server counts two refused
+  downloads open at once (the app cancels each before asking for the
+  next; on a slow machine the server can take in the next request a
+  moment before it sees the last close). Each retry is logged; what
+  they assert is unchanged.
+
+Results, 2026-09-28. The first `pnpm test:linux` built the image and ran
+the whole end-to-end suite on Linux (the arguments meant to choose two
+checks did not reach vitest; fixed, and checked since: `pnpm test:linux
+tests/e2e/m1.e2e.ts -t "C4|C6"` ran only those 5 checks, in 20 seconds
+with the image and caches in place). Every file passed: 251 checks, and
+1 skipped (C9's frame rate, skipped where drawing is in software, as
+on GitHub's machines), in 20 minutes, with the three retries in place
+and none of them needed. Drawn in software, the budgets were logged, not
+checked: the sofa studio ready in 12.6 s (U13), Blockworld in 4.4 s
+(T5), the showroom in 6.3 s (S2), 14.3 frames a second during parallax
+(C9). The same day, PR #35's automatic build passed on Windows and
+Linux (run 36446383753). C4, C6, and D13 also pass on Windows.
+
+## L9's measure of the main process (2026-09-27, prompts 106 and 107)
 
 L9 read the main process's event-loop delay with monitorEventLoopDelay
 and sat at 18 to 20 ms on Windows (once 20.005 ms, a failure). The cause
@@ -3154,7 +3317,7 @@ the searches, so searches in the worker, the 500 results passed back,
 and the reply to the shell each take well under that. The history code
 is unchanged. L9 now keeps the loop awake the same way while the
 searches run and fails if any gap between two turns reaches 20 ms
-(owner, prompt 99: option 1); the limit is unchanged. Local run
+(owner, prompt 107: option 1); the limit is unchanged. Local run
 (Windows 11): L9 in seven runs, longest gap 0.6 to 1.5 ms (three runs
 of the old measure on the same code read 16.1 to 18.2 ms); searches
 after the first 1 to 32 ms, as before; all nine m10 checks passed. A

@@ -308,14 +308,18 @@ export function walkControls(
 
 /** The keys a slider uses while it has the keyboard (HoloML 0.2 `slider`, milestone 18). */
 const SLIDER_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']);
+/** The keys a choice's options use: the arrows move to another option, the space bar picks one (`choice`, milestone 18). */
+const OPTION_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' ']);
 
 /**
  * A key that belongs to a control in the page, not to walking or the
- * page's scripts: any key in a text field, and a slider's own keys while
- * it has the keyboard (other keys still walk, jump, and reach scripts).
+ * page's scripts: any key in a text field, and a slider's or a choice's
+ * own keys while it has the keyboard (other keys still walk, jump, and
+ * reach scripts).
  */
 export function keptByControl(e: KeyboardEvent): boolean {
   const t = e.target;
   if (t instanceof HTMLInputElement && t.type === 'range') return SLIDER_KEYS.has(e.key);
+  if (t instanceof HTMLInputElement && t.type === 'radio') return OPTION_KEYS.has(e.key);
   return t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement;
 }

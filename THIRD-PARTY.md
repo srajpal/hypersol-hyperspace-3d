@@ -43,8 +43,16 @@ HoloML's examples (tests/fixtures/holoml, copied by `pnpm holoml:sync`):
   Sounds, and Music Jingles (https://kenney.nl, CC0 1.0; credited in its
   models/CREDITS.md). Its page, script, block models, and the birds and
   crickets (made by a script) are Apache-2.0, The HoloML Authors.
+- The sofa studio (tests/fixtures/holoml/sofa-studio). Its sofa,
+  furniture, fabric, rug, and floor textures, and its studio light are
+  from Poly Haven (https://polyhaven.com, CC0 1.0: no conditions;
+  credited, with each artist, in its models/CREDITS.md); the sofa's
+  material split, the oak and ebony pictures, and the rug's grey are
+  made from them. Its pages, script, room, and rug are Apache-2.0, The
+  HoloML Authors.
 - Some checks use Blockworld's blocks in pages of their own
-  (walls.holoml).
+  (walls.holoml, shadows.holoml, textures.holoml, choice.holoml, and
+  environment.holoml).
 
 ## Filter lists
 
@@ -69,4 +77,5 @@ this project, except the 2001 to 2003 HyperSol concept screen in
 The HoloML examples section shows a picture of each example
 (apps/browser/src/renderer/examples/), taken in HyperSpace 3D by `pnpm
 screenshots:examples` from the copies above; the showroom's cars and
-Blockworld's blocks in them are Kenney's (CC0).
+Blockworld's blocks in them are Kenney's (CC0), and the sofa studio's
+sofa, furniture, fabrics, and light are Poly Haven's (CC0).

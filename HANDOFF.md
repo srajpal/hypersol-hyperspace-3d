@@ -5,8 +5,14 @@ Last updated 2026-09-27 (milestones 1 to 17 accepted; milestone 18 in
 progress: its first part, walking and turning speeds and sliders
 (prompt 92), is built and merged in holoml (pull request #14); the
 browser's side and the fixes for GitHub's Linux machines are in browser
-pull request #34; the sofa studio, the rest of milestone 18, is being
-planned; the roadmap is in TODO.md).
+pull request #34 (merged). The second part, the sofa studio (prompt 98:
+shadows, material pictures, choices, light from the surroundings, and
+the shop page), is built: holoml's side merged (pull request #15) and
+published at https://srajpal.github.io/holoml/sofa-studio/; the
+browser's on branch m18-sofa-studio, on main, with the copy synced from
+holoml's main, in a pull request. The README shows four pictures
+(prompt 99). The milestone waits for the owner's acceptance. The
+roadmap is in TODO.md).
 
 ## Where things stand
 
@@ -41,8 +47,9 @@ state; this is a summary.
   https://srajpal.github.io/holoml/blockworld/, and the browser's copy
   (packages/holoml and tests/fixtures/holoml) is synced from holoml's
   main (`pnpm holoml:sync main --examples main`); 18
-  Sofa studio; 19 Harbour Loft; 20 Coral Bay; 21 Aquarium, where HoloML
-  0.2 is tagged); 22 privacy
+  Sofa studio; 19 Harbour Loft; 20 a sneaker store (in place of Coral
+  Bay, a resort, prompts 101 and 102); 21 Aquarium, where HoloML 0.2 is
+  tagged); 22 privacy
   and data tools (HTTPS-only, per-site storage, bookmark import and
   export: #24, #26, #27); then installers as 1.0 (23 for Windows and
   Linux, 24 for macOS), with mobile later (owner, prompt 67).

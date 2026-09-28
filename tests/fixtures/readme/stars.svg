@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250">
+  <!-- A clear night over a tent (made up for the sample page). -->
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16213f"/>
+      <stop offset="1" stop-color="#34406b"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="250" fill="url(#night)"/>
+  <g fill="#fff6d8">
+    <circle cx="40" cy="30" r="2"/><circle cx="90" cy="70" r="1.5"/><circle cx="130" cy="24" r="2.5"/>
+    <circle cx="180" cy="60" r="1.5"/><circle cx="230" cy="30" r="2"/><circle cx="280" cy="80" r="1.5"/>
+    <circle cx="330" cy="40" r="2"/><circle cx="370" cy="96" r="1.5"/><circle cx="60" cy="110" r="1.5"/>
+    <circle cx="150" cy="100" r="2"/><circle cx="250" cy="120" r="1.5"/><circle cx="350" cy="140" r="2"/>
+  </g>
+  <path d="M318 44 a26 26 0 1 0 22 40 a20 20 0 1 1 -22 -40 z" fill="#fff1c4"/>
+  <path d="M0 200 Q100 170 200 196 T400 186 V250 H0 Z" fill="#1d2743"/>
+  <path d="M150 214 L196 150 L242 214 Z" fill="#e8894d"/>
+  <path d="M196 150 L196 214" stroke="#9c4f2c" stroke-width="3"/>
+  <ellipse cx="196" cy="216" rx="70" ry="8" fill="#e8894d" opacity="0.25"/>
+</svg>

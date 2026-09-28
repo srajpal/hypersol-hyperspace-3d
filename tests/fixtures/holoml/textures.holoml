@@ -1,0 +1,23 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML textured materials</title>
+  </head>
+  <!-- Blocks with the page's own pictures on their material, tiled. -->
+  <scene background="#1c2030">
+    <viewpoint position="0 1.6 3.4" look-at="0 1.2 0" />
+    <light type="ambient" intensity="1" />
+    <model id="striped" src="blockworld/models/stone.gltf" position="-0.9 1 0">
+      <material name="stone" map="gen/stripes.png" repeat="3 1" />
+    </model>
+    <model id="own" src="blockworld/models/stone.gltf" position="0.9 1 0">
+      <material name="stone" repeat="2" />
+    </model>
+    <!-- Pictures that are not shown: from another site, and too large. -->
+    <model id="away" src="blockworld/models/stone.gltf" position="-0.9 2.4 0">
+      <material name="stone" map="https://pictures.example/weave.png" />
+    </model>
+    <model id="huge" src="blockworld/models/stone.gltf" position="0.9 2.4 0">
+      <material name="stone" normal-map="gen/claim.png?w=8192&amp;h=8192" />
+    </model>
+  </scene>
+</holoml>

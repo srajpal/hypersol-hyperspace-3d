@@ -10,4 +10,5 @@ export const VIEWER_DEPS = [
   'three/examples/jsm/utils/SkeletonUtils.js',
   'three/examples/jsm/environments/RoomEnvironment.js',
   'three/examples/jsm/controls/OrbitControls.js',
+  'three/examples/jsm/loaders/HDRLoader.js',
 ];
