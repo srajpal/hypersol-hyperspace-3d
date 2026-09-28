@@ -92,6 +92,24 @@
   and wood in place, watch the price follow, switch between day and
   evening light, and go on to a cart page (there is no shop behind it).
   It is in the HoloML examples section and the start panel.
+- Panels, click actions, places, a fade, a sky, and a floor plan
+  (milestone 19, first part), in HoloML 0.2 pages:
+  - `panel`: text of more than one line on a flat board in the scene,
+    wrapped to its width; Find in page finds its words, and screen
+    readers and the text view read them.
+  - Click actions: an animation or a sound can begin when a thing is
+    clicked (`begin="click"`, `trigger`, `toggle`), such as a door that
+    opens and closes or a switch for a lamp. Each trigger is a button in
+    the scene's outline, for the keyboard and screen readers; with
+    reduced motion, each goes straight to its end.
+  - Places: several viewpoints, and an address ending in `#name` starts
+    at one; the outline's "Go to" and links to `#name` move the viewer
+    there, and Back returns.
+  - Following a link to another HoloML page of the same site fades out
+    and in (a cut with reduced motion).
+  - `sky`, a panorama drawn behind the scene (PNG and JPEG panoramas are
+    decoded with the sky at the top); `plan`, a floor plan in a corner
+    of the screen with the viewer's place and direction on it.
 
 ## 0.9.0 — developer preview (2026-09-26)
 

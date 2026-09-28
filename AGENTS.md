@@ -154,7 +154,7 @@ see .github/workflows/ci.yml; macOS not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
 - Toolchain: Node 22.13 or newer; pnpm 12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 261 tests passed on 2026-09-27)
+- Unit: `pnpm test` (Vitest; 264 tests passed on 2026-09-28)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
   against it (about ten minutes; 240 checks, all passed, in the full run
@@ -293,7 +293,15 @@ milestone; the current milestone's checks are defined in TODO.md):
   software), every fabric and wood, the price, the cart page, the
   keyboard alone, and no frames while idle. U1 and U8 are holoml's own
   tests.
-- Later milestones add: the HoloML example sites (19 to 21), HoloML's
+- Milestone 19 checks V2 to V7 (same command, tests/e2e/m19.e2e.ts),
+  first part: panels (the page's pixels, Find in page, screen readers,
+  the text view), click actions (the mouse, Enter and Space on their
+  buttons, the sound, reduced motion, scripts), places (#name, "Go to",
+  Back), arriving through a fade, the sky, and the floor plan. V1 is
+  holoml's own tests. Harbour Loft's checks (V8 to V10) come with the
+  site.
+- Later milestones add: the HoloML example sites (the rest of 19, and
+  20 and 21), HoloML's
   documentation (22), privacy and data tools (23), and installers (24
   and 25).
 

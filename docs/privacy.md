@@ -157,13 +157,14 @@ the list updates can be turned off:
   does; at most 256 KB, given up after 5 seconds, and cancelled when you
   leave the page).
 - HoloML pages (`.holoml` addresses) and the 3D models, sounds,
-  scripts, and pictures (a material's, and the panorama of the
-  surroundings; milestone 18) they name: only from the page's own site
+  scripts, and pictures (a material's and the panorama of the
+  surroundings, milestone 18; the sky and a floor plan, milestone 19)
+  they name: only from the page's own site
   (the page's content policy allows nothing else), through the page's
   own session, so the shield and encrypted DNS apply as for any page.
   The browser's HoloML viewer itself comes from the app, not the
   network. Every model, sound, and picture file counts against the
-  page's limits as it arrives (milestones 15, 17, and 18); a file that
+  page's limits as it arrives (milestones 15, 17, 18, and 19); a file that
   crosses one is not fetched further. A HoloML
   0.2 page's scripts (milestone 17) run in the page's own sandboxed
   process like a web page's, and can reach only its own site; their

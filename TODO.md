@@ -30,7 +30,7 @@ Plan approved 2026-09-24.
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
 | 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
 | 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | Done (accepted, prompt 112) |
-| 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | In progress (plan answered and build approved, prompt 114) |
+| 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | In progress (build approved, prompt 114; the language and the browser's part done, the site begun; handed off mid-build, prompt 116) |
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Later (prompts 101 and 102) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Later (prompt 115) |
@@ -3058,7 +3058,9 @@ the sofa studio's copy in tests/fixtures/holoml/sofa-studio.
 Status: In progress. Planned (prompt 113); the owner answered Q1 to Q6
 with the recommendations and approved the build (prompt 114). Pushed
 before the milestone (after milestone 18's acceptance). Rule 13 check
-done (ARCHITECTURE.md section 3).
+done (ARCHITECTURE.md section 3). Handed off mid-build on 2026-09-28
+(prompt 116): tasks 1 and 2 done, task 3 begun; HANDOFF.md says where
+things are and what comes next.
 
 Goal: a flat to tour, for an estate agent. Walk through the rooms of a
 loft by the harbour, open doors, switch lamps on and off, read about
@@ -3161,14 +3163,17 @@ sofa studio did not have: text of more than one line (holoml issue
 
 ### Tasks
 
-- [ ] 1. HoloML 0.2, third part: SPEC.md, the checker, and conformance
-      samples for each new element, attribute, and problem.
-- [ ] 2. The browser: panels, click actions, named viewpoints and the
+- [x] 1. HoloML 0.2, third part: SPEC.md, the checker, and conformance
+      samples for each new element, attribute, and problem (holoml
+      branch `harbour-loft`).
+- [x] 2. The browser: panels, click actions, named viewpoints and the
       fade, the sky, the floor plan; the copy of the parser and checker
-      (`pnpm holoml:sync`).
+      (`pnpm holoml:sync`, from holoml's `harbour-loft` branch for now).
 - [ ] 3. Harbour Loft: the models, textures, and HDRI (checked CC0,
       sizes, credits), the flat, the terrace page, the booking page,
-      the about page; published with GitHub Pages.
+      the about page; published with GitHub Pages. Begun: the download
+      tool (run), the flat's layout, and a design note
+      (examples/harbour-loft/tools/DESIGN.md in the holoml branch).
 - [ ] 4. The examples section and the start panel: its card, its
       picture, and its row.
 - [ ] 5. Checks V1 to V12 (tests/e2e/m19.e2e.ts, holoml's tests), run on
@@ -3193,6 +3198,18 @@ sofa studio did not have: text of more than one line (holoml issue
 | V10 | Efficient | An idle flat draws no frames |
 | V11 | Published | From its public address in the built app (by hand, as S8, T9, and U16) |
 | V12 | Regression | The full run on Windows, `pnpm test:linux`, the unit tests, holoml's tests, and the automatic builds |
+
+### Results so far (2026-09-28, Windows 11)
+
+- V1: holoml's tests, 189 passed, with the new conformance samples
+  (v02-panels-click-places, bad-click-actions, and newer-than-declared
+  grown); its lint and type check clean.
+- V2 to V7: `tests/e2e/m19.e2e.ts`, 6 checks, all passed (run on their
+  own after `pnpm build`).
+- The unit tests: 264 passed (three new, for panels' wrapping and a
+  floor plan's area); lint and type check clean.
+- Not run yet: V8 to V12 (Harbour Loft is not built yet), the full run,
+  `pnpm test:linux`, and the automatic builds.
 
 ### Done when
 
