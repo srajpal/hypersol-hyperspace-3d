@@ -101,6 +101,10 @@ and the owner's acceptance.
 
 Worth knowing:
 
+- The copy's test checks the commit its branch points to now: after any
+  new commit on holoml's `harbour-loft`, run `pnpm holoml:sync
+  harbour-loft --examples harbour-loft` again (only SOURCE.json changes
+  when the copied files do not).
 - Run one milestone's checks after `pnpm build` with `npx vitest run
   --config vitest.e2e.config.ts tests/e2e/m19.e2e.ts`.
 - A button in a page acts on Enter only with the typed character: key

@@ -1,7 +1,7 @@
 {
   "repository": "https://github.com/srajpal/holoml",
   "tag": "harbour-loft",
-  "commit": "e298e6f7929a3673b7af8b47caedccf69b67cf73",
+  "commit": "e7b118f895af5f029f8af5f7b6bc2e5feeeba48d",
   "files": {
     "src/parser.ts": "20958d033b1a4d1452bb2bf4608a4c31b01d00891159ce3b523ccda048389b7a",
     "src/rules.ts": "498a30c5af3f03ade6b2bb6db4115f6798f9e77d0b56fb9e6add90246762f53b",
@@ -9,7 +9,7 @@
   },
   "examples": {
     "ref": "harbour-loft",
-    "commit": "e298e6f7929a3673b7af8b47caedccf69b67cf73",
+    "commit": "e7b118f895af5f029f8af5f7b6bc2e5feeeba48d",
     "files": {
       "showroom/README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
       "showroom/about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",
