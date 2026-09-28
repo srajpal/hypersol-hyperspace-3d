@@ -1199,3 +1199,9 @@ C6, and D13 retry lost input on Linux.
 ```text
 Yes, do both.
 ```
+
+## 105 — 2026-09-28 · Claude Opus 5.5, low effort
+
+```text
+OK, let me know when the Linux run finishes.
+```

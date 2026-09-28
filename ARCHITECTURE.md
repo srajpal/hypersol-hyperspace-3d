@@ -195,7 +195,7 @@ fix. No upgrade needed.
 | UI widgets (address bar, menus) | Lit web components | Tiny, standards-based, no framework lock-in; themed with CSS variables. |
 | Build | electron-vite (Vite) now; electron-builder planned for the installers (milestones 23 and 24; not yet installed) | Fast dev reload; installers for Windows, macOS, Linux. |
 | Toolchain | Node 22.13 or newer; pnpm 12.4.1 pinned in package.json (`packageManager`, with the pnpm version recorded in the lockfile); installs use `--frozen-lockfile` | Reproducible installs (GitHub issue #5). |
-| Tests | Vitest (unit), Playwright (Electron end-to-end) | Standard, cross-platform. |
+| Tests | Vitest (unit), Playwright (Electron end-to-end); `pnpm test:linux` runs them in a Docker container that copies GitHub's Linux machines (tests/linux/, prompts 103 and 104) | Standard, cross-platform. The container finds Linux problems on this computer; the automatic builds on GitHub stay the check a pull request is merged on. |
 | Repos | hypersol-hyperspace-3d (browser; renamed from hypersol-websurfer-3d on 2026-09-26), holoml (language) | Each useful on its own; browser depends on holoml packages via npm. |
 | License | Apache 2.0 both; spec text also CC BY 4.0 | Per brief. |
 

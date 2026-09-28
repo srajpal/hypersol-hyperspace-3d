@@ -3264,6 +3264,47 @@ applies.
 
 Results: see the pull request's automatic builds.
 
+## Linux on this computer, and three checks that retry (2026-09-28, prompts 103 and 104)
+
+The owner asked whether to build a Linux VM to test everything instead
+of relying on the automatic builds (prompt 103). Recommended and
+approved (prompt 104): keep the automatic builds as the check pull
+requests are merged on, and add a Linux run on this computer that
+copies GitHub's Linux machines, with Docker (already installed here;
+Windows 11 Home has no Hyper-V manager for a full VM, and a runner of
+GitHub's builds on this computer would let anyone's pull request run
+code on it).
+
+- `pnpm test:linux` (tests/linux/): an Ubuntu 24.04 image with Node 22,
+  pnpm, a virtual display, a throwaway keyring, openssl, and Electron's
+  libraries; a fresh copy of the repository sent in for every run (the
+  committed files with changes to tracked files); the CI job's steps,
+  in a container of GitHub's size (4 processors, 16 GB), with no
+  graphics card, so Chromium draws in software. pnpm's store and
+  Electron's download stay in Docker volumes between runs. With
+  arguments it runs chosen end-to-end files only.
+- C4, C6, and D13, which failed once each on PR #35's Linux runs, retry
+  as issue #30's checks do: C4's clicks into the fields use clickUntil,
+  C6's hover a new moveUntil (a pointer move can be lost as a click
+  can), and D13 loads its page again when the server counts two refused
+  downloads open at once (the app cancels each before asking for the
+  next; on a slow machine the server can take in the next request a
+  moment before it sees the last close). Each retry is logged; what
+  they assert is unchanged.
+
+Results, 2026-09-28. The first `pnpm test:linux` built the image and ran
+the whole end-to-end suite on Linux (the arguments meant to choose two
+checks did not reach vitest; fixed, and checked since: `pnpm test:linux
+tests/e2e/m1.e2e.ts -t "C4|C6"` ran only those 5 checks, in 20 seconds
+with the image and caches in place). Every file passed: 251 checks, and
+1 skipped (C9's frame rate, skipped where drawing is in software, as
+on GitHub's machines), in 20 minutes, with the three retries in place
+and none of them needed. Drawn in software, the budgets were logged, not
+checked: the sofa studio ready in 12.6 s (U13), Blockworld in 4.4 s
+(T5), the showroom in 6.3 s (S2), 14.3 frames a second during parallax
+(C9). The same day, PR #35's automatic build passed on Windows and
+Linux (run 36446383753). C4, C6, and D13 also pass on Windows.
+
 ## GitHub issue #30: lost clicks on Linux CI (2026-09-27, prompt 74)
 
 On GitHub's Linux runner a click sent right after a page appears or

@@ -180,6 +180,16 @@ date given and grow with each milestone; TODO.md has the latest.
   95, and 96). Checks of scenes wait
   for what they check, not for fixed times (holdKeyUntil, framesDrawn,
   and sceneWait in tests/e2e/harness.ts).
+- Linux on this computer, the way GitHub's Linux machines run the
+  checks: `pnpm test:linux` (needs Docker; first run 2026-09-28, owner,
+  prompts 103 and 104). It builds tests/linux/Dockerfile (Ubuntu 24.04,
+  Node 22, a virtual display, a throwaway keyring), sends in a fresh
+  copy of the repository (the committed files with changes to tracked
+  files), and runs the CI job's steps in a container of GitHub's size (4
+  processors, 16 GB) with no graphics card; `pnpm test:linux <vitest
+  arguments>` runs chosen end-to-end files only. It finds Linux
+  problems before a push and reproduces them in minutes; the automatic
+  builds stay the check a pull request is merged on.
 
 What to recheck after any change (regression list; grows with each
 milestone; the current milestone's checks are defined in TODO.md):
