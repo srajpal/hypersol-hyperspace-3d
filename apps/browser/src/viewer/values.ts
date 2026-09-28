@@ -66,6 +66,17 @@ export function repeat(el: ElementNode): number {
   return v && /^\d+$/.test(v) && Number(v) >= 1 && Number.isSafeInteger(Number(v)) ? Number(v) : 1;
 }
 
+/**
+ * How many times a material's pictures tile (HoloML 0.2 `repeat`): one
+ * number more than 0, the same both ways, or two; null when absent or bad.
+ */
+export function tiling(el: ElementNode): [number, number] | null {
+  const parts = attr(el, 'repeat')?.trim().split(/\s+/);
+  if (!parts || (parts.length !== 1 && parts.length !== 2) || !parts.every(finite)) return null;
+  const [u, v] = [Number(parts[0]), Number(parts[1] ?? parts[0])];
+  return u > 0 && v > 0 ? [u, v] : null;
+}
+
 /** Text content with whitespace collapsed, as in title and label. */
 export function text(el: ElementNode): string {
   return el.children

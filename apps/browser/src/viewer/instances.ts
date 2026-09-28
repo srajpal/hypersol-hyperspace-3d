@@ -38,6 +38,8 @@ export class InstancePool {
     private readonly scene: Scene,
     /** The file's address, for the tests and the inspector. */
     readonly src = '',
+    /** Its models cast and receive shadows (HoloML 0.2, milestone 18). */
+    private readonly shadows = false,
   ) {
     template.scene.updateMatrixWorld(true);
     this.grow(16);
@@ -114,6 +116,8 @@ export class InstancePool {
       const mesh = new InstancedMesh(o.geometry, o.material as Material | Material[], capacity);
       // Many instances spread over the scene: cull none (a few draw calls either way).
       mesh.frustumCulled = false;
+      mesh.castShadow = this.shadows;
+      mesh.receiveShadow = this.shadows;
       mesh.userData['pool'] = this;
       mesh.count = this.slots.length;
       this.parts.push({ mesh, local: o.matrixWorld.clone() });

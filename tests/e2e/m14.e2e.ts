@@ -153,7 +153,8 @@ describe('P1, P2, P3, P5, P7, P10: a still scene', () => {
     const models = await holo<Model[]>(h, 'window.__holoml.models()', PAGE);
     const car = models[0]!;
     expect(car.state).toBe('loaded');
-    expect(car.materials['Paint']).toEqual({ color: '#c0182a', metalness: 0.7, roughness: 0.3, opacity: 1 });
+    // Since milestone 18 the report also names a material's colour picture and its tiling (this car has none).
+    expect(car.materials['Paint']).toEqual({ color: '#c0182a', metalness: 0.7, roughness: 0.3, opacity: 1, map: null, repeat: null });
     expect(car.materials['Glass']!.opacity).toBeCloseTo(0.35, 5);
     expect(models[1]!.materials['Paint']!.color).not.toBe('#c0182a'); // the other car keeps its own paint
     const stand = await holo<{ position: Vec; rotation: Vec; scale: Vec }>(h, 'window.__holoml.object("stand")', PAGE);

@@ -1,0 +1,24 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML choices</title>
+    <script src="choice.js" />
+  </head>
+  <!-- A choice that changes the block's material in place, and one only
+       the script uses; the script writes what it hears in the screen text. -->
+  <scene background="#1c2030">
+    <viewpoint position="0 1.2 3" look-at="0 1 0" />
+    <light type="ambient" intensity="1" />
+    <model id="block" src="blockworld/models/stone.gltf" position="0 1 0" />
+    <choice id="finish" corner="bottom-left" label="Finish" target="#block" material="stone" value="blue">
+      <option value="stone">Stone</option>
+      <option value="red" color="#ff3030" roughness="0.2">Red</option>
+      <option value="blue" color="#3050ff">Blue</option>
+      <option value="striped" map="gen/stripes.png" repeat="2">Striped</option>
+    </choice>
+    <choice id="size" corner="top-right" label="Size">
+      <option>Small</option>
+      <option>Large</option>
+    </choice>
+    <hud id="heard" corner="top-left"> </hud>
+  </scene>
+</holoml>

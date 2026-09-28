@@ -4,13 +4,14 @@
  * object, `holoml`, to find, change, add, and remove elements, and to
  * hear clicks, keys, frames, and sliders. Scripts get handles ("things"),
  * never the viewer's own objects, and every value is checked on the way
- * in. Milestone 18 (prompt 92): the viewer's speeds, and sliders.
+ * in. Milestone 18 (prompt 92): the viewer's speeds, and sliders; then
+ * (prompt 98) choices.
  */
 import type { Entry, HolomlView, Hit, SceneEvent } from './scene';
 import type { Vec3 } from './values';
 
-type Kind = 'model' | 'group' | 'light' | 'label' | 'sound' | 'hud' | 'slider';
-const KINDS = new Set<string>(['model', 'group', 'light', 'label', 'sound', 'hud', 'slider']);
+type Kind = 'model' | 'group' | 'light' | 'label' | 'sound' | 'hud' | 'slider' | 'choice';
+const KINDS = new Set<string>(['model', 'group', 'light', 'label', 'sound', 'hud', 'slider', 'choice']);
 const COLOR = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 function vector(v: unknown, what: string): Vec3 {
@@ -114,7 +115,7 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
         },
       );
     }
-    if (has('label', 'hud', 'slider')) {
+    if (has('label', 'hud', 'slider', 'choice')) {
       define(
         'text',
         () => view.textOf(e),
@@ -175,6 +176,18 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
       define('min', () => view.sliderRange(e)?.min);
       define('max', () => view.sliderRange(e)?.max);
       define('step', () => view.sliderRange(e)?.step);
+    }
+    if (has('choice')) {
+      define(
+        'value',
+        () => view.choiceValue(e),
+        (v) => {
+          if (typeof v !== 'string' || !view.setChoiceValue(e, v)) {
+            throw new TypeError(`value must be one of the choice's options: ${(view.choiceOptions(e) ?? []).map((o) => JSON.stringify(o)).join(', ')}`);
+          }
+        },
+      );
+      define('options', () => Object.freeze([...(view.choiceOptions(e) ?? [])]));
     }
     t['remove'] = () => view.removeEntry(e);
     const frozen = Object.freeze(t) as unknown as HolomlThing;
