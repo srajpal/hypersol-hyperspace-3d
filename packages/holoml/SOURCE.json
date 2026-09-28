@@ -1,15 +1,15 @@
 {
   "repository": "https://github.com/srajpal/holoml",
-  "tag": "sofa-studio-about-label",
-  "commit": "211f0eeb4af83b630e5f73ede66566b921282aad",
+  "tag": "main",
+  "commit": "660b082ac85a2799f72e902754b43d45dcc83a10",
   "files": {
-    "src/parser.ts": "f9c9f959135af2c7df7f34b7c6aa4d814d9511f4668b1dbd0e5b73b4dece624a",
-    "src/rules.ts": "65b48c8acde942ac46c704acee6de53b6cf89e80b3a54383443cc0aedef4164f",
-    "src/schema.ts": "bab6ce107cefef9db148eced409a8b79588470b569b452f49d4e2631348a829f"
+    "src/parser.ts": "68f232f3c7bcc299dd477596ec62fcb9681dbd4f330ed9e55d50846626a4e526",
+    "src/rules.ts": "27d6320a358c2ab5e386f12b1b94066611207066ce1970509ba7585da57c06a6",
+    "src/schema.ts": "6e8072057d65039a5c340308e78749909c8934a16f40e93c3ab8a890fad9068d"
   },
   "examples": {
-    "ref": "sofa-studio-about-label",
-    "commit": "211f0eeb4af83b630e5f73ede66566b921282aad",
+    "ref": "main",
+    "commit": "660b082ac85a2799f72e902754b43d45dcc83a10",
     "files": {
       "showroom/README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
       "showroom/about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",

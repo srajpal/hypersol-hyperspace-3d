@@ -3076,9 +3076,10 @@ browser does.
   half behind the Light choice in the README's first picture; it is
   now under "Add to cart", above the sofa, and both links grow lighter
   in the evening, where dark blue and grey were hard to read (holoml
-  branch sofa-studio-about-label, in a pull request; the browser's
-  copy synced from it, and the README's, the examples section's, and
-  milestone 18's pictures taken again). U13 to U15 and T8 pass again.
+  branch sofa-studio-about-label, merged as holoml #16; the browser's
+  copy synced from holoml's main at the merge, 660b082, and the
+  README's, the examples section's, and milestone 18's pictures taken
+  again). U13 to U15 and T8 pass again.
 
 ## Proposal: four more HoloML example sites (2026-09-27, prompt 84)
 
