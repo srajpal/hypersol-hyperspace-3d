@@ -106,6 +106,11 @@ Rule 13 check, 2026-09-27 (start of milestone 17, Blockworld): 44.4.5 is
 still the newest stable release on npm, with no security release since.
 No upgrade needed.
 
+Rule 13 check, 2026-09-27 (start of milestone 18, with walking speed and
+the slider, prompt 92): 44.4.5 is still the newest stable release on npm
+("latest"; 45 is in alpha), and no release since mentions a security
+fix. No upgrade needed.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |
@@ -183,6 +188,7 @@ No upgrade needed.
 | Sound on HoloML pages | `sound` files are fetched within the page's limits like models (budget.ts) and played with Web Audio (viewer/sound.ts), only after the first trusted click or key on the page. The browser also keeps a HoloML tab muted until then: the page's preload, in its own world where page scripts cannot reach, tells the shell of that first input (hypersol-holoml-state, activated), and the shell's tab view keeps this gate apart from the tab's own mute | Milestone 17 (owner, prompt 85, Q5 a: as browsers require for web pages). Holding the viewer's own sounds alone would not stop a page's script from playing sound. |
 | Drawing many models | A model file is loaded once (a template); a model without its own materials or animation is an instance of the file's meshes (InstancedMesh, viewer/instances.ts), so thousands of blocks are a few draw calls; others get clones. Instances follow their holders' world matrices when told they moved; picking maps an instance back to its element. The limit counts model files (64), and each model drawn counts its triangles | Milestone 17. Blockworld: about 1,200 blocks in 14 draw calls. |
 | HoloML examples section | A dialog (hud/examples.ts) with a card per example site (renderer/examples.ts: name, line, what it shows, picture), Open and Source, and links to the holoml repository and its specification; opened from the start panel's "Try HoloML", the menu, and Ctrl+Shift+E (a remappable shortcut). The pictures are part of the browser, made by `pnpm screenshots:examples` from the local copies; nothing is fetched until a link is chosen. `pnpm holoml:sync` copies every example into the test fixtures | Milestone 17 (owner, prompt 85, and prompt 86, Q2 a; the repository links, prompt 88). |
+| Walking speeds and sliders | HoloML 0.2 `speed` and `turn-speed` on the viewpoint set walk mode's pace (controls.ts: 2.2 metres a second and 90 degrees a second unless the page says; looking up and down from the keyboard goes as fast as turning; Shift still doubles walking); `holoml.viewer.speed` and `turnSpeed` change them while the page is open. A `slider` is the page's own `<input type="range">` in its screen corner, labelled by its text, so the mouse, touch, the keyboard, and screen readers use it as on any web page, Tab reaches it after the scene's outline, and the text view shows it; moving it sends the page's scripts `change` (scene.ts, api.ts). While it has the keyboard it keeps only its own keys (keptByControl in controls.ts); other keys still walk and reach scripts | Milestone 18, first part (owner, prompts 91 and 92: walking felt slow; a speed setting and a slider in Blockworld, whose code shows how). A native control needs no new accessibility work and cannot be mistaken for a click in the scene. |
 | Window frame, reconsidered | Standard OS frame kept | Considered in milestone 6: a custom frame would lose native dragging, snapping, and accessibility; the theme now sets the frame's light or dark scheme. |
 | Bookmarks and history | SQLite through Node's built-in node:sqlite (owner decision 2026-09-25, prompt 20) | Fast search over thousands of rows; standard for browsers. Built into Electron's Node, so no native module and no extra package. |
 | UI widgets (address bar, menus) | Lit web components | Tiny, standards-based, no framework lock-in; themed with CSS variables. |

@@ -45,7 +45,7 @@ export const EXAMPLES: readonly Example[] = [
     name: 'Blockworld',
     line: 'A small block game: break and place blocks, find five gems in the stone, and see day turn to night.',
     row: 'Blockworld: a small block game to play',
-    features: 'HoloML 0.2: a script, sound, walls and gravity, day and night',
+    features: 'HoloML 0.2: a script, sound, walls and gravity, a speed slider, day and night',
     picture: blockworldPicture,
   },
 ];

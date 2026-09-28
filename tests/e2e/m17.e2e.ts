@@ -14,8 +14,15 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
   APP_DIR,
+  clickUntil,
+  framesDrawn,
+  graphicsSwitches,
+  holdKeyUntil,
   OFFLINE_RULES,
   removeFolder,
+  sceneWait,
+  settled,
+  watchStalls,
   clickAt,
   closeFocusedTab,
   focusedTab,
@@ -45,6 +52,8 @@ afterAll(async () => {
 });
 
 type Vec = [number, number, number];
+/** Blockworld's longer checks: drawn in software (GitHub's machines) they take minutes, not seconds. Not a requirement. */
+const BLOCKWORLD_TIME = 240_000;
 const url = (page: string) => server.url(`holoml/${page}`);
 
 function holo<T>(h: Harness, expression: string, page: string): Promise<T> {
@@ -169,6 +178,9 @@ describe('T2: scripts', () => {
     // The page's own process is busy for ever: ask the shell, never the page.
     await waitFor('the tab to show the page', async () => (await focusedTab(h)).url, (u) => u.endsWith('script-loop.holoml'));
     await sleep(1500);
+    // The shell's own switch animation done, the page's script now spinning.
+    await settled(h);
+    const stalls = await watchStalls(h);
     const times: number[] = [];
     for (let i = 0; i < 10; i++) {
       const t = performance.now();
@@ -176,7 +188,13 @@ describe('T2: scripts', () => {
       times.push(performance.now() - t);
       await sleep(100);
     }
-    expect(Math.max(...times), times.map((t) => t.toFixed(0)).join(', ')).toBeLessThan(200);
+    const why = await stalls();
+    // Within 200 ms with a graphics card; drawn in software (GitHub's machines), logged, not
+    // checked, as the other budgets (owner, prompt 96: the software GPU process is shared).
+    const software = await softwareRenderer(h);
+    const answers = `${times.map((t) => t.toFixed(0)).join(', ')} ms; ${why}`;
+    if (software) console.log(`T2: answers took ${answers}; the 200 ms budget not checked: drawing in software (${software})`);
+    else expect(Math.max(...times), answers).toBeLessThan(200);
     await closeFocusedTab(h);
     await waitFor('the tab closed', async () => (await tabs(h)).length, (n) => n === before);
   });
@@ -280,7 +298,11 @@ describe('T5 to T7: Blockworld', () => {
   afterAll(async () => h?.close());
 
   it('T5 the island of blocks loads within 5 s and draws smoothly, with few draw calls', async () => {
-    expect(loadMs).toBeLessThan(5000);
+    const software = await softwareRenderer(h);
+    // Within 5 s with a graphics card. Drawn in software (GitHub's machines), the time is
+    // logged, not checked, as the frame rate below is (owner, prompts 59 and 95).
+    if (software) console.log(`T5: loaded in ${loadMs} ms; the 5-second budget not checked: drawing in software (${software})`);
+    else expect(loadMs).toBeLessThan(5000);
     const blocks = await bw<number>('blocks');
     expect(blocks).toBeGreaterThan(1000);
     const stats = await holo<{ calls: number; pools: { src: string; count: number }[] }>(h, 'window.__holoml.stats()', PAGE);
@@ -289,46 +311,48 @@ describe('T5 to T7: Blockworld', () => {
     const f0 = await holo<number>(h, 'window.__holoml.frames', PAGE);
     await sleep(2000);
     const fps = ((await holo<number>(h, 'window.__holoml.frames', PAGE)) - f0) / 2;
-    const software = await softwareRenderer(h);
     // With a graphics card, 30 frames a second or more; drawn in software (GitHub's machines), only that it draws, as C9.
     expect(fps).toBeGreaterThan(software ? 0 : 30);
   });
 
   it('T6 breaking and placing by mouse and by keyboard; keys 1 to 5 choose the block', async () => {
-    const [cx, cz] = [0, 1];
-    const top = await bw<number>(`top(${cx}, ${cz})`);
-    const target: Vec = [cx + 0.5, top - 0.5, cz + 0.5];
-    const aimAt = async () => {
-      await inPage(h, `holoml.viewer.position = [0.5, ${top + 3.2}, 3.5], true`, PAGE);
-      await sleep(400);
-      await inPage(h, `holoml.viewer.lookAt(${JSON.stringify(target)}), true`, PAGE);
-      await waitFor('the block under the crosshair', () => inPage<Vec | null>(h, 'holoml.aim()?.thing?.position ?? null', PAGE), (p) => p !== null);
+    const top = await bw<number>('top(0, 1)');
+    // Standing still first: drawn in software (GitHub's machines), the walker takes a while to land.
+    await inPage(h, `holoml.viewer.position = [0.5, ${top + 3.2}, 3.5], true`, PAGE);
+    await waitFor('standing', () => walker(h, PAGE), (w) => w?.onGround === true, await sceneWait(h, 5000));
+    type Aim = { at: Vec; normal: Vec };
+    /** Looks at the ground ahead: the block under the crosshair, and which way the face there faces. */
+    const aim = async (): Promise<Aim> => {
+      await inPage(h, `holoml.viewer.lookAt([0.5, ${top - 0.5}, 1.5]), true`, PAGE);
+      await framesDrawn(h, PAGE);
+      const code = '(() => { const a = holoml.aim(); return a && a.thing && a.normal ? { at: a.thing.position.map(Math.floor), normal: a.normal.map(Math.round) } : null; })()';
+      return (await waitFor('a block under the crosshair', () => inPage<Aim | null>(h, code, PAGE), (a) => a !== null))!;
     };
-    const at = () => bw<string | null>(`blockAt(${cx}, ${top - 1}, ${cz})`);
-    const before = await at();
-    expect(before).not.toBeNull();
-    // The mouse: click to break, right-click to place.
-    await aimAt();
-    await clickAt(h, await centre(h, PAGE));
-    await waitFor('broken', at, (k) => k === null || k === 'water');
-    await sleep(400);
-    await aimAt();
+    const kind = (p: Vec) => bw<string | null>(`blockAt(${p.join(', ')})`);
+    const gone = (k: string | null) => k === null || k === 'water';
+    const onFace = (a: Aim): Vec => [a.at[0] + a.normal[0], a.at[1] + a.normal[1], a.at[2] + a.normal[2]];
+    const crosshair = await centre(h, PAGE);
+    // The mouse: a click breaks the block under the crosshair (clicked again if a click is lost, issue #30)...
+    let a = await aim();
+    expect(await kind(a.at)).not.toBeNull();
+    await clickUntil(h, crosshair, 'broken by a click', async () => gone(await kind(a.at)));
+    // ...and with stone chosen (key 3), a right-click places one on the face it points at.
     await pressInPage(h, '3', [], PAGE);
     await waitFor('stone chosen', () => hud('hand'), (t) => t.startsWith('Placing: Stone'));
-    await clickAt(h, await centre(h, PAGE), { button: 'right' });
-    await waitFor('placed', at, (k) => k === 'stone');
-    // The keyboard: E breaks, Q places, what is under the crosshair.
-    await aimAt();
+    a = await aim();
+    await clickUntil(h, crosshair, 'placed by a right-click', async () => (await kind(onFace(a))) === 'stone', { button: 'right' });
+    // The keyboard: E breaks, and Q places (planks, key 4), what is under the crosshair.
+    a = await aim();
     await pressInPage(h, 'e', [], PAGE);
-    await waitFor('broken with E', at, (k) => k === null || k === 'water');
-    await sleep(400);
-    await aimAt();
+    await waitFor('broken with E', () => kind(a.at), gone);
     await pressInPage(h, '4', [], PAGE);
+    await waitFor('planks chosen', () => hud('hand'), (t) => t.startsWith('Placing: Planks'));
+    a = await aim();
     await pressInPage(h, 'q', [], PAGE);
-    await waitFor('placed with Q', at, (k) => k === 'planks');
+    await waitFor('placed with Q', () => kind(onFace(a)), (k) => k === 'planks');
     await pressInPage(h, '1', [], PAGE);
     await waitFor('grass chosen', () => hud('hand'), (t) => t.startsWith('Placing: Grass'));
-  });
+  }, BLOCKWORLD_TIME);
 
   it('T6 five gems, found in the stone and brought to the chest, win the game', async () => {
     const gems = await bw<Vec[]>('gems');
@@ -355,12 +379,12 @@ describe('T5 to T7: Blockworld', () => {
     await waitFor('won', () => bw<boolean>('won'), (v) => v === true);
     expect(await hud('score')).toMatch(/In the chest: 5 of 5/);
     expect(await hud('message')).toMatch(/You won/);
-  });
+  }, BLOCKWORLD_TIME);
 
   it('T4 the chest is solid: the walker stands on it', async () => {
     const chest = await bw<Vec>('chest');
     await inPage(h, `holoml.viewer.position = [${chest[0]}, ${chest[1] + 4}, ${chest[2]}], true`, PAGE);
-    const w = await waitFor('standing', () => walker(h, PAGE), (x) => x?.onGround === true, 5000);
+    const w = await waitFor('standing', () => walker(h, PAGE), (x) => x?.onGround === true, await sceneWait(h, 5000));
     // The chest's lid is 0.43 m above its middle.
     expect(w!.feet[1]).toBeCloseTo(chest[1] + 0.43, 1);
   });
@@ -368,8 +392,8 @@ describe('T5 to T7: Blockworld', () => {
   it('T6 night comes, and a torch lights its surroundings', async () => {
     const NIGHT = 'blockworld/index.holoml?hour=22';
     await shellCall(h, 'showUrl', url(NIGHT));
-    await waitForPage(h, 'hour=22');
-    await ready(h, 'hour=22', 30_000);
+    await waitForPage(h, 'hour=22', await sceneWait(h, 15_000));
+    await ready(h, 'hour=22', await sceneWait(h, 30_000));
     expect(await hud('clock', 'hour=22')).toMatch(/Day 1, 22:/);
     expect(await holo<string>(h, 'window.__holoml.lights().find((l) => l.type === "directional").intensity.toFixed(2)', 'hour=22')).toBe('0.00');
     const top = await bw<number>('top(0, 1)', 'hour=22');
@@ -408,25 +432,29 @@ describe('T5 to T7: Blockworld', () => {
         }
         return out;
       });
-    await waitFor('standing', () => walker(h, 'hour=22'), (w) => w?.onGround === true, 5000);
-    await sleep(300);
+    await waitFor('standing', () => walker(h, 'hour=22'), (w) => w?.onGround === true, await sceneWait(h, 5000));
+    // New frames before each picture: drawn in software, a frame can take longer than a pause.
+    await framesDrawn(h, 'hour=22', 3);
     const lit = await cells();
     await inPage(h, 'holoml.find("torch-1").intensity = 0, true', 'hour=22');
-    await sleep(300);
+    await framesDrawn(h, 'hour=22', 3);
     const dark = await cells();
     await inPage(h, `holoml.find("torch-1").intensity = ${intensity}, true`, 'hour=22');
     const brighter = lit.filter((v, i) => v >= dark[i]! * 1.3).length;
     expect(brighter, `cells at least 30% brighter with the torch's light: ${brighter} of ${lit.length}`).toBeGreaterThanOrEqual(lit.length / 4);
-  });
+  }, BLOCKWORLD_TIME);
 
   it('T7 the screen text is in the text view and the accessibility tree', async () => {
     const NIGHT = 'hour=22';
-    await h.shell.click('hs-toolbar [data-testid="text-view"]');
-    await waitFor('the text view', () => holo<boolean>(h, 'window.__holoml.textView', NIGHT), (v) => v === true);
+    // Ctrl+Shift+V in the page (R8 checks the button too): drawn in software, Blockworld keeps
+    // the shared GPU process so busy that a click's wait for the button to hold still can run out.
+    await pressInPage(h, 'V', ['control', 'shift'], NIGHT);
+    await waitFor('the text view', () => holo<boolean>(h, 'window.__holoml.textView', NIGHT), (v) => v === true, await sceneWait(h, 15_000));
     const text = await inPage<string>(h, 'document.body.innerText', NIGHT);
     expect(text).toContain('Gems carried: 0');
     expect(text).toContain('Placing:');
-    await h.shell.click('hs-toolbar [data-testid="text-view"]');
+    await pressInPage(h, 'V', ['control', 'shift'], NIGHT);
+    await waitFor('3D again', () => holo<boolean>(h, 'window.__holoml.textView', NIGHT), (v) => v === false, await sceneWait(h, 15_000));
     const tree = await h.app.evaluate(async ({ webContents }) => {
       const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes('hour=22')).pop()!;
       guest.debugger.attach('1.3');
@@ -440,7 +468,7 @@ describe('T5 to T7: Blockworld', () => {
     expect(tree.some((n) => n.includes('Gems carried: 0'))).toBe(true);
     // The clock (a day lasts four minutes, so the hour has moved on since the page opened).
     expect(tree.some((n) => /^Day \d+, \d\d:\d\d$/.test(n))).toBe(true);
-  });
+  }, BLOCKWORLD_TIME);
 
   it('T7 with reduced motion, the day stands still at noon', async () => {
     const STILL = 'blockworld/index.holoml?still';
@@ -451,8 +479,8 @@ describe('T5 to T7: Blockworld', () => {
     });
     try {
       await shellCall(h, 'showUrl', url(STILL));
-      await waitForPage(h, '?still');
-      await ready(h, '?still', 30_000);
+      await waitForPage(h, '?still', await sceneWait(h, 15_000));
+      await ready(h, '?still', await sceneWait(h, 30_000));
       const first = await hud('clock', '?still');
       expect(first).toBe('Day 1, 12:00 (the clock stands still)');
       await sleep(2000);
@@ -462,34 +490,34 @@ describe('T5 to T7: Blockworld', () => {
         for (const w of webContents.getAllWebContents()) if (w.getType() === 'webview' && w.debugger.isAttached()) w.debugger.detach();
       });
     }
-  });
+  }, BLOCKWORLD_TIME);
 
   it('T7 the keyboard alone: the arrows turn, Page Down looks down, and E breaks the block under the crosshair', async () => {
     // Walking (W), jumping (Space), placing (Q), and choosing (1 to 5) by key are in T4 and T6.
     const KEYS = '?keys';
     await shellCall(h, 'showUrl', url(`${PAGE}${KEYS}`));
-    await waitForPage(h, KEYS);
-    await ready(h, KEYS, 30_000);
-    await waitFor('standing', () => walker(h, KEYS), (w) => w?.onGround === true, 15_000);
+    await waitForPage(h, KEYS, await sceneWait(h, 15_000));
+    await ready(h, KEYS, await sceneWait(h, 30_000));
+    await waitFor('standing', () => walker(h, KEYS), (w) => w?.onGround === true, await sceneWait(h, 15_000));
     const view = () => inPage<{ position: Vec; direction: Vec }>(h, '({ position: holoml.viewer.position, direction: holoml.viewer.direction })', KEYS);
     const yawOf = (d: Vec) => Math.atan2(-d[0], -d[2]);
+    const turnedBy = (a: Vec, b: Vec) => {
+      const change = Math.abs(yawOf(a) - yawOf(b));
+      return Math.min(change, 2 * Math.PI - change);
+    };
     const before = await view();
-    // The left arrow turns, without moving.
-    await hold(h, KEYS, 'Left', 600);
-    const turned = await view();
-    const change = Math.abs(yawOf(turned.direction) - yawOf(before.direction));
-    expect(Math.min(change, 2 * Math.PI - change)).toBeGreaterThan(0.4);
+    // The left arrow turns, without moving (held until it has turned: in software, frames come slowly).
+    const turned = await holdKeyUntil(h, KEYS, 'Left', 'turned by the left arrow', view, (v) => turnedBy(v.direction, before.direction) > 0.4);
     expect(Math.hypot(turned.position[0] - before.position[0], turned.position[2] - before.position[2])).toBeLessThan(0.05);
     // Page Down looks down, at the ground in front.
-    await hold(h, KEYS, 'PageDown', 1500);
-    expect((await view()).direction[1]).toBeLessThan(-0.8);
+    await holdKeyUntil(h, KEYS, 'PageDown', 'looking down with Page Down', view, (v) => v.direction[1] < -0.8);
     const aimed = await waitFor('a block under the crosshair', () => inPage<Vec | null>(h, 'holoml.aim()?.thing?.position ?? null', KEYS), (p) => p !== null);
     const [x, y, z] = aimed!.map(Math.floor) as Vec;
     expect(await bw<string | null>(`blockAt(${x}, ${y}, ${z})`, KEYS)).not.toBeNull();
     // E breaks it.
     await pressInPage(h, 'e', [], KEYS);
     await waitFor('broken with E', () => bw<string | null>(`blockAt(${x}, ${y}, ${z})`, KEYS), (k) => k === null || k === 'water');
-  });
+  }, BLOCKWORLD_TIME);
 });
 
 describe('T8: the HoloML examples section', () => {
@@ -515,7 +543,11 @@ describe('T8: the HoloML examples section', () => {
     for (const id of ['showroom', 'blockworld']) {
       const card = `hs-examples [data-testid="example-${id}"]`;
       expect(await h.shell.locator(card).isVisible()).toBe(true);
-      const picture = await h.shell.locator(`${card} img`).evaluate((img: HTMLImageElement) => ({ w: img.naturalWidth, alt: img.alt }));
+      const picture = (await waitFor(
+        `${id}'s picture loaded`,
+        () => h.shell.locator(`${card} img`).evaluate((img: HTMLImageElement) => ({ w: img.complete ? img.naturalWidth : 0, alt: img.alt })),
+        (p) => p.w > 0,
+      ))!;
       expect(picture.w).toBeGreaterThan(300);
       expect(picture.alt).toMatch(/a picture of the site/);
     }
@@ -589,10 +621,12 @@ describe('After the report (prompt 89)', () => {
       const before = tab.snapshotAt;
       await shellCall(h, 'showUrl', url(PAGE));
       await waitForPage(h, PAGE);
-      // The page itself loads at once and gets its picture; the car arrives two seconds later.
+      // The page itself loads at once and gets its picture; the fixture server holds the car
+      // back until this check lets it through.
       await waitFor('a picture of the page while the car is still coming', () => focusedTab(h), (t) => t.snapshotAt > before && t.url.endsWith(PAGE));
       expect(await holo<boolean>(h, 'window.__holoml.ready', PAGE)).toBe(false);
       expect(await redShare(tab.id)).toBeLessThan(0.002);
+      server.release('late-car');
       await ready(h, PAGE);
       await waitFor('the car on the card', () => redShare(tab.id), (share) => share > 0.01, 6000);
     } finally {
@@ -621,7 +655,7 @@ describe('After the report (prompt 89)', () => {
     delete env['ELECTRON_RUN_AS_NODE'];
     const app = await electron.launch({
       executablePath: req('electron') as unknown as string,
-      args: [APP_DIR, `--start-url=${url('blockworld/index.holoml')}`, `--hypersol-user-data=${profile}`, OFFLINE_RULES],
+      args: [APP_DIR, `--start-url=${url('blockworld/index.holoml')}`, `--hypersol-user-data=${profile}`, OFFLINE_RULES, ...graphicsSwitches()],
       env,
     });
     try {

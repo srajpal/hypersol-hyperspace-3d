@@ -70,6 +70,14 @@ export interface FixtureServer {
   openNow: Map<string, number>;
   /** Body bytes written, by path and query (streaming favicon routes). */
   sent: Map<string, number>;
+  /** Lets requests held at a gate (…?gate=NAME) through, now and from then on. */
+  release(gate: string): void;
+}
+
+/** Requests held until a check lets them through (FixtureServer.release). */
+interface Gate {
+  open: boolean;
+  waiting: (() => void)[];
 }
 
 /** A PNG header claiming a size, for the favicon dimension limit (not decodable). */
@@ -120,7 +128,8 @@ function page(title: string, body: string): string {
  *                                       a glTF of T triangles (default 1) whose buffer is zeros.bin, at least
  *                                       N MB (default: just what the triangles need); img adds a claim.png;
  *                                       ms=M answers after M milliseconds (up to 10 s)
- *   /holoml/gen/late-car.gltf?ms=M      holoml/models/placeholder-car.gltf, after M milliseconds (up to 10 s)
+ *   /holoml/gen/late-car.gltf?ms=M      holoml/models/placeholder-car.gltf, after M milliseconds (up to 10 s);
+ *                                       with gate=NAME instead, when the check calls release(NAME)
  *   /holoml/gen/never.gltf              answers nothing, ever (a model that never finishes)
  *   /holoml/gen/many.holoml?n=N         a page of a label and N empty groups (up to 50,000)
  *   /holoml/gen/tone.wav                a second of a quiet tone, as a WAV file (milestone 17)
@@ -227,8 +236,7 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
       return;
     }
     if (what === 'late-car.gltf') {
-      const wait = Math.min(10_000, Math.max(0, Number(p.get('ms') ?? '0') || 0));
-      setTimeout(() => {
+      const send = () => {
         readFile(join(FIXTURES_DIR, 'holoml', 'models', 'placeholder-car.gltf')).then(
           (body) => {
             if (res.destroyed) return;
@@ -237,7 +245,16 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
           },
           () => res.writeHead(500).end(),
         );
-      }, wait);
+      };
+      const name = p.get('gate');
+      if (name) {
+        const gate = c.gates.get(name) ?? { open: false, waiting: [] };
+        c.gates.set(name, gate);
+        if (gate.open) send();
+        else gate.waiting.push(send);
+        return;
+      }
+      setTimeout(send, Math.min(10_000, Math.max(0, Number(p.get('ms') ?? '0') || 0)));
       return;
     }
     if (what === 'box.gltf') {
@@ -430,6 +447,7 @@ interface Counters {
   maxOpen: Map<string, number>;
   openNow: Map<string, number>;
   sent: Map<string, number>;
+  gates: Map<string, Gate>;
 }
 
 async function listen(
@@ -447,7 +465,17 @@ async function listen(
   const base = `${scheme}://127.0.0.1:${port}/`;
   return {
     base,
-    ...counters,
+    hits: counters.hits,
+    aborted: counters.aborted,
+    maxOpen: counters.maxOpen,
+    openNow: counters.openNow,
+    sent: counters.sent,
+    release: (name) => {
+      const gate = counters.gates.get(name) ?? { open: false, waiting: [] };
+      counters.gates.set(name, gate);
+      gate.open = true;
+      for (const send of gate.waiting.splice(0)) send();
+    },
     url: (file) => base + file,
     close: () =>
       new Promise<void>((resolve) => {
@@ -463,7 +491,7 @@ async function listen(
 
 /** Serves the fixtures on 127.0.0.1, at a random free port unless one is given. */
 function counters(): Counters {
-  return { hits: new Map(), aborted: new Map(), maxOpen: new Map(), openNow: new Map(), sent: new Map() };
+  return { hits: new Map(), aborted: new Map(), maxOpen: new Map(), openNow: new Map(), sent: new Map(), gates: new Map() };
 }
 
 export function startFixtureServer(port = 0): Promise<FixtureServer> {

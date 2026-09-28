@@ -73,6 +73,20 @@ Object.defineProperty(window, '__holoml', {
       return state.view?.sounds.active ?? false;
     },
     huds: () => [...document.querySelectorAll<HTMLElement>('.holoml-hud')].map((h) => ({ id: h.dataset['id'] ?? null, text: h.innerText, hidden: h.hidden })),
+    /** The sliders (HoloML 0.2, milestone 18): label, value, range, and corner. */
+    sliders: () =>
+      [...document.querySelectorAll<HTMLElement>('.holoml-slider')].map((s) => {
+        const input = s.querySelector('input')!;
+        return {
+          id: s.dataset['id'] ?? null,
+          label: s.querySelector('span')?.textContent ?? '',
+          value: Number(input.value),
+          min: Number(input.min),
+          max: Number(input.max),
+          step: Number(input.step),
+          corner: (s.parentElement as HTMLElement | null)?.dataset['corner'] ?? null,
+        };
+      }),
     walker: () => state.view?.walkerInfo ?? null,
     stats: () => state.view?.stats ?? null,
     get version() {
@@ -146,6 +160,10 @@ const STYLE = `
   .holoml-hud-corner[data-corner="bottom-right"] { right: 16px; bottom: 72px; align-items: flex-end; text-align: right; }
   .holoml-hud { color: #f2f4ff; font-weight: 600; line-height: 1.35; text-shadow: 0 1px 3px #000c, 0 0 1px #000; }
   .holoml-hud[hidden] { display: none; }
+  .holoml-slider { pointer-events: auto; display: flex; align-items: center; gap: 10px; color: #f2f4ff; font-weight: 600; font-size: 16px;
+    text-shadow: 0 1px 3px #000c, 0 0 1px #000; }
+  .holoml-slider input { width: 150px; margin: 0; accent-color: #7fd8ff; cursor: pointer; }
+  .holoml-slider input:focus-visible { outline: 2px solid #7fd8ff; outline-offset: 4px; border-radius: 4px; }
   .holoml-crosshair { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); }
   .holoml-crosshair::before, .holoml-crosshair::after { content: ''; position: absolute; background: #ffffffd9; box-shadow: 0 0 2px #000; }
   .holoml-crosshair::before { left: 10px; top: 0; width: 2px; height: 22px; }

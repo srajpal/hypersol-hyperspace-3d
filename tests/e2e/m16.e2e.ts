@@ -30,6 +30,8 @@ import {
   type Harness,
   type Point,
   APP_DIR,
+  graphicsSwitches,
+  holdKeyUntil,
   OFFLINE_RULES,
   removeFolder,
 } from './harness';
@@ -82,20 +84,6 @@ async function tabTo(h: Harness, page: string, text: string): Promise<void> {
   await waitFor(`${text} in focus`, () => focused(h, page), (t) => t === text);
 }
 
-async function holdKey(h: Harness, page: string, keyCode: string, ms: number): Promise<void> {
-  const send = (type: 'keyDown' | 'keyUp') =>
-    h.app.evaluate(
-      ({ webContents }, { page, keyCode, type }) => {
-        const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes(page)).pop();
-        guest?.sendInputEvent({ type, keyCode });
-      },
-      { page, keyCode, type },
-    );
-  await send('keyDown');
-  await sleep(ms);
-  await send('keyUp');
-}
-
 describe('S2 to S7: the showroom', () => {
   let h: Harness;
   beforeAll(async () => {
@@ -121,11 +109,16 @@ describe('S2 to S7: the showroom', () => {
 
   it('S2 the hall loads whole within 5 seconds, inside the budget', async () => {
     const PAGE = 'index.holoml';
+    const software = await softwareRenderer(h);
     const started = Date.now();
     await shellCall(h, 'showUrl', url(`${PAGE}?s2`));
     await waitForPage(h, `${PAGE}?s2`);
-    await ready(h, `${PAGE}?s2`, 5000);
-    expect(Date.now() - started).toBeLessThan(5000);
+    await ready(h, `${PAGE}?s2`, software ? 60_000 : 5000);
+    const loadMs = Date.now() - started;
+    // Within 5 s with a graphics card. Drawn in software (GitHub's machines), the time is
+    // logged, not checked, as the frame-rate budgets are (owner, prompts 59 and 95).
+    if (software) console.log(`S2: loaded in ${loadMs} ms; the 5-second budget not checked: drawing in software (${software})`);
+    else expect(loadMs).toBeLessThan(5000);
     const states = (await models(h, PAGE)).map((m) => m.state);
     expect(states.length).toBe(11); // the hall, five plinths, five cars
     expect(states.every((s) => s === 'loaded'), JSON.stringify(states)).toBe(true);
@@ -195,9 +188,10 @@ describe('S2 to S7: the showroom', () => {
     const before = await holo<{ mode: string; position: Vec }>(h, 'window.__holoml.view()', PAGE);
     expect(before.mode).toBe('walk');
     expect(before.position[1]).toBeCloseTo(1.7, 5);
-    await holdKey(h, PAGE, 'W', 600);
-    const after = await holo<{ position: Vec }>(h, 'window.__holoml.view()', PAGE);
-    expect(Math.hypot(after.position[0] - before.position[0], after.position[2] - before.position[2])).toBeGreaterThan(0.3);
+    // W held until the walker has moved (drawn in software, frames come slowly).
+    const moved = (p: Vec) => Math.hypot(p[0] - before.position[0], p[2] - before.position[2]);
+    const after = await holdKeyUntil(h, PAGE, 'W', 'walked with W', () => holo<{ position: Vec }>(h, 'window.__holoml.view()', PAGE), (v) => moved(v.position) > 0.3);
+    expect(moved(after.position)).toBeGreaterThan(0.3);
     expect(after.position[1]).toBeCloseTo(1.7, 5);
   });
 
@@ -314,7 +308,7 @@ describe('HoloML pages in a development run (pnpm dev)', () => {
     delete env['ELECTRON_RUN_AS_NODE'];
     const app = await electron.launch({
       executablePath: req('electron') as unknown as string,
-      args: [APP_DIR, `--start-url=${url('index.holoml')}`, `--hypersol-user-data=${profile}`, OFFLINE_RULES],
+      args: [APP_DIR, `--start-url=${url('index.holoml')}`, `--hypersol-user-data=${profile}`, OFFLINE_RULES, ...graphicsSwitches()],
       env,
     });
     try {

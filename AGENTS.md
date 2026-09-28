@@ -167,6 +167,16 @@ date given and grow with each milestone; TODO.md has the latest.
   example `HYPERSOL_TEST_SHOW=1 pnpm test:e2e`); then leave the machine
   alone while it runs. Check C1 confirms background windows are off
   every display and unfocused.
+- GitHub's Linux machines have no graphics card and draw in software. To
+  draw that way on any machine and find checks that pass only with a
+  graphics card, set HYPERSOL_TEST_SOFTWARE=1 (for example
+  `HYPERSOL_TEST_SOFTWARE=1 pnpm test:e2e`; first run 2026-09-27); the
+  frame-rate budgets, the HoloML load-time budgets (S2, T5), and the
+  responsiveness budgets while a heavy HoloML page loads (R3, T2) are
+  then measured and logged, not checked, as there (owner, prompts 59,
+  95, and 96). Checks of scenes wait
+  for what they check, not for fixed times (holdKeyUntil, framesDrawn,
+  and sceneWait in tests/e2e/harness.ts).
 
 What to recheck after any change (regression list; grows with each
 milestone; the current milestone's checks are defined in TODO.md):
@@ -255,7 +265,13 @@ milestone; the current milestone's checks are defined in TODO.md):
   section. T1 is holoml's own tests. After the milestone's report
   (prompt 89): a HoloML tab's card shows its scene once drawn, and
   Blockworld plays in a development run.
-- Later milestones add: the HoloML example sites (18 to 21), privacy
+- Milestone 18 checks U2 to U6 (same command, tests/e2e/m18.e2e.ts),
+  first part: walking and turning speeds (the page's, the default, and
+  a script's), sliders (keyboard, mouse, the script's change event,
+  the keys a slider keeps, screen readers, the text view), and
+  Blockworld's Speed slider. U1 is holoml's own tests.
+- Later milestones add: the HoloML example sites (the rest of 18, and 19
+  to 21), privacy
   and data tools (22), and installers (23 and 24).
 
 Rules for tests: a failing test is reported, not deleted. A test is

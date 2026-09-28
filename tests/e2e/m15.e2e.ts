@@ -22,7 +22,9 @@ import {
   shellCall,
   sleep,
   waitFor,
+  softwareRenderer,
   waitForPage,
+  watchStalls,
   type Harness,
   type Point,
 } from './harness';
@@ -173,6 +175,7 @@ describe('R3: a page of 20,000 elements', () => {
     const PAGE = 'many.holoml';
     await shellCall(h, 'showUrl', server.url('holoml/gen/many.holoml?n=20000'));
     // While the page loads and builds, the browser's own controls answer at once.
+    const stalls = await watchStalls(h);
     const times: number[] = [];
     const until = Date.now() + 3000;
     while (Date.now() < until) {
@@ -181,9 +184,16 @@ describe('R3: a page of 20,000 elements', () => {
       times.push(performance.now() - t);
       await sleep(50);
     }
+    const why = await stalls();
     await waitForPage(h, PAGE);
     await sceneReady(h, PAGE);
-    expect(Math.max(...times), `shell answers took ${times.map((t) => t.toFixed(0)).join(', ')} ms`).toBeLessThan(200);
+    // Within 200 ms with a graphics card. Drawn in software (GitHub's machines), the browser's
+    // page and the scene share one software GPU process, which the scene's first draw keeps
+    // busy for seconds: the times are logged, not checked, as the other budgets (owner, prompt 96).
+    const software = await softwareRenderer(h);
+    const answers = `shell answers took ${times.map((t) => t.toFixed(0)).join(', ')} ms; ${why}`;
+    if (software) console.log(`R3: ${answers}; the 200 ms budget not checked: drawing in software (${software})`);
+    else expect(Math.max(...times), answers).toBeLessThan(200);
     expect(await holo<string[]>(h, 'window.__holoml.labels()', PAGE)).toContain('First of many');
     const out = await leftOut(h, PAGE);
     expect(out).toHaveLength(1);
@@ -192,7 +202,9 @@ describe('R3: a page of 20,000 elements', () => {
     expect(await noticeText(h, PAGE)).toMatch(/elements: past the page's limit of 10,000/);
     const t = performance.now();
     await shellCall(h, 'tabs');
-    expect(performance.now() - t).toBeLessThan(200);
+    const last = performance.now() - t;
+    if (software) console.log(`R3: a last answer took ${last.toFixed(0)} ms; not checked: drawing in software`);
+    else expect(last).toBeLessThan(200);
   });
 });
 

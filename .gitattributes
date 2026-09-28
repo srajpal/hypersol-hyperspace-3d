@@ -1,2 +1,7 @@
 # HoloML test pages are read byte for byte (their error positions are checked).
 *.holoml -text
+# The example sites (showroom, Blockworld, and later ones) are
+# byte-for-byte copies of HoloML's (checked by hash in
+# packages/holoml/src/copy.test.ts), so no line-ending conversion for
+# anything under the HoloML fixtures.
+tests/fixtures/holoml/** -text

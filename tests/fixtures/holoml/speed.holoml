@@ -1,0 +1,14 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML speeds and sliders</title>
+    <script src="speed.js" />
+  </head>
+  <scene background="#223344">
+    <viewpoint position="0 1.6 0" look-at="0 1.6 -10" mode="walk" speed="4" turn-speed="180" />
+    <light type="ambient" intensity="0.8" />
+    <label position="0 2 -6">Straight ahead</label>
+    <slider id="pace" corner="top-left" min="0.5" max="2" step="0.25" value="1">Pace 1×</slider>
+    <slider id="plain" corner="bottom-left" min="0" max="10">Plain</slider>
+    <hud id="said" corner="top-right"></hud>
+  </scene>
+</holoml>
