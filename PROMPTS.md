@@ -1181,3 +1181,10 @@ aquarium's fish for paths), as recommended.
 ```text
 Sneaker store. What the store needs (recommended).
 ```
+
+## 103 — 2026-09-28 · Claude Opus 5.5, low effort
+
+```text
+Should we build a Linux VM environment to test everything instead of
+relying on the CI?
+```
