@@ -189,7 +189,12 @@ describe('T2: scripts', () => {
       await sleep(100);
     }
     const why = await stalls();
-    expect(Math.max(...times), `${times.map((t) => t.toFixed(0)).join(', ')} ms; ${why}`).toBeLessThan(200);
+    // Within 200 ms with a graphics card; drawn in software (GitHub's machines), logged, not
+    // checked, as the other budgets (owner, prompt 96: the software GPU process is shared).
+    const software = await softwareRenderer(h);
+    const answers = `${times.map((t) => t.toFixed(0)).join(', ')} ms; ${why}`;
+    if (software) console.log(`T2: answers took ${answers}; the 200 ms budget not checked: drawing in software (${software})`);
+    else expect(Math.max(...times), answers).toBeLessThan(200);
     await closeFocusedTab(h);
     await waitFor('the tab closed', async () => (await tabs(h)).length, (n) => n === before);
   });

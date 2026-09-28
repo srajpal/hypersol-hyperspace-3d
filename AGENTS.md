@@ -171,9 +171,10 @@ date given and grow with each milestone; TODO.md has the latest.
   draw that way on any machine and find checks that pass only with a
   graphics card, set HYPERSOL_TEST_SOFTWARE=1 (for example
   `HYPERSOL_TEST_SOFTWARE=1 pnpm test:e2e`; first run 2026-09-27); the
-  frame-rate budgets and the HoloML load-time budgets (S2, T5) are then
-  measured and logged, not checked, as there (owner, prompts 59 and
-  95). Checks of scenes wait
+  frame-rate budgets, the HoloML load-time budgets (S2, T5), and the
+  responsiveness budgets while a heavy HoloML page loads (R3, T2) are
+  then measured and logged, not checked, as there (owner, prompts 59,
+  95, and 96). Checks of scenes wait
   for what they check, not for fixed times (holdKeyUntil, framesDrawn,
   and sceneWait in tests/e2e/harness.ts).
 

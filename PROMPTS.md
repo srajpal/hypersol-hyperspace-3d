@@ -1091,3 +1091,18 @@ budgets.
 ```text
 Like frame rates (recommended).
 ```
+
+## 96 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answer to the agent's question about checks R3 and T2 (the browser
+answers within 200 ms while a heavy HoloML page loads) on machines that
+draw in software: there the browser's page and the scene share one
+software GPU process, and the scene's first draw kept the browser's page
+waiting 4.3 s on Linux and 0.5 to 0.8 s on Windows. The choices were:
+like the other budgets (measured and logged there, not checked; 200 ms
+still with a graphics card); a browser change first; or 200 ms
+everywhere. Chosen: like the other budgets.
+
+```text
+Like the other budgets (recommended).
+```

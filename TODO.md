@@ -2301,7 +2301,7 @@ questions.
 |---|---|---|
 | R1 | Oversized files | A model file over 32 MB, and a page whose models add up to more than 128 MB, are left out with a mark and a notice; the rest shows |
 | R2 | Big pictures, many triangles | A 8192 by 8192 picture, and models over 2 million triangles in all, are left out the same way |
-| R3 | Many elements | A page of 20,000 elements shows the first part and says the rest was left out; the browser stays responsive (a shell action answers within 200 ms) |
+| R3 | Many elements | A page of 20,000 elements shows the first part and says the rest was left out; the browser stays responsive (a shell action answers within 200 ms, with a graphics card; drawn in software, measured and logged, prompt 96) |
 | R4 | Slow and stopped | A model that never finishes is given up after 30 s; Esc and the stop button stop pending loads at once |
 | R5 | Repeated visits | Ten visits back and forth between two heavy pages leave the page process's memory where it was after the first |
 | R6 | Keyboard | Tab reaches every link and named thing in page order with a visible outline; Enter follows links; focus holds when objects appear or go |
@@ -2642,7 +2642,7 @@ Named T (milestone 16 used S).
 | # | Check | Expected result |
 |---|---|---|
 | T1 | The language | holoml's tests: every new element, attribute, and problem has a conformance sample; all 0.1 samples and examples still pass; a 0.2 page read as 0.1 is refused |
-| T2 | Scripts | A page's script from its own site runs and changes the scene through the API; an inline script, or one from another site, does not run, and the console says why; a script error is shown in the console and the scene stays; a script that never stops leaves the browser's controls answering within 200 ms, and closing the tab works |
+| T2 | Scripts | A page's script from its own site runs and changes the scene through the API; an inline script, or one from another site, does not run, and the console says why; a script error is shown in the console and the scene stays; a script that never stops leaves the browser's controls answering within 200 ms (with a graphics card; drawn in software, measured and logged, prompt 96), and closing the tab works |
 | T3 | Sound | Nothing plays before the first click or key; after it, a sound plays (checked through the page's audio state); the tab's mute silences it; a sound file over the limits is left out like a model |
 | T4 | Walls and gravity | The walker falls to the ground, stands on blocks, jumps with Space, and cannot pass through solid blocks or walk through the chest |
 | T5 | Many blocks | Blockworld's island (several thousand blocks) loads within 5 s from 127.0.0.1 and draws at 30 frames a second or more, both with a graphics card (drawn in software, as on GitHub's machines, both are measured and logged instead: the frame rate as C9, prompt 59; the load time since prompt 95) |
@@ -2999,6 +2999,18 @@ budgets of S2 and T5 (with a graphics card both load well under that).
 The owner chose to treat them like the frame-rate budgets (prompt 59):
 drawn in software, the load time is measured and logged, not checked;
 with a graphics card, 5 s still applies.
+
+Responsiveness budgets (owner, prompt 96): R3 and T2, the browser
+answering within 200 ms while a heavy HoloML page loads, failed on both
+machines with one stall of the shell (4.3 s on Linux, 0.5 to 0.8 s on
+Windows). The stall report showed the shell's time in native code, not
+in its scripts: drawing in software, the browser's page and the scene
+share one software GPU process, which the scene's first draw (shaders,
+environment lighting) keeps busy for seconds; with a graphics card the
+shell answered within 12 ms. The owner chose to treat these budgets
+like the others: drawn in software, the answer times and the stall
+report are logged, not checked; with a graphics card, 200 ms still
+applies.
 
 Results: see the pull request's automatic builds.
 
