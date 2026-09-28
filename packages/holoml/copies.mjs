@@ -10,11 +10,11 @@ export const COPIES = [
 ];
 
 /**
- * HoloML's example sites (milestones 16 and 17), copied byte for byte into
+ * HoloML's example sites (milestones 16 to 18), copied byte for byte into
  * the browser's test fixtures, so the end-to-end checks serve them from
  * 127.0.0.1. The scripts that make them stay in the holoml repository.
  */
-export const EXAMPLES = { from: 'examples/', to: '../../tests/fixtures/holoml/', names: ['showroom', 'blockworld'], skip: /^tools\// };
+export const EXAMPLES = { from: 'examples/', to: '../../tests/fixtures/holoml/', names: ['showroom', 'blockworld', 'sofa-studio'], skip: /^tools\// };
 
 export function transform(text, from, tag) {
   const body = text

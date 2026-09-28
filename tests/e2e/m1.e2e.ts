@@ -17,10 +17,12 @@ import {
   ADDRESS,
   SHOW_WINDOWS,
   clickAt,
+  clickUntil,
   softwareRenderer,
   describeMissedClick,
   inPage,
   launch,
+  moveUntil,
   navigateTo,
   pageCentre,
   project,
@@ -247,16 +249,14 @@ describe('C4 typing', () => {
   });
   afterAll(async () => h?.close());
 
-  /** Clicks a field where it shows on the tilted page and waits until it has focus. */
+  /**
+   * Clicks a field where it shows on the tilted page until it has focus:
+   * clicked again if a click is lost (GitHub's Linux machines, issue #30;
+   * C4, 2026-09-28). What C4 checks is the typing; C2 checks the clicks.
+   */
   async function clickToFocus(id: string): Promise<void> {
     const p = await screenPointOf(h, `#${id}`, 'form');
-    await clickAt(h, p);
-    await waitFor(
-      `#${id} to take focus from the click`,
-      () => inPage<string>(h, 'document.activeElement.id', 'form'),
-      (active) => active === id,
-      5000,
-    );
+    await clickUntil(h, p, `#${id} to take focus from the click`, async () => (await inPage<string>(h, 'document.activeElement.id', 'form')) === id);
   }
 
   it('types into a text input', async () => {
@@ -273,8 +273,8 @@ describe('C4 typing', () => {
 
   it('ticks a checkbox', async () => {
     const p = await screenPointOf(h, '#agree', 'form');
-    await clickAt(h, p);
-    await waitFor('checkbox ticked', () => inPage<boolean>(h, 'document.getElementById("agree").checked', 'form'), (v) => v, 5000);
+    // Clicked again only if nothing happened (a lost click, issue #30), so a tick is never undone.
+    await clickUntil(h, p, 'checkbox ticked', () => inPage<boolean>(h, 'document.getElementById("agree").checked', 'form'));
   });
 });
 
@@ -315,12 +315,10 @@ describe('C6 hover and links', () => {
   afterAll(async () => h?.close());
 
   it('reports hover on and off a target', async () => {
-    const t = await screenPointOf(h, '#target', 'hover');
-    await h.shell.mouse.move(t.x, t.y, { steps: 5 });
-    await waitFor('hover on', () => inPage<boolean>(h, 'window.__fixture.hovered', 'hover'), (v) => v === true);
-    const corner = await project(h, 30, 30);
-    await h.shell.mouse.move(corner.x, corner.y, { steps: 5 });
-    await waitFor('hover off', () => inPage<boolean>(h, 'window.__fixture.hovered', 'hover'), (v) => v === false);
+    const hovered = () => inPage<boolean>(h, 'window.__fixture.hovered', 'hover');
+    // Moved again if a pointer move is lost (GitHub's Linux machines, issue #30; C6, 2026-09-28).
+    await moveUntil(h, await screenPointOf(h, '#target', 'hover'), 'hover on', async () => (await hovered()) === true);
+    await moveUntil(h, await project(h, 30, 30), 'hover off', async () => (await hovered()) === false);
   });
 
   it('follows a link to the second page', async () => {

@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config';
 
-// The README's screenshot (owner, prompt 68): pnpm screenshots:readme.
-// HoloML's showroom, served locally (prompt 81, Q5 a); no network.
+// The README's screenshots (owner, prompts 68 and 99): pnpm screenshots:readme.
+// Four views served locally (a sample page and HoloML's examples); no network.
 export default defineConfig({
   test: {
     include: ['tests/screenshots/readme.capture.ts'],

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 460">
+  <!-- A made-up autumn landscape for the sample page: sky, sun, three ridges, a lake, pines. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7dcae"/>
+      <stop offset="0.55" stop-color="#f3a86f"/>
+      <stop offset="1" stop-color="#dc7659"/>
+    </linearGradient>
+    <linearGradient id="lake" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7b5d88"/>
+      <stop offset="1" stop-color="#3a3657"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="460" fill="url(#sky)"/>
+  <circle cx="860" cy="160" r="68" fill="#fff3d6" opacity="0.92"/>
+  <path d="M0 290 L140 180 L260 250 L400 140 L560 260 L700 170 L860 270 L1000 160 L1200 270 V460 H0 Z" fill="#a05f7b"/>
+  <path d="M0 330 L180 240 L330 310 L520 220 L700 320 L880 240 L1060 320 L1200 280 V460 H0 Z" fill="#744d76"/>
+  <path d="M0 370 L220 310 L420 360 L640 300 L860 370 L1040 320 L1200 360 V460 H0 Z" fill="#4a3a62"/>
+  <rect y="390" width="1200" height="70" fill="url(#lake)"/>
+  <g stroke="#f7dcae" stroke-opacity="0.55" stroke-width="3" stroke-linecap="round">
+    <line x1="800" y1="408" x2="920" y2="408"/>
+    <line x1="820" y1="424" x2="900" y2="424"/>
+    <line x1="842" y1="440" x2="878" y2="440"/>
+  </g>
+  <g fill="#2c2944">
+    <path d="M60 392 l20 -64 l20 64 z"/>
+    <path d="M96 392 l26 -86 l26 86 z"/>
+    <path d="M140 392 l18 -56 l18 56 z"/>
+    <path d="M1040 392 l22 -70 l22 70 z"/>
+    <path d="M1080 392 l28 -92 l28 92 z"/>
+    <path d="M1128 392 l18 -60 l18 60 z"/>
+  </g>
+</svg>

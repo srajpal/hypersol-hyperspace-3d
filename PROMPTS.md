@@ -1112,3 +1112,96 @@ Like the other budgets (recommended).
 ```text
 Merged holoml #14. Continue with the next milestone.
 ```
+
+## 98 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answers to the milestone 18 part 2 plan's questions (the sofa studio),
+all as recommended, and approval to build. Q1, the material choice (a:
+the declarative `choice` and `option`). Q2, the sofa (a: one of Poly
+Haven's three CC0 sofas, the one whose fabric separates best). Q3, the
+sofa bed (a: dropped; the viewer switches the room between day and
+evening light instead). Q4, light from the surroundings (a: the
+`environment` attribute and a studio HDRI from Poly Haven). Q5, shadows
+drawn in software (a: the renderer may leave them out there; the checks
+log that and check the rest). Q6, the price (a: the page's script
+computes it from the choices and shows it in a `hud`).
+
+```text
+Use the recommendations and build.
+```
+
+## 99 — 2026-09-28 · Claude Opus 5.5, low effort
+
+(A screenshot of the README's HoloML section, with an arrow at the link
+https://srajpal.github.io/holoml/.)
+
+```text
+Merged #34 and holoml #15, continue.
+But also this link in the HyperSpace README does not work; it should be
+https://github.com/srajpal/holoml. Please check both the READMEs and
+check everything works.
+Also use 4 images on the HyperSpace README now to show the variety of
+things it can do.
+```
+
+## 100 — 2026-09-28 · Claude Opus 5.5, low effort
+
+Approves the proposed AGENTS.md wording for the README's pictures (four
+screenshots of the newest version, showing the variety of what the
+browser does, refreshed with `pnpm screenshots:readme` at the end of
+each milestone and release), and asks to move the sofa studio's "About
+this studio" label, which sat behind the Light choice in the README's
+first picture.
+
+```text
+Approve the AGENTS wording, and move the About label.
+```
+
+## 101 — 2026-09-28 · Claude Opus 5.5, low effort
+
+```text
+Merged holoml #16. Before you continue, let's change milestone 20 from
+Coral Bay to another website where people can purchase products that
+would be good in 3D, as that will show the capabilities better for
+general use than the resort.
+```
+
+## 102 — 2026-09-28 · Claude Opus 5.5, low effort
+
+Answers to two questions about the new milestone 20. Which kind of
+store, in place of Coral Bay: a sneaker store (a wall of shoes to pick
+up, turn, and see up close, in their colourways and sizes, with a cart
+and checkout), not the recommended gadget and gift shop, a department
+store, or a bike shop. What happens to the HoloML features Coral Bay was
+to bring (movement along paths, sounds by place, a sky, loading by
+area): what the store needs (loading by area moves to the store; paths,
+sounds by place, and a sky wait until a site needs them, perhaps the
+aquarium's fish for paths), as recommended.
+
+```text
+Sneaker store. What the store needs (recommended).
+```
+
+## 103 — 2026-09-28 · Claude Opus 5.5, low effort
+
+```text
+Should we build a Linux VM environment to test everything instead of
+relying on the CI?
+```
+
+## 104 — 2026-09-28 · Claude Opus 5.5, low effort
+
+Approves both proposals after prompt 103: a local Linux test run that
+copies GitHub's Linux machines (a Docker image, `pnpm test:linux`, and
+its documents; about 1 to 2 GB downloaded once), and making checks C4,
+C6, and D13 retry lost input on Linux.
+
+```text
+Yes, do both.
+```
+
+## 105 — 2026-09-28 · Claude Opus 5.5, low effort
+
+```text
+OK, let me know when the Linux run finishes.
+```

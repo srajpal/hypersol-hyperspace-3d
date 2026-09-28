@@ -46,6 +46,7 @@ fails on file paths over Windows' 260-character limit.
 | `pnpm typecheck` | TypeScript, every package |
 | `pnpm test` | Unit tests (Vitest), next to the code as `*.test.ts` |
 | `pnpm test:e2e` | Builds the app and drives it with Playwright (a few minutes). Its windows open off screen and never take focus; set `HYPERSOL_TEST_SHOW=1` to watch. On Linux without a desktop: `xvfb-run -a pnpm test:e2e` |
+| `pnpm test:linux` | With Docker, on any computer: all of the above on Linux, as GitHub's Linux machines run them (Ubuntu 24.04, 4 processors, 16 GB, no graphics card), in a container with a fresh copy of the repository. `pnpm test:linux tests/e2e/m1.e2e.ts` runs chosen end-to-end files |
 
 Every push and pull request runs all of these on Windows and Linux in
 GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)).

@@ -18,9 +18,9 @@ export const LIMITS = {
   elements: 10_000,
   /** Different model files (a file used by many models is loaded once). */
   modelFiles: 64,
-  /** One file: a model, a file it names, or a sound. */
+  /** One file: a model, a file it names, a sound, or a picture. */
   fileBytes: 32 * 1024 * 1024,
-  /** All of a page's model and sound files together. */
+  /** All of a page's model, sound, and picture files together. */
   totalBytes: 128 * 1024 * 1024,
   /** A picture's width and height. */
   pictureSide: 4096,
@@ -140,8 +140,14 @@ export class Budget {
     this.triangles = Math.max(0, this.triangles - n);
   }
 
+  /** A picture left out after it arrived (too large, or not a picture): its bytes no longer count. */
+  releaseBytes(n: number): void {
+    this.bytes = Math.max(0, this.bytes - n);
+  }
+
   /**
-   * A file other than a model (a sound), counted like a model's files.
+   * A file other than a model (a sound, or a picture the page names),
+   * counted like a model's files.
    * Rejects with LeftOut for a limit or a stop, or with an Error when it
    * cannot be fetched.
    */
@@ -197,7 +203,7 @@ export class Budget {
       if (this.bytes > LIMITS.totalBytes) {
         void reader.cancel();
         this.release(tally);
-        throw new LeftOut(`the page's model files would pass ${MB(LIMITS.totalBytes)} in all`);
+        throw new LeftOut(`the page's files would pass ${MB(LIMITS.totalBytes)} in all`);
       }
       chunks.push(value);
     }

@@ -205,3 +205,15 @@ examples section with a picture of each example.
 ![Blockworld in the morning: the island from a pillar of stone at one corner](screenshots/m17/51-blockworld.png)
 
 ![Blockworld at night: three torches light the slope](screenshots/m17/52-blockworld-night.png)
+
+**Milestone 18: sofa studio** (built 2026-09-27; waiting for acceptance).
+First, a page says how fast the viewer walks and turns, and sliders go
+on the screen (Blockworld's Speed slider). Then the sofa studio,
+HoloML's first shop page: shadows, the fabrics' own pictures, choices
+that change the sofa in place, and light from a photo studio's
+panorama; the price follows the choices, and the evening lamp casts its
+own shadows.
+
+![The sofa studio by day: the red velvet chosen, the price beside it](screenshots/m18/53-sofa-studio.png)
+
+![The sofa studio in the evening: brown leather on an ebony frame, lit by the table lamp](screenshots/m18/54-sofa-studio-evening.png)

@@ -127,11 +127,14 @@ Do not change earlier entries except to correct an error.
   add them to docs/progress.md; the README keeps a short progress
   paragraph that links there. (Added 2026-09-25, prompt 21; the progress
   page split out 2026-09-26, prompt 47.)
-- The README always opens with a screenshot of the newest version or
-  milestone, and a good-looking one: refresh docs/screenshots/readme.png
-  with `pnpm screenshots:readme` at the end of each milestone and each
-  release, and look at it. It shows the HoloML showroom (milestone 16),
-  served locally. (Owner, prompt 68; the showroom since prompt 81, Q5 a.)
+- The README always opens with four screenshots of the newest version
+  or milestone, good-looking ones that show the variety of what the
+  browser does: refresh docs/screenshots/readme*.png with `pnpm
+  screenshots:readme` at the end of each milestone and each release,
+  and look at them. They show the sofa studio, Blockworld, a sample page
+  in the layers view, and the instrument panel, all served locally.
+  (Owner, prompt 68; the showroom from prompt 81, Q5 a; four pictures
+  since prompt 99, the wording approved in prompt 100.)
 - Owner-only automation (Remote Control at session start, the prompt-log
   reminder) lives in CLAUDE.local.md, which is gitignored, so
   contributors' sessions never inherit it.
@@ -177,6 +180,16 @@ date given and grow with each milestone; TODO.md has the latest.
   95, and 96). Checks of scenes wait
   for what they check, not for fixed times (holdKeyUntil, framesDrawn,
   and sceneWait in tests/e2e/harness.ts).
+- Linux on this computer, the way GitHub's Linux machines run the
+  checks: `pnpm test:linux` (needs Docker; first run 2026-09-28, owner,
+  prompts 103 and 104). It builds tests/linux/Dockerfile (Ubuntu 24.04,
+  Node 22, a virtual display, a throwaway keyring), sends in a fresh
+  copy of the repository (the committed files with changes to tracked
+  files), and runs the CI job's steps in a container of GitHub's size (4
+  processors, 16 GB) with no graphics card; `pnpm test:linux <vitest
+  arguments>` runs chosen end-to-end files only. It finds Linux
+  problems before a push and reproduces them in minutes; the automatic
+  builds stay the check a pull request is merged on.
 
 What to recheck after any change (regression list; grows with each
 milestone; the current milestone's checks are defined in TODO.md):
@@ -202,8 +215,10 @@ milestone; the current milestone's checks are defined in TODO.md):
   per-site settings, image rectangles, pages that change, reduced
   motion, efficiency. The layers view is on by default, so every earlier
   check runs with it on.
-- README screenshot: `pnpm screenshots:readme` (HoloML's showroom from
-  the local copy, no network; first run 2026-09-27; not a test).
+- README screenshots: `pnpm screenshots:readme` (four since 2026-09-28,
+  prompt 99: the sofa studio, Blockworld, a made-up sample page in the
+  layers view, and the instrument panel; from local copies in
+  tests/fixtures, no network; first run 2026-09-27; not a test).
 - The HoloML examples' pictures: `pnpm screenshots:examples` (from the
   local copies, no network; first run 2026-09-27). They are part of the
   browser: run it when an example changes, before `pnpm screenshots`.
@@ -265,13 +280,20 @@ milestone; the current milestone's checks are defined in TODO.md):
   section. T1 is holoml's own tests. After the milestone's report
   (prompt 89): a HoloML tab's card shows its scene once drawn, and
   Blockworld plays in a development run.
-- Milestone 18 checks U2 to U6 (same command, tests/e2e/m18.e2e.ts),
-  first part: walking and turning speeds (the page's, the default, and
-  a script's), sliders (keyboard, mouse, the script's change event,
-  the keys a slider keeps, screen readers, the text view), and
-  Blockworld's Speed slider. U1 is holoml's own tests.
-- Later milestones add: the HoloML example sites (the rest of 18, and 19
-  to 21), privacy
+- Milestone 18 checks U2 to U6 and U9 to U15 (same command,
+  tests/e2e/m18.e2e.ts). First part: walking and turning speeds (the
+  page's, the default, and a script's), sliders (keyboard, mouse, the
+  script's change event, the keys a slider keeps, screen readers, the
+  text view), and Blockworld's Speed slider. Second part: shadows (the
+  floor's pixels; drawn in software they are left out, and the check
+  logs that), a material's pictures and tiling, choices (mouse,
+  keyboard, screen readers, scripts, the text view), light from a
+  panorama of the surroundings, and the sofa studio (a copy in
+  tests/fixtures/holoml/sofa-studio): loading within 5 s (logged in
+  software), every fabric and wood, the price, the cart page, the
+  keyboard alone, and no frames while idle. U1 and U8 are holoml's own
+  tests.
+- Later milestones add: the HoloML example sites (19 to 21), privacy
   and data tools (22), and installers (23 and 24).
 
 Rules for tests: a failing test is reported, not deleted. A test is

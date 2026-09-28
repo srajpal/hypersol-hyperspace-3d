@@ -25,10 +25,21 @@ const TYPES: Record<string, string> = {
   '.ogg': 'audio/ogg',
   '.wav': 'audio/wav',
   '.mp3': 'audio/mpeg',
+  // The sofa studio (milestone 18): glTF's own buffers, pictures, and the panorama of the surroundings.
+  '.bin': 'application/octet-stream',
+  '.jpg': 'image/jpeg',
+  '.hdr': 'image/vnd.radiance',
+  // The README's sample page (prompt 99): its pictures.
+  '.svg': 'image/svg+xml',
 };
 
 /** A solid-colour 16×16 PNG, built here so the fixture has no binary file. */
 function makePng(r: number, g: number, b: number): Buffer {
+  return png(16, 16, () => [r, g, b]);
+}
+
+/** A PNG of any size, each pixel's colour from a function. */
+function png(width: number, height: number, pixel: (x: number, y: number) => [number, number, number]): Buffer {
   const chunk = (type: string, data: Buffer) => {
     const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
     const len = Buffer.alloc(4);
@@ -37,14 +48,13 @@ function makePng(r: number, g: number, b: number): Buffer {
     crc.writeUInt32BE(crc32(body));
     return Buffer.concat([len, body, crc]);
   };
-  const size = 16;
   const header = Buffer.alloc(13);
-  header.writeUInt32BE(size, 0);
-  header.writeUInt32BE(size, 4);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
   header[8] = 8; // bit depth
   header[9] = 2; // truecolour
-  const row = Buffer.concat([Buffer.from([0]), Buffer.from(Array.from({ length: size }, () => [r, g, b]).flat())]);
-  const pixels = deflateSync(Buffer.concat(Array.from({ length: size }, () => row)));
+  const rows = Array.from({ length: height }, (_, y) => Buffer.concat([Buffer.from([0]), Buffer.from(Array.from({ length: width }, (_, x) => pixel(x, y)).flat())]));
+  const pixels = deflateSync(Buffer.concat(rows));
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk('IHDR', header),
@@ -81,6 +91,32 @@ interface Gate {
 }
 
 /** A PNG header claiming a size, for the favicon dimension limit (not decodable). */
+/** "ff2020" as red, green, and blue from 0 to 255 (a bad value is the fallback). */
+function hex(value: string | null, fallback: [number, number, number]): [number, number, number] {
+  if (!value || !/^[0-9a-f]{6}$/i.test(value)) return fallback;
+  const n = parseInt(value, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+/**
+ * A panorama in Radiance's HDR format (RGBE, flat scanlines): 64 by 32
+ * pixels of one colour, each channel from 0 up (1 is as bright as white).
+ */
+function hdrPanorama(r: number, g: number, b: number): Buffer {
+  const [w, h] = [64, 32];
+  const v = Math.max(r, g, b);
+  let rgbe = [0, 0, 0, 0];
+  if (v > 1e-32) {
+    const e = Math.ceil(Math.log2(v + 1e-9)); // v = m * 2^e with m in [0.5, 1)
+    const scale = 256 / 2 ** e;
+    rgbe = [Math.floor(r * scale), Math.floor(g * scale), Math.floor(b * scale), e + 128];
+  }
+  const header = Buffer.from(`#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n-Y ${h} +X ${w}\n`, 'ascii');
+  const pixels = Buffer.alloc(w * h * 4);
+  for (let i = 0; i < w * h; i++) pixels.set(rgbe, i * 4);
+  return Buffer.concat([header, pixels]);
+}
+
 function pngClaiming(width: number, height: number): Buffer {
   const b = Buffer.alloc(33);
   Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(b, 0);
@@ -134,6 +170,10 @@ function page(title: string, body: string): string {
  *   /holoml/gen/many.holoml?n=N         a page of a label and N empty groups (up to 50,000)
  *   /holoml/gen/tone.wav                a second of a quiet tone, as a WAV file (milestone 17)
  *   /holoml/gen/big.wav?mb=N            N MB of silence named as a WAV file, without a declared length
+ *   /holoml/gen/stripes.png?n=N&a=RGB&b=RGB
+ *                                       64 by 64 pixels of N pairs of upright stripes, colour a then b
+ *                                       (default 2 pairs, ff2020 and 2040ff; milestone 18)
+ *   /holoml/gen/panorama.hdr?rgb=R,G,B  a 64 by 32 HDR panorama of one colour (default 0,1,0: green)
  */
 /** A WAV file: 16-bit mono, 22,050 samples a second, of a 440 Hz tone. */
 function toneWav(seconds: number): Buffer {
@@ -228,6 +268,20 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
         if (!res.destroyed) res.end();
       };
       pump();
+      return;
+    }
+    if (what === 'stripes.png') {
+      const pairs = Math.min(16, Math.max(1, Number(p.get('n') ?? '2') || 2));
+      const a = hex(p.get('a'), [0xff, 0x20, 0x20]);
+      const b = hex(p.get('b'), [0x20, 0x40, 0xff]);
+      res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'no-store' });
+      res.end(png(64, 64, (x) => (Math.floor((x * pairs * 2) / 64) % 2 === 0 ? a : b)));
+      return;
+    }
+    if (what === 'panorama.hdr') {
+      const [r, g, b] = (p.get('rgb') ?? '0,1,0').split(',').map((n) => Math.max(0, Number(n) || 0));
+      res.writeHead(200, { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' });
+      res.end(hdrPanorama(r ?? 0, g ?? 0, b ?? 0));
       return;
     }
     if (what === 'claim.png') {

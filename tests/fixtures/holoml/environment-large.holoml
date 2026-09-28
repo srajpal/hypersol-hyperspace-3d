@@ -1,0 +1,12 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML surroundings too large</title>
+  </head>
+  <!-- A panorama over the renderer's picture limit: left out, and the scene shows with the renderer's own light. -->
+  <scene background="#1c2030" environment="gen/claim.png?w=8192&amp;h=4096">
+    <viewpoint position="0 1 2.2" look-at="0 1 0" />
+    <model id="mirror" src="blockworld/models/stone.gltf" position="0 1 0" rotation="0 30 0">
+      <material name="stone" metalness="1" roughness="0.25" />
+    </model>
+  </scene>
+</holoml>

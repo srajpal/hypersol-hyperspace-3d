@@ -156,13 +156,15 @@ the list updates can be turned off:
   page names (fetched through that page's own session, as a browser tab
   does; at most 256 KB, given up after 5 seconds, and cancelled when you
   leave the page).
-- HoloML pages (`.holoml` addresses) and the 3D models, sounds, and
-  scripts they name: only from the page's own site (the page's content
-  policy allows nothing else), through the page's own session, so the
-  shield and encrypted DNS apply as for any page. The browser's HoloML
-  viewer itself comes from the app, not the network. Every model and
-  sound file counts against the page's limits as it arrives (milestones
-  15 and 17); a file that crosses one is not fetched further. A HoloML
+- HoloML pages (`.holoml` addresses) and the 3D models, sounds,
+  scripts, and pictures (a material's, and the panorama of the
+  surroundings; milestone 18) they name: only from the page's own site
+  (the page's content policy allows nothing else), through the page's
+  own session, so the shield and encrypted DNS apply as for any page.
+  The browser's HoloML viewer itself comes from the app, not the
+  network. Every model, sound, and picture file counts against the
+  page's limits as it arrives (milestones 15, 17, and 18); a file that
+  crosses one is not fetched further. A HoloML
   0.2 page's scripts (milestone 17) run in the page's own sandboxed
   process like a web page's, and can reach only its own site; their
   scene API gives them the scene, where you look in it, and your
@@ -172,8 +174,11 @@ the list updates can be turned off:
 - HoloML's examples: the start panel's "Try HoloML" links (milestones 16
   and 17) and the HoloML examples section (the menu, or Ctrl+Shift+E)
   open the example sites HoloML publishes with GitHub Pages at
-  `https://srajpal.github.io/holoml/` (the showroom, Blockworld), only
-  when you choose one; each is then an ordinary HoloML page. The
+  `https://srajpal.github.io/holoml/` (the showroom, Blockworld, the
+  sofa studio), only when you choose one; each is then an ordinary
+  HoloML page. The sofa studio's script keeps your fabric and wood for
+  its cart page in that tab's session storage, on this computer, as any
+  site's script may; the browser adds nothing to it. The
   section's links to HoloML's repository, its specification, and each
   example's source open `https://github.com/srajpal/holoml` pages the
   same way. The start panel and the section fetch nothing themselves:

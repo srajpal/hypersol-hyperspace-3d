@@ -15,6 +15,11 @@
  * plain models are drawn as instances (instances.ts); walls and gravity
  * for walking (physics.ts); lights and the background can be animated;
  * sounds (sound.ts), text on the screen, and a crosshair.
+ *
+ * Milestone 18 (HoloML 0.2, second part): sliders and speeds; shadows
+ * (left out when drawing in software); material pictures and tiling
+ * (pictures.ts); choices that change a model's material in place; and
+ * light from the page's own panorama of the surroundings.
  */
 import {
   AmbientLight,
@@ -35,10 +40,12 @@ import {
   Mesh,
   MeshStandardMaterial,
   Object3D,
+  PCFShadowMap,
   PerspectiveCamera,
   PMREMGenerator,
   PointLight,
   Raycaster,
+  RepeatWrapping,
   Scene,
   SkinnedMesh,
   SpotLight,
@@ -63,8 +70,9 @@ import { Budget, LeftOut, LIMITS } from './budget';
 import { keptByControl, orbitControls, TURN_SPEED, walkControls, WALK_SPEED, type ViewControls } from './controls';
 import { InstancePool, countTriangles, worldBox, type Template } from './instances';
 import { SolidGrid, Walker, type Box } from './physics';
+import { Pictures, type PictureUse } from './pictures';
 import { SoundBank, type SoundHandle, type SoundReport } from './sound';
-import { attr, color, contrastText, duration, has, num, repeat, resolveAddress, scale, text, vec3, type Vec3 } from './values';
+import { attr, color, contrastText, duration, has, num, repeat, resolveAddress, scale, text, tiling, vec3, type Vec3 } from './values';
 
 const DEG = Math.PI / 180;
 const LINK_HIGHLIGHT = 0x5ce1ff;
@@ -96,8 +104,65 @@ export interface ModelReport {
   bytes?: number;
   triangles?: number;
   pictures?: { width: number; height: number }[];
-  materials: Record<string, { color: string; metalness: number; roughness: number; opacity: number }>;
+  materials: Record<string, MaterialReport>;
   animation: { name: string; playing: boolean; time: number } | null;
+}
+
+/**
+ * A named material's look, for the tests and scripts: its numbers, and
+ * its colour picture (the page's address for one the page gave, "own"
+ * for the model file's) with its tiling.
+ */
+export interface MaterialReport {
+  color: string;
+  metalness: number;
+  roughness: number;
+  opacity: number;
+  map: string | null;
+  repeat: [number, number] | null;
+}
+
+/** A material's look as a `material` or an `option` element gives it: only what it gives. */
+interface Look {
+  color: string | null;
+  metalness: number | null;
+  roughness: number | null;
+  opacity: number | null;
+  map?: Texture;
+  normalMap?: Texture;
+  roughnessMap?: Texture;
+  repeat: [number, number] | null;
+}
+
+/** A material's pictures, which `repeat` tiles (the model's own as well as the page's). */
+const PICTURE_SLOTS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap', 'bumpMap'] as const;
+
+/** The page's panorama of the surroundings (HoloML 0.2 `environment`). */
+interface EnvironmentState {
+  src: string;
+  state: 'loading' | 'loaded' | 'failed' | 'refused' | 'left-out';
+  reason?: string;
+}
+
+/** One option of a choice: its value and label, its look, and the materials made with it (one for each material it replaces). */
+interface ChoiceOption {
+  value: string;
+  label: string;
+  look: Promise<Look> | null;
+  made: Map<Material, MeshStandardMaterial>;
+}
+
+/** A choice (HoloML 0.2, milestone 18): its options, its radio buttons, and what it changes. */
+interface ChoiceState {
+  options: ChoiceOption[];
+  inputs: HTMLInputElement[];
+  legend: HTMLElement;
+  chosen: number;
+  /** The model's id and the material's name; null for a choice only the page's scripts use. */
+  target: string | null;
+  material: string | null;
+  /** The console was told the model has no such material. */
+  warned?: boolean;
 }
 
 /** One element of the scene, for the outline, keyboard, inspector, and scripts. */
@@ -119,6 +184,8 @@ export interface Entry {
   removed?: boolean;
   /** Its own solid flag (models and groups, HoloML 0.2). */
   solid?: boolean;
+  /** Its own shadows flag (models and groups, HoloML 0.2, milestone 18). */
+  shadows?: boolean;
   /** A model's file, once loaded; and the triangles it counts. */
   template?: Template;
   triangles?: number;
@@ -127,6 +194,8 @@ export interface Entry {
   hud?: HTMLElement;
   /** A slider's control and its label (HoloML 0.2, milestone 18); its box is `hud`. */
   slider?: { input: HTMLInputElement; label: HTMLElement };
+  /** A choice's options and radio buttons (milestone 18); its box is `hud`. */
+  choice?: ChoiceState;
   /** A label's words and look, to draw it again when a script changes it. */
   labelLook?: { words: string; size: number; color: string; note: HTMLElement };
 }
@@ -142,7 +211,7 @@ export type SceneEvent =
   | { type: 'click'; hit: Hit; button: 'left' | 'right' | 'middle' }
   | { type: 'key'; key: string; down: boolean; repeat: boolean }
   | { type: 'frame'; time: number; dt: number }
-  | { type: 'change'; entry: Entry; value: number };
+  | { type: 'change'; entry: Entry; value: number | string };
 
 interface LoadedTemplate {
   template: Template;
@@ -183,7 +252,8 @@ export class HolomlView {
   /** Elements in the scene now (the page's limit counts these). */
   private elementCount = 2; // holoml and scene
   private readonly templates = new Map<string, Promise<LoadedTemplate>>();
-  private readonly pools = new Map<Template, InstancePool>();
+  /** Instance pools, by model file (and whether its models have shadows). */
+  private readonly pools = new Map<string, InstancePool>();
   private collidersDirty = true;
   private grid: SolidGrid | null = null;
   private selected = -1;
@@ -212,6 +282,24 @@ export class HolomlView {
   /** A frame was drawn (the tab card's picture waits for one, prompt 89). */
   onDrawn: (() => void) | null = null;
   private viewMoving = false;
+  /** The page's own pictures: materials' and the surroundings' (milestone 18). */
+  private readonly pictures: Pictures;
+  /** Pictures and surroundings not shown, and why (for the notice). */
+  private readonly pictureProblems: { what: string; why: string }[] = [];
+  /** The WebGL renderer's name when Chromium draws in software (no graphics card), else null. */
+  private readonly software: string | null;
+  /** Shadows: drawn (a 0.2 page, a graphics card), and whether and why a page's were left out. */
+  private readonly shadowsOn: boolean;
+  private shadowsLeftOut: string | null = null;
+  private readonly shadowLights: (DirectionalLight | PointLight | SpotLight)[] = [];
+  private shadowBox: Box3 | null = null;
+  /** Models a choice changes: drawn as their own copies, never as instances. */
+  private readonly choiceTargets = new Set<string>();
+  private readonly choices: Entry[] = [];
+  /** A chosen model's meshes: their materials before any option. */
+  private readonly ownMaterials = new WeakMap<Mesh, Material[]>();
+  /** The page's panorama of the surroundings, and whether it lights the scene yet. */
+  private environment: EnvironmentState | null = null;
 
   constructor(root: ElementNode, container: HTMLElement, outline: HTMLElement, hudLayer: HTMLElement) {
     this.outline = outline;
@@ -226,6 +314,16 @@ export class HolomlView {
     this.renderer.outputColorSpace = SRGBColorSpace;
     container.append(this.renderer.domElement);
     this.renderer.domElement.dataset['testid'] = 'holoml-canvas';
+    this.software = softwareRenderer(this.renderer);
+    // Shadows (HoloML 0.2): soft shadow maps where there is a graphics card.
+    // Drawn in software they would take most of every frame, so a page's
+    // shadows are left out there, and the console says so (owner, prompt 98, Q5 a).
+    this.shadowsOn = this.version === '0.2' && this.software === null;
+    if (this.shadowsOn) {
+      this.renderer.shadowMap.enabled = true;
+      this.renderer.shadowMap.type = PCFShadowMap;
+    }
+    this.pictures = new Pictures(this.budget, this.origin, Math.min(8, this.renderer.capabilities.getMaxAnisotropy()));
 
     const scene = root.children.find((c): c is ElementNode => c.type === 'element' && c.name === 'scene');
     const background = scene ? color(scene, 'background') : null;
@@ -237,6 +335,16 @@ export class HolomlView {
     this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     this.scene.environmentIntensity = 0.45;
     pmrem.dispose();
+    // HoloML 0.2: the page's own surroundings light the scene once they arrive.
+    const surroundings = scene && this.version === '0.2' ? attr(scene, 'environment') : null;
+    if (surroundings) this.loadEnvironment(surroundings);
+    // The models a choice changes get their own copies (not instances), so each is found before building.
+    if (scene && this.version === '0.2') {
+      for (const c of scene.children) {
+        const target = c.type === 'element' && c.name === 'choice' && attr(c, 'material') ? attr(c, 'target')?.trim() : null;
+        if (target?.startsWith('#')) this.choiceTargets.add(target.slice(1));
+      }
+    }
 
     this.crosshair = document.createElement('div');
     this.crosshair.className = 'holoml-crosshair';
@@ -258,6 +366,10 @@ export class HolomlView {
         }
         if (c.name === 'slider') {
           if (this.count(c) && this.version === '0.2') this.slider(c);
+          continue;
+        }
+        if (c.name === 'choice') {
+          if (this.count(c) && this.version === '0.2') this.choice(c);
           continue;
         }
         this.build(c, this.scene, null, null, 0, false, animates);
@@ -409,10 +521,36 @@ export class HolomlView {
     return !this.viewMoving;
   }
 
+  /** Shadows (milestone 18): the lights and the models that cast them, and why a page's were left out, if they were. */
+  get shadowsInfo(): { lights: number; models: number; leftOut: string | null } {
+    const models = this.shadowsOn ? this.entries.filter((e) => e.kind === 'model' && e.report?.state === 'loaded' && this.castsShadows(e)).length : 0;
+    return { lights: this.shadowLights.filter((l) => l.parent).length, models, leftOut: this.shadowsLeftOut };
+  }
+
+  /** The page's panorama of the surroundings, and how brightly it lights the scene. */
+  get environmentInfo(): { src: string; state: string; reason?: string; intensity: number } | null {
+    return this.environment ? { ...this.environment, intensity: this.scene.environmentIntensity } : null;
+  }
+
+  /** The choices (milestone 18): label, corner, options, and the chosen value. */
+  get choicesInfo(): { id: string | null; label: string; corner: string | null; value: string; options: { value: string; label: string }[] }[] {
+    return this.choices.map((e) => {
+      const c = e.choice!;
+      return {
+        id: e.id,
+        label: c.legend.textContent ?? '',
+        corner: e.hud?.parentElement?.dataset['corner'] ?? null,
+        value: c.options[c.chosen]?.value ?? '',
+        options: c.options.map(({ value, label }) => ({ value, label })),
+      };
+    });
+  }
+
   /** What was left out, and why, for the notice. */
   get leftOut(): { what: string; why: string }[] {
     const out = this.models.filter((m) => m.state === 'left-out' || m.state === 'refused' || m.state === 'failed').map((m) => ({ what: m.src, why: m.reason ?? m.state }));
     for (const s of this.sounds.reports) if (s.state !== 'loaded' && s.state !== 'loading') out.push({ what: s.src, why: s.reason ?? s.state });
+    out.push(...this.pictureProblems);
     if (this.leftOutElements > 0) {
       out.push({ what: `${this.leftOutElements.toLocaleString('en')} elements`, why: `past the page's limit of ${LIMITS.elements.toLocaleString('en')}` });
     }
@@ -458,6 +596,7 @@ export class HolomlView {
         parent.add(g);
         this.setObject(entry, g);
         if (this.version === '0.2' && has(node, 'solid')) entry.solid = true;
+        if (this.version === '0.2' && has(node, 'shadows')) entry.shadows = true;
         if (entry.id && listed) entry.item = this.addItem(entry, 'Group');
         for (const c of node.children) this.build(c, g, entry, link, depth + 1, fromScript, animates);
         this.track(g, link);
@@ -466,6 +605,7 @@ export class HolomlView {
       case 'model':
         if (listed) entry.item = this.addItem(entry, 'Model');
         if (this.version === '0.2' && has(node, 'solid')) entry.solid = true;
+        if (this.version === '0.2' && has(node, 'shadows')) entry.shadows = true;
         this.setObject(entry, this.model(node, parent, entry));
         this.track(entry.object!, link);
         break;
@@ -597,8 +737,10 @@ export class HolomlView {
     const clipName = attr(el, 'animation');
     this.pending += 1;
     if (this.pending === 1) this.onBusy?.(true);
-    this.loadTemplate(url)
-      .then((loaded) => {
+    // The materials' pictures (HoloML 0.2) load beside the model; a picture that fails is reported, and the rest shows.
+    const looks = Promise.all(changes.map((c) => this.lookOf(c)));
+    Promise.all([this.loadTemplate(url), looks])
+      .then(async ([loaded, given]) => {
         if (entry.removed) return;
         const t = loaded.template;
         // Each model drawn counts its triangles; the first was counted by the load.
@@ -610,17 +752,25 @@ export class HolomlView {
         report.triangles = t.triangles;
         report.pictures = t.pictures;
         holder.userData['template'] = t;
-        if (t.instanceable && changes.length === 0 && !clipName) {
+        const shadows = this.shadowsOn && this.castsShadows(entry);
+        const chosen = entry.id !== null && this.choiceTargets.has(entry.id);
+        if (t.instanceable && changes.length === 0 && !clipName && !chosen) {
           // Drawn as an instance of the file's meshes (many blocks, few draw calls).
-          this.poolFor(t, url.href).add(holder);
+          this.poolFor(t, url.href, shadows).add(holder);
           this.materialsOf(t.scene, report);
         } else {
           const copy = cloneModel(t.scene);
+          if (shadows) castShadows(copy);
           holder.add(copy);
-          this.changeMaterials(changes, copy, report);
+          holder.userData['copy'] = copy;
+          this.changeMaterials(changes, given, copy, report);
           if (clipName) this.startClip(el, copy, loaded.animations, clipName, report);
+          // The options its choices start with; the model counts as loading until they are on it.
+          await Promise.all(this.choices.filter((c) => c.choice!.target === entry.id).map((c) => this.applyChoice(c)));
+          if (entry.removed) return;
         }
         report.state = 'loaded';
+        if (shadows) this.shadowBox = null;
         if (this.isSolid(entry)) this.collidersDirty = true;
         this.applyMotion();
       })
@@ -643,13 +793,21 @@ export class HolomlView {
     }
   }
 
-  private poolFor(t: Template, src: string): InstancePool {
-    let pool = this.pools.get(t);
+  /** The instances of a model file: one pool for models with shadows, one for models without. */
+  private poolFor(t: Template, src: string, shadows: boolean): InstancePool {
+    const key = `${shadows ? 'shadows ' : ''}${src}`;
+    let pool = this.pools.get(key);
     if (!pool) {
-      pool = new InstancePool(t, this.scene, src);
-      this.pools.set(t, pool);
+      pool = new InstancePool(t, this.scene, src, shadows);
+      this.pools.set(key, pool);
     }
     return pool;
+  }
+
+  /** Whether a model casts and receives shadows: its own flag, or a group's around it (HoloML 0.2). */
+  private castsShadows(entry: Entry): boolean {
+    for (let e: Entry | null = entry; e; e = e.parent) if (e.shadows) return true;
+    return false;
   }
 
   private startClip(el: ElementNode, model: Object3D, clips: AnimationClip[], clipName: string, report: ModelReport): void {
@@ -683,26 +841,19 @@ export class HolomlView {
     this.onLeftOut?.();
   }
 
-  /** <material> children: change the named materials, only what is given. */
-  private changeMaterials(changes: ElementNode[], model: Object3D, report: ModelReport): void {
+  /** <material> children: change the named materials, only what is given (with their looks, pictures included). */
+  private changeMaterials(changes: ElementNode[], looks: Look[], model: Object3D, report: ModelReport): void {
     const done = new Map<Material, MeshStandardMaterial>();
     model.traverse((o) => {
       if (!(o instanceof Mesh)) return;
       const list = Array.isArray(o.material) ? o.material : [o.material];
       const next = list.map((m: Material) => {
-        const change = changes.find((c) => attr(c, 'name') === m.name);
-        if (!change || !(m instanceof MeshStandardMaterial)) return m;
-        const copy = done.get(m) ?? m.clone();
-        if (!(copy instanceof MeshStandardMaterial)) return m;
-        if (!done.has(m)) {
-          const c = color(change, 'color');
-          if (c) copy.color.set(c);
-          copy.metalness = num(change, 'metalness', copy.metalness, 0, 1);
-          copy.roughness = num(change, 'roughness', copy.roughness, 0, 1);
-          if (has(change, 'opacity')) {
-            copy.opacity = num(change, 'opacity', copy.opacity, 0, 1);
-            copy.transparent = copy.opacity < 1;
-          }
+        const i = changes.findIndex((c) => attr(c, 'name') === m.name);
+        if (i < 0 || !(m instanceof MeshStandardMaterial)) return m;
+        let copy = done.get(m);
+        if (!copy) {
+          copy = m.clone();
+          this.applyLook(copy, looks[i]!);
           done.set(m, copy);
         }
         return copy;
@@ -716,12 +867,114 @@ export class HolomlView {
     }
   }
 
+  /**
+   * What a `material` or an `option` element gives: its numbers, and
+   * (HoloML 0.2) its pictures and tiling, once the pictures arrive. It
+   * never fails: a picture that cannot be shown is left out and reported,
+   * and the material keeps its own.
+   */
+  private async lookOf(el: ElementNode): Promise<Look> {
+    const unit = (name: string) => {
+      const v = has(el, name) ? num(el, name, NaN, 0, 1) : NaN;
+      return Number.isNaN(v) ? null : v;
+    };
+    const look: Look = { color: color(el, 'color'), metalness: unit('metalness'), roughness: unit('roughness'), opacity: unit('opacity'), repeat: null };
+    if (this.version !== '0.2') return look;
+    look.repeat = tiling(el);
+    const slots: [string, 'map' | 'normalMap' | 'roughnessMap', PictureUse][] = [
+      ['map', 'map', 'color'],
+      ['normal-map', 'normalMap', 'data'],
+      ['roughness-map', 'roughnessMap', 'data'],
+    ];
+    await Promise.all(
+      slots.map(async ([name, slot, use]) => {
+        const src = attr(el, name);
+        const texture = src ? await this.picture(src, use, look.repeat ?? [1, 1]) : null;
+        if (texture) look[slot] = texture;
+      }),
+    );
+    return look;
+  }
+
+  /** One of the page's pictures, counted as loading until it arrives; null (and reported) when it cannot be shown. */
+  private async picture(src: string, use: PictureUse, repeat: [number, number]): Promise<Texture | null> {
+    const url = resolveAddress(src, this.base);
+    if (!url || url.origin !== this.origin) {
+      this.pictureLeftOut(src, "pictures load only from the page's own site");
+      return null;
+    }
+    this.pending += 1;
+    if (this.pending === 1) this.onBusy?.(true);
+    try {
+      return await this.pictures.texture(url, use, repeat);
+    } catch (e) {
+      this.pictureLeftOut(src, e instanceof LeftOut ? e.reason : `could not be loaded (${e instanceof Error ? e.message : String(e)})`);
+      return null;
+    } finally {
+      this.settle();
+    }
+  }
+
+  /** A picture not shown: reported once, however many materials name it. */
+  private pictureLeftOut(what: string, why: string): void {
+    if (this.pictureProblems.some((p) => p.what === what)) return;
+    this.pictureProblems.push({ what, why });
+    console.warn(`HoloML: the picture "${what}" was left out: ${why}.`);
+    this.onLeftOut?.();
+  }
+
+  /** Gives a material a look: only what the look gives changes; `repeat` tiles the material's own pictures too. */
+  private applyLook(m: MeshStandardMaterial, look: Look): void {
+    if (look.color) m.color.set(look.color);
+    if (look.metalness !== null) m.metalness = look.metalness;
+    if (look.roughness !== null) m.roughness = look.roughness;
+    if (look.opacity !== null) {
+      m.opacity = look.opacity;
+      m.transparent = look.opacity < 1;
+    }
+    const slots = m as unknown as Record<(typeof PICTURE_SLOTS)[number], Texture | null>;
+    const given = new Set<Texture>();
+    for (const slot of ['map', 'normalMap', 'roughnessMap'] as const) {
+      const t = look[slot];
+      if (t) {
+        slots[slot] = t;
+        given.add(t);
+      }
+    }
+    if (look.repeat) {
+      // One copy of each picture, however many slots use it (roughness and metalness often share one).
+      const tiled = new Map<Texture, Texture>();
+      for (const slot of PICTURE_SLOTS) {
+        const t = slots[slot];
+        if (!t || given.has(t)) continue;
+        let copy = tiled.get(t);
+        if (!copy) {
+          copy = t.clone();
+          copy.wrapS = RepeatWrapping;
+          copy.wrapT = RepeatWrapping;
+          copy.repeat.set(look.repeat[0], look.repeat[1]);
+          copy.needsUpdate = true;
+          tiled.set(t, copy);
+        }
+        slots[slot] = copy;
+      }
+    }
+    m.needsUpdate = true;
+  }
+
   private materialsOf(model: Object3D, report: ModelReport): void {
     model.traverse((o) => {
       if (!(o instanceof Mesh)) return;
       for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
         if (m instanceof MeshStandardMaterial && m.name) {
-          report.materials[m.name] = { color: `#${m.color.getHexString()}`, metalness: m.metalness, roughness: m.roughness, opacity: m.opacity };
+          report.materials[m.name] = {
+            color: `#${m.color.getHexString()}`,
+            metalness: m.metalness,
+            roughness: m.roughness,
+            opacity: m.opacity,
+            map: m.map ? ((m.map.userData['src'] as string | undefined) ?? 'own') : null,
+            repeat: m.map ? [m.map.repeat.x, m.map.repeat.y] : null,
+          };
         }
       }
     });
@@ -759,8 +1012,125 @@ export class HolomlView {
     } else return null;
     light.userData['factor'] = factor;
     light.userData['kind'] = type;
+    if (this.version === '0.2' && has(el, 'shadows') && type !== 'ambient') this.castFrom(light as DirectionalLight | PointLight | SpotLight);
     parent.add(light);
     return light;
+  }
+
+  /**
+   * A light marked `shadows` (HoloML 0.2): soft shadows from the models
+   * marked `shadows`, where there is a graphics card; drawn in software,
+   * left out, and the console says so once.
+   */
+  private castFrom(light: DirectionalLight | PointLight | SpotLight): void {
+    if (!this.shadowsOn) {
+      if (!this.shadowsLeftOut) {
+        this.shadowsLeftOut = `this computer draws 3D in software${this.software ? ` (${this.software})` : ''}`;
+        console.warn("HoloML: the page's shadows were left out: this computer draws 3D in software, without a graphics card.");
+      }
+      return;
+    }
+    light.castShadow = true;
+    const size = light instanceof PointLight ? 1024 : 2048;
+    light.shadow.mapSize.set(size, size);
+    // Soft edges, and no stripes on the surfaces that cast them.
+    light.shadow.radius = 4;
+    light.shadow.bias = -0.0003;
+    light.shadow.normalBias = 0.02;
+    this.shadowLights.push(light);
+  }
+
+  /**
+   * Each shadow-casting light sees just the models with shadows, so the
+   * detail of its shadow map is spent on them (fitted before each frame;
+   * the models' bounds are measured again when they arrive or move).
+   */
+  private fitShadows(): void {
+    if (this.shadowLights.length === 0) return;
+    if (!this.shadowBox) {
+      this.scene.updateMatrixWorld();
+      const box = new Box3();
+      const b = new Box3();
+      for (const e of this.entries) {
+        if (e.kind !== 'model' || e.removed || !e.template || e.report?.state !== 'loaded' || !this.castsShadows(e)) continue;
+        const o = e.object!;
+        if (o.userData['pool']) worldBox(e.template, o, b);
+        else b.setFromObject(o);
+        box.union(b);
+      }
+      this.shadowBox = box;
+    }
+    if (this.shadowBox.isEmpty()) return;
+    const { min, max } = this.shadowBox;
+    const corners = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => new Vector3(i & 1 ? max.x : min.x, i & 2 ? max.y : min.y, i & 4 ? max.z : min.z));
+    const pad = 0.1;
+    for (const light of this.shadowLights) {
+      if (!light.parent) continue;
+      light.updateWorldMatrix(true, false);
+      if (light instanceof DirectionalLight) {
+        light.target.updateWorldMatrix(true, false);
+        light.shadow.updateMatrices(light);
+        const cam = light.shadow.camera;
+        const lo = new Vector3(Infinity, Infinity, Infinity);
+        const hi = new Vector3(-Infinity, -Infinity, -Infinity);
+        for (const c of corners) {
+          const v = c.clone().applyMatrix4(cam.matrixWorldInverse);
+          lo.min(v);
+          hi.max(v);
+        }
+        // An orthographic view may reach behind the light's own place, so near can be less than 0.
+        cam.left = lo.x - pad;
+        cam.right = hi.x + pad;
+        cam.bottom = lo.y - pad;
+        cam.top = hi.y + pad;
+        cam.near = -hi.z - pad;
+        cam.far = -lo.z + pad;
+        cam.updateProjectionMatrix();
+      } else {
+        const at = light.getWorldPosition(new Vector3());
+        const cam = light.shadow.camera;
+        cam.near = 0.05;
+        cam.far = Math.max(1, Math.max(...corners.map((c) => c.distanceTo(at))) + pad);
+        cam.updateProjectionMatrix();
+      }
+    }
+  }
+
+  /**
+   * The page's panorama of the surroundings (HoloML 0.2 `environment`):
+   * once it arrives, it lights the scene in place of the renderer's own
+   * soft light. It comes from the page's own site, within its limits.
+   */
+  private loadEnvironment(src: string): void {
+    const state: EnvironmentState = { src, state: 'loading' };
+    this.environment = state;
+    const url = resolveAddress(src, this.base);
+    if (!url || url.origin !== this.origin) {
+      state.state = 'refused';
+      state.reason = "the surroundings load only from the page's own site";
+      this.pictureLeftOut(src, state.reason);
+      return;
+    }
+    this.pending += 1;
+    if (this.pending === 1) this.onBusy?.(true);
+    this.pictures
+      .environment(url)
+      .then((panorama) => {
+        const pmrem = new PMREMGenerator(this.renderer);
+        const lit = pmrem.fromEquirectangular(panorama).texture;
+        pmrem.dispose();
+        panorama.dispose();
+        this.scene.environment?.dispose();
+        this.scene.environment = lit;
+        state.state = 'loaded';
+        this.followAmbient();
+      })
+      .catch((e: unknown) => {
+        state.state = e instanceof LeftOut ? 'left-out' : 'failed';
+        state.reason = e instanceof LeftOut ? e.reason : `could not be loaded (${e instanceof Error ? e.message : String(e)})`;
+        this.pictureLeftOut(src, state.reason);
+      })
+      .finally(() => this.settle());
   }
 
   private label(el: ElementNode, parent: Object3D, entry: Entry): Object3D {
@@ -869,6 +1239,150 @@ export class HolomlView {
   /** Moves a slider (kept to its range and steps), without a change event. */
   setSliderValue(entry: Entry, value: number): void {
     if (entry.slider) entry.slider.input.value = String(value);
+  }
+
+  /**
+   * A choice (HoloML 0.2, milestone 18): options in a corner of the
+   * screen, as the page's own group of radio buttons, so the mouse,
+   * touch, the keyboard (the arrow keys), and screen readers use it as on
+   * any web page. Picking an option changes the named material of the
+   * target model in place; either way, it tells the page's scripts
+   * (`change`). Every option's pictures load with the page, so a pick
+   * shows at once.
+   */
+  private choice(el: ElementNode): Entry {
+    const id = attr(el, 'id') ?? null;
+    const entry: Entry = { el, kind: 'choice', name: nameOf(el), depth: 0, object: null, item: null, id: null, parent: null, children: [], link: null, fromScript: false };
+    if (id && !this.entryById.has(id)) {
+      entry.id = id;
+      this.entryById.set(id, entry);
+    }
+    this.entries.push(entry);
+    this.choices.push(entry);
+    // Its options count against the page's limit on elements too.
+    this.elementCount += countElements(el);
+    const target = attr(el, 'target')?.trim();
+    const material = attr(el, 'material') ?? null;
+    const changes = target?.startsWith('#') && material !== null;
+    const options: ChoiceOption[] = [];
+    for (const o of el.children) {
+      if (o.type !== 'element' || o.name !== 'option') continue;
+      const label = text(o);
+      const value = attr(o, 'value') ?? label;
+      // Two options with one value: the checker reports it, and the first is kept.
+      if (options.some((x) => x.value === value)) continue;
+      options.push({ value, label: label || value, look: changes ? this.lookOf(o) : null, made: new Map() });
+    }
+    const box = document.createElement('fieldset');
+    box.className = 'holoml-choice';
+    box.dataset['testid'] = 'holoml-choice';
+    if (entry.id) box.dataset['id'] = entry.id;
+    const legend = document.createElement('legend');
+    legend.textContent = attr(el, 'label')?.replace(/\s+/g, ' ').trim() ?? '';
+    legend.hidden = legend.textContent === '';
+    if (legend.hidden) box.setAttribute('aria-label', entry.id ?? 'Choice');
+    const list = document.createElement('div');
+    list.className = 'holoml-options';
+    const group = `holoml-choice-${this.choices.length}`;
+    const start = Math.max(0, options.findIndex((o) => o.value === attr(el, 'value')));
+    const inputs = options.map((o, i) => {
+      const label = document.createElement('label');
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = group;
+      input.value = o.value;
+      input.checked = i === start;
+      const words = document.createElement('span');
+      words.textContent = o.label;
+      label.append(input, words);
+      list.append(label);
+      input.addEventListener('change', () => {
+        if (input.checked) this.pick(entry, i, true);
+      });
+      return input;
+    });
+    box.append(legend, list);
+    this.corner(el).append(box);
+    entry.hud = box;
+    entry.choice = { options, inputs, legend, chosen: start, target: changes ? target!.slice(1) : null, material: changes ? material : null };
+    return entry;
+  }
+
+  /** Picks an option: the viewer did (tell the scripts), or a script did (no event). */
+  private pick(entry: Entry, index: number, byViewer: boolean): void {
+    const c = entry.choice;
+    if (!c || !c.options[index]) return;
+    const changed = index !== c.chosen;
+    c.chosen = index;
+    c.inputs[index]!.checked = true;
+    if (!changed) return;
+    void this.applyChoice(entry);
+    if (byViewer) this.emit({ type: 'change', entry, value: c.options[index]!.value });
+  }
+
+  /**
+   * Puts a choice's chosen option on its model's material, once the model
+   * and the option's pictures are there. Each option starts from the
+   * material's own look (the page's, before any option) and changes only
+   * what it gives; the material it makes is kept for the next time.
+   */
+  private async applyChoice(entry: Entry): Promise<void> {
+    const c = entry.choice;
+    if (!c?.target || !c.material) return;
+    const option = c.options[c.chosen];
+    const look = await option?.look;
+    // Picked again meanwhile, or gone: the later pick applies its own.
+    if (!option || !look || c.options[c.chosen] !== option || entry.removed) return;
+    const model = this.entryById.get(c.target);
+    const holder = model?.kind === 'model' && !model.removed ? model.object : null;
+    if (!model || !holder?.userData['copy']) return;
+    let found = false;
+    holder.traverse((o) => {
+      if (!(o instanceof Mesh)) return;
+      const now = Array.isArray(o.material) ? o.material : [o.material];
+      // The materials it had before any option: each option starts from these.
+      let own = this.ownMaterials.get(o);
+      if (!own) {
+        own = [...now];
+        this.ownMaterials.set(o, own);
+      }
+      const next = own.map((base, i) => {
+        if (base.name !== c.material || !(base instanceof MeshStandardMaterial)) return now[i]!;
+        found = true;
+        let made = option.made.get(base);
+        if (!made) {
+          made = base.clone();
+          this.applyLook(made, look);
+          option.made.set(base, made);
+        }
+        return made;
+      });
+      o.material = Array.isArray(o.material) ? next : next[0]!;
+    });
+    if (!found && !c.warned) {
+      c.warned = true;
+      console.warn(`HoloML: the choice "${entry.name}" changes the material "${c.material}", which the model "${model.name}" does not have.`);
+    }
+    if (model.report) this.materialsOf(holder, model.report);
+    this.requestFrame();
+  }
+
+  /** A choice's chosen value and its options' values (for scripts). */
+  choiceValue(entry: Entry): string | undefined {
+    const c = entry.choice;
+    return c ? c.options[c.chosen]?.value : undefined;
+  }
+
+  choiceOptions(entry: Entry): string[] | undefined {
+    return entry.choice?.options.map((o) => o.value);
+  }
+
+  /** Picks the option with a value, as the viewer would, but without a change event; false when no option has it. */
+  setChoiceValue(entry: Entry, value: string): boolean {
+    const i = entry.choice?.options.findIndex((o) => o.value === value) ?? -1;
+    if (i < 0) return false;
+    this.pick(entry, i, false);
+    return true;
   }
 
   private setHudText(entry: Entry, value: string): void {
@@ -1365,6 +1879,8 @@ export class HolomlView {
       if (e.item) this.removeItem(e);
       e.sound?.remove();
       e.hud?.remove();
+      if (e.choice) this.choices.splice(this.choices.indexOf(e), 1);
+      if (e.kind === 'model' && this.castsShadows(e)) this.shadowBox = null;
       if (e.report) {
         const i = this.models.indexOf(e.report);
         if (i >= 0) this.models.splice(i, 1);
@@ -1399,6 +1915,8 @@ export class HolomlView {
       });
     }
     if (this.hasSolid(entry)) this.collidersDirty = true;
+    // The shadow-casting lights fit the models with shadows again.
+    if (this.shadowLights.length > 0) this.shadowBox = null;
   }
 
   setSolid(entry: Entry, on: boolean): void {
@@ -1411,6 +1929,7 @@ export class HolomlView {
   textOf(entry: Entry): string | undefined {
     if (entry.kind === 'label') return entry.labelLook?.words;
     if (entry.kind === 'slider') return entry.slider?.label.textContent ?? '';
+    if (entry.kind === 'choice') return entry.choice?.legend.textContent ?? '';
     if (entry.kind === 'hud') return [...(entry.hud?.children ?? [])].map((c) => c.textContent ?? '').join('\n');
     return undefined;
   }
@@ -1418,6 +1937,13 @@ export class HolomlView {
   setText(entry: Entry, value: string): void {
     if (entry.kind === 'hud') this.setHudText(entry, value);
     else if (entry.kind === 'slider' && entry.slider) entry.slider.label.textContent = value.replace(/\s+/g, ' ').trim();
+    else if (entry.kind === 'choice' && entry.choice) {
+      const legend = entry.choice.legend;
+      legend.textContent = value.replace(/\s+/g, ' ').trim();
+      legend.hidden = legend.textContent === '';
+      if (legend.hidden) entry.hud?.setAttribute('aria-label', entry.id ?? 'Choice');
+      else entry.hud?.removeAttribute('aria-label');
+    }
     else if (entry.kind === 'label' && entry.labelLook && entry.object) {
       const words = value.replace(/\s+/g, ' ').trim();
       entry.labelLook.words = words;
@@ -1468,7 +1994,10 @@ export class HolomlView {
     const pool = holder.userData['pool'] as InstancePool | undefined;
     if (pool) {
       pool.remove(holder);
-      holder.add(cloneModel(t.scene));
+      const copy = cloneModel(t.scene);
+      if (this.shadowsOn && this.castsShadows(entry)) castShadows(copy);
+      holder.add(copy);
+      holder.userData['copy'] = copy;
     }
     holder.traverse((o) => {
       if (!(o instanceof Mesh)) return;
@@ -1581,6 +2110,7 @@ export class HolomlView {
       for (const pool of this.pools.values()) pool.sync();
     }
     this.followAmbient();
+    this.fitShadows();
     this.renderer.render(this.scene, this.camera);
     this.frames += 1;
     this.onDrawn?.();
@@ -1589,15 +2119,20 @@ export class HolomlView {
   }
 
   /**
-   * The soft light from around the scene (the environment, for paint and
-   * metal) is the renderer's. In a 0.2 page that has ambient lights, it
-   * follows their brightness, so a page can make night (milestone 17);
+   * The soft light from around the scene (for paint and metal) is the
+   * renderer's own, or the page's panorama of its surroundings (HoloML
+   * 0.2, milestone 18). In a 0.2 page that has ambient lights, it follows
+   * their brightness, so a page can make evening or night (milestone 17);
    * 0.1 pages look as they did.
    */
   private followAmbient(): void {
-    if (this.version !== '0.2' || this.ambients.length === 0) return;
+    const full = this.environment?.state === 'loaded' ? 1 : 0.45;
+    if (this.version !== '0.2' || this.ambients.length === 0) {
+      this.scene.environmentIntensity = full;
+      return;
+    }
     const ambient = this.ambients.reduce((sum, l) => sum + (l.parent ? l.intensity : 0), 0);
-    this.scene.environmentIntensity = 0.45 * Math.min(1, ambient / 0.6);
+    this.scene.environmentIntensity = full * Math.min(1, ambient / 0.6);
   }
 
   /** Moves every animate element on; true while any still runs. */
@@ -1697,6 +2232,7 @@ function countElements(node: ElementNode): number {
 function nameOf(el: ElementNode): string {
   if (el.name === 'label') return text(el) || 'label';
   if (el.name === 'slider') return text(el) || attr(el, 'id') || 'slider';
+  if (el.name === 'choice') return attr(el, 'label')?.trim() || attr(el, 'id') || 'choice';
   const id = attr(el, 'id');
   if (id) return id;
   if (el.name === 'model') return (attr(el, 'src') ?? '').split(/[?#]/)[0]!.split('/').pop() || 'model';
@@ -1709,6 +2245,26 @@ function nameOf(el: ElementNode): string {
 function isInside(o: Object3D, ancestor: Object3D): boolean {
   for (let p: Object3D | null = o; p; p = p.parent) if (p === ancestor) return true;
   return false;
+}
+
+/** A model that casts and receives shadows: every mesh in it. */
+function castShadows(model: Object3D): void {
+  model.traverse((o) => {
+    if (!(o instanceof Mesh)) return;
+    o.castShadow = true;
+    o.receiveShadow = true;
+  });
+}
+
+/**
+ * The WebGL renderer's name when Chromium draws in software (no graphics
+ * card, as on GitHub's test machines), else null.
+ */
+function softwareRenderer(renderer: WebGLRenderer): string | null {
+  const gl = renderer.getContext();
+  const info = gl.getExtension('WEBGL_debug_renderer_info');
+  const name = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : '';
+  return /swiftshader|llvmpipe|softpipe|basic render|warp/i.test(name) ? name : null;
 }
 
 /** Where a model that could not be loaded would be: a small red wire box. */
