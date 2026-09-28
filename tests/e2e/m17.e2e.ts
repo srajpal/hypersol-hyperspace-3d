@@ -392,8 +392,8 @@ describe('T5 to T7: Blockworld', () => {
   it('T6 night comes, and a torch lights its surroundings', async () => {
     const NIGHT = 'blockworld/index.holoml?hour=22';
     await shellCall(h, 'showUrl', url(NIGHT));
-    await waitForPage(h, 'hour=22');
-    await ready(h, 'hour=22', 30_000);
+    await waitForPage(h, 'hour=22', await sceneWait(h, 15_000));
+    await ready(h, 'hour=22', await sceneWait(h, 30_000));
     expect(await hud('clock', 'hour=22')).toMatch(/Day 1, 22:/);
     expect(await holo<string>(h, 'window.__holoml.lights().find((l) => l.type === "directional").intensity.toFixed(2)', 'hour=22')).toBe('0.00');
     const top = await bw<number>('top(0, 1)', 'hour=22');
@@ -446,12 +446,15 @@ describe('T5 to T7: Blockworld', () => {
 
   it('T7 the screen text is in the text view and the accessibility tree', async () => {
     const NIGHT = 'hour=22';
-    await h.shell.click('hs-toolbar [data-testid="text-view"]');
-    await waitFor('the text view', () => holo<boolean>(h, 'window.__holoml.textView', NIGHT), (v) => v === true);
+    // Ctrl+Shift+V in the page (R8 checks the button too): drawn in software, Blockworld keeps
+    // the shared GPU process so busy that a click's wait for the button to hold still can run out.
+    await pressInPage(h, 'V', ['control', 'shift'], NIGHT);
+    await waitFor('the text view', () => holo<boolean>(h, 'window.__holoml.textView', NIGHT), (v) => v === true, await sceneWait(h, 15_000));
     const text = await inPage<string>(h, 'document.body.innerText', NIGHT);
     expect(text).toContain('Gems carried: 0');
     expect(text).toContain('Placing:');
-    await h.shell.click('hs-toolbar [data-testid="text-view"]');
+    await pressInPage(h, 'V', ['control', 'shift'], NIGHT);
+    await waitFor('3D again', () => holo<boolean>(h, 'window.__holoml.textView', NIGHT), (v) => v === false, await sceneWait(h, 15_000));
     const tree = await h.app.evaluate(async ({ webContents }) => {
       const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes('hour=22')).pop()!;
       guest.debugger.attach('1.3');
@@ -465,7 +468,7 @@ describe('T5 to T7: Blockworld', () => {
     expect(tree.some((n) => n.includes('Gems carried: 0'))).toBe(true);
     // The clock (a day lasts four minutes, so the hour has moved on since the page opened).
     expect(tree.some((n) => /^Day \d+, \d\d:\d\d$/.test(n))).toBe(true);
-  });
+  }, BLOCKWORLD_TIME);
 
   it('T7 with reduced motion, the day stands still at noon', async () => {
     const STILL = 'blockworld/index.holoml?still';
@@ -476,8 +479,8 @@ describe('T5 to T7: Blockworld', () => {
     });
     try {
       await shellCall(h, 'showUrl', url(STILL));
-      await waitForPage(h, '?still');
-      await ready(h, '?still', 30_000);
+      await waitForPage(h, '?still', await sceneWait(h, 15_000));
+      await ready(h, '?still', await sceneWait(h, 30_000));
       const first = await hud('clock', '?still');
       expect(first).toBe('Day 1, 12:00 (the clock stands still)');
       await sleep(2000);
@@ -493,8 +496,8 @@ describe('T5 to T7: Blockworld', () => {
     // Walking (W), jumping (Space), placing (Q), and choosing (1 to 5) by key are in T4 and T6.
     const KEYS = '?keys';
     await shellCall(h, 'showUrl', url(`${PAGE}${KEYS}`));
-    await waitForPage(h, KEYS);
-    await ready(h, KEYS, 30_000);
+    await waitForPage(h, KEYS, await sceneWait(h, 15_000));
+    await ready(h, KEYS, await sceneWait(h, 30_000));
     await waitFor('standing', () => walker(h, KEYS), (w) => w?.onGround === true, await sceneWait(h, 15_000));
     const view = () => inPage<{ position: Vec; direction: Vec }>(h, '({ position: holoml.viewer.position, direction: holoml.viewer.direction })', KEYS);
     const yawOf = (d: Vec) => Math.atan2(-d[0], -d[2]);

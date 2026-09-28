@@ -406,11 +406,12 @@ async function onScreen(h: Harness, page: PageRef): Promise<void> {
  * its first paint (so does Chrome), and "loaded" can come a moment
  * before that; a person cannot click what has not appeared yet.
  */
-export async function waitForPage(h: Harness, page: PageRef): Promise<void> {
+export async function waitForPage(h: Harness, page: PageRef, timeoutMs = 15_000): Promise<void> {
   await waitFor(
     `page ${JSON.stringify(page)} to load`,
     () => inPage<string>(h, 'document.readyState', page),
     (s) => s === 'complete',
+    timeoutMs,
   );
   await settled(h);
   await onScreen(h, page);
