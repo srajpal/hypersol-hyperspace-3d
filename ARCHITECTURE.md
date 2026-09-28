@@ -111,6 +111,11 @@ the slider, prompt 92): 44.4.5 is still the newest stable release on npm
 ("latest"; 45 is in alpha), and no release since mentions a security
 fix. No upgrade needed.
 
+Rule 13 check, 2026-09-28 (start of milestone 19, Harbour Loft, prompt
+113): 44.4.5 (2026-09-23) is still the newest stable release on npm
+("latest"; 45 is in alpha, 45.0.0-alpha.12), with no release since. No
+upgrade needed.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |
