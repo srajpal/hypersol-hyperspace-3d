@@ -1,15 +1,15 @@
 {
   "repository": "https://github.com/srajpal/holoml",
-  "tag": "speed-and-slider",
-  "commit": "38da28231e9cd1c356580066ecb3d904c8d057ba",
+  "tag": "main",
+  "commit": "12847d34e933e3fee55dda2071a6c826a04efd80",
   "files": {
-    "src/parser.ts": "f41e9b98a2a7bd30756d864d9e818620bb5ca480cfd3385184e991e231824526",
-    "src/rules.ts": "7d716495bb441bf9a6b89d9914e4dc68250b5bea64dd184f92c32100c65ec6c7",
-    "src/schema.ts": "f023a8486df5095a13f95f5219e9bc95dafa2eb15cf1365b4f263c368d624b46"
+    "src/parser.ts": "68f232f3c7bcc299dd477596ec62fcb9681dbd4f330ed9e55d50846626a4e526",
+    "src/rules.ts": "aa5ec6a468f3951352d872da0e30dad642246095366f25ab9a0bf7e11cd00a3d",
+    "src/schema.ts": "dc50756c052178895017150aca86fc5ce2ce43cba59329354d27da5c976e2f5a"
   },
   "examples": {
-    "ref": "speed-and-slider",
-    "commit": "38da28231e9cd1c356580066ecb3d904c8d057ba",
+    "ref": "main",
+    "commit": "12847d34e933e3fee55dda2071a6c826a04efd80",
     "files": {
       "showroom/README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
       "showroom/about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",

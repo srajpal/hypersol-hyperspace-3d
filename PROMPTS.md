@@ -1106,3 +1106,9 @@ everywhere. Chosen: like the other budgets.
 ```text
 Like the other budgets (recommended).
 ```
+
+## 97 — 2026-09-27 · Claude Opus 5.5, low effort
+
+```text
+Merged holoml #14. Continue with the next milestone.
+```

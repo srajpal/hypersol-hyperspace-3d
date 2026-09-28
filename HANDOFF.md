@@ -3,9 +3,10 @@
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-09-27 (milestones 1 to 17 accepted; milestone 18 in
 progress: its first part, walking and turning speeds and sliders
-(prompt 92), is built, with holoml pull request #14 waiting for the
-owner's merge; the sofa studio, the rest of milestone 18, is to be
-planned next; the roadmap is in TODO.md).
+(prompt 92), is built and merged in holoml (pull request #14); the
+browser's side and the fixes for GitHub's Linux machines are in browser
+pull request #34; the sofa studio, the rest of milestone 18, is being
+planned; the roadmap is in TODO.md).
 
 ## Where things stand
 

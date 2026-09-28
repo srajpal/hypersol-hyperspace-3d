@@ -2816,9 +2816,10 @@ Checks (named U; milestone 17 used T):
 
 ### Part 1 results (2026-09-27)
 
-The browser's copy is synced from holoml's branch `speed-and-slider`
-(`pnpm holoml:sync speed-and-slider --examples speed-and-slider`); after
-the owner merges pull request #14 it is synced again from main. Checks
+The owner merged holoml pull request #14 (prompt 97); the browser's
+copy is synced from holoml's main at the merge commit (`pnpm holoml:sync
+main --examples main`, 12847d3), the same files as the branch the checks
+ran on. Checks
 are in tests/e2e/m18.e2e.ts, with the test page
 tests/fixtures/holoml/speed.holoml and its script.
 
