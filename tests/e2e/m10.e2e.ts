@@ -397,7 +397,7 @@ describe('L8 and L9: history through the worker', () => {
       // and the longest gap between two turns is the longest piece of work
       // in between. (An event-loop delay timer cannot be used: an idle
       // Windows process wakes only every 15.6 ms, so it read 16 to 24 ms
-      // with no work at all; prompt 93.) The probe keeps a processor busy,
+      // with no work at all; prompt 99.) The probe keeps a processor busy,
       // so the answer times are not taken while it runs.
       await h.app.evaluate(() => {
         const probe = { max: 0, stop: false };

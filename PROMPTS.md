@@ -1047,6 +1047,74 @@ the tags?
 
 ## 92 — 2026-09-27 · Claude Opus 5.5, low effort
 
+Answer to the agent's proposal after prompt 91: a `speed` attribute on
+`<viewpoint>` and `holoml.viewer.speed` in the scene API (walking is fixed
+at 2.2 metres a second), to be done at once or in milestone 18's plan.
+
+```text
+Do the speed variable, and add a little slider in the game to change
+the speed, so that the code shows how to use it. Include it in
+milestone 18. Speed up the turning too, with the slider option.
+```
+
+## 93 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answer to the agent's question: whether it should fix the end-to-end
+checks that fail on GitHub's Linux runner (most of milestone 17's, the
+milestone 16 development-run check, R3, and K1), with a branch and a
+pull request so the Linux checks run.
+
+```text
+Yes, fix the Linux failures, push a branch and open a PR.
+```
+
+## 94 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answer to the agent's offer to turn on auto-fix for pull request #34
+(the HoloML checks on GitHub's Linux machines), so that failing checks
+are worked on as they report: yes.
+
+```text
+Go ahead. Let me know if something needs merging before the next step.
+```
+
+## 95 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answer to the agent's question about the 5-second load budgets (checks
+S2 and T5) on machines that draw in software, such as GitHub's Linux
+machines, where the showroom took 9.3 s and Blockworld 5.7 s. The
+choices were: as with the frame-rate budgets (prompt 59), measured and
+logged but not checked there, still 5 s with a graphics card; 5 s
+everywhere; or a larger budget in software. Chosen: like the frame-rate
+budgets.
+
+```text
+Like frame rates (recommended).
+```
+
+## 96 — 2026-09-27 · Claude Opus 5.5, low effort
+
+Answer to the agent's question about checks R3 and T2 (the browser
+answers within 200 ms while a heavy HoloML page loads) on machines that
+draw in software: there the browser's page and the scene share one
+software GPU process, and the scene's first draw kept the browser's page
+waiting 4.3 s on Linux and 0.5 to 0.8 s on Windows. The choices were:
+like the other budgets (measured and logged there, not checked; 200 ms
+still with a graphics card); a browser change first; or 200 ms
+everywhere. Chosen: like the other budgets.
+
+```text
+Like the other budgets (recommended).
+```
+
+## 97 — 2026-09-27 · Claude Opus 5.5, low effort
+
+```text
+Merged holoml #14. Continue with the next milestone.
+```
+
+## 98 — 2026-09-27 · Claude Opus 5.5, low effort
+
 ```text
 End-to-end check L9 in tests/e2e/m10.e2e.ts ("with 100,000 visits,
 searches answer within 50 ms and the main process is never held 20 ms")
@@ -1065,7 +1133,7 @@ measurements and ask. Follow AGENTS.md (log owner prompts, commit after
 an approved change, keep TODO.md results current).
 ```
 
-## 93 — 2026-09-27 · Claude Opus 5.5, low effort
+## 99 — 2026-09-27 · Claude Opus 5.5, low effort
 
 Answer to the question of how L9 should measure "the main process is
 never held 20 ms", after the finding that its event-loop delay monitor
@@ -1078,15 +1146,15 @@ baseline).
 Go with option 1, measure the longest block directly.
 ```
 
-## 94 — 2026-09-27 · Claude Opus 5.5, low effort
+## 100 — 2026-09-27 · Claude Opus 5.5, low effort
 
-Approval to publish the L9 measurement change (prompts 92 and 93).
+Approval to publish the L9 measurement change (prompts 98 and 99).
 
 ```text
 Push it and open a PR.
 ```
 
-## 95 — 2026-09-27 · Claude Opus 5.5, low effort
+## 101 — 2026-09-27 · Claude Opus 5.5, low effort
 
 Approval to switch on the app's automatic fixing of CI failures for the
 L9 pull request (#33).
@@ -1095,7 +1163,7 @@ L9 pull request (#33).
 Turn on auto-fix
 ```
 
-## 96 — 2026-09-27 · Claude Opus 5.5, low effort
+## 102 — 2026-09-27 · Claude Opus 5.5, low effort
 
 Approval to start the suggested task for R3 (m15, a page of 20,000
 elements), which fails on both CI runners on main and on PR #33: find

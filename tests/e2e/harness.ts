@@ -75,6 +75,28 @@ export interface LaunchOptions {
 export const SHOW_WINDOWS = process.env['HYPERSOL_TEST_SHOW'] === '1';
 
 /**
+ * Draw in software, as GitHub's Linux machines do (they have no graphics
+ * card), on any machine: set HYPERSOL_TEST_SOFTWARE=1. For finding checks
+ * that only pass with a graphics card; the frame-rate budgets are then
+ * skipped, as there.
+ */
+export const SOFTWARE = process.env['HYPERSOL_TEST_SOFTWARE'] === '1';
+
+/**
+ * The graphics switches every test launch needs (the harness's, and the
+ * development-run checks that start Electron themselves). Linux machines
+ * without a graphics card (GitHub's) offer only a software GL, which
+ * Chromium blocks for WebGL 2, so the room and HoloML scenes cannot start;
+ * this lets Chromium draw WebGL with its own software renderer instead.
+ * With a graphics card it changes nothing (milestone 12).
+ */
+export function graphicsSwitches(opts: { noWebGL?: boolean } = {}): string[] {
+  if (opts.noWebGL) return ['--test-no-webgl'];
+  if (SOFTWARE) return ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
+  return process.platform === 'linux' ? ['--enable-unsafe-swiftshader'] : [];
+}
+
+/**
  * Only the OS basics plus the test switches. The test runner's own
  * variables (NODE_OPTIONS and friends) must not leak into Electron's main
  * process.
@@ -114,12 +136,7 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
   if (opts.downloadsDir !== undefined) args.push(`--downloads-dir=${opts.downloadsDir}`);
   if (opts.noKeychain) args.push('--test-no-keychain');
   if (opts.sleepMinuteMs !== undefined) args.push(`--test-sleep-minute-ms=${opts.sleepMinuteMs}`);
-  // Linux machines without a graphics card (GitHub's test machines) offer
-  // only a software GL, which Chromium blocks for WebGL 2, so the room
-  // cannot start. This lets Chromium draw WebGL with its own software
-  // renderer instead; with a graphics card it changes nothing (milestone 12).
-  if (opts.noWebGL) args.push('--test-no-webgl');
-  else if (process.platform === 'linux') args.push('--enable-unsafe-swiftshader');
+  args.push(...graphicsSwitches({ noWebGL: opts.noWebGL }));
   // Without a desktop session, Chromium would pick its fixed-key password
   // store, which the app counts as no keychain; the password checks need
   // the real one, so ask for the secret service (GNOME Keyring) by name.
@@ -389,14 +406,124 @@ async function onScreen(h: Harness, page: PageRef): Promise<void> {
  * its first paint (so does Chrome), and "loaded" can come a moment
  * before that; a person cannot click what has not appeared yet.
  */
-export async function waitForPage(h: Harness, page: PageRef): Promise<void> {
+export async function waitForPage(h: Harness, page: PageRef, timeoutMs = 15_000): Promise<void> {
   await waitFor(
     `page ${JSON.stringify(page)} to load`,
     () => inPage<string>(h, 'document.readyState', page),
     (s) => s === 'complete',
+    timeoutMs,
   );
   await settled(h);
   await onScreen(h, page);
+}
+
+/**
+ * Starts watching for stalls: long tasks in the shell's page, gaps over
+ * 60 ms in the main process's event loop, and a CPU profile of the shell.
+ * The returned function stops and describes them, for the message of a
+ * responsiveness check that fails (a slow answer on GitHub's machines
+ * says where the time went, and in which of the shell's code).
+ */
+export async function watchStalls(h: Harness): Promise<() => Promise<string>> {
+  const cdp = await h.shell.context().newCDPSession(h.shell);
+  await cdp.send('Profiler.enable');
+  await cdp.send('Profiler.setSamplingInterval', { interval: 1000 });
+  await cdp.send('Profiler.start');
+  await h.shell.evaluate(() => {
+    const w = window as unknown as { __stalls?: { at: number; ms: number }[]; __stallWatch?: PerformanceObserver };
+    w.__stallWatch?.disconnect();
+    w.__stalls = [];
+    w.__stallWatch = new PerformanceObserver((list) => {
+      for (const e of list.getEntries()) w.__stalls!.push({ at: Math.round(e.startTime), ms: Math.round(e.duration) });
+    });
+    w.__stallWatch.observe({ type: 'longtask' });
+  });
+  await h.app.evaluate(() => {
+    const g = globalThis as unknown as { __gaps?: { at: number; ms: number }[]; __gapTimer?: ReturnType<typeof setInterval> };
+    if (g.__gapTimer) clearInterval(g.__gapTimer);
+    g.__gaps = [];
+    let last = performance.now();
+    g.__gapTimer = setInterval(() => {
+      const now = performance.now();
+      if (now - last > 60) g.__gaps!.push({ at: Math.round(last), ms: Math.round(now - last) });
+      last = now;
+    }, 10);
+  });
+  return async () => {
+    const shell = await h.shell.evaluate(() => {
+      const w = window as unknown as { __stalls?: { at: number; ms: number }[]; __stallWatch?: PerformanceObserver };
+      w.__stallWatch?.disconnect();
+      return w.__stalls ?? [];
+    });
+    const main = await h.app.evaluate(() => {
+      const g = globalThis as unknown as { __gaps?: { at: number; ms: number }[]; __gapTimer?: ReturnType<typeof setInterval> };
+      if (g.__gapTimer) clearInterval(g.__gapTimer);
+      return g.__gaps ?? [];
+    });
+    const list = (xs: { at: number; ms: number }[]) => (xs.length ? xs.map((x) => `${x.ms} ms at ${x.at}`).join(', ') : 'none');
+    // The shell's busiest code while watched: self time by function, idle left out.
+    let busiest = 'no profile';
+    try {
+      const { profile } = await cdp.send('Profiler.stop');
+      const self = new Map<number, number>();
+      profile.samples?.forEach((id, i) => self.set(id, (self.get(id) ?? 0) + (profile.timeDeltas?.[i] ?? 0)));
+      const byName = new Map<string, number>();
+      for (const n of profile.nodes) {
+        const name = n.callFrame.functionName || '(anonymous)';
+        if (name === '(idle)') continue;
+        const key = `${name} ${n.callFrame.url.split('/').pop() ?? ''}:${n.callFrame.lineNumber}`;
+        byName.set(key, (byName.get(key) ?? 0) + (self.get(n.id) ?? 0) / 1000);
+      }
+      busiest = [...byName.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([k, ms]) => `${Math.round(ms)} ms ${k}`)
+        .join(', ');
+      await cdp.detach();
+    } catch (e) {
+      busiest = `no profile (${String(e)})`;
+    }
+    return `long tasks in the shell: ${list(shell)}; main process gaps over 60 ms: ${list(main)}; the shell's busiest code: ${busiest}`;
+  };
+}
+
+/**
+ * Holds a key down in a web page until what it does shows, then lets it
+ * go: walking and turning in a HoloML scene go frame by frame, and drawn
+ * in software frames come slowly, so a fixed hold can be over before the
+ * scene has moved. Waits `sceneWait` long.
+ */
+export async function holdKeyUntil<T>(h: Harness, page: string, keyCode: string, what: string, read: () => Promise<T>, done: (v: T) => boolean, timeoutMs = 3000): Promise<T> {
+  const send = (type: 'keyDown' | 'keyUp') =>
+    h.app.evaluate(
+      ({ webContents }, { page, keyCode, type }) => {
+        const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes(page)).pop();
+        guest?.sendInputEvent({ type, keyCode });
+      },
+      { page, keyCode, type },
+    );
+  await send('keyDown');
+  try {
+    return (await waitFor(what, read, done, await sceneWait(h, timeoutMs)))!;
+  } finally {
+    await send('keyUp');
+  }
+}
+
+/** Waits until the page has drawn at least `count` more frames (a HoloML page's __holoml.frames). */
+export async function framesDrawn(h: Harness, page: PageRef, count = 2, timeoutMs = 20_000): Promise<void> {
+  const start = await inPage<number>(h, 'window.__holoml.frames', page);
+  await waitFor(`${count} more frames`, () => inPage<number>(h, 'window.__holoml.frames', page), (n) => n >= start + count, timeoutMs);
+}
+
+/**
+ * How long to wait for something a HoloML scene does over time (a walker
+ * landing, a turn): drawing in software, as on GitHub's machines, frames
+ * come slowly and a walker's time runs slower than the clock (a frame
+ * moves it at most 100 ms), so waits there are six times as long.
+ */
+export async function sceneWait(h: Harness, ms: number): Promise<number> {
+  return (await softwareRenderer(h)) ? ms * 6 : ms;
 }
 
 /** Waits until any switch animation has finished. */

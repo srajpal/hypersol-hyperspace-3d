@@ -60,7 +60,7 @@ import { clone as cloneModel } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { check, HoloParseError, parse, type ElementNode, type HoloNode } from '@hypersol/holoml';
 import { Budget, LeftOut, LIMITS } from './budget';
-import { orbitControls, walkControls, type ViewControls } from './controls';
+import { keptByControl, orbitControls, TURN_SPEED, walkControls, WALK_SPEED, type ViewControls } from './controls';
 import { InstancePool, countTriangles, worldBox, type Template } from './instances';
 import { SolidGrid, Walker, type Box } from './physics';
 import { SoundBank, type SoundHandle, type SoundReport } from './sound';
@@ -125,6 +125,8 @@ export interface Entry {
   sound?: SoundHandle;
   soundReport?: SoundReport;
   hud?: HTMLElement;
+  /** A slider's control and its label (HoloML 0.2, milestone 18); its box is `hud`. */
+  slider?: { input: HTMLInputElement; label: HTMLElement };
   /** A label's words and look, to draw it again when a script changes it. */
   labelLook?: { words: string; size: number; color: string; note: HTMLElement };
 }
@@ -139,7 +141,8 @@ export interface Hit {
 export type SceneEvent =
   | { type: 'click'; hit: Hit; button: 'left' | 'right' | 'middle' }
   | { type: 'key'; key: string; down: boolean; repeat: boolean }
-  | { type: 'frame'; time: number; dt: number };
+  | { type: 'frame'; time: number; dt: number }
+  | { type: 'change'; entry: Entry; value: number };
 
 interface LoadedTemplate {
   template: Template;
@@ -191,7 +194,12 @@ export class HolomlView {
   private readonly hudLayer: HTMLElement;
   private readonly crosshair: HTMLElement;
   readonly sounds = new SoundBank();
-  private readonly listeners = { click: new Set<(e: SceneEvent) => void>(), key: new Set<(e: SceneEvent) => void>(), frame: new Set<(e: SceneEvent) => void>() };
+  private readonly listeners = {
+    click: new Set<(e: SceneEvent) => void>(),
+    key: new Set<(e: SceneEvent) => void>(),
+    frame: new Set<(e: SceneEvent) => void>(),
+    change: new Set<(e: SceneEvent) => void>(),
+  };
   private readonly version: string;
   private sceneId: string | null = null;
   /** The page's own ambient lights (HoloML 0.2: the soft light from around follows them). */
@@ -246,6 +254,10 @@ export class HolomlView {
         if (c.name === 'viewpoint') viewpoint ??= c;
         if (c.name === 'hud') {
           if (this.count(c)) this.hud(c, false);
+          continue;
+        }
+        if (c.name === 'slider') {
+          if (this.count(c) && this.version === '0.2') this.slider(c);
           continue;
         }
         this.build(c, this.scene, null, null, 0, false, animates);
@@ -776,14 +788,7 @@ export class HolomlView {
       entry.id = id;
       this.entryById.set(id, entry);
     }
-    const corner = ['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(attr(el, 'corner') ?? '') ? attr(el, 'corner')! : 'top-left';
-    let place = this.hudLayer.querySelector<HTMLElement>(`.holoml-hud-corner[data-corner="${corner}"]`);
-    if (!place) {
-      place = document.createElement('div');
-      place.className = 'holoml-hud-corner';
-      place.dataset['corner'] = corner;
-      this.hudLayer.append(place);
-    }
+    const place = this.corner(el);
     this.entries.push(entry);
     const box = document.createElement('div');
     box.className = 'holoml-hud';
@@ -797,6 +802,73 @@ export class HolomlView {
     entry.hud = box;
     this.setHudText(entry, el.children.map((ch) => (ch.type === 'text' ? ch.value : '')).join(''));
     return entry;
+  }
+
+  /** The screen corner an element names, where its screen text and sliders stack in page order. */
+  private corner(el: ElementNode): HTMLElement {
+    const corner = ['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(attr(el, 'corner') ?? '') ? attr(el, 'corner')! : 'top-left';
+    let place = this.hudLayer.querySelector<HTMLElement>(`.holoml-hud-corner[data-corner="${corner}"]`);
+    if (!place) {
+      place = document.createElement('div');
+      place.className = 'holoml-hud-corner';
+      place.dataset['corner'] = corner;
+      this.hudLayer.append(place);
+    }
+    return place;
+  }
+
+  /**
+   * A slider (HoloML 0.2, milestone 18): a number the viewer chooses, with
+   * its label, in a corner of the screen. It is the page's own range
+   * control, so the mouse, touch, the keyboard, and screen readers use it
+   * as on any web page; moving it tells the page's scripts (`change`).
+   */
+  private slider(el: ElementNode): Entry {
+    const id = attr(el, 'id') ?? null;
+    const entry: Entry = { el, kind: 'slider', name: nameOf(el), depth: 0, object: null, item: null, id: null, parent: null, children: [], link: null, fromScript: false };
+    if (id && !this.entryById.has(id)) {
+      entry.id = id;
+      this.entryById.set(id, entry);
+    }
+    this.entries.push(entry);
+    const min = num(el, 'min', 0);
+    let max = num(el, 'max', 1);
+    if (!(max > min)) max = min + 1;
+    const step = num(el, 'step', (max - min) / 100, Number.MIN_VALUE);
+    const value = Math.min(max, Math.max(min, num(el, 'value', min)));
+    const box = document.createElement('label');
+    box.className = 'holoml-slider';
+    box.dataset['testid'] = 'holoml-slider';
+    if (entry.id) box.dataset['id'] = entry.id;
+    const words = document.createElement('span');
+    words.textContent = text(el);
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.min = String(min);
+    input.max = String(max);
+    input.step = String(step);
+    input.value = String(value);
+    box.append(words, input);
+    this.corner(el).append(box);
+    entry.hud = box;
+    entry.slider = { input, label: words };
+    input.addEventListener('input', () => this.emit({ type: 'change', entry, value: Number(input.value) }));
+    return entry;
+  }
+
+  /** A slider's value, range, and steps (for scripts). */
+  sliderValue(entry: Entry): number | undefined {
+    return entry.slider ? Number(entry.slider.input.value) : undefined;
+  }
+
+  sliderRange(entry: Entry): { min: number; max: number; step: number } | undefined {
+    const i = entry.slider?.input;
+    return i ? { min: Number(i.min), max: Number(i.max), step: Number(i.step) } : undefined;
+  }
+
+  /** Moves a slider (kept to its range and steps), without a change event. */
+  setSliderValue(entry: Entry, value: number): void {
+    if (entry.slider) entry.slider.input.value = String(value);
   }
 
   private setHudText(entry: Entry, value: string): void {
@@ -978,9 +1050,10 @@ export class HolomlView {
     const v02 = this.version === '0.2';
     if (v02 && viewpoint && has(viewpoint, 'crosshair')) this.crosshair.hidden = false;
     if (mode === 'walk' && v02) {
-      // HoloML 0.2: walls, and gravity if the page asks for it.
+      // HoloML 0.2: walls, gravity if the page asks for it, and its speeds (milestone 18).
       this.walker = new Walker(position, has(viewpoint!, 'gravity'), has(viewpoint!, 'jump'));
-      this.controls = walkControls(this.camera, canvas, lookAt, changed, { walker: this.walker, solids: () => this.solids() });
+      const speeds = { walk: num(viewpoint!, 'speed', WALK_SPEED, 0.5, 10), turn: num(viewpoint!, 'turn-speed', TURN_SPEED, 10, 720) };
+      this.controls = walkControls(this.camera, canvas, lookAt, changed, { walker: this.walker, solids: () => this.solids() }, speeds);
     } else {
       this.controls = mode === 'walk' ? walkControls(this.camera, canvas, lookAt, changed) : orbitControls(this.camera, canvas, lookAt, changed);
     }
@@ -1177,8 +1250,8 @@ export class HolomlView {
   private wireKeys(): void {
     const send = (e: KeyboardEvent, down: boolean) => {
       if (this.listeners.key.size === 0 || e.ctrlKey || e.metaKey || e.altKey) return;
-      const t = e.target;
-      if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement) return;
+      // A slider keeps its own keys while it has the keyboard; others still reach scripts.
+      if (keptByControl(e)) return;
       this.emit({ type: 'key', key: e.key, down, repeat: e.repeat });
     };
     window.addEventListener('keydown', (e) => send(e, true));
@@ -1188,7 +1261,7 @@ export class HolomlView {
   // ---- Scripts (api.ts) -------------------------------------------------------
 
   /** Calls a script's listener for a kind of event; returns a function that stops it. */
-  listen(type: 'click' | 'key' | 'frame', listener: (e: SceneEvent) => void): () => void {
+  listen(type: 'click' | 'key' | 'frame' | 'change', listener: (e: SceneEvent) => void): () => void {
     this.listeners[type].add(listener);
     if (type === 'frame') this.requestFrame();
     return () => this.listeners[type].delete(listener);
@@ -1337,12 +1410,14 @@ export class HolomlView {
   /** A label's or screen text's words. */
   textOf(entry: Entry): string | undefined {
     if (entry.kind === 'label') return entry.labelLook?.words;
+    if (entry.kind === 'slider') return entry.slider?.label.textContent ?? '';
     if (entry.kind === 'hud') return [...(entry.hud?.children ?? [])].map((c) => c.textContent ?? '').join('\n');
     return undefined;
   }
 
   setText(entry: Entry, value: string): void {
     if (entry.kind === 'hud') this.setHudText(entry, value);
+    else if (entry.kind === 'slider' && entry.slider) entry.slider.label.textContent = value.replace(/\s+/g, ' ').trim();
     else if (entry.kind === 'label' && entry.labelLook && entry.object) {
       const words = value.replace(/\s+/g, ' ').trim();
       entry.labelLook.words = words;
@@ -1445,6 +1520,23 @@ export class HolomlView {
   viewerLookAt(point: Vec3): void {
     this.controls?.lookAt(point);
     this.requestFrame();
+  }
+
+  /** How fast the viewer walks (metres a second) and turns from the keyboard (degrees a second). */
+  get viewerSpeed(): number {
+    return this.controls?.speed ?? WALK_SPEED;
+  }
+
+  set viewerSpeed(v: number) {
+    if (this.controls) this.controls.speed = v;
+  }
+
+  get viewerTurnSpeed(): number {
+    return this.controls?.turnSpeed ?? TURN_SPEED;
+  }
+
+  set viewerTurnSpeed(v: number) {
+    if (this.controls) this.controls.turnSpeed = v;
   }
 
   // ---- Drawing --------------------------------------------------------------
@@ -1604,6 +1696,7 @@ function countElements(node: ElementNode): number {
 /** A name for the outline and the inspector: the text, the id, or the file. */
 function nameOf(el: ElementNode): string {
   if (el.name === 'label') return text(el) || 'label';
+  if (el.name === 'slider') return text(el) || attr(el, 'id') || 'slider';
   const id = attr(el, 'id');
   if (id) return id;
   if (el.name === 'model') return (attr(el, 'src') ?? '').split(/[?#]/)[0]!.split('/').pop() || 'model';

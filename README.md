@@ -24,9 +24,10 @@ release), with limits for heavy scenes, keyboard and screen-reader
 access, a scene inspector, and a HoloML car showroom to try from the
 start panel. Milestone 17 adds Blockworld, a small block game written in
 the first part of HoloML 0.2 (scripts, sound, walls and gravity), and a
-HoloML examples section. Next:
-four more example sites, then privacy and data tools, then installers as
-1.0. See [Progress](#progress),
+HoloML examples section. Milestone 18 has begun with walking and turning
+speeds a page can set and sliders on the screen (Blockworld's Speed
+slider); its sofa studio comes next. Then three more example sites,
+privacy and data tools, and installers as 1.0. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
 ## The story
@@ -116,6 +117,9 @@ An archived copy of the 2001 site is available through the
   gravity for walking, and animated lights; Blockworld, a small block
   game, shows them. A HoloML examples section (Ctrl+Shift+E) lists every
   example with a picture, and links to the HoloML repository.
+  Milestone 18: a page sets how fast the viewer walks and turns, and
+  can put sliders on the screen for its script (Blockworld's Speed
+  slider).
 - Mouse and keyboard throughout; touch for scenes.
 
 ## Built with the Buildwright approach
@@ -269,7 +273,9 @@ the top bar, or click a card on the left to switch tabs. The main keys
   models still loading, and Ctrl+Shift+V switches the text view.
   Walking in a scene: W, A, S, D or the up and down arrows move, the
   left and right arrows turn, Page Up and Page Down look up and down,
-  Shift runs, and Space jumps where the page allows.
+  Shift runs, and Space jumps where the page allows; the page chooses
+  how fast. A slider on a scene's screen takes the arrow keys, Home, and
+  End while it has the keyboard (Tab reaches it).
   Ctrl+Shift+E shows the HoloML examples.
 
 What the browser stores and sends is listed in

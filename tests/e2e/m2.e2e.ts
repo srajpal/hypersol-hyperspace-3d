@@ -285,7 +285,8 @@ describe('D5 new-window links', () => {
 
   it('opens target=_blank links in a new tab in front', async () => {
     const p = await screenPointOf(h, '#blank', 'new-window');
-    await clickAt(h, p);
+    // Clicked again if a click is lost (GitHub's Linux machines, issue #30).
+    await clickUntil(h, p, 'the new tab in front', async () => (await focusedTab(h)).url.includes('from=blank'));
     await focusedWhere(h, 'the new tab in front', (t) => t.url.includes('from=blank'));
     expect(await tabs(h)).toHaveLength(2);
   });
@@ -297,8 +298,11 @@ describe('D5 new-window links', () => {
     await waitForPage(h, 'new-window');
     const p = await screenPointOf(h, '#plain', 'new-window');
     await h.shell.keyboard.down('Control');
-    await clickAt(h, p);
-    await h.shell.keyboard.up('Control');
+    try {
+      await clickUntil(h, p, 'a tab behind', async () => (await tabs(h)).length === 3);
+    } finally {
+      await h.shell.keyboard.up('Control');
+    }
     await tabCount(h, 3);
     const all = await tabs(h);
     expect(all[1]!.url).toContain('from=plain'); // right after its opener
@@ -307,7 +311,7 @@ describe('D5 new-window links', () => {
 
   it('opens window.open from a click in front', async () => {
     const p = await screenPointOf(h, '#open', 'new-window');
-    await clickAt(h, p);
+    await clickUntil(h, p, 'the clicked pop-up in front', async () => (await focusedTab(h)).url.includes('from=click'));
     await focusedWhere(h, 'the clicked pop-up in front', (t) => t.url.includes('from=click'));
   });
 });

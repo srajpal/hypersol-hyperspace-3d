@@ -18,6 +18,9 @@ export interface ViewControls {
   moveTo(eye: [number, number, number]): void;
   /** Turns the viewer toward a point. */
   lookAt(point: [number, number, number]): void;
+  /** Walking: metres a second, and degrees a second for turning from the keyboard (orbit keeps them, unused). */
+  speed: number;
+  turnSpeed: number;
   dispose(): void;
 }
 
@@ -37,7 +40,7 @@ export function orbitControls(camera: PerspectiveCamera, element: HTMLElement, t
   const spherical = new Spherical();
   const offset = new Vector3();
   const onKey = (e: KeyboardEvent) => {
-    if (e.altKey || e.ctrlKey || e.metaKey || isTyping(e)) return;
+    if (e.altKey || e.ctrlKey || e.metaKey || keptByControl(e)) return;
     offset.copy(camera.position).sub(controls.target);
     spherical.setFromVector3(offset);
     switch (e.key) {
@@ -70,9 +73,23 @@ export function orbitControls(camera: PerspectiveCamera, element: HTMLElement, t
     controls.update();
   };
   window.addEventListener('keydown', onKey);
+  let speed = WALK_SPEED;
+  let turnSpeed = TURN_SPEED;
   return {
     mode: 'orbit',
     target: controls.target,
+    get speed() {
+      return speed;
+    },
+    set speed(v: number) {
+      speed = v;
+    },
+    get turnSpeed() {
+      return turnSpeed;
+    },
+    set turnSpeed(v: number) {
+      turnSpeed = v;
+    },
     step: () => false,
     moveTo: (eye) => {
       camera.position.set(...eye);
@@ -89,13 +106,13 @@ export function orbitControls(camera: PerspectiveCamera, element: HTMLElement, t
   };
 }
 
-const WALK_SPEED = 2.2; // metres a second
+/** Walking, unless the page says otherwise (HoloML 0.2 `speed`): metres a second. */
+export const WALK_SPEED = 2.2;
+/** Turning, and looking up and down, from the keyboard (milestone 17; HoloML 0.2 `turn-speed`): degrees a second. */
+export const TURN_SPEED = 90;
 /** Shift held: walking goes this much faster (milestone 17). */
 const RUN = 2;
 const LOOK_SPEED = 0.005; // radians a pixel
-/** Turning, and looking up and down, from the keyboard (milestone 17): radians a second. */
-const KEY_TURN_SPEED = 1.6;
-const KEY_LOOK_SPEED = 1.2;
 
 /** Walls and gravity (HoloML 0.2): the walker, and the solid boxes around it. */
 export interface WalkPhysics {
@@ -109,11 +126,22 @@ export interface WalkPhysics {
  * finger to look and two to move forward and back. Shift walks faster.
  * From the keyboard alone (milestone 17), the left and right arrows turn,
  * and Page Up and Page Down look up and down, so the crosshair can aim.
+ * How fast it walks and turns is the page's to choose (HoloML 0.2 `speed`
+ * and `turn-speed`, milestone 18), and a script can change it.
  *
  * With physics (HoloML 0.2), solid things stop the walker; with gravity
  * it falls and stands on them, and Space jumps if the page allows it.
  */
-export function walkControls(camera: PerspectiveCamera, element: HTMLElement, lookAt: Vector3, changed: () => void, physics?: WalkPhysics): ViewControls {
+export function walkControls(
+  camera: PerspectiveCamera,
+  element: HTMLElement,
+  lookAt: Vector3,
+  changed: () => void,
+  physics?: WalkPhysics,
+  speeds?: { walk?: number; turn?: number },
+): ViewControls {
+  let walkSpeed = speeds?.walk ?? WALK_SPEED;
+  let turnSpeed = speeds?.turn ?? TURN_SPEED;
   const eye = camera.position.y;
   const dir = new Vector3().subVectors(lookAt, camera.position);
   let yaw = Math.atan2(-dir.x, -dir.z);
@@ -179,7 +207,7 @@ export function walkControls(camera: PerspectiveCamera, element: HTMLElement, lo
   };
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Shift') running = true;
-    if (e.key === ' ' && physics && !e.altKey && !e.ctrlKey && !e.metaKey && !isTyping(e)) {
+    if (e.key === ' ' && physics && !e.altKey && !e.ctrlKey && !e.metaKey && !keptByControl(e)) {
       e.preventDefault();
       if (physics.walker.jump()) {
         airborne = true;
@@ -188,7 +216,7 @@ export function walkControls(camera: PerspectiveCamera, element: HTMLElement, lo
       return;
     }
     const k = KEYS[e.key];
-    if (!k || e.altKey || e.ctrlKey || e.metaKey || isTyping(e)) return;
+    if (!k || e.altKey || e.ctrlKey || e.metaKey || keptByControl(e)) return;
     e.preventDefault();
     if (!held.has(k)) {
       held.add(k);
@@ -230,14 +258,25 @@ export function walkControls(camera: PerspectiveCamera, element: HTMLElement, lo
   return {
     mode: 'walk',
     target,
+    get speed() {
+      return walkSpeed;
+    },
+    set speed(v: number) {
+      walkSpeed = v;
+    },
+    get turnSpeed() {
+      return turnSpeed;
+    },
+    set turnSpeed(v: number) {
+      turnSpeed = v;
+    },
     step(dt) {
       // With gravity, every frame checks the ground: a block under the feet may be gone.
       if (held.size === 0 && !airborne && !physics?.walker.gravity) return false;
-      const turn = (KEY_TURN_SPEED * dt) / 1000;
-      const look = (KEY_LOOK_SPEED * dt) / 1000;
+      const turn = (((turnSpeed * Math.PI) / 180) * dt) / 1000;
       yaw += (held.has('turn-left') ? turn : 0) - (held.has('turn-right') ? turn : 0);
-      pitch = Math.max(-1.4, Math.min(1.4, pitch + (held.has('look-up') ? look : 0) - (held.has('look-down') ? look : 0)));
-      const d = (WALK_SPEED * (running ? RUN : 1) * dt) / 1000;
+      pitch = Math.max(-1.4, Math.min(1.4, pitch + (held.has('look-up') ? turn : 0) - (held.has('look-down') ? turn : 0)));
+      const d = (walkSpeed * (running ? RUN : 1) * dt) / 1000;
       move((held.has('f') ? d : 0) - (held.has('b') ? d : 0), (held.has('r') ? d : 0) - (held.has('l') ? d : 0), dt / 1000);
       return held.size > 0 || airborne;
     },
@@ -267,7 +306,16 @@ export function walkControls(camera: PerspectiveCamera, element: HTMLElement, lo
   };
 }
 
-function isTyping(e: KeyboardEvent): boolean {
+/** The keys a slider uses while it has the keyboard (HoloML 0.2 `slider`, milestone 18). */
+const SLIDER_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']);
+
+/**
+ * A key that belongs to a control in the page, not to walking or the
+ * page's scripts: any key in a text field, and a slider's own keys while
+ * it has the keyboard (other keys still walk, jump, and reach scripts).
+ */
+export function keptByControl(e: KeyboardEvent): boolean {
   const t = e.target;
+  if (t instanceof HTMLInputElement && t.type === 'range') return SLIDER_KEYS.has(e.key);
   return t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement;
 }

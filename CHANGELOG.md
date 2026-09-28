@@ -66,6 +66,13 @@
 - Fixed: a HoloML tab's card could show the page before its scene was
   drawn (an empty room, or only its labels); the card's picture is now
   taken again once the scene is drawn with nothing left to load.
+- Walking speeds and sliders (milestone 18, first part): a HoloML 0.2
+  page says how fast the viewer walks and turns (`speed`, `turn-speed`),
+  a script can change it (`holoml.viewer.speed`, `turnSpeed`), and
+  `slider` puts a labelled slider on the screen for the page's script
+  (the `change` event). Blockworld walks faster (4.3 metres a second),
+  turns faster (120 degrees a second), and has a Speed slider. Looking
+  up and down from the keyboard now goes as fast as turning.
 
 ## 0.9.0 — developer preview (2026-09-26)
 

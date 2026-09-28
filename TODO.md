@@ -29,7 +29,7 @@ Plan approved 2026-09-24.
 | 15 | HoloML hardening | Resource limits for heavy or hostile scenes, with costs shown and cancelling (GitHub issue #23); keyboard and screen-reader navigation of scenes, with a text outline and a flat, still view (#25); a source and scene inspector for authors (#28) | Done (accepted, prompt 79) |
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
 | 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
-| 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes | Later (prompt 85, Q4 a) |
+| 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | In progress: part 1 (speeds and sliders) built, in pull request #34; part 2, the sofa studio, planned, waiting for approval |
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Later (prompt 85, Q4 a) |
 | 20 | Coral Bay | A resort: paths to ride, sounds by place, sky and environment light, loading by area | Later (prompt 85, Q4 a) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
@@ -1535,7 +1535,7 @@ that sleep when unused; and history work moved off the main process
 | L6 | Economy mode | On: lower resolution, effects off, at most 30 frames a second, "ECO" shown; "on battery" follows the power source |
 | L7 | Sleeping tabs | An unused tab sleeps (its page is gone, card kept); opening it wakes it with its history; tabs with sound, a download, or typed text stay awake |
 | L8 | History still works | History, search, and the start panel work through the worker; E checks pass |
-| L9 | History budget | Unit benchmark: 100,000 visits, search and recent within 50 ms, main thread held at most 20 ms (since prompt 93: the longest gap between two turns of the main process's event loop) |
+| L9 | History budget | Unit benchmark: 100,000 visits, search and recent within 50 ms, main thread held at most 20 ms (since prompt 99: the longest gap between two turns of the main process's event loop) |
 | L10 | Keyboard and menus | The new shortcuts and menu entries work from the page and the shell |
 
 ### Check results (Windows 11, 2026-09-26)
@@ -2301,7 +2301,7 @@ questions.
 |---|---|---|
 | R1 | Oversized files | A model file over 32 MB, and a page whose models add up to more than 128 MB, are left out with a mark and a notice; the rest shows |
 | R2 | Big pictures, many triangles | A 8192 by 8192 picture, and models over 2 million triangles in all, are left out the same way |
-| R3 | Many elements | A page of 20,000 elements shows the first part and says the rest was left out; the browser stays responsive (a shell action answers within 200 ms) |
+| R3 | Many elements | A page of 20,000 elements shows the first part and says the rest was left out; the browser stays responsive (a shell action answers within 200 ms, with a graphics card; drawn in software, measured and logged, prompt 96) |
 | R4 | Slow and stopped | A model that never finishes is given up after 30 s; Esc and the stop button stop pending loads at once |
 | R5 | Repeated visits | Ten visits back and forth between two heavy pages leave the page process's memory where it was after the first |
 | R6 | Keyboard | Tab reaches every link and named thing in page order with a visible outline; Enter follows links; focus holds when objects appear or go |
@@ -2455,7 +2455,7 @@ repository and becomes the browser's showcase.
 | # | Check | Expected result |
 |---|---|---|
 | S1 | Valid pages | Every showroom page passes HoloML's checker with no problems (holoml unit tests) |
-| S2 | Loads whole and fast | The hall is ready within 5 s from 127.0.0.1; no model is left out or fails; the Scene part's totals are under the budget |
+| S2 | Loads whole and fast | The hall is ready within 5 s from 127.0.0.1 with a graphics card (drawn in software, measured and logged instead, prompt 95); no model is left out or fails; the Scene part's totals are under the budget |
 | S3 | Walk around | Each car page starts in walk mode; walking moves around the car at eye height |
 | S4 | Links and colours | Every link reaches its page and Back returns; each colour page shows its paint (the material's colour read back) |
 | S5 | For everyone | Tab reaches every car by name; the text view lists the cars and links; with reduced motion the turntable stands still |
@@ -2642,10 +2642,10 @@ Named T (milestone 16 used S).
 | # | Check | Expected result |
 |---|---|---|
 | T1 | The language | holoml's tests: every new element, attribute, and problem has a conformance sample; all 0.1 samples and examples still pass; a 0.2 page read as 0.1 is refused |
-| T2 | Scripts | A page's script from its own site runs and changes the scene through the API; an inline script, or one from another site, does not run, and the console says why; a script error is shown in the console and the scene stays; a script that never stops leaves the browser's controls answering within 200 ms, and closing the tab works |
+| T2 | Scripts | A page's script from its own site runs and changes the scene through the API; an inline script, or one from another site, does not run, and the console says why; a script error is shown in the console and the scene stays; a script that never stops leaves the browser's controls answering within 200 ms (with a graphics card; drawn in software, measured and logged, prompt 96), and closing the tab works |
 | T3 | Sound | Nothing plays before the first click or key; after it, a sound plays (checked through the page's audio state); the tab's mute silences it; a sound file over the limits is left out like a model |
 | T4 | Walls and gravity | The walker falls to the ground, stands on blocks, jumps with Space, and cannot pass through solid blocks or walk through the chest |
-| T5 | Many blocks | Blockworld's island (several thousand blocks) loads within 5 s from 127.0.0.1 and draws at 30 frames a second or more with a graphics card (skipped in software, as C9) |
+| T5 | Many blocks | Blockworld's island (several thousand blocks) loads within 5 s from 127.0.0.1 and draws at 30 frames a second or more, both with a graphics card (drawn in software, as on GitHub's machines, both are measured and logged instead: the frame rate as C9, prompt 59; the load time since prompt 95) |
 | T6 | Playing | Breaking and placing by mouse and by keyboard; keys 1 to 5 change the block shown on screen; picking up a gem counts it; five gems in the chest show "You won"; night comes and a torch lights its surroundings |
 | T7 | For everyone | Blockworld can be played from the keyboard alone; the screen text is in the text view and the accessibility tree; with reduced motion the day stands still at noon |
 | T8 | The examples section | Opens from the start panel, the menu, and Ctrl+Shift+E; shows the showroom and Blockworld with their screenshots; Open goes to the example's address (a local copy in the test); usable from the keyboard; opening the panel fetches nothing (no unexpected traffic) |
@@ -2756,6 +2756,209 @@ After the report (prompts 89 and 90):
   its plan: CC0 packs have few real-looking fish; if there are not
   enough, CC BY models (credited) would need the owner's approval, as
   prompt 85's Q3 a allows CC0 only.
+
+## Milestone 18 — Sofa studio, with walking speeds and sliders
+
+Status: In progress. Part 1 (walking and turning speeds, and sliders)
+approved by the owner and built, 2026-09-27 (prompt 92), in browser pull
+request #34 with the fixes for GitHub's Linux machines. Part 2, the sofa
+studio, the milestone's example site: planned below (prompt 97),
+waiting for the owner's answers and approval. Pushed before the
+milestone (after milestone 17's acceptance). Rule 13 check done
+(ARCHITECTURE.md section 3).
+
+### Part 1: walking and turning speeds, and sliders (prompt 92)
+
+Walking felt slow in Blockworld (prompt 91): it was fixed at 2.2 metres
+a second, and nothing in HoloML could change it. The owner asked for a
+speed setting, a slider in the game to change it, so that the game's
+code shows how to use it, and faster turning with it (prompt 92).
+
+- HoloML 0.2 (holoml pull request #14): `speed` (metres a second, 0.5 to
+  10, default 2.2) and `turn-speed` (degrees a second, 10 to 720, default
+  90) on `viewpoint`; `slider`, a number the viewer chooses on the
+  screen (`min`, `max`, `step`, `value`, a corner, and its label); in
+  the scene API, `holoml.viewer.speed` and `turnSpeed`, slider things
+  (`value`, `min`, `max`, `step`, `text`), and the `change` event.
+- The browser: walk mode goes at the page's speeds; looking up and down
+  from the keyboard goes as fast as turning (it was a little slower,
+  69 degrees a second). A slider is the page's own range control in its
+  screen corner, so the mouse, touch, the keyboard, and screen readers
+  use it as on any web page, and the text view shows it; while it has
+  the keyboard it keeps only its own keys (arrows, Home, End, Page Up,
+  Page Down), so the other keys still walk and reach the page's script.
+- Blockworld walks at 4.3 metres a second (Minecraft's walking pace)
+  and turns at 120 degrees a second; its Speed slider, under the block
+  choices, goes from half to twice both, and the "Speed" part of
+  game.js shows how.
+
+Tasks:
+
+- [x] 1. The language: SPEC.md, the checker, conformance samples
+      (holoml).
+- [x] 2. The browser: the speeds, the slider, the scene API; the copy of
+      the parser and checker (`pnpm holoml:sync`).
+- [x] 3. Blockworld's speeds and Speed slider; its picture in the
+      examples section.
+- [x] 4. Checks U1 to U7 (tests/e2e/m18.e2e.ts, holoml's tests).
+- [x] 5. Documents.
+
+Checks (named U; milestone 17 used T):
+
+| # | Check | Expected result |
+|---|---|---|
+| U1 | The language | holoml's tests: `speed`, `turn-speed`, and `slider` have valid and problem samples; the checker reports speeds out of range, a `max` not above `min`, and a `value` outside the range; a 0.1 page may not use them |
+| U2 | Walking speed | A page's `speed` is how fast the viewer walks (within 20%, measured while the key is held); a 0.2 page that says nothing walks at 2.2 metres a second and turns at 90 degrees a second |
+| U3 | Turning speed | A page's `turn-speed` is how fast the arrow keys turn the viewer (within 20%), without moving them |
+| U4 | Scripts | `holoml.viewer.speed` and `turnSpeed` can be read and set, and change how fast the viewer goes; a value out of range is an error and changes nothing |
+| U5 | Sliders | In their corners, with their labels, and the defaults SPEC.md gives; the keyboard (arrows, Home, End) and the mouse move them, and the script hears `change`; a script's `value` moves a slider without an event, and a value out of range is an error; while a slider has the keyboard it keeps its own keys and the others still walk; a click on it is not a click in the scene; screen readers find it, named by its label; the text view shows it |
+| U6 | Blockworld | 4.3 metres a second and 120 degrees a second; its Speed slider sets both from half to twice, and its label follows |
+| U7 | Regression | The HoloML checks (milestones 14 to 17), the unit tests, and the full end-to-end run |
+
+### Part 1 results (2026-09-27)
+
+The owner merged holoml pull request #14 (prompt 97); the browser's
+copy is synced from holoml's main at the merge commit (`pnpm holoml:sync
+main --examples main`, 12847d3), the same files as the branch the checks
+ran on. Checks
+are in tests/e2e/m18.e2e.ts, with the test page
+tests/fixtures/holoml/speed.holoml and its script.
+
+| # | Result |
+|---|---|
+| U1 | Pass. holoml's tests: 170 passed (a valid sample, v02-speed-and-slider; a problem sample, bad-slider; newer-than-declared uses both in a 0.1 page); lint and types clean |
+| U2 | Pass. At `speed="4"` the viewer walked within 20% of 4 metres a second, measured between two moments while W was held; walls.holoml, a 0.2 page without speeds, reads 2.2 and 90 |
+| U3 | Pass. At `turn-speed="180"` the left arrow turned within 20% of 180 degrees a second, without moving |
+| U4 | Pass. Five values out of range were refused with their messages and changed nothing; at 8 metres a second and 30 degrees a second the viewer went within 20% of both |
+| U5 | Pass. Both sliders in their corners with their labels; the second shows the defaults (0 to 10 in steps of 0.1, starting at 0). The right arrow moved "pace" to 1.25: the script heard it, set 5 metres a second and 225 degrees a second, and changed the label; the left arrow moved it back without turning the viewer, and W still walked. A click at its right end set 2, with no scene click. A script's value 0.5 moved it without an event; 3 was refused. The accessibility tree has two sliders, "Pace 2×" (value 0.5) and "Plain"; the text view shows both |
+| U6 | Pass. Blockworld reads 4.3 and 120; End on its slider gave 8.6 and 240 and the label "Speed 2×", Home gave 2.15 and 60 and "Speed 0.5×" |
+| U7 | Pass, with one timing miss. Full run: 244 of 245 end-to-end checks passed (C to U); milestone 10's L9 answered one search in 70 ms (limit 50) during the run and passed alone right after (9 of 9); L9's measure is being reworked in the owner's other session (browser pull request #33). The HoloML checks (milestones 14 to 17) passed again with the new walk controls (64 of 64); unit tests 261; holoml's tests 170 |
+
+### Part 2: the sofa studio (plan, waiting for approval)
+
+Goal: HoloML's first shop, with realistic graphics. A furniture shop's
+page for one sofa in a lit room: the viewer walks around it, chooses the
+fabric and the legs in place (no new page), sees soft shadows and a room
+that looks real, watches the price follow the choice, and goes on to an
+ordinary web page to "add it to the cart". It needs what the showroom
+found missing (holoml issues #8 shadows and #9 changing a material in
+place), textured materials, and light from the surroundings.
+
+#### How it would work (proposed)
+
+- **HoloML 0.2, second part** (holoml repository: SPEC.md, the checker,
+  conformance samples; 0.1 pages unchanged):
+  - Shadows (#8): a `shadows` flag on `light` (it casts shadows) and on
+    `model` and `group` (they cast and receive them). The renderer
+    chooses how soft and how detailed, and may leave shadows out when it
+    must (as with its other limits), saying so.
+  - Textured materials: `material` gains `map` (a colour picture),
+    `normal-map` (fine bumps), `roughness-map`, and `repeat` (how many
+    times the picture tiles, such as "3 3"). Pictures come from the
+    page's own site and count against the page's limits like models'.
+  - A choice in place (#9): `choice`, a set of options on the screen, in
+    a corner like `hud` and `slider`. It names a model's material
+    (`target="#sofa" material="Fabric"`); each `option` gives the
+    material's new colour, pictures, and roughness, and its label.
+    Picking an option changes the material at once, without a script;
+    the keyboard (arrow keys, as a group of radio buttons) and screen
+    readers use it, and the text view shows it. Scripts hear `change`
+    with the option's value, and can read and set the chosen option.
+  - Light from the surroundings: `environment` on `scene`, a picture of
+    the surroundings (an HDR or JPEG panorama from the page's own site)
+    that lights shiny and soft materials alike, and can also be the
+    background. Without it, the renderer's own soft light, as now.
+- **The browser**: soft shadow maps (Three.js), sized within the limits;
+  texture maps and tiling; choices as the page's own radio buttons in
+  their corner, as sliders are; the environment picture through
+  Three.js's own HDR loader (already part of three; no new package);
+  the limits count every picture.
+- **The sofa studio** (holoml repository, examples/sofa-studio/,
+  published with GitHub Pages like the others), from Poly Haven's CC0
+  models, textures, and HDRIs (downloads approved in prompt 85, Q3 a):
+  - A room with a wood floor, a rug, walls, a coffee table, a side
+    table, and a lamp; a studio HDRI for the light; soft shadows under
+    everything. The sofa is one of Poly Haven's Sofa 01 to 03 (per Q2),
+    chosen for a fabric that is its own material.
+  - Orbit around the sofa (it is a product page, not a walk).
+  - Two choices, bottom left: Fabric (five, such as rough linen, velour
+    velvet, wool bouclé, poly-wool herringbone, and brown leather) and
+    Legs (oak, walnut, black metal).
+  - The price, top right, follows the choices (per Q6), and "Add to
+    cart" opens cart.html, an ordinary page in the example that lists
+    the chosen fabric and legs from its address (there is no shop
+    behind it).
+  - An "Evening" slider or choice for the lamp and the window light
+    (per Q3), and credits on an about page, as the showroom has.
+- **The examples section and the start panel** gain the sofa studio,
+  with its picture.
+
+#### Questions
+
+- Q1, the material choice. a: the declarative `choice` and `option`
+  above: no script needed for the common case, the keyboard and screen
+  readers use it, and scripts can listen (recommended: issue #9's idea,
+  the smallest useful step; the aquarium and the apartment can reuse
+  it). b: screen buttons (`button`) and a script that changes the
+  material (more flexible, but every shop page needs code).
+- Q2, the sofa. a: one of Poly Haven's three sofas (realistic, 2,700 to
+  8,000 triangles, CC0), the one whose fabric separates best
+  (recommended). b: all three, with a Model choice too (a larger page).
+  c: Kenney's Furniture Kit (low-poly, as the showroom's cars; smaller,
+  less real).
+- Q3, the sofa bed from the proposal (prompt 84). None of the CC0 sofas
+  opens into a bed. a: drop it, and let the viewer switch the room
+  between day and evening light instead (recommended). b: a script-made
+  mattress that slides out (would look crude).
+- Q4, light from the surroundings. a: the `environment` attribute and a
+  1k studio HDRI from Poly Haven (about 1.5 MB; recommended: reflections
+  and soft light are most of "looks real"). b: keep the renderer's own
+  soft light (no new attribute, less real).
+- Q5, shadows when drawing in software (GitHub's machines). a: the
+  renderer may leave them out when it must; drawn in software, the
+  checks log that and check the rest, as the other budgets (prompts 59,
+  95, 96) (recommended). b: always draw shadows, however slow.
+- Q6, the price. a: the page's script computes it from the two choices
+  and shows it in a `hud` (shows choices and scripts working together)
+  (recommended). b: each option declares its price and the renderer
+  adds them up (a shop-only idea in the language).
+
+#### Tasks
+
+- [ ] 1. HoloML 0.2, second part: shadows, texture maps and tiling,
+      `choice` and `option`, `environment`; SPEC.md, the checker,
+      conformance samples for each new element, attribute, and problem.
+- [ ] 2. The browser: shadows, textures, choices, the environment, the
+      limits; the copy of the parser and checker (`pnpm holoml:sync`).
+- [ ] 3. The sofa studio: the models, textures, and HDRI (checked CC0,
+      sizes, credits), the room, the pages, the price script, the cart
+      page, the about page; published with GitHub Pages.
+- [ ] 4. The examples section and the start panel: its card, its
+      picture, and its row.
+- [ ] 5. Checks U8 to U16 (tests/e2e/m18.e2e.ts, holoml's tests).
+- [ ] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
+      THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the README
+      screenshot.
+
+#### Checks
+
+| # | Check | Expected result |
+|---|---|---|
+| U8 | The language | holoml's tests: shadows, texture maps, repeat, choice and option, and environment have valid and problem samples; a 0.1 page may not use them |
+| U9 | Shadows | With a graphics card, a lit model with shadows darkens the floor under it (the page's pixels, with and without); drawn in software, per Q5 |
+| U10 | Textures | A material's pictures load within the page's limits, show on the model (the page's pixels take the picture's colours), and tile as `repeat` says |
+| U11 | Choices | In their corner with their labels; mouse, keyboard, and screen readers pick an option; the material changes in place (read back) without loading a page; the script hears `change`; the text view shows the choices |
+| U12 | Environment | The page's panorama lights the scene (a shiny test sphere reflects its colours) and counts against the limits |
+| U13 | The sofa studio | Ready within 5 s from 127.0.0.1 with a graphics card (logged in software); every model and picture loaded, no problems; each fabric and leg choice changes the sofa; the price follows; "Add to cart" opens the cart page with the choices |
+| U14 | For everyone | The whole page from the keyboard (choices, the evening switch, the cart link); screen readers name the choices; the text view; with reduced motion nothing moves by itself |
+| U15 | Efficient | An idle sofa studio draws no frames |
+| U16 | Published | The sofa studio opens from its public address in the built app (by hand, as S8 and T9) |
+| U17 | Regression | C to U pass, the unit tests, and holoml's tests |
+
+#### Done when
+
+- Part 1 is merged (browser pull request #34), U8 to U17 pass,
+  screenshots are saved, and the owner accepts.
 
 ## Proposal: four more HoloML example sites (2026-09-27, prompt 84)
 
@@ -2873,7 +3076,73 @@ On the answers, the first of the new milestones (per Q4) gets a full
 plan with its tasks and checks for approval, with the Rule 13 check at
 its start. The roadmap table is changed at that point, not before.
 
-## L9's measure of the main process (2026-09-27, prompts 92 and 93)
+## The HoloML checks on GitHub's Linux machines (2026-09-27, prompt 93)
+
+The automatic builds on main had failed since milestone 16's build. On
+Windows, a unit test: the copied example sites got Windows line endings
+on checkout, so their hashes no longer matched (fixed in the owner's
+other session, browser pull request #33, with a .gitattributes rule).
+On Linux, most of milestone 17's checks and milestone 16's
+development-run check failed, and R3 (milestone 15) and K1 (milestone 9)
+now and then. The agent had run milestone 17's checks only on a machine
+with a graphics card, and had not looked at the automatic builds. The
+owner asked for the Linux failures to be fixed, in a pull request
+(prompt 93).
+
+What was wrong, and what changed (the requirements are unchanged):
+
+- GitHub's machines have no graphics card, so Chromium draws in software
+  (SwiftShader), and a scene as big as Blockworld draws a frame far more
+  slowly. The checks waited fixed times (a key held 0.6 s, a walker to
+  land within 5 s, 0.3 s before comparing pictures), and got a frame or
+  two in that time. They now wait for what they check: a key is held
+  until the view has turned or the walker has moved (holdKeyUntil),
+  waits for the walker to land are six times as long when drawing in
+  software (sceneWait), and pictures are compared after new frames have
+  been drawn (framesDrawn). Breaking and placing now aim at whatever
+  block is under the crosshair once the walker stands still, and check
+  that block and the face it points at.
+- Clicks sent right after a page changes are sometimes lost there
+  (issue #30): the checks that click Blockworld and the slider now click
+  again when a click has no effect (clickUntil), as the other checks do.
+- The two development-run checks start Electron themselves and missed
+  the switch the harness gives on Linux (--enable-unsafe-swiftshader),
+  so there was no WebGL 2 and the viewer showed its notice instead of
+  the scene. The switches now come from one place (graphicsSwitches).
+- The card check's car arrived after a fixed two seconds, which a slow
+  machine can take before the first picture; the fixture server now
+  holds the car until the check lets it through (a gate).
+- T8 read a picture's size before it had loaded; it now waits for it.
+- R3 and T2 (the browser answering within 200 ms) failed there with one
+  answer of 1.2 to 1.5 s. The cause is not known yet; both now report
+  the shell's long tasks and the main process's pauses when they fail,
+  and T2 measures once the shell's own switch animation has finished.
+- HYPERSOL_TEST_SOFTWARE=1 draws in software on any machine, as GitHub's
+  machines do: with it, milestones 15 to 18 failed here as on GitHub
+  (T6, T7, T8, S3), and pass after these changes (50 of 50).
+
+Load budgets (owner, prompt 95): on the pull request's Linux run the
+showroom took 9.3 s and Blockworld 5.7 s to load, against the 5-second
+budgets of S2 and T5 (with a graphics card both load well under that).
+The owner chose to treat them like the frame-rate budgets (prompt 59):
+drawn in software, the load time is measured and logged, not checked;
+with a graphics card, 5 s still applies.
+
+Responsiveness budgets (owner, prompt 96): R3 and T2, the browser
+answering within 200 ms while a heavy HoloML page loads, failed on both
+machines with one stall of the shell (4.3 s on Linux, 0.5 to 0.8 s on
+Windows). The stall report showed the shell's time in native code, not
+in its scripts: drawing in software, the browser's page and the scene
+share one software GPU process, which the scene's first draw (shaders,
+environment lighting) keeps busy for seconds; with a graphics card the
+shell answered within 12 ms. The owner chose to treat these budgets
+like the others: drawn in software, the answer times and the stall
+report are logged, not checked; with a graphics card, 200 ms still
+applies.
+
+Results: see the pull request's automatic builds.
+
+## L9's measure of the main process (2026-09-27, prompts 98 and 99)
 
 L9 read the main process's event-loop delay with monitorEventLoopDelay
 and sat at 18 to 20 ms on Windows (once 20.005 ms, a failure). The cause
@@ -2885,7 +3154,7 @@ the searches, so searches in the worker, the 500 results passed back,
 and the reply to the shell each take well under that. The history code
 is unchanged. L9 now keeps the loop awake the same way while the
 searches run and fails if any gap between two turns reaches 20 ms
-(owner, prompt 93: option 1); the limit is unchanged. Local run
+(owner, prompt 99: option 1); the limit is unchanged. Local run
 (Windows 11): L9 in seven runs, longest gap 0.6 to 1.5 ms (three runs
 of the old measure on the same code read 16.1 to 18.2 ms); searches
 after the first 1 to 32 ms, as before; all nine m10 checks passed. A
