@@ -626,6 +626,28 @@ ${await explain().catch((x: unknown) => `(no details: ${String(x)})`)}`) : e;
 }
 
 /**
+ * Moves the pointer to a screen point until the move's effect shows (a
+ * hover), as clickUntil clicks: on GitHub's Linux machines a pointer move
+ * can be lost as a click can (issue #30; C6's hover, 2026-09-28). A lost
+ * move has no effect, so moving again is safe; between attempts the
+ * pointer steps a pixel aside and comes back, so the page gets new moves.
+ * Each retry is logged. For checks about what hovering does.
+ */
+export async function moveUntil(h: Harness, p: Point, what: string, done: () => Promise<boolean>): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    await h.shell.mouse.move(p.x, p.y, { steps: 5 });
+    try {
+      await waitFor(what, done, (v) => v, attempt < 3 ? 4000 : 15_000);
+      return;
+    } catch (e) {
+      if (attempt >= 3) throw e;
+      console.warn(`[harness] ${what}: the pointer's move did not reach the page; moving again (attempt ${attempt + 1})`);
+      await h.shell.mouse.move(p.x + 1, p.y + 1);
+    }
+  }
+}
+
+/**
  * The WebGL renderer's name when Chromium draws in software (no graphics
  * card, as on GitHub's test machines), else null. Frame-rate budgets are
  * promises about graphics hardware: where this is not null they are

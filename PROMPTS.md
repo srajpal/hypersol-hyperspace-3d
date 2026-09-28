@@ -1188,3 +1188,14 @@ Sneaker store. What the store needs (recommended).
 Should we build a Linux VM environment to test everything instead of
 relying on the CI?
 ```
+
+## 104 — 2026-09-28 · Claude Opus 5.5, low effort
+
+Approves both proposals after prompt 103: a local Linux test run that
+copies GitHub's Linux machines (a Docker image, `pnpm test:linux`, and
+its documents; about 1 to 2 GB downloaded once), and making checks C4,
+C6, and D13 retry lost input on Linux.
+
+```text
+Yes, do both.
+```

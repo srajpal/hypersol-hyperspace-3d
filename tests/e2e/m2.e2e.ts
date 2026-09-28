@@ -659,20 +659,36 @@ describe('D13 favicon downloads are cancelled when refused (PR #7 review)', () =
   afterAll(async () => h?.close());
 
   it('drops each refused 10 MB download at once, one at a time', async () => {
-    const keys = [1, 2, 3].map((n) => `/favicon/declared-huge.png?n=${n}`);
-    await navigateTo(h, server.url(`favicon.html?icons=${encodeURIComponent(keys.join(','))}`));
-    await waitForPage(h, 'favicon.html');
-    // The server sees every connection closed well before the 5 s timeout.
-    await waitFor(
-      'all three downloads dropped',
-      async () => keys.map((k) => server.aborted.get(k) ?? 0),
-      (n) => n.every((x) => x > 0),
-      3000,
-    );
-    expect(server.maxOpen.get('/favicon/declared-huge.png')).toBe(1);
-    expect(server.openNow.get('/favicon/declared-huge.png') ?? 0).toBe(0);
-    for (const k of keys) expect(server.sent.get(k) ?? 0).toBeLessThan(256 * 1024);
-    expect((await focusedTab(h)).hasFavicon).toBe(false);
+    const PATH = '/favicon/declared-huge.png';
+    // The app cancels each refused download before it asks for the next.
+    // On GitHub's slow Linux machines the server can still take in the
+    // next request a moment before it sees the last one close, and count
+    // two open for that instant (once, run 36432173070): then the page is
+    // loaded again, with new downloads, up to three times, and each rerun
+    // is logged (as issue #30's retries). A download left running would
+    // overlap the next on every run.
+    for (let attempt = 1; ; attempt++) {
+      const keys = [1, 2, 3].map((n) => `${PATH}?n=${attempt * 10 + n}`);
+      server.maxOpen.delete(PATH);
+      await navigateTo(h, server.url(`favicon.html?icons=${encodeURIComponent(keys.join(','))}`));
+      await waitForPage(h, 'favicon.html');
+      // The server sees every connection closed well before the 5 s timeout.
+      await waitFor(
+        'all three downloads dropped',
+        async () => keys.map((k) => server.aborted.get(k) ?? 0),
+        (n) => n.every((x) => x > 0),
+        3000,
+      );
+      expect(server.openNow.get(PATH) ?? 0).toBe(0);
+      for (const k of keys) expect(server.sent.get(k) ?? 0).toBeLessThan(256 * 1024);
+      expect((await focusedTab(h)).hasFavicon).toBe(false);
+      const most = server.maxOpen.get(PATH);
+      if (most === 1 || attempt >= 3) {
+        expect(most, 'refused downloads open at once').toBe(1);
+        break;
+      }
+      console.warn(`[D13] the server counted ${most} refused downloads open at once; loading the page again (attempt ${attempt + 1})`);
+    }
   });
 
   it('drops a download answered with an error status', async () => {
