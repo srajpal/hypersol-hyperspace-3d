@@ -176,7 +176,7 @@ starts with a small prototype and the same habits of direction and checking.
 ## What comes next
 
 Milestones 18 to 21, four more HoloML example sites, each adding to
-the language: a sofa studio, an apartment tour, a resort, and an
+the language: a sofa studio, an apartment tour, a sneaker store, and an
 aquarium. 22, privacy and data tools: HTTPS-only browsing,
 per-site storage, and bookmark import and export. 23 and 24, installers
 as 1.0 for Windows and Linux, then macOS. Later: free camera

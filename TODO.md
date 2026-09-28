@@ -31,7 +31,7 @@ Plan approved 2026-09-24.
 | 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
 | 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | Built: part 1 (speeds and sliders) merged (pull request #34); part 2, the sofa studio (prompt 98), merged in holoml (#15) and published, the browser's side in a pull request; waiting for acceptance |
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Later (prompt 85, Q4 a) |
-| 20 | Coral Bay | A resort: paths to ride, sounds by place, sky and environment light, loading by area | Later (prompt 85, Q4 a) |
+| 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Later (prompts 101 and 102) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
 | 22 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85) |
 | 23 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
@@ -68,6 +68,14 @@ the browser's HoloML examples section), 18 Sofa studio, 19 Harbour Loft,
 20 Coral Bay, 21 Aquarium. Privacy and data tools moved from 17 to 22,
 the Windows and Linux release from 18 to 23, macOS from 19 to 24, and
 the later milestones from 20, 21, and 22 to 25, 26, and 27.
+
+On 2026-09-28 (prompts 101 and 102) milestone 20 became a sneaker
+store in place of Coral Bay, a resort: a store where people buy
+products that are good in 3D shows the browser's general use better.
+Of the HoloML features Coral Bay was to bring, loading by area moves to
+the store (many shoes, each loaded when the viewer comes near);
+movement along paths, sounds by place, and a sky wait until a site
+needs them (the aquarium's fish may take paths).
 
 ### Where design work belongs
 
@@ -2743,16 +2751,22 @@ After the report (prompts 89 and 90):
   its plan (prompt 87): moving between pages as between rooms, a link
   to a named viewpoint on the next page (`href="kitchen.holoml#window"`)
   and a transition (a short fade instead of a cut).
-- 20 Coral Bay: movement along paths, positional sound, sky, loading by
-  area, simpler models far away. Proposed for its plan (prompt 87):
-  areas that load their models when the viewer comes near and let go of
-  them when far, counted against the page's limits only while loaded; a
-  simpler model to show far away; and loading progress a page's script
-  can show.
+- 20 Sneaker store (in place of Coral Bay, prompts 101 and 102): a wall
+  of sneakers to pick up, turn, and see up close (the sole, the laces),
+  in their colourways (choices) and sizes, a cart across shoes, and a
+  checkout page (no real payment). From Coral Bay's list, loading by
+  area: proposed for its plan (prompt 87), areas that load their models
+  when the viewer comes near and let go of them when far, counted
+  against the page's limits only while loaded, a simpler model to show
+  far away, and loading progress a page's script can show. Open
+  question for its plan: good CC0 shoe models (prompt 85, Q3 a allows
+  CC0 only; CC BY ones, credited, would need the owner's approval).
 - 21 Aquarium (prompt 85): 5 to 10 real-looking fish of different
   kinds that swim around the tank with their own animations (glTF
   skins), rocks, plants, bubbles, light through the water, and a Feed
-  button: food falls and the fish swim to it and eat. Open question for
+  button: food falls and the fish swim to it and eat. It may take
+  movement along paths, from Coral Bay's list, for the fish (prompt
+  102). Open question for
   its plan: CC0 packs have few real-looking fish; if there are not
   enough, CC BY models (credited) would need the owner's approval, as
   prompt 85's Q3 a allows CC0 only.
@@ -3118,7 +3132,8 @@ work is also HoloML 0.2.
    small floor plan showing where you are; a link to book a viewing.
    Needs: collision, click actions, light changes, multi-line text,
    and larger scenes.
-4. **Coral Bay** (largest: a resort). An island resort outdoors and
+4. **Coral Bay** (largest: a resort; replaced on 2026-09-28 by a
+   sneaker store, prompts 101 and 102). An island resort outdoors and
    in: terrain, water with moving waves, palms swaying, boats sailing
    on paths, a golf cart you ride along a path between the beach, the
    pool, and the hotel lobby, rooms to tour, sunset lighting, and

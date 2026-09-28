@@ -1156,3 +1156,28 @@ first picture.
 ```text
 Approve the AGENTS wording, and move the About label.
 ```
+
+## 101 — 2026-09-28 · Claude Opus 5.5, low effort
+
+```text
+Merged holoml #16. Before you continue, let's change milestone 20 from
+Coral Bay to another website where people can purchase products that
+would be good in 3D, as that will show the capabilities better for
+general use than the resort.
+```
+
+## 102 — 2026-09-28 · Claude Opus 5.5, low effort
+
+Answers to two questions about the new milestone 20. Which kind of
+store, in place of Coral Bay: a sneaker store (a wall of shoes to pick
+up, turn, and see up close, in their colourways and sizes, with a cart
+and checkout), not the recommended gadget and gift shop, a department
+store, or a bike shop. What happens to the HoloML features Coral Bay was
+to bring (movement along paths, sounds by place, a sky, loading by
+area): what the store needs (loading by area moves to the store; paths,
+sounds by place, and a sky wait until a site needs them, perhaps the
+aquarium's fish for paths), as recommended.
+
+```text
+Sneaker store. What the store needs (recommended).
+```

@@ -47,8 +47,9 @@ state; this is a summary.
   https://srajpal.github.io/holoml/blockworld/, and the browser's copy
   (packages/holoml and tests/fixtures/holoml) is synced from holoml's
   main (`pnpm holoml:sync main --examples main`); 18
-  Sofa studio; 19 Harbour Loft; 20 Coral Bay; 21 Aquarium, where HoloML
-  0.2 is tagged); 22 privacy
+  Sofa studio; 19 Harbour Loft; 20 a sneaker store (in place of Coral
+  Bay, a resort, prompts 101 and 102); 21 Aquarium, where HoloML 0.2 is
+  tagged); 22 privacy
   and data tools (HTTPS-only, per-site storage, bookmark import and
   export: #24, #26, #27); then installers as 1.0 (23 for Windows and
   Linux, 24 for macOS), with mobile later (owner, prompt 67).
