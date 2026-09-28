@@ -30,7 +30,7 @@ Plan approved 2026-09-24.
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
 | 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
 | 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | Done (accepted, prompt 112) |
-| 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Planned (prompt 113), waiting for approval |
+| 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | In progress (plan answered and build approved, prompt 114) |
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Later (prompts 101 and 102) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Later (prompt 115) |
@@ -3055,9 +3055,10 @@ the sofa studio's copy in tests/fixtures/holoml/sofa-studio.
 
 ## Milestone 19 — Harbour Loft
 
-Status: Plan, waiting for the owner's answers and approval (prompt 113).
-Pushed before the milestone (after milestone 18's acceptance). Rule 13
-check done (ARCHITECTURE.md section 3).
+Status: In progress. Planned (prompt 113); the owner answered Q1 to Q6
+with the recommendations and approved the build (prompt 114). Pushed
+before the milestone (after milestone 18's acceptance). Rule 13 check
+done (ARCHITECTURE.md section 3).
 
 Goal: a flat to tour, for an estate agent. Walk through the rooms of a
 loft by the harbour, open doors, switch lamps on and off, read about
