@@ -3742,10 +3742,10 @@ milestone ends (milestone 17's plan, Q5 a).
 
 ### Tasks
 
-- [ ] 1. HoloML 0.2, fifth part: SPEC.md (water, sounds from a place,
+- [x] 1. HoloML 0.2, fifth part: SPEC.md (water, sounds from a place,
       animation speed; paths to the ideas for later versions), the
       checker, and conformance samples (holoml branch `aquarium`).
-- [ ] 2. The browser: water, sounds from a place, and animation speed;
+- [x] 2. The browser: water, sounds from a place, and animation speed;
       the copy (`pnpm holoml:sync`, from holoml's `aquarium` branch for
       now).
 - [ ] 3. The fish (Q1): chosen, checked (licence, size, triangles),
@@ -3781,6 +3781,40 @@ milestone ends (milestone 17's plan, Q5 a).
 | X10 | Published | From its public address in the built app (by hand, as W11) |
 | X11 | The automatic builds | Each job finishes within its limit (Q7) |
 | X12 | Regression | The full run on Windows, `pnpm test:linux`, the unit tests, holoml's tests, and the automatic builds |
+
+### Results so far
+
+- Task 3 (the fish, 2026-09-29): Sketchfab's public search (no account)
+  for CC BY fish, matched with Objaverse's copies (its index and
+  licence records on Hugging Face), Babylon.js's asset library, and
+  Khronos's Barramundi; 17 candidates downloaded, looked at in the
+  viewer's own Three.js, and 9 picked: 8 kinds of fish and a sea
+  turtle, every one CC BY 4.0 or CC0 in Objaverse's record of when it
+  was copied. Five use an old material form (specular-glossiness) that
+  three.js no longer reads, and one carries colours for Babylon.js's own
+  animation: the site's tools will convert them. Sent to the owner for
+  approval before the tank is built (the plan's check-in).
+- Task 1 (holoml `aquarium`, ed72075 and 7d17c35): SPEC.md, the
+  checker (a size of three numbers more than 0, a range that needs a
+  position, at most one water in a scene), a valid sample
+  (v02-water-and-sound-places), a problem sample (bad-water), and the
+  0.1 sample that may not use water; holoml's tests 209 passed, lint and
+  types clean. Found while building: water leaves labels and panels as
+  they are, to be read (7d17c35).
+- Task 2: water.ts (the haze and the moving light in the materials'
+  shaders), sound.ts (a panner and each ear's level for a sound from a
+  place), scene.ts and api.ts (the water, a sound's place, a model's
+  animation speed), and the page's hooks (water, waterFadeAt,
+  soundLevels). Unit tests 273 passed (five new: the way through the
+  water, its fade, its light, which materials it goes over, and the
+  loudness with distance); lint and types clean.
+- X2 to X4 (tests/e2e/m21.e2e.ts, fixture pages water.holoml,
+  caustics.holoml, sound-place.holoml, and animation-speed.holoml): all
+  pass on Windows with the graphics card and drawing in software
+  (HYPERSOL_TEST_SOFTWARE=1; there the moving light is left out, as the
+  check expects). X3 reads the real sound in each ear (Web Audio
+  analysers): 4 m to the right, the left ear hears under a fifth of the
+  right; 13 m away, past its 12 m range, silence.
 
 ### Done when
 

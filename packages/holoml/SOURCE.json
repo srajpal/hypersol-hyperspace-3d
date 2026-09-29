@@ -1,11 +1,11 @@
 {
   "repository": "https://github.com/srajpal/holoml",
-  "tag": "main",
-  "commit": "a6c88d9bec58b250a7b1a3c9d0d49b4f8cf466b0",
+  "tag": "aquarium",
+  "commit": "7d17c35afe2bb557dc45549bc6606bfd6c379f53",
   "files": {
-    "src/parser.ts": "68f232f3c7bcc299dd477596ec62fcb9681dbd4f330ed9e55d50846626a4e526",
-    "src/rules.ts": "dbe08816807ae4c7108d965083bec93a3b16fbd61adc4b3256e111fc00152e8c",
-    "src/schema.ts": "174486df8e3f6cc548226bb1db799bbe49d19a6c51ef24c6e0777f8ccc7f232a"
+    "src/parser.ts": "bcbc0926e1ebf6b9c3afaacaeeb9bec23f27e1fa330a135516dd77b12a5308c2",
+    "src/rules.ts": "15adf805a9ed20f71abd6ac88992bc18c887b851e0e056898b9b67729d65ee6d",
+    "src/schema.ts": "35392942fc4c8ae0a4e925ef30eeb7ae70f52c563e07da6bc5f15be71d17f716"
   },
   "examples": {
     "ref": "main",

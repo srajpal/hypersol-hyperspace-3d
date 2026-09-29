@@ -1,0 +1,17 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML sounds from a place</title>
+  </head>
+  <!-- The viewer stands at the origin looking along -z. A tone plays 4 m to
+       the right, heard within 12 m; another sits in a group 30 m away,
+       heard within 10 m, until the group comes near. "plain" has no place. -->
+  <scene background="#1c2030">
+    <viewpoint position="0 1.6 0" look-at="0 1.6 -5" mode="walk" />
+    <label id="sign" position="0 2 -4">Listen</label>
+    <sound id="right" src="gen/tone.wav" position="4 1.6 0" range="12" loop autoplay />
+    <sound id="plain" src="gen/tone.wav" />
+    <group id="cart" position="0 0 -30">
+      <sound id="cart-tone" src="gen/tone.wav" position="0 1.6 0" range="10" loop autoplay />
+    </group>
+  </scene>
+</holoml>

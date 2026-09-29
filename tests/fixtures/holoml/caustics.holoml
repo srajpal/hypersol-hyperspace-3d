@@ -1,0 +1,16 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML caustics</title>
+  </head>
+  <!-- A grey stone floor under 3 m of clear water, seen from above the surface:
+       the waves' moving net of light plays over it. "spot" marks the middle
+       of the floor. -->
+  <scene background="#101820">
+    <viewpoint position="0 6 4" look-at="0 0 0" />
+    <light type="ambient" intensity="0.3" />
+    <light type="directional" position="0 10 1" look-at="0 0 0" intensity="1.5" />
+    <water position="0 -0.2 0" size="12 3 12" color="#1f6f8b" clarity="30" caustics />
+    <model id="floor" src="blockworld/models/stone.gltf" position="0 -0.5 0" scale="12 1 12" />
+    <group id="spot" position="0 0 0" />
+  </scene>
+</holoml>

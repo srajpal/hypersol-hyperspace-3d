@@ -103,6 +103,10 @@ Object.defineProperty(window, '__holoml', {
     areas: () => JSON.parse(JSON.stringify(state.view?.areasInfo ?? [])),
     standIns: () => JSON.parse(JSON.stringify(state.view?.standInsInfo ?? [])),
     totals: () => state.view?.totals ?? null,
+    /** Water and sounds from a place (milestone 21): the water's box, look, and moving light; how much a point has faded into it from where the viewer is; and how loud a sound from a place is in each ear now. */
+    water: () => JSON.parse(JSON.stringify(state.view?.waterInfo ?? null)),
+    waterFadeAt: (point: [number, number, number]) => state.view?.waterFadeAt(point) ?? 0,
+    soundLevels: (id: string) => state.view?.soundLevels(id) ?? null,
     /** The page's panorama of the surroundings: its address, whether it arrived, and how brightly it lights the scene. */
     environment: () => state.view?.environmentInfo ?? null,
     walker: () => state.view?.walkerInfo ?? null,
