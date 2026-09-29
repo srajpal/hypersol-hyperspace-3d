@@ -91,8 +91,10 @@ Auto-fix on):
   main (SOURCE.json: 4d69a69, the merge of #17).
 
 What comes next: #36's automatic builds (V8 to V10 were given time for
-drawing in software after `pnpm test:linux` ran them out of time), and
-the owner's acceptance. V11 passed (the published site in the built
+drawing in software after `pnpm test:linux` ran them out of time; then
+its Linux job failed V5 and V8, which read the page too late on
+GitHub's slower machine, fixed 2026-09-29: TODO.md, milestone 19's
+results), and the owner's acceptance. V11 passed (the published site in the built
 app). The AGENTS.md wording for the README's pictures is approved and
 in (prompt 119). For an owner decision later: ARCHITECTURE.md section
 10, item 4 (large scenes: shaders compiled on the page's main thread,

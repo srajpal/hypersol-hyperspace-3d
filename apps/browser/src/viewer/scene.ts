@@ -2229,7 +2229,7 @@ export class HolomlView {
   /** A sound (HoloML 0.2): fetched within the limits; played after the viewer's first click or key. */
   private sound(el: ElementNode, entry: Entry): void {
     const src = attr(el, 'src') ?? '';
-    const report: SoundReport = { id: entry.id, src, state: 'loading', playing: false };
+    const report: SoundReport = { id: entry.id, src, state: 'loading', playing: false, plays: 0 };
     entry.soundReport = report;
     // A sound that begins on a click does not also play by itself (the checker reports both together).
     const autoplay = has(el, 'autoplay') && attr(el, 'begin') !== 'click';

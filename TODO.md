@@ -3301,7 +3301,20 @@ sofa studio did not have: text of more than one line (holoml issue
   (`pnpm test:linux tests/e2e/m19.e2e.ts`, 2026-09-29): V2 to V10, 9
   checks, all passed (V8 ready in 20.5 s, logged; V8 took 169 s, V9
   185 s, V10 62 s).
-- Not yet: the automatic builds of browser pull request #36.
+- The automatic builds of browser pull request #36 (2026-09-29): Windows
+  passed; Linux passed 258 of 261 checks (1 skipped) and failed two,
+  both reading the page too late on GitHub's slower machine, drawing in
+  software. V5: the arriving page was busy over its first frame for more
+  than the 4 s it waits at most before fading in, so when the check
+  could ask it, it had faded in (as it should). V8: the door's sound
+  (0.75 s) had ended before the check could see it playing. Fixed
+  without loosening either: V5 now samples the page's brightness from
+  the browser (its own pictures of the page, which need nothing from
+  the page) from when it appears, and checks, against the page's own
+  record of its fade, that nothing of its scene shows from when it sets
+  its fade until it fades in, and that the fade covers it; a sound's
+  report counts its plays, and V8 checks the door's sound started. Both
+  pass on Windows, drawing in software, and with `pnpm test:linux`.
 
 ### Done when
 
