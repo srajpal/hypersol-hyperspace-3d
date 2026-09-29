@@ -3430,7 +3430,7 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
       picture, and its row.
 - [ ] 5. Checks W1 to W12 (tests/e2e/m20.e2e.ts, holoml's tests), run on
       Windows, with `pnpm test:linux`, and in the automatic builds.
-- [ ] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
+- [x] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
       THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the README's
       pictures.
 
@@ -3545,6 +3545,17 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
 - Screenshots: docs/screenshots/m20 (`MILESTONE=m20 pnpm screenshots`;
   the store, a shoe's page, and the checkout are 58 to 60), and the
   README's four pictures again (`pnpm screenshots:readme`), looked at.
+- The full `pnpm test:linux` run (2026-09-29, 33 minutes, with milestone
+  19's first V5 fix): lint and the unit tests pass (266, and 2 skipped:
+  the copy's checks against holoml beside it), and 269 of 270
+  end-to-end checks pass, 1 skipped: D8's and K2's clipboard checks
+  pass there, where the clipboard works. W6: ready in 6.6 s, drawing in
+  software (logged). W10: halfway down the hall six bays in, 5.0 MB
+  counted and 5.9 MB of ArrayBuffers; by the entrance four, 3.6 MB and
+  4.8 MB (the heap 6.7 MB both times; the working set 239 and 233 MB).
+- Not yet: the automatic builds (the pull request), and W11 by hand
+  once holoml's pull request #18 is merged and GitHub Pages publishes
+  the store.
 
 ### Done when
 
