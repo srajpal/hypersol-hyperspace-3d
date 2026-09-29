@@ -1405,3 +1405,13 @@ Sketchfab models, and a barramundi (Microsoft, Khronos's glTF samples).
 ```text
 Fish approved.
 ```
+
+## 124 — 2026-09-29 · Claude Opus 5.5, max effort
+
+After the milestone 21 report: holoml's pull request #19 (HoloML 0.2's
+fifth part, 0.2 complete, and the aquarium) merged by the owner; the
+browser's pull request #38 still showed a failing check.
+
+```text
+#19 merged, #38 has a failure
+```
