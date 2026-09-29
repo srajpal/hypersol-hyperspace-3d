@@ -101,15 +101,15 @@ Where the work is:
   sounds, and tools/; the download's cache, tools/cache/, is ignored by
   git), its tests, and the README and NOTICE.
 - The browser's copy of HoloML (packages/holoml) comes from holoml's
-  `aquarium` branch; once holoml's pull request is merged, sync it from
-  main (`pnpm holoml:sync main --examples main`), as milestone 20 did.
-- Pull requests: holoml #19 and the browser's #38, with Auto-fix on
-  for both. Their first builds found the aquarium too slow to draw in
-  software and a Windows line-end slip in holoml's credits test; both
-  are fixed (TODO.md has the details). Not yet: the builds of the fixed
-  branches (X11: each job within its 45 minutes), X10 (the published
-  aquarium in the built app, by hand) once holoml's pull request is
-  merged and GitHub Pages publishes it, and the owner's acceptance.
+  main (SOURCE.json: 710d8b9, the merge of #19, prompt 124).
+- Pull requests: holoml #19, merged (prompt 124; GitHub Pages publishes
+  the aquarium, and X10 passed), and the browser's #38, with Auto-fix
+  on. Its builds found the aquarium too slow to draw in software (fixed
+  by lighter models); since then every job has kept within its 45
+  minutes (X11), and the only failures were three timing checks of
+  earlier milestones on GitHub's machines (V5, E6b, and #10), each of
+  which has passed on the same code. TODO.md has the details. Not yet:
+  the owner's acceptance, and then tagging HoloML v0.2.0 (task 9).
 
 Worth knowing:
 

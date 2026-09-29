@@ -3757,7 +3757,7 @@ milestone ends (milestone 17's plan, Q5 a).
       request is merged.
 - [x] 5. The examples section and the start panel: its card, its
       picture, and its row.
-- [ ] 6. The automatic builds (Q7): the end-to-end checks in two parts
+- [x] 6. The automatic builds (Q7): the end-to-end checks in two parts
       side by side on each system (ci.yml and vitest.e2e.config.ts,
       written; the automatic builds of the pull request will show it).
 - [ ] 7. Checks X1 to X12 (tests/e2e/m21.e2e.ts, holoml's tests), run on
@@ -3967,6 +3967,30 @@ milestone ends (milestone 17's plan, Q5 a).
   `pnpm test:linux tests/e2e/m21.e2e.ts`, all 8 passed (18 minutes, X7
   5.3 of them; X5 drawn in 17.3 s; X9 1.0 frames a second, and the heap
   11.1 MB then 11.3 MB).
+- The automatic builds on the fix (d6b168d, 2026-09-29): every job
+  within its 45 minutes (X11). Linux part 1 passed in 19 min 29 s and
+  Windows part 2 in 11 min 5 s. Linux part 2 took 32 min 13 s: every
+  m21 check passed there (17 minutes; X5 ready in 10.3 s and drawn in
+  13.3 s, X9 1.0 frames a second and the heap 11.0 MB then 11.2 MB), and
+  V5 (milestone 19) failed: the arriving page was busy for about 5 s
+  drawing in software, so no picture of it came back before its fade-in
+  began (in this pull request's first build, with the same viewer, it
+  was not busy and V5 passed). Windows part 1 failed E6b (milestone 3):
+  quitting took 6551 ms where 6000 are allowed. Both failed jobs run
+  again: Linux part 2 passed (31 min 56 s), and Windows part 1 failed
+  #10 (milestone 8): five of the 100 small downloads had all their bytes
+  but were not marked finished within the minute (E6b passed). None of
+  the three touches this milestone's changes, and each passed before on
+  the same code; they are not changed.
+- Prompt 124: holoml #19 merged (710d8b9), and GitHub Pages published
+  it. The copy synced from holoml's main (only SOURCE.json and the
+  copied files' first lines changed). X10: the built app opened
+  https://srajpal.github.io/holoml/aquarium/index.holoml#tunnel from the
+  internet: ready in 3751 ms and drawn in 3955 ms, 171 models loaded,
+  no problems, 12.1 MB counted, the water's light shown; the fish swam
+  (1.2 to 2.2 m in 3 s); Feed dropped the food and the fish ate it; the
+  great white shark's button told about it on the board; the about page
+  opened with its credits.
 
 ### Done when
 
