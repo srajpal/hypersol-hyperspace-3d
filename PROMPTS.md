@@ -1319,3 +1319,11 @@ standards.
 ```text
 Hand off this session when you come to a good stopping point.
 ```
+
+## 117 — 2026-09-28 · Claude Opus 5.5, max effort
+
+(A new session, picking up milestone 19 from the hand-off.)
+
+```text
+Read the handoff and tell me your plan.
+```
