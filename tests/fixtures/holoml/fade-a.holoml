@@ -1,0 +1,16 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML fade, first page</title>
+  </head>
+  <!-- Milestone 19 (V5): a link to another HoloML page of this site (it fades), and one to a web page (it does not). -->
+  <scene background="#2a3a4a">
+    <viewpoint position="0 1.5 3" look-at="0 1.5 0" />
+    <light type="ambient" intensity="0.8" />
+    <a href="fade-b.holoml">
+      <label position="-0.9 1.5 0" size="0.25">Next room</label>
+    </a>
+    <a href="../link-a.html">
+      <label position="0.9 1.5 0" size="0.25">A web page</label>
+    </a>
+  </scene>
+</holoml>

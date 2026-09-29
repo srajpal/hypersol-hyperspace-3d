@@ -50,6 +50,16 @@ HoloML's examples (tests/fixtures/holoml, copied by `pnpm holoml:sync`):
   material split, the oak and ebony pictures, and the rug's grey are
   made from them. Its pages, script, room, and rug are Apache-2.0, The
   HoloML Authors.
+- Harbour Loft (tests/fixtures/holoml/harbour-loft). Its furniture,
+  lamps, and plants, the textures of its floors, tiles, worktop
+  splashback, brick wall, fabrics, and decking, and the harbour (Simon's
+  Town harbour: the sky and the light) are from Poly Haven
+  (https://polyhaven.com, CC0 1.0; credited, with each artist, in its
+  models/CREDITS.md); the recoloured duvet and floor tiles and the
+  re-encoded pictures are made from them. Its pages, script, the walls,
+  windows, doors, kitchen, bathroom, bed, wardrobe, and terrace (made by
+  its script), the floor plan, and the door and switch sounds are
+  Apache-2.0, The HoloML Authors.
 - Some checks use Blockworld's blocks in pages of their own
   (walls.holoml, shadows.holoml, textures.holoml, choice.holoml, and
   environment.holoml).
@@ -78,4 +88,5 @@ The HoloML examples section shows a picture of each example
 (apps/browser/src/renderer/examples/), taken in HyperSpace 3D by `pnpm
 screenshots:examples` from the copies above; the showroom's cars and
 Blockworld's blocks in them are Kenney's (CC0), and the sofa studio's
-sofa, furniture, fabrics, and light are Poly Haven's (CC0).
+sofa, furniture, fabrics, and light and Harbour Loft's furniture,
+textures, and harbour are Poly Haven's (CC0).

@@ -439,6 +439,35 @@ it('captures the main screens', async () => {
     await capture(shop, '54-sofa-studio-evening');
   } finally {
     await shop.close();
+  }
+  // Milestone 19: Harbour Loft's living room by day, its bedroom in the evening with the bedside lamps on, and the roof terrace.
+  const loft = await launch(server.url('link-a.html'));
+  const LOFT = 'harbour-loft/index.holoml';
+  const TERRACE = 'harbour-loft/terrace.holoml';
+  const open = async (page: string) => {
+    await shellCall(loft, 'showUrl', server.url(`holoml/${page}`));
+    await waitForPage(loft, page);
+    await waitFor('the flat', () => inPage<boolean>(loft, 'window.__holoml?.ready === true', page), (r) => r, 30_000);
+  };
+  try {
+    await waitForPage(loft, 'link-a');
+    await open(LOFT);
+    await inPage(loft, 'holoml.viewer.position = [1.3, 1.65, -0.6], holoml.viewer.lookAt([-3, 1, 3]), true', LOFT);
+    await sleep(2000);
+    await capture(loft, '55-harbour-loft');
+    await inPage(loft, `document.querySelector('[data-id="time"] input[value="evening"]').click(), true`, LOFT);
+    for (const lamp of ['Bedside lamp, left', 'Bedside lamp, right']) {
+      await inPage(loft, `[...document.querySelectorAll('#holoml-outline button')].find((b) => b.textContent === ${JSON.stringify(lamp)}).click(), true`, LOFT);
+    }
+    await inPage(loft, 'holoml.viewer.position = [5.5, 1.6, 1.7], holoml.viewer.lookAt([3.6, 0.8, -0.6]), true', LOFT);
+    await sleep(2000);
+    await capture(loft, '56-harbour-loft-evening');
+    await inPage(loft, `document.querySelector('[data-id="time"] input[value="day"]').click(), true`, LOFT);
+    await open(TERRACE);
+    await sleep(2000);
+    await capture(loft, '57-harbour-loft-terrace');
+  } finally {
+    await loft.close();
     await server.close();
   }
 }, 600_000);

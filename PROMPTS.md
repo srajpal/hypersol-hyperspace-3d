@@ -1284,3 +1284,80 @@ Can you check PR #33: what do we have to do with it to merge it?
 ```text
 Merged #33. Push it, and plan milestone 19.
 ```
+
+## 114 — 2026-09-28 · Claude Opus 5.5, low effort
+
+Answers to the milestone 19 plan's questions (Harbour Loft), all as
+recommended, approval to build, and to close the GitHub issues already
+built. Q1, paragraphs (a: a new `panel` element, a flat board of wrapped
+text). Q2, doors and switches (a: click actions in the language, each a
+button in the outline). Q3, rooms and pages (a: the whole flat on one
+page, and the roof terrace as a second page reached with a fade and a
+named viewpoint). Q4, the view outside (a: `sky`, a panorama behind
+everything). Q5, the floor plan (a: a `plan` element). Q6, the models (a:
+Poly Haven, with the kitchen and bathroom made by the site's script
+from Poly Haven textures). The issues: holoml #8, #9, and #10, and the
+browser's #23, #25, and #28.
+
+```text
+Use the recommendations and build, and close the issues.
+```
+
+## 115 — 2026-09-28 · Claude Opus 5.5, low effort
+
+(Sent during the milestone 19 build.)
+
+```text
+Milestone 22 should be creating documentation for HoloML using some
+standards.
+```
+
+## 116 — 2026-09-28 · Claude Opus 5.5, max effort
+
+(Sent during the milestone 19 build.)
+
+```text
+Hand off this session when you come to a good stopping point.
+```
+
+## 117 — 2026-09-28 · Claude Opus 5.5, max effort
+
+(A new session, picking up milestone 19 from the hand-off.)
+
+```text
+Read the handoff and tell me your plan.
+```
+
+## 118 — 2026-09-28 · Claude Opus 5.5, max effort
+
+Approval of the plan for the rest of milestone 19 (Harbour Loft's
+`prepare.mjs` and pages, the browser's copy, its examples card, checks
+V8 to V10, the full run, the documents and screenshots, then the pull
+requests), and the answer to its question: Harbour Loft takes the sofa
+studio's place as the README's first picture (AGENTS.md's wording to
+be shown first).
+
+```text
+Go, and yes to Harbour Loft in the README.
+```
+
+## 119 — 2026-09-28 · Claude Opus 5.5, max effort
+
+Approval of the AGENTS.md wording proposed in the reply to prompt 118
+(the README's pictures: Harbour Loft in place of the sofa studio, in the
+working agreement and the testing list), Auto-fix turned on for browser
+pull request #36, and holoml pull request #17 merged by the owner.
+
+```text
+Yes to the AGENTS wording, and turn on Auto-fix, and #17 merged.
+```
+
+## 120 — 2026-09-28 · Claude Opus 5.5, max effort
+
+(Sent while milestone 19's pull requests were open, after holoml #17
+merged.)
+
+```text
+You can start on the next milestone; use recommendations if you have
+questions.
+```

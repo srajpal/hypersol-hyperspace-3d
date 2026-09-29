@@ -1,5 +1,5 @@
 /**
- * HoloML's example sites (milestones 16 to 18; owner, prompt 85): what the
+ * HoloML's example sites (milestones 16 to 19; owner, prompt 85): what the
  * start panel's "Try HoloML" and the examples dialog list. The sites are
  * published from the holoml repository with GitHub Pages; the pictures are
  * part of the browser (pnpm screenshots makes them from local copies), so
@@ -8,6 +8,7 @@
 import showroomPicture from './examples/showroom.jpg';
 import blockworldPicture from './examples/blockworld.jpg';
 import sofaStudioPicture from './examples/sofa-studio.jpg';
+import harbourLoftPicture from './examples/harbour-loft.jpg';
 
 export interface Example {
   id: string;
@@ -56,6 +57,14 @@ export const EXAMPLES: readonly Example[] = [
     row: 'Sofa studio: choose a fabric and see it in 3D',
     features: 'HoloML 0.2: choices, textured materials, shadows, a studio panorama for light, a script for the price',
     picture: sofaStudioPicture,
+  },
+  {
+    id: 'harbour-loft',
+    name: 'Harbour Loft',
+    line: 'A loft by the harbour to tour: open the doors, switch the lamps on, read about each room, and go up to the roof terrace.',
+    row: 'Harbour Loft: tour a flat by the harbour',
+    features: 'HoloML 0.2: panels, click actions, places, a sky, a floor plan, and a fade between pages',
+    picture: harbourLoftPicture,
   },
 ];
 

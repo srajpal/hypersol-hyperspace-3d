@@ -1,0 +1,10 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML sky</title>
+  </head>
+  <!-- Milestone 19 (V6): a sky, orange above the horizon and blue below, drawn behind everything. -->
+  <scene background="#000000" sky="gen/sky.png?top=ff6010&amp;bottom=1060ff">
+    <viewpoint position="0 1.6 0" look-at="0 1.6 -5" />
+    <light type="ambient" intensity="0.6" />
+  </scene>
+</holoml>

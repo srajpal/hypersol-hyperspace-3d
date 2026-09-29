@@ -1,15 +1,15 @@
 /**
  * The README's screenshots (owner, prompt 68: always the newest version,
  * nice ones; prompt 99: four, to show the variety of what the browser
- * does):
+ * does; prompt 118: Harbour Loft, the newest example, first):
  *
  *   pnpm screenshots:readme
  *
  * In one window with four tabs (a sample web page, and HoloML's showroom,
- * Blockworld, and sofa studio), it writes to docs/screenshots/:
+ * Blockworld, and Harbour Loft), it writes to docs/screenshots/:
  *
- * - readme.png: the sofa studio, the newest example (milestone 18), with
- *   the red velvet chosen;
+ * - readme.png: Harbour Loft, the newest example (milestone 19): its
+ *   living room by day, the harbour through the windows;
  * - readme-game.png: Blockworld, a HoloML game, from a pillar of stone at
  *   one corner of the island;
  * - readme-layers.png: the sample page in the Daylight theme, its parts
@@ -57,15 +57,15 @@ it('captures the README screenshots', async () => {
     await waitForPage(h, 'field-notes.html');
     await settled(h);
     await sleep(1500);
-    for (const page of ['showroom/index.holoml', 'blockworld/index.holoml?hour=16.3', 'sofa-studio/index.holoml']) {
+    for (const page of ['showroom/index.holoml', 'blockworld/index.holoml?hour=16.3', 'harbour-loft/index.holoml']) {
       await pressInShell(h, 'T', ['control']);
       await sleep(500);
       await shellCall(h, 'showUrl', holoml(page));
       await ready(page.split('?')[0]!);
     }
 
-    // The sofa studio, with the red velvet chosen.
-    await inPage(h, `document.querySelector('[data-id="fabric"] input[value="velvet"]').click(), true`, 'sofa-studio');
+    // Harbour Loft's living room by day, from beside the bedroom's door (as its picture in the examples section).
+    await inPage(h, 'holoml.viewer.position = [1.3, 1.65, -0.6], holoml.viewer.lookAt([-3, 1, 3]), true', 'harbour-loft');
     await sleep(2500);
     await shot('readme.png');
 

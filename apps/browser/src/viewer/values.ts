@@ -77,6 +77,35 @@ export function tiling(el: ElementNode): [number, number] | null {
   return u > 0 && v > 0 ? [u, v] : null;
 }
 
+/**
+ * A rectangle of the ground (HoloML 0.2 `area`, a floor plan's): x0 z0
+ * x1 z1, with x1 more than x0 and z1 more than z0; null when absent or bad.
+ */
+export function area(el: ElementNode, name = 'area'): [number, number, number, number] | null {
+  const parts = attr(el, name)?.trim().split(/\s+/);
+  if (!parts || parts.length !== 4 || !parts.every(finite)) return null;
+  const [x0, z0, x1, z1] = parts.map(Number) as [number, number, number, number];
+  return x1 > x0 && z1 > z0 ? [x0, z0, x1, z1] : null;
+}
+
+/**
+ * A panel's text as paragraphs (HoloML 0.2 `panel`): a blank line starts
+ * a new one, and within each, spaces and line breaks collapse as in a
+ * label.
+ */
+export function paragraphs(value: string): string[] {
+  return value
+    .replace(/\r\n?/g, '\n')
+    .split(/\n[ \t\f\v]*\n/)
+    .map((p) => p.replace(/\s+/g, ' ').trim())
+    .filter((p) => p !== '');
+}
+
+/** An element's own text, as written (line breaks kept). */
+export function rawText(el: ElementNode): string {
+  return el.children.map((c) => (c.type === 'text' ? c.value : '')).join('');
+}
+
 /** Text content with whitespace collapsed, as in title and label. */
 export function text(el: ElementNode): string {
   return el.children

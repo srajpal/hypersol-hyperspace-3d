@@ -63,6 +63,7 @@ Object.defineProperty(window, '__holoml', {
     links: () => state.view?.links.map((l) => l.href) ?? [],
     object: (id: string) => state.view?.objectInfo(id) ?? null,
     point: (which: string | number) => state.view?.screenPoint(which) ?? null,
+    rect: (id: string) => state.view?.screenRect(id) ?? null,
     linkAt: (x: number, y: number) => state.view?.linkHrefAt(x, y) ?? null,
     lights: () => state.view?.lightsInfo() ?? [],
     leftOut: () => state.view?.leftOut ?? [],
@@ -91,6 +92,13 @@ Object.defineProperty(window, '__holoml', {
     choices: () => JSON.parse(JSON.stringify(state.view?.choicesInfo ?? [])),
     /** Shadows: the lights and meshes that cast them, and why a page's were left out, if they were. */
     shadows: () => state.view?.shadowsInfo ?? null,
+    /** HoloML 0.2's third part (milestone 19): panels, click actions, places, the sky, the floor plan, and the fade. */
+    panels: () => JSON.parse(JSON.stringify(state.view?.panelsInfo ?? [])),
+    actions: () => JSON.parse(JSON.stringify(state.view?.actionsInfo ?? [])),
+    places: () => JSON.parse(JSON.stringify(state.view?.placesInfo ?? null)),
+    sky: () => state.view?.skyInfo ?? null,
+    plan: () => JSON.parse(JSON.stringify(state.view?.planInfo ?? null)),
+    fade: () => JSON.parse(JSON.stringify(state.view?.fadeInfo ?? null)),
     /** The page's panorama of the surroundings: its address, whether it arrived, and how brightly it lights the scene. */
     environment: () => state.view?.environmentInfo ?? null,
     walker: () => state.view?.walkerInfo ?? null,
@@ -182,6 +190,17 @@ const STYLE = `
   .holoml-options input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
   .holoml-options label:has(input:checked) { background: #7fd8ff; border-color: #7fd8ff; color: #0b0f1e; }
   .holoml-options label:has(input:focus-visible) { outline: 2px solid #7fd8ff; outline-offset: 2px; }
+  /* Milestone 19: the floor plan, with the viewer's place and the way they face; and the fade between places and pages. */
+  .holoml-plan { position: relative; margin: 0; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 4px 18px #0007; }
+  .holoml-plan[hidden] { display: none; }
+  .holoml-plan img { display: block; width: 100%; height: auto; }
+  .holoml-plan-marker { position: absolute; left: 0; top: 0; width: 28px; height: 28px; transform: translate(-50%, -50%); }
+  .holoml-plan-marker[hidden] { display: none; }
+  .holoml-plan-marker::before { content: ''; position: absolute; left: 5px; top: -4px; border-left: 9px solid transparent; border-right: 9px solid transparent;
+    border-bottom: 18px solid #e8453cb3; }
+  .holoml-plan-marker::after { content: ''; position: absolute; left: 8px; top: 8px; width: 8px; height: 8px; border-radius: 50%; background: #e8453c;
+    border: 2px solid #fff; box-shadow: 0 0 2px #000a; }
+  #holoml-fade { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; }
   .holoml-crosshair { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); }
   .holoml-crosshair::before, .holoml-crosshair::after { content: ''; position: absolute; background: #ffffffd9; box-shadow: 0 0 2px #000; }
   .holoml-crosshair::before { left: 10px; top: 0; width: 2px; height: 22px; }
@@ -200,6 +219,8 @@ const STYLE = `
   body.holoml-text-view .holoml-hud { color: #eef1ff !important; text-shadow: none; font-size: 17px !important; }
   body.holoml-text-view .holoml-crosshair { display: none; }
   body.holoml-text-view .holoml-choice { background: none; backdrop-filter: none; font-size: 16px; }
+  body.holoml-text-view .holoml-panel-words p { margin: 4px 0 12px; }
+  body.holoml-text-view #holoml-fade, body.holoml-text-view .holoml-plan-marker { display: none; }
 `;
 
 function start(): void {
@@ -303,7 +324,8 @@ function start(): void {
     drawnToTell = true;
   };
   view.onDrawn = () => {
-    if (!drawnToTell || view.busy || !view.viewSettled) return;
+    // Not while the page is dark in a fade (milestone 19): the card shows the scene.
+    if (!drawnToTell || view.busy || !view.viewSettled || view.fading) return;
     drawnToTell = false;
     window.postMessage({ hypersolHolomlDrawn: true }, '*');
   };

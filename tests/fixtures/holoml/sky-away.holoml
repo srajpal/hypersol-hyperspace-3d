@@ -1,0 +1,9 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML sky from another site</title>
+  </head>
+  <!-- Milestone 19 (V6): a sky from another site is not loaded; the background colour shows. -->
+  <scene background="#204030" sky="https://example.com/sky.jpg">
+    <viewpoint position="0 1.6 0" look-at="0 1.6 -5" />
+  </scene>
+</holoml>

@@ -1,9 +1,10 @@
 /**
  * Pictures a page names itself (HoloML 0.2, milestone 18): a material's
  * colour, normal, and roughness pictures, and the panorama of the
- * surroundings. Each comes from the page's own site within its limits
- * (budget.ts), each address once, and its size is read from its header
- * before it is decoded, so a huge picture is left out, not decoded.
+ * surroundings; since milestone 19, the sky and a floor plan too. Each
+ * comes from the page's own site within its limits (budget.ts), each
+ * address once, and its size is read from its header before it is
+ * decoded, so a huge picture is left out, not decoded.
  */
 import {
   DataTexture,
@@ -30,7 +31,11 @@ function tooLarge(width: number, height: number): LeftOut | null {
 
 export class Pictures {
   private readonly bitmaps = new Map<string, Promise<ImageBitmap>>();
+  private readonly files = new Map<string, Promise<{ data: ArrayBuffer; bytes: number }>>();
+  private readonly released = new Set<string>();
   private readonly textures = new Map<string, Promise<Texture>>();
+  /** Panoramas: the surroundings and the sky may be one file, loaded (and counted) once. */
+  private readonly panoramas = new Map<string, Promise<Texture>>();
 
   constructor(
     private readonly budget: Budget,
@@ -39,29 +44,55 @@ export class Pictures {
     private readonly anisotropy = 1,
   ) {}
 
-  private bitmap(url: URL): Promise<ImageBitmap> {
-    let picture = this.bitmaps.get(url.href);
+  /**
+   * A picture, decoded. WebGL does not flip a decoded bitmap, so one to
+   * be seen the right way up (a panorama, in the convention three.js
+   * expects for it) is decoded upside down; materials' pictures keep
+   * glTF's convention, as they are.
+   */
+  private bitmap(url: URL, flip = false): Promise<ImageBitmap> {
+    const key = `${flip ? 'flipped ' : ''}${url.href}`;
+    let picture = this.bitmaps.get(key);
     if (!picture) {
-      picture = this.budget.file(url, this.origin).then(({ data, bytes }) =>
-        this.keepingBytes(bytes, () => {
-          const size = pictureSize(new Uint8Array(data));
-          if (!size) throw new Error('not a PNG, JPEG, or WebP picture');
-          const over = tooLarge(size.width, size.height);
-          if (over) throw over;
-          return createImageBitmap(new Blob([data]));
-        }),
+      picture = this.checked(url).then(({ data, bytes }) =>
+        this.keepingBytes(url, bytes, () => createImageBitmap(new Blob([data]), flip ? { imageOrientation: 'flipY' } : {})),
       );
-      this.bitmaps.set(url.href, picture);
+      this.bitmaps.set(key, picture);
     }
     return picture;
   }
 
-  /** Makes something of a picture's bytes; if that fails, the picture is not shown and its bytes stop counting (as a model's). */
-  private async keepingBytes<T>(bytes: number, make: () => T | Promise<T>): Promise<T> {
+  /** A picture's bytes: fetched and counted once however it is used, with its size read from its header and checked. */
+  private checked(url: URL): Promise<{ data: ArrayBuffer; bytes: number }> {
+    let file = this.files.get(url.href);
+    if (!file) {
+      file = this.budget.file(url, this.origin).then((got) =>
+        this.keepingBytes(url, got.bytes, () => {
+          const size = pictureSize(new Uint8Array(got.data));
+          if (!size) throw new Error('not a PNG, JPEG, or WebP picture');
+          const over = tooLarge(size.width, size.height);
+          if (over) throw over;
+          return got;
+        }),
+      );
+      this.files.set(url.href, file);
+    }
+    return file;
+  }
+
+  /**
+   * Makes something of a picture's bytes; if that fails, the picture is
+   * not shown and its bytes stop counting, as a model's (once, however
+   * many ways it was used).
+   */
+  private async keepingBytes<T>(url: URL, bytes: number, make: () => T | Promise<T>): Promise<T> {
     try {
       return await make();
     } catch (e) {
-      this.budget.releaseBytes(bytes);
+      if (!this.released.has(url.href)) {
+        this.released.add(url.href);
+        this.budget.releaseBytes(bytes);
+      }
       throw e;
     }
   }
@@ -95,11 +126,29 @@ export class Pictures {
     return copy;
   }
 
-  /** The surroundings: an HDR panorama, or a PNG or JPEG one, to light the scene. */
-  async environment(url: URL): Promise<Texture> {
+  /** A panorama, an HDR, PNG, or JPEG picture: the surroundings, to light the scene, or the sky, to draw behind it. */
+  environment(url: URL): Promise<Texture> {
+    let panorama = this.panoramas.get(url.href);
+    if (!panorama) {
+      panorama = this.panorama(url);
+      this.panoramas.set(url.href, panorama);
+    }
+    return panorama;
+  }
+
+  /**
+   * A picture shown by the page itself (a floor plan, milestone 19): an
+   * address of its bytes, once its size has been read and checked.
+   */
+  async address(url: URL): Promise<string> {
+    const { data } = await this.checked(url);
+    return URL.createObjectURL(new Blob([data]));
+  }
+
+  private async panorama(url: URL): Promise<Texture> {
     if (/\.hdr$/i.test(url.pathname)) {
       const { data, bytes } = await this.budget.file(url, this.origin);
-      const hdr = await this.keepingBytes(bytes, () => {
+      const hdr = await this.keepingBytes(url, bytes, () => {
         const parsed = new HDRLoader().parse(data);
         if (!parsed.width || !parsed.height || !parsed.data) throw new Error('not an HDR panorama');
         const over = tooLarge(parsed.width, parsed.height);
@@ -116,7 +165,8 @@ export class Pictures {
       t.needsUpdate = true;
       return t;
     }
-    const t = new Texture(await this.bitmap(url));
+    const t = new Texture(await this.bitmap(url, true));
+    t.flipY = false;
     t.colorSpace = SRGBColorSpace;
     t.mapping = EquirectangularReflectionMapping;
     t.needsUpdate = true;

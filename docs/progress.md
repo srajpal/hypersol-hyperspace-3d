@@ -217,3 +217,16 @@ own shadows.
 ![The sofa studio by day: the red velvet chosen, the price beside it](screenshots/m18/53-sofa-studio.png)
 
 ![The sofa studio in the evening: brown leather on an ebony frame, lit by the table lamp](screenshots/m18/54-sofa-studio-evening.png)
+
+**Milestone 19: Harbour Loft** (built; waiting for acceptance).
+HoloML 0.2's third part: text of more than one line on a board in the
+scene, doors and lamps that work with a click (and from the keyboard),
+places to go to, a fade between a site's pages, a sky, and a floor plan.
+Harbour Loft shows them: a flat by a harbour to tour, with a panel in
+each room, lamps to switch on in the evening, and a roof terrace.
+
+![Harbour Loft by day: the living room, the dining table and the island, the harbour through the windows, the floor plan in the corner](screenshots/m19/55-harbour-loft.png)
+
+![Harbour Loft in the evening: the bedroom lit by its bedside lamps](screenshots/m19/56-harbour-loft-evening.png)
+
+![Harbour Loft's roof terrace: sun loungers on a deck behind glass railings, the marina all round](screenshots/m19/57-harbour-loft-terrace.png)

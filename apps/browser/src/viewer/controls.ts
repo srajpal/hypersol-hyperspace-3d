@@ -142,7 +142,8 @@ export function walkControls(
 ): ViewControls {
   let walkSpeed = speeds?.walk ?? WALK_SPEED;
   let turnSpeed = speeds?.turn ?? TURN_SPEED;
-  const eye = camera.position.y;
+  // Without walls and gravity, the eyes keep their height (a place, or a script, may move them to another).
+  let eye = camera.position.y;
   const dir = new Vector3().subVectors(lookAt, camera.position);
   let yaw = Math.atan2(-dir.x, -dir.z);
   let pitch = Math.atan2(dir.y, Math.hypot(dir.x, dir.z));
@@ -284,7 +285,7 @@ export function walkControls(
       if (physics) {
         physics.walker.placeEye(eyeAt);
         airborne = physics.walker.gravity;
-      }
+      } else eye = eyeAt[1];
       camera.position.set(...eyeAt);
       aim();
     },
@@ -310,16 +311,19 @@ export function walkControls(
 const SLIDER_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']);
 /** The keys a choice's options use: the arrows move to another option, the space bar picks one (`choice`, milestone 18). */
 const OPTION_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' ']);
+/** The keys that press a button in the scene's outline: a click action's, or "Go to" a place (milestone 19). */
+const BUTTON_KEYS = new Set(['Enter', ' ']);
 
 /**
  * A key that belongs to a control in the page, not to walking or the
- * page's scripts: any key in a text field, and a slider's or a choice's
- * own keys while it has the keyboard (other keys still walk, jump, and
- * reach scripts).
+ * page's scripts: any key in a text field, a slider's or a choice's own
+ * keys while it has the keyboard, and Enter and Space on a button of the
+ * outline (other keys still walk, jump, and reach scripts).
  */
 export function keptByControl(e: KeyboardEvent): boolean {
   const t = e.target;
   if (t instanceof HTMLInputElement && t.type === 'range') return SLIDER_KEYS.has(e.key);
   if (t instanceof HTMLInputElement && t.type === 'radio') return OPTION_KEYS.has(e.key);
+  if (t instanceof HTMLButtonElement && t.closest('#holoml-outline')) return BUTTON_KEYS.has(e.key);
   return t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement;
 }

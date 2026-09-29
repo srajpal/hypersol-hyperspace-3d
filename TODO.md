@@ -30,15 +30,16 @@ Plan approved 2026-09-24.
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
 | 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
 | 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | Done (accepted, prompt 112) |
-| 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Later (prompt 85, Q4 a) |
+| 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Built, waiting for acceptance (build approved, prompt 114; handed off mid-build, prompt 116; built in prompt 118: the language, the browser's part, and Harbour Loft; the pull requests and V11 next) |
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Later (prompts 101 and 102) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
-| 22 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85) |
-| 23 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
-| 24 | macOS release | Signing, notarization, Mac checks | Later |
-| 25 | Free camera and room navigation | Move freely around the room | Later |
-| 26 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
-| 27 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
+| 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Later (prompt 115) |
+| 23 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85, and from 22, prompt 115) |
+| 24 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
+| 25 | macOS release | Signing, notarization, Mac checks | Later |
+| 26 | Free camera and room navigation | Move freely around the room | Later |
+| 27 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
+| 28 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS and Android | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
@@ -76,6 +77,12 @@ Of the HoloML features Coral Bay was to bring, loading by area moves to
 the store (many shoes, each loaded when the viewer comes near);
 movement along paths, sounds by place, and a sky wait until a site
 needs them (the aquarium's fish may take paths).
+
+On 2026-09-28 (prompt 115) documentation for HoloML to recognised
+standards became milestone 22, after the example sites and HoloML 0.2's
+tag: privacy and data tools moved from 22 to 23, the Windows and Linux
+release from 23 to 24, macOS from 24 to 25, and the later milestones
+from 25, 26, and 27 to 26, 27, and 28.
 
 ### Where design work belongs
 
@@ -3045,6 +3052,284 @@ the sofa studio's copy in tests/fixtures/holoml/sofa-studio.
 | U15 | Pass. No frames drawn in 2 s while idle, and none with reduced motion (nothing on the page moves by itself) |
 | U16 | Pass (2026-09-28, prompt 99). After holoml #15 merged, the built app opened https://srajpal.github.io/holoml/sofa-studio/index.holoml (a one-off run with the network, not a test, as S8 and T9): HoloML 0.2, ready in 3.1 s, no problems, nothing left out, all 8 models and the panorama loaded, 2 shadow lights and 8 models with shadows; choosing Wool check changed the sofa (its picture from the published site) and the price to $1,600 |
 | U17 | Full run, 2026-09-27: 247 of 252 checks passed. P2 failed because the material report now also names a material's colour picture and tiling; its expected object gains those two fields (null for that car; the check is otherwise the same), and milestone 14's checks passed again (19 of 19). D8's three copy and paste checks and K3's password copy failed: this computer's clipboard refused every use during the run and after it (PowerShell's Set-Clipboard and Get-Clipboard failed 10 of 10 tries), so they could not pass here; nothing in this change touches the clipboard, and they passed in milestone 17's full run and in pull request #34's automatic builds. Run again on 2026-09-28, with the clipboard working: D8 5 of 5, K1 to K3 3 of 3. After the last changes, the HoloML checks (milestones 14 to 18) passed again, 76 of 76, and milestone 18's drawn in software, 12 of 12; unit tests 261; holoml's tests 182; lint and types clean. Screenshots: docs/screenshots/m18/ (53 and 54 are the sofa studio) and the README screenshot, refreshed |
+
+## Milestone 19 — Harbour Loft
+
+Status: Built, waiting for acceptance. Planned (prompt 113); the owner
+answered Q1 to Q6 with the recommendations and approved the build
+(prompt 114). Pushed before the milestone (after milestone 18's
+acceptance). Rule 13 check done (ARCHITECTURE.md section 3). Handed off
+mid-build on 2026-09-28 (prompt 116) with tasks 1 and 2 done; resumed
+in prompt 118, which also chose Harbour Loft for the README's first
+picture. Tasks 1 to 4 are done, and the checks and documents below;
+next, the pull requests (holoml's first), the automatic builds, V11,
+and the owner's acceptance.
+
+Goal: a flat to tour, for an estate agent. Walk through the rooms of a
+loft by the harbour, open doors, switch lamps on and off, read about
+each room on a panel, see where you are on a floor plan, look out at
+the harbour, go up to the roof terrace, and book a viewing. It is
+HoloML's first larger scene, and it needs what the showroom and the
+sofa studio did not have: text of more than one line (holoml issue
+#11), click actions without a script, links that arrive at a place
+(prompt 87), and a view outside.
+
+### How it would work (proposed)
+
+- **HoloML 0.2, third part** (holoml repository: SPEC.md, the checker,
+  conformance samples; 0.1 pages unchanged):
+  - Paragraphs (#11, Q1): `panel`, a flat board of text placed and
+    turned like a model. Its lines wrap to a `width` in metres; blank
+    lines separate paragraphs; `size` is the height of a line, with a
+    text colour and a background colour (or none). Find in page, the
+    text view, and screen readers get its words.
+  - Click actions without a script (Q2): `animate` gains `begin`
+    (`load`, as now, or `click`: it runs when its target, or the
+    element `trigger` names, is clicked or chosen with the keyboard),
+    `toggle` (each click runs it forward, then back), and `label` (its
+    name for the keyboard and screen readers). A door swings open and
+    shut; a switch turns a lamp on and off. `sound` gains the same
+    `begin`, `trigger`, and `label`. Each click action is a button in
+    the page's outline ("Open or close: bedroom door"), so Tab and
+    Enter reach it; scripts still hear the click.
+  - Places and arriving (prompt 87, Q3): a page may have several
+    `viewpoint` elements, each with an `id` and a `label`. An address
+    ending in `#name` starts the viewer at that viewpoint (otherwise at
+    the first), and the outline lists them as places to go ("Go to:
+    Kitchen"). Following a link to another HoloML page of the same
+    site fades out and in, instead of a cut (a cut with reduced
+    motion).
+  - The view outside (Q4): `sky` on `scene`, a panorama (HDR, PNG, or
+    JPEG, from the page's own site) drawn behind everything in place of
+    the background colour; `environment` can use the same file to light
+    the scene. It is the sky from Coral Bay's list, which this site
+    needs for its windows (prompt 102).
+  - A floor plan (Q5): `plan`, a picture in a corner of the screen (as
+    `hud`) with a marker for where the viewer is and which way they
+    face; `area="x0 z0 x1 z1"` says which rectangle of the scene the
+    picture shows.
+- **The browser**: panels drawn as flat text, sharp at a step away;
+  click actions and their buttons in the outline; named viewpoints and
+  the fade between pages; the sky; the floor plan; pictures from the
+  page's own site within its limits; the copy of the parser and checker
+  (`pnpm holoml:sync`).
+- **Harbour Loft** (holoml repository, examples/harbour-loft/,
+  published with GitHub Pages like the others):
+  - A loft of about 90 m²: a hall, an open living room and kitchen, a
+    bedroom, a study, and a bathroom, with tall windows onto a harbour
+    (a Poly Haven HDRI as the sky and the light). Walk mode; walls and
+    furniture stop the walker.
+  - Doors that open when clicked, with a sound; lamps with switches; a
+    day and evening light (as the sofa studio's); a panel in each room
+    with its size and a few lines about it; the floor plan in a corner.
+  - A door out to the roof terrace: a second page, reached with a fade,
+    arriving at its door (a named viewpoint), and a way back.
+  - "Book a viewing": an ordinary page with a made-up form that sends
+    nothing (there is no agent behind it); an about page with the
+    credits.
+  - Models (Q6): Poly Haven's CC0 furniture for the living room, the
+    dining table, the study, and the bedroom; the walls, floors,
+    kitchen worktops, and bathroom fittings made by the site's script
+    from Poly Haven textures, as the sofa studio's room was (Poly Haven
+    has no kitchen or bathroom fittings, and only three beds). About 30
+    MB in all, well within a page's 128 MB.
+- **The examples section and the start panel**: its card, its picture,
+  and its row.
+
+### Questions
+
+- Q1, paragraphs. a: a new `panel` element, a flat board of wrapped
+  text placed like a model (recommended: an estate agent's panel on a
+  wall, readable from a step away). b: `label` wraps instead (it still
+  turns to face the viewer, like a sign that follows you).
+- Q2, doors and switches. a: click actions in the language (`animate`
+  and `sound` with `begin="click"`, `trigger`, `toggle`, and `label`),
+  each a button in the outline (recommended: the everyday case needs no
+  code, and the keyboard and screen readers get it for free). b: the
+  site's script does them (no change to the language).
+- Q3, rooms and pages. a: the whole flat on one page, walked through,
+  plus the roof terrace as a second page reached with a fade and a
+  named viewpoint (recommended: a real tour, and it tries prompt 87's
+  page transitions). b: a page per room, linked with fades. c: one page
+  only; page transitions later.
+- Q4, the view outside. a: `sky`, a panorama behind everything
+  (recommended: the harbour through the windows is the site's point).
+  b: a plain colour outside.
+- Q5, the floor plan. a: a `plan` element with the viewer's place on it
+  (recommended). b: leave it out; the panels name each room.
+- Q6, the models. a: Poly Haven (CC0), with the kitchen and bathroom
+  made by the site's script from Poly Haven textures (recommended:
+  realistic, as the sofa studio). b: Kenney's Furniture Kit (CC0,
+  low-poly, with every room's fittings; consistent but toy-like). c: CC
+  BY models for the missing fittings, credited (needs your approval:
+  prompt 85, Q3 a allows CC0 only).
+
+### Tasks
+
+- [x] 1. HoloML 0.2, third part: SPEC.md, the checker, and conformance
+      samples for each new element, attribute, and problem (holoml
+      branch `harbour-loft`).
+- [x] 2. The browser: panels, click actions, named viewpoints and the
+      fade, the sky, the floor plan; the copy of the parser and checker
+      (`pnpm holoml:sync`, from holoml's `harbour-loft` branch for now).
+- [x] 3. Harbour Loft: the models, textures, and HDRI (checked CC0,
+      sizes, credits), the flat, the terrace page, the booking page,
+      the about page (holoml branch `harbour-loft`: tools/download.mjs,
+      tools/layout.mjs, tools/prepare.mjs, and the pages; prompt 118).
+      Published with GitHub Pages when holoml's pull request merges.
+- [x] 4. The examples section and the start panel: its card, its
+      picture (`pnpm screenshots:examples`), and its row (prompt 118).
+- [ ] 5. Checks V1 to V12 (tests/e2e/m19.e2e.ts, holoml's tests), run on
+      Windows, with `pnpm test:linux`, and in the automatic builds.
+- [ ] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
+      THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the README's
+      pictures.
+
+### Checks (named V; milestone 18 used U)
+
+| # | Check | Expected result |
+|---|---|---|
+| V1 | The language | holoml's tests: each new element and attribute has valid and problem samples; a 0.1 page may not use them |
+| V2 | Panels | Lines wrap within the width and paragraphs stay apart (the page's pixels); Find in page finds the words; screen readers and the text view read them |
+| V3 | Click actions | A click, and Enter on its outline button, opens a door, and the next closes it; a switch turns its lamp on and off; the sound plays (after the first click, as sounds must); with reduced motion each goes straight to its end; scripts still hear the clicks |
+| V4 | Places | An address with `#name` starts at that viewpoint; an unknown name starts at the first; the outline's "Go to" moves the viewer there |
+| V5 | Arriving | A link to another HoloML page of the same site fades out and in (the page's brightness over time); a cut with reduced motion; other links as before |
+| V6 | The sky | The panorama shows behind the scene (the page's pixels take its colours), from the page's own site, counted against its limits |
+| V7 | The floor plan | In its corner; its marker follows the viewer as they walk and turn |
+| V8 | Harbour Loft | Ready within 5 s from 127.0.0.1 with a graphics card (logged in software); every model loaded, no problems; walls stop the walker; every door and lamp works; the terrace page and back; the booking page |
+| V9 | For everyone | The whole tour from the keyboard; screen readers name the rooms, doors, and switches; the text view; reduced motion |
+| V10 | Efficient | An idle flat draws no frames |
+| V11 | Published | From its public address in the built app (by hand, as S8, T9, and U16) |
+| V12 | Regression | The full run on Windows, `pnpm test:linux`, the unit tests, holoml's tests, and the automatic builds |
+
+### Decisions made while building (prompt 118)
+
+- The flat's plan is data: tools/layout.mjs holds its walls and their
+  openings, rooms, door hinges, and furniture; prepare.mjs writes the
+  walls, windows, and furniture into index.holoml (between two
+  comments) and draws the floor plan from the same numbers. The doors,
+  lamps, panels, places, and links are written in the page by hand.
+- Each model is one .glb, its pictures inside: the viewer fetches a
+  model's files one after another, and as .gltf files with their
+  pictures beside them the flat took 203 requests, the last at 3.6 s;
+  now 56, all in by 1.3 s. Oak left the window sills and the basin, so
+  fewer pictures repeat between files. The flat is 19 MB and 250,000
+  triangles; the whole site 22 MB.
+- Ready in 3.5 to 3.8 s the first time with a graphics card (5 s
+  allowed): after the files arrive, the first drawing compiles the
+  materials' shaders on the page's main thread; the seven lamp lights
+  cost about 0.8 s of it (2.7 s without them). Kept, as the tour's
+  point. A way to come in sooner is an open question for the viewer
+  (ARCHITECTURE.md section 10, item 4).
+- The outline: every model is a stop in it (milestone 15's rule), so
+  the page puts its places, panels, links, doors, and lamps first (43
+  stops) and its 110 walls and furniture after; its Light choice, on
+  the screen, comes after the outline. The same open question lists
+  ways the viewer could help.
+- Looks: Poly Haven's marble_01 is stone tiles, so the worktops are
+  plain white stone and the tiles the splashback; the floor tiles are
+  recoloured grey and the duvet off-white; the parquet's roughness is
+  raised (it glared in the sun); the picture frame's glass, opaque in
+  Poly Haven's 1k files, is made clear; the lamps' own glow is taken
+  out, and a small bright sphere grows when a lamp is switched on.
+- Light: indoors the fill is 1.7 and the sun 3.5 (at 0.6 the walls read
+  grey); outdoors 0.9 and 3; loft.js takes each page's own day values,
+  and the evening is 0.07 and no sun.
+- Door leaves fill their openings (0.98 by 2.09 m); the doors that are
+  links (up to the terrace, back down) have ids, so a check can click
+  the door itself.
+- The design note (tools/DESIGN.md) is gone: the site's README says
+  what readers need.
+- The examples section's capture waits for a walker to land only when
+  it has gravity; T8 checks the new card and row.
+
+### Results so far (2026-09-28, Windows 11)
+
+- V1: holoml's tests, 194 passed: the new conformance samples
+  (v02-panels-click-places, bad-click-actions, and newer-than-declared
+  grown), and Harbour Loft's pages valid, its files existing within 25
+  MB and 400,000 triangles, and its credits; lint and type check clean.
+- V2 to V10: `tests/e2e/m19.e2e.ts`, 9 checks, all passed in the full
+  run. V8: ready in 3.8 s from 127.0.0.1 with this computer's graphics
+  card (5 s allowed); its 120 models, 10 sounds, sky, light, and plan
+  loaded, no problems; the walker stopped by the front wall and by the
+  shut study door, and through it once open; a click on the study door
+  (its sound played) and on the hall's switch; every door and lamp by
+  its button; up to the terrace with a fade, and back to
+  #terrace-door; the booking form sent nothing. V9: every place, panel,
+  link, door, and lamp within 43 Tab stops, before the walls and
+  furniture; the Light choice 112 stops later (see the decisions);
+  Enter and Space; screen readers; the text view; reduced motion (a
+  door at once, the terrace by a cut). V10: no frames while idle, by
+  day, lit in the evening with the doors open, and with reduced motion.
+- T8 (milestone 17) checks Harbour Loft's card and row: passed.
+- The full run on Windows (V12): 261 checks, 260 passed. U2 (milestone
+  18: a page's walking speed) read 4.83 m/s where the page says 4 and
+  the check allows under 4.8; run alone three times, it passed. This
+  milestone changed nothing about walking speeds (controls.ts: only the
+  eye height a place sets, and the keys the outline's buttons keep);
+  the check takes the viewer's place against the page's clock, and a
+  late frame reads fast.
+- The unit tests: 264 passed; lint and type check clean.
+- Screenshots: docs/screenshots/m19 (`MILESTONE=m19 pnpm screenshots`),
+  and the README's four pictures with Harbour Loft first (`pnpm
+  screenshots:readme`, prompt 118).
+- V11 (2026-09-28, prompt 119, after the owner merged holoml #17 and
+  GitHub Pages published it): the built app opened
+  https://srajpal.github.io/holoml/harbour-loft/index.holoml (a one-off
+  run with the network, not a test, as U16): HoloML 0.2, ready in 8.0 s
+  over the internet (20 MB), no problems, nothing left out, its 120
+  models, 10 sounds, sky, light, and plan loaded, 7 places and 10
+  click actions; the kitchen lights came on from their button; the
+  terrace arrived through a fade, everything loaded. Pass.
+- The copy of HoloML is synced from holoml's main (4d69a69, the merge
+  of #17); only the copies' first comment line changed (the ref).
+- `pnpm test:linux` (Ubuntu in Docker, drawing in software, as
+  GitHub's machines): lint, types, and the unit tests pass (262, and
+  2 skipped: the copy's checks against holoml beside it). V2 to V7
+  pass. V8 to V10 ran out of the 60 seconds a check has: drawing in
+  software, the flat takes about 30 s to load (V8 logged 30.6 s) and
+  each frame seconds. V8 now presses every door and lamp together and
+  then reads them, V9 goes on from where V8 leaves the flat instead of
+  loading it again, and the three have limits for drawing in software
+  (8, 5, and 4 minutes, as other long checks have 2 and 4); on Windows
+  they still pass (V8 read 4.7 s while the Linux run shared the
+  computer).
+- The full `pnpm test:linux` run with the checks before that change
+  (2026-09-29): 257 passed, 1 skipped, and V8 to V10 ran out of their
+  60 seconds. Milestone 19's checks again on Linux after it
+  (`pnpm test:linux tests/e2e/m19.e2e.ts`, 2026-09-29): V2 to V10, 9
+  checks, all passed (V8 ready in 20.5 s, logged; V8 took 169 s, V9
+  185 s, V10 62 s).
+- The automatic builds of browser pull request #36 (2026-09-29): Windows
+  passed; Linux passed 258 of 261 checks (1 skipped) and failed two,
+  both reading the page too late on GitHub's slower machine, drawing in
+  software. V5: the arriving page was busy over its first frame for more
+  than the 4 s it waits at most before fading in, so when the check
+  could ask it, it had faded in (as it should). V8: the door's sound
+  (0.75 s) had ended before the check could see it playing. Fixed
+  without loosening either: V5 now samples the page's brightness from
+  the browser for 2.5 s after the page appears, and checks, against the
+  page's own record of its fade, that nothing of its scene shows until
+  it begins to fade in; then it lets the model come, as before, and the
+  page fades in and is lit. A sound's report counts its plays, and V8
+  checks the door's sound started. The automatic builds on that
+  (3e6b852): V8 passed; V5 failed again, as it also wanted several black
+  samples while the page was dark, and on GitHub's machine the page is
+  busy over its first frame for all of its dark time, and the browser's
+  pictures of it wait for it too (one sample before, then none until it
+  was fading in). Now it wants only what can be seen there: the samples
+  taken before the fade-in, all dark. Tried here with the page's
+  processor slowed twenty times, drawing in software: the same one
+  sample, and a pass. V8 passes on Windows, drawing in software, with
+  `pnpm test:linux`, and in the automatic builds; V5 passes on Windows
+  and drawing in software, and its first version passed with `pnpm
+  test:linux`. Not yet: this V5 with `pnpm test:linux` and in the
+  automatic builds (running).
+
+### Done when
+
+- V1 to V12 pass, screenshots are saved, and the owner accepts.
 
 ## The README: a broken link, and four pictures (2026-09-28, prompt 99)
 
