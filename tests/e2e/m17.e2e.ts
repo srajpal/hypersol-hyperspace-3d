@@ -536,13 +536,14 @@ describe('T8: the HoloML examples section', () => {
     await h.shell.locator('[data-testid="start-examples"]').waitFor({ state: 'visible' });
     expect(await h.shell.locator('[data-testid="start-showroom"]').getAttribute('data-url')).toBe(url('showroom/index.holoml'));
     expect(await h.shell.locator('[data-testid="start-example-blockworld"]').getAttribute('data-url')).toBe(url('blockworld/index.holoml'));
-    // The sofa studio joined in milestone 18 (prompt 98).
+    // The sofa studio joined in milestone 18 (prompt 98), and Harbour Loft in milestone 19.
     expect(await h.shell.locator('[data-testid="start-example-sofa-studio"]').getAttribute('data-url')).toBe(url('sofa-studio/index.holoml'));
+    expect(await h.shell.locator('[data-testid="start-example-harbour-loft"]').getAttribute('data-url')).toBe(url('harbour-loft/index.holoml'));
     const hits = holomlHits();
     // From the start panel.
     await h.shell.click('[data-testid="start-examples"]');
     await waitFor('the examples', isOpen, (n) => n === 1);
-    for (const id of ['showroom', 'blockworld', 'sofa-studio']) {
+    for (const id of ['showroom', 'blockworld', 'sofa-studio', 'harbour-loft']) {
       const card = `hs-examples [data-testid="example-${id}"]`;
       expect(await h.shell.locator(card).isVisible()).toBe(true);
       const picture = (await waitFor(

@@ -1327,3 +1327,16 @@ Hand off this session when you come to a good stopping point.
 ```text
 Read the handoff and tell me your plan.
 ```
+
+## 118 — 2026-09-28 · Claude Opus 5.5, max effort
+
+Approval of the plan for the rest of milestone 19 (Harbour Loft's
+`prepare.mjs` and pages, the browser's copy, its examples card, checks
+V8 to V10, the full run, the documents and screenshots, then the pull
+requests), and the answer to its question: Harbour Loft takes the sofa
+studio's place as the README's first picture (AGENTS.md's wording to
+be shown first).
+
+```text
+Go, and yes to Harbour Loft in the README.
+```

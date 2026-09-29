@@ -43,6 +43,17 @@ const SHOTS: { id: string; page: string; steps?: [string, number][]; until?: str
     page: 'sofa-studio/index.holoml',
     steps: [[`document.querySelector('[data-id="fabric"] input[value="linen"]').click(), true`, 1500]],
   },
+  {
+    // The living room by day, from beside the bedroom's door: the harbour
+    // through the windows, the dining table, the island, and the door up
+    // to the roof terrace.
+    id: 'harbour-loft',
+    page: 'harbour-loft/index.holoml',
+    steps: [
+      ['holoml.viewer.position = [1.3, 1.65, -0.6], true', 300],
+      ['holoml.viewer.lookAt([-3, 1, 3]), true', 0],
+    ],
+  },
 ];
 
 /** Stone blocks from the ground up to a height, at one column. */
@@ -62,8 +73,8 @@ it('captures the pictures of the HoloML examples', async () => {
       const part = shot.page.split('?')[0]!;
       await waitForPage(h, part);
       await waitFor(`${shot.id} ready`, () => inPage<boolean>(h, 'window.__holoml?.ready === true', part), (r) => r, 30_000);
-      // A walker falls to the ground first; then the view is set.
-      await waitFor('standing', () => inPage<boolean>(h, 'window.__holoml.walker()?.onGround ?? true', part), (v) => v, 15_000);
+      // A walker with gravity falls to the ground first (one without stays where it starts); then the view is set.
+      await waitFor('standing', () => inPage<boolean>(h, '((w) => !w || !w.gravity || w.onGround)(window.__holoml.walker())', part), (v) => v, 15_000);
       for (const [code, pause] of shot.steps ?? []) {
         await inPage(h, code, part);
         await sleep(pause);

@@ -1,12 +1,14 @@
 /**
  * Milestone 19 end-to-end checks (TODO.md): HoloML 0.2's third part and
  * Harbour Loft. V2 to V7: panels, click actions, places, arriving through
- * a fade, the sky, and the floor plan. V1 (the language) is the holoml
+ * a fade, the sky, and the floor plan. V8 to V10: Harbour Loft (a copy in
+ * tests/fixtures/holoml/harbour-loft). V1 (the language) is the holoml
  * repository's tests; V11 (the published site) is checked by hand.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
+  clickAt,
   clickUntil,
   focusedTab,
   inPage,
@@ -17,6 +19,7 @@ import {
   sceneWait,
   shellCall,
   sleep,
+  softwareRenderer,
   waitFor,
   waitForPage,
   type Harness,
@@ -554,5 +557,298 @@ describe('V6 and V7: the sky and the floor plan', () => {
     // Outside the area: no marker.
     await inPage(h, 'holoml.viewer.position = [9, 1.6, 0], true', PAGE);
     await waitFor('off the plan', plan, (p) => !p.marker.shown);
+  });
+});
+
+describe('V8 to V10: Harbour Loft', () => {
+  let h: Harness;
+  const PAGE = 'harbour-loft/index.holoml';
+  const LOFT = 'harbour-loft/index';
+  const TERRACE = 'harbour-loft/terrace';
+  let loadMs = 0;
+
+  /** The doors: the door (the trigger), its hinge, its button, and the hinge's turn shut and open. */
+  const DOORS: [string, string, string, number, number][] = [
+    ['study-door', 'study-hinge', 'Study door', -90, -180],
+    ['bathroom-door', 'bathroom-hinge', 'Bathroom door', -90, 0],
+    ['bedroom-door', 'bedroom-hinge', 'Bedroom door', 90, 0],
+  ];
+  /** The lamps: the trigger (a switch, or the lamp itself), its button, its light and how bright it comes on, and its bulbs' glow and how large. */
+  const LAMPS: [string, string, string, number, string[], number][] = [
+    ['hall-switch', 'Hall light', 'hall-light', 1.2, ['hall-glow'], 1],
+    ['kitchen-switch', 'Kitchen lights', 'kitchen-light', 1.2, ['kitchen-glow-1', 'kitchen-glow-2'], 1],
+    ['bathroom-switch', 'Bathroom light', 'bathroom-light', 1.2, ['bathroom-glow'], 1],
+    ['living-lamp', 'Living room lamp', 'living-light', 1, ['living-glow'], 0.7],
+    ['bedside-left', 'Bedside lamp, left', 'bedside-left-light', 0.9, ['bedside-left-glow'], 0.7],
+    ['bedside-right', 'Bedside lamp, right', 'bedside-right-light', 0.9, ['bedside-right-glow'], 0.7],
+    ['desk-lamp', 'Desk lamp', 'desk-light', 1.6, ['desk-glow'], 0.75],
+  ];
+  const info = (id: string, page = LOFT) => holo<{ rotation: Vec; scale: Vec }>(h, `window.__holoml.object(${JSON.stringify(id)})`, page);
+  const turnOf = async (id: string) => (await info(id)).rotation[1];
+  const scaleOf = async (id: string) => (await info(id)).scale[0];
+  /** Two turns about y the same, whichever way round they are written. */
+  const sameTurn = (a: number, b: number) => Math.abs(((((a - b) % 360) + 540) % 360) - 180) < 0.5;
+  const intensity = (id: string) => inPage<number>(h, `holoml.find(${JSON.stringify(id)}).intensity`, LOFT);
+  const action = async (trigger: string) => (await holo<Action[]>(h, 'window.__holoml.actions()', LOFT)).find((a) => a.trigger === trigger)!;
+  const places = (page = LOFT) => holo<Places>(h, 'window.__holoml.places()', page);
+  const fade = (page: string) => holo<Fade>(h, 'window.__holoml.fade()', page);
+  const feet = async () => (await holo<{ feet: Vec }>(h, 'window.__holoml.walker()', LOFT)).feet;
+  const frames = () => holo<number>(h, 'window.__holoml.frames', LOFT);
+  /** Presses a button of the page's outline by its words, as Enter on it does (the keyboard itself is V9's). */
+  const pressButton = (label: string) =>
+    inPage<boolean>(h, `(() => { const b = [...document.querySelectorAll('#holoml-outline button')].find((x) => x.textContent === ${JSON.stringify(label)}); b?.click(); return Boolean(b); })()`, LOFT);
+  /** Puts the viewer somewhere, looking at a point. */
+  const stand = (at: Vec, look: Vec, page = LOFT) => inPage(h, `(holoml.viewer.position = ${JSON.stringify(at)}, holoml.viewer.lookAt(${JSON.stringify(look)}), true)`, page);
+  /** The kind and value of what has the keyboard, for radio buttons. */
+  const focusedRadio = () => inPage<string | null>(h, "document.activeElement?.type === 'radio' ? document.activeElement.value : null", LOFT);
+
+  /**
+   * Walks with a key held until the walker stops (something solid in the
+   * way) or the time is up; stopped is the same place while the page drew
+   * new frames, so a slow machine does not count as stopped.
+   */
+  async function walkUntilStopped(keyCode: string, maxMs: number): Promise<Vec> {
+    await key(h, LOFT, keyCode, 'keyDown');
+    try {
+      const end = Date.now() + maxMs;
+      let [last, lastFrames, still] = [await feet(), await frames(), 0];
+      while (Date.now() < end && still < 3) {
+        await sleep(250);
+        const [now, drawnNow] = [await feet(), await frames()];
+        if (drawnNow < lastFrames + 2) continue;
+        still = near(now, last, 0.002) ? still + 1 : 0;
+        [last, lastFrames] = [now, drawnNow];
+      }
+      return last;
+    } finally {
+      await key(h, LOFT, keyCode, 'keyUp');
+    }
+  }
+
+  beforeAll(async () => {
+    h = await launch(server.url('link-a.html'));
+    await waitForPage(h, 'link-a.html');
+    const t = Date.now();
+    await shellCall(h, 'showUrl', url(PAGE));
+    await waitForPage(h, LOFT, await sceneWait(h, 15_000));
+    await ready(h, LOFT, 60_000);
+    loadMs = Date.now() - t;
+  });
+  afterAll(async () => h?.close());
+
+  it('V8 ready within 5 s with everything loaded; walls and doors stop the walker; every door and lamp works; the terrace and back; the booking page', async () => {
+    const software = await softwareRenderer(h);
+    // Within 5 s with a graphics card; drawn in software (GitHub's machines), logged (owner, prompts 59, 95, and 98 Q5 a).
+    if (software) console.log(`V8: ready in ${loadMs} ms; the 5-second budget not checked: drawing in software (${software})`);
+    else {
+      console.log(`V8: ready in ${loadMs} ms`);
+      expect(loadMs).toBeLessThan(5000);
+    }
+    expect(await holo<unknown[]>(h, 'window.__holoml.problems', LOFT)).toEqual([]);
+    expect(await holo<unknown[]>(h, 'window.__holoml.leftOut()', LOFT)).toEqual([]);
+    const source = await (await fetch(url(PAGE))).text();
+    const all = await holo<{ src: string; state: string }[]>(h, 'window.__holoml.models()', LOFT);
+    expect(all.length).toBe(source.match(/<model /g)!.length);
+    expect(all.filter((m) => m.state !== 'loaded')).toEqual([]);
+    for (const part of ['sky', 'environment', 'plan']) expect(await holo<{ state: string }>(h, `window.__holoml.${part}()`, LOFT), part).toMatchObject({ state: 'loaded' });
+    expect((await holo<{ state: string }[]>(h, 'window.__holoml.sounds()', LOFT)).map((s) => s.state)).toEqual(Array(10).fill('loaded'));
+    expect(await places()).toMatchObject({ start: 'hall', current: 'hall' });
+    expect((await places()).places.map((p) => p.label)).toEqual(['Hall', 'Living room', 'Kitchen', 'Bedroom', 'Study', 'Bathroom', 'By the door to the terrace']);
+    await drawn(h, LOFT);
+
+    // The walls stop the walker: backing away from the harbour, the hall's walker stops at the front wall (its inside at z = -3.75; the walker is 0.6 m wide).
+    const back = await walkUntilStopped('S', await sceneWait(h, 6000));
+    expect(back[2], `stopped at ${back.join(', ')}`).toBeGreaterThan(-3.5);
+    expect(back[2]).toBeLessThan(-3.3);
+
+    // The study door, shut, stops the walker; a click opens it, with its sound, and the walker goes through.
+    await stand([-1.2, 1.6, -2.55], [-5, 1.6, -2.55]);
+    const atDoor = await walkUntilStopped('W', await sceneWait(h, 6000));
+    expect(atDoor[0], `stopped at ${atDoor.join(', ')}`).toBeGreaterThan(-1.75);
+    await stand([-0.9, 1.6, -2.55], [-2, 1.1, -2.55]);
+    await drawn(h, LOFT);
+    await clickUntil(h, await onScreen(h, LOFT, 'study-door'), 'the study door opens', async () => (await action('study-door')).pressed === 'true');
+    await waitFor('the door sound', () => holo<{ src: string; playing: boolean }[]>(h, 'window.__holoml.sounds()', LOFT), (s) => s.some((x) => x.src === 'sounds/door.wav' && x.playing), 3000);
+    await waitFor('open', () => turnOf('study-hinge'), (r) => sameTurn(r, -180));
+    await stand([-1.2, 1.6, -2.55], [-5, 1.6, -2.55]);
+    const inStudy = await walkUntilStopped('W', await sceneWait(h, 6000));
+    expect(inStudy[0], `walked to ${inStudy.join(', ')}`).toBeLessThan(-3);
+
+    // The hall's switch, by the front door: a click lights the pendant and its bulb, and the next puts them out.
+    await stand([-0.8, 1.6, -2.7], [-0.8, 1.1, -3.75]);
+    await drawn(h, LOFT);
+    const sw = await onScreen(h, LOFT, 'hall-switch');
+    await clickUntil(h, sw, 'the hall light on', async () => (await action('hall-switch')).pressed === 'true');
+    await waitFor('lit', () => intensity('hall-light'), (v) => Math.abs(v - 1.2) < 1e-6);
+    await waitFor('its bulb', () => scaleOf('hall-glow'), (s) => Math.abs(s - 1) < 1e-6);
+    await clickUntil(h, sw, 'the hall light off', async () => (await action('hall-switch')).pressed === 'false');
+    await waitFor('out', () => intensity('hall-light'), (v) => v === 0);
+
+    // Every door and lamp, by its button: each runs its actions, and the next press undoes them.
+    expect(await pressButton('Study door')).toBe(true);
+    await waitFor('the study door shut', () => turnOf('study-hinge'), (r) => sameTurn(r, -90));
+    for (const [door, hinge, label, shut, open] of DOORS) {
+      expect(await action(door)).toMatchObject({ button: label, pressed: 'false', sounds: ['door.wav'] });
+      expect(await pressButton(label)).toBe(true);
+      await waitFor(`${label} open`, () => turnOf(hinge), (r) => sameTurn(r, open));
+      expect((await action(door)).pressed).toBe('true');
+      await pressButton(label);
+      await waitFor(`${label} shut`, () => turnOf(hinge), (r) => sameTurn(r, shut));
+    }
+    for (const [trigger, label, light, bright, glows, size] of LAMPS) {
+      expect(await action(trigger)).toMatchObject({ button: label, pressed: 'false', sounds: ['switch.wav'] });
+      expect(await pressButton(label)).toBe(true);
+      await waitFor(`${label} on`, () => intensity(light), (v) => Math.abs(v - bright) < 1e-6);
+      for (const g of glows) await waitFor(`${g} glowing`, () => scaleOf(g), (s) => Math.abs(s - size) < 1e-6);
+      await pressButton(label);
+      await waitFor(`${label} off`, () => intensity(light), (v) => v === 0);
+      for (const g of glows) await waitFor(`${g} out`, () => scaleOf(g), (s) => s < 0.01);
+    }
+
+    // Up to the roof terrace through the door in the brick wall (a fade), and back down to the door there.
+    expect(await pressButton('Go to: By the door to the terrace')).toBe(true);
+    await waitFor('by the terrace door', places, (p) => p.current === 'terrace-door');
+    await stand([-5.3, 1.6, 0.9], [-6.1, 1.1, 0.9]);
+    await drawn(h, LOFT);
+    await clickUntil(h, await onScreen(h, LOFT, 'stairs-door'), 'the roof terrace', async () => (await focusedTab(h)).url === url('harbour-loft/terrace.holoml'));
+    await waitForPage(h, TERRACE, await sceneWait(h, 15_000));
+    await ready(h, TERRACE, await sceneWait(h, 20_000));
+    expect(await holo<unknown[]>(h, 'window.__holoml.problems', TERRACE)).toEqual([]);
+    expect((await holo<{ state: string }[]>(h, 'window.__holoml.models()', TERRACE)).filter((m) => m.state !== 'loaded')).toEqual([]);
+    const arrived = await waitFor('faded in', () => fade(TERRACE), (f) => f !== undefined && !f.arriving && f.opacity === 0, await sceneWait(h, 8000));
+    expect(arrived.log.map((x) => x.to)).toEqual([1, 0]);
+    expect(await places(TERRACE)).toMatchObject({ start: 'door', current: 'door' });
+    await stand([-3.6, 1.6, 0.4], [-3.6, 1.1, -1], TERRACE);
+    await drawn(h, TERRACE);
+    await clickUntil(h, await onScreen(h, TERRACE, 'flat-door'), 'back down to the flat', async () => (await focusedTab(h)).url === url(`${PAGE}#terrace-door`));
+    await waitForPage(h, LOFT, await sceneWait(h, 15_000));
+    await ready(h, LOFT, await sceneWait(h, 20_000));
+    expect(await places()).toMatchObject({ start: 'terrace-door', current: 'terrace-door' });
+    expect(near((await view(h, LOFT)).position, [-5.55, 1.6, 0.9])).toBe(true);
+
+    // The booking page, from its panel in the hall: a form that sends nothing.
+    await stand([0, 1.6, -1.9], [-1.94, 1.5, -1.68]);
+    await drawn(h, LOFT);
+    await clickUntil(h, await onScreen(h, LOFT, 0), 'the booking page', async () => (await focusedTab(h)).url === url('harbour-loft/booking.html'));
+    await waitForPage(h, 'booking.html');
+    const asked = () => [...server.hits.values()].reduce((n, x) => n + x, 0);
+    const before = asked();
+    await inPage(h, "(document.getElementById('name').value = 'A visitor', document.querySelector('button[type=submit]').click(), true)", 'booking.html');
+    await waitFor('the note', () => inPage<boolean>(h, "document.getElementById('sent').hidden", 'booking.html'), (hidden) => hidden === false);
+    expect(await inPage<string>(h, "document.getElementById('sent').textContent", 'booking.html')).toBe('This is an example: nothing was sent, and there is no agent behind it.');
+    expect(await inPage<string>(h, "document.getElementById('name').value", 'booking.html')).toBe('');
+    await sleep(500);
+    expect(asked()).toBe(before);
+    await pressInShell(h, 'Left', ['alt']);
+    await waitFor('back', async () => (await focusedTab(h)).url, (u) => u.startsWith(url(PAGE)));
+    await ready(h, LOFT, await sceneWait(h, 20_000));
+  });
+
+  it('V9 the whole tour from the keyboard: places, doors, lamps, links, and the Light choice; screen readers name them; the text view; reduced motion', async () => {
+    await openPage(h, PAGE);
+    await drawn(h, LOFT);
+    // Into the page: a click on the hall's floor (nothing to use there).
+    const size = await inPage<{ w: number; h: number }>(h, '({ w: innerWidth, h: innerHeight })', LOFT);
+    await clickAt(h, await project(h, size.w * 0.5, size.h * 0.93));
+    // Tab: the places, the panels, the links, the doors, and the lamps, all before the walls, windows, and furniture (the models prepare.mjs writes).
+    const stops: string[] = [];
+    for (let i = 0; i < 80 && stops.at(-1) !== 'Desk lamp'; i++) {
+      await pressInPage(h, 'Tab', [], LOFT);
+      await sleep(60);
+      stops.push(await focusedText(h, LOFT));
+    }
+    const wanted = ['Go to: Hall', 'Go to: Kitchen', 'Go to: By the door to the terrace', 'Book a viewing', 'About this tour', 'Up to the roof terrace', 'Study door', 'Bathroom door', 'Bedroom door', 'Hall light', 'Kitchen lights', 'Bathroom light', 'Living room lamp', 'Bedside lamp, left', 'Bedside lamp, right', 'Desk lamp'];
+    for (const s of wanted) expect(stops, `the Tab stops: ${stops.join(' | ')}`).toContain(s);
+    const source = await (await fetch(url(PAGE))).text();
+    const block = source.slice(source.indexOf('<!-- prepare.mjs: from here'), source.indexOf('<!-- prepare.mjs: to here'));
+    const structure = new Set([...block.matchAll(/<model (?:id="([^"]+)" )?src="models\/([^"]+)"/g)].map((m) => `Model: ${m[1] ?? m[2]}`));
+    expect(structure.has('Model: wall.glb')).toBe(true);
+    expect(stops.filter((s) => structure.has(s))).toEqual([]);
+    console.log(`V9: every place, panel, link, door, and lamp within ${stops.length} Tab stops, before the walls and furniture`);
+
+    // "Go to: Kitchen", with Enter.
+    for (let i = 0; i < 80 && (await focusedText(h, LOFT)) !== 'Go to: Kitchen'; i++) await pressInPage(h, 'Tab', ['shift'], LOFT);
+    await press(h, LOFT, 'Enter');
+    await waitFor('in the kitchen', places, (p) => p.current === 'kitchen');
+    // A door and a lamp: Enter runs them, Space undoes them.
+    await tabTo(h, LOFT, 'Bathroom door');
+    await press(h, LOFT, 'Enter');
+    await waitFor('the bathroom door open', () => turnOf('bathroom-hinge'), (r) => sameTurn(r, 0));
+    await press(h, LOFT, 'Space');
+    await waitFor('shut', () => turnOf('bathroom-hinge'), (r) => sameTurn(r, -90));
+    await tabTo(h, LOFT, 'Kitchen lights');
+    await press(h, LOFT, 'Enter');
+    await waitFor('the kitchen lit', () => intensity('kitchen-light'), (v) => Math.abs(v - 1.2) < 1e-6);
+
+    // The Light choice, after the page's outline (where every model is a stop): onward with Tab, and the arrow keys pick the evening.
+    let more = 0;
+    for (; more < 250 && (await focusedRadio()) === null; more++) await pressInPage(h, 'Tab', [], LOFT);
+    expect(await focusedRadio()).toBe('day');
+    console.log(`V9: the Light choice after ${more} more Tab stops`);
+    await pressInPage(h, 'Right', [], LOFT);
+    await waitFor('evening', () => intensity('fill'), (v) => v < 0.1);
+
+    // Screen readers: the places, doors, and lamps are named buttons (a lamp that is on is pressed), the panels' words, the plan, the links, the choice.
+    const tree = await axNodes(h, LOFT);
+    for (const name of ['Go to: Kitchen', 'Go to: Bedroom', 'Go to: Bathroom', 'Study door', 'Bedroom door', 'Hall light', 'Bedside lamp, left', 'Desk lamp']) {
+      expect(tree.some((n) => n.role === 'button' && n.name === name), name).toBe(true);
+    }
+    expect(tree.find((n) => n.role === 'button' && n.name === 'Kitchen lights')?.pressed).toBe('true');
+    expect(tree.some((n) => n.name.includes('The top floor of an old sail loft on the quay'))).toBe(true);
+    expect(tree.some((n) => n.role === 'image' && n.name === 'Floor plan of Harbour Loft')).toBe(true);
+    expect(tree.some((n) => n.role === 'link' && n.name === 'Up to the roof terrace')).toBe(true);
+    expect(tree.some((n) => n.role === 'radio' && n.name === 'Evening')).toBe(true);
+
+    // The text view: the panels' words, the places, the doors and lamps, the links, and the choice.
+    await pressInPage(h, 'V', ['control', 'shift'], LOFT);
+    await waitFor('the text view', () => holo<boolean>(h, 'window.__holoml.textView', LOFT), (v) => v === true);
+    const text = await inPage<string>(h, 'document.body.innerText', LOFT);
+    for (const words of ['Harbour Loft, 90 m²', 'Offers over $685,000', 'Bathroom, 12 m²', 'Go to: Kitchen', 'Study door', 'Hall light', 'Book a viewing', 'Up to the roof terrace', 'Light', 'Evening']) {
+      expect(text).toContain(words);
+    }
+    await pressInPage(h, 'V', ['control', 'shift'], LOFT);
+    await waitFor('3D again', () => holo<boolean>(h, 'window.__holoml.textView', LOFT), (v) => v === false);
+
+    // Reduced motion: a door goes straight to its end, and the terrace arrives with a cut.
+    await reducedMotion(h, true);
+    try {
+      await waitFor('reduced motion', () => holo<boolean>(h, 'holoml.reducedMotion', LOFT), (v) => v === true);
+      await pressButton('Bedroom door');
+      expect((await action('bedroom-door')).animations[0]).toMatchObject({ progress: 1, running: false });
+      await waitFor('open at once', () => turnOf('bedroom-hinge'), (r) => sameTurn(r, 0), 1000);
+      await pressButton('Bedroom door');
+      await waitFor('shut at once', () => turnOf('bedroom-hinge'), (r) => sameTurn(r, 90), 1000);
+      await inPage(h, "([...document.querySelectorAll('#holoml-outline a')].find((a) => a.textContent === 'Up to the roof terrace').click(), true)", LOFT);
+      await waitForPage(h, TERRACE, await sceneWait(h, 15_000));
+      await ready(h, TERRACE, await sceneWait(h, 20_000));
+      expect(await fade(TERRACE)).toEqual({ opacity: 0, arriving: false, log: [] });
+    } finally {
+      await reducedMotion(h, false);
+    }
+  });
+
+  it('V10 an idle flat draws no frames: by day, in the evening with every lamp on and every door open, and with reduced motion', async () => {
+    await openPage(h, PAGE);
+    await inPage(h, `(document.querySelector('[data-id="time"] input[value="day"]').click(), true)`, LOFT);
+    await drawn(h, LOFT);
+    const idle = async (what: string) => {
+      await sleep(1000);
+      const f0 = await frames();
+      await sleep(2000);
+      expect(await frames(), what).toBe(f0);
+    };
+    await idle('by day');
+    await inPage(h, `(document.querySelector('[data-id="time"] input[value="evening"]').click(), true)`, LOFT);
+    for (const [, label] of LAMPS) expect(await pressButton(label)).toBe(true);
+    for (const [, , label] of DOORS) expect(await pressButton(label)).toBe(true);
+    await drawn(h, LOFT);
+    await idle('in the evening, lit, the doors open');
+    await reducedMotion(h, true);
+    try {
+      await drawn(h, LOFT);
+      await idle('with reduced motion');
+    } finally {
+      await reducedMotion(h, false);
+    }
   });
 });
