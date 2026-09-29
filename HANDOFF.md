@@ -1,10 +1,10 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-09-29 (milestones 1 to 20 accepted, 19 and 20 in
-prompt 122. Milestone 21, the aquarium, is built and waiting for the
-owner's acceptance: see "Milestone 21, built" below. 22 is HoloML's
-documentation (prompt 115). The roadmap is in TODO.md).
+Last updated 2026-09-29 (milestones 1 to 21 accepted, 21 in prompt
+125: see "Milestone 21, accepted" below; tagging HoloML v0.2.0 waits for
+the owner's go. 22 is HoloML's documentation (prompt 115), not yet
+planned. The roadmap is in TODO.md).
 
 ## Where things stand
 
@@ -51,8 +51,10 @@ state; this is a summary.
   holoml, #18, and the browser, #37; published at
   https://srajpal.github.io/holoml/sneaker-store/; in place of Coral
   Bay, a resort, prompts 101 and 102); 21 the ocean tunnel, an
-  aquarium, where HoloML 0.2 is completed and then tagged (built;
-  waiting for acceptance)); 22 documentation for HoloML to recognised standards (prompt
+  aquarium, where HoloML 0.2 is completed (accepted 2026-09-29, prompt
+  125; merged in holoml, #19, and the browser, #38; published at
+  https://srajpal.github.io/holoml/aquarium/; HoloML v0.2.0 is tagged
+  when the owner says go)); 22 documentation for HoloML to recognised standards (prompt
   115); 23 privacy and data tools (HTTPS-only, per-site storage,
   bookmark import and export: #24, #26, #27); then installers as 1.0
   (24 for Windows and Linux, 25 for macOS), with mobile later (owner,
@@ -64,26 +66,27 @@ state; this is a summary.
   HyperSpace 3D Authors" and "The HoloML Authors" (AUTHORS files).
 
 Two repositories, kept as sibling folders (never one inside the other).
-Both main branches have milestones 19 and 20; milestone 21's work goes
-on the browser's branch `m21-aquarium` (from main after #37):
+Both main branches have milestones 19 to 21 (the browser's #38 and
+holoml's #19 merged, 2026-09-29):
 
 - Browser: https://github.com/srajpal/hypersol-hyperspace-3d (renamed
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
 
-## Milestone 21, built (2026-09-29, prompts 121 to 123)
+## Milestone 21, accepted (2026-09-29, prompts 121 to 125)
 
 The plan and its checks (X1 to X12) are in TODO.md, "Milestone 21 —
 Aquarium", with the decisions made while building and the results. The
 owner answered Q1 to Q7 with the recommendations (prompt 122), taken
 with prompt 121's "Next milestone" as approval of the plan and its
-build, and approved the nine fish (prompt 123). One check-in remains:
-HoloML 0.2 is tagged v0.2.0, with a short release note, only after the
-owner accepts the milestone and says go (task 9, Q6 a).
+build, and approved the nine fish (prompt 123). The owner merged holoml
+#19 (prompt 124) and the browser's #38, and accepted the milestone
+(prompt 125). One task remains: HoloML 0.2 is tagged v0.2.0 on holoml's
+main, with a short release note, when the owner says go (task 9, Q6 a).
 
 Where the work is:
 
-- Browser: branch `m21-aquarium`, from main after #37: the viewer's
+- Browser: branch `m21-aquarium` (merged, #38), from main after #37: the viewer's
   water (water.ts), sounds from a place (sound.ts), animation speed
   (api.ts), shaders compiled without blocking and nothing drawn behind
   another tab (scene.ts, main.ts, the preload, room.ts, and
@@ -94,7 +97,7 @@ Where the work is:
   automatic builds in two parts on each system (ci.yml and
   vitest.e2e.config.ts, Q7 a), the documents, and the screenshots
   (docs/screenshots/m21).
-- holoml: branch `aquarium`, from its main after pull request #18: the
+- holoml: branch `aquarium` (merged, #19), from its main after pull request #18: the
   language's fifth part (SPEC.md, the checker, conformance samples), 0.2
   complete (spec.test.ts keeps it so), the aquarium
   (examples/aquarium: its pages, aquarium.js, ocean.js, the models and
@@ -102,14 +105,13 @@ Where the work is:
   git), its tests, and the README and NOTICE.
 - The browser's copy of HoloML (packages/holoml) comes from holoml's
   main (SOURCE.json: 710d8b9, the merge of #19, prompt 124).
-- Pull requests: holoml #19, merged (prompt 124; GitHub Pages publishes
-  the aquarium, and X10 passed), and the browser's #38, with Auto-fix
-  on. Its builds found the aquarium too slow to draw in software (fixed
-  by lighter models); since then every job has kept within its 45
-  minutes (X11), and the only failures were three timing checks of
-  earlier milestones on GitHub's machines (V5, E6b, and #10), each of
-  which has passed on the same code. TODO.md has the details. Not yet:
-  the owner's acceptance, and then tagging HoloML v0.2.0 (task 9).
+- Pull requests: holoml #19 and the browser's #38, both merged (GitHub
+  Pages publishes the aquarium, and X10 passed). #38's builds found the
+  aquarium too slow to draw in software (fixed by lighter models) and a
+  race in the idle-frame checks (fixed by sceneStill); its last build
+  passed, every job within its 45 minutes (X11). V5, E6b, and #10, from
+  earlier milestones, each failed once on GitHub's machines and passed
+  on the same code; they are not changed. TODO.md has the details.
 
 Worth knowing:
 

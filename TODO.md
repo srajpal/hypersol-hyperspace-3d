@@ -32,7 +32,7 @@ Plan approved 2026-09-24.
 | 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | Done (accepted, prompt 112) |
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Done (accepted, prompt 122) |
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Done (accepted, prompt 122) |
-| 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | In progress (planned, prompt 121; the recommended answers and the build, prompt 122) |
+| 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Done (accepted, prompt 125; HoloML 0.2 tagged when the owner says go) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Later (prompt 115) |
 | 23 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85, and from 22, prompt 115) |
 | 24 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
@@ -3605,7 +3605,10 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
 
 ## Milestone 21 — Aquarium
 
-Status: In progress. Planned (prompt 121): the owner merged milestones
+Status: Done. Accepted by the owner on 2026-09-29 (prompt 125), after
+holoml pull request #19 (prompt 124) and the browser's #38 merged; one
+task waits for the owner: tagging HoloML 0.2 (task 9, when the owner
+says go). Planned (prompt 121): the owner merged milestones
 19 and 20 and asked for the next milestone, and this plan was drafted
 with questions and recommendations. The owner answered Q1 to Q7 with
 the recommendations (prompt 122), which, with prompt 121's "Next
@@ -3760,7 +3763,7 @@ milestone ends (milestone 17's plan, Q5 a).
 - [x] 6. The automatic builds (Q7): the end-to-end checks in two parts
       side by side on each system (ci.yml and vitest.e2e.config.ts,
       written; the automatic builds of the pull request will show it).
-- [ ] 7. Checks X1 to X12 (tests/e2e/m21.e2e.ts, holoml's tests), run on
+- [x] 7. Checks X1 to X12 (tests/e2e/m21.e2e.ts, holoml's tests), run on
       Windows, with `pnpm test:linux`, and in the automatic builds.
 - [x] 8. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
       THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the
@@ -4006,6 +4009,10 @@ milestone ends (milestone 17's plan, Q5 a).
   were ready and drawn after U15 had begun, drawing in software. Fixed
   as in the decisions above; P10, S6, U13 to U15, V10, and W10 pass
   drawing in software on this computer and with the graphics card.
+- The automatic builds on 0683a98 passed, every job within its 45
+  minutes (X11, X12): Linux part 1 in 17 min 56 s and part 2 in 33 min 0
+  s, Windows part 1 in 18 min 1 s and part 2 in 11 min 14 s. The owner
+  merged the browser's #38 and accepted the milestone (prompt 125).
 
 ### Done when
 

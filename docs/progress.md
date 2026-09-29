@@ -245,7 +245,7 @@ to turn it over, choose its colour and size, and add it to a cart.
 
 ![The checkout page: two pairs, their sizes, and the total, with a button that places nothing](screenshots/m20/60-sneaker-store-checkout.png)
 
-**Milestone 21: ocean tunnel** (built; waiting for acceptance).
+**Milestone 21: ocean tunnel** (accepted 2026-09-29).
 HoloML 0.2's fifth and last part, which completes it: water that things
 are seen through, fading into its colour with distance, with the light
 from its waves moving over what is in it; sounds that come from a place;

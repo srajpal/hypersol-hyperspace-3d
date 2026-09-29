@@ -52,7 +52,7 @@ until then, and the sneaker store, one shoe in ten colourways to walk
 among, turn over, and add to a cart. Milestone 21 adds water, sounds
 that come from a place, and the ocean tunnel, an aquarium to walk
 through with 30 fish swimming over and around you, and completes HoloML
-0.2 (built; waiting for acceptance). Then HoloML's documentation,
+0.2. Then HoloML's documentation,
 privacy and data tools, and installers as 1.0. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
@@ -202,7 +202,7 @@ and VR. The full roadmap is in [TODO.md](TODO.md).
 
 ## Progress
 
-Twenty milestones are done and accepted.
+Twenty-one milestones are done and accepted.
 Milestones 1 to 11 built the browser: a live page on a tilted panel in
 the 3D room, tabs as cards, bookmarks and history, ad and tracker
 blocking with encrypted DNS, the layers view, two themes, an instrument
@@ -221,9 +221,8 @@ sliders, and the sofa studio, a shop page with shadows, textured
 fabrics, and choices that change the sofa in place. Milestone 19 adds
 Harbour Loft, a flat to tour, with panels of text, doors and lamps to
 click, places, a sky, and a floor plan. Milestone 20 adds loading by
-area and the sneaker store. Milestone 21, built and waiting for
-acceptance, adds water, sounds from a place, and the ocean tunnel, an
-aquarium, and completes HoloML 0.2.
+area and the sneaker store. Milestone 21 adds water, sounds from a
+place, and the ocean tunnel, an aquarium, and completes HoloML 0.2.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
