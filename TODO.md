@@ -31,7 +31,7 @@ Plan approved 2026-09-24.
 | 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
 | 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | Done (accepted, prompt 112) |
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Built, waiting for acceptance (build approved, prompt 114; handed off mid-build, prompt 116; built in prompt 118: the language, the browser's part, and Harbour Loft; the pull requests and V11 next) |
-| 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Later (prompts 101 and 102) |
+| 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | In progress (planned and started, prompt 120, with the recommended answers) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Later (prompt 115) |
 | 23 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85, and from 22, prompt 115) |
@@ -3301,6 +3301,129 @@ sofa studio did not have: text of more than one line (holoml issue
 ### Done when
 
 - V1 to V12 pass, screenshots are saved, and the owner accepts.
+
+## Milestone 20 — Sneaker store
+
+Status: Planned and started (prompt 120): the owner said to start the
+next milestone and to take the recommendations for its questions, so
+Q1 to Q5 are answered as recommended and the build is approved. Rule 13
+check done (ARCHITECTURE.md section 3). Pushed before the milestone
+(milestone 19's branch, browser pull request #36, not yet accepted:
+this milestone's branch starts from it).
+
+Goal: a sneaker store, in place of Coral Bay, a resort (prompts 101 and
+102): a wall of sneakers to pick up, turn, and see up close (the sole,
+the laces), in their colourways and sizes, a cart across shoes, and a
+checkout page with no real payment. HoloML's loading by area comes with
+it (prompt 102): many shoes, each loaded when the viewer comes near.
+
+### How it would work (proposed)
+
+- **HoloML 0.2, fourth part** (holoml repository: SPEC.md, the checker,
+  conformance samples; earlier pages unchanged):
+  - Loading by area (prompt 87): a `group` with `load="near"` loads its
+    models, and their pictures, only while the viewer is within `near`
+    metres of it (default 10), and lets them go when the viewer is
+    farther than half as much again; they count against the page's
+    limits only while loaded. A group near the start loads with the
+    page.
+  - Stand-ins: a model's `stand-in` names a lighter model shown in its
+    place until the model has loaded, and again once it is let go.
+  - The scene API: a group's `loaded` (all its models in), and a `load`
+    event as a group's models come in or are let go, so a script can
+    show progress.
+- **The browser**: the viewer loads and lets go by area as the viewer
+  moves (releasing the memory), shows stand-ins, keeps the counts, and
+  tells scripts; the copy of the parser and checker.
+- **The sneaker store** (holoml repository, examples/sneaker-store,
+  published with GitHub Pages like the others):
+  - One sneaker, Shopify's (from the Khronos glTF sample assets, CC BY
+    4.0, credited as its licence asks), in about ten colourways: its
+    own three, and more made by recolouring its picture; a lighter
+    stand-in for far away.
+  - The store: a bright room with a wall of shelves on each side, a shoe
+    in each colourway on them, a bench, and a counter; walk mode; the
+    shelves load by area.
+  - A shoe's page: a click on a shoe opens it with a fade, close up on a
+    turntable to orbit around; its colourway (a choice: the shoe changes
+    in place), its size (a choice for the script), "Turn it over" to see
+    the sole (a click action), "Add to cart" (the script), and the cart
+    on the screen.
+  - The cart and checkout: an ordinary web page with the cart's shoes,
+    sizes, and total, and a button that places nothing ("an example:
+    nothing was ordered or charged"); no payment fields. The cart is
+    kept in the tab's session storage across the store's pages.
+  - An about page with the credits.
+- **The examples section and the start panel**: its card, its picture,
+  and its row.
+
+### Questions (answered with the recommendations, prompt 120)
+
+- Q1, the shoes. a: Shopify's sneaker from the Khronos glTF sample
+  assets (CC BY 4.0: credited in the store's credits, its about page,
+  and THIRD-PARTY), in about ten colourways made from its own picture
+  (recommended: realistic, and no other good sneaker is free without an
+  account; prompt 85, Q3 a allowed CC0 only, so this needs the owner's
+  approval, given in prompt 120). b: sneakers made by the site's script
+  (plain). c: the owner finds or buys models.
+- Q2, loading by area. a: in the language: `load="near"` and `near` on a
+  group, a model's `stand-in`, and the scene API's `loaded` and `load`
+  event (recommended). b: the page's script adds and removes models
+  itself (holoml.add and remove; no change to the language). c: leave
+  it out.
+- Q3, picking up a shoe. a: a click on a shoe opens its page with a
+  fade, where it turns on a turntable and you orbit around it, choose
+  its colourway and size, turn it over, and add it to the cart
+  (recommended: every part is HoloML 0.2 as it stands, with the store's
+  script). b: in place on the wall, a script moving the shoe and the
+  viewer.
+- Q4, the checkout. a: an ordinary web page with the cart and a button
+  that places nothing, and no payment fields (recommended: "no real
+  payment", and nothing like card details is asked for). b: a pretend
+  card form that sends nothing.
+- Q5, sizes and the cart. a: EU sizes 36 to 47 in a choice, and the
+  cart in the tab's session storage (recommended, as the sofa studio
+  kept its choices). b: US sizes too.
+
+### Tasks
+
+- [ ] 1. HoloML 0.2, fourth part: SPEC.md, the checker, and conformance
+      samples for loading by area, stand-ins, and the scene API's
+      loading (holoml branch `sneaker-store`).
+- [ ] 2. The browser: loading and letting go by area, stand-ins, the
+      counts, the scene API; the copy (`pnpm holoml:sync`, from holoml's
+      `sneaker-store` branch for now).
+- [ ] 3. The sneaker store: the shoe, its colourways, and its stand-in
+      (credited), the store, a shoe's page, the cart and checkout page,
+      and the about page; published with GitHub Pages.
+- [ ] 4. The examples section and the start panel: its card, its
+      picture, and its row.
+- [ ] 5. Checks W1 to W12 (tests/e2e/m20.e2e.ts, holoml's tests), run on
+      Windows, with `pnpm test:linux`, and in the automatic builds.
+- [ ] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
+      THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the README's
+      pictures.
+
+### Checks (named W; milestone 19 used V)
+
+| # | Check | Expected result |
+|---|---|---|
+| W1 | The language | holoml's tests: loading by area and stand-ins, and their problems, have samples; a 0.1 page may not use them |
+| W2 | Loading by area | A group far from the viewer is not fetched at first (the server sees no request); walking near loads it; walking away lets it go, and the page's counted bytes drop; a group near the start loads with the page |
+| W3 | Stand-ins | A model's stand-in shows until the model has loaded, and again once it is let go; the stand-in counts against the limits |
+| W4 | Scripts | A group's `loaded`, and the `load` event as its models come in and are let go |
+| W5 | Limits | Only loaded groups count: a page whose areas together pass the limits loads each area in turn |
+| W6 | The store | Ready within 5 s from 127.0.0.1 with a graphics card (logged in software); no problems; the near shelves loaded and the far ones as stand-ins; walking along the wall loads each shelf; walls stop the walker |
+| W7 | A shoe | A click on a shoe opens its page with a fade; every colourway changes the shoe in place; "Turn it over" shows the sole; a size is chosen |
+| W8 | The cart | "Add to cart" on two shoes; the cart on the screen counts them; the checkout page lists both with their sizes and the total, and its button places nothing |
+| W9 | For everyone | The whole store from the keyboard; screen readers; the text view; reduced motion |
+| W10 | Efficient | An idle store draws no frames; the page process's memory falls again after far shelves are let go |
+| W11 | Published | From its public address in the built app (by hand, as V11) |
+| W12 | Regression | The full run on Windows, `pnpm test:linux`, the unit tests, holoml's tests, and the automatic builds |
+
+### Done when
+
+- W1 to W12 pass, screenshots are saved, and the owner accepts.
 
 ## The README: a broken link, and four pictures (2026-09-28, prompt 99)
 
