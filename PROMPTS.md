@@ -1340,3 +1340,24 @@ be shown first).
 ```text
 Go, and yes to Harbour Loft in the README.
 ```
+
+## 119 — 2026-09-28 · Claude Opus 5.5, max effort
+
+Approval of the AGENTS.md wording proposed in the reply to prompt 118
+(the README's pictures: Harbour Loft in place of the sofa studio, in the
+working agreement and the testing list), Auto-fix turned on for browser
+pull request #36, and holoml pull request #17 merged by the owner.
+
+```text
+Yes to the AGENTS wording, and turn on Auto-fix, and #17 merged.
+```
+
+## 120 — 2026-09-28 · Claude Opus 5.5, max effort
+
+(Sent while milestone 19's pull requests were open, after holoml #17
+merged.)
+
+```text
+You can start on the next milestone; use recommendations if you have
+questions.
+```

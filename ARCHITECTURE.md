@@ -587,7 +587,7 @@ HoloML pages in milestone 14.)
 4. Large HoloML scenes, found with Harbour Loft (milestone 19; for an
    owner decision, not built). (a) The first drawing of a scene compiles
    its materials' shaders on the page's main thread: the flat's files
-   are all in by 1.3 s, and it is ready at about 3.5 s on this computer
+   are all in by 1.3 s, and it is ready at 3.5 to 3.8 s on this computer
    the first time (7 lamp lights cost about 0.8 s of that). Compiling
    without blocking (Three.js's compileAsync, with the browser's
    parallel shader compiling) before the first frame would let a page

@@ -71,7 +71,9 @@ The plan and its checks (V1 to V12) are in TODO.md, "Milestone 19 —
 Harbour Loft"; the owner approved the build in prompt 114, and it was
 handed off mid-build (prompt 116) and finished in prompt 118.
 
-Where the work is (neither branch is pushed yet):
+Where the work is (holoml's pull request #17 is merged, and GitHub
+Pages publishes the site; the browser's is pull request #36, with
+Auto-fix on):
 
 - Browser: branch `m19-harbour-loft`, from main after milestone 18's
   acceptance: the viewer's part (panels, click actions, places and the
@@ -86,19 +88,16 @@ Where the work is (neither branch is pushed yet):
   tools/download.mjs, layout.mjs, and prepare.mjs; the download's
   cache, tools/cache/, is ignored by git), and its README.
 - The browser's copy of HoloML (packages/holoml) comes from holoml's
-  `harbour-loft` branch (SOURCE.json). Once holoml's pull request is
-  merged, sync it from main again: `pnpm holoml:sync main --examples
-  main`.
+  main (SOURCE.json: 4d69a69, the merge of #17).
 
-What comes next, in order: the pull requests (holoml's first; GitHub
-Pages publishes the site when it merges), the browser's copy synced
-from holoml's main, the automatic builds, V11 by hand (the site from
-its public address in the built app), and the owner's acceptance. For
-an owner decision: the AGENTS.md wording for the README's pictures
-(proposed in the reply to prompt 118; the README and its capture
-already show Harbour Loft), and ARCHITECTURE.md section 10, item 4
-(large scenes: shaders compiled on the page's main thread, every model
-a Tab stop).
+What comes next: #36's automatic builds (V8 to V10 were given time for
+drawing in software after `pnpm test:linux` ran them out of time), and
+the owner's acceptance. V11 passed (the published site in the built
+app). The AGENTS.md wording for the README's pictures is approved and
+in (prompt 119). For an owner decision later: ARCHITECTURE.md section
+10, item 4 (large scenes: shaders compiled on the page's main thread,
+every model a Tab stop). Milestone 20, the sneaker store, is being
+planned and started (prompt 120).
 
 Worth knowing:
 

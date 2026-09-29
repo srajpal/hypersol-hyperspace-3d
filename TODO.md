@@ -3215,7 +3215,7 @@ sofa studio did not have: text of more than one line (holoml issue
   now 56, all in by 1.3 s. Oak left the window sills and the basin, so
   fewer pictures repeat between files. The flat is 19 MB and 250,000
   triangles; the whole site 22 MB.
-- Ready in about 3.5 s the first time with a graphics card (5 s
+- Ready in 3.5 to 3.8 s the first time with a graphics card (5 s
   allowed): after the files arrive, the first drawing compiles the
   materials' shaders on the page's main thread; the seven lamp lights
   cost about 0.8 s of it (2.7 s without them). Kept, as the tour's
@@ -3274,8 +3274,29 @@ sofa studio did not have: text of more than one line (holoml issue
 - Screenshots: docs/screenshots/m19 (`MILESTONE=m19 pnpm screenshots`),
   and the README's four pictures with Harbour Loft first (`pnpm
   screenshots:readme`, prompt 118).
-- Not run yet: `pnpm test:linux`, the automatic builds, and V11 (after
-  holoml's pull request merges and GitHub Pages publishes the site).
+- V11 (2026-09-28, prompt 119, after the owner merged holoml #17 and
+  GitHub Pages published it): the built app opened
+  https://srajpal.github.io/holoml/harbour-loft/index.holoml (a one-off
+  run with the network, not a test, as U16): HoloML 0.2, ready in 8.0 s
+  over the internet (20 MB), no problems, nothing left out, its 120
+  models, 10 sounds, sky, light, and plan loaded, 7 places and 10
+  click actions; the kitchen lights came on from their button; the
+  terrace arrived through a fade, everything loaded. Pass.
+- The copy of HoloML is synced from holoml's main (4d69a69, the merge
+  of #17); only the copies' first comment line changed (the ref).
+- `pnpm test:linux` (Ubuntu in Docker, drawing in software, as
+  GitHub's machines): lint, types, and the unit tests pass (262, and
+  2 skipped: the copy's checks against holoml beside it). V2 to V7
+  pass. V8 to V10 ran out of the 60 seconds a check has: drawing in
+  software, the flat takes about 30 s to load (V8 logged 30.6 s) and
+  each frame seconds. V8 now presses every door and lamp together and
+  then reads them, V9 goes on from where V8 leaves the flat instead of
+  loading it again, and the three have limits for drawing in software
+  (8, 5, and 4 minutes, as other long checks have 2 and 4); on Windows
+  they still pass (V8 read 4.7 s while the Linux run shared the
+  computer).
+- Not yet: V8 to V10 on Linux again, and the automatic builds of
+  browser pull request #36.
 
 ### Done when
 

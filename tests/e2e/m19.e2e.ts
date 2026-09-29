@@ -685,24 +685,28 @@ describe('V8 to V10: Harbour Loft', () => {
     await waitFor('out', () => intensity('hall-light'), (v) => v === 0);
 
     // Every door and lamp, by its button: each runs its actions, and the next press undoes them.
+    // (All pressed together, then read: drawing in software, each wait for a frame takes seconds.)
     expect(await pressButton('Study door')).toBe(true);
     await waitFor('the study door shut', () => turnOf('study-hinge'), (r) => sameTurn(r, -90));
-    for (const [door, hinge, label, shut, open] of DOORS) {
-      expect(await action(door)).toMatchObject({ button: label, pressed: 'false', sounds: ['door.wav'] });
-      expect(await pressButton(label)).toBe(true);
-      await waitFor(`${label} open`, () => turnOf(hinge), (r) => sameTurn(r, open));
+    for (const [door, , label] of DOORS) expect(await action(door)).toMatchObject({ button: label, pressed: 'false', sounds: ['door.wav'] });
+    for (const [trigger, label] of LAMPS) expect(await action(trigger)).toMatchObject({ button: label, pressed: 'false', sounds: ['switch.wav'] });
+    for (const [, , label] of DOORS) expect(await pressButton(label)).toBe(true);
+    for (const [, label] of LAMPS) expect(await pressButton(label)).toBe(true);
+    for (const [door, hinge, label, , open] of DOORS) {
+      await waitFor(`${label} open`, () => turnOf(hinge), (r) => sameTurn(r, open), await sceneWait(h, 5000));
       expect((await action(door)).pressed).toBe('true');
-      await pressButton(label);
-      await waitFor(`${label} shut`, () => turnOf(hinge), (r) => sameTurn(r, shut));
     }
     for (const [trigger, label, light, bright, glows, size] of LAMPS) {
-      expect(await action(trigger)).toMatchObject({ button: label, pressed: 'false', sounds: ['switch.wav'] });
-      expect(await pressButton(label)).toBe(true);
-      await waitFor(`${label} on`, () => intensity(light), (v) => Math.abs(v - bright) < 1e-6);
-      for (const g of glows) await waitFor(`${g} glowing`, () => scaleOf(g), (s) => Math.abs(s - size) < 1e-6);
-      await pressButton(label);
-      await waitFor(`${label} off`, () => intensity(light), (v) => v === 0);
-      for (const g of glows) await waitFor(`${g} out`, () => scaleOf(g), (s) => s < 0.01);
+      await waitFor(`${label} on`, () => intensity(light), (v) => Math.abs(v - bright) < 1e-6, await sceneWait(h, 5000));
+      for (const g of glows) await waitFor(`${g} glowing`, () => scaleOf(g), (s) => Math.abs(s - size) < 1e-6, await sceneWait(h, 5000));
+      expect((await action(trigger)).pressed).toBe('true');
+    }
+    for (const [, , label] of DOORS) await pressButton(label);
+    for (const [, label] of LAMPS) await pressButton(label);
+    for (const [, hinge, label, shut] of DOORS) await waitFor(`${label} shut`, () => turnOf(hinge), (r) => sameTurn(r, shut), await sceneWait(h, 5000));
+    for (const [, label, light, , glows] of LAMPS) {
+      await waitFor(`${label} off`, () => intensity(light), (v) => v === 0, await sceneWait(h, 5000));
+      for (const g of glows) await waitFor(`${g} out`, () => scaleOf(g), (s) => s < 0.01, await sceneWait(h, 5000));
     }
 
     // Up to the roof terrace through the door in the brick wall (a fade), and back down to the door there.
@@ -742,10 +746,13 @@ describe('V8 to V10: Harbour Loft', () => {
     await pressInShell(h, 'Left', ['alt']);
     await waitFor('back', async () => (await focusedTab(h)).url, (u) => u.startsWith(url(PAGE)));
     await ready(h, LOFT, await sceneWait(h, 20_000));
-  });
+    // Drawn in software (GitHub's Linux machines), the flat takes about half a minute to load, and each frame seconds.
+  }, 480_000);
 
   it('V9 the whole tour from the keyboard: places, doors, lamps, links, and the Light choice; screen readers name them; the text view; reduced motion', async () => {
-    await openPage(h, PAGE);
+    // On from V8, the flat as it was left (loading it again takes half a minute drawn in software): to the hall first.
+    expect(await pressButton('Go to: Hall')).toBe(true);
+    await waitFor('in the hall', places, (p) => p.current === 'hall');
     await drawn(h, LOFT);
     // Into the page: a click on the hall's floor (nothing to use there).
     const size = await inPage<{ w: number; h: number }>(h, '({ w: innerWidth, h: innerHeight })', LOFT);
@@ -825,7 +832,7 @@ describe('V8 to V10: Harbour Loft', () => {
     } finally {
       await reducedMotion(h, false);
     }
-  });
+  }, 300_000);
 
   it('V10 an idle flat draws no frames: by day, in the evening with every lamp on and every door open, and with reduced motion', async () => {
     await openPage(h, PAGE);
@@ -850,5 +857,5 @@ describe('V8 to V10: Harbour Loft', () => {
     } finally {
       await reducedMotion(h, false);
     }
-  });
+  }, 240_000);
 });

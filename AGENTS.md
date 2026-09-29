@@ -131,10 +131,11 @@ Do not change earlier entries except to correct an error.
   or milestone, good-looking ones that show the variety of what the
   browser does: refresh docs/screenshots/readme*.png with `pnpm
   screenshots:readme` at the end of each milestone and each release,
-  and look at them. They show the sofa studio, Blockworld, a sample page
+  and look at them. They show Harbour Loft, Blockworld, a sample page
   in the layers view, and the instrument panel, all served locally.
   (Owner, prompt 68; the showroom from prompt 81, Q5 a; four pictures
-  since prompt 99, the wording approved in prompt 100.)
+  since prompt 99, the wording approved in prompt 100; Harbour Loft in
+  place of the sofa studio from prompt 118.)
 - Owner-only automation (Remote Control at session start, the prompt-log
   reminder) lives in CLAUDE.local.md, which is gitignored, so
   contributors' sessions never inherit it.
@@ -217,8 +218,9 @@ milestone; the current milestone's checks are defined in TODO.md):
   motion, efficiency. The layers view is on by default, so every earlier
   check runs with it on.
 - README screenshots: `pnpm screenshots:readme` (four since 2026-09-28,
-  prompt 99: the sofa studio, Blockworld, a made-up sample page in the
-  layers view, and the instrument panel; from local copies in
+  prompt 99: Harbour Loft (since prompt 118; the sofa studio before),
+  Blockworld, a made-up sample page in the layers view, and the
+  instrument panel; from local copies in
   tests/fixtures, no network; first run 2026-09-27; not a test).
 - The HoloML examples' pictures: `pnpm screenshots:examples` (from the
   local copies, no network; first run 2026-09-27). They are part of the

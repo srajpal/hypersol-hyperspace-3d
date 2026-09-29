@@ -1,15 +1,15 @@
 {
   "repository": "https://github.com/srajpal/holoml",
-  "tag": "harbour-loft",
-  "commit": "31dda58bb12991c02518def325ad9e3dfcb98774",
+  "tag": "main",
+  "commit": "4d69a6997010cd909070eb4a224c478b33012e41",
   "files": {
-    "src/parser.ts": "20958d033b1a4d1452bb2bf4608a4c31b01d00891159ce3b523ccda048389b7a",
-    "src/rules.ts": "498a30c5af3f03ade6b2bb6db4115f6798f9e77d0b56fb9e6add90246762f53b",
-    "src/schema.ts": "696231c20816f7212ce9d8d86c15f36be72431ed4fc45d9005a55f78881e215d"
+    "src/parser.ts": "68f232f3c7bcc299dd477596ec62fcb9681dbd4f330ed9e55d50846626a4e526",
+    "src/rules.ts": "91b4a35651a21bdc17fbde7ff880d9eaa0209f1450979ea447e3042a55dd9b65",
+    "src/schema.ts": "03f8cad649f1e00b7cb6f90d2f89b71e05c84aa3688bfafc2af5469da3c0d83f"
   },
   "examples": {
-    "ref": "harbour-loft",
-    "commit": "31dda58bb12991c02518def325ad9e3dfcb98774",
+    "ref": "main",
+    "commit": "4d69a6997010cd909070eb4a224c478b33012e41",
     "files": {
       "showroom/README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
       "showroom/about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",
