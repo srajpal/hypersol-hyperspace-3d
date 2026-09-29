@@ -477,7 +477,7 @@ describe('W6 to W10: the sneaker store', () => {
     await waitForPage(h, SHOE);
     expect(Number(await inPage<string | null>(h, "sessionStorage.getItem('fadeMax')", SHOE))).toBeGreaterThan(0.95);
     await ready(h, SHOE, await sceneWait(h, 20_000));
-    const arrived = await waitFor('faded in', () => holo<{ opacity: number; arriving: boolean; log: { to: number }[] }>(h, 'window.__holoml.fade()', SHOE), (f) => !f.arriving && f.opacity === 0, 8000);
+    const arrived = await waitFor('faded in', () => holo<{ opacity: number; arriving: boolean; log: { to: number }[] }>(h, 'window.__holoml.fade()', SHOE), (f) => !f.arriving && f.opacity === 0, await sceneWait(h, 8000));
     expect(arrived.log.map((x) => x.to)).toEqual([1, 0]);
     expect(await choice('colour')).toBe('beach');
     await waitFor('the beach colours on the shoe', shoeMap, (m) => m?.endsWith('/colours/beach.jpg') === true);
@@ -532,10 +532,12 @@ describe('W6 to W10: the sneaker store', () => {
     await openPage(h, `${SHOE}?colour=beach&again=1`);
     expect(await hud(SHOE, 'cart')).toBe('Cart: empty');
     expect(await pick('size', '44')).toBe(true);
-    // "Add to cart", clicked in the scene: the chime, and the cart counts it.
+    // "Add to cart", clicked in the scene: the chime (counted as it starts: it lasts 0.7 s), and the cart counts it.
+    const chimes = async () => (await holo<{ id: string | null; plays: number }[]>(h, 'window.__holoml.sounds()', SHOE)).find((x) => x.id === 'chime')?.plays ?? 0;
+    expect(await chimes()).toBe(0);
     const add = await point(SHOE, 'add');
     await clickUntil(h, await project(h, add.x, add.y), 'in the cart', async () => (await hud(SHOE, 'cart')) === 'Cart: 1 pair · $120');
-    await waitFor('the chime', () => holo<{ id: string; playing: boolean }[]>(h, 'window.__holoml.sounds()', SHOE), (s) => s.find((x) => x.id === 'chime')?.playing === true, 3000);
+    await waitFor('the chime', chimes, (n) => n === 1, await sceneWait(h, 3000));
     // Another: Ember, size 41, added from the keyboard.
     expect(await pick('colour', 'ember')).toBe(true);
     expect(await pick('size', '41')).toBe(true);
@@ -640,7 +642,7 @@ describe('W6 to W10: the sneaker store', () => {
       expect((await holo<{ rotation: Vec }>(h, 'window.__holoml.object("spin")', SHOE)).rotation[1]).toBeCloseTo(405, 3);
       await tabTo(SHOE, 'Turn it over');
       await press(h, SHOE, 'Enter');
-      await waitFor('upside down', flip, (x) => Math.abs(x - 180) < 0.01, 2000);
+      await waitFor('upside down', flip, (x) => Math.abs(x - 180) < 0.01, await sceneWait(h, 2000));
     } finally {
       await reducedMotion(h, false);
     }
