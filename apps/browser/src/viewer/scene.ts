@@ -463,6 +463,17 @@ export class HolomlView {
   private waterDirty = false;
   /** Why the water's moving light was left out, if it was. */
   private causticsLeftOut: string | null = null;
+  /** The page's tab is behind another (milestone 21): what moves waits, and nothing draws but a change. */
+  private behind = false;
+  /**
+   * New materials' shaders compile without blocking the page (milestone 21):
+   * wanted when models arrive or materials change, and while they compile
+   * the last frame stays on the screen.
+   */
+  private shadersWanted = true;
+  private compiling = false;
+  /** A frame is being drawn: what the page's scripts move during it asks for no new frame while the tab is behind. */
+  private inFrame = false;
 
   constructor(root: ElementNode, container: HTMLElement, outline: HTMLElement, hudLayer: HTMLElement) {
     this.outline = outline;
@@ -1463,6 +1474,7 @@ export class HolomlView {
   private settle(): void {
     this.pending -= 1;
     this.waterDirty = true;
+    this.shadersWanted = true;
     this.requestFrame();
     if (this.pending === 0) {
       this.onBusy?.(false);
@@ -2210,6 +2222,7 @@ export class HolomlView {
     }
     if (model.report) this.materialsOf(holder, model.report);
     this.waterDirty = true;
+    this.shadersWanted = true;
     this.requestFrame();
   }
 
@@ -2353,6 +2366,7 @@ export class HolomlView {
       this.software === null,
     );
     this.waterDirty = true;
+    this.shadersWanted = true;
   }
 
   /** The page's water, for the tests and the inspector: its box, its look, and its moving light. */
@@ -3235,6 +3249,7 @@ export class HolomlView {
     });
     this.materialsOf(holder, entry.report);
     this.waterDirty = true;
+    this.shadersWanted = true;
     this.requestFrame();
   }
 
@@ -3297,14 +3312,47 @@ export class HolomlView {
     this.requestFrame();
   }
 
+  /**
+   * The page's tab went behind another, or came to the front (milestone 21).
+   * Behind, the scene stops drawing what moves (animations, the water's
+   * light, a script's frames); a change still draws once, so that the
+   * tab's card can show the scene. In front again, it goes on.
+   */
+  setBehind(on: boolean): void {
+    if (this.behind === on) return;
+    this.behind = on;
+    this.last = 0;
+    if (!on) this.requestFrame();
+  }
+
+  get isBehind(): boolean {
+    return this.behind;
+  }
+
+  /** New shaders are compiling, or wanted: the scene is not yet drawn as it now is (for the tests). */
+  get shadersCompiling(): boolean {
+    return this.compiling || this.shadersWanted;
+  }
+
   requestFrame(): void {
     if (this.frameRequested) return;
+    // Behind another tab, what moves in a frame (a script's frame handler moving things) asks for no more.
+    if (this.behind && this.inFrame) return;
     this.frameRequested = true;
     requestAnimationFrame((t) => this.frame(t));
   }
 
   private frame(time: number): void {
     this.frameRequested = false;
+    this.inFrame = true;
+    try {
+      this.drawFrame(time);
+    } finally {
+      this.inFrame = false;
+    }
+  }
+
+  private drawFrame(time: number): void {
     const dt = this.last === 0 ? 16 : Math.min(100, time - this.last);
     this.last = time;
     let moving = this.controls?.step(dt) ?? false;
@@ -3347,13 +3395,34 @@ export class HolomlView {
       const up = new Vector3(0, 1, 0).applyQuaternion(c.quaternion);
       this.sounds.follow([c.position.x, c.position.y, c.position.z], [forward.x, forward.y, forward.z], [up.x, up.y, up.z]);
     }
+    // New shaders compile off the page's main thread where the graphics card can (KHR_parallel_shader_compile);
+    // meanwhile the last frame stays, and what loads goes on loading.
+    if (this.shadersWanted && !this.compiling) {
+      this.shadersWanted = false;
+      this.compiling = true;
+      this.renderer
+        .compileAsync(this.scene, this.camera)
+        .catch(() => undefined)
+        .finally(() => {
+          this.compiling = false;
+          this.requestFrame();
+        });
+    }
+    if (this.compiling) {
+      // Not drawn yet, but where everything is stays current (clicks, and what the tests measure, use it).
+      this.scene.updateMatrixWorld();
+      this.camera.updateMatrixWorld();
+      if (moving && !this.behind) this.requestFrame();
+      else this.last = 0;
+      return;
+    }
     this.renderer.render(this.scene, this.camera);
     this.frames += 1;
     this.updatePlan();
     // Arrived through a fade: in once everything is drawn.
     if (this.arriving && this.pending === 0) this.arrive();
     this.onDrawn?.();
-    if (moving) this.requestFrame();
+    if (moving && !this.behind) this.requestFrame();
     else this.last = 0;
   }
 

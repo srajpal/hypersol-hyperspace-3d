@@ -47,7 +47,9 @@ if (isHolomlDocument) {
     if (data.hypersolHolomlDrawn === true) ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { drawn: true });
   });
   ipcRenderer.on(HOLOML_COMMAND_CHANNEL, (_event, command: unknown) => {
-    if (command === 'stop' || command === 'text-view-on' || command === 'text-view-off') window.postMessage({ hypersolHolomlCommand: command }, '*');
+    if (command === 'stop' || command === 'text-view-on' || command === 'text-view-off' || command === 'behind' || command === 'in-front') {
+      window.postMessage({ hypersolHolomlCommand: command }, '*');
+    }
   });
   // The first real click, tap, or key on the page lets it play sound (HoloML
   // 0.2, milestone 17). Heard here, in the preload's own world: a page's

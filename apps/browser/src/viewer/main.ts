@@ -107,6 +107,14 @@ Object.defineProperty(window, '__holoml', {
     water: () => JSON.parse(JSON.stringify(state.view?.waterInfo ?? null)),
     waterFadeAt: (point: [number, number, number]) => state.view?.waterFadeAt(point) ?? 0,
     soundLevels: (id: string) => state.view?.soundLevels(id) ?? null,
+    /** Whether the page's tab is behind another (milestone 21): it draws nothing then. */
+    get behind() {
+      return state.view?.isBehind ?? false;
+    },
+    /** New shaders compile without blocking the page (milestone 21): true until the scene is drawn with them. */
+    get compiling() {
+      return state.view?.shadersCompiling ?? false;
+    },
     /** The page's panorama of the surroundings: its address, whether it arrived, and how brightly it lights the scene. */
     environment: () => state.view?.environmentInfo ?? null,
     walker: () => state.view?.walkerInfo ?? null,
@@ -369,12 +377,13 @@ function start(): void {
       setTextView(!state.textView);
     }
   });
-  // From the browser, through the page's preload: stop, and the text view.
+  // From the browser, through the page's preload: stop, the text view, and whether its tab is behind another (milestone 21).
   window.addEventListener('message', (e) => {
     const command = (e.data as { hypersolHolomlCommand?: unknown } | null)?.hypersolHolomlCommand;
     if (e.source !== window || typeof command !== 'string') return;
     if (command === 'stop') view.stop();
     else if (command === 'text-view-on' || command === 'text-view-off') setTextView(command === 'text-view-on');
+    else if (command === 'behind' || command === 'in-front') view.setBehind(command === 'behind');
   });
 }
 

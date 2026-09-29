@@ -9,12 +9,18 @@
  */
 import {
   Color,
+  DataTexture,
+  LinearFilter,
+  LinearMipmapLinearFilter,
   Mesh,
   MeshBasicMaterial,
   MeshLambertMaterial,
   MeshPhongMaterial,
   MeshStandardMaterial,
+  RedFormat,
+  RepeatWrapping,
   SRGBColorSpace,
+  UnsignedByteType,
   Vector3,
   type Material,
   type Object3D,
@@ -34,7 +40,7 @@ export interface WaterLook {
 }
 
 /** How long the net of light takes to change its pattern, roughly, in seconds: slow, as under calm water. */
-const CAUSTICS_PACE = 0.55;
+const CAUSTICS_PACE = 1;
 
 const VERTEX_PARS = /* glsl */ `
 varying vec3 vWaterWorld;
@@ -62,6 +68,7 @@ uniform float waterClarity;
 uniform float waterTime;
 uniform float waterCaustics;
 uniform float waterLight;
+uniform sampler2D waterNetMap;
 varying vec3 vWaterWorld;
 
 // How much of the way from a to b lies inside the water's box, in metres.
@@ -81,42 +88,11 @@ float waterPath( vec3 a, vec3 b ) {
   return max( leave - enter, 0.0 );
 }
 
-vec2 waterHash( vec2 p ) {
-  p = vec2( dot( p, vec2( 127.1, 311.7 ) ), dot( p, vec2( 269.5, 183.3 ) ) );
-  return fract( sin( p ) * 43758.5453 );
-}
-
-// How far a point is from the nearest edge between slowly moving cells: 0 on an edge.
-float waterCells( vec2 x, float t ) {
-  vec2 n = floor( x );
-  vec2 f = fract( x );
-  float f1 = 8.0;
-  float f2 = 8.0;
-  for ( int j = -1; j <= 1; j ++ ) {
-    for ( int i = -1; i <= 1; i ++ ) {
-      vec2 g = vec2( float( i ), float( j ) );
-      vec2 o = 0.5 + 0.42 * sin( t + 6.2831 * waterHash( n + g ) );
-      float d = length( g + o - f );
-      if ( d < f1 ) {
-        f2 = f1;
-        f1 = d;
-      } else if ( d < f2 ) {
-        f2 = d;
-      }
-    }
-  }
-  return f2 - f1;
-}
-
-// The net of light: soft, wavy threads along the cells' edges, two layers
-// drifting past each other, brightest where they cross.
+// The net of light: two copies of the picture of it, at different sizes, drifting past each other; brightest where they cross.
 float waterNet( vec2 p, float t ) {
-  vec2 warp = vec2( sin( p.y * 0.9 + t * 0.6 ), cos( p.x * 0.8 - t * 0.5 ) ) * 0.25;
-  float a = waterCells( p + warp, t );
-  float b = waterCells( p * 1.37 + vec2( 3.7, 1.3 ) - warp, t * 1.21 + 2.0 );
-  float la = pow( 1.0 - smoothstep( 0.0, 0.28, a ), 2.0 );
-  float lb = pow( 1.0 - smoothstep( 0.0, 0.22, b ), 2.0 );
-  return la * 0.8 + lb * 0.6 + la * lb * 1.2;
+  float a = texture2D( waterNetMap, p * 0.3 + vec2( t * 0.045, t * 0.03 ) ).r;
+  float b = texture2D( waterNetMap, p * 0.46 + vec2( 0.37 - t * 0.035, 0.61 + t * 0.05 ) ).r;
+  return a * 0.8 + b * 0.6 + a * b * 1.5;
 }
 `;
 
@@ -127,7 +103,7 @@ if ( waterCaustics > 0.5 && all( greaterThanEqual( vWaterWorld, waterMin ) ) && 
   float waterUp = clamp( waterNormal.y * 0.7 + 0.3, 0.0, 1.0 );
   float waterDepth = waterMax.y - vWaterWorld.y;
   float waterDim = exp( - waterDepth / 7.0 );
-  float waterNetHere = waterNet( vWaterWorld.xz * 1.8 + vec2( waterDepth * 0.12 ), waterTime );
+  float waterNetHere = waterNet( vWaterWorld.xz + vec2( waterDepth * 0.07 ), waterTime );
   outgoingLight += diffuseColor.rgb * waterNetHere * waterUp * waterDim * waterLight;
 }
 `;
@@ -163,6 +139,54 @@ export function waterPath(a: Vec3, b: Vec3, min: Vec3, max: Vec3): number {
   return Math.max(0, leave - enter);
 }
 
+/**
+ * The picture of the net of light, drawn once: the edges of wavy cells
+ * (distance to the second-nearest point less the nearest), bright and soft,
+ * tiling in both directions (the points repeat across the edges).
+ */
+let net: DataTexture | null = null;
+function netPicture(): DataTexture {
+  if (net) return net;
+  const size = 256;
+  const cells = 6;
+  let seed = 7;
+  const random = () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+  const points: [number, number][] = [];
+  for (let j = 0; j < cells; j++) for (let i = 0; i < cells; i++) points.push([i + 0.15 + 0.7 * random(), j + 0.15 + 0.7 * random()]);
+  const data = new Uint8Array(size * size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      // A gentle, tiling warp, so the edges curve as light on the sand does.
+      const u = (x / size) * cells + 0.22 * Math.sin((2 * Math.PI * 2 * y) / size);
+      const v = (y / size) * cells + 0.22 * Math.sin((2 * Math.PI * 2 * x) / size);
+      // Only the cells around it can hold its nearest points (each cell's point lies inside it).
+      let [f1, f2] = [9, 9];
+      const [ci, cj] = [Math.floor(u), Math.floor(v)];
+      for (let j = cj - 1; j <= cj + 1; j++) {
+        for (let i = ci - 1; i <= ci + 1; i++) {
+          const [wi, wj] = [((i % cells) + cells) % cells, ((j % cells) + cells) % cells];
+          const [px, py] = points[wj * cells + wi]!;
+          const d = Math.hypot(px + (i - wi) - u, py + (j - wj) - v);
+          if (d < f1) [f2, f1] = [f1, d];
+          else if (d < f2) f2 = d;
+        }
+      }
+      const edge = 1 - Math.min(1, Math.max(0, (f2 - f1) / 0.36));
+      data[y * size + x] = Math.round(255 * edge * edge * (3 - 2 * edge) * edge);
+    }
+  }
+  net = new DataTexture(data, size, size, RedFormat, UnsignedByteType);
+  net.wrapS = net.wrapT = RepeatWrapping;
+  net.magFilter = LinearFilter;
+  net.minFilter = LinearMipmapLinearFilter;
+  net.generateMipmaps = true;
+  net.needsUpdate = true;
+  return net;
+}
+
 type Hookable = MeshStandardMaterial | MeshBasicMaterial | MeshLambertMaterial | MeshPhongMaterial;
 
 function hookable(m: Material): m is Hookable {
@@ -185,6 +209,7 @@ export class Water {
     waterTime: { value: 0 },
     waterCaustics: { value: 0 },
     waterLight: { value: 0.35 },
+    waterNetMap: { value: null as DataTexture | null },
   };
 
   constructor(look: WaterLook, causticsShown: boolean) {
@@ -203,6 +228,7 @@ export class Water {
     this.uniforms.waterColor.value.set(rgb.r, rgb.g, rgb.b);
     this.uniforms.waterClarity.value = look.clarity;
     this.uniforms.waterCaustics.value = this.causticsShown ? 1 : 0;
+    if (this.causticsShown) this.uniforms.waterNetMap.value = netPicture();
   }
 
   /** How bright the net of light is: it follows the page's lights from above. */

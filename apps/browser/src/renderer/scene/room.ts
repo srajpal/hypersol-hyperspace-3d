@@ -277,7 +277,7 @@ export class Room {
     const object = new CSS3DObject(view.element);
     view.setSize(this.currentLayout.panelWidth, this.currentLayout.panelHeight);
     this.applyPose(object, this.centrePose());
-    this.setShown(view.element, false);
+    this.setShown(view, false);
     // In the page now, so a background tab's webview attaches and loads.
     this.cameraElement.append(view.element);
     this.cssScene.add(object);
@@ -480,7 +480,7 @@ export class Room {
     const next = this.views.get(tabId);
     if (next) {
       this.tweens = this.tweens.filter((t) => t.object !== next.object);
-      this.setShown(next.view.element, true);
+      this.setShown(next.view, true);
       if (duration > 0 && previous !== tabId) {
         this.applyPose(next.object, this.cardPose(tabId));
         this.addTween(next.object, () => this.centrePose(), duration);
@@ -492,7 +492,7 @@ export class Room {
     if (old) {
       this.tweens = this.tweens.filter((t) => t.object !== old.object);
       const hide = () => {
-        if (this.focusedId !== previous) this.setShown(old.view.element, false);
+        if (this.focusedId !== previous) this.setShown(old.view, false);
       };
       if (duration > 0) this.addTween(old.object, () => this.cardPose(previous), duration, hide);
       else hide();
@@ -631,8 +631,12 @@ export class Room {
     object.scale.setScalar(pose.scale);
   }
 
-  private setShown(element: HTMLElement, shown: boolean): void {
-    // Hidden, not removed: a webview that leaves the page reloads.
+  private setShown(view: TabView, shown: boolean): void {
+    // Hidden, not removed: a webview that leaves the page reloads. Hidden
+    // this way, Chromium still counts the page as seen, so the tab view also
+    // tells it (a HoloML page then draws nothing, milestone 21).
+    const element = view.element;
+    view.setInFront(shown);
     element.style.visibility = shown ? '' : 'hidden';
     element.style.pointerEvents = shown ? '' : 'none';
     element.setAttribute('aria-hidden', shown ? 'false' : 'true');
