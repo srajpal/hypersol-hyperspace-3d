@@ -3839,6 +3839,12 @@ milestone ends (milestone 17's plan, Q5 a).
   place, keeping a skeleton's joints and weights, and small parts such
   as eyes whole. Looked at beside the approved fish, they are the same;
   the mackerel's outline is a little less smooth close up.
+- A page compiling shaders is not yet idle: since shaders compile
+  without holding up the page, it draws once they are ready, which can
+  be seconds later drawing in software. The checks that count an idle
+  page's frames (P10, S6, U15, V10, W10) start from the harness's
+  sceneStill: drawn, no shaders compiling, and the frame count holding.
+  They check the same: an idle page draws nothing.
 - The aquarium's checks may take up to 600 s each (TANK_TIME), as drawn
   in software they take minutes; not a requirement, as with
   Blockworld's. X9 counts frames once the page has been told its tab is
@@ -3991,6 +3997,15 @@ milestone ends (milestone 17's plan, Q5 a).
   (1.2 to 2.2 m in 3 s); Feed dropped the food and the fish ate it; the
   great white shark's button told about it on the board; the about page
   opened with its credits.
+- The automatic builds on a860c28: both Windows jobs failed. Part 1: two
+  unit tests ran out of their 5 s on a slow machine (the password
+  vault's "Clear data" and the storage service's bad requests; 21 s for
+  all the unit tests, where they take 13 to 15). Part 2: U15 (milestone
+  18) counted one frame in its idle window: U14 had changed the sofa's
+  choices, and the new shaders, compiled without holding up the page,
+  were ready and drawn after U15 had begun, drawing in software. Fixed
+  as in the decisions above; P10, S6, U13 to U15, V10, and W10 pass
+  drawing in software on this computer and with the graphics card.
 
 ### Done when
 

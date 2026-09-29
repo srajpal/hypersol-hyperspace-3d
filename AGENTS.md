@@ -188,7 +188,9 @@ date given and grow with each milestone; TODO.md has the latest.
   then measured and logged, not checked, as there (owner, prompts 59,
   95, and 96). Checks of scenes wait
   for what they check, not for fixed times (holdKeyUntil, framesDrawn,
-  and sceneWait in tests/e2e/harness.ts).
+  sceneStill, and sceneWait in tests/e2e/harness.ts); a check that an
+  idle page draws nothing starts from sceneStill, as a page compiling
+  shaders is not yet idle (milestone 21).
 - Linux on this computer, the way GitHub's Linux machines run the
   checks: `pnpm test:linux` (needs Docker; first run 2026-09-28, owner,
   prompts 103 and 104). It builds tests/linux/Dockerfile (Ubuntu 24.04,

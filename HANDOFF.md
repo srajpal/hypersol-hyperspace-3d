@@ -139,6 +139,10 @@ Worth knowing:
   models have triangle budgets (fish.mjs, and prepare.mjs for Poly
   Haven's): shapes.mjs thinTo makes a more detailed file lighter. A new
   fish or rock should get one.
+- Shaders compile without holding up the page, and the scene is drawn
+  once they are ready, so a page can answer while it is not yet idle:
+  checks that an idle page draws nothing start from the harness's
+  sceneStill (drawn, not compiling, the frame count holding).
 - In vitest 5 the default report on this computer leaves out what
   passing checks log (the load times and frame rates); add
   `--reporter=verbose` to see them. The automatic builds show them.

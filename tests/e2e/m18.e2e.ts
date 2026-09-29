@@ -22,6 +22,7 @@ import {
   pressInPage,
   pressInShell,
   project,
+  sceneStill,
   sceneWait,
   shellCall,
   sleep,
@@ -333,23 +334,12 @@ const focusedText = (h: Harness, page: string) =>
 
 /**
  * Waits until an idle page has drawn what it loaded: a scene draws only
- * when something changes (each arrival asks for a frame), so once the
- * frame count holds still, the last frame shows everything.
+ * when something changes (each arrival asks for a frame), so once no
+ * shaders are compiling and the frame count holds still, the last frame
+ * shows everything (sceneStill).
  */
 async function drawn(h: Harness, page: string): Promise<void> {
-  let last = -1;
-  await waitFor(
-    'the scene drawn and still',
-    async () => {
-      const now = await holo<number>(h, 'window.__holoml.frames', page);
-      const still = now > 0 && now === last;
-      last = now;
-      await sleep(300);
-      return still;
-    },
-    (v) => v,
-    await sceneWait(h, 10_000),
-  );
+  await sceneStill(h, page, await sceneWait(h, 10_000));
 }
 
 /** Opens a page in the harness's tab and waits until it is ready. */
@@ -684,6 +674,8 @@ describe('U13 to U15: the sofa studio', () => {
   });
 
   it('U15 an idle sofa studio draws no frames, with reduced motion too', async () => {
+    // Once the choices the checks before made have been drawn.
+    await drawn(h, STUDIO);
     await sleep(1000);
     const f0 = await holo<number>(h, 'window.__holoml.frames', STUDIO);
     await sleep(2000);
@@ -695,6 +687,7 @@ describe('U13 to U15: the sofa studio', () => {
       await guest.debugger.sendCommand('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
     });
     try {
+      await drawn(h, STUDIO);
       await sleep(1000);
       const f1 = await holo<number>(h, 'window.__holoml.frames', STUDIO);
       await sleep(2000);
