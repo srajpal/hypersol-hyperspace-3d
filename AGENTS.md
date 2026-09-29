@@ -165,7 +165,11 @@ date given and grow with each milestone; TODO.md has the latest.
   the certificate-error check (Git for Windows includes one). Every
   host except 127.0.0.1 is blocked during the run, and the test windows
   ignore the real mouse, so a resting cursor cannot disturb results. See
-  TODO.md for results.
+  TODO.md for results. The automatic builds run the end-to-end checks
+  in two parts side by side on each system (owner, prompt 122, Q7 a):
+  HYPERSOL_E2E_PART=2 runs HoloML's example sites from milestone 18 on,
+  HYPERSOL_E2E_PART=1 everything else (vitest.e2e.config.ts lists the
+  sites); without it, every check runs.
 - Test windows stay out of the way (owner request, 2026-09-25): they
   open off screen, never take focus, and have no taskbar button, so the
   computer can be used during a run; `pnpm screenshots` works the same

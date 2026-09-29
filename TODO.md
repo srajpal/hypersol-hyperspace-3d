@@ -3757,7 +3757,9 @@ milestone ends (milestone 17's plan, Q5 a).
       request is merged.
 - [ ] 5. The examples section and the start panel: its card, its
       picture, and its row.
-- [ ] 6. The automatic builds (Q7).
+- [ ] 6. The automatic builds (Q7): the end-to-end checks in two parts
+      side by side on each system (ci.yml and vitest.e2e.config.ts,
+      written; the automatic builds of the pull request will show it).
 - [ ] 7. Checks X1 to X12 (tests/e2e/m21.e2e.ts, holoml's tests), run on
       Windows, with `pnpm test:linux`, and in the automatic builds.
 - [ ] 8. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
