@@ -406,11 +406,13 @@ describe('X5 to X9: the aquarium', () => {
     await waitForPage(h, TANK_PAGE, await sceneWait(h, 15_000));
     await ready(h, TANK_PAGE, 60_000);
     const ms = Date.now() - t;
+    // Its shaders compile once it is ready, without holding up the page: the tank is on the screen when they have.
     await painted(h, TANK_PAGE);
-    if (software) console.log(`X5: ready in ${ms} ms; the 5-second budget not checked: drawing in software (${software})`);
+    const drawn = Date.now() - t;
+    if (software) console.log(`X5: ready in ${ms} ms, drawn in ${drawn} ms; the 5-second budget not checked: drawing in software (${software})`);
     else {
-      console.log(`X5: ready in ${ms} ms`);
-      expect(ms).toBeLessThan(5000);
+      console.log(`X5: ready in ${ms} ms, drawn in ${drawn} ms`);
+      expect(drawn).toBeLessThan(5000);
     }
     expect(await holo<unknown[]>(h, 'window.__holoml.problems', TANK_PAGE)).toEqual([]);
     expect(await holo<unknown[]>(h, 'window.__holoml.leftOut()', TANK_PAGE)).toEqual([]);
