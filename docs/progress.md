@@ -230,3 +230,17 @@ each room, lamps to switch on in the evening, and a roof terrace.
 ![Harbour Loft in the evening: the bedroom lit by its bedside lamps](screenshots/m19/56-harbour-loft-evening.png)
 
 ![Harbour Loft's roof terrace: sun loungers on a deck behind glass railings, the marina all round](screenshots/m19/57-harbour-loft-terrace.png)
+
+**Milestone 20: sneaker store** (built; waiting for acceptance).
+HoloML 0.2's fourth part: groups of models that load only while the
+viewer is near, and are let go (their memory released) when the viewer
+walks away, with a lighter stand-in in each model's place until then.
+The sneaker store shows it: one shoe in ten colourways on the walls of a
+hall, each bay's six shoes loaded as you come near, and a shoe's own page
+to turn it over, choose its colour and size, and add it to a cart.
+
+![The sneaker store: the first bay's six blue shoes close by, the hall and its bays going back to the counter](screenshots/m20/58-sneaker-store.png)
+
+![A shoe's page: the Sunset colourway on its turntable, the colour and size choices, and its buttons](screenshots/m20/59-sneaker-store-shoe.png)
+
+![The checkout page: two pairs, their sizes, and the total, with a button that places nothing](screenshots/m20/60-sneaker-store-checkout.png)
