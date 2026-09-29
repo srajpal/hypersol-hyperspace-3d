@@ -354,6 +354,8 @@ describe('X5 to X9: the aquarium', () => {
   let ocean: Ocean;
   let ids: string[];
   const TANK_PAGE = 'aquarium/index.holoml';
+  /** The aquarium's checks: drawn in software (GitHub's machines) they take minutes, not seconds. Not a requirement. */
+  const TANK_TIME = 600_000;
   const MB = 1024 * 1024;
   const EATERS = ['tuna', 'barramundi', 'bream', 'mackerel', 'snapper', 'clownfish', 'butterflyfish'];
 
@@ -453,7 +455,7 @@ describe('X5 to X9: the aquarium', () => {
     const atRail = await walkUntilStopped('W', await sceneWait(h, 8000));
     expect(atRail[2], `stopped at ${atRail.join(', ')}`).toBeGreaterThan(-11.45);
     expect(atRail[2]).toBeLessThan(-11.1);
-  }, 240_000);
+  }, TANK_TIME);
 
   it('X6 feeding: the Feed button (a click, and Enter on its button in the outline) drops the food with its sound; the fish come to it and eat every flake within a minute', async () => {
     await openPage(h, TANK_PAGE);
@@ -483,7 +485,7 @@ describe('X5 to X9: the aquarium', () => {
     await press(h, TANK_PAGE, 'Enter');
     await waitFor('food falling again', () => hud('status'), (s) => s === 'Food is falling: the fish are coming.', 5000);
     await waitFor('the plop again', () => plays('plop'), (n) => n >= 2, 5000);
-  }, 600_000);
+  }, TANK_TIME);
 
   it("X7 a click on a fish, through the glass, and its kind's button in the outline, tell about it on the board", async () => {
     await openPage(h, TANK_PAGE);
@@ -509,7 +511,7 @@ describe('X5 to X9: the aquarium', () => {
     expect(shark[1]).toMatch(/must keep swimming to breathe/);
     // The board's words are in the page, for screen readers and Find in page.
     expect(await inPage<string>(h, 'document.getElementById("holoml-outline").innerText', TANK_PAGE)).toContain('must keep swimming to breathe');
-  }, 240_000);
+  }, TANK_TIME);
 
   it('X8 for everyone: the whole visit from the keyboard; screen readers name the fish, the button, and the places; the text view; with reduced motion everything holds still, and feeding says the fish have eaten', async () => {
     await openPage(h, TANK_PAGE);
@@ -557,7 +559,7 @@ describe('X5 to X9: the aquarium', () => {
     } finally {
       await reducedMotion(h, false);
     }
-  }, 300_000);
+  }, TANK_TIME);
 
   it("X9 efficient: at least 30 frames a second while the fish swim (with a graphics card); no frames in a hidden tab; the page's memory does not grow over two minutes of bubbles and feeding", async () => {
     await openPage(h, TANK_PAGE);
@@ -573,7 +575,10 @@ describe('X5 to X9: the aquarium', () => {
     }
     // A new tab in front: the aquarium's page, now hidden, draws nothing; back to it, and it draws again.
     await pressInShell(h, 'T', ['control']);
-    await sleep(1000);
+    // Once the page is told its tab is behind, a frame it had begun may still finish (slowly, drawn in software); then
+    // nothing.
+    await waitFor('the aquarium behind', () => holo<boolean>(h, 'window.__holoml.behind', TANK_PAGE), (b) => b === true, await sceneWait(h, 5000));
+    await sleep(software ? 3000 : 1000);
     const hidden = await frames();
     await sleep(1500);
     expect(await frames(), 'no frames while hidden').toBe(hidden);
@@ -589,5 +594,5 @@ describe('X5 to X9: the aquarium', () => {
     const after = await pageMemory(h, TANK_PAGE);
     console.log(`X9: heap ${(start.heap / MB).toFixed(1)} MB then ${(after.heap / MB).toFixed(1)} MB; buffers ${(start.buffers / MB).toFixed(1)} MB then ${(after.buffers / MB).toFixed(1)} MB`);
     expect(after.heap + after.buffers, 'the page memory after two minutes').toBeLessThan(start.heap + start.buffers + 4 * MB);
-  }, 300_000);
+  }, TANK_TIME);
 });
