@@ -74,9 +74,19 @@ on the browser's branch `m21-aquarium` (from main after #37):
 ## Milestone 21, planned (2026-09-29, prompt 121)
 
 The owner merged milestones 19 and 20 and asked for the next milestone
-(prompt 121). Its plan is being drafted in TODO.md, "Milestone 21 —
-Aquarium", for the owner's approval; nothing is built yet. The Electron
-check (rule 13) is done, and the browser's branch is `m21-aquarium`.
+(prompt 121). Its plan is in TODO.md, "Milestone 21 — Aquarium", with
+seven questions (Q1 to Q7) and checks X1 to X12, and waits for the
+owner's approval; nothing is built yet. The Electron check (rule 13) is
+done, and the browser's branch is `m21-aquarium` (pushed).
+
+The open question that matters most is Q1, the fish: real-looking CC0
+fish free without an account are scarce (only Khronos's Barramundi
+Fish, without animation), so the plan recommends CC BY 4.0 fish,
+credited, from Babylon.js's asset library and Objaverse (the Allen
+Institute for AI's copy of Sketchfab's free models on Hugging Face),
+shown to the owner before the tank is built around them. Q7: the Linux
+job of the automatic builds took 38 minutes 44 seconds of its 45 (#37),
+so the checks would be split into two jobs.
 
 ## Milestone 20, built (2026-09-29, prompt 120)
 
