@@ -103,11 +103,13 @@ Where the work is:
 - The browser's copy of HoloML (packages/holoml) comes from holoml's
   `aquarium` branch; once holoml's pull request is merged, sync it from
   main (`pnpm holoml:sync main --examples main`), as milestone 20 did.
-- Not yet (see TODO.md for what ran): the pull requests and their
-  automatic builds (the first with two parts on each system: X11), X10
-  (the published aquarium in the built app, by hand) once holoml's pull
-  request is merged and GitHub Pages publishes it, and the owner's
-  acceptance.
+- Pull requests: holoml #19 and the browser's #38, with Auto-fix on
+  for both. Their first builds found the aquarium too slow to draw in
+  software and a Windows line-end slip in holoml's credits test; both
+  are fixed (TODO.md has the details). Not yet: the builds of the fixed
+  branches (X11: each job within its 45 minutes), X10 (the published
+  aquarium in the built app, by hand) once holoml's pull request is
+  merged and GitHub Pages publishes it, and the owner's acceptance.
 
 Worth knowing:
 
