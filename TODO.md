@@ -3794,8 +3794,19 @@ milestone ends (milestone 17's plan, Q5 a).
   turtle, every one CC BY 4.0 or CC0 in Objaverse's record of when it
   was copied. Five use an old material form (specular-glossiness) that
   three.js no longer reads, and one carries colours for Babylon.js's own
-  animation: the site's tools will convert them. Sent to the owner for
-  approval before the tank is built (the plan's check-in).
+  animation: the site's tools convert them. Sent to the owner for
+  approval before the tank is built (the plan's check-in); waiting.
+- The fish's tools (holoml `aquarium`, 90c3790): fish.mjs (the nine,
+  each at a fixed version with its checksum and credit), download.mjs
+  (all nine fetched and matching), and prepare.mjs with glb.mjs,
+  fit.mjs, and rig.mjs. Prepared, the nine are 11.8 MB (48 MB as
+  downloaded), each its length in metres with its head to +z, as drawn
+  in the viewer's own Three.js: the shark and the bream keep their own
+  swims; the barramundi, snapper, mackerel, clownfish, butterflyfish,
+  and tuna get a skeleton and a wave from head to tail (the tuna's only
+  behind its middle, as tuna swim, and straightened, as its file had it
+  turned 17 degrees); the turtle's own skeleton gets flipper strokes.
+  The model files are committed once the owner approves the fish.
 - Task 1 (holoml `aquarium`, ed72075 and 7d17c35): SPEC.md, the
   checker (a size of three numbers more than 0, a range that needs a
   position, at most one water in a scene), a valid sample

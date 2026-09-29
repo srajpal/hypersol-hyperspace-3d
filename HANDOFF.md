@@ -81,6 +81,17 @@ HoloML 0.2 is tagged only after acceptance, when the owner says go
 (task 9). The Electron check (rule 13) is done, and the browser's branch
 is `m21-aquarium` (pushed).
 
+Where the work is: tasks 1 and 2 are done (holoml branch `aquarium`:
+the language, SPEC.md, and samples; the browser's branch: water.ts,
+sound.ts, scene.ts, api.ts, checks X2 to X4 in tests/e2e/m21.e2e.ts,
+passing with a graphics card and drawing in software), and task 6 is
+written (ci.yml and vitest.e2e.config.ts: two parts on each system; the
+pull request's automatic builds will show it). Task 3: nine fish (8
+kinds and a sea turtle) were sent to the owner for approval on
+2026-09-29 as a picture with their credits; their tools are in holoml's
+examples/aquarium/tools (fish.mjs lists them), and the prepared models
+wait, uncommitted, for the approval. Task 4, the tank, starts after it.
+
 The fish (Q1 a): CC BY 4.0 fish, credited, from Babylon.js's asset
 library and Objaverse (the Allen Institute for AI's copy of Sketchfab's
 free models on Hugging Face), with Khronos's Barramundi Fish (CC0); only
@@ -88,6 +99,18 @@ CC BY 4.0 or CC0, never "non-commercial", "no derivatives", or "share
 alike". The Linux job of the automatic builds took 38 minutes 44
 seconds of its 45 (#37), so the end-to-end checks are split into two
 jobs on each system (Q7 a).
+
+Worth knowing:
+
+- Run the aquarium's tools from holoml's root: `node
+  examples/aquarium/tools/download.mjs` (once), then `electron
+  examples/aquarium/tools/prepare.mjs` (Electron is in the browser's
+  apps/browser/node_modules/.bin).
+- The water's haze and moving light are added to every model material
+  as it compiles (water.ts, onBeforeCompile); the viewer goes over the
+  materials again when models load or change (waterDirty in scene.ts).
+- A sound from a place has left and right analysers; the page's hook
+  soundLevels(id) reads what each ear hears, and X3 checks it.
 
 ## Milestone 20, accepted (2026-09-29, prompts 120 to 122)
 
