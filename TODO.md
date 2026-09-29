@@ -3748,14 +3748,14 @@ milestone ends (milestone 17's plan, Q5 a).
 - [x] 2. The browser: water, sounds from a place, and animation speed;
       the copy (`pnpm holoml:sync`, from holoml's `aquarium` branch for
       now).
-- [ ] 3. The fish (Q1): chosen, checked (licence, size, triangles),
+- [x] 3. The fish (Q1): chosen, checked (licence, size, triangles),
       credited, and prepared (a swimming animation for those without
-      one); shown to the owner before task 4.
-- [ ] 4. The aquarium: the tank and the tunnel, rocks, plants, bubbles,
+      one); shown to the owner before task 4 (approved, prompt 123).
+- [x] 4. The aquarium: the tank and the tunnel, rocks, plants, bubbles,
       sounds, the script (swimming, feeding, and the fish's panel), and
       the about page; published with GitHub Pages when holoml's pull
       request is merged.
-- [ ] 5. The examples section and the start panel: its card, its
+- [x] 5. The examples section and the start panel: its card, its
       picture, and its row.
 - [ ] 6. The automatic builds (Q7): the end-to-end checks in two parts
       side by side on each system (ci.yml and vitest.e2e.config.ts,
@@ -3784,6 +3784,53 @@ milestone ends (milestone 17's plan, Q5 a).
 | X11 | The automatic builds | Each job finishes within its limit (Q7) |
 | X12 | Regression | The full run on Windows, `pnpm test:linux`, the unit tests, holoml's tests, and the automatic builds |
 
+### Decisions made while building
+
+- Water: the haze is the length of the view's way through the water's
+  box over its clarity, so what is seen through the water takes its
+  colour in proportion, from inside the water or from outside through
+  glass; labels and panels are left as they are, to be read (holoml
+  7d17c35). The moving light goes on lit materials only, strongest on
+  faces turned up to the surface and fainter with depth; it holds still
+  with reduced motion and is left out drawing in software (the console
+  says so), as shadows are.
+- Sounds from a place: Web Audio's panner (equal power), the loudness
+  falling in a straight line to nothing at the sound's range, full
+  within a metre; the listener is the viewer, facing where the viewer
+  looks. The page's hook soundLevels(id) reads what each ear hears, for
+  X3.
+- The fish (Q1 a): from Babylon.js's asset library, Objaverse's copies
+  of Sketchfab's CC BY models, and Khronos's Barramundi. The site's
+  tools convert five that use an old material form
+  (specular-glossiness), turn each head to +z, size it to its length,
+  and give the six without a swim a skeleton (a chain of bones along the
+  body) and a wave from head to tail (the tuna's only behind its
+  middle); the turtle's own skeleton gets flipper strokes.
+- The tank: 24 m wide, 34 m long, and 6.5 m deep, with a glass tunnel
+  26 m long (2.4 m in radius) along its floor and a gallery at the
+  entrance; its walls, painted in the water's colour behind rockwork,
+  fade into the water. Ledges along the tunnel and a rail at its end
+  keep the walker off the glass.
+- The fish swim by the site's script (Q3 a, aquarium.js): each heads
+  for a wandering goal within its kind's depths at its kind's pace and
+  turns no faster than its kind can; the small kinds keep together in
+  schools; all keep clear of each other, the tunnel, the rocks, and the
+  walls, and are pushed back if they ever cross; a fish's tail beats
+  faster as it swims faster (`animationSpeed`, 0.5 to 2.5 times).
+  Feeding drops 24 flakes from the surface by the feeder; the nearest
+  fish that eat (not the sharks or the turtle) turn to the nearest flake
+  within reach and eat it. A flake that reaches the sand stays there,
+  and the corner of the screen says how many did.
+- A click on the tunnel's glass finds the fish behind it (the script's
+  own ray through the glass, since the glass is the nearest thing), and
+  each kind's first fish is a click action with a sound, so that it is
+  a button in the outline for the keyboard and screen readers.
+- Found while building, in the viewer: new materials' shaders compile
+  without blocking the page, a page behind another tab draws nothing,
+  and the water's moving light samples a picture drawn once
+  (ARCHITECTURE.md). Since a page is now ready before its shaders have
+  compiled, X5 times the aquarium to its first drawn frame.
+
 ### Results so far
 
 - Task 3 (the fish, 2026-09-29): Sketchfab's public search (no account)
@@ -3795,7 +3842,8 @@ milestone ends (milestone 17's plan, Q5 a).
   was copied. Five use an old material form (specular-glossiness) that
   three.js no longer reads, and one carries colours for Babylon.js's own
   animation: the site's tools convert them. Sent to the owner for
-  approval before the tank is built (the plan's check-in); waiting.
+  approval before the tank is built (the plan's check-in), and approved
+  (prompt 123); the models are committed in holoml (2140889).
 - The fish's tools (holoml `aquarium`, 90c3790): fish.mjs (the nine,
   each at a fixed version with its checksum and credit), download.mjs
   (all nine fetched and matching), and prepare.mjs with glb.mjs,
@@ -3828,6 +3876,56 @@ milestone ends (milestone 17's plan, Q5 a).
   check expects). X3 reads the real sound in each ear (Web Audio
   analysers): 4 m to the right, the left ear hears under a fifth of the
   right; 13 m away, past its 12 m range, silence.
+- Task 4 (holoml `aquarium`, b1116c7 to 54f174a): the ocean tunnel, as
+  in the decisions above: 30 fish of nine kinds (2 great white sharks, a
+  flatback sea turtle, 2 tuna, 2 barramundi, 6 gilt-head bream, 8
+  Atlantic mackerel, 4 grey snapper, 3 clownfish, and 2 copperband
+  butterflyfish), rocks, rockwork, a log, shells, and sand from Poly
+  Haven, swaying plants, bubbles from three air stones (18 each), each
+  heard from where it rises, feeding, a board about each kind, the
+  about page with the credits, and index.html for other browsers. The
+  sounds (the water, the bubbles, the food's plop, and a blip) are made
+  by tools/prepare.mjs. Published, it is 16.5 MB in 36 files (the
+  models 15.9 MB). holoml's tests 215 passed (six new: its two pages,
+  and its files and limits, its fish and their swims, its water and
+  Feed button, and its credits).
+- Found while building (the browser, 450e733): the aquarium's 40 or so
+  shader programs compiled one after another on the page's main thread
+  (3.7 s; on the screen after 4.9 s), so new materials now compile
+  without blocking it; a HoloML page in a tab behind another still drew
+  about a frame a second (Chromium counts a tab hidden by style as
+  seen), so the shell now tells the page, and it draws nothing; and the
+  water's light samples a picture drawn once, as computing it in the
+  shader took seconds to compile on Windows for each material. The
+  HoloML checks of milestones 14, 18, and 20 then caught clicks and
+  screen points going astray while shaders compiled (the scene's places
+  were not kept current meanwhile), fixed in the same change; holoml's
+  SPEC.md says a page that cannot be seen need not be drawn (f7650ce).
+- Task 5 (bd3fca3): the copy from holoml's `aquarium`, the card
+  ("Ocean tunnel") and its picture (`EXAMPLES_ONLY=aquarium pnpm
+  screenshots:examples`, taken again after the light changed, 31aed53),
+  and the row; T8 with the new card and row passes.
+- X5 to X9 (tests/e2e/m21.e2e.ts): all pass on Windows with the
+  graphics card. X5: ready in 1636 ms and drawn in 2785 ms.
+- HoloML 0.2 complete (holoml 682b64e): SPEC.md, the README, and the
+  examples no longer call it a draft, and spec.test.ts checks that no
+  sentence about 0.2 does, nor lists anything still to come in it
+  (X1); holoml's tests 217 passed. Its NOTICE credits the fish
+  (58607f1); the copy is synced from it (b90432b).
+- The HoloML checks after the viewer's changes (milestones 14 to 21):
+  102 passed (8 minutes).
+- The full run on Windows (`pnpm test:e2e --reporter=verbose`,
+  2026-09-29, 15.5 minutes): 278 checks, all passed, the clipboard's
+  among them. Logged: X5, the aquarium ready in 2182 ms and drawn in
+  3614 ms; X6, none of the 27 fish that eat within 3 m of the feeder
+  before the food fell, and 3 came to it; X9, 145.5 frames a second
+  while the fish swim, and over two minutes of bubbles and feeding the
+  page's heap 11.6 MB then 11.9 MB, and its ArrayBuffers 10.8 MB both
+  times. The unit tests 273 passed; lint and type check clean.
+- Documents (31aed53): both READMEs, SPEC, ARCHITECTURE, CHANGELOG,
+  docs/privacy.md, THIRD-PARTY, and AGENTS.md's testing list; the
+  screenshots (docs/screenshots/m21: the tunnel, the shark's board, and
+  feeding are 61 to 63) and the README's four pictures again, looked at.
 
 ### Done when
 

@@ -155,14 +155,16 @@ see .github/workflows/ci.yml; macOS not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
 - Toolchain: Node 22.13 or newer; pnpm 12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 268 tests passed on 2026-09-29)
+- Unit: `pnpm test` (Vitest; 273 tests passed on 2026-09-29)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about twelve minutes; 270 checks in the full run on
-  2026-09-29 in milestone 20, 265 passed: the four clipboard checks
-  failed while the Windows clipboard itself failed on this computer, and
-  L9 once, then passed alone; TODO.md has the details). Needs openssl on PATH for
-  the certificate-error check (Git for Windows includes one). Every
+  against it (about sixteen minutes; 278 checks in the full run on
+  2026-09-29 in milestone 21, all passed; TODO.md has the details). On
+  this computer vitest's report leaves out what passing checks log (the
+  load times, frame rates, and memory); `pnpm test:e2e
+  --reporter=verbose` shows it, as the automatic builds do. Needs
+  openssl on PATH for the certificate-error check (Git for Windows
+  includes one). Every
   host except 127.0.0.1 is blocked during the run, and the test windows
   ignore the real mouse, so a resting cursor cannot disturb results. See
   TODO.md for results. The automatic builds run the end-to-end checks

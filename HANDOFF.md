@@ -2,9 +2,9 @@
 
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-09-29 (milestones 1 to 20 accepted, 19 and 20 in
-prompt 122. Milestone 21, the aquarium, is planned and being built
-(prompts 121 and 122): see "Milestone 21, in progress" below. 22 is
-HoloML's documentation (prompt 115). The roadmap is in TODO.md).
+prompt 122. Milestone 21, the aquarium, is built and waiting for the
+owner's acceptance: see "Milestone 21, built" below. 22 is HoloML's
+documentation (prompt 115). The roadmap is in TODO.md).
 
 ## Where things stand
 
@@ -50,8 +50,9 @@ state; this is a summary.
   with loading by area (accepted 2026-09-29, prompt 122; merged in
   holoml, #18, and the browser, #37; published at
   https://srajpal.github.io/holoml/sneaker-store/; in place of Coral
-  Bay, a resort, prompts 101 and 102); 21 Aquarium, where HoloML 0.2 is
-  completed and tagged (being built)); 22 documentation for HoloML to recognised standards (prompt
+  Bay, a resort, prompts 101 and 102); 21 the ocean tunnel, an
+  aquarium, where HoloML 0.2 is completed and then tagged (built;
+  waiting for acceptance)); 22 documentation for HoloML to recognised standards (prompt
   115); 23 privacy and data tools (HTTPS-only, per-site storage,
   bookmark import and export: #24, #26, #27); then installers as 1.0
   (24 for Windows and Linux, 25 for macOS), with mobile later (owner,
@@ -70,47 +71,73 @@ on the browser's branch `m21-aquarium` (from main after #37):
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
 
-## Milestone 21, in progress (2026-09-29, prompts 121 and 122)
+## Milestone 21, built (2026-09-29, prompts 121 to 123)
 
 The plan and its checks (X1 to X12) are in TODO.md, "Milestone 21 —
-Aquarium". The owner answered Q1 to Q7 with the recommendations (prompt
-122), taken with prompt 121's "Next milestone" as approval of the plan
-and its build. Two check-ins remain in the plan: the fish (task 3) are
-shown to the owner before the tank is built around them (task 4), and
-HoloML 0.2 is tagged only after acceptance, when the owner says go
-(task 9). The Electron check (rule 13) is done, and the browser's branch
-is `m21-aquarium` (pushed).
+Aquarium", with the decisions made while building and the results. The
+owner answered Q1 to Q7 with the recommendations (prompt 122), taken
+with prompt 121's "Next milestone" as approval of the plan and its
+build, and approved the nine fish (prompt 123). One check-in remains:
+HoloML 0.2 is tagged v0.2.0, with a short release note, only after the
+owner accepts the milestone and says go (task 9, Q6 a).
 
-Where the work is: tasks 1 and 2 are done (holoml branch `aquarium`:
-the language, SPEC.md, and samples; the browser's branch: water.ts,
-sound.ts, scene.ts, api.ts, checks X2 to X4 in tests/e2e/m21.e2e.ts,
-passing with a graphics card and drawing in software), and task 6 is
-written (ci.yml and vitest.e2e.config.ts: two parts on each system; the
-pull request's automatic builds will show it). Task 3: nine fish (8
-kinds and a sea turtle) were sent to the owner for approval on
-2026-09-29 as a picture with their credits; their tools are in holoml's
-examples/aquarium/tools (fish.mjs lists them), and the prepared models
-wait, uncommitted, for the approval. Task 4, the tank, starts after it.
+Where the work is:
 
-The fish (Q1 a): CC BY 4.0 fish, credited, from Babylon.js's asset
-library and Objaverse (the Allen Institute for AI's copy of Sketchfab's
-free models on Hugging Face), with Khronos's Barramundi Fish (CC0); only
-CC BY 4.0 or CC0, never "non-commercial", "no derivatives", or "share
-alike". The Linux job of the automatic builds took 38 minutes 44
-seconds of its 45 (#37), so the end-to-end checks are split into two
-jobs on each system (Q7 a).
+- Browser: branch `m21-aquarium`, from main after #37: the viewer's
+  water (water.ts), sounds from a place (sound.ts), animation speed
+  (api.ts), shaders compiled without blocking and nothing drawn behind
+  another tab (scene.ts, main.ts, the preload, room.ts, and
+  tab-view.ts), the aquarium's copy (tests/fixtures/holoml/aquarium),
+  its examples card and picture, checks X2 to X9 (tests/e2e/m21.e2e.ts,
+  with the fixture pages water.holoml, caustics.holoml,
+  sound-place.holoml, and animation-speed.holoml), T8 grown, the
+  automatic builds in two parts on each system (ci.yml and
+  vitest.e2e.config.ts, Q7 a), the documents, and the screenshots
+  (docs/screenshots/m21).
+- holoml: branch `aquarium`, from its main after pull request #18: the
+  language's fifth part (SPEC.md, the checker, conformance samples), 0.2
+  complete (spec.test.ts keeps it so), the aquarium
+  (examples/aquarium: its pages, aquarium.js, ocean.js, the models and
+  sounds, and tools/; the download's cache, tools/cache/, is ignored by
+  git), its tests, and the README and NOTICE.
+- The browser's copy of HoloML (packages/holoml) comes from holoml's
+  `aquarium` branch; once holoml's pull request is merged, sync it from
+  main (`pnpm holoml:sync main --examples main`), as milestone 20 did.
+- Not yet (see TODO.md for what ran): the pull requests and their
+  automatic builds (the first with two parts on each system: X11), X10
+  (the published aquarium in the built app, by hand) once holoml's pull
+  request is merged and GitHub Pages publishes it, and the owner's
+  acceptance.
 
 Worth knowing:
 
 - Run the aquarium's tools from holoml's root: `node
   examples/aquarium/tools/download.mjs` (once), then `electron
   examples/aquarium/tools/prepare.mjs` (Electron is in the browser's
-  apps/browser/node_modules/.bin).
+  apps/browser/node_modules/.bin). prepare.mjs rewrites the tank, the
+  bubblers, and the fish in index.holoml, between its prepare.mjs
+  comments, from ocean.js.
 - The water's haze and moving light are added to every model material
   as it compiles (water.ts, onBeforeCompile); the viewer goes over the
-  materials again when models load or change (waterDirty in scene.ts).
+  materials again when models load or change (waterDirty in scene.ts),
+  and asks for their shaders to be compiled then (shadersWanted): the
+  last frame stays on the screen until they are, and a page's hooks say
+  `compiling`. Checks that click in a scene wait until it is drawn and
+  not compiling (painted() in m21.e2e.ts).
+- A tab hidden behind another is hidden by style, which Chromium still
+  counts as seen; the room tells the tab view (setShown, setInFront),
+  which sends a HoloML page "behind" or "in-front". Behind, the viewer
+  asks for no frames for what moves (requestFrame's inFrame guard);
+  the page's hook says `behind`.
 - A sound from a place has left and right analysers; the page's hook
   soundLevels(id) reads what each ear hears, and X3 checks it.
+- In vitest 5 the default report on this computer leaves out what
+  passing checks log (the load times and frame rates); add
+  `--reporter=verbose` to see them. The automatic builds show them.
+- The fish's placements for the pictures are shared by the example's
+  picture and the screenshots (tests/screenshots/aquarium.ts); they
+  hold only with reduced motion, as the script moves the fish every
+  frame otherwise.
 
 ## Milestone 20, accepted (2026-09-29, prompts 120 to 122)
 
