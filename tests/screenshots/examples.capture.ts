@@ -14,16 +14,31 @@ import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { it } from 'vitest';
 import { startFixtureServer } from '../e2e/fixture-server';
-import { inPage, launch, shellCall, sleep, waitFor, waitForPage } from '../e2e/harness';
+import { inPage, launch, shellCall, sleep, waitFor, waitForPage, type Harness } from '../e2e/harness';
 
 const OUT = fileURLToPath(new URL('../../apps/browser/src/renderer/examples/', import.meta.url));
+
+/** Places the aquarium's fish as they might pass the tunnel, for its picture. */
+const AQUARIUM_FISH = `() => {
+  const put = (id, p, yaw) => { const t = holoml.find(id); if (t) { t.position = p; t.rotation = [0, yaw, 0]; } };
+  put('shark-1', [-1.4, 3.8, -1.2], 75);
+  put('shark-2', [4.5, 4.7, -10], -110);
+  put('turtle-1', [2.7, 3.1, -3.2], -135);
+  put('tuna-1', [1.0, 5.0, -6.8], -70);
+  put('tuna-2', [2.1, 5.4, -7.6], -65);
+  put('barramundi-1', [-4.4, 1.2, -3.5], 120);
+  [[-3.3, 1.5, 0.6], [-3.7, 1.8, 0.2], [-3.1, 1.2, -0.2], [-3.9, 1.3, 1.0], [-3.5, 2.0, 1.2], [-4.0, 1.6, -0.5]].forEach((p, i) => put('bream-' + (i + 1), p, 150 + i * 5));
+  [[0.2, 5.4, -3.2], [0.6, 5.2, -3.6], [1.0, 5.5, -3.0], [-0.2, 5.1, -3.8], [0.4, 5.7, -4.1], [0.9, 5.0, -4.4], [-0.5, 5.5, -2.9], [1.3, 5.3, -3.9]].forEach((p, i) => put('mackerel-' + (i + 1), p, 100 + i * 3));
+  [[-2.9, 0.6, 1.9], [-3.1, 0.7, 2.3]].forEach((p, i) => put('clownfish-' + (i + 1), p, 80 + i * 20));
+  put('butterflyfish-1', [2.9, 0.9, 1.2], -100);
+}`;
 
 /**
  * Each example, the page to show, and what to do before the picture: page
  * code to run in turn, each followed by a pause, and a condition to wait
  * for.
  */
-const SHOTS: { id: string; page: string; steps?: [string, number][]; until?: string }[] = [
+const SHOTS: { id: string; page: string; steps?: [string, number][]; until?: string; still?: boolean }[] = [
   { id: 'showroom', page: 'showroom/index.holoml' },
   {
     // Late afternoon, the whole island from above one corner: the viewer
@@ -65,6 +80,19 @@ const SHOTS: { id: string; page: string; steps?: [string, number][]; until?: str
       ['holoml.viewer.lookAt([-4.6, 1.4, -7]), true', 0],
     ],
   },
+  {
+    // In the tunnel, looking up and ahead, with the fish placed as they
+    // might pass (reduced motion holds them where the page's script is
+    // told they are): a shark over the glass, the turtle, tuna, and schools.
+    id: 'aquarium',
+    page: 'aquarium/index.holoml#tunnel',
+    still: true,
+    steps: [
+      [`(${AQUARIUM_FISH})(), true`, 300],
+      ['holoml.viewer.position = [0.4, 1.3, 3.5], true', 300],
+      ['holoml.viewer.lookAt([-1.5, 3.2, -4]), true', 1500],
+    ],
+  },
 ];
 
 /** Stone blocks from the ground up to a height, at one column. */
@@ -81,8 +109,9 @@ it('captures the pictures of the HoloML examples', async () => {
     await waitForPage(h, 'link-a.html');
     const only = process.env['EXAMPLES_ONLY']?.split(',');
     for (const shot of SHOTS.filter((s) => !only || only.includes(s.id))) {
+      await reducedMotion(h, shot.still === true);
       await shellCall(h, 'showUrl', server.url(`holoml/${shot.page}`));
-      const part = shot.page.split('?')[0]!;
+      const part = shot.page.split(/[?#]/)[0]!;
       await waitForPage(h, part);
       await waitFor(`${shot.id} ready`, () => inPage<boolean>(h, 'window.__holoml?.ready === true', part), (r) => r, 30_000);
       // A walker with gravity falls to the ground first (one without stays where it starts); then the view is set.
@@ -109,3 +138,17 @@ it('captures the pictures of the HoloML examples', async () => {
     await server.close();
   }
 }, 180_000);
+
+/** Emulates (or stops emulating) reduced motion in the tab's page; it lasts across the tab's navigations while on. */
+async function reducedMotion(h: Harness, on: boolean): Promise<void> {
+  await h.app.evaluate(async ({ webContents }, on) => {
+    const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview').pop()!;
+    if (on) {
+      if (!guest.debugger.isAttached()) guest.debugger.attach('1.3');
+      await guest.debugger.sendCommand('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+    } else if (guest.debugger.isAttached()) {
+      await guest.debugger.sendCommand('Emulation.setEmulatedMedia', { features: [] });
+      guest.debugger.detach();
+    }
+  }, on);
+}

@@ -1,15 +1,15 @@
 {
   "repository": "https://github.com/srajpal/holoml",
   "tag": "aquarium",
-  "commit": "7d17c35afe2bb557dc45549bc6606bfd6c379f53",
+  "commit": "f7650ce6036133f7ec2ab3a1a413c31be1e445be",
   "files": {
     "src/parser.ts": "bcbc0926e1ebf6b9c3afaacaeeb9bec23f27e1fa330a135516dd77b12a5308c2",
     "src/rules.ts": "15adf805a9ed20f71abd6ac88992bc18c887b851e0e056898b9b67729d65ee6d",
     "src/schema.ts": "35392942fc4c8ae0a4e925ef30eeb7ae70f52c563e07da6bc5f15be71d17f716"
   },
   "examples": {
-    "ref": "main",
-    "commit": "a6c88d9bec58b250a7b1a3c9d0d49b4f8cf466b0",
+    "ref": "aquarium",
+    "commit": "f7650ce6036133f7ec2ab3a1a413c31be1e445be",
     "files": {
       "showroom/README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
       "showroom/about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",
@@ -244,7 +244,43 @@
       "sneaker-store/shoe.holoml": "5d591a7d184db55677c7eccc40c60f529c6fa2d3afdb438c4a8f0e70e65def1b",
       "sneaker-store/shoe.js": "891018f189c1118e9e310c7a7dd5d31b0ca3266dbb30e5d221b335ea73873145",
       "sneaker-store/sounds/add.wav": "5d2fdea36ddf2711ef91a0f94cb6efa8c2c954516a35fad7cae16d85596171b8",
-      "sneaker-store/store.js": "1289915391e96158de908206936b22aa76827cc30c51b1fd9fcd0f189de46849"
+      "sneaker-store/store.js": "1289915391e96158de908206936b22aa76827cc30c51b1fd9fcd0f189de46849",
+      "aquarium/README.md": "e1a9a83ab975d830728f2c4b7af3ea09c7c43ef8cb6bda553ad654018a48026d",
+      "aquarium/about.holoml": "d12441f7d745b8fa0d1880e41eb52d8d982c3d0c71101b8af19fdff874f103ae",
+      "aquarium/aquarium.js": "b0c9eb9adeadaba8110b33fece8d0e5da2e32c259223d6f9ebcd12354542fb66",
+      "aquarium/index.holoml": "e035822a2d0e45bb19c9efbd4c58832027363c995e2248b1ba440882b7db2e37",
+      "aquarium/index.html": "50a7add60d406eb457753b7d1d5e9367592282d24f253d6078bbb4603767e207",
+      "aquarium/models/CREDITS.md": "7b6cd2a3c0e66c1f4d5dee0188249499dc28195223962005d33ca95579172380",
+      "aquarium/models/airstone.glb": "b4f9bfd608036e54b323af4bc29b0575e2c6be2a9f909fec14e4c837569aa7dc",
+      "aquarium/models/barramundi.glb": "a6ed40b754a0283b3813fcc2bd77fe5a0e5647efbb68f497968db20e4aefc603",
+      "aquarium/models/boulder.glb": "a47f60e87e0bb74eea71ccdcd2c792883353bae4cd9f1dd08812fdb14cd5db9d",
+      "aquarium/models/bream.glb": "f18a19b70c888a7ad9361ec81d7847b53b7ca88a6b70699326fe2e46945e94db",
+      "aquarium/models/bubble.glb": "b341fa69ece47ce1770ebeb9247cb4c4a449a40e828a7b708e2503aae65cacf9",
+      "aquarium/models/butterflyfish.glb": "6a75fb7a140a21e961d0d8d660b19b855d3c42e7e87cf6edf1718b143b582de8",
+      "aquarium/models/clownfish.glb": "fbf8644bd1cc9b8a96b0d85819a363aeecf707bdeb40df67595dc7a19fe5601e",
+      "aquarium/models/flake.glb": "0cde6f8a1127a20b5633c084dd8edb8d691d37795de408a81b8d7e5eb4802006",
+      "aquarium/models/gallery.glb": "f995370ec405b1cebdf51c80dede18331779457f8362a4d83c3268c1882713d6",
+      "aquarium/models/kelp.glb": "8fe946c3aa33cc3f46b0620abe15b18a73347053b6c5a5ea5bd2d790e684f288",
+      "aquarium/models/ledge.glb": "b799fbc317baaa3b3eeb690b1745b47710d0a5d7cd8a190e3e41f17be3a408aa",
+      "aquarium/models/log.glb": "3ca5601c706d2996e01222934565bb083d8ffe560ef8c6988263a2eaf8878fec",
+      "aquarium/models/mackerel.glb": "1d79168e74c57df5cc612af8fddde86f0ae8b9abeeb708fe6e45f25face30960",
+      "aquarium/models/rail.glb": "53d1e1c235466d78b31d26be8e5b4da548a7c733a15a12df863ff8cfbe31e6cd",
+      "aquarium/models/sand.glb": "f45fe865c641ef68c50d02735b2fc41dd557331b67bc0a7304c6a6277d94f70a",
+      "aquarium/models/seagrass-a.glb": "41e52ebdcbcf75de32520d58d023ede55960af8cb5d607506ffb23480aea3f00",
+      "aquarium/models/seagrass-b.glb": "75b2365abe240e1a38333e588626d5a9e4e5455097dd9ff7cca8d6298ab59a81",
+      "aquarium/models/shark.glb": "cb9e97d26e7c1aa49952e7433187850a47e238d3afa94e3fc0eb4d1912b44a2c",
+      "aquarium/models/shell.glb": "a0d329bbf9de792ac8da6bbccae849b7e551a9331ba258c5171cc3ba8a81559e",
+      "aquarium/models/snapper.glb": "3eed6719d4833ac078c6ed0cebd935ca47f338347a48abac8cdc7759c027e33a",
+      "aquarium/models/tank.glb": "b88c789d3fd2bdc3b53b3fa8df302e78d90b50f0e0d977ddba6dfd9efb2dbc23",
+      "aquarium/models/tuna.glb": "0fc0a34af6dc3d7368aae57aef0cbc767cd33b3fa243b010208910e83b5ec30e",
+      "aquarium/models/tunnel.glb": "23e6c0bdf3f55e6264cad612e2be679e0ae623ebdb701cc774e293ed10976a65",
+      "aquarium/models/turtle.glb": "6b5d6ff5f4fe113ef5839fd783d03ec001f3ed4eb213ea30208317b0acdbaf82",
+      "aquarium/models/wall.glb": "8ff9e2d6d9ba0107f4b9d192c7c26164b14bad4e64324d2113d739f20e09b425",
+      "aquarium/ocean.js": "2b7e6c483cde1a578f0a4aa814c77fd28f96a1fae56863e4bb604a4e375e1441",
+      "aquarium/sounds/blip.wav": "59169a1d17672d273be23a368a34768a8655d6eb3132c88ff2b4554088fada53",
+      "aquarium/sounds/bubbles.wav": "3e74573f1977818e2dc93d715b87f3b9dfd160c79096a96d08f88bba5c306a43",
+      "aquarium/sounds/plop.wav": "05c33874a08d68be24bebc62e43571d7e46fed09cc2ded06058ab1d4fdc609c3",
+      "aquarium/sounds/water.wav": "d30720d3b4e33b0e9d61ccd79865020dd0bbbfe7c9d883a7f412469e6b2b8c3b"
     }
   }
 }

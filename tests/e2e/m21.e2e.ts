@@ -1,12 +1,13 @@
 /**
  * Milestone 21 end-to-end checks (TODO.md): HoloML 0.2's fifth part and
  * the aquarium. X2 to X4: water, sounds from a place, and a model's
- * animation speed. X1 (the language) is the holoml repository's tests;
- * X10 (the published site) is checked by hand.
+ * animation speed. X5 to X9: the aquarium (a copy in
+ * tests/fixtures/holoml/aquarium). X1 (the language) is the holoml
+ * repository's tests; X10 (the published site) is checked by hand.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
-import { clickAt, inPage, launch, project, sceneWait, shellCall, sleep, softwareRenderer, waitFor, waitForPage, type Harness, type Point } from './harness';
+import { clickAt, inPage, launch, pressInPage, pressInShell, project, sceneWait, shellCall, sleep, softwareRenderer, waitFor, waitForPage, type Harness, type Point } from './harness';
 
 let server: FixtureServer;
 
@@ -35,11 +36,17 @@ async function ready(h: Harness, page: string, timeoutMs = 20_000): Promise<void
   await waitFor(`${page} ready`, () => holo<boolean>(h, 'window.__holoml.ready', page), (r) => r === true, timeoutMs);
 }
 
-/** Opens a page in the harness's tab and waits until it is ready. */
+/** Opens a page in the harness's tab and waits until it is ready and drawn (its shaders compile after it is ready). */
 async function openPage(h: Harness, page: string): Promise<void> {
   await shellCall(h, 'showUrl', url(page));
   await waitForPage(h, page, await sceneWait(h, 15_000));
   await ready(h, page, await sceneWait(h, 20_000));
+  await painted(h, page);
+}
+
+/** Waits until the scene is drawn with every shader it needs. */
+async function painted(h: Harness, page: string): Promise<void> {
+  await waitFor(`${page} drawn`, () => holo<boolean>(h, 'window.__holoml.frames > 0 && !window.__holoml.compiling', page), (v) => v === true, await sceneWait(h, 20_000));
 }
 
 const point = async (h: Harness, page: string, id: string) => (await holo<Point | null>(h, `window.__holoml.point(${JSON.stringify(id)})`, page))!;
@@ -275,4 +282,310 @@ describe('X2 to X4: water, sounds from a place, and animation speed', () => {
     expect(held).toBeLessThan(0.001);
     expect(still).toBeGreaterThan(0.3);
   });
+});
+
+// ---- X5 to X9: the aquarium ------------------------------------------------------------------
+
+/** Sends a key down or up to the page. */
+function key(h: Harness, page: string, keyCode: string, type: 'keyDown' | 'keyUp'): Promise<void> {
+  return h.app.evaluate(
+    ({ webContents }, { page, keyCode, type }) => {
+      const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes(page)).pop();
+      guest?.sendInputEvent({ type, keyCode });
+    },
+    { page, keyCode, type },
+  );
+}
+
+/** Presses Enter or Space in the page as a keyboard does: down, the character, and up. */
+function press(h: Harness, page: string, which: 'Enter' | 'Space' | 'F'): Promise<void> {
+  return h.app.evaluate(
+    ({ webContents }, { page, which }) => {
+      const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes(page)).pop()!;
+      guest.sendInputEvent({ type: 'keyDown', keyCode: which });
+      guest.sendInputEvent({ type: 'char', keyCode: which === 'Enter' ? '\r' : which === 'Space' ? ' ' : 'f' });
+      guest.sendInputEvent({ type: 'keyUp', keyCode: which });
+    },
+    { page, which },
+  );
+}
+
+/** The accessibility tree's named nodes, as screen readers get them. */
+function axNodes(h: Harness, page: string): Promise<{ role: string; name: string }[]> {
+  return h.app.evaluate(async ({ webContents }, page) => {
+    const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes(page)).pop()!;
+    const attached = guest.debugger.isAttached();
+    if (!attached) guest.debugger.attach('1.3');
+    try {
+      const r = (await guest.debugger.sendCommand('Accessibility.getFullAXTree')) as { nodes: { ignored: boolean; role?: { value: string }; name?: { value: string } }[] };
+      return r.nodes.filter((n) => !n.ignored && n.name?.value).map((n) => ({ role: n.role?.value ?? '', name: n.name!.value }));
+    } finally {
+      if (!attached) guest.debugger.detach();
+    }
+  }, page);
+}
+
+/** The page's memory after its garbage is collected: its JavaScript heap and its ArrayBuffers, in bytes. */
+function pageMemory(h: Harness, page: string): Promise<{ heap: number; buffers: number }> {
+  return h.app.evaluate(async ({ webContents }, page) => {
+    const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes(page)).pop()!;
+    const attached = guest.debugger.isAttached();
+    if (!attached) guest.debugger.attach('1.3');
+    try {
+      await guest.debugger.sendCommand('HeapProfiler.collectGarbage');
+      const use = (await guest.debugger.sendCommand('Runtime.getHeapUsage')) as { usedSize: number; backingStorageSize?: number };
+      return { heap: use.usedSize, buffers: use.backingStorageSize ?? 0 };
+    } finally {
+      if (!attached) guest.debugger.detach();
+    }
+  }, page);
+}
+
+interface Ocean {
+  TANK: { min: Vec; max: Vec };
+  TUNNEL: { radius: number; from: number; to: number };
+  FEEDER: Vec;
+  ROCKS: { at: Vec; scale: number }[];
+  KINDS: { kind: string; name: string; about: string; count: number; school: boolean }[];
+}
+
+describe('X5 to X9: the aquarium', () => {
+  let h: Harness;
+  let ocean: Ocean;
+  let ids: string[];
+  const TANK_PAGE = 'aquarium/index.holoml';
+  const MB = 1024 * 1024;
+  const EATERS = ['tuna', 'barramundi', 'bream', 'mackerel', 'snapper', 'clownfish', 'butterflyfish'];
+
+  const frames = () => holo<number>(h, 'window.__holoml.frames', TANK_PAGE);
+  const feet = async () => (await holo<{ feet: Vec }>(h, 'window.__holoml.walker()', TANK_PAGE)).feet;
+  const stand = (at: Vec, look: Vec) => inPage(h, `(holoml.viewer.position = ${JSON.stringify(at)}, holoml.viewer.lookAt(${JSON.stringify(look)}), true)`, TANK_PAGE);
+  const hud = async (id: string) => (await holo<{ id: string | null; text: string }[]>(h, 'window.__holoml.huds()', TANK_PAGE)).find((x) => x.id === id)?.text ?? '';
+  const board = async () => (await holo<{ id: string | null; paragraphs: string[] }[]>(h, 'window.__holoml.panels()', TANK_PAGE)).find((p) => p.id === 'board')!.paragraphs;
+  const places = () => holo<{ current: string | null }>(h, 'window.__holoml.places()', TANK_PAGE);
+  const plays = async (id: string) => (await holo<{ id: string | null; plays: number }[]>(h, 'window.__holoml.sounds()', TANK_PAGE)).find((s) => s.id === id)!.plays;
+  /** Every fish's place, by its id. */
+  const fishAt = async () => Object.fromEntries(await inPage<[string, Vec][]>(h, `${JSON.stringify(ids)}.map((id) => [id, holoml.find(id).position])`, TANK_PAGE)) as Record<string, Vec>;
+  const focusedText = () => inPage<string>(h, 'document.activeElement?.textContent ?? ""', TANK_PAGE);
+  /** Tab through the page's outline until an item with this text has the keyboard. */
+  async function tabTo(text: string): Promise<void> {
+    for (let i = 0; i < 90 && (await focusedText()) !== text; i++) await pressInPage(h, 'Tab', [], TANK_PAGE);
+    expect(await focusedText()).toBe(text);
+  }
+  /** Walks with a key held until the walker stops (the same place while the page drew new frames) or the time is up. */
+  async function walkUntilStopped(keyCode: string, maxMs: number): Promise<Vec> {
+    await key(h, TANK_PAGE, keyCode, 'keyDown');
+    try {
+      const end = Date.now() + maxMs;
+      let [last, lastFrames, still] = [await feet(), await frames(), 0];
+      while (Date.now() < end && still < 3) {
+        await sleep(250);
+        const [now, drawnNow] = [await feet(), await frames()];
+        if (drawnNow < lastFrames + 2) continue;
+        still = now.every((v, i) => Math.abs(v - last[i]!) <= 0.002) ? still + 1 : 0;
+        [last, lastFrames] = [now, drawnNow];
+      }
+      return last;
+    } finally {
+      await key(h, TANK_PAGE, keyCode, 'keyUp');
+    }
+  }
+
+  beforeAll(async () => {
+    ocean = (await import(new URL('../fixtures/holoml/aquarium/ocean.js', import.meta.url).href)) as Ocean;
+    ids = ocean.KINDS.flatMap((k) => Array.from({ length: k.count }, (_, i) => `${k.kind}-${i + 1}`));
+    h = await launch(server.url('link-a.html'));
+    await waitForPage(h, 'link-a.html');
+  });
+  afterAll(async () => h?.close());
+
+  it('X5 the aquarium: ready within 5 s with everything loaded and no problems; the fish swim, in the water and clear of the tunnel and the rocks; the ledges and the rail stop the walker', async () => {
+    const software = await softwareRenderer(h);
+    const t = Date.now();
+    await shellCall(h, 'showUrl', url(TANK_PAGE));
+    await waitForPage(h, TANK_PAGE, await sceneWait(h, 15_000));
+    await ready(h, TANK_PAGE, 60_000);
+    const ms = Date.now() - t;
+    await painted(h, TANK_PAGE);
+    if (software) console.log(`X5: ready in ${ms} ms; the 5-second budget not checked: drawing in software (${software})`);
+    else {
+      console.log(`X5: ready in ${ms} ms`);
+      expect(ms).toBeLessThan(5000);
+    }
+    expect(await holo<unknown[]>(h, 'window.__holoml.problems', TANK_PAGE)).toEqual([]);
+    expect(await holo<unknown[]>(h, 'window.__holoml.leftOut()', TANK_PAGE)).toEqual([]);
+    const models = await holo<{ src: string; state: string }[]>(h, 'window.__holoml.models()', TANK_PAGE);
+    expect(models.filter((m) => m.state !== 'loaded')).toEqual([]);
+    expect(ids).toHaveLength(30);
+    for (const k of ocean.KINDS) expect(models.filter((m) => m.src === `models/${k.kind}.glb`), k.kind).toHaveLength(k.count);
+
+    // The fish swim: every one moves, and every place it is seen at is in the water, outside the tunnel's glass, and outside the rocks.
+    const { TANK, TUNNEL, ROCKS } = ocean;
+    const first = await fishAt();
+    const end = Date.now() + (await sceneWait(h, 8000));
+    let samples = 0;
+    let last = first;
+    while (Date.now() < end) {
+      await sleep(400);
+      last = await fishAt();
+      samples++;
+      for (const [id, p] of Object.entries(last)) {
+        for (let a = 0; a < 3; a++) expect(p[a], `${id} in the water (${p.join(', ')})`).toBeGreaterThanOrEqual(TANK.min[a]!);
+        for (let a = 0; a < 3; a++) expect(p[a], `${id} in the water (${p.join(', ')})`).toBeLessThanOrEqual(TANK.max[a]!);
+        if (p[2] < TUNNEL.from && p[2] > TUNNEL.to) expect(Math.hypot(p[0], Math.max(0, p[1])), `${id} outside the tunnel (${p.join(', ')})`).toBeGreaterThan(TUNNEL.radius);
+        for (const r of ROCKS) {
+          const centre: Vec = [r.at[0], r.at[1] + 0.75 * r.scale, r.at[2]];
+          expect(Math.hypot(p[0] - centre[0], p[1] - centre[1], p[2] - centre[2]), `${id} outside the rock at ${r.at.join(', ')}`).toBeGreaterThan(0.95 * r.scale);
+        }
+      }
+    }
+    expect(samples).toBeGreaterThan(5);
+    for (const id of ids) expect(Math.hypot(...last[id]!.map((v, i) => v - first[id]![i]!) as Vec), `${id} swam`).toBeGreaterThan(0.05);
+
+    // The ledges keep the walker off the glass (the right one's inside face at x = 1.775; the walker is 0.6 m wide), and the rail across the end.
+    await stand([0, 1.6, 2], [5, 1.6, 2]);
+    const atLedge = await walkUntilStopped('W', await sceneWait(h, 8000));
+    expect(atLedge[0], `stopped at ${atLedge.join(', ')}`).toBeGreaterThan(1.3);
+    expect(atLedge[0]).toBeLessThan(1.6);
+    await stand([0, 1.6, -9], [0, 1.6, -15]);
+    const atRail = await walkUntilStopped('W', await sceneWait(h, 8000));
+    expect(atRail[2], `stopped at ${atRail.join(', ')}`).toBeGreaterThan(-11.45);
+    expect(atRail[2]).toBeLessThan(-11.1);
+  }, 240_000);
+
+  it('X6 feeding: the Feed button (a click, and Enter on its button in the outline) drops the food with its sound; the fish come to it and eat every flake within a minute', async () => {
+    await openPage(h, TANK_PAGE);
+    const { FEEDER } = ocean;
+    const eaters = ids.filter((id) => EATERS.includes(id.split('-')[0]!));
+    /** How many of the fish that eat are within 3 m of where the food falls (across the ground). */
+    const nearFood = async () => {
+      const at = await fishAt();
+      return eaters.filter((id) => Math.hypot(at[id]![0] - FEEDER[0], at[id]![2] - FEEDER[2]) < 3).length;
+    };
+    await stand([-0.6, 1.6, 1.5], [1.74, 1.2, 0.2]);
+    expect(await hud('status')).toBe('');
+    const before = await nearFood();
+    // A click on the button (the first also lets sounds play): its plop, and food falling.
+    const feedAt = (await waitFor('the Feed button in view', () => holo<Point | null>(h, 'window.__holoml.point("feed")', TANK_PAGE), (p) => p !== null))!;
+    await clickAt(h, await project(h, feedAt.x, feedAt.y));
+    await waitFor('food falling', () => hud('status'), (s) => s === 'Food is falling: the fish are coming.', 5000);
+    await stand([-0.6, 1.6, 1.5], [3.6, 3, 0]);
+    await waitFor('the plop', () => plays('plop'), (n) => n >= 1, 5000);
+    // The fish come to it, and eat every flake.
+    const most = await waitFor('fish at the food', nearFood, (n) => n >= before + 3, await sceneWait(h, 20_000));
+    console.log(`X6: ${before} of ${eaters.length} fish that eat were within 3 m of the feeder before; ${most} came`);
+    const done = await waitFor('the food eaten', () => hud('status'), (s) => s.startsWith('The fish have eaten'), await sceneWait(h, 60_000));
+    expect(done).toBe('The fish have eaten.');
+    // Enter on the button in the outline does the same.
+    await tabTo('Feed the fish');
+    await press(h, TANK_PAGE, 'Enter');
+    await waitFor('food falling again', () => hud('status'), (s) => s === 'Food is falling: the fish are coming.', 5000);
+    await waitFor('the plop again', () => plays('plop'), (n) => n >= 2, 5000);
+  }, 600_000);
+
+  it("X7 a click on a fish, through the glass, and its kind's button in the outline, tell about it on the board", async () => {
+    await openPage(h, TANK_PAGE);
+    expect((await board())[0]).toBe('The fish of the tunnel');
+    // The turtle, held still (reduced motion) above the tunnel, clicked through the glass from inside.
+    await reducedMotion(h, true);
+    try {
+      await openPage(h, TANK_PAGE);
+      await inPage(h, `(holoml.find('turtle-1').position = [0.3, 3.6, -1.5], true)`, TANK_PAGE);
+      await stand([0, 1.6, 1.5], [0.3, 3.6, -1.5]);
+      await sleep(300);
+      await clickAt(h, await centre(h, TANK_PAGE));
+      const told = await waitFor('the turtle on the board', board, (b) => b[0] === 'Flatback sea turtle', 5000);
+      expect(told[1]).toMatch(/northern Australia/);
+    } finally {
+      await reducedMotion(h, false);
+    }
+    // The shark's button in the outline, from the keyboard.
+    await openPage(h, TANK_PAGE);
+    await tabTo('About the great white shark');
+    await press(h, TANK_PAGE, 'Enter');
+    const shark = await waitFor('the shark on the board', board, (b) => b[0] === 'Great white shark', 5000);
+    expect(shark[1]).toMatch(/must keep swimming to breathe/);
+    // The board's words are in the page, for screen readers and Find in page.
+    expect(await inPage<string>(h, 'document.getElementById("holoml-outline").innerText', TANK_PAGE)).toContain('must keep swimming to breathe');
+  }, 240_000);
+
+  it('X8 for everyone: the whole visit from the keyboard; screen readers name the fish, the button, and the places; the text view; with reduced motion everything holds still, and feeding says the fish have eaten', async () => {
+    await openPage(h, TANK_PAGE);
+    const tree = await axNodes(h, TANK_PAGE);
+    for (const k of ocean.KINDS) expect(tree.some((n) => n.role === 'button' && n.name === `About ${k.about}`), k.kind).toBe(true);
+    expect(tree.some((n) => n.role === 'button' && n.name === 'Feed the fish')).toBe(true);
+    for (const place of ['The entrance', 'In the tunnel', 'The feeding place', 'The end of the tunnel']) expect(tree.some((n) => n.role === 'button' && n.name === `Go to: ${place}`), place).toBe(true);
+    expect(tree.some((n) => n.role === 'link' && n.name === 'About the aquarium')).toBe(true);
+    // The keyboard: to the feeding place, and a fish's board.
+    await tabTo('Go to: The feeding place');
+    await press(h, TANK_PAGE, 'Enter');
+    await waitFor('at the feeding place', places, (p) => p.current === 'feeding');
+    await tabTo('About the tuna');
+    await press(h, TANK_PAGE, 'Enter');
+    await waitFor('the tuna on the board', board, (b) => b[0] === 'Tuna', 5000);
+
+    // The text view reads the welcome, the board, and the buttons.
+    await pressInPage(h, 'V', ['control', 'shift'], TANK_PAGE);
+    await waitFor('the text view', () => holo<boolean>(h, 'window.__holoml.textView', TANK_PAGE), (v) => v === true);
+    const text = await inPage<string>(h, 'document.body.innerText', TANK_PAGE);
+    for (const words of ['The ocean tunnel', 'About the great white shark', 'Feed the fish', 'Built for speed']) expect(text).toContain(words);
+    await pressInPage(h, 'V', ['control', 'shift'], TANK_PAGE);
+    await waitFor('3D again', () => holo<boolean>(h, 'window.__holoml.textView', TANK_PAGE), (v) => v === false);
+
+    // Reduced motion: the fish, the bubbles, and the light hold still, and an idle page draws nothing; feeding (F, and Enter on the button) says the fish have eaten.
+    await reducedMotion(h, true);
+    try {
+      await openPage(h, TANK_PAGE);
+      const water = () => holo<{ causticsTime: number }>(h, 'window.__holoml.water()', TANK_PAGE);
+      const [fishBefore, lightBefore] = [await fishAt(), (await water()).causticsTime];
+      await sleep(1500);
+      const f0 = await frames();
+      await sleep(2000);
+      expect(await frames(), 'no frames while idle').toBe(f0);
+      expect(await fishAt()).toEqual(fishBefore);
+      expect((await water()).causticsTime).toBe(lightBefore);
+      await press(h, TANK_PAGE, 'F');
+      await waitFor('food down', () => hud('status'), (s) => s === 'Food is down.', 5000);
+      await waitFor('eaten', () => hud('status'), (s) => s === 'The fish have eaten.', 5000);
+      await inPage(h, `(holoml.find('status').text = '', true)`, TANK_PAGE);
+      await tabTo('Feed the fish');
+      await press(h, TANK_PAGE, 'Enter');
+      await waitFor('eaten again', () => hud('status'), (s) => s === 'The fish have eaten.', 5000);
+      expect(await fishAt()).toEqual(fishBefore);
+    } finally {
+      await reducedMotion(h, false);
+    }
+  }, 300_000);
+
+  it("X9 efficient: at least 30 frames a second while the fish swim (with a graphics card); no frames in a hidden tab; the page's memory does not grow over two minutes of bubbles and feeding", async () => {
+    await openPage(h, TANK_PAGE);
+    const software = await softwareRenderer(h);
+    await sleep(3000);
+    const f0 = await frames();
+    await sleep(2000);
+    const rate = ((await frames()) - f0) / 2;
+    if (software) console.log(`X9: ${rate.toFixed(1)} frames a second; the budget not checked: drawing in software (${software})`);
+    else {
+      console.log(`X9: ${rate.toFixed(1)} frames a second`);
+      expect(rate).toBeGreaterThanOrEqual(30);
+    }
+    // A new tab in front: the aquarium's page, now hidden, draws nothing; back to it, and it draws again.
+    await pressInShell(h, 'T', ['control']);
+    await sleep(1000);
+    const hidden = await frames();
+    await sleep(1500);
+    expect(await frames(), 'no frames while hidden').toBe(hidden);
+    await pressInShell(h, 'W', ['control']);
+    await waitFor('drawing again', frames, (n) => n > hidden + 5, await sceneWait(h, 5000));
+    // Two minutes of bubbles and feeding: the page's memory, after its garbage is collected, is where it was.
+    const start = await pageMemory(h, TANK_PAGE);
+    for (let round = 0; round < 2; round++) {
+      await inPage(h, `(holoml.find('status').text = '', true)`, TANK_PAGE);
+      await press(h, TANK_PAGE, 'F');
+      await sleep(60_000);
+    }
+    const after = await pageMemory(h, TANK_PAGE);
+    console.log(`X9: heap ${(start.heap / MB).toFixed(1)} MB then ${(after.heap / MB).toFixed(1)} MB; buffers ${(start.buffers / MB).toFixed(1)} MB then ${(after.buffers / MB).toFixed(1)} MB`);
+    expect(after.heap + after.buffers, 'the page memory after two minutes').toBeLessThan(start.heap + start.buffers + 4 * MB);
+  }, 300_000);
 });
