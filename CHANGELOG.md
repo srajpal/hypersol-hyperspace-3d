@@ -110,6 +110,14 @@
   - `sky`, a panorama drawn behind the scene (PNG and JPEG panoramas are
     decoded with the sky at the top); `plan`, a floor plan in a corner
     of the screen with the viewer's place and direction on it.
+- Harbour Loft (milestone 19): a flat by a harbour to tour, published at
+  https://srajpal.github.io/holoml/harbour-loft/: walk through its
+  rooms, open its doors and switch its lamps on (with a click, or from
+  the keyboard), read about each room on its panel, see where you are
+  on the floor plan, turn the day to evening, go up to the roof terrace
+  (a second page, reached with a fade), and book a viewing (a form that
+  sends nothing; the flat and its price are made up). It is in the
+  HoloML examples section and the start panel.
 
 ## 0.9.0 — developer preview (2026-09-26)
 

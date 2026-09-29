@@ -7,11 +7,11 @@ anyone publish a fully 3D website as easily as writing HTML.
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/readme.png" alt="HyperSpace 3D showing HoloML's sofa studio: a red velvet sofa in a sunlit room, with the fabric and wood choices and the price, and four tabs as cards on the left"></td>
+    <td width="50%"><img src="docs/screenshots/readme.png" alt="HyperSpace 3D showing HoloML's Harbour Loft: a loft's living room by day, boats in the harbour through tall steel windows, a floor plan in the corner, and four tabs as cards on the left"></td>
     <td width="50%"><img src="docs/screenshots/readme-game.png" alt="Blockworld, a small block game written in HoloML: an island of grass blocks and trees, seen from above one corner"></td>
   </tr>
   <tr>
-    <td><b>3D websites.</b> <a href="https://github.com/srajpal/holoml/tree/main/examples/sofa-studio">The sofa studio</a>, written in HoloML: choose a fabric and a wood, and the sofa changes in place, with soft shadows and a studio's light.</td>
+    <td><b>3D websites.</b> <a href="https://github.com/srajpal/holoml/tree/main/examples/harbour-loft">Harbour Loft</a>, written in HoloML: walk through a loft by the harbour, open its doors, switch its lamps on, and go up to the roof terrace.</td>
     <td><b>Games, too.</b> <a href="https://github.com/srajpal/holoml/tree/main/examples/blockworld">Blockworld</a>: walk, break and place blocks, and find five gems, with the mouse or the keyboard alone.</td>
   </tr>
   <tr>
@@ -25,9 +25,9 @@ anyone publish a fully 3D website as easily as writing HTML.
 </table>
 
 *The newest build, made with `pnpm screenshots:readme` from local
-copies: HoloML's examples (the sofa studio's furniture, fabrics, and
-light from Poly Haven, CC0; Blockworld's blocks from Kenney, CC0) and a
-made-up sample page.*
+copies: HoloML's examples (Harbour Loft's furniture, textures, and
+harbour from Poly Haven, CC0; Blockworld's blocks from Kenney, CC0) and
+a made-up sample page.*
 
 For Windows and Linux (checked by automatic tests on both); macOS is
 planned but untested. Apache 2.0. No telemetry.
@@ -44,7 +44,10 @@ the first part of HoloML 0.2 (scripts, sound, walls and gravity), and a
 HoloML examples section. Milestone 18 adds walking and turning speeds a
 page can set, sliders on the screen (Blockworld's Speed slider), and the
 sofa studio, a shop page with shadows, textured fabrics, and choices
-that change the sofa in place. Then three more example sites,
+that change the sofa in place. Milestone 19 adds text panels, doors and
+lamps that work with a click, places to go to, a sky, a floor plan, and
+Harbour Loft, a flat by a harbour to tour (built; waiting for
+acceptance). Then two more example sites, HoloML's documentation,
 privacy and data tools, and installers as 1.0. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
@@ -139,7 +142,11 @@ An archived copy of the 2001 site is available through the
   can put sliders on the screen for its script (Blockworld's Speed
   slider); shadows, a material's own pictures (fabric, wood), choices
   on the screen that change a material in place, and light from a
-  panorama of the surroundings, shown by the sofa studio.
+  panorama of the surroundings, shown by the sofa studio. Milestone 19:
+  text of more than one line on a board in the scene, doors and lamps
+  that work with a click (and from the keyboard), places to go to, a
+  fade between a site's pages, a sky, and a floor plan, shown by
+  Harbour Loft.
 - Mouse and keyboard throughout; touch for scenes.
 
 ## Built with the Buildwright approach
@@ -174,9 +181,8 @@ starts with a small prototype and the same habits of direction and checking.
 
 ## What comes next
 
-Milestones 18 to 21, four more HoloML example sites, each adding to
-the language: a sofa studio, an apartment tour, a sneaker store, and an
-aquarium. 22, documentation for HoloML to recognised standards. 23,
+Milestones 20 and 21, two more HoloML example sites, each adding to
+the language: a sneaker store and an aquarium. 22, documentation for HoloML to recognised standards. 23,
 privacy and data tools: HTTPS-only browsing, per-site storage, and
 bookmark import and export. 24 and 25, installers as 1.0 for Windows
 and Linux, then macOS. Later: free camera
@@ -185,7 +191,7 @@ and VR. The full roadmap is in [TODO.md](TODO.md).
 
 ## Progress
 
-Sixteen milestones are done and accepted.
+Eighteen milestones are done and accepted.
 Milestones 1 to 11 built the browser: a live page on a tilted panel in
 the 3D room, tabs as cards, bookmarks and history, ad and tracker
 blocking with encrypted DNS, the layers view, two themes, an instrument
@@ -201,7 +207,10 @@ scene inspector. Milestone 16 adds a HoloML car showroom, published with GitHub 
 start panel. Milestone 17 adds Blockworld, a small block game in HoloML
 0.2, and the HoloML examples section. Milestone 18 adds walking speeds,
 sliders, and the sofa studio, a shop page with shadows, textured
-fabrics, and choices that change the sofa in place.
+fabrics, and choices that change the sofa in place. Milestone 19, built
+and waiting for acceptance, adds Harbour Loft, a flat to tour, with
+panels of text, doors and lamps to click, places, a sky, and a floor
+plan.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
@@ -220,11 +229,13 @@ left out and marked, and a notice says why.
 
 To try one, open a new tab and choose one under Try HoloML, or open the
 HoloML examples (the menu, or Ctrl+Shift+E): the showroom (milestone 16),
-Blockworld (milestone 17), and the sofa studio (milestone 18). They come
-from the holoml repository, https://github.com/srajpal/holoml, which
-publishes each with GitHub Pages: https://srajpal.github.io/holoml/showroom/,
-https://srajpal.github.io/holoml/blockworld/, and
-https://srajpal.github.io/holoml/sofa-studio/. The browser asks nothing
+Blockworld (milestone 17), the sofa studio (milestone 18), and Harbour
+Loft (milestone 19). They come from the holoml repository,
+https://github.com/srajpal/holoml, which publishes each with GitHub
+Pages: https://srajpal.github.io/holoml/showroom/,
+https://srajpal.github.io/holoml/blockworld/,
+https://srajpal.github.io/holoml/sofa-studio/, and
+https://srajpal.github.io/holoml/harbour-loft/. The browser asks nothing
 of those sites until you choose one.
 
 ## Project documents
@@ -295,8 +306,9 @@ the top bar, or click a card on the left to switch tabs. The main keys
   prints.
 - Ctrl+O opens a HoloML file from the computer (or drop one on the
   window); a `.holoml` address shows as a 3D scene across the window.
-  In a scene, Tab moves through its links and named things, Esc stops
-  models still loading, and Ctrl+Shift+V switches the text view.
+  In a scene, Tab moves through its places ("Go to"), links, and named
+  things, Enter or Space works a door or a lamp that a click would, Esc
+  stops models still loading, and Ctrl+Shift+V switches the text view.
   Walking in a scene: W, A, S, D or the up and down arrows move, the
   left and right arrows turn, Page Up and Page Down look up and down,
   Shift runs, and Space jumps where the page allows; the page chooses

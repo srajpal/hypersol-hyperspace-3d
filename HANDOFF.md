@@ -2,8 +2,8 @@
 
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-09-28 (milestones 1 to 18 accepted; milestone 19,
-Harbour Loft, is being built and was handed off mid-build in prompt 116:
-see "Milestone 19, in progress" below. Milestone 20 is a sneaker store
+Harbour Loft, is built, prompt 118, and waits for its pull requests and
+the owner's acceptance: see "Milestone 19, built" below. Milestone 20 is a sneaker store
 (prompts 101 and 102), and 22 is HoloML's documentation (prompt 115).
 The roadmap is in TODO.md).
 
@@ -44,8 +44,8 @@ state; this is a summary.
   pictures, choices, and light from the surroundings (accepted
   2026-09-28, prompt 112; merged in holoml, pull requests #14 to #16,
   and the browser, #34 and #35; published at
-  https://srajpal.github.io/holoml/sofa-studio/); 19 Harbour Loft (in
-  progress); 20 a sneaker store (in place of Coral
+  https://srajpal.github.io/holoml/sofa-studio/); 19 Harbour Loft
+  (built, waiting for acceptance); 20 a sneaker store (in place of Coral
   Bay, a resort, prompts 101 and 102); 21 Aquarium, where HoloML 0.2 is
   tagged); 22 documentation for HoloML to recognised standards (prompt
   115); 23 privacy and data tools (HTTPS-only, per-site storage,
@@ -65,39 +65,40 @@ below), kept as sibling folders (never one inside the other):
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
 
-## Milestone 19, in progress (handed off 2026-09-28, prompt 116)
+## Milestone 19, built (2026-09-28, prompt 118)
 
 The plan and its checks (V1 to V12) are in TODO.md, "Milestone 19 —
-Harbour Loft"; the owner approved the build in prompt 114.
+Harbour Loft"; the owner approved the build in prompt 114, and it was
+handed off mid-build (prompt 116) and finished in prompt 118.
 
 Where the work is (neither branch is pushed yet):
 
 - Browser: branch `m19-harbour-loft`, from main after milestone 18's
-  acceptance. Its commits: the plan, the roadmap change for milestone
-  22, the answers, the viewer's work (panels, click actions, places and
-  the fade, the sky, the floor plan, in apps/browser/src/viewer), with
-  checks V2 to V7 in tests/e2e/m19.e2e.ts, and this hand-off.
-- holoml: branch `harbour-loft`, from its main after pull request #16.
-  Its commits: the language (SPEC.md, the checker, conformance samples),
-  a spec note on which trigger a click runs, and Harbour Loft begun:
-  examples/harbour-loft/tools/download.mjs (run once; its 54 MB cache,
-  tools/cache/, is ignored by git) and layout.mjs.
+  acceptance: the viewer's part (panels, click actions, places and the
+  fade, the sky, the floor plan, in apps/browser/src/viewer), Harbour
+  Loft's copy (tests/fixtures/holoml/harbour-loft), its examples card
+  and picture, checks V2 to V10 (tests/e2e/m19.e2e.ts) and T8 grown,
+  the documents, and the screenshots (docs/screenshots/m19 and the
+  README's four, Harbour Loft first).
+- holoml: branch `harbour-loft`, from its main after pull request #16:
+  the language (SPEC.md, the checker, conformance samples), Harbour
+  Loft (examples/harbour-loft: its pages, loft.js, the models, and
+  tools/download.mjs, layout.mjs, and prepare.mjs; the download's
+  cache, tools/cache/, is ignored by git), and its README.
 - The browser's copy of HoloML (packages/holoml) comes from holoml's
   `harbour-loft` branch (SOURCE.json). Once holoml's pull request is
   merged, sync it from main again: `pnpm holoml:sync main --examples
   main`.
 
-What comes next, in order: examples/harbour-loft/tools/DESIGN.md in the
-holoml branch holds everything decided and measured for the site (each
-model's size and use, the textures, the doors' hinges, the lamps and
-switches, the places, the panels' words, the other pages) and the list
-of what is left: `prepare.mjs` (Electron, as the sofa studio's), the
-pages and `loft.js`, then in this repository the copy (add
-`harbour-loft` to packages/holoml/copies.mjs), the examples card and
-picture, checks V8 to V10, the full run, `pnpm test:linux`, the
-automatic builds, the documents, the screenshots, and the pull requests
-(holoml's first; GitHub Pages publishes it on merge), then V11 by hand
-and the owner's acceptance.
+What comes next, in order: the pull requests (holoml's first; GitHub
+Pages publishes the site when it merges), the browser's copy synced
+from holoml's main, the automatic builds, V11 by hand (the site from
+its public address in the built app), and the owner's acceptance. For
+an owner decision: the AGENTS.md wording for the README's pictures
+(proposed in the reply to prompt 118; the README and its capture
+already show Harbour Loft), and ARCHITECTURE.md section 10, item 4
+(large scenes: shaders compiled on the page's main thread, every model
+a Tab stop).
 
 Worth knowing:
 
@@ -113,9 +114,18 @@ Worth knowing:
 - A panorama read as a PNG or JPEG is decoded flipped (pictures.ts),
   since WebGL does not flip an ImageBitmap; check V6 looks at a
   two-colour sky to keep it the right way up.
-- Harbour Loft's walls are separate `wall.gltf` models, one a piece: the
+- Harbour Loft's walls are separate `wall.glb` models, one a piece: the
   walker is stopped by each model's whole box, so a wall with a door, or
   a balustrade around a terrace, must be pieces.
+- Harbour Loft is made by its tools: change tools/layout.mjs (walls,
+  rooms, doors, furniture) or tools/prepare.mjs, then run
+  `electron examples/harbour-loft/tools/prepare.mjs` from holoml's root
+  (Electron is in the browser's apps/browser/node_modules/.bin), look
+  at the rooms, and commit; it rewrites the flat's walls, windows, and
+  furniture in index.holoml between its two prepare.mjs comments.
+- U2 (milestone 18, walking speed) read 4.83 m/s once in the full run
+  where 4.8 is allowed, and passed alone three times: a timing check
+  that reads fast after a late frame.
 
 ## Read these first, in order
 

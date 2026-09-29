@@ -41,7 +41,7 @@ describe('the copy of HoloML (owner, prompt 65, Q4 a)', () => {
     }
   });
 
-  it('has the example sites unchanged since they were copied (milestones 16 to 18)', () => {
+  it('has the example sites unchanged since they were copied (milestones 16 to 19)', () => {
     const names = Object.keys(source.examples.files);
     for (const site of examples.names) expect(names).toContain(`${site}/index.holoml`);
     for (const name of names) expect(hash(readFileSync(join(here, examples.to, name))), name).toBe(source.examples.files[name]);

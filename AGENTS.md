@@ -157,8 +157,9 @@ date given and grow with each milestone; TODO.md has the latest.
 - Unit: `pnpm test` (Vitest; 264 tests passed on 2026-09-28)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about ten minutes; 240 checks, all passed, in the full run
-  on 2026-09-27 at the end of milestone 17). Needs openssl on PATH for
+  against it (about eleven minutes; 261 checks in the full run on
+  2026-09-28 in milestone 19, 260 passed and U2 once read a walk just
+  too fast, then passed alone; TODO.md has the details). Needs openssl on PATH for
   the certificate-error check (Git for Windows includes one). Every
   host except 127.0.0.1 is blocked during the run, and the test windows
   ignore the real mouse, so a resting cursor cannot disturb results. See
@@ -293,15 +294,18 @@ milestone; the current milestone's checks are defined in TODO.md):
   software), every fabric and wood, the price, the cart page, the
   keyboard alone, and no frames while idle. U1 and U8 are holoml's own
   tests.
-- Milestone 19 checks V2 to V7 (same command, tests/e2e/m19.e2e.ts),
-  first part: panels (the page's pixels, Find in page, screen readers,
-  the text view), click actions (the mouse, Enter and Space on their
-  buttons, the sound, reduced motion, scripts), places (#name, "Go to",
-  Back), arriving through a fade, the sky, and the floor plan. V1 is
-  holoml's own tests. Harbour Loft's checks (V8 to V10) come with the
-  site.
-- Later milestones add: the HoloML example sites (the rest of 19, and
-  20 and 21), HoloML's
+- Milestone 19 checks V2 to V10 (same command, tests/e2e/m19.e2e.ts):
+  panels (the page's pixels, Find in page, screen readers, the text
+  view), click actions (the mouse, Enter and Space on their buttons, the
+  sound, reduced motion, scripts), places (#name, "Go to", Back),
+  arriving through a fade, the sky, and the floor plan; and Harbour Loft
+  (a copy in tests/fixtures/holoml/harbour-loft): ready within 5 s
+  (logged in software), walls and a shut door that stop the walker,
+  every door and lamp, the roof terrace and back, the booking page's
+  form that sends nothing, the whole tour from the keyboard, screen
+  readers, the text view, reduced motion, and no frames while idle. V1
+  is holoml's own tests; V11 (the published site) is checked by hand.
+- Later milestones add: the HoloML example sites (20 and 21), HoloML's
   documentation (22), privacy and data tools (23), and installers (24
   and 25).
 
