@@ -3295,8 +3295,13 @@ sofa studio did not have: text of more than one line (holoml issue
   (8, 5, and 4 minutes, as other long checks have 2 and 4); on Windows
   they still pass (V8 read 4.7 s while the Linux run shared the
   computer).
-- Not yet: V8 to V10 on Linux again, and the automatic builds of
-  browser pull request #36.
+- The full `pnpm test:linux` run with the checks before that change
+  (2026-09-29): 257 passed, 1 skipped, and V8 to V10 ran out of their
+  60 seconds. Milestone 19's checks again on Linux after it
+  (`pnpm test:linux tests/e2e/m19.e2e.ts`, 2026-09-29): V2 to V10, 9
+  checks, all passed (V8 ready in 20.5 s, logged; V8 took 169 s, V9
+  185 s, V10 62 s).
+- Not yet: the automatic builds of browser pull request #36.
 
 ### Done when
 
@@ -3387,10 +3392,10 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
 
 ### Tasks
 
-- [ ] 1. HoloML 0.2, fourth part: SPEC.md, the checker, and conformance
+- [x] 1. HoloML 0.2, fourth part: SPEC.md, the checker, and conformance
       samples for loading by area, stand-ins, and the scene API's
       loading (holoml branch `sneaker-store`).
-- [ ] 2. The browser: loading and letting go by area, stand-ins, the
+- [x] 2. The browser: loading and letting go by area, stand-ins, the
       counts, the scene API; the copy (`pnpm holoml:sync`, from holoml's
       `sneaker-store` branch for now).
 - [ ] 3. The sneaker store: the shoe, its colourways, and its stand-in
@@ -3420,6 +3425,42 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
 | W10 | Efficient | An idle store draws no frames; the page process's memory falls again after far shelves are let go |
 | W11 | Published | From its public address in the built app (by hand, as V11) |
 | W12 | Regression | The full run on Windows, `pnpm test:linux`, the unit tests, holoml's tests, and the automatic builds |
+
+### Decisions made while building
+
+- What `loaded` means for a group (SPEC.md, section 10): every model in
+  it that is near enough to load has loaded or been left out (as
+  `holoml.ready` counts), so one left out does not keep it waiting; the
+  `load` event is told when that becomes true and when the group is let
+  go, not while a script's new model loads into a group already in.
+- A model that loads by area and would pass the page's totals (bytes or
+  triangles, or the 64 model files) waits for room instead of being
+  left out, and tries again when a group is let go. One left out for
+  another reason (a file too large, a failed load, Esc) is tried again
+  the next time the viewer comes near, and keeps its place in the Tab
+  order.
+- A model file or a picture is let go (its bytes and triangles no longer
+  counted, its memory released) when the last model using it is let go.
+  A model removed by a script releases its share but leaves the file
+  loaded for the next, as before.
+- A stand-in is drawn plain (as an instance where it can be) in a
+  holder inside its model's, and is counted, like any model, for as long
+  as the page shows it.
+
+### Results so far
+
+- Task 1 (holoml `sneaker-store`, 06afc79 and 00d97a3): SPEC.md, the
+  checker, and the samples; the copy synced from it (e9a276a).
+- Task 2: the viewer loads and lets go by area (scene.ts), counts what
+  is loaded now (budget.ts, pictures.ts), shows stand-ins, and gives
+  scripts `loaded` and the `load` event (api.ts); the inspector shows a
+  waiting model as waiting, not as a problem. Unit tests: 268 passed
+  (four new: the totals a model may wait for, and pictures let go);
+  lint and type check clean.
+- W2 to W5 (tests/e2e/m20.e2e.ts, fixture pages areas.holoml,
+  stand-in.holoml, and areas-limits.holoml): all pass on Windows, three
+  runs, and drawing in software (HYPERSOL_TEST_SOFTWARE=1).
+- Milestones 14 to 19's HoloML checks after the change: 85 passed.
 
 ### Done when
 

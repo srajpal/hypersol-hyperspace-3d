@@ -34,7 +34,8 @@ export class InstancePool {
   dirty = false;
 
   constructor(
-    private readonly template: Template,
+    /** The file it draws (a pool is disposed with its file, when that is let go). */
+    readonly template: Template,
     private readonly scene: Scene,
     /** The file's address, for the tests and the inspector. */
     readonly src = '',

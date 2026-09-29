@@ -25,6 +25,12 @@
  * actions (a door that opens, a switch for a lamp), each a button in the
  * outline; several viewpoints, as places an address names; a fade
  * between HoloML pages of one site; a sky; and a floor plan on the screen.
+ *
+ * Milestone 20 (HoloML 0.2, fourth part): loading by area. A group with
+ * load="near" loads its models while the viewer is near and lets them go
+ * (releasing their memory, and their share of the limits) when the viewer
+ * is farther; a model's stand-in shows in its place until it has loaded;
+ * scripts read `loaded` and hear `load`.
  */
 import {
   AmbientLight,
@@ -89,6 +95,10 @@ const FADE_IN_MS = 450;
 const ARRIVAL_WAIT_MS = 4000;
 /** Going to a place on the same page: out and in again. */
 const PLACE_FADE_MS = 180;
+/** Loading by area (milestone 20): a group's models are let go once the viewer is this many times its `near` away. */
+const LET_GO = 1.5;
+/** Why a model that loads by area is not loaded (the inspector shows it). */
+const FAR = 'it loads when the viewer comes near';
 
 interface Link {
   href: string;
@@ -160,14 +170,54 @@ interface PlanState {
 
 export interface ModelReport {
   src: string;
-  /** refused: another site; left-out: over a limit, stopped, or failed to load (see reason). */
-  state: 'loading' | 'loaded' | 'failed' | 'refused' | 'left-out';
+  /**
+   * refused: another site; left-out: over a limit, stopped, or failed to
+   * load (see reason); waiting: it loads by area, and the viewer is not
+   * near, or it waits for room within the limits (milestone 20).
+   */
+  state: 'loading' | 'loaded' | 'failed' | 'refused' | 'left-out' | 'waiting';
   reason?: string;
   bytes?: number;
   triangles?: number;
   pictures?: { width: number; height: number }[];
   materials: Record<string, MaterialReport>;
   animation: { name: string; playing: boolean; time: number } | null;
+  /** A stand-in's report (milestone 20): the address of the model it stands in for. */
+  standsInFor?: string;
+}
+
+/** A group that loads by area (HoloML 0.2 load="near", milestone 20). */
+interface Area {
+  entry: Entry;
+  /** How near, in metres, the viewer's eyes come for its models to load; they are let go beyond LET_GO times as far. */
+  near: number;
+  /** The viewer is near: its models load, or have loaded. */
+  in: boolean;
+  /** Its `loaded` as last told to the page's scripts (the `load` event). */
+  told: boolean;
+}
+
+/** A model's stand-in (HoloML 0.2 `stand-in`, milestone 20): a lighter model in its place while it is not loaded. */
+interface StandIn {
+  /** Inside the model's own holder: placed, turned, and sized as the model. */
+  holder: Object3D;
+  report: ModelReport;
+  /** Its file's address, while it uses the file. */
+  href: string | null;
+  template?: Template;
+  triangles?: number;
+}
+
+/** What a model holds while it is loaded or loading, released when it is let go (milestone 20). */
+interface Held {
+  /** Its file's address. */
+  href: string;
+  /** Its `material` children's looks, with the page's pictures they hold. */
+  looks: Promise<Look[]>;
+  /** The materials made for it from those looks. */
+  materials: Material[];
+  /** Its animation's mixer. */
+  mixer: AnimationMixer | null;
 }
 
 /**
@@ -262,6 +312,14 @@ export interface Entry {
   labelLook?: { words: string; size: number; color: string; note: HTMLElement };
   /** A panel's (HoloML 0.2, milestone 19). */
   panelLook?: PanelLook;
+  /** A group that loads by area (HoloML 0.2 load="near", milestone 20). */
+  area?: Area;
+  /** A model's stand-in (HoloML 0.2 `stand-in`, milestone 20). */
+  standIn?: StandIn;
+  /** What a model holds while loaded or loading (milestone 20). */
+  held?: Held;
+  /** Counts a model's loads: a load that finishes after the model was let go is dropped. */
+  loads?: number;
 }
 
 /** What a click, a tap, or the crosshair hit. */
@@ -275,7 +333,8 @@ export type SceneEvent =
   | { type: 'click'; hit: Hit; button: 'left' | 'right' | 'middle' }
   | { type: 'key'; key: string; down: boolean; repeat: boolean }
   | { type: 'frame'; time: number; dt: number }
-  | { type: 'change'; entry: Entry; value: number | string };
+  | { type: 'change'; entry: Entry; value: number | string }
+  | { type: 'load'; entry: Entry; loaded: boolean };
 
 interface LoadedTemplate {
   template: Template;
@@ -333,6 +392,7 @@ export class HolomlView {
     key: new Set<(e: SceneEvent) => void>(),
     frame: new Set<(e: SceneEvent) => void>(),
     change: new Set<(e: SceneEvent) => void>(),
+    load: new Set<(e: SceneEvent) => void>(),
   };
   private readonly version: string;
   private sceneId: string | null = null;
@@ -386,6 +446,12 @@ export class HolomlView {
   private readonly fadeLog: { to: number; at: number }[] = [];
   /** The floor plan (HoloML 0.2 `plan`). */
   private planState: PlanState | null = null;
+  /** Groups that load by area (milestone 20). */
+  private readonly areas: Area[] = [];
+  /** How many models (and stand-ins) use each model file, so a file that no model uses any more can be let go. */
+  private readonly templateUsers = new Map<string, number>();
+  /** The tiled copies of a made material's pictures, released with it. */
+  private readonly tiledOf = new WeakMap<Material, Texture[]>();
 
   constructor(root: ElementNode, container: HTMLElement, outline: HTMLElement, hudLayer: HTMLElement) {
     this.outline = outline;
@@ -494,6 +560,8 @@ export class HolomlView {
     const start = this.placeNamed(addressName()) ?? this.viewpoints[0] ?? null;
     this.startPlace = this.currentPlace = start ? (attr(start, 'id') ?? null) : null;
     this.setUpView(start);
+    // Groups that load by area within reach of the start load with the page (milestone 20).
+    this.updateAreas();
     if (this.placesListed) {
       // A link to #name on this page, the outline's "Go to", Back and Forward: to that place, or to the first.
       window.addEventListener('hashchange', () => this.goTo(this.placeNamed(addressName()) ?? this.viewpoints[0]!));
@@ -559,19 +627,7 @@ export class HolomlView {
     this.controls?.dispose();
     for (const pool of this.pools.values()) pool.dispose();
     const done = new Set<unknown>();
-    const release = (o: Object3D) => {
-      const mesh = o as Object3D & { geometry?: { dispose(): void }; material?: Material | Material[] };
-      if (mesh.geometry && !done.has(mesh.geometry)) {
-        done.add(mesh.geometry);
-        mesh.geometry.dispose();
-      }
-      for (const m of Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : []) {
-        if (done.has(m)) continue;
-        done.add(m);
-        for (const value of Object.values(m)) if (value instanceof Texture) value.dispose();
-        m.dispose();
-      }
-    };
+    const release = (o: Object3D) => releaseObject(o, done);
     this.scene.traverse(release);
     for (const t of this.templates.values()) void t.then((loaded) => loaded.template.scene.traverse(release)).catch(() => undefined);
     this.renderer.dispose();
@@ -801,6 +857,12 @@ export class HolomlView {
         this.setObject(entry, g);
         if (this.version === '0.2' && has(node, 'solid')) entry.solid = true;
         if (this.version === '0.2' && has(node, 'shadows')) entry.shadows = true;
+        if (this.version === '0.2' && attr(node, 'load') === 'near') {
+          // Loading by area (milestone 20): its models wait for the viewer to come near.
+          const near = num(node, 'near', 10, 0);
+          entry.area = { entry, near: near > 0 ? near : 10, in: false, told: false };
+          this.areas.push(entry.area);
+        }
         if (entry.id && listed) entry.item = this.addItem(entry, 'Group');
         for (const c of node.children) this.build(c, g, entry, link, depth + 1, fromScript, animates);
         this.track(g, link);
@@ -931,10 +993,14 @@ export class HolomlView {
   private model(el: ElementNode, parent: Object3D, entry: Entry): Object3D {
     const holder = this.place(new Object3D(), el);
     parent.add(holder);
+    this.setObject(entry, holder);
     const src = attr(el, 'src') ?? '';
     const report: ModelReport = { src, state: 'loading', materials: {}, animation: null };
     this.models.push(report);
     entry.report = report;
+    // HoloML 0.2 (milestone 20): a lighter model stands in until this one has loaded.
+    const standIn = this.version === '0.2' ? attr(el, 'stand-in') : null;
+    if (standIn) this.standIn(entry, holder, standIn);
     const url = resolveAddress(src, this.base);
     // Models come from the page's own site only (owner, prompt 65, Q2 a);
     // the page's content policy enforces the same.
@@ -946,10 +1012,37 @@ export class HolomlView {
       this.onLeftOut?.();
       return holder;
     }
-    // The page's limit on model files (issue #23; a file used many times counts once).
+    // Loading by area (milestone 20): in a group the viewer is not near, it waits for the viewer.
+    if (this.wanted(entry)) this.loadModel(entry);
+    else {
+      report.state = 'waiting';
+      report.reason = FAR;
+    }
+    return holder;
+  }
+
+  /**
+   * Loads a model's file and its materials' pictures, and draws it: as an
+   * instance of the file's meshes, or as its own copy when it changes its
+   * materials, plays an animation, or a choice changes it. A model that
+   * loads by area may be let go before it arrives: that load is dropped.
+   */
+  private loadModel(entry: Entry): void {
+    const el = entry.el;
+    const holder = entry.object!;
+    const report = entry.report!;
+    const url = resolveAddress(attr(el, 'src') ?? '', this.base)!;
+    const byArea = this.byArea(entry);
+    const load = (entry.loads = (entry.loads ?? 0) + 1);
+    const current = () => !entry.removed && entry.loads === load;
+    report.state = 'loading';
+    delete report.reason;
+    // The page's limit on model files (issue #23; a file used many times counts once, and one let go not at all).
     if (!this.templates.has(url.href) && this.templates.size >= LIMITS.modelFiles) {
-      this.leaveOut(holder, report, entry, `more than ${LIMITS.modelFiles} model files on the page`);
-      return holder;
+      const reason = `more than ${LIMITS.modelFiles} model files on the page`;
+      if (byArea) this.waitForRoom(entry, reason);
+      else this.leaveOut(holder, report, entry, reason);
+      return;
     }
     const changes = el.children.filter((c): c is ElementNode => c.type === 'element' && c.name === 'material');
     const clipName = attr(el, 'animation');
@@ -957,9 +1050,12 @@ export class HolomlView {
     if (this.pending === 1) this.onBusy?.(true);
     // The materials' pictures (HoloML 0.2) load beside the model; a picture that fails is reported, and the rest shows.
     const looks = Promise.all(changes.map((c) => this.lookOf(c)));
+    const held: Held = { href: url.href, looks, materials: [], mixer: null };
+    entry.held = held;
+    this.useTemplate(url.href);
     Promise.all([this.loadTemplate(url), looks])
       .then(async ([loaded, given]) => {
-        if (entry.removed) return;
+        if (!current()) return;
         const t = loaded.template;
         // Each model drawn counts its triangles; the first was counted by the load.
         if (loaded.claimed) this.budget.useTriangles(t.triangles);
@@ -981,24 +1077,369 @@ export class HolomlView {
           if (shadows) castShadows(copy);
           holder.add(copy);
           holder.userData['copy'] = copy;
-          this.changeMaterials(changes, given, copy, report);
-          if (clipName) this.startClip(el, copy, loaded.animations, clipName, report);
+          held.materials = this.changeMaterials(changes, given, copy, report);
+          if (clipName) held.mixer = this.startClip(el, copy, loaded.animations, clipName, report);
           // The options its choices start with; the model counts as loading until they are on it.
           await Promise.all(this.choices.filter((c) => c.choice!.target === entry.id).map((c) => this.applyChoice(c)));
-          if (entry.removed) return;
+          if (!current()) return;
         }
         report.state = 'loaded';
+        this.showStandIn(entry, false);
         if (shadows) this.shadowBox = null;
         if (this.isSolid(entry)) this.collidersDirty = true;
         this.applyMotion();
       })
       .catch((e: unknown) => {
-        if (entry.removed) return;
-        if (e instanceof LeftOut) this.leaveOut(holder, report, entry, e.reason);
+        if (!current()) return;
+        // A model that loads by area and would pass the page's totals waits for room (milestone 20).
+        if (byArea && e instanceof LeftOut && e.overTotal) this.waitForRoom(entry, e.reason);
+        else if (e instanceof LeftOut) this.leaveOut(holder, report, entry, e.reason);
         else this.leaveOut(holder, report, entry, `could not be loaded (${e instanceof Error ? e.message : String(e)})`, 'failed');
       })
+      .finally(() => {
+        this.settle();
+        if (byArea) this.tellAreas();
+      });
+  }
+
+  /**
+   * A model's stand-in (HoloML 0.2, milestone 20): loaded with the page,
+   * and counted, like any model, into a holder inside the model's own, so
+   * it is placed, turned, and sized as the model, and a click on it is a
+   * click on the model. It is drawn plain (as an instance where it can
+   * be), and is solid and casts shadows if the model does.
+   */
+  private standIn(entry: Entry, holder: Object3D, src: string): void {
+    const report: ModelReport = { src, state: 'loading', materials: {}, animation: null, standsInFor: attr(entry.el, 'src') ?? '' };
+    this.models.push(report);
+    const s: StandIn = { holder: new Object3D(), report, href: null };
+    holder.add(s.holder);
+    entry.standIn = s;
+    const url = resolveAddress(src, this.base);
+    if (!url || url.origin !== this.origin) {
+      this.standInLeftOut(s, "models load only from the page's own site", 'refused');
+      return;
+    }
+    if (!this.templates.has(url.href) && this.templates.size >= LIMITS.modelFiles) {
+      this.standInLeftOut(s, `more than ${LIMITS.modelFiles} model files on the page`);
+      return;
+    }
+    this.pending += 1;
+    if (this.pending === 1) this.onBusy?.(true);
+    s.href = url.href;
+    this.useTemplate(url.href);
+    this.loadTemplate(url)
+      .then((loaded) => {
+        if (entry.removed) return;
+        const t = loaded.template;
+        if (loaded.claimed) this.budget.useTriangles(t.triangles);
+        loaded.claimed = true;
+        s.template = t;
+        s.triangles = t.triangles;
+        report.bytes = t.bytes;
+        report.triangles = t.triangles;
+        report.pictures = t.pictures;
+        s.holder.userData['template'] = t;
+        const shadows = this.shadowsOn && this.castsShadows(entry);
+        if (t.instanceable) this.poolFor(t, url.href, shadows).add(s.holder);
+        else {
+          const copy = cloneModel(t.scene);
+          if (shadows) castShadows(copy);
+          s.holder.add(copy);
+        }
+        this.materialsOf(t.scene, report);
+        report.state = 'loaded';
+        if (s.holder.visible && shadows) this.shadowBox = null;
+        if (s.holder.visible && this.isSolid(entry)) this.collidersDirty = true;
+      })
+      .catch((e: unknown) => {
+        if (entry.removed) return;
+        if (e instanceof LeftOut) this.standInLeftOut(s, e.reason);
+        else this.standInLeftOut(s, `could not be loaded (${e instanceof Error ? e.message : String(e)})`, 'failed');
+      })
       .finally(() => this.settle());
-    return holder;
+  }
+
+  /** A stand-in not shown: reported (the model itself still loads). */
+  private standInLeftOut(s: StandIn, reason: string, state: 'left-out' | 'failed' | 'refused' = 'left-out'): void {
+    s.report.state = state;
+    s.report.reason = reason;
+    console.warn(`HoloML: the stand-in "${s.report.src}" was ${state === 'failed' ? 'not loaded' : 'left out'}: ${reason}.`);
+    if (s.href) this.releaseTemplate(s.href, false);
+    s.href = null;
+    this.onLeftOut?.();
+  }
+
+  /** Shows a model's stand-in while the model is not loaded, and hides it once the model is. */
+  private showStandIn(entry: Entry, shown: boolean): void {
+    const s = entry.standIn;
+    if (!s || s.holder.visible === shown) return;
+    s.holder.visible = shown;
+    const pool = s.holder.userData['pool'] as InstancePool | undefined;
+    if (pool) pool.dirty = true;
+    if (s.template && this.isSolid(entry)) this.collidersDirty = true;
+    if (s.template && this.castsShadows(entry)) this.shadowBox = null;
+    this.requestFrame();
+  }
+
+  /** A model's stand-in goes with the model (holoml.remove): it no longer counts. */
+  private removeStandIn(entry: Entry): void {
+    const s = entry.standIn;
+    if (!s) return;
+    (s.holder.userData['pool'] as InstancePool | undefined)?.remove(s.holder);
+    if (s.triangles) this.budget.releaseTriangles(s.triangles);
+    if (s.href) this.releaseTemplate(s.href, false);
+    const i = this.models.indexOf(s.report);
+    if (i >= 0) this.models.splice(i, 1);
+    entry.standIn = undefined;
+  }
+
+  // ---- Loading by area (HoloML 0.2, milestone 20) -------------------------------
+
+  /** Whether a model loads by area: a group around it has load="near". */
+  private byArea(entry: Entry): boolean {
+    for (let e = entry.parent; e; e = e.parent) if (e.area) return true;
+    return false;
+  }
+
+  /** Whether a model may load now: the viewer is near every group around it that loads by area. */
+  private wanted(entry: Entry): boolean {
+    for (let e = entry.parent; e; e = e.parent) if (e.area && !e.area.in) return false;
+    return true;
+  }
+
+  /** The models in a group, at any depth. */
+  private modelsIn(group: Entry): Entry[] {
+    const out: Entry[] = [];
+    const walk = (e: Entry) => {
+      for (const c of e.children) {
+        if (c.removed) continue;
+        if (c.kind === 'model') out.push(c);
+        walk(c);
+      }
+    };
+    walk(group);
+    return out;
+  }
+
+  /**
+   * Each group with load="near" loads its models while the viewer's eyes
+   * are within its `near` of the group's place, and lets them go once
+   * they are farther than LET_GO times that (so walking along the edge
+   * does not load them and let them go again and again). What is let go
+   * makes room first, and models that waited for room try again.
+   */
+  private updateAreas(): void {
+    if (this.areas.length === 0) return;
+    const eye = this.camera.position;
+    const at = new Vector3();
+    const coming: Area[] = [];
+    const going: Area[] = [];
+    for (const a of this.areas) {
+      if (a.entry.removed) continue;
+      const d = a.entry.object!.getWorldPosition(at).distanceTo(eye);
+      if (!a.in && d <= a.near) coming.push(a);
+      else if (a.in && d > a.near * LET_GO) going.push(a);
+    }
+    if (coming.length === 0 && going.length === 0) return;
+    for (const a of going) a.in = false;
+    for (const a of going) for (const m of this.modelsIn(a.entry)) this.letGo(m);
+    for (const a of coming) a.in = true;
+    for (const a of coming) for (const m of this.modelsIn(a.entry)) if (m.report?.state === 'waiting' && this.wanted(m)) this.loadModel(m);
+    if (going.length > 0) {
+      for (const m of this.entries) if (m.kind === 'model' && !m.removed && m.report?.state === 'waiting' && this.wanted(m)) this.loadModel(m);
+    }
+    this.tellAreas();
+    this.requestFrame();
+  }
+
+  /**
+   * Lets a model go: it holds nothing and counts for nothing, its stand-in
+   * shows again, and a load still under way is dropped when it finishes.
+   * It loads again when the viewer comes near.
+   */
+  private letGo(entry: Entry): void {
+    const report = entry.report!;
+    if (report.state === 'refused') return;
+    entry.loads = (entry.loads ?? 0) + 1;
+    const drawn = report.state === 'loaded';
+    const solid = drawn && this.isSolid(entry);
+    const shadows = drawn && this.castsShadows(entry);
+    this.unload(entry, true);
+    report.state = 'waiting';
+    report.reason = FAR;
+    delete report.bytes;
+    delete report.triangles;
+    delete report.pictures;
+    delete (report as ModelReport & { action?: AnimationAction }).action;
+    report.materials = {};
+    report.animation = null;
+    this.showStandIn(entry, true);
+    if (solid) this.collidersDirty = true;
+    if (shadows) this.shadowBox = null;
+  }
+
+  /** A model that loads by area and would pass the page's limits waits, holding nothing, until other groups are let go. */
+  private waitForRoom(entry: Entry, reason: string): void {
+    this.unload(entry, true);
+    entry.report!.state = 'waiting';
+    entry.report!.reason = `${reason}; it loads when other groups are let go`;
+    this.showStandIn(entry, true);
+  }
+
+  /**
+   * Takes a model out of the scene and releases what it holds: its
+   * triangles, its instance or copy, the materials made for it, its
+   * animation, its materials' pictures, and its use of its file. With
+   * `drop` (loading by area), a file or picture no model uses any more is
+   * let go too; without (holoml.remove), it stays loaded for the next.
+   */
+  private unload(entry: Entry, drop: boolean): void {
+    const holder = entry.object;
+    if (entry.triangles) this.budget.releaseTriangles(entry.triangles);
+    entry.triangles = undefined;
+    entry.template = undefined;
+    if (holder) {
+      (holder.userData['pool'] as InstancePool | undefined)?.remove(holder);
+      (holder.userData['copy'] as Object3D | undefined)?.removeFromParent();
+      delete holder.userData['copy'];
+      delete holder.userData['template'];
+      for (const c of [...holder.children]) if (c.userData['missing'] === true) holder.remove(c);
+    }
+    const held = entry.held;
+    entry.held = undefined;
+    if (!held) return;
+    for (const m of held.materials) this.disposeMade(m);
+    if (held.mixer) {
+      held.mixer.stopAllAction();
+      this.mixers.splice(this.mixers.indexOf(held.mixer), 1);
+      for (const a of [...this.playing]) if (a.getMixer() === held.mixer) this.playing.delete(a);
+    }
+    // A choice's materials were made from this model's: they are made again when it loads again.
+    for (const c of this.choices) {
+      if (c.choice?.target !== entry.id) continue;
+      for (const o of c.choice.options) {
+        for (const m of o.made.values()) this.disposeMade(m);
+        o.made.clear();
+      }
+    }
+    void held.looks.then((looks) => {
+      for (const l of looks) for (const t of [l.map, l.normalMap, l.roughnessMap]) if (t) this.pictures.release(t, drop);
+    });
+    this.releaseTemplate(held.href, drop);
+  }
+
+  /** A material made for one model (from its `material` changes or a choice's option), with the tiled copies of its pictures. */
+  private disposeMade(m: Material): void {
+    for (const t of this.tiledOf.get(m) ?? []) t.dispose();
+    m.dispose();
+  }
+
+  /** One more model (or stand-in) uses a model file. */
+  private useTemplate(href: string): void {
+    this.templateUsers.set(href, (this.templateUsers.get(href) ?? 0) + 1);
+  }
+
+  /**
+   * A model (or stand-in) no longer uses a file. With `drop`, a file no
+   * model uses any more is let go: its bytes and triangles stop counting,
+   * and its meshes, materials, and pictures are released (a file that
+   * failed is forgotten, so it is tried again next time).
+   */
+  private releaseTemplate(href: string, drop: boolean): void {
+    const left = (this.templateUsers.get(href) ?? 1) - 1;
+    if (left > 0) {
+      this.templateUsers.set(href, left);
+      return;
+    }
+    this.templateUsers.delete(href);
+    if (!drop) return;
+    const loading = this.templates.get(href);
+    this.templates.delete(href);
+    void loading?.then(
+      (loaded) => {
+        const t = loaded.template;
+        // The load counted one copy's triangles for the first model; none took them.
+        if (!loaded.claimed) this.budget.releaseTriangles(t.triangles);
+        this.budget.releaseBytes(t.bytes);
+        for (const key of [href, `shadows ${href}`]) {
+          const pool = this.pools.get(key);
+          if (pool?.template !== t) continue;
+          pool.dispose();
+          this.pools.delete(key);
+        }
+        releaseFile(t.scene);
+      },
+      () => undefined,
+    );
+  }
+
+  /**
+   * Tells the page's scripts when a group that loads by area has all its
+   * models in, or has let them go (the `load` event, as its `loaded`
+   * changes; not while a script's new model loads into a group already in).
+   */
+  private tellAreas(): void {
+    for (const a of [...this.areas]) {
+      if (a.entry.removed) continue;
+      const loaded = this.isLoaded(a.entry);
+      const within = a.in && this.wanted(a.entry);
+      if (loaded && !a.told) {
+        a.told = true;
+        this.emit({ type: 'load', entry: a.entry, loaded: true });
+      } else if (!within && a.told) {
+        a.told = false;
+        this.emit({ type: 'load', entry: a.entry, loaded: false });
+      }
+    }
+  }
+
+  /**
+   * A model's or a group's `loaded` (the scene API): a model's file has
+   * loaded; a group is not let go, and every model in it that may load now
+   * has loaded or been left out.
+   */
+  isLoaded(e: Entry): boolean {
+    if (e.kind === 'model') return e.report?.state === 'loaded';
+    for (let p: Entry | null = e; p; p = p.parent) if (p.area && !p.area.in) return false;
+    return this.modelsIn(e).every((m) => !this.wanted(m) || (m.report?.state !== 'loading' && m.report?.state !== 'waiting'));
+  }
+
+  /** The groups that load by area (for the tests): how near the viewer is, and their models with their stand-ins. */
+  get areasInfo(): { id: string | null; near: number; in: boolean; loaded: boolean; distance: number; models: { id: string | null; src: string; state: string; reason: string | null; standIn: { src: string; state: string; shown: boolean } | null }[] }[] {
+    const eye = this.camera.position;
+    const at = new Vector3();
+    return this.areas
+      .filter((a) => !a.entry.removed)
+      .map((a) => ({
+        id: a.entry.id,
+        near: a.near,
+        in: a.in,
+        loaded: this.isLoaded(a.entry),
+        distance: a.entry.object!.getWorldPosition(at).distanceTo(eye),
+        models: this.modelsIn(a.entry).map((m) => this.modelInfo(m)),
+      }));
+  }
+
+  /** Every model with a stand-in (for the tests): its state, and its stand-in's. */
+  get standInsInfo(): { id: string | null; src: string; state: string; reason: string | null; standIn: { src: string; state: string; shown: boolean } | null }[] {
+    return this.entries.filter((e) => e.kind === 'model' && !e.removed && e.standIn).map((e) => this.modelInfo(e));
+  }
+
+  private modelInfo(m: Entry): { id: string | null; src: string; state: string; reason: string | null; standIn: { src: string; state: string; shown: boolean } | null } {
+    const s = m.standIn;
+    return {
+      id: m.id,
+      src: m.report?.src ?? '',
+      state: m.report?.state ?? '',
+      reason: m.report?.reason ?? null,
+      standIn: s ? { src: s.report.src, state: s.report.state, shown: s.holder.visible && s.report.state === 'loaded' } : null,
+    };
+  }
+
+  /** What the page's files count now (for the tests): bytes, triangles, and model files. */
+  get totals(): { bytes: number; triangles: number; modelFiles: number } {
+    return { bytes: this.budget.bytes, triangles: this.budget.triangles, modelFiles: this.templates.size };
   }
 
   /** One thing finished loading (or failing): the scene is ready when nothing is left. */
@@ -1028,11 +1469,12 @@ export class HolomlView {
     return false;
   }
 
-  private startClip(el: ElementNode, model: Object3D, clips: AnimationClip[], clipName: string, report: ModelReport): void {
+  /** Plays (or poses) one of a model's own animations; its mixer, or null when it has none of that name. */
+  private startClip(el: ElementNode, model: Object3D, clips: AnimationClip[], clipName: string, report: ModelReport): AnimationMixer | null {
     const clip = clips.find((c) => c.name === clipName);
     if (!clip) {
       console.warn(`HoloML: the model "${report.src}" has no animation named "${clipName}".`);
-      return;
+      return null;
     }
     const mixer = new AnimationMixer(model);
     const action = mixer.clipAction(clip);
@@ -1044,23 +1486,28 @@ export class HolomlView {
     this.mixers.push(mixer);
     report.animation = { name: clipName, playing: !action.paused, time: 0 };
     (report as ModelReport & { action?: AnimationAction }).action = action;
+    return mixer;
   }
 
-  /** A model not shown: marked where it would be, reported, and out of the Tab order. */
+  /**
+   * A model not shown: marked where it would be, reported, and out of the
+   * Tab order. What it held is released; one that loads by area forgets
+   * its file and stays in the Tab order, as it is tried again when the
+   * viewer next comes near (milestone 20). Its stand-in stays.
+   */
   private leaveOut(holder: Object3D, report: ModelReport, entry: Entry, reason: string, state: 'left-out' | 'failed' = 'left-out'): void {
     report.state = state;
     report.reason = reason;
     console.warn(state === 'failed' ? `HoloML: the model "${report.src}" ${reason}.` : `HoloML: the model "${report.src}" was left out: ${reason}.`);
-    const pool = holder.userData['pool'] as InstancePool | undefined;
-    pool?.remove(holder);
-    holder.clear();
+    const byArea = this.byArea(entry);
+    this.unload(entry, byArea);
     holder.add(missingMarker());
-    if (entry.item) this.removeItem(entry);
+    if (entry.item && !byArea) this.removeItem(entry);
     this.onLeftOut?.();
   }
 
-  /** <material> children: change the named materials, only what is given (with their looks, pictures included). */
-  private changeMaterials(changes: ElementNode[], looks: Look[], model: Object3D, report: ModelReport): void {
+  /** <material> children: change the named materials, only what is given (with their looks, pictures included); the materials made. */
+  private changeMaterials(changes: ElementNode[], looks: Look[], model: Object3D, report: ModelReport): Material[] {
     const done = new Map<Material, MeshStandardMaterial>();
     model.traverse((o) => {
       if (!(o instanceof Mesh)) return;
@@ -1083,6 +1530,7 @@ export class HolomlView {
       const name = attr(c, 'name') ?? '';
       if (!report.materials[name]) console.warn(`HoloML: the model "${report.src}" has no material named "${name}".`);
     }
+    return [...done.values()];
   }
 
   /**
@@ -1176,6 +1624,8 @@ export class HolomlView {
         }
         slots[slot] = copy;
       }
+      // Released with the material, when its model is let go (milestone 20).
+      this.tiledOf.set(m, [...tiled.values()]);
     }
     m.needsUpdate = true;
   }
@@ -1270,10 +1720,7 @@ export class HolomlView {
       const box = new Box3();
       const b = new Box3();
       for (const e of this.entries) {
-        if (e.kind !== 'model' || e.removed || !e.template || e.report?.state !== 'loaded' || !this.castsShadows(e)) continue;
-        const o = e.object!;
-        if (o.userData['pool']) worldBox(e.template, o, b);
-        else b.setFromObject(o);
+        if (e.kind !== 'model' || e.removed || !this.castsShadows(e) || !this.modelBox(e, b)) continue;
         box.union(b);
       }
       this.shadowBox = box;
@@ -2192,15 +2639,30 @@ export class HolomlView {
     const boxes: Box[] = [];
     const b = new Box3();
     for (const e of this.entries) {
-      if (e.kind !== 'model' || e.removed || !e.template || !this.isSolid(e) || e.report?.state !== 'loaded') continue;
-      const o = e.object!;
-      if (o.userData['pool']) worldBox(e.template, o, b);
-      else b.setFromObject(o);
-      if (!b.isEmpty()) boxes.push({ min: [b.min.x, b.min.y, b.min.z], max: [b.max.x, b.max.y, b.max.z] });
+      if (e.kind !== 'model' || e.removed || !this.isSolid(e) || !this.modelBox(e, b)) continue;
+      boxes.push({ min: [b.min.x, b.min.y, b.min.z], max: [b.max.x, b.max.y, b.max.z] });
     }
     this.grid = new SolidGrid(boxes);
     this.collidersDirty = false;
     return this.grid;
+  }
+
+  /**
+   * The box a model takes up in the world: its own once it has loaded, or
+   * its stand-in's while that stands in (milestone 20); false when neither
+   * is there.
+   */
+  private modelBox(e: Entry, b: Box3): boolean {
+    const o = e.object;
+    const s = e.standIn;
+    if (o && e.template && e.report?.state === 'loaded') {
+      if (o.userData['pool']) worldBox(e.template, o, b);
+      else b.setFromObject((o.userData['copy'] as Object3D | undefined) ?? o);
+    } else if (s?.template && s.holder.visible) {
+      if (s.holder.userData['pool']) worldBox(s.template, s.holder, b);
+      else b.setFromObject(s.holder);
+    } else return false;
+    return !b.isEmpty();
   }
 
   // ---- Pointer and links ----------------------------------------------------
@@ -2383,7 +2845,7 @@ export class HolomlView {
   // ---- Scripts (api.ts) -------------------------------------------------------
 
   /** Calls a script's listener for a kind of event; returns a function that stops it. */
-  listen(type: 'click' | 'key' | 'frame' | 'change', listener: (e: SceneEvent) => void): () => void {
+  listen(type: SceneEvent['type'], listener: (e: SceneEvent) => void): () => void {
     this.listeners[type].add(listener);
     if (type === 'frame') this.requestFrame();
     return () => this.listeners[type].delete(listener);
@@ -2504,7 +2966,12 @@ export class HolomlView {
         const i = this.models.indexOf(e.report);
         if (i >= 0) this.models.splice(i, 1);
       }
-      if (e.triangles && e.report?.state === 'loaded') this.budget.releaseTriangles(e.triangles);
+      if (e.kind === 'model') {
+        // Its triangles and what it held no longer count; its file stays loaded for the next (milestone 20).
+        this.unload(e, false);
+        this.removeStandIn(e);
+      }
+      if (e.area) this.areas.splice(this.areas.indexOf(e.area), 1);
       this.elementCount -= 1;
     }
     entry.object?.removeFromParent();
@@ -2515,6 +2982,8 @@ export class HolomlView {
     this.entries.push(...kept);
     if (this.selected >= this.entries.length) this.selected = -1;
     if (solid) this.collidersDirty = true;
+    // A group that loads by area may have all its models in now.
+    if (this.areas.length > 0) this.tellAreas();
     this.requestFrame();
   }
 
@@ -2721,6 +3190,8 @@ export class HolomlView {
     this.last = time;
     let moving = this.controls?.step(dt) ?? false;
     this.viewMoving = moving;
+    // Loading by area (milestone 20): what the viewer came near loads, and what it left is let go.
+    this.updateAreas();
     if (this.stepAnimations(performance.now())) moving = true;
     if (this.playing.size > 0 && !this.reducedMotion.matches) {
       for (const m of this.mixers) m.update(dt / 1000);
@@ -2923,6 +3394,42 @@ function nameOf(el: ElementNode): string {
 function isInside(o: Object3D, ancestor: Object3D): boolean {
   for (let p: Object3D | null = o; p; p = p.parent) if (p === ancestor) return true;
   return false;
+}
+
+/** Releases an object's geometry, materials, and pictures on the graphics card, each once (`done` holds those already released). */
+function releaseObject(o: Object3D, done: Set<unknown>): void {
+  const mesh = o as Object3D & { geometry?: { dispose(): void }; material?: Material | Material[] };
+  if (mesh.geometry && !done.has(mesh.geometry)) {
+    done.add(mesh.geometry);
+    mesh.geometry.dispose();
+  }
+  for (const m of Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : []) {
+    if (done.has(m)) continue;
+    done.add(m);
+    for (const value of Object.values(m)) if (value instanceof Texture) value.dispose();
+    m.dispose();
+  }
+}
+
+/**
+ * A model file let go (loading by area, milestone 20): its meshes,
+ * materials, and pictures are released, and its decoded pictures closed.
+ */
+function releaseFile(root: Object3D): void {
+  const done = new Set<unknown>();
+  root.traverse((o) => {
+    const mesh = o as Object3D & { material?: Material | Material[] };
+    for (const m of Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : []) {
+      for (const value of Object.values(m)) {
+        const image = value instanceof Texture ? (value.image as unknown) : null;
+        if (image instanceof ImageBitmap && !done.has(image)) {
+          done.add(image);
+          image.close();
+        }
+      }
+    }
+    releaseObject(o, done);
+  });
 }
 
 /** A model that casts and receives shadows: every mesh in it. */

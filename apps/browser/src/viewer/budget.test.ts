@@ -151,7 +151,33 @@ group('HoloML resource limits: loading within the page budget', () => {
     const out = bytes.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
     expect(out).toHaveLength(1);
     expect((out[0]!.reason as LeftOut).reason).toMatch(/128 MB/);
+    expect((out[0]!.reason as LeftOut).overTotal).toBe(true);
     expect(budget.bytes).toBeLessThanOrEqual(LIMITS.totalBytes);
+  });
+
+  it("marks what would pass the page's totals, which fall again as models are let go (milestone 20), apart from the one-file limit", async () => {
+    const MB = 1024 * 1024;
+    const half = LIMITS.triangles / 2 + 1;
+    serve({
+      '/t1.gltf': model(half, 't1.bin', 1024),
+      '/t1.bin': 1024,
+      '/t2.gltf': model(half, 't2.bin', 1024),
+      '/t2.bin': 1024,
+      '/big.gltf': model(1, 'big.bin', 40 * MB),
+      '/big.bin': 40 * MB,
+    });
+    const budget = new Budget();
+    const first = await budget.load(at('/t1.gltf'), ORIGIN);
+    const over = (await budget.load(at('/t2.gltf'), ORIGIN).catch((e: unknown) => e)) as LeftOut;
+    expect(over).toMatchObject({ overTotal: true, reason: expect.stringMatching(/triangles would pass/) });
+    expect(() => budget.useTriangles(half)).toThrow(expect.objectContaining({ overTotal: true }));
+    expect((await budget.load(at('/big.gltf'), ORIGIN).catch((e: unknown) => e)) as LeftOut).toMatchObject({ overTotal: false });
+    // Let go: its triangles and bytes stop counting, and the other fits.
+    budget.releaseTriangles(half);
+    budget.releaseBytes(first.bytes);
+    expect(budget.triangles).toBe(0);
+    expect(budget.bytes).toBe(0);
+    await expect(budget.load(at('/t2.gltf'), ORIGIN)).resolves.toMatchObject({ triangles: half });
   });
 
   it('refuses a file from another site, and stops every load at once', async () => {

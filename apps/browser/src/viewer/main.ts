@@ -58,7 +58,7 @@ Object.defineProperty(window, '__holoml', {
       return state.view?.busy ?? false;
     },
     view: () => state.view?.view ?? null,
-    models: () => JSON.parse(JSON.stringify(state.view?.models.map(({ src, state: s, materials, animation }) => ({ src, state: s, materials, animation })) ?? [])),
+    models: () => JSON.parse(JSON.stringify(state.view?.models.map(({ src, state: s, materials, animation, standsInFor }) => ({ src, state: s, materials, animation, standsInFor })) ?? [])),
     labels: () => state.view?.labels.map((l) => l.text) ?? [],
     links: () => state.view?.links.map((l) => l.href) ?? [],
     object: (id: string) => state.view?.objectInfo(id) ?? null,
@@ -99,6 +99,10 @@ Object.defineProperty(window, '__holoml', {
     sky: () => state.view?.skyInfo ?? null,
     plan: () => JSON.parse(JSON.stringify(state.view?.planInfo ?? null)),
     fade: () => JSON.parse(JSON.stringify(state.view?.fadeInfo ?? null)),
+    /** Loading by area (milestone 20): the groups, their models and stand-ins; every model with a stand-in; and what the page's files count now. */
+    areas: () => JSON.parse(JSON.stringify(state.view?.areasInfo ?? [])),
+    standIns: () => JSON.parse(JSON.stringify(state.view?.standInsInfo ?? [])),
+    totals: () => state.view?.totals ?? null,
     /** The page's panorama of the surroundings: its address, whether it arrived, and how brightly it lights the scene. */
     environment: () => state.view?.environmentInfo ?? null,
     walker: () => state.view?.walkerInfo ?? null,

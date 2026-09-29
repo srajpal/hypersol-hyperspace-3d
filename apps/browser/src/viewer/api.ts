@@ -5,7 +5,8 @@
  * hear clicks, keys, frames, and sliders. Scripts get handles ("things"),
  * never the viewer's own objects, and every value is checked on the way
  * in. Milestone 18 (prompt 92): the viewer's speeds, and sliders; then
- * (prompt 98) choices. Milestone 19: panels.
+ * (prompt 98) choices. Milestone 19: panels. Milestone 20: whether models
+ * and groups are loaded, and the `load` event (loading by area).
  */
 import type { Entry, HolomlView, Hit, SceneEvent } from './scene';
 import type { Vec3 } from './values';
@@ -104,6 +105,8 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
         () => e.solid === true,
         (v) => view.setSolid(e, v === true),
       );
+      // Loading by area (milestone 20): a model's file is in; a group's models near enough to load are all in.
+      define('loaded', () => !e.removed && view.isLoaded(e));
     }
     if (has('model', 'group', 'label', 'panel')) {
       define(
@@ -199,7 +202,7 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
   };
 
   const hitOut = (h: Hit | null) => (h ? { thing: thing(h.entry), point: h.point, normal: h.normal } : null);
-  const TYPES = new Set(['click', 'key', 'frame', 'change']);
+  const TYPES = new Set<SceneEvent['type']>(['click', 'key', 'frame', 'change', 'load']);
 
   const viewer = Object.freeze({
     get position(): Vec3 {
@@ -248,13 +251,16 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
       if (e) view.removeEntry(e);
     },
     on: (type: unknown, listener: unknown) => {
-      if (typeof type !== 'string' || !TYPES.has(type)) throw new TypeError('holoml.on(type, listener): type must be "click", "key", "frame", or "change"');
+      if (typeof type !== 'string' || !TYPES.has(type as SceneEvent['type'])) {
+        throw new TypeError('holoml.on(type, listener): type must be "click", "key", "frame", "change", or "load"');
+      }
       if (typeof listener !== 'function') throw new TypeError('holoml.on(type, listener): listener must be a function');
       const call = listener as (e: unknown) => void;
-      return view.listen(type as 'click' | 'key' | 'frame' | 'change', (e: SceneEvent) => {
+      return view.listen(type as SceneEvent['type'], (e: SceneEvent) => {
         if (e.type === 'click') call(Object.freeze({ type: 'click', ...hitOut(e.hit), button: e.button }));
         else if (e.type === 'key') call(Object.freeze({ type: 'key', key: e.key, down: e.down, repeat: e.repeat }));
         else if (e.type === 'change') call(Object.freeze({ type: 'change', thing: thing(e.entry), value: e.value }));
+        else if (e.type === 'load') call(Object.freeze({ type: 'load', thing: thing(e.entry), loaded: e.loaded }));
         else call(Object.freeze({ type: 'frame', time: e.time, dt: e.dt }));
       });
     },
