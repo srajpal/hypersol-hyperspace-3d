@@ -232,8 +232,9 @@ HoloML is the 3D markup language developed alongside the browser, in its
 own repository so it stays independent and reusable:
 [github.com/srajpal/holoml](https://github.com/srajpal/holoml).
 Versions 0.1 and 0.2 are written down there (SPEC.md), with a parser, a
-checker, and sample pages; 0.2 grew with the example sites. HoloML files
-use the extension `.holoml`. This browser
+checker, and sample pages; 0.2 grew with the example sites and is
+released as [v0.2.0](https://github.com/srajpal/holoml/releases/tag/v0.2.0).
+HoloML files use the extension `.holoml`. This browser
 shows HoloML pages (milestone 14): open a `.holoml` address, or a file
 with Ctrl+O, and walk or orbit around the scene. A page's size, models,
 pictures, and triangles have limits (milestone 15); what crosses one is

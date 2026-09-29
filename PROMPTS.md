@@ -1424,3 +1424,15 @@ request #38 and accepted milestone 21, the aquarium.
 ```text
 Merged #38 accept milestone
 ```
+
+## 126 — 2026-09-29 · Claude Opus 5.5, max effort
+
+Approval of milestone 21's last task (Q6 a): tag holoml's main (710d8b9,
+the merge of #19) as v0.2.0 and publish it as a GitHub release, "HoloML
+0.2", with the release note drafted and sent in the reply (what 0.2
+adds, the six published example sites, what the repository holds, and
+the licences), as a regular release rather than a pre-release.
+
+```text
+Go and publish
+```

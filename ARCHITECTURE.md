@@ -352,7 +352,8 @@ hypersol-hyperspace-3d/
                                and checker from the holoml repository
                                (the tag or branch and commit are in
                                SOURCE.json; v0.1.1 until milestone 17,
-                               then 0.2, a draft until milestone 21),
+                               then 0.2, a draft until milestone 21,
+                               and v0.2.0 since it was released),
                                made by sync.mjs
                                (pnpm holoml:sync); a test checks the copy
   docs/

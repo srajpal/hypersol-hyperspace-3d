@@ -1,14 +1,14 @@
 {
   "repository": "https://github.com/srajpal/holoml",
-  "tag": "main",
+  "tag": "v0.2.0",
   "commit": "710d8b9f40593f2f913131cb01ec454db0d634b1",
   "files": {
-    "src/parser.ts": "68f232f3c7bcc299dd477596ec62fcb9681dbd4f330ed9e55d50846626a4e526",
-    "src/rules.ts": "2a181446f1267d6de8871159dd3bd7eb30b197fda9baaaf7ddc50244d1701718",
-    "src/schema.ts": "5301804556a1d27954fbcdb0e26e7fd6c8836770b0ba7a1d68220b74999c8f09"
+    "src/parser.ts": "61119ede47a01e8c8bfb349a701c832e8b729e99c3e79d52647cac9027786034",
+    "src/rules.ts": "47d721587728d00fc3dc4bb831f2d62bb2697464acfa95e1503580b4c6c5cb33",
+    "src/schema.ts": "0d1eed6b2b874ad179171cd1513b1d6e84f23641600e2daec129eddd01380aed"
   },
   "examples": {
-    "ref": "main",
+    "ref": "v0.2.0",
     "commit": "710d8b9f40593f2f913131cb01ec454db0d634b1",
     "files": {
       "showroom/README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",

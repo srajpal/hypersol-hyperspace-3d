@@ -2,8 +2,8 @@
 
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-09-29 (milestones 1 to 21 accepted, 21 in prompt
-125: see "Milestone 21, accepted" below; tagging HoloML v0.2.0 waits for
-the owner's go. 22 is HoloML's documentation (prompt 115), not yet
+125, and HoloML 0.2 released as v0.2.0 in prompt 126: see "Milestone 21,
+accepted" below. 22 is HoloML's documentation (prompt 115), not yet
 planned. The roadmap is in TODO.md).
 
 ## Where things stand
@@ -53,8 +53,8 @@ state; this is a summary.
   Bay, a resort, prompts 101 and 102); 21 the ocean tunnel, an
   aquarium, where HoloML 0.2 is completed (accepted 2026-09-29, prompt
   125; merged in holoml, #19, and the browser, #38; published at
-  https://srajpal.github.io/holoml/aquarium/; HoloML v0.2.0 is tagged
-  when the owner says go)); 22 documentation for HoloML to recognised standards (prompt
+  https://srajpal.github.io/holoml/aquarium/; HoloML 0.2 released as
+  v0.2.0, https://github.com/srajpal/holoml/releases/tag/v0.2.0)); 22 documentation for HoloML to recognised standards (prompt
   115); 23 privacy and data tools (HTTPS-only, per-site storage,
   bookmark import and export: #24, #26, #27); then installers as 1.0
   (24 for Windows and Linux, 25 for macOS), with mobile later (owner,
@@ -81,8 +81,9 @@ owner answered Q1 to Q7 with the recommendations (prompt 122), taken
 with prompt 121's "Next milestone" as approval of the plan and its
 build, and approved the nine fish (prompt 123). The owner merged holoml
 #19 (prompt 124) and the browser's #38, and accepted the milestone
-(prompt 125). One task remains: HoloML 0.2 is tagged v0.2.0 on holoml's
-main, with a short release note, when the owner says go (task 9, Q6 a).
+(prompt 125). On the owner's go (prompt 126), holoml's main (710d8b9) is
+tagged v0.2.0 and published as the GitHub release "HoloML 0.2" (task 9,
+Q6 a); the browser's copy of HoloML comes from that tag.
 
 Where the work is:
 
@@ -104,7 +105,7 @@ Where the work is:
   sounds, and tools/; the download's cache, tools/cache/, is ignored by
   git), its tests, and the README and NOTICE.
 - The browser's copy of HoloML (packages/holoml) comes from holoml's
-  main (SOURCE.json: 710d8b9, the merge of #19, prompt 124).
+  tag v0.2.0 (SOURCE.json: 710d8b9, the merge of #19, prompt 126).
 - Pull requests: holoml #19 and the browser's #38, both merged (GitHub
   Pages publishes the aquarium, and X10 passed). #38's builds found the
   aquarium too slow to draw in software (fixed by lighter models) and a
