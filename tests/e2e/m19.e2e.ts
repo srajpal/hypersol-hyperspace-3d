@@ -434,6 +434,45 @@ describe('V5: arriving through a fade', () => {
     );
   const darkest = (page: string) => inPage<string | null>(h, "sessionStorage.getItem('fadeMax')", page).then(Number);
   const fade = (page: string) => holo<Fade>(h, 'window.__holoml.fade()', page);
+  /**
+   * The page's brightness over some milliseconds, sampled by the browser
+   * (its own pictures of the page, 0 to 255 in a square around a point at
+   * half its width and 30% of its height) from when the page appears,
+   * each with the times its capture began and finished: a page drawing
+   * its first frame in software may not answer for seconds, so it is not
+   * asked.
+   */
+  const brightness = (page: string, ms: number) =>
+    h.app.evaluate(
+      async ({ webContents }, { page, ms }) => {
+        const out: { t: number; done: number; light: number }[] = [];
+        const end = Date.now() + ms;
+        while (Date.now() < end) {
+          const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview').pop();
+          if (guest?.getURL().includes(page)) {
+            const t = Date.now();
+            const image = await guest.capturePage();
+            const { width, height } = image.getSize();
+            if (width > 0 && height > 0) {
+              const px = image.toBitmap(); // BGRA
+              const [cx, cy, half] = [Math.round(width / 2), Math.round(height * 0.3), 8];
+              let [sum, n] = [0, 0];
+              for (let y = cy - half; y <= cy + half; y++) {
+                for (let x = cx - half; x <= cx + half; x++) {
+                  const i = (y * width + x) * 4;
+                  sum += 0.299 * px[i + 2]! + 0.587 * px[i + 1]! + 0.114 * px[i]!;
+                  n++;
+                }
+              }
+              out.push({ t, done: Date.now(), light: sum / n });
+            }
+          }
+          await new Promise((r) => setTimeout(r, 100));
+        }
+        return out;
+      },
+      { page, ms },
+    );
 
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'));
@@ -447,19 +486,29 @@ describe('V5: arriving through a fade', () => {
     await watchFade(A);
     // The first link: "Next room".
     await clickUntil(h, await onScreen(h, A, 0), 'the next room', async () => (await focusedTab(h)).url === url(B));
+    // The next page is dark while its model is still coming (the check holds it): its brightness, sampled from when
+    // it appears, over longer than the 4 s it waits at most...
+    const samples = await brightness(B, 6000);
     await waitForPage(h, B);
     // The first page went dark before it went.
     expect(await darkest(B)).toBeGreaterThan(0.95);
-    // The next page stays dark while its model is still coming (the check holds it)...
-    await waitFor('arriving', () => fade(B), (f) => f !== undefined && f.arriving && f.opacity === 1);
+    // ...from when the page set its fade (as it starts) until it began to fade in (once its scene is drawn with
+    // nothing left to load, or after the 4 s: a page drawing in software may take that long over its first frame,
+    // and the check's reading of the page with it), nothing of its scene shows (the lit scene reads about 226; the
+    // page's own dark ground, before the fade is first painted, about 16), and the fade covers it.
+    const [started, origin] = [await fade(B), await inPage<number>(h, 'performance.timeOrigin', B)];
+    expect(started.log[0]).toMatchObject({ to: 1 });
+    const [from, until] = [origin + started.log[0]!.at, started.log[1] ? origin + started.log[1].at : Infinity];
+    const whileDark = samples.filter((x) => x.t >= from && x.done <= until);
+    const seen = `from ${Math.round(from - origin)} until ${Math.round(until - origin)} ms; samples: ${JSON.stringify(samples.map((x) => [Math.round(x.t - origin), Math.round(x.light)]))}`;
+    expect(Math.max(...whileDark.map((x) => x.light)), seen).toBeLessThan(30);
+    expect(whileDark.filter((x) => x.light < 12).length, seen).toBeGreaterThan(3);
     const size = await inPage<{ w: number; h: number }>(h, '({ w: innerWidth, h: innerHeight })', B);
     const centre = { x: size.w / 2, y: size.h * 0.3 };
-    const [dark] = await pixels(h, B, [centre], 8);
-    expect(dark!.light).toBeLessThan(12);
     // ...and fades in once it has drawn its scene.
     server.release('fade-b');
     await ready(h, B);
-    const done = await waitFor('faded in', () => fade(B), (f) => !f.arriving && f.opacity === 0, 6000);
+    const done = await waitFor('faded in', () => fade(B), (f) => !f.arriving && f.opacity === 0, await sceneWait(h, 6000));
     expect(done.log.map((x) => x.to)).toEqual([1, 0]);
     const [light] = await pixels(h, B, [centre], 8);
     expect(light!.light).toBeGreaterThan(150);
@@ -667,8 +716,11 @@ describe('V8 to V10: Harbour Loft', () => {
     expect(atDoor[0], `stopped at ${atDoor.join(', ')}`).toBeGreaterThan(-1.75);
     await stand([-0.9, 1.6, -2.55], [-2, 1.1, -2.55]);
     await drawn(h, LOFT);
+    const doorPlays = async () => (await holo<{ src: string; plays: number }[]>(h, 'window.__holoml.sounds()', LOFT)).filter((x) => x.src === 'sounds/door.wav').reduce((n, x) => n + x.plays, 0);
+    const played = await doorPlays();
     await clickUntil(h, await onScreen(h, LOFT, 'study-door'), 'the study door opens', async () => (await action('study-door')).pressed === 'true');
-    await waitFor('the door sound', () => holo<{ src: string; playing: boolean }[]>(h, 'window.__holoml.sounds()', LOFT), (s) => s.some((x) => x.src === 'sounds/door.wav' && x.playing), 3000);
+    // Its sound played (counted as it starts: drawing in software, the page may answer only after it has ended).
+    await waitFor('the door sound', doorPlays, (n) => n > played, await sceneWait(h, 3000));
     await waitFor('open', () => turnOf('study-hinge'), (r) => sameTurn(r, -180));
     await stand([-1.2, 1.6, -2.55], [-5, 1.6, -2.55]);
     const inStudy = await walkUntilStopped('W', await sceneWait(h, 6000));

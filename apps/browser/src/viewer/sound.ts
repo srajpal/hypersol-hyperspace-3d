@@ -14,6 +14,8 @@ export interface SoundReport {
   reason?: string;
   bytes?: number;
   playing: boolean;
+  /** How many times it has started playing (for the tests and the inspector: a short sound may be over before anyone looks). */
+  plays: number;
 }
 
 interface Sound {
@@ -138,6 +140,7 @@ export class SoundBank {
     s.source = source;
     s.gain = gain;
     s.report.playing = true;
+    s.report.plays += 1;
     source.start();
     this.onChange?.();
   }
