@@ -1390,3 +1390,18 @@ the end-to-end checks split into two jobs on each system).
 ```text
 Accepted. Use the recommended answers.
 ```
+
+## 123 — 2026-09-29 · Claude Opus 5.5, max effort
+
+Approval of the aquarium's fish (milestone 21, the plan's check-in
+before the tank is built): the nine sent as a picture with their
+credits, 8 kinds and a sea turtle, CC BY 4.0 or CC0: a great white
+shark and a grey snapper (Babylon.js's asset library), a flatback sea
+turtle (DigitalLife3D), a gilt-head bream (BlueMesh), Atlantic mackerel
+(Amy Scott-Murray), a tuna (GoldenZtuff), a clownfish (zixisun02), and a
+copperband butterflyfish (Dsanchez13), from Objaverse's copies of
+Sketchfab models, and a barramundi (Microsoft, Khronos's glTF samples).
+
+```text
+Fish approved.
+```
