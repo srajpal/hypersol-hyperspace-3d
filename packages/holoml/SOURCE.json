@@ -1,7 +1,7 @@
 {
   "repository": "https://github.com/srajpal/holoml",
   "tag": "sneaker-store",
-  "commit": "e1a38413de1cabc95a4274a37d30581c120f0042",
+  "commit": "5349baad9fcd0f991681346a9c85fe26e79022c0",
   "files": {
     "src/parser.ts": "096ed7f15af3e5a4647dbcdcc3afa968ea47ed892411f4ee8997ea11525d8f4f",
     "src/rules.ts": "00450509bbbfe091d84047e90e00a9737b85a5f6207dfcdcfa196f2b9ee22ac6",
@@ -9,7 +9,7 @@
   },
   "examples": {
     "ref": "sneaker-store",
-    "commit": "e1a38413de1cabc95a4274a37d30581c120f0042",
+    "commit": "5349baad9fcd0f991681346a9c85fe26e79022c0",
     "files": {
       "showroom/README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
       "showroom/about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",

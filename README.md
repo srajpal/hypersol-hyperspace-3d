@@ -50,7 +50,8 @@ Harbour Loft, a flat by a harbour to tour (built; waiting for
 acceptance). Milestone 20 adds groups of models that load only while
 you are near them, with lighter stand-ins until then, and the sneaker
 store, one shoe in ten colourways to walk among, turn over, and add to a
-cart (being built). Then one more example site, HoloML's documentation,
+cart (built; waiting for acceptance). Then one more example site,
+HoloML's documentation,
 privacy and data tools, and installers as 1.0. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
@@ -216,8 +217,8 @@ sliders, and the sofa studio, a shop page with shadows, textured
 fabrics, and choices that change the sofa in place. Milestone 19, built
 and waiting for acceptance, adds Harbour Loft, a flat to tour, with
 panels of text, doors and lamps to click, places, a sky, and a floor
-plan. Milestone 20, being built, adds loading by area and the sneaker
-store.
+plan. Milestone 20, built and waiting for acceptance, adds loading by
+area and the sneaker store.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 

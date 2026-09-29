@@ -3516,6 +3516,24 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
 - W2 to W10 (tests/e2e/m20.e2e.ts): all 9 checks pass on Windows, in
   two full runs of the file (and the store's five alone before them),
   and drawing in software (HYPERSOL_TEST_SOFTWARE=1, 138 s).
+- Milestone 19's fix for pull request #36 (V5 and V8 on GitHub's Linux
+  machines, 3e6b852) merged into this branch (a75dfe1); W7, W8, and W9
+  given the same care (816ee59): W8 counts the chime's plays, and W7's
+  and W9's waits grow drawing in software.
+- The full run on Windows (`pnpm test:e2e`, 2026-09-29, 12 minutes):
+  270 checks, 265 passed and 5 failed. Four are the clipboard checks of
+  D8 (copying a link and text, pasting) and K2 (the Passwords tab's
+  copy): the Windows clipboard itself failed on this computer at the
+  time (PowerShell's Set-Clipboard failed as well, again and again), and
+  they failed the same run alone; they passed in milestone 19's full run,
+  and nothing here touches the clipboard. The fifth, L9 (the main
+  process held 40 ms where 20 ms is allowed, with 100,000 visits),
+  passed alone. Not yet: those four again on a working clipboard.
+- The copy of HoloML synced again from holoml's `sneaker-store`
+  (5349baa, its README and NOTICE): only SOURCE.json changed.
+- Screenshots: docs/screenshots/m20 (`MILESTONE=m20 pnpm screenshots`;
+  the store, a shoe's page, and the checkout are 58 to 60), and the
+  README's four pictures again (`pnpm screenshots:readme`), looked at.
 
 ### Done when
 
