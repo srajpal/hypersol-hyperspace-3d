@@ -1,5 +1,5 @@
 // Copied from the holoml repository (https://github.com/srajpal/holoml),
-// packages/schema/src/rules.ts at main. Apache License 2.0, The HoloML Authors.
+// packages/schema/src/rules.ts at sneaker-store. Apache License 2.0, The HoloML Authors.
 // Do not edit here: change HoloML there and run pnpm holoml:sync.
 
 /**
@@ -132,7 +132,14 @@ export const ELEMENTS: Readonly<Record<string, ElementRule>> = {
   },
   group: {
     children: SCENE_CONTENT,
-    attributes: { ...place, solid: { value: { kind: 'flag' }, since: '0.2' }, shadows: { value: { kind: 'flag' }, since: '0.2' } },
+    attributes: {
+      ...place,
+      solid: { value: { kind: 'flag' }, since: '0.2' },
+      shadows: { value: { kind: 'flag' }, since: '0.2' },
+      // 0.2: loading by area (checked in index.ts: near needs load="near").
+      load: { value: { kind: 'choice', values: ['page', 'near'] }, since: '0.2' },
+      near: { value: { kind: 'number', positive: true }, since: '0.2' },
+    },
   },
   model: {
     children: ['material'],
@@ -143,6 +150,8 @@ export const ELEMENTS: Readonly<Record<string, ElementRule>> = {
       autoplay: { value: { kind: 'flag' } },
       solid: { value: { kind: 'flag' }, since: '0.2' },
       shadows: { value: { kind: 'flag' }, since: '0.2' },
+      // 0.2: a lighter model shown in its place until it has loaded, and once it is let go.
+      'stand-in': { value: { kind: 'url', for: 'model' }, since: '0.2' },
     },
   },
   material: {

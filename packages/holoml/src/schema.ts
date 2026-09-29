@@ -1,5 +1,5 @@
 // Copied from the holoml repository (https://github.com/srajpal/holoml),
-// packages/schema/src/index.ts at main. Apache License 2.0, The HoloML Authors.
+// packages/schema/src/index.ts at sneaker-store. Apache License 2.0, The HoloML Authors.
 // Do not edit here: change HoloML there and run pnpm holoml:sync.
 
 /**
@@ -116,6 +116,11 @@ export function check(doc: HoloDocument, options: CheckOptions = {}): Problem[] 
     if (el.name === 'sound') sounds.push(el);
     if (el.name === 'viewpoint') viewpoints.push(el);
     if (el.name === 'a' && insideLink) report('nested-link', 'A link cannot be inside another link', el.start);
+    // Loading by area (0.2): "near" says how near a group that loads by area must be.
+    if (el.name === 'group' && atLeast(version, '0.2')) {
+      const near = attr(el, 'near');
+      if (near && attr(el, 'load')?.value !== 'near') report('missing-attribute', '<group> with "near" needs the attribute load="near"', near.start);
+    }
 
     // Children.
     if (rule.children === 'text') {

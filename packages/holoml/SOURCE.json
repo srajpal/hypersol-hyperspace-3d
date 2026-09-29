@@ -1,15 +1,15 @@
 {
   "repository": "https://github.com/srajpal/holoml",
-  "tag": "main",
-  "commit": "4d69a6997010cd909070eb4a224c478b33012e41",
+  "tag": "sneaker-store",
+  "commit": "06afc79f2955e1c68028a8260c5fa1ad55319d55",
   "files": {
-    "src/parser.ts": "68f232f3c7bcc299dd477596ec62fcb9681dbd4f330ed9e55d50846626a4e526",
-    "src/rules.ts": "91b4a35651a21bdc17fbde7ff880d9eaa0209f1450979ea447e3042a55dd9b65",
-    "src/schema.ts": "03f8cad649f1e00b7cb6f90d2f89b71e05c84aa3688bfafc2af5469da3c0d83f"
+    "src/parser.ts": "096ed7f15af3e5a4647dbcdcc3afa968ea47ed892411f4ee8997ea11525d8f4f",
+    "src/rules.ts": "00450509bbbfe091d84047e90e00a9737b85a5f6207dfcdcfa196f2b9ee22ac6",
+    "src/schema.ts": "9873c5dfe8380e0d04478084cbce8432451e72654ecd280c55715381e8869b48"
   },
   "examples": {
-    "ref": "main",
-    "commit": "4d69a6997010cd909070eb4a224c478b33012e41",
+    "ref": "sneaker-store",
+    "commit": "06afc79f2955e1c68028a8260c5fa1ad55319d55",
     "files": {
       "showroom/README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
       "showroom/about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",
