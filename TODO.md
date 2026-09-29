@@ -3321,8 +3321,11 @@ sofa studio did not have: text of more than one line (holoml issue
   was fading in). Now it wants only what can be seen there: the samples
   taken before the fade-in, all dark. Tried here with the page's
   processor slowed twenty times, drawing in software: the same one
-  sample, and a pass. Both pass on Windows, drawing in software, and
-  with `pnpm test:linux`.
+  sample, and a pass. V8 passes on Windows, drawing in software, with
+  `pnpm test:linux`, and in the automatic builds; V5 passes on Windows
+  and drawing in software, and its first version passed with `pnpm
+  test:linux`. Not yet: this V5 with `pnpm test:linux` and in the
+  automatic builds (running).
 
 ### Done when
 
