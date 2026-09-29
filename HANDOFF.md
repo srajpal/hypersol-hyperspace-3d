@@ -95,9 +95,10 @@ Where the work is:
   from main (`pnpm holoml:sync main --examples main`), as milestone 19
   did.
 
-What comes next: the pull requests (holoml's first), W11 by hand once
-GitHub Pages publishes the store, the automatic builds, and the owner's
-acceptance.
+What comes next: the pull requests are open, holoml's #18 and the
+browser's #37 (merge #36 first: #37 starts from milestone 19's branch);
+their automatic builds, W11 by hand once #18 is merged and GitHub Pages
+publishes the store, and the owner's acceptance.
 
 Worth knowing:
 

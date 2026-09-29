@@ -3553,9 +3553,9 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
   software (logged). W10: halfway down the hall six bays in, 5.0 MB
   counted and 5.9 MB of ArrayBuffers; by the entrance four, 3.6 MB and
   4.8 MB (the heap 6.7 MB both times; the working set 239 and 233 MB).
-- Not yet: the automatic builds (the pull request), and W11 by hand
-  once holoml's pull request #18 is merged and GitHub Pages publishes
-  the store.
+- Pull requests: holoml #18 and the browser's #37 (2026-09-29). Not
+  yet: their automatic builds, and W11 by hand once #18 is merged and
+  GitHub Pages publishes the store.
 
 ### Done when
 
