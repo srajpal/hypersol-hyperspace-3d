@@ -1,5 +1,5 @@
 /**
- * Walls and gravity for walking (HoloML 0.2 draft, SPEC.md "Walls and
+ * Walls and gravity for walking (HoloML 0.2, SPEC.md "Walls and
  * gravity"): the walker is a box 0.6 m wide and 1.8 m tall, with its eyes
  * 1.6 m above its feet. It cannot move into a solid box; with gravity it
  * falls and stands on solid boxes or on the floor (y = 0). Plain numbers

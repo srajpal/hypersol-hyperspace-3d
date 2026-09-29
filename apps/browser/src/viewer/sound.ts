@@ -1,5 +1,5 @@
 /**
- * A HoloML page's sounds (HoloML 0.2 draft, `sound`; HyperSpace 3D
+ * A HoloML page's sounds (HoloML 0.2, `sound`; HyperSpace 3D
  * milestone 17, owner prompt 85, Q5 a). Files are fetched within the
  * page's limits like models, and nothing plays before the viewer's first
  * click, tap, or key on the page: only then is the audio started, and

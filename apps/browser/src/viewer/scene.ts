@@ -10,7 +10,7 @@
  * reduced motion is followed; the instrument panel's Scene part reads
  * the tree, the selection, and the costs from here (#28).
  *
- * Milestone 17 (HoloML 0.2 draft): elements can be added and removed by
+ * Milestone 17 (HoloML 0.2): elements can be added and removed by
  * the page's scripts (api.ts); a model file is loaded once and repeated
  * plain models are drawn as instances (instances.ts); walls and gravity
  * for walking (physics.ts); lights and the background can be animated;

@@ -1,5 +1,5 @@
 /**
- * The scene API for a HoloML page's scripts (HoloML 0.2 draft, SPEC.md
+ * The scene API for a HoloML page's scripts (HoloML 0.2, SPEC.md
  * section 10; HyperSpace 3D milestone 17, owner prompt 86, Q1 a): one
  * object, `holoml`, to find, change, add, and remove elements, and to
  * hear clicks, keys, frames, and sliders. Scripts get handles ("things"),

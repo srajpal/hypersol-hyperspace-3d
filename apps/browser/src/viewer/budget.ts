@@ -6,7 +6,7 @@
  * before anything is decoded. A model that crosses a limit is left out;
  * the rest of the scene shows.
  *
- * Milestone 17 (HoloML 0.2 draft): a model file is loaded once however
+ * Milestone 17 (HoloML 0.2): a model file is loaded once however
  * many models use it, so the limit is on model files; each model drawn
  * counts its triangles; sound files count like model files.
  *
