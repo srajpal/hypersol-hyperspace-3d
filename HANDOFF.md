@@ -1,12 +1,10 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-09-29 (milestones 1 to 18 accepted; milestones 19,
-Harbour Loft, and 20, the sneaker store, are built and merged, prompt
-121, and wait for the owner's acceptance: see "Milestone 20, built" and
-"Milestone 19, built" below. Milestone 21, the aquarium, is being
-planned (prompt 121): see "Milestone 21, planned". 22 is HoloML's
-documentation (prompt 115). The roadmap is in TODO.md).
+Last updated 2026-09-29 (milestones 1 to 20 accepted, 19 and 20 in
+prompt 122. Milestone 21, the aquarium, is planned and being built
+(prompts 121 and 122): see "Milestone 21, in progress" below. 22 is
+HoloML's documentation (prompt 115). The roadmap is in TODO.md).
 
 ## Where things stand
 
@@ -46,13 +44,14 @@ state; this is a summary.
   2026-09-28, prompt 112; merged in holoml, pull requests #14 to #16,
   and the browser, #34 and #35; published at
   https://srajpal.github.io/holoml/sofa-studio/); 19 Harbour Loft
-  (built and merged, holoml #17 and the browser's #36, waiting for
-  acceptance; published at https://srajpal.github.io/holoml/harbour-loft/);
-  20 a sneaker store, with loading by area (built and merged, holoml
-  #18 and the browser's #37, waiting for acceptance; published at
+  (accepted 2026-09-29, prompt 122; merged in holoml, #17, and the
+  browser, #36; published at
+  https://srajpal.github.io/holoml/harbour-loft/); 20 a sneaker store,
+  with loading by area (accepted 2026-09-29, prompt 122; merged in
+  holoml, #18, and the browser, #37; published at
   https://srajpal.github.io/holoml/sneaker-store/; in place of Coral
   Bay, a resort, prompts 101 and 102); 21 Aquarium, where HoloML 0.2 is
-  tagged (being planned)); 22 documentation for HoloML to recognised standards (prompt
+  completed and tagged (being built)); 22 documentation for HoloML to recognised standards (prompt
   115); 23 privacy and data tools (HTTPS-only, per-site storage,
   bookmark import and export: #24, #26, #27); then installers as 1.0
   (24 for Windows and Linux, 25 for macOS), with mobile later (owner,
@@ -71,24 +70,26 @@ on the browser's branch `m21-aquarium` (from main after #37):
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
 
-## Milestone 21, planned (2026-09-29, prompt 121)
+## Milestone 21, in progress (2026-09-29, prompts 121 and 122)
 
-The owner merged milestones 19 and 20 and asked for the next milestone
-(prompt 121). Its plan is in TODO.md, "Milestone 21 — Aquarium", with
-seven questions (Q1 to Q7) and checks X1 to X12, and waits for the
-owner's approval; nothing is built yet. The Electron check (rule 13) is
-done, and the browser's branch is `m21-aquarium` (pushed).
+The plan and its checks (X1 to X12) are in TODO.md, "Milestone 21 —
+Aquarium". The owner answered Q1 to Q7 with the recommendations (prompt
+122), taken with prompt 121's "Next milestone" as approval of the plan
+and its build. Two check-ins remain in the plan: the fish (task 3) are
+shown to the owner before the tank is built around them (task 4), and
+HoloML 0.2 is tagged only after acceptance, when the owner says go
+(task 9). The Electron check (rule 13) is done, and the browser's branch
+is `m21-aquarium` (pushed).
 
-The open question that matters most is Q1, the fish: real-looking CC0
-fish free without an account are scarce (only Khronos's Barramundi
-Fish, without animation), so the plan recommends CC BY 4.0 fish,
-credited, from Babylon.js's asset library and Objaverse (the Allen
-Institute for AI's copy of Sketchfab's free models on Hugging Face),
-shown to the owner before the tank is built around them. Q7: the Linux
-job of the automatic builds took 38 minutes 44 seconds of its 45 (#37),
-so the checks would be split into two jobs.
+The fish (Q1 a): CC BY 4.0 fish, credited, from Babylon.js's asset
+library and Objaverse (the Allen Institute for AI's copy of Sketchfab's
+free models on Hugging Face), with Khronos's Barramundi Fish (CC0); only
+CC BY 4.0 or CC0, never "non-commercial", "no derivatives", or "share
+alike". The Linux job of the automatic builds took 38 minutes 44
+seconds of its 45 (#37), so the end-to-end checks are split into two
+jobs on each system (Q7 a).
 
-## Milestone 20, built (2026-09-29, prompt 120)
+## Milestone 20, accepted (2026-09-29, prompts 120 to 122)
 
 The plan and its checks (W1 to W12) are in TODO.md, "Milestone 20 —
 Sneaker store"; the owner approved the plan, with the recommended
@@ -120,7 +121,7 @@ Merged (prompt 121): holoml's #18 and the browser's #37 (after #36);
 their automatic builds passed, GitHub Pages published the store, and
 W11 passed (the published store in the built app; TODO.md has the
 numbers). The browser's copy of HoloML is synced from holoml's main
-(a6c88d9). What comes next: the owner's acceptance.
+(a6c88d9). The owner accepted the milestone (prompt 122).
 
 Worth knowing:
 
@@ -147,7 +148,7 @@ Worth knowing:
 - The store's bench is in the middle of the hall: W6 walks the left-hand
   lane (the right-hand one has the About sign's stand in it).
 
-## Milestone 19, built (2026-09-28, prompt 118)
+## Milestone 19, accepted (2026-09-29; built in prompt 118)
 
 The plan and its checks (V1 to V12) are in TODO.md, "Milestone 19 —
 Harbour Loft"; the owner approved the build in prompt 114, and it was
@@ -177,11 +178,11 @@ passed (V8 to V10 were given time for drawing in software after `pnpm
 test:linux` ran them out of time; then its Linux job failed V5 and V8,
 which read the page too late on GitHub's slower machine, fixed
 2026-09-29: TODO.md, milestone 19's results). V11 passed (the published
-site in the built app). What comes next: the owner's acceptance. The AGENTS.md wording for the README's pictures is approved and
+site in the built app). The owner accepted the milestone (prompt
+122). The AGENTS.md wording for the README's pictures is approved and
 in (prompt 119). For an owner decision later: ARCHITECTURE.md section
 10, item 4 (large scenes: shaders compiled on the page's main thread,
-every model a Tab stop). Milestone 20, the sneaker store, is being
-planned and started (prompt 120), and is built (see above).
+every model a Tab stop).
 
 Worth knowing:
 

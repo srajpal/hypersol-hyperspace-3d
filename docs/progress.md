@@ -218,7 +218,7 @@ own shadows.
 
 ![The sofa studio in the evening: brown leather on an ebony frame, lit by the table lamp](screenshots/m18/54-sofa-studio-evening.png)
 
-**Milestone 19: Harbour Loft** (built; waiting for acceptance).
+**Milestone 19: Harbour Loft** (accepted 2026-09-29).
 HoloML 0.2's third part: text of more than one line on a board in the
 scene, doors and lamps that work with a click (and from the keyboard),
 places to go to, a fade between a site's pages, a sky, and a floor plan.
@@ -231,7 +231,7 @@ each room, lamps to switch on in the evening, and a roof terrace.
 
 ![Harbour Loft's roof terrace: sun loungers on a deck behind glass railings, the marina all round](screenshots/m19/57-harbour-loft-terrace.png)
 
-**Milestone 20: sneaker store** (built; waiting for acceptance).
+**Milestone 20: sneaker store** (accepted 2026-09-29).
 HoloML 0.2's fourth part: groups of models that load only while the
 viewer is near, and are let go (their memory released) when the viewer
 walks away, with a lighter stand-in in each model's place until then.

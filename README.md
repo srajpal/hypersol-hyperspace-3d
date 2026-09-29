@@ -36,7 +36,7 @@ planned but untested. Apache 2.0. No telemetry.
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
 as source for developers (no installers yet). Since then, HoloML 0.1 has
 been written down in its own repository (milestone 13), and this browser
-shows HoloML pages (milestones 14 to 18, accepted; not yet in a
+shows HoloML pages (milestones 14 to 20, accepted; not yet in a
 release), with limits for heavy scenes, keyboard and screen-reader
 access, a scene inspector, and a HoloML car showroom to try from the
 start panel. Milestone 17 adds Blockworld, a small block game written in
@@ -46,12 +46,12 @@ page can set, sliders on the screen (Blockworld's Speed slider), and the
 sofa studio, a shop page with shadows, textured fabrics, and choices
 that change the sofa in place. Milestone 19 adds text panels, doors and
 lamps that work with a click, places to go to, a sky, a floor plan, and
-Harbour Loft, a flat by a harbour to tour (built; waiting for
-acceptance). Milestone 20 adds groups of models that load only while
-you are near them, with lighter stand-ins until then, and the sneaker
-store, one shoe in ten colourways to walk among, turn over, and add to a
-cart (built; waiting for acceptance). Then one more example site,
-HoloML's documentation,
+Harbour Loft, a flat by a harbour to tour. Milestone 20 adds groups of
+models that load only while you are near them, with lighter stand-ins
+until then, and the sneaker store, one shoe in ten colourways to walk
+among, turn over, and add to a cart. Milestone 21, being built, adds
+water, sounds that come from a place, and an aquarium, and completes
+HoloML 0.2. Then HoloML's documentation,
 privacy and data tools, and installers as 1.0. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
@@ -188,8 +188,9 @@ starts with a small prototype and the same habits of direction and checking.
 
 ## What comes next
 
-Milestones 20 and 21, two more HoloML example sites, each adding to
-the language: a sneaker store and an aquarium. 22, documentation for HoloML to recognised standards. 23,
+Milestone 21, the last HoloML example site, being built: an aquarium,
+with water and sounds that come from a place, which completes HoloML
+0.2. 22, documentation for HoloML to recognised standards. 23,
 privacy and data tools: HTTPS-only browsing, per-site storage, and
 bookmark import and export. 24 and 25, installers as 1.0 for Windows
 and Linux, then macOS. Later: free camera
@@ -198,7 +199,7 @@ and VR. The full roadmap is in [TODO.md](TODO.md).
 
 ## Progress
 
-Eighteen milestones are done and accepted.
+Twenty milestones are done and accepted.
 Milestones 1 to 11 built the browser: a live page on a tilted panel in
 the 3D room, tabs as cards, bookmarks and history, ad and tracker
 blocking with encrypted DNS, the layers view, two themes, an instrument
@@ -214,11 +215,10 @@ scene inspector. Milestone 16 adds a HoloML car showroom, published with GitHub 
 start panel. Milestone 17 adds Blockworld, a small block game in HoloML
 0.2, and the HoloML examples section. Milestone 18 adds walking speeds,
 sliders, and the sofa studio, a shop page with shadows, textured
-fabrics, and choices that change the sofa in place. Milestone 19, built
-and waiting for acceptance, adds Harbour Loft, a flat to tour, with
-panels of text, doors and lamps to click, places, a sky, and a floor
-plan. Milestone 20, built and waiting for acceptance, adds loading by
-area and the sneaker store.
+fabrics, and choices that change the sofa in place. Milestone 19 adds
+Harbour Loft, a flat to tour, with panels of text, doors and lamps to
+click, places, a sky, and a floor plan. Milestone 20 adds loading by
+area and the sneaker store. Milestone 21, the aquarium, is being built.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 

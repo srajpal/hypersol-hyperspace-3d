@@ -30,9 +30,9 @@ Plan approved 2026-09-24.
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
 | 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
 | 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | Done (accepted, prompt 112) |
-| 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Built and merged, waiting for acceptance (build approved, prompt 114; built in prompt 118; holoml #17 and the browser's #36 merged, prompts 119 and 121) |
-| 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Built and merged, waiting for acceptance (planned and started, prompt 120, with the recommended answers; holoml #18 and the browser's #37 merged, prompt 121) |
-| 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Current: plan drafted, waiting for approval (prompt 121) |
+| 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Done (accepted, prompt 122) |
+| 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Done (accepted, prompt 122) |
+| 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | In progress (planned, prompt 121; the recommended answers and the build, prompt 122) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Later (prompt 115) |
 | 23 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85, and from 22, prompt 115) |
 | 24 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
@@ -3055,7 +3055,8 @@ the sofa studio's copy in tests/fixtures/holoml/sofa-studio.
 
 ## Milestone 19 — Harbour Loft
 
-Status: Built and merged, waiting for acceptance. Planned (prompt
+Status: Done. Accepted by the owner on 2026-09-29 (prompt 122), after
+holoml pull request #17 and the browser's #36 merged. Planned (prompt
 113); the owner answered Q1 to Q6 with the recommendations and
 approved the build (prompt 114). Pushed before the milestone (after
 milestone 18's acceptance). Rule 13 check done (ARCHITECTURE.md section
@@ -3063,7 +3064,7 @@ milestone 18's acceptance). Rule 13 check done (ARCHITECTURE.md section
 done; resumed in prompt 118, which also chose Harbour Loft for the
 README's first picture. All six tasks are done. The owner merged holoml
 pull request #17 (prompt 119) and the browser's #36 (prompt 121,
-2026-09-29); the owner has not yet said it is accepted.
+2026-09-29).
 
 Goal: a flat to tour, for an estate agent. Walk through the rooms of a
 loft by the harbour, open doors, switch lamps on and off, read about
@@ -3341,7 +3342,8 @@ sofa studio did not have: text of more than one line (holoml issue
 
 ## Milestone 20 — Sneaker store
 
-Status: Built and merged, waiting for acceptance. Planned and started
+Status: Done. Accepted by the owner on 2026-09-29 (prompt 122), after
+holoml pull request #18 and the browser's #37 merged. Planned and started
 (prompt 120): the owner said to start the next milestone and to take
 the recommendations for its questions, so Q1 to Q5 are answered as
 recommended and the build is approved. Rule 13 check done
@@ -3349,7 +3351,7 @@ recommended and the build is approved. Rule 13 check done
 19's branch, browser pull request #36, not yet accepted: this
 milestone's branch starts from it). All six tasks are done. The owner
 merged holoml pull request #18 and the browser's #37 (prompt 121,
-2026-09-29); the owner has not yet said it is accepted.
+2026-09-29).
 
 Goal: a sneaker store, in place of Coral Bay, a resort (prompts 101 and
 102): a wall of sneakers to pick up, turn, and see up close (the sole,
@@ -3603,11 +3605,16 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
 
 ## Milestone 21 — Aquarium
 
-Status: Planned, waiting for the owner's approval (prompt 121). The
-owner merged milestones 19 and 20 and asked for the next milestone;
-this is its plan, with questions and recommendations. Nothing is built
-yet. Rule 13 check done (ARCHITECTURE.md section 3). Pushed before the
-milestone (branch `m21-aquarium`, from main after #37).
+Status: In progress. Planned (prompt 121): the owner merged milestones
+19 and 20 and asked for the next milestone, and this plan was drafted
+with questions and recommendations. The owner answered Q1 to Q7 with
+the recommendations (prompt 122), which, with prompt 121's "Next
+milestone", is taken as approval of the plan and its build, as prompt
+120 was. The plan's own check-ins stay: the fish are shown to the owner
+before the tank is built around them (task 3), and HoloML 0.2 is tagged
+after acceptance, when the owner says go (task 9). Rule 13 check done
+(ARCHITECTURE.md section 3). Pushed before the milestone (branch
+`m21-aquarium`, from main after #37).
 
 Goal: an aquarium to visit (prompt 85). 5 to 10 real-looking fish of
 different kinds swim around a big tank with their own swimming
@@ -3675,7 +3682,7 @@ milestone ends (milestone 17's plan, Q5 a).
 - **The automatic builds**: the Linux job took 38 minutes 44 seconds of
   the 45 it may take (#37), and this milestone's checks add more (Q7).
 
-### Questions
+### Questions (answered with the recommendations, prompt 122)
 
 - Q1, the fish. Real-looking fish that are CC0 and free without an
   account are scarce. Only one was found: Khronos's Barramundi Fish (a
