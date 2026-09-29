@@ -1361,3 +1361,12 @@ merged.)
 You can start on the next milestone; use recommendations if you have
 questions.
 ```
+
+## 121 — 2026-09-29 · Claude Opus 5.5, max effort
+
+(Sent after milestone 20's report: holoml pull request #18 and the
+browser's #36 and #37 were open.)
+
+```text
+#18, #36, and #37 merged. Next milestone.
+```
