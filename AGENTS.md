@@ -155,7 +155,7 @@ see .github/workflows/ci.yml; macOS not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
 - Toolchain: Node 22.13 or newer; pnpm 12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 264 tests passed on 2026-09-28)
+- Unit: `pnpm test` (Vitest; 268 tests passed on 2026-09-29)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
   against it (about eleven minutes; 261 checks in the full run on
@@ -307,7 +307,22 @@ milestone; the current milestone's checks are defined in TODO.md):
   form that sends nothing, the whole tour from the keyboard, screen
   readers, the text view, reduced motion, and no frames while idle. V1
   is holoml's own tests; V11 (the published site) is checked by hand.
-- Later milestones add: the HoloML example sites (20 and 21), HoloML's
+- Milestone 20 checks W2 to W10 (same command, tests/e2e/m20.e2e.ts):
+  loading by area (a far group not fetched, walking near loads it,
+  walking away lets it go and its bytes stop counting), stand-ins,
+  scripts' `loaded` and `load` event, and the limits counting only what
+  is loaded (fixture pages areas.holoml, stand-in.holoml, and
+  areas-limits.holoml); and the sneaker store (a copy in
+  tests/fixtures/holoml/sneaker-store): ready within 5 s (logged in
+  software), the shelves by the entrance loaded and the rest as
+  stand-ins, walking down the hall loading each shelf, the counter, bays,
+  and walls stopping the walker, a shoe's page through a fade, every
+  colourway in place, turning a shoe over, sizes, the cart and the
+  checkout page that places nothing, the keyboard alone, screen
+  readers, the text view, reduced motion, no frames while idle, and the
+  page's memory falling again once far shelves are let go. W1 is
+  holoml's own tests; W11 (the published site) is checked by hand.
+- Later milestones add: the last HoloML example site (21), HoloML's
   documentation (22), privacy and data tools (23), and installers (24
   and 25).
 

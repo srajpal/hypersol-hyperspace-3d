@@ -60,6 +60,17 @@ HoloML's examples (tests/fixtures/holoml, copied by `pnpm holoml:sync`):
   windows, doors, kitchen, bathroom, bed, wardrobe, and terrace (made by
   its script), the floor plan, and the door and switch sounds are
   Apache-2.0, The HoloML Authors.
+- The sneaker store (tests/fixtures/holoml/sneaker-store). Its shoe is
+  "Materials Variants Shoe" © 2021 Shopify, Inc., from the Khronos glTF
+  Sample Assets (https://github.com/KhronosGroup/glTF-Sample-Assets),
+  under the Creative Commons Attribution 4.0 International licence (CC BY
+  4.0, https://creativecommons.org/licenses/by/4.0/; credited, with every
+  change made to it, in its models/CREDITS.md, and on its about page):
+  seven of its ten colourways are recoloured from its picture, and the
+  mark on its heel and the lettering on its sole are painted out, as the
+  licence leaves out logos and trademarks. Its pages, scripts, hall,
+  bays, bench, counter, plants, turntable, and chime (made by its
+  script) are Apache-2.0, The HoloML Authors.
 - Some checks use Blockworld's blocks in pages of their own
   (walls.holoml, shadows.holoml, textures.holoml, choice.holoml, and
   environment.holoml).
@@ -89,4 +100,5 @@ The HoloML examples section shows a picture of each example
 screenshots:examples` from the copies above; the showroom's cars and
 Blockworld's blocks in them are Kenney's (CC0), and the sofa studio's
 sofa, furniture, fabrics, and light and Harbour Loft's furniture,
-textures, and harbour are Poly Haven's (CC0).
+textures, and harbour are Poly Haven's (CC0), and the sneaker store's
+shoe is Shopify's "Materials Variants Shoe" (CC BY 4.0, as above).

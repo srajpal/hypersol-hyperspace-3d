@@ -466,6 +466,22 @@ it('captures the main screens', async () => {
     await open(TERRACE);
     await sleep(2000);
     await capture(loft, '57-harbour-loft-terrace');
+    // Milestone 20: the sneaker store's hall from beside its first bay, a shoe's page, and the checkout page with two pairs in the cart.
+    const STORE = 'sneaker-store/index.holoml';
+    const SHOE = 'sneaker-store/shoe.holoml?colour=sunset';
+    await open(STORE);
+    await inPage(loft, 'holoml.viewer.position = [-0.8, 1.55, -1.8], holoml.viewer.lookAt([-4.6, 1.4, -7]), true', STORE);
+    await sleep(2000);
+    await capture(loft, '58-sneaker-store');
+    await inPage(loft, "(sessionStorage.setItem('sneaker-store-cart', JSON.stringify([{ colour: 'beach', size: '41' }, { colour: 'sunset', size: '44' }])), true)", STORE);
+    await open(SHOE);
+    // After its turn on the turntable.
+    await sleep(10_000);
+    await capture(loft, '59-sneaker-store-shoe');
+    await shellCall(loft, 'showUrl', server.url('holoml/sneaker-store/checkout.html'));
+    await waitForPage(loft, 'sneaker-store/checkout.html');
+    await sleep(1500);
+    await capture(loft, '60-sneaker-store-checkout');
   } finally {
     await loft.close();
     await server.close();

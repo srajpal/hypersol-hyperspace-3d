@@ -3398,10 +3398,11 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
 - [x] 2. The browser: loading and letting go by area, stand-ins, the
       counts, the scene API; the copy (`pnpm holoml:sync`, from holoml's
       `sneaker-store` branch for now).
-- [ ] 3. The sneaker store: the shoe, its colourways, and its stand-in
+- [x] 3. The sneaker store: the shoe, its colourways, and its stand-in
       (credited), the store, a shoe's page, the cart and checkout page,
-      and the about page; published with GitHub Pages.
-- [ ] 4. The examples section and the start panel: its card, its
+      and the about page; published with GitHub Pages (when holoml's
+      pull request is merged).
+- [x] 4. The examples section and the start panel: its card, its
       picture, and its row.
 - [ ] 5. Checks W1 to W12 (tests/e2e/m20.e2e.ts, holoml's tests), run on
       Windows, with `pnpm test:linux`, and in the automatic builds.
@@ -3446,6 +3447,36 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
 - A stand-in is drawn plain (as an instance where it can be) in a
   holder inside its model's, and is counted, like any model, for as long
   as the page shows it.
+- The store (holoml examples/sneaker-store, made by tools/download.mjs
+  and tools/prepare.mjs): a hall 26 m long with five bays on each wall,
+  one colourway to a bay; each bay is a cubby wall of six shoes (their
+  toes to one side and the other in turn) with the colourway's name and
+  price above, and its six shoes are one group that loads by area
+  (`near="7.5"`, measured to the bay's foot on the wall). A bay with one
+  shoe on a ledge, tried first, left the shoes too small in a bright,
+  empty wall. The two bays by the entrance load with the page.
+- The shoe: each colourway is its own .glb (its pictures inside, at 512
+  pixels; about 0.7 MB), so a bay's shoes are one file to load and let
+  go; the shoe page's shoe has its pictures at 1024, and its colour
+  choice puts each colourway's picture on it in place. The stand-in is
+  the shoe with its points joined within 2 cm (the same part of its
+  picture only), 2,445 triangles of 22,700, with a picture of 64 pixels.
+- The shoe's licence leaves out logos and trademarks: the mark on its
+  heel tab (in its colour, relief, and roughness pictures) and
+  "///FOAM" on its midsole (in its relief) are painted out, and the
+  credits say so. Its own three colours are kept; seven more are made by
+  recolouring its knit and trim (the parts that differ between its three
+  pictures), keeping their light and shade.
+- A shoe's page: the shoe turns once on its turntable as the page opens
+  (then the page is idle), and "Turn it over" (a click action) turns it
+  about its middle; "Add to cart" is a click action with a chime whose
+  click the script hears, so it is a button in the outline for the
+  keyboard. `colourways.js` is a module the pages' scripts and the
+  checkout page import, and prepare.mjs reads.
+- W10's memory: the page's JavaScript heap and its ArrayBuffers (where a
+  model's meshes are kept), measured after collecting garbage through
+  the page's debugger; the process's working set is logged, as Windows
+  keeps memory a process may use again.
 
 ### Results so far
 
@@ -3461,6 +3492,17 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
   stand-in.holoml, and areas-limits.holoml): all pass on Windows, three
   runs, and drawing in software (HYPERSOL_TEST_SOFTWARE=1).
 - Milestones 14 to 19's HoloML checks after the change: 85 passed.
+- Task 3 (holoml `sneaker-store`, e1a3841, and its README and NOTICE,
+  5349baa): holoml's tests 204 passed (four new, on the store's files,
+  limits, stand-ins, colour choice, and credits), lint and type check
+  clean. The store is ready in about 1.5 s from 127.0.0.1 (2.3 MB in 24
+  files), with no problems.
+- Task 4 (1bcea4a): the copy from holoml's `sneaker-store`, the card,
+  its picture (`EXAMPLES_ONLY=sneaker-store pnpm screenshots:examples`,
+  new: one example alone), and T8 with the new card and row: passes.
+- W2 to W10 (tests/e2e/m20.e2e.ts): all 9 checks pass on Windows, in
+  two full runs of the file (and the store's five alone before them),
+  and drawing in software (HYPERSOL_TEST_SOFTWARE=1, 138 s).
 
 ### Done when
 

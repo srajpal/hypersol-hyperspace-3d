@@ -176,13 +176,17 @@ the list updates can be turned off:
   and 17) and the HoloML examples section (the menu, or Ctrl+Shift+E)
   open the example sites HoloML publishes with GitHub Pages at
   `https://srajpal.github.io/holoml/` (the showroom, Blockworld, the
-  sofa studio, Harbour Loft), only when you choose one; each is then an
-  ordinary HoloML page. The sofa studio's script keeps your fabric and
-  wood for its cart page, and Harbour Loft's your choice of day or
-  evening for its other pages, in that tab's session storage, on this
-  computer, as any site's script may; the browser adds nothing to it.
-  Harbour Loft's booking page is a form that sends nothing and keeps
-  nothing. The
+  sofa studio, Harbour Loft, the sneaker store), only when you choose
+  one; each is then an ordinary HoloML page. The sofa studio's script
+  keeps your fabric and wood for its cart page, Harbour Loft's your
+  choice of day or evening for its other pages, and the sneaker store's
+  its cart (the shoes, colours, and sizes you added), in that tab's
+  session storage, on this computer, as any site's script may; the
+  browser adds nothing to it. Harbour Loft's booking page is a form
+  that sends nothing and keeps nothing, and the sneaker store's
+  checkout page asks for nothing and sends nothing. A HoloML page that
+  loads by area (milestone 20) fetches a group's models from its own
+  site as you come near them. The
   section's links to HoloML's repository, its specification, and each
   example's source open `https://github.com/srajpal/holoml` pages the
   same way. The start panel and the section fetch nothing themselves:
