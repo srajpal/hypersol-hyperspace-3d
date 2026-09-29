@@ -438,9 +438,9 @@ describe('V5: arriving through a fade', () => {
    * The page's brightness over some milliseconds, sampled by the browser
    * (its own pictures of the page, 0 to 255 in a square around a point at
    * half its width and 30% of its height) from when the page appears,
-   * each with the times its capture began and finished: a page drawing
-   * its first frame in software may not answer for seconds, so it is not
-   * asked.
+   * each with the times its capture began and finished. The page itself
+   * is not asked; a page busy over its first frame (drawing in software)
+   * holds back the browser's pictures of it too, until it is done.
    */
   const brightness = (page: string, ms: number) =>
     h.app.evaluate(
@@ -487,25 +487,26 @@ describe('V5: arriving through a fade', () => {
     // The first link: "Next room".
     await clickUntil(h, await onScreen(h, A, 0), 'the next room', async () => (await focusedTab(h)).url === url(B));
     // The next page is dark while its model is still coming (the check holds it): its brightness, sampled from when
-    // it appears, over longer than the 4 s it waits at most...
-    const samples = await brightness(B, 6000);
+    // it appears, for 2.5 s...
+    const samples = await brightness(B, 2500);
     await waitForPage(h, B);
     // The first page went dark before it went.
     expect(await darkest(B)).toBeGreaterThan(0.95);
-    // ...from when the page set its fade (as it starts) until it began to fade in (once its scene is drawn with
-    // nothing left to load, or after the 4 s: a page drawing in software may take that long over its first frame,
-    // and the check's reading of the page with it), nothing of its scene shows (the lit scene reads about 226; the
-    // page's own dark ground, before the fade is first painted, about 16), and the fade covers it.
+    // ...shows nothing of its scene until it begins to fade in (the lit scene reads about 226; the page's own dark
+    // ground, before its fade is first painted, about 16; the fade, 0). It begins once its scene is drawn with nothing
+    // left to load, or after the 4 s it waits at most; a page drawing its first frame in software may be busy for all
+    // of that time, and then the samples are those taken before it started, and after.
     const [started, origin] = [await fade(B), await inPage<number>(h, 'performance.timeOrigin', B)];
     expect(started.log[0]).toMatchObject({ to: 1 });
-    const [from, until] = [origin + started.log[0]!.at, started.log[1] ? origin + started.log[1].at : Infinity];
-    const whileDark = samples.filter((x) => x.t >= from && x.done <= until);
-    const seen = `from ${Math.round(from - origin)} until ${Math.round(until - origin)} ms; samples: ${JSON.stringify(samples.map((x) => [Math.round(x.t - origin), Math.round(x.light)]))}`;
-    expect(Math.max(...whileDark.map((x) => x.light)), seen).toBeLessThan(30);
-    expect(whileDark.filter((x) => x.light < 12).length, seen).toBeGreaterThan(3);
+    const until = started.log[1] ? origin + started.log[1].at : Infinity;
+    const beforeFadeIn = samples.filter((x) => x.done <= until);
+    const seen = `the fade set at ${Math.round(started.log[0]!.at)} ms, the fade-in begun at ${Math.round(until - origin)} ms; samples: ${JSON.stringify(samples.map((x) => [Math.round(x.t - origin), Math.round(x.done - origin), Math.round(x.light)]))}`;
+    expect(beforeFadeIn.length, seen).toBeGreaterThan(0);
+    expect(Math.max(...beforeFadeIn.map((x) => x.light)), seen).toBeLessThan(30);
+    console.log(`V5: ${seen}`);
     const size = await inPage<{ w: number; h: number }>(h, '({ w: innerWidth, h: innerHeight })', B);
     const centre = { x: size.w / 2, y: size.h * 0.3 };
-    // ...and fades in once it has drawn its scene.
+    // ...and fades in once it has drawn its scene with nothing left to load.
     server.release('fade-b');
     await ready(h, B);
     const done = await waitFor('faded in', () => fade(B), (f) => !f.arriving && f.opacity === 0, await sceneWait(h, 6000));

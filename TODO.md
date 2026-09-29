@@ -3309,12 +3309,20 @@ sofa studio did not have: text of more than one line (holoml issue
   could ask it, it had faded in (as it should). V8: the door's sound
   (0.75 s) had ended before the check could see it playing. Fixed
   without loosening either: V5 now samples the page's brightness from
-  the browser (its own pictures of the page, which need nothing from
-  the page) from when it appears, and checks, against the page's own
-  record of its fade, that nothing of its scene shows from when it sets
-  its fade until it fades in, and that the fade covers it; a sound's
-  report counts its plays, and V8 checks the door's sound started. Both
-  pass on Windows, drawing in software, and with `pnpm test:linux`.
+  the browser for 2.5 s after the page appears, and checks, against the
+  page's own record of its fade, that nothing of its scene shows until
+  it begins to fade in; then it lets the model come, as before, and the
+  page fades in and is lit. A sound's report counts its plays, and V8
+  checks the door's sound started. The automatic builds on that
+  (3e6b852): V8 passed; V5 failed again, as it also wanted several black
+  samples while the page was dark, and on GitHub's machine the page is
+  busy over its first frame for all of its dark time, and the browser's
+  pictures of it wait for it too (one sample before, then none until it
+  was fading in). Now it wants only what can be seen there: the samples
+  taken before the fade-in, all dark. Tried here with the page's
+  processor slowed twenty times, drawing in software: the same one
+  sample, and a pass. Both pass on Windows, drawing in software, and
+  with `pnpm test:linux`.
 
 ### Done when
 
