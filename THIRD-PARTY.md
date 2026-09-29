@@ -84,13 +84,15 @@ HoloML's examples (tests/fixtures/holoml, copied by `pnpm holoml:sync`):
   barramundi by Microsoft, from the Khronos glTF Sample Assets (CC0
   1.0). Each is credited, with its address and the changes made to it
   (its materials converted, turned, sized, and centred, its pictures
-  made smaller, and, where its file had no swim, given one made here,
-  with a skeleton where it had none), in its models/CREDITS.md and on
-  its about page. Its boulder, log, shell, and sand are from Poly Haven
+  made smaller, where its file had no swim, given one made here, with a
+  skeleton where it had none, and the shark, the turtle, and the
+  mackerel made lighter), in its models/CREDITS.md and on its about
+  page. Its boulder, log, shell, and sand are from Poly Haven
   (https://polyhaven.com, CC0 1.0; credited, with each artist, in its
-  models/CREDITS.md), the boulder and the log made lighter. Its pages,
-  script, tank, tunnel, gallery, plants, bubbles, food, air stones, and
-  sounds (made by its tools) are Apache-2.0, The HoloML Authors.
+  models/CREDITS.md), the boulder, the log, and the shell made lighter.
+  Its pages, script, tank, tunnel, gallery, plants, bubbles, food, air
+  stones, and sounds (made by its tools) are Apache-2.0, The HoloML
+  Authors.
 - Some checks use Blockworld's blocks in pages of their own
   (walls.holoml, shadows.holoml, textures.holoml, choice.holoml, and
   environment.holoml).

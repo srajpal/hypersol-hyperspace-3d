@@ -131,6 +131,12 @@ Worth knowing:
   the page's hook says `behind`.
 - A sound from a place has left and right analysers; the page's hook
   soundLevels(id) reads what each ear hears, and X3 checks it.
+- Drawn in software (GitHub's Linux machines) the aquarium is slow: its
+  checks may take up to 600 s each (TANK_TIME in m21.e2e.ts), and the
+  m21 file about 18 minutes on `pnpm test:linux`'s 4 processors. Its
+  models have triangle budgets (fish.mjs, and prepare.mjs for Poly
+  Haven's): shapes.mjs thinTo makes a more detailed file lighter. A new
+  fish or rock should get one.
 - In vitest 5 the default report on this computer leaves out what
   passing checks log (the load times and frame rates); add
   `--reporter=verbose` to see them. The automatic builds show them.

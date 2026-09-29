@@ -3762,7 +3762,7 @@ milestone ends (milestone 17's plan, Q5 a).
       written; the automatic builds of the pull request will show it).
 - [ ] 7. Checks X1 to X12 (tests/e2e/m21.e2e.ts, holoml's tests), run on
       Windows, with `pnpm test:linux`, and in the automatic builds.
-- [ ] 8. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
+- [x] 8. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
       THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the
       README's pictures.
 - [ ] 9. HoloML 0.2 tagged (Q6), after the owner accepts the milestone.
@@ -3830,6 +3830,19 @@ milestone ends (milestone 17's plan, Q5 a).
   and the water's moving light samples a picture drawn once
   (ARCHITECTURE.md). Since a page is now ready before its shaders have
   compiled, X5 times the aquarium to its first drawn frame.
+- Triangles (found on Linux, where the tank drew in software at a frame
+  or so a second): a fish or a Poly Haven model may have at most so many
+  triangles (fish.mjs and prepare.mjs; the shark 12,000, the turtle
+  14,000, the mackerel 4,000, the boulder 5,000, the log 6,000, the
+  shell 3,000); a more detailed file is made lighter by joining its
+  vertices by place, one vertex for each part of its picture at each
+  place, keeping a skeleton's joints and weights, and small parts such
+  as eyes whole. Looked at beside the approved fish, they are the same;
+  the mackerel's outline is a little less smooth close up.
+- The aquarium's checks may take up to 600 s each (TANK_TIME), as drawn
+  in software they take minutes; not a requirement, as with
+  Blockworld's. X9 counts frames once the page has been told its tab is
+  behind (its hook `behind`), after a frame it had begun has finished.
 
 ### Results so far
 
@@ -3854,7 +3867,8 @@ milestone ends (milestone 17's plan, Q5 a).
   and tuna get a skeleton and a wave from head to tail (the tuna's only
   behind its middle, as tuna swim, and straightened, as its file had it
   turned 17 degrees); the turtle's own skeleton gets flipper strokes.
-  The model files are committed once the owner approves the fish.
+  The model files were committed once the owner approved the fish
+  (2140889).
 - Task 1 (holoml `aquarium`, ed72075 and 7d17c35): SPEC.md, the
   checker (a size of three numbers more than 0, a range that needs a
   position, at most one water in a scene), a valid sample
@@ -3926,6 +3940,33 @@ milestone ends (milestone 17's plan, Q5 a).
   docs/privacy.md, THIRD-PARTY, and AGENTS.md's testing list; the
   screenshots (docs/screenshots/m21: the tunnel, the shark's board, and
   feeding are 61 to 63) and the README's four pictures again, looked at.
+- The full run on Linux on this computer (`pnpm test:linux`,
+  2026-09-29, 53 minutes): lint and the unit tests pass (271, and 2
+  skipped: the copy's checks against holoml beside it), and 274 of 278
+  end-to-end checks pass, 1 skipped; X7, X8, and X9 failed. Drawn in
+  software the aquarium made 1.5 frames a second: X7 and X8 ran out of
+  their time (240 s and 300 s), and X9 counted two frames drawn before
+  the page was told its tab was behind. The m21 file took 21 minutes.
+- The pull requests (2026-09-29): holoml #19 and the browser's #38. The
+  browser's automatic builds, the first in two parts on each system:
+  Linux part 1 passed in 21 min 40 s, Windows part 1 in 15 min 34 s,
+  and Windows part 2 in 10 min 51 s; Linux part 2 failed as on this
+  computer, in 31 min 21 s (X5 drawn in 10.6 s there, X9 at 2.5 frames
+  a second). holoml #19's Windows build failed: the aquarium's credits
+  test split the file's lines on \n alone, and Git gives it Windows line
+  ends there (fixed, 7469fb1).
+- The fix: the most detailed models made lighter (holoml 43c5b30, as in
+  the decisions above): from the tunnel 191,000 triangles in view
+  (577,000), drawn in software on this computer 2.1 frames a second
+  (0.87); published, the aquarium is 11.7 MB (the models 11.0 MB). The
+  copy synced from it, the example's picture taken again, and the
+  checks' time and X9's wait as above. Then: m21 in software on this
+  computer, all 8 passed (6 minutes); with the graphics card X2 to X9 and
+  T8 passed (X5 ready in 1307 ms and drawn in 2801 ms, X9 143.5 frames a
+  second, the page's ArrayBuffers 6.2 MB where they were 10.8); and
+  `pnpm test:linux tests/e2e/m21.e2e.ts`, all 8 passed (18 minutes, X7
+  5.3 of them; X5 drawn in 17.3 s; X9 1.0 frames a second, and the heap
+  11.1 MB then 11.3 MB).
 
 ### Done when
 
