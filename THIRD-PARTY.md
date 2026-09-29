@@ -21,7 +21,7 @@ licence fields).
 | @remusao/guess-url-type, small, smaz, smaz-compress, smaz-decompress, trie (used by the adblocker) | 2.1 to 2.2 | MPL-2.0 | Parts of the adblocker |
 | [tldts](https://github.com/remusao/tldts) (tldts-experimental, tldts-core) | 7.4.15 | MIT | Site names for the adblocker |
 | @types/trusted-types | 2.0.7 | MIT | Type definitions used by Lit |
-| [HoloML](https://github.com/srajpal/holoml) parser and checker (packages/holoml, copied from the repository; the tag or branch and commit are in its SOURCE.json) | 0.2 draft | Apache-2.0, The HoloML Authors | Reading and checking HoloML pages |
+| [HoloML](https://github.com/srajpal/holoml) parser and checker (packages/holoml, copied from the repository; the tag or branch and commit are in its SOURCE.json) | 0.2 | Apache-2.0, The HoloML Authors | Reading and checking HoloML pages |
 
 The Mozilla Public License 2.0 applies file by file: the adblocker's
 files stay under MPL-2.0 and their source is available from the link
@@ -71,6 +71,26 @@ HoloML's examples (tests/fixtures/holoml, copied by `pnpm holoml:sync`):
   licence leaves out logos and trademarks. Its pages, scripts, hall,
   bays, bench, counter, plants, turntable, and chime (made by its
   script) are Apache-2.0, The HoloML Authors.
+- The ocean tunnel, an aquarium (tests/fixtures/holoml/aquarium). Its
+  fish are under the Creative Commons Attribution 4.0 International
+  licence (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/):
+  the great white shark and the grey snapper by the Babylon.js authors
+  (https://github.com/BabylonJS/Assets); the flatback sea turtle by
+  DigitalLife3D, the gilt-head bream by BlueMesh, the Atlantic mackerel
+  by Amy Scott-Murray, the tuna by GoldenZtuff, the clownfish by
+  zixisun02, and the copperband butterflyfish by Dsanchez13, from
+  Sketchfab as copied by Objaverse
+  (https://huggingface.co/datasets/allenai/objaverse); and the
+  barramundi by Microsoft, from the Khronos glTF Sample Assets (CC0
+  1.0). Each is credited, with its address and the changes made to it
+  (its materials converted, turned, sized, and centred, its pictures
+  made smaller, and, where its file had no swim, given one made here,
+  with a skeleton where it had none), in its models/CREDITS.md and on
+  its about page. Its boulder, log, shell, and sand are from Poly Haven
+  (https://polyhaven.com, CC0 1.0; credited, with each artist, in its
+  models/CREDITS.md), the boulder and the log made lighter. Its pages,
+  script, tank, tunnel, gallery, plants, bubbles, food, air stones, and
+  sounds (made by its tools) are Apache-2.0, The HoloML Authors.
 - Some checks use Blockworld's blocks in pages of their own
   (walls.holoml, shadows.holoml, textures.holoml, choice.holoml, and
   environment.holoml).
@@ -100,5 +120,7 @@ The HoloML examples section shows a picture of each example
 screenshots:examples` from the copies above; the showroom's cars and
 Blockworld's blocks in them are Kenney's (CC0), and the sofa studio's
 sofa, furniture, fabrics, and light and Harbour Loft's furniture,
-textures, and harbour are Poly Haven's (CC0), and the sneaker store's
-shoe is Shopify's "Materials Variants Shoe" (CC BY 4.0, as above).
+textures, and harbour are Poly Haven's (CC0), the sneaker store's
+shoe is Shopify's "Materials Variants Shoe" (CC BY 4.0, as above), and
+the ocean tunnel's fish are those credited above (CC BY 4.0, and the
+barramundi CC0), among Poly Haven's rocks, log, and sand (CC0).

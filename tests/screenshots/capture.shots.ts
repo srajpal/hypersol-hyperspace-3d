@@ -32,6 +32,7 @@ import {
   waitForPage,
   type Harness,
 } from '../e2e/harness';
+import { AQUARIUM_FISH } from './aquarium';
 
 const STAR = 'hs-toolbar [data-testid="star"]';
 const milestone = process.env['MILESTONE'];
@@ -482,8 +483,44 @@ it('captures the main screens', async () => {
     await waitForPage(loft, 'sneaker-store/checkout.html');
     await sleep(1500);
     await capture(loft, '60-sneaker-store-checkout');
+    // Milestone 21: the ocean tunnel with the fish placed as they might pass over the glass (reduced motion holds them
+    // there), the great white shark's board, and the fish coming to the food.
+    const TANK = 'aquarium/index.holoml';
+    await reducedMotion(loft, true);
+    await open(TANK);
+    await inPage(loft, `(${AQUARIUM_FISH})(), true`, TANK);
+    await inPage(loft, 'holoml.viewer.position = [0.4, 1.3, 3.5], holoml.viewer.lookAt([-1.5, 3.2, -4]), true', TANK);
+    await sleep(2000);
+    await capture(loft, '61-aquarium');
+    await inPage(loft, "(holoml.find('shark-1').position = [-3.8, 2.6, 0.2], holoml.find('shark-1').rotation = [0, 180, 0], true)", TANK);
+    await inPage(loft, `[...document.querySelectorAll('#holoml-outline button')].find((b) => b.textContent === 'About the great white shark').click(), true`, TANK);
+    await inPage(loft, 'holoml.viewer.position = [0.6, 1.6, 2.9], holoml.viewer.lookAt([-1.74, 1.45, 1.5]), true', TANK);
+    await sleep(2000);
+    await capture(loft, '62-aquarium-shark');
+    await reducedMotion(loft, false);
+    const FED = `${TANK}?fed`;
+    await open(FED);
+    // Between two of the tunnel's ribs, looking up to where the food falls; the nearest fish come to it within seconds.
+    await inPage(loft, 'holoml.viewer.position = [-0.3, 1.5, -0.3], holoml.viewer.lookAt([3.6, 4.4, -0.2]), true', FED);
+    await inPage(loft, `[...document.querySelectorAll('#holoml-outline button')].find((b) => b.textContent === 'Feed the fish').click(), true`, FED);
+    await sleep(3400);
+    await capture(loft, '63-aquarium-feeding');
   } finally {
     await loft.close();
     await server.close();
   }
 }, 600_000);
+
+/** Emulates (or stops emulating) reduced motion in the tab's page; it lasts across the tab's navigations while on. */
+async function reducedMotion(h: Harness, on: boolean): Promise<void> {
+  await h.app.evaluate(async ({ webContents }, on) => {
+    const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview').pop()!;
+    if (on) {
+      if (!guest.debugger.isAttached()) guest.debugger.attach('1.3');
+      await guest.debugger.sendCommand('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+    } else if (guest.debugger.isAttached()) {
+      await guest.debugger.sendCommand('Emulation.setEmulatedMedia', { features: [] });
+      guest.debugger.detach();
+    }
+  }, on);
+}

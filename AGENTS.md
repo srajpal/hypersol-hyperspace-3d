@@ -327,9 +327,24 @@ milestone; the current milestone's checks are defined in TODO.md):
   readers, the text view, reduced motion, no frames while idle, and the
   page's memory falling again once far shelves are let go. W1 is
   holoml's own tests; W11 (the published site) is checked by hand.
-- Later milestones add: the last HoloML example site (21), HoloML's
-  documentation (22), privacy and data tools (23), and installers (24
-  and 25).
+- Milestone 21 checks X2 to X9 (same command, tests/e2e/m21.e2e.ts):
+  water (a far model takes more of the water's colour than a near one,
+  one outside the water keeps its own, and the light from the waves
+  moves over a floor, holds still with reduced motion, and is left out
+  in software), sounds from a place (each ear's level as the viewer
+  walks away, and silence beyond the range), and a script's animation
+  speed (fixture pages water.holoml, caustics.holoml,
+  sound-place.holoml, and animation-speed.holoml); and the ocean tunnel
+  (a copy in tests/fixtures/holoml/aquarium): ready within 5 s (logged
+  in software), the fish in the water and clear of the tunnel and the
+  rocks, the ledges and the rail stopping the walker, feeding (every
+  flake eaten), a fish's panel from a click through the glass and from
+  its button, the keyboard alone, screen readers, the text view,
+  reduced motion, the frame rate (logged in software), no frames behind
+  another tab, and the page's memory over two minutes. X1 is holoml's
+  own tests; X10 (the published site) is checked by hand.
+- Later milestones add: HoloML's documentation (22), privacy and data
+  tools (23), and installers (24 and 25).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

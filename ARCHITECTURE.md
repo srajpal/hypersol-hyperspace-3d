@@ -208,7 +208,7 @@ release of any line since. No upgrade needed.
 | Panels, click actions, places, fades, sky, and plan | HoloML 0.2's third part (scene.ts, panels.ts, pictures.ts). A `panel` is a canvas picture of its words, wrapped to its width at about 1,000 pixels a metre (at most 4,096 a side), on a flat unlit board, with a plain back; its words are also in the page (Find in page) and in the outline after its button. Click actions: an `animate` or `sound` with `begin="click"` joins its trigger (its `trigger`, or the animation's target); a click on the trigger, or on what it holds (the innermost trigger wins), runs them, a toggle forward and then back from where it is; the pointer and the outline show triggers; each trigger's button takes the place of its item in the outline (after a panel's), and Enter and Space on it do the same and tell scripts of a click without a point (keptByControl keeps those keys for it). Places: in a page with several viewpoints, the address's `#name` picks the start (else the first), and "Go to" buttons and links to `#name` go through the address, so Back returns; going to a place fades out and in over 180 ms. Leaving for another HoloML page of the same site fades out over 260 ms; a page opened that way (a same-site HoloML referrer, a new navigation) starts dark and fades in once its scene is drawn with nothing left to load, or after 4 s. `sky`: the page's panorama as the scene's background, dimmed with its ambient lights; one file used as sky and surroundings is fetched and counted once; PNG and JPEG panoramas are decoded flipped, since WebGL does not flip an ImageBitmap. `plan`: the page's picture in its corner, fetched and size-checked within the limits, with a marker placed each frame from the camera's position and direction | Milestone 19 (owner, prompt 114: Q1 to Q5 a). No new package. |
 | Loading by area and stand-ins | HoloML 0.2's fourth part (scene.ts, budget.ts, pictures.ts, api.ts). A `group` with `load="near"` is an area: after the view is set up, and before each frame is drawn, the viewer measures from the camera to each area's place and loads its models once within its `near` (10 m unless the page says), lets them go beyond 1.5 times that, and lets go first so what comes in has room; a model loads while every area around it is in. Areas within reach of the start load with the page, so `holoml.ready` waits for them only. A model file (a template) and a material's picture count their users: the last model let go releases its bytes and triangles from the counts and its meshes, materials, pictures, and decoded images from memory, and a pool of its instances goes with it; a load that finishes after its model was let go is dropped. What would pass the page's totals (bytes, triangles, 64 files) waits instead of being left out, and tries again when an area is let go; a model left out for another reason is tried again the next time the viewer comes near. A model removed by a script releases its share but leaves its file loaded, as before. A `stand-in` is loaded with the page into a holder inside its model's, drawn plain (an instance where it can be), counted like a model, solid and casting shadows as the model, and a click on it is a click on the model; it shows while the model is not loaded. Scripts read `loaded` (a model's file; a group's models near enough to load, all loaded or left out) and hear `load` when an area's models are all in and when it is let go. The inspector shows a waiting model as waiting, not as a problem | Milestone 20 (owner, prompt 120: Q1 to Q5 a, the recommendations; loading by area from prompt 87). No new package. |
 | Water, sounds from a place, and animation speed | HoloML 0.2's fifth part (water.ts, sound.ts, scene.ts, api.ts). `water`: the viewer adds two pieces of shader code to every model material as it is compiled (onBeforeCompile, with its own program key), gone over again whenever models load or change: each vertex's place in the world (after skinning and instancing), and, after the colours reach the screen's colour space (as three.js does fog), a mix into the water's colour by the length of the way from the eye to the point that lies inside the water's box (a slab test), divided by `clarity`. With `caustics`, lit materials get light added before tone mapping: a net of soft, wavy threads (the edges of cells in a tiling picture of 256 by 256 pixels that the viewer draws once, written for this; nothing copied), sampled twice at different sizes as the two drift past each other, strongest on faces turned up to the surface, fainter with depth, and as bright as the page's lights that shine from a place allow (the pattern computed in the shader took seconds to compile on Windows, for each material); it moves with the frames (keeping the scene drawing), holds still with reduced motion, and is left out drawing in software, with a console message, as shadows are. Panels and labels (text to read), the background, and the sky are left as they are. A sound with a `position` is a marker in its parent (so it moves with a group) and is played through a Web Audio panner (equal power, linear distance: full within 1 metre, silent from its `range`); the listener follows the camera each frame while a placed sound exists; two analysers on the panner's left and right give the page's hooks each ear's level. A model's `animationSpeed` is its animation mixer's time scale | Milestone 21 (owner, prompt 122: Q4 a the water element, Q5 a sounds from a place in 0.2, Q3 a the fish moved by scripts). No new package. |
-| Shaders, and HoloML pages behind other tabs | New materials' shaders compile without blocking the page (three.js's compileAsync, with KHR_parallel_shader_compile where the graphics card has it): when models arrive or materials change, the viewer asks for them all at once and keeps the last frame on the screen until they are ready, keeping where everything is current meanwhile for clicks. A HoloML page in a tab behind another is told so by the shell (room.ts, then the tab view, the page's preload, and the viewer: "behind" and "in-front" on the HoloML command channel), since a tab hidden by style is still seen by Chromium, which only slows its frames: behind, nothing that moves asks for frames (animations, the water's light, a script's frame handler), and a change from outside a frame still draws once, for the tab's card | Milestone 21: the aquarium's shaders took 3.7 s of the page's main thread one after another (ready in 4.9 s; 1.8 s after), and it drew about a frame a second behind another tab. No new package. |
+| Shaders, and HoloML pages behind other tabs | New materials' shaders compile without blocking the page (three.js's compileAsync, with KHR_parallel_shader_compile where the graphics card has it): when models arrive or materials change, the viewer asks for them all at once and keeps the last frame on the screen until they are ready, keeping where everything is current meanwhile for clicks. A HoloML page in a tab behind another is told so by the shell (room.ts, then the tab view, the page's preload, and the viewer: "behind" and "in-front" on the HoloML command channel), since a tab hidden by style is still seen by Chromium, which only slows its frames: behind, nothing that moves asks for frames (animations, the water's light, a script's frame handler), and a change from outside a frame still draws once, for the tab's card | Milestone 21: the aquarium's shaders took 3.7 s of the page's main thread one after another (on the screen after 4.9 s; now ready in 1.6 s and drawn in 2.8 s, check X5), and it drew about a frame a second behind another tab. No new package. |
 | Window frame, reconsidered | Standard OS frame kept | Considered in milestone 6: a custom frame would lose native dragging, snapping, and accessibility; the theme now sets the frame's light or dark scheme. |
 | Bookmarks and history | SQLite through Node's built-in node:sqlite (owner decision 2026-09-25, prompt 20) | Fast search over thousands of rows; standard for browsers. Built into Electron's Node, so no native module and no extra package. |
 | UI widgets (address bar, menus) | Lit web components | Tiny, standards-based, no framework lock-in; themed with CSS variables. |
@@ -352,18 +352,20 @@ hypersol-hyperspace-3d/
                                and checker from the holoml repository
                                (the tag or branch and commit are in
                                SOURCE.json; v0.1.1 until milestone 17,
-                               then the 0.2 draft), made by sync.mjs
+                               then 0.2, a draft until milestone 21),
+                               made by sync.mjs
                                (pnpm holoml:sync); a test checks the copy
   docs/
     screens.md                 (planned) layout notes and states
     screenshots/               progress screenshots, one folder per milestone
     privacy.md                 what is blocked, what is stored, what is fetched
   tests/
-    e2e/                       Playwright drives the built app (m1 to m17 checks)
+    e2e/                       Playwright drives the built app (m1 to m21 checks)
     fixtures/                  sample pages served from 127.0.0.1;
-                               holoml/showroom/ and holoml/blockworld/ are
-                               HoloML's examples, copied by pnpm
-                               holoml:sync (milestones 16 and 17)
+                               holoml/showroom/, blockworld/, sofa-studio/,
+                               harbour-loft/, sneaker-store/, and aquarium/
+                               are HoloML's examples, copied by pnpm
+                               holoml:sync (milestones 16 to 21)
     screenshots/               progress screenshots (pnpm screenshots)
 ```
 
@@ -372,8 +374,8 @@ hypersol-hyperspace-3d/
 ```
 holoml/
   SPEC.md                      the language: version 0.1 (milestone 13),
-                               and the 0.2 draft, which grows with the
-                               example sites (milestones 17 to 21)
+                               and 0.2, which grew with the example
+                               sites (milestones 17 to 21)
   LICENSE, LICENSE-SPEC        Apache 2.0 and CC BY 4.0
   packages/
     parser/                    @holoml/parser: text to a tree with line and
@@ -396,6 +398,21 @@ holoml/
                                Pack, CC0), copies the sounds (Kenney's
                                sound packs, CC0), and makes the birds and
                                crickets
+  examples/sofa-studio/        the sofa studio (milestone 18): a shop page
+                               with choices of fabric and wood, shadows,
+                               and a studio's light (Poly Haven, CC0)
+  examples/harbour-loft/       Harbour Loft (milestone 19): a flat to tour,
+                               with panels, doors and lamps, places, a
+                               sky, and a floor plan (Poly Haven, CC0)
+  examples/sneaker-store/      the sneaker store (milestone 20): a shoe in
+                               ten colourways on shelves loaded by area
+                               (Khronos's sample shoe, CC BY 4.0)
+  examples/aquarium/           the ocean tunnel (milestone 21): 30 fish
+                               swum by aquarium.js through water, with
+                               bubbles and feeding; tools/ fetches the
+                               fish (CC BY 4.0 and CC0) and Poly Haven's
+                               rocks (CC0), gives the fish without one a
+                               swim, and makes the tank and the sounds
   .github/workflows/ci.yml     lint, types, and tests on Windows and Linux
   .github/workflows/pages.yml  publishes examples/ with GitHub Pages
                                (without the tools/ folders)
