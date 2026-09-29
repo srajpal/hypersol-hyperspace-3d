@@ -30,9 +30,9 @@ Plan approved 2026-09-24.
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
 | 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
 | 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | Done (accepted, prompt 112) |
-| 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Built, waiting for acceptance (build approved, prompt 114; handed off mid-build, prompt 116; built in prompt 118: the language, the browser's part, and Harbour Loft; the pull requests and V11 next) |
-| 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | In progress (planned and started, prompt 120, with the recommended answers) |
-| 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
+| 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Built and merged, waiting for acceptance (build approved, prompt 114; built in prompt 118; holoml #17 and the browser's #36 merged, prompts 119 and 121) |
+| 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Built and merged, waiting for acceptance (planned and started, prompt 120, with the recommended answers; holoml #18 and the browser's #37 merged, prompt 121) |
+| 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Current: plan drafted, waiting for approval (prompt 121) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Later (prompt 115) |
 | 23 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85, and from 22, prompt 115) |
 | 24 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
@@ -3055,15 +3055,15 @@ the sofa studio's copy in tests/fixtures/holoml/sofa-studio.
 
 ## Milestone 19 — Harbour Loft
 
-Status: Built, waiting for acceptance. Planned (prompt 113); the owner
-answered Q1 to Q6 with the recommendations and approved the build
-(prompt 114). Pushed before the milestone (after milestone 18's
-acceptance). Rule 13 check done (ARCHITECTURE.md section 3). Handed off
-mid-build on 2026-09-28 (prompt 116) with tasks 1 and 2 done; resumed
-in prompt 118, which also chose Harbour Loft for the README's first
-picture. Tasks 1 to 4 are done, and the checks and documents below;
-next, the pull requests (holoml's first), the automatic builds, V11,
-and the owner's acceptance.
+Status: Built and merged, waiting for acceptance. Planned (prompt
+113); the owner answered Q1 to Q6 with the recommendations and
+approved the build (prompt 114). Pushed before the milestone (after
+milestone 18's acceptance). Rule 13 check done (ARCHITECTURE.md section
+3). Handed off mid-build on 2026-09-28 (prompt 116) with tasks 1 and 2
+done; resumed in prompt 118, which also chose Harbour Loft for the
+README's first picture. All six tasks are done. The owner merged holoml
+pull request #17 (prompt 119) and the browser's #36 (prompt 121,
+2026-09-29); the owner has not yet said it is accepted.
 
 Goal: a flat to tour, for an estate agent. Walk through the rooms of a
 loft by the harbour, open doors, switch lamps on and off, read about
@@ -3179,9 +3179,11 @@ sofa studio did not have: text of more than one line (holoml issue
       Published with GitHub Pages when holoml's pull request merges.
 - [x] 4. The examples section and the start panel: its card, its
       picture (`pnpm screenshots:examples`), and its row (prompt 118).
-- [ ] 5. Checks V1 to V12 (tests/e2e/m19.e2e.ts, holoml's tests), run on
-      Windows, with `pnpm test:linux`, and in the automatic builds.
-- [ ] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
+- [x] 5. Checks V1 to V12 (tests/e2e/m19.e2e.ts, holoml's tests), run on
+      Windows, with `pnpm test:linux`, and in the automatic builds
+      (V5's last version on Linux in the automatic builds only; see the
+      results).
+- [x] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
       THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the README's
       pictures.
 
@@ -3326,6 +3328,12 @@ sofa studio did not have: text of more than one line (holoml issue
   and drawing in software, and its first version passed with `pnpm
   test:linux`. Not yet: this V5 with `pnpm test:linux` and in the
   automatic builds (running).
+- The automatic builds of #36's last commit (704edf1, with this V5): Linux
+  passed (26 minutes) and Windows passed (19 minutes). Milestone 20's
+  pull request #37, which contains it, passed on both too (see milestone
+  20's results). This V5 has not run with `pnpm test:linux`.
+- Merged (2026-09-29, prompt 121): the owner merged #36 (135aa25), after
+  holoml #17 (prompt 119).
 
 ### Done when
 
@@ -3333,12 +3341,15 @@ sofa studio did not have: text of more than one line (holoml issue
 
 ## Milestone 20 — Sneaker store
 
-Status: Planned and started (prompt 120): the owner said to start the
-next milestone and to take the recommendations for its questions, so
-Q1 to Q5 are answered as recommended and the build is approved. Rule 13
-check done (ARCHITECTURE.md section 3). Pushed before the milestone
-(milestone 19's branch, browser pull request #36, not yet accepted:
-this milestone's branch starts from it).
+Status: Built and merged, waiting for acceptance. Planned and started
+(prompt 120): the owner said to start the next milestone and to take
+the recommendations for its questions, so Q1 to Q5 are answered as
+recommended and the build is approved. Rule 13 check done
+(ARCHITECTURE.md section 3). Pushed before the milestone (milestone
+19's branch, browser pull request #36, not yet accepted: this
+milestone's branch starts from it). All six tasks are done. The owner
+merged holoml pull request #18 and the browser's #37 (prompt 121,
+2026-09-29); the owner has not yet said it is accepted.
 
 Goal: a sneaker store, in place of Coral Bay, a resort (prompts 101 and
 102): a wall of sneakers to pick up, turn, and see up close (the sole,
@@ -3428,8 +3439,10 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
       pull request is merged).
 - [x] 4. The examples section and the start panel: its card, its
       picture, and its row.
-- [ ] 5. Checks W1 to W12 (tests/e2e/m20.e2e.ts, holoml's tests), run on
-      Windows, with `pnpm test:linux`, and in the automatic builds.
+- [x] 5. Checks W1 to W12 (tests/e2e/m20.e2e.ts, holoml's tests), run on
+      Windows, with `pnpm test:linux`, and in the automatic builds
+      (four clipboard checks fail on this computer, whose clipboard is
+      broken, and pass elsewhere; see the results).
 - [x] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
       THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the README's
       pictures.
@@ -3556,6 +3569,33 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
 - Pull requests: holoml #18 and the browser's #37 (2026-09-29). Not
   yet: their automatic builds, and W11 by hand once #18 is merged and
   GitHub Pages publishes the store.
+- The automatic builds (2026-09-29): holoml #18 passed on Linux and
+  Windows. The browser's #37 (4450929, with milestone 19's last V5)
+  passed on both: the unit tests 266 passed and 2 skipped, and the
+  end-to-end checks 269 passed and 1 skipped of 270, on each. Linux took
+  38 minutes 44 seconds of the 45 its job may take; Windows 20 minutes.
+  On GitHub's Windows machine D8's and K2's clipboard checks passed.
+- Merged (2026-09-29, prompt 121): the owner merged holoml #18 (a6c88d9)
+  and the browser's #36 and #37 (585c5ae), and GitHub Pages published
+  the store. The copy of HoloML is synced from holoml's main (a6c88d9);
+  only the copies' first comment line (the ref) and SOURCE.json changed.
+- W11 (2026-09-29, prompt 121): the built app opened
+  https://srajpal.github.io/holoml/sneaker-store/index.holoml (a one-off
+  run with the network, not a test, as V11): HoloML 0.2, ready in 3.2 s
+  over the internet, no problems, nothing left out; 154 models, 2.4 MB
+  and 429,084 triangles counted in 22 model files; 12 places and 12
+  links. At the start the two bays nearest the viewer were loaded and
+  the other eight showed their stand-ins. Down the hall the six far bays
+  loaded and the four nearest the start were let go and showed their
+  stand-ins again (5.3 MB, 973,884 triangles, 26 files). The Sunset
+  shoe's link opened its page through a fade, in Sunset, with no
+  problems; size 43 and "Add to cart" made the cart "1 pair · $125",
+  and the checkout page listed the Sunset shoe in EU size 43 at $125.
+  Pass.
+- The Windows clipboard on this computer still failed on 2026-09-29
+  (PowerShell's Set-Clipboard), so D8's and K2's four clipboard checks
+  have not run again here; they pass on Linux and on GitHub's Windows
+  machine.
 
 ### Done when
 

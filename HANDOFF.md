@@ -1,11 +1,11 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-09-29 (milestones 1 to 18 accepted; milestone 19,
-Harbour Loft, is built, prompt 118, and waits for the owner's
-acceptance: see "Milestone 19, built" below. Milestone 20, the sneaker
-store, is built, prompt 120, and waits for its pull requests and the
-owner's acceptance: see "Milestone 20, built". 22 is HoloML's
+Last updated 2026-09-29 (milestones 1 to 18 accepted; milestones 19,
+Harbour Loft, and 20, the sneaker store, are built and merged, prompt
+121, and wait for the owner's acceptance: see "Milestone 20, built" and
+"Milestone 19, built" below. Milestone 21, the aquarium, is being
+planned (prompt 121): see "Milestone 21, planned". 22 is HoloML's
 documentation (prompt 115). The roadmap is in TODO.md).
 
 ## Where things stand
@@ -46,10 +46,13 @@ state; this is a summary.
   2026-09-28, prompt 112; merged in holoml, pull requests #14 to #16,
   and the browser, #34 and #35; published at
   https://srajpal.github.io/holoml/sofa-studio/); 19 Harbour Loft
-  (built, waiting for acceptance); 20 a sneaker store, with loading by
-  area (built, waiting for acceptance; in place of Coral Bay, a resort,
-  prompts 101 and 102); 21 Aquarium, where HoloML 0.2 is
-  tagged); 22 documentation for HoloML to recognised standards (prompt
+  (built and merged, holoml #17 and the browser's #36, waiting for
+  acceptance; published at https://srajpal.github.io/holoml/harbour-loft/);
+  20 a sneaker store, with loading by area (built and merged, holoml
+  #18 and the browser's #37, waiting for acceptance; published at
+  https://srajpal.github.io/holoml/sneaker-store/; in place of Coral
+  Bay, a resort, prompts 101 and 102); 21 Aquarium, where HoloML 0.2 is
+  tagged (being planned)); 22 documentation for HoloML to recognised standards (prompt
   115); 23 privacy and data tools (HTTPS-only, per-site storage,
   bookmark import and export: #24, #26, #27); then installers as 1.0
   (24 for Windows and Linux, 25 for macOS), with mobile later (owner,
@@ -60,12 +63,20 @@ state; this is a summary.
   personal project honouring it, not marketed for now. Copyright: "The
   HyperSpace 3D Authors" and "The HoloML Authors" (AUTHORS files).
 
-Two repositories, both on `main` (milestones 19 and 20's work is on
-branches, below), kept as sibling folders (never one inside the other):
+Two repositories, kept as sibling folders (never one inside the other).
+Both main branches have milestones 19 and 20; milestone 21's work goes
+on the browser's branch `m21-aquarium` (from main after #37):
 
 - Browser: https://github.com/srajpal/hypersol-hyperspace-3d (renamed
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
+
+## Milestone 21, planned (2026-09-29, prompt 121)
+
+The owner merged milestones 19 and 20 and asked for the next milestone
+(prompt 121). Its plan is being drafted in TODO.md, "Milestone 21 —
+Aquarium", for the owner's approval; nothing is built yet. The Electron
+check (rule 13) is done, and the browser's branch is `m21-aquarium`.
 
 ## Milestone 20, built (2026-09-29, prompt 120)
 
@@ -95,10 +106,11 @@ Where the work is:
   from main (`pnpm holoml:sync main --examples main`), as milestone 19
   did.
 
-What comes next: the pull requests are open, holoml's #18 and the
-browser's #37 (merge #36 first: #37 starts from milestone 19's branch);
-their automatic builds, W11 by hand once #18 is merged and GitHub Pages
-publishes the store, and the owner's acceptance.
+Merged (prompt 121): holoml's #18 and the browser's #37 (after #36);
+their automatic builds passed, GitHub Pages published the store, and
+W11 passed (the published store in the built app; TODO.md has the
+numbers). The browser's copy of HoloML is synced from holoml's main
+(a6c88d9). What comes next: the owner's acceptance.
 
 Worth knowing:
 
@@ -150,12 +162,12 @@ Auto-fix on):
 - The browser's copy of HoloML (packages/holoml) comes from holoml's
   main (SOURCE.json: 4d69a69, the merge of #17).
 
-What comes next: #36's automatic builds (V8 to V10 were given time for
-drawing in software after `pnpm test:linux` ran them out of time; then
-its Linux job failed V5 and V8, which read the page too late on
-GitHub's slower machine, fixed 2026-09-29: TODO.md, milestone 19's
-results), and the owner's acceptance. V11 passed (the published site in the built
-app). The AGENTS.md wording for the README's pictures is approved and
+Merged (prompt 121): the browser's #36, after its automatic builds
+passed (V8 to V10 were given time for drawing in software after `pnpm
+test:linux` ran them out of time; then its Linux job failed V5 and V8,
+which read the page too late on GitHub's slower machine, fixed
+2026-09-29: TODO.md, milestone 19's results). V11 passed (the published
+site in the built app). What comes next: the owner's acceptance. The AGENTS.md wording for the README's pictures is approved and
 in (prompt 119). For an owner decision later: ARCHITECTURE.md section
 10, item 4 (large scenes: shaders compiled on the page's main thread,
 every model a Tab stop). Milestone 20, the sneaker store, is being

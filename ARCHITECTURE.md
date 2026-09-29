@@ -121,6 +121,11 @@ prompt 120): 44.4.5 (2026-09-23) is still the newest stable release on
 npm ("latest"; 45 is in alpha, 45.0.0-alpha.13 of 2026-09-28), with no
 stable release since. No upgrade needed.
 
+Rule 13 check, 2026-09-29 (start of milestone 21, the aquarium, prompt
+121): 44.4.5 (2026-09-23) is still the newest stable release on npm
+("latest"; 45 is in alpha, still 45.0.0-alpha.13 of 2026-09-28), with no
+release of any line since. No upgrade needed.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |
