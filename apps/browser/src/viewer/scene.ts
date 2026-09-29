@@ -10,7 +10,7 @@
  * reduced motion is followed; the instrument panel's Scene part reads
  * the tree, the selection, and the costs from here (#28).
  *
- * Milestone 17 (HoloML 0.2 draft): elements can be added and removed by
+ * Milestone 17 (HoloML 0.2): elements can be added and removed by
  * the page's scripts (api.ts); a model file is loaded once and repeated
  * plain models are drawn as instances (instances.ts); walls and gravity
  * for walking (physics.ts); lights and the background can be animated;
@@ -31,6 +31,9 @@
  * (releasing their memory, and their share of the limits) when the viewer
  * is farther; a model's stand-in shows in its place until it has loaded;
  * scripts read `loaded` and hear `load`.
+ *
+ * Milestone 21 (HoloML 0.2, fifth part): water (water.ts), sounds that
+ * come from a place (sound.ts), and a model's animation speed for scripts.
  */
 import {
   AmbientLight,
@@ -84,6 +87,7 @@ import { SolidGrid, Walker, type Box } from './physics';
 import { disposePanel, drawPanel, type PanelLook } from './panels';
 import { Pictures, type PictureUse } from './pictures';
 import { SoundBank, type SoundHandle, type SoundReport } from './sound';
+import { Water } from './water';
 import { area, attr, color, contrastText, duration, has, num, paragraphs, rawText, repeat, resolveAddress, scale, text, tiling, vec3, type Vec3 } from './values';
 
 const DEG = Math.PI / 180;
@@ -320,6 +324,8 @@ export interface Entry {
   held?: Held;
   /** Counts a model's loads: a load that finishes after the model was let go is dropped. */
   loads?: number;
+  /** A model's animation speed, as a script set it (milestone 21); 1 when never set. */
+  animationSpeed?: number;
 }
 
 /** What a click, a tap, or the crosshair hit. */
@@ -452,6 +458,22 @@ export class HolomlView {
   private readonly templateUsers = new Map<string, number>();
   /** The tiled copies of a made material's pictures, released with it. */
   private readonly tiledOf = new WeakMap<Material, Texture[]>();
+  /** The page's water (HoloML 0.2 `water`, milestone 21); its materials are gone over again when models arrive or change. */
+  private water: Water | null = null;
+  private waterDirty = false;
+  /** Why the water's moving light was left out, if it was. */
+  private causticsLeftOut: string | null = null;
+  /** The page's tab is behind another (milestone 21): what moves waits, and nothing draws but a change. */
+  private behind = false;
+  /**
+   * New materials' shaders compile without blocking the page (milestone 21):
+   * wanted when models arrive or materials change, and while they compile
+   * the last frame stays on the screen.
+   */
+  private shadersWanted = true;
+  private compiling = false;
+  /** A frame is being drawn: what the page's scripts move during it asks for no new frame while the tab is behind. */
+  private inFrame = false;
 
   constructor(root: ElementNode, container: HTMLElement, outline: HTMLElement, hudLayer: HTMLElement) {
     this.outline = outline;
@@ -526,6 +548,11 @@ export class HolomlView {
         if (c.name === 'plan') {
           // At most one (the checker reports a second, which is left out).
           if (this.count(c) && this.version === '0.2' && !this.planState) this.plan(c);
+          continue;
+        }
+        if (c.name === 'water') {
+          // At most one (the checker reports a second, which is left out).
+          if (this.count(c) && this.version === '0.2' && !this.water) this.makeWater(c);
           continue;
         }
         if (c.name === 'hud') {
@@ -914,7 +941,7 @@ export class HolomlView {
         break;
       case 'sound':
         if (this.version === '0.2') {
-          this.sound(node, entry);
+          this.sound(node, entry, parent);
           // Plays when its trigger is clicked (milestone 19).
           if (attr(node, 'begin') === 'click') this.pendingActions.push({ trigger: idOf(attr(node, 'trigger')), sound: entry, label: attr(node, 'label') ?? null });
         }
@@ -1079,6 +1106,7 @@ export class HolomlView {
           holder.userData['copy'] = copy;
           held.materials = this.changeMaterials(changes, given, copy, report);
           if (clipName) held.mixer = this.startClip(el, copy, loaded.animations, clipName, report);
+          if (held.mixer && entry.animationSpeed !== undefined) held.mixer.timeScale = entry.animationSpeed;
           // The options its choices start with; the model counts as loading until they are on it.
           await Promise.all(this.choices.filter((c) => c.choice!.target === entry.id).map((c) => this.applyChoice(c)));
           if (!current()) return;
@@ -1445,6 +1473,8 @@ export class HolomlView {
   /** One thing finished loading (or failing): the scene is ready when nothing is left. */
   private settle(): void {
     this.pending -= 1;
+    this.waterDirty = true;
+    this.shadersWanted = true;
     this.requestFrame();
     if (this.pending === 0) {
       this.onBusy?.(false);
@@ -1839,6 +1869,7 @@ export class HolomlView {
    */
   private panel(el: ElementNode, parent: Object3D, entry: Entry): Object3D {
     const holder = this.place(new Object3D(), el);
+    holder.userData['holomlText'] = true;
     parent.add(holder);
     const background = color(el, 'background');
     const note = document.createElement('div');
@@ -2190,6 +2221,8 @@ export class HolomlView {
       console.warn(`HoloML: the choice "${entry.name}" changes the material "${c.material}", which the model "${model.name}" does not have.`);
     }
     if (model.report) this.materialsOf(holder, model.report);
+    this.waterDirty = true;
+    this.shadersWanted = true;
     this.requestFrame();
   }
 
@@ -2227,7 +2260,7 @@ export class HolomlView {
   }
 
   /** A sound (HoloML 0.2): fetched within the limits; played after the viewer's first click or key. */
-  private sound(el: ElementNode, entry: Entry): void {
+  private sound(el: ElementNode, entry: Entry, parent: Object3D): void {
     const src = attr(el, 'src') ?? '';
     const report: SoundReport = { id: entry.id, src, state: 'loading', playing: false, plays: 0 };
     entry.soundReport = report;
@@ -2235,6 +2268,8 @@ export class HolomlView {
     const autoplay = has(el, 'autoplay') && attr(el, 'begin') !== 'click';
     const handle = this.sounds.add(report, { loop: has(el, 'loop'), autoplay, volume: num(el, 'volume', 1, 0, 1) });
     entry.sound = handle;
+    // A sound from a place (milestone 21): it sits in its parent, so it moves with a group.
+    if (has(el, 'position')) this.placeSound(entry, parent, vec3(el, 'position', [0, 0, 0]), num(el, 'range', 20, Number.MIN_VALUE));
     const url = resolveAddress(src, this.base);
     if (!url || url.origin !== this.origin) {
       handle.fail('refused', "sounds load only from the page's own site");
@@ -2257,6 +2292,103 @@ export class HolomlView {
         this.onLeftOut?.();
       })
       .finally(() => this.settle());
+  }
+
+  /** Puts a sound at a place in its parent (milestone 21): a marker it is heard from, as the viewer moves and as its group moves. */
+  private placeSound(entry: Entry, parent: Object3D, at: Vec3, range: number): void {
+    let marker = entry.object;
+    if (!marker) {
+      marker = new Object3D();
+      marker.name = 'sound';
+      parent.add(marker);
+      this.setObject(entry, marker);
+    }
+    marker.position.set(...at);
+    const world = new Vector3();
+    const where = (): Vec3 => {
+      marker.getWorldPosition(world);
+      return [world.x, world.y, world.z];
+    };
+    entry.sound?.place(where, range);
+    this.requestFrame();
+  }
+
+  /** A sound's place in its parent (a script's `position`), or null for a sound from everywhere. */
+  soundPosition(entry: Entry): Vec3 | null {
+    const p = entry.kind === 'sound' ? entry.object?.position : undefined;
+    return p ? [p.x, p.y, p.z] : null;
+  }
+
+  /** A script gives a sound a place: from there on it comes from that place (its range as the page gave it, or 20 metres). */
+  setSoundPosition(entry: Entry, at: Vec3): void {
+    if (entry.kind !== 'sound' || entry.removed) return;
+    const parent = entry.parent?.object ?? this.scene;
+    this.placeSound(entry, parent, at, num(entry.el, 'range', 20, Number.MIN_VALUE));
+  }
+
+  /** How loud a sound from a place is in each of the viewer's ears now (the page's hooks), by its id. */
+  soundLevels(id: string): { left: number; right: number } | null {
+    return this.entryById.get(id)?.sound?.levels() ?? null;
+  }
+
+  /** How fast a model's own animation plays (milestone 21): 1 as made, 0 held still. */
+  animationSpeedOf(entry: Entry): number {
+    return entry.animationSpeed ?? 1;
+  }
+
+  setAnimationSpeed(entry: Entry, speed: number): void {
+    if (entry.kind !== 'model' || entry.removed) return;
+    entry.animationSpeed = speed;
+    if (entry.held?.mixer) entry.held.mixer.timeScale = speed;
+    this.requestFrame();
+  }
+
+  /**
+   * The page's water (HoloML 0.2 `water`, milestone 21). Its moving light
+   * is left out where Chromium draws in software, as shadows are: it would
+   * take much of every frame there, and the console says so.
+   */
+  private makeWater(el: ElementNode): void {
+    const size = vec3(el, 'size', [1, 1, 1]);
+    const caustics = has(el, 'caustics');
+    if (caustics && this.software !== null) {
+      this.causticsLeftOut = `this computer draws 3D in software (${this.software})`;
+      console.warn("HoloML: the water's moving light was left out: this computer draws 3D in software, without a graphics card.");
+    }
+    this.water = new Water(
+      {
+        position: vec3(el, 'position', [0, 0, 0]),
+        size: size.every((n) => n > 0) ? size : [1, 1, 1],
+        color: color(el, 'color') ?? '#1f6f8b',
+        clarity: num(el, 'clarity', 15, Number.MIN_VALUE),
+        caustics,
+      },
+      this.software === null,
+    );
+    this.waterDirty = true;
+    this.shadersWanted = true;
+  }
+
+  /** The page's water, for the tests and the inspector: its box, its look, and its moving light. */
+  get waterInfo(): { min: Vec3; max: Vec3; color: string; clarity: number; caustics: boolean; causticsShown: boolean; causticsLeftOut: string | null; causticsTime: number } | null {
+    const w = this.water;
+    if (!w) return null;
+    return { min: w.min, max: w.max, color: w.look.color, clarity: w.look.clarity, caustics: w.look.caustics, causticsShown: w.causticsShown, causticsLeftOut: this.causticsLeftOut, causticsTime: w.causticsTime };
+  }
+
+  /** How much a point has faded into the water's colour, seen from where the viewer is now (0 without water). */
+  waterFadeAt(point: Vec3): number {
+    const c = this.camera.position;
+    return this.water ? this.water.fadeAt([c.x, c.y, c.z], point) : 0;
+  }
+
+  /** How bright the water's moving light is: it follows the page's lights that shine from a place (the sun, lamps). */
+  private waterLight(): number {
+    let sum = 0;
+    this.scene.traverseVisible((o) => {
+      if (o instanceof DirectionalLight || o instanceof SpotLight || o instanceof PointLight) sum += o.intensity;
+    });
+    return Math.min(1.2, 0.25 * sum);
   }
 
   private addLink(href: string, object: Object3D, el: ElementNode): HTMLElement {
@@ -3116,6 +3248,8 @@ export class HolomlView {
       o.material = Array.isArray(o.material) ? next : next[0]!;
     });
     this.materialsOf(holder, entry.report);
+    this.waterDirty = true;
+    this.shadersWanted = true;
     this.requestFrame();
   }
 
@@ -3178,14 +3312,47 @@ export class HolomlView {
     this.requestFrame();
   }
 
+  /**
+   * The page's tab went behind another, or came to the front (milestone 21).
+   * Behind, the scene stops drawing what moves (animations, the water's
+   * light, a script's frames); a change still draws once, so that the
+   * tab's card can show the scene. In front again, it goes on.
+   */
+  setBehind(on: boolean): void {
+    if (this.behind === on) return;
+    this.behind = on;
+    this.last = 0;
+    if (!on) this.requestFrame();
+  }
+
+  get isBehind(): boolean {
+    return this.behind;
+  }
+
+  /** New shaders are compiling, or wanted: the scene is not yet drawn as it now is (for the tests). */
+  get shadersCompiling(): boolean {
+    return this.compiling || this.shadersWanted;
+  }
+
   requestFrame(): void {
     if (this.frameRequested) return;
+    // Behind another tab, what moves in a frame (a script's frame handler moving things) asks for no more.
+    if (this.behind && this.inFrame) return;
     this.frameRequested = true;
     requestAnimationFrame((t) => this.frame(t));
   }
 
   private frame(time: number): void {
     this.frameRequested = false;
+    this.inFrame = true;
+    try {
+      this.drawFrame(time);
+    } finally {
+      this.inFrame = false;
+    }
+  }
+
+  private drawFrame(time: number): void {
     const dt = this.last === 0 ? 16 : Math.min(100, time - this.last);
     this.last = time;
     let moving = this.controls?.step(dt) ?? false;
@@ -3212,13 +3379,50 @@ export class HolomlView {
     }
     this.followAmbient();
     this.fitShadows();
+    if (this.water) {
+      if (this.waterDirty) {
+        this.water.hook(this.scene);
+        this.waterDirty = false;
+      }
+      this.water.light = this.waterLight();
+      // The moving light keeps the scene drawing; with reduced motion it holds still.
+      if (this.water.step(dt, this.reducedMotion.matches)) moving = true;
+    }
+    if (this.sounds.placed) {
+      const c = this.camera;
+      const forward = new Vector3();
+      c.getWorldDirection(forward);
+      const up = new Vector3(0, 1, 0).applyQuaternion(c.quaternion);
+      this.sounds.follow([c.position.x, c.position.y, c.position.z], [forward.x, forward.y, forward.z], [up.x, up.y, up.z]);
+    }
+    // New shaders compile off the page's main thread where the graphics card can (KHR_parallel_shader_compile);
+    // meanwhile the last frame stays, and what loads goes on loading.
+    if (this.shadersWanted && !this.compiling) {
+      this.shadersWanted = false;
+      this.compiling = true;
+      this.renderer
+        .compileAsync(this.scene, this.camera)
+        .catch(() => undefined)
+        .finally(() => {
+          this.compiling = false;
+          this.requestFrame();
+        });
+    }
+    if (this.compiling) {
+      // Not drawn yet, but where everything is stays current (clicks, and what the tests measure, use it).
+      this.scene.updateMatrixWorld();
+      this.camera.updateMatrixWorld();
+      if (moving && !this.behind) this.requestFrame();
+      else this.last = 0;
+      return;
+    }
     this.renderer.render(this.scene, this.camera);
     this.frames += 1;
     this.updatePlan();
     // Arrived through a fade: in once everything is drawn.
     if (this.arriving && this.pending === 0) this.arrive();
     this.onDrawn?.();
-    if (moving) this.requestFrame();
+    if (moving && !this.behind) this.requestFrame();
     else this.last = 0;
   }
 

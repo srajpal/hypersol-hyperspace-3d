@@ -1,5 +1,5 @@
 /**
- * HoloML's example sites (milestones 16 to 20; owner, prompt 85): what the
+ * HoloML's example sites (milestones 16 to 21; owner, prompt 85): what the
  * start panel's "Try HoloML" and the examples dialog list. The sites are
  * published from the holoml repository with GitHub Pages; the pictures are
  * part of the browser (pnpm screenshots makes them from local copies), so
@@ -10,6 +10,7 @@ import blockworldPicture from './examples/blockworld.jpg';
 import sofaStudioPicture from './examples/sofa-studio.jpg';
 import harbourLoftPicture from './examples/harbour-loft.jpg';
 import sneakerStorePicture from './examples/sneaker-store.jpg';
+import aquariumPicture from './examples/aquarium.jpg';
 
 export interface Example {
   id: string;
@@ -74,6 +75,14 @@ export const EXAMPLES: readonly Example[] = [
     row: 'Sneaker store: walk the shelves and try a shoe',
     features: 'HoloML 0.2: loading by area, stand-ins, colour and size choices, and a cart kept by a script',
     picture: sneakerStorePicture,
+  },
+  {
+    id: 'aquarium',
+    name: 'Ocean tunnel',
+    line: 'An aquarium to walk through: sharks, a sea turtle, tuna, and schools of fish swim over and around a glass tunnel. Feed them, and read about each.',
+    row: 'Ocean tunnel: walk under the fish',
+    features: 'HoloML 0.2: water, light from the waves, sounds from a place, and 30 fish swum by a script',
+    picture: aquariumPicture,
   },
 ];
 

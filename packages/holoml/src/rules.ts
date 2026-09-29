@@ -1,5 +1,5 @@
 // Copied from the holoml repository (https://github.com/srajpal/holoml),
-// packages/schema/src/rules.ts at sneaker-store. Apache License 2.0, The HoloML Authors.
+// packages/schema/src/rules.ts at main. Apache License 2.0, The HoloML Authors.
 // Do not edit here: change HoloML there and run pnpm holoml:sync.
 
 /**
@@ -10,8 +10,8 @@
  *
  * The table is the newest version's. What a later version added says so
  * in `since`; a page that declares an earlier version may not use it
- * (SPEC.md, "Versions"). Version 0.2 is a draft that grows with the
- * browser's example sites (HyperSpace 3D milestones 17 to 21).
+ * (SPEC.md, "Versions"). Version 0.2 grew with the browser's example
+ * sites (HyperSpace 3D milestones 17 to 21).
  */
 
 export type ValueKind =
@@ -27,6 +27,8 @@ export type ValueKind =
   | { kind: 'tiling' }
   /** Four numbers, "x0 z0 x1 z1", with x1 above x0 and z1 above z0: a rectangle of the ground. */
   | { kind: 'area' }
+  /** Three numbers more than 0: a width, a height, and a depth. */
+  | { kind: 'size' }
   | { kind: 'id' }
   /** "#" and the id of an element in the same document. */
   | { kind: 'idref' }
@@ -119,9 +121,9 @@ export const ELEMENTS: Readonly<Record<string, ElementRule>> = {
     attributes: { src: { value: { kind: 'url', for: 'script' }, required: true } },
   },
   scene: {
-    children: [...SCENE_CONTENT, 'viewpoint', 'hud', 'slider', 'choice', 'plan'],
+    children: [...SCENE_CONTENT, 'viewpoint', 'hud', 'slider', 'choice', 'plan', 'water'],
     // 0.2: several viewpoints, the places a page's address can name (checked in index.ts: each with an id).
-    once: ['viewpoint', 'plan'],
+    once: ['viewpoint', 'plan', 'water'],
     manyFrom: { viewpoint: '0.2' },
     attributes: {
       id: { value: { kind: 'id' }, since: '0.2' },
@@ -237,6 +239,9 @@ export const ELEMENTS: Readonly<Record<string, ElementRule>> = {
       loop: { value: { kind: 'flag' } },
       autoplay: { value: { kind: 'flag' } },
       volume: { value: { kind: 'number', min: 0, max: 1 } },
+      // Sounds from a place (checked in index.ts: range needs a position).
+      position: { value: { kind: 'vector3' } },
+      range: { value: { kind: 'number', positive: true } },
       // Plays when its trigger is clicked (checked in index.ts: begin="click" needs a trigger).
       begin: { value: { kind: 'choice', values: ['load', 'click'] } },
       trigger: { value: { kind: 'idref' } },
@@ -310,6 +315,22 @@ export const ELEMENTS: Readonly<Record<string, ElementRule>> = {
       size: { value: { kind: 'number', positive: true } },
       color: { value: { kind: 'color' } },
       background: { value: { kind: 'color' } },
+    },
+  },
+  /**
+   * A box of water: its floor's middle at `position`, its surface at the
+   * top. What is seen through it fades into its colour, and with
+   * `caustics` the light of its waves plays over what is in it.
+   */
+  water: {
+    since: '0.2',
+    children: 'none',
+    attributes: {
+      position: { value: { kind: 'vector3' } },
+      size: { value: { kind: 'size' }, required: true },
+      color: { value: { kind: 'color' } },
+      clarity: { value: { kind: 'number', positive: true } },
+      caustics: { value: { kind: 'flag' } },
     },
   },
   /** A floor plan in a corner of the screen, with the viewer's place on it. */

@@ -36,7 +36,7 @@ planned but untested. Apache 2.0. No telemetry.
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
 as source for developers (no installers yet). Since then, HoloML 0.1 has
 been written down in its own repository (milestone 13), and this browser
-shows HoloML pages (milestones 14 to 18, accepted; not yet in a
+shows HoloML pages (milestones 14 to 20, accepted; not yet in a
 release), with limits for heavy scenes, keyboard and screen-reader
 access, a scene inspector, and a HoloML car showroom to try from the
 start panel. Milestone 17 adds Blockworld, a small block game written in
@@ -46,12 +46,13 @@ page can set, sliders on the screen (Blockworld's Speed slider), and the
 sofa studio, a shop page with shadows, textured fabrics, and choices
 that change the sofa in place. Milestone 19 adds text panels, doors and
 lamps that work with a click, places to go to, a sky, a floor plan, and
-Harbour Loft, a flat by a harbour to tour (built; waiting for
-acceptance). Milestone 20 adds groups of models that load only while
-you are near them, with lighter stand-ins until then, and the sneaker
-store, one shoe in ten colourways to walk among, turn over, and add to a
-cart (built; waiting for acceptance). Then one more example site,
-HoloML's documentation,
+Harbour Loft, a flat by a harbour to tour. Milestone 20 adds groups of
+models that load only while you are near them, with lighter stand-ins
+until then, and the sneaker store, one shoe in ten colourways to walk
+among, turn over, and add to a cart. Milestone 21 adds water, sounds
+that come from a place, and the ocean tunnel, an aquarium to walk
+through with 30 fish swimming over and around you, and completes HoloML
+0.2 (built; waiting for acceptance). Then HoloML's documentation,
 privacy and data tools, and installers as 1.0. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
@@ -153,7 +154,11 @@ An archived copy of the 2001 site is available through the
   Harbour Loft. Milestone 20: groups of models that load only while the
   viewer is near and are let go (their memory released) when the viewer
   walks away, with a lighter stand-in in each model's place until then,
-  shown by the sneaker store.
+  shown by the sneaker store. Milestone 21: water that things are seen
+  through, fading into its colour with distance, with the light from its
+  waves moving over what is in it; sounds that come from a place,
+  quieter with distance and from their side; and a model's animation
+  speed for scripts, shown by the ocean tunnel, an aquarium.
 - Mouse and keyboard throughout; touch for scenes.
 
 ## Built with the Buildwright approach
@@ -188,8 +193,7 @@ starts with a small prototype and the same habits of direction and checking.
 
 ## What comes next
 
-Milestones 20 and 21, two more HoloML example sites, each adding to
-the language: a sneaker store and an aquarium. 22, documentation for HoloML to recognised standards. 23,
+Milestone 22, documentation for HoloML to recognised standards. 23,
 privacy and data tools: HTTPS-only browsing, per-site storage, and
 bookmark import and export. 24 and 25, installers as 1.0 for Windows
 and Linux, then macOS. Later: free camera
@@ -198,7 +202,7 @@ and VR. The full roadmap is in [TODO.md](TODO.md).
 
 ## Progress
 
-Eighteen milestones are done and accepted.
+Twenty milestones are done and accepted.
 Milestones 1 to 11 built the browser: a live page on a tilted panel in
 the 3D room, tabs as cards, bookmarks and history, ad and tracker
 blocking with encrypted DNS, the layers view, two themes, an instrument
@@ -214,11 +218,12 @@ scene inspector. Milestone 16 adds a HoloML car showroom, published with GitHub 
 start panel. Milestone 17 adds Blockworld, a small block game in HoloML
 0.2, and the HoloML examples section. Milestone 18 adds walking speeds,
 sliders, and the sofa studio, a shop page with shadows, textured
-fabrics, and choices that change the sofa in place. Milestone 19, built
-and waiting for acceptance, adds Harbour Loft, a flat to tour, with
-panels of text, doors and lamps to click, places, a sky, and a floor
-plan. Milestone 20, built and waiting for acceptance, adds loading by
-area and the sneaker store.
+fabrics, and choices that change the sofa in place. Milestone 19 adds
+Harbour Loft, a flat to tour, with panels of text, doors and lamps to
+click, places, a sky, and a floor plan. Milestone 20 adds loading by
+area and the sneaker store. Milestone 21, built and waiting for
+acceptance, adds water, sounds from a place, and the ocean tunnel, an
+aquarium, and completes HoloML 0.2.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
@@ -226,10 +231,10 @@ screenshots, and [TODO.md](TODO.md) for the roadmap.
 
 HoloML is the 3D markup language developed alongside the browser, in its
 own repository so it stays independent and reusable:
-[github.com/srajpal/holoml](https://github.com/srajpal/holoml). Version
-0.1 is written down there (SPEC.md), with a parser, a checker, and
-sample pages, and version 0.2 is a draft that grows with the example
-sites; HoloML files use the extension `.holoml`. This browser
+[github.com/srajpal/holoml](https://github.com/srajpal/holoml).
+Versions 0.1 and 0.2 are written down there (SPEC.md), with a parser, a
+checker, and sample pages; 0.2 grew with the example sites. HoloML files
+use the extension `.holoml`. This browser
 shows HoloML pages (milestone 14): open a `.holoml` address, or a file
 with Ctrl+O, and walk or orbit around the scene. A page's size, models,
 pictures, and triangles have limits (milestone 15); what crosses one is
@@ -238,15 +243,17 @@ left out and marked, and a notice says why.
 To try one, open a new tab and choose one under Try HoloML, or open the
 HoloML examples (the menu, or Ctrl+Shift+E): the showroom (milestone 16),
 Blockworld (milestone 17), the sofa studio (milestone 18), Harbour
-Loft (milestone 19), and the sneaker store (milestone 20). They come
-from the holoml repository, https://github.com/srajpal/holoml, which
-publishes each with GitHub Pages:
+Loft (milestone 19), the sneaker store (milestone 20), and the ocean
+tunnel (milestone 21). They come from the holoml repository,
+https://github.com/srajpal/holoml, which publishes each with GitHub
+Pages:
 https://srajpal.github.io/holoml/showroom/,
 https://srajpal.github.io/holoml/blockworld/,
 https://srajpal.github.io/holoml/sofa-studio/,
-https://srajpal.github.io/holoml/harbour-loft/, and
-https://srajpal.github.io/holoml/sneaker-store/. The browser asks
-nothing of those sites until you choose one.
+https://srajpal.github.io/holoml/harbour-loft/,
+https://srajpal.github.io/holoml/sneaker-store/, and
+https://srajpal.github.io/holoml/aquarium/. The browser asks nothing of
+those sites until you choose one.
 
 ## Project documents
 

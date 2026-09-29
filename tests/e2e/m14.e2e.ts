@@ -18,6 +18,7 @@ import {
   pressInShell,
   project,
   removeFolder,
+  sceneStill,
   shellCall,
   sleep,
   tabs,
@@ -185,8 +186,7 @@ describe('P1, P2, P3, P5, P7, P10: a still scene', () => {
   });
 
   it('P10 an idle scene draws nothing', async () => {
-    await sleep(500);
-    const before = await holo<number>(h, 'window.__holoml.frames', PAGE);
+    const before = await sceneStill(h, PAGE);
     await sleep(1500);
     expect(await holo<number>(h, 'window.__holoml.frames', PAGE)).toBe(before);
   });

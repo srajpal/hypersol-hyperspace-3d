@@ -16,6 +16,7 @@ import {
   pressInPage,
   pressInShell,
   project,
+  sceneStill,
   sceneWait,
   shellCall,
   sleep,
@@ -64,23 +65,12 @@ async function openPage(h: Harness, page: string, ref = page.split('?')[0]!): Pr
 
 /**
  * Waits until an idle page has drawn what it loaded: a scene draws only
- * when something changes, so once the frame count holds still, the last
- * frame shows everything.
+ * when something changes (each arrival asks for a frame), so once no
+ * shaders are compiling and the frame count holds still, the last frame
+ * shows everything (sceneStill).
  */
 async function drawn(h: Harness, page: string): Promise<void> {
-  let last = -1;
-  await waitFor(
-    'the scene drawn and still',
-    async () => {
-      const now = await holo<number>(h, 'window.__holoml.frames', page);
-      const still = now > 0 && now === last;
-      last = now;
-      await sleep(300);
-      return still;
-    },
-    (v) => v,
-    await sceneWait(h, 10_000),
-  );
+  await sceneStill(h, page, await sceneWait(h, 10_000));
 }
 
 /** Sends a key down or up to the page. */

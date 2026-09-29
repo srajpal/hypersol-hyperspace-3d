@@ -1361,3 +1361,57 @@ merged.)
 You can start on the next milestone; use recommendations if you have
 questions.
 ```
+
+## 121 — 2026-09-29 · Claude Opus 5.5, max effort
+
+(Sent after milestone 20's report: holoml pull request #18 and the
+browser's #36 and #37 were open.)
+
+```text
+#18, #36, and #37 merged. Next milestone.
+```
+
+## 122 — 2026-09-29 · Claude Opus 5.5, max effort
+
+Sent after milestone 21's plan. The agent had asked whether milestones
+19 and 20 were accepted, and the plan's questions Q1 to Q7. The owner
+accepted both milestones and answered every question as recommended.
+Q1, the fish (a: CC BY 4.0 fish, credited, from Babylon.js's asset
+library and Objaverse's copies of Sketchfab models, with Khronos's
+Barramundi Fish; shown to the owner before the tank is built around
+them). Q2, the aquarium's shape (a: a walk-through tunnel under a big
+tank). Q3, how the fish move (a: by the site's script; movement along
+paths moves to later versions). Q4, the water's look (a: a `water`
+element). Q5, sounds from a place (a: in HoloML 0.2 now). Q6, tagging
+HoloML 0.2 (a: v0.2.0 with a release note, after the milestone is
+accepted and the owner says go). Q7, the automatic builds' time (a:
+the end-to-end checks split into two jobs on each system).
+
+```text
+Accepted. Use the recommended answers.
+```
+
+## 123 — 2026-09-29 · Claude Opus 5.5, max effort
+
+Approval of the aquarium's fish (milestone 21, the plan's check-in
+before the tank is built): the nine sent as a picture with their
+credits, 8 kinds and a sea turtle, CC BY 4.0 or CC0: a great white
+shark and a grey snapper (Babylon.js's asset library), a flatback sea
+turtle (DigitalLife3D), a gilt-head bream (BlueMesh), Atlantic mackerel
+(Amy Scott-Murray), a tuna (GoldenZtuff), a clownfish (zixisun02), and a
+copperband butterflyfish (Dsanchez13), from Objaverse's copies of
+Sketchfab models, and a barramundi (Microsoft, Khronos's glTF samples).
+
+```text
+Fish approved.
+```
+
+## 124 — 2026-09-29 · Claude Opus 5.5, max effort
+
+After the milestone 21 report: holoml's pull request #19 (HoloML 0.2's
+fifth part, 0.2 complete, and the aquarium) merged by the owner; the
+browser's pull request #38 still showed a failing check.
+
+```text
+#19 merged, #38 has a failure
+```

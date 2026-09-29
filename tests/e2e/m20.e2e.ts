@@ -15,6 +15,7 @@ import {
   launch,
   pressInPage,
   project,
+  sceneStill,
   sceneWait,
   shellCall,
   sleep,
@@ -319,21 +320,14 @@ function pageMemory(h: Harness, page: string): Promise<{ heap: number; buffers: 
   }, page);
 }
 
-/** Waits until an idle page has drawn what it loaded (the frame count holds still). */
+/**
+ * Waits until an idle page has drawn what it loaded: a scene draws only
+ * when something changes (each arrival asks for a frame), so once no
+ * shaders are compiling and the frame count holds still, the last frame
+ * shows everything (sceneStill).
+ */
 async function drawn(h: Harness, page: string): Promise<void> {
-  let last = -1;
-  await waitFor(
-    'the scene drawn and still',
-    async () => {
-      const now = await holo<number>(h, 'window.__holoml.frames', page);
-      const still = now > 0 && now === last;
-      last = now;
-      await sleep(300);
-      return still;
-    },
-    (v) => v,
-    await sceneWait(h, 10_000),
-  );
+  await sceneStill(h, page, await sceneWait(h, 10_000));
 }
 
 describe('W6 to W10: the sneaker store', () => {

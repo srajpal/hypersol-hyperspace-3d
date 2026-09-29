@@ -22,6 +22,8 @@ import {
   pressInPage,
   pressInShell,
   project,
+  sceneStill,
+  sceneWait,
   shellCall,
   sleep,
   softwareRenderer,
@@ -227,8 +229,7 @@ describe('S2 to S7: the showroom', () => {
     expect((await holo<{ rotation: Vec }>(h, 'window.__holoml.object("turntable")', HALL))!.rotation[1]).not.toBe(r1);
     const CAR = 'pippet.holoml';
     await open(h, CAR);
-    await sleep(500);
-    const f2 = await holo<number>(h, 'window.__holoml.frames', CAR);
+    const f2 = await sceneStill(h, CAR, await sceneWait(h, 10_000));
     await sleep(1500);
     expect(await holo<number>(h, 'window.__holoml.frames', CAR)).toBe(f2);
   });

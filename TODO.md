@@ -30,9 +30,9 @@ Plan approved 2026-09-24.
 | 16 | Car showroom demo | Demo site with walk-around 3D cars | Done (accepted, prompt 83) |
 | 17 | Blockworld and the examples section | A small block game in HoloML (movement, breaking and placing, day and night, sound); HoloML 0.2 draft: scripts, sound, screen text, walls and gravity, animated lights; a HoloML examples section in the browser, with screenshots | Done (accepted, prompt 91) |
 | 18 | Sofa studio | A furniture shop: choose fabrics in place, shadows, a price that changes; first, walking and turning speeds and sliders (prompt 92) | Done (accepted, prompt 112) |
-| 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Built, waiting for acceptance (build approved, prompt 114; handed off mid-build, prompt 116; built in prompt 118: the language, the browser's part, and Harbour Loft; the pull requests and V11 next) |
-| 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | In progress (planned and started, prompt 120, with the recommended answers) |
-| 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Later (prompt 85) |
+| 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Done (accepted, prompt 122) |
+| 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Done (accepted, prompt 122) |
+| 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | In progress (planned, prompt 121; the recommended answers and the build, prompt 122) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Later (prompt 115) |
 | 23 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85, and from 22, prompt 115) |
 | 24 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
@@ -3055,15 +3055,16 @@ the sofa studio's copy in tests/fixtures/holoml/sofa-studio.
 
 ## Milestone 19 — Harbour Loft
 
-Status: Built, waiting for acceptance. Planned (prompt 113); the owner
-answered Q1 to Q6 with the recommendations and approved the build
-(prompt 114). Pushed before the milestone (after milestone 18's
-acceptance). Rule 13 check done (ARCHITECTURE.md section 3). Handed off
-mid-build on 2026-09-28 (prompt 116) with tasks 1 and 2 done; resumed
-in prompt 118, which also chose Harbour Loft for the README's first
-picture. Tasks 1 to 4 are done, and the checks and documents below;
-next, the pull requests (holoml's first), the automatic builds, V11,
-and the owner's acceptance.
+Status: Done. Accepted by the owner on 2026-09-29 (prompt 122), after
+holoml pull request #17 and the browser's #36 merged. Planned (prompt
+113); the owner answered Q1 to Q6 with the recommendations and
+approved the build (prompt 114). Pushed before the milestone (after
+milestone 18's acceptance). Rule 13 check done (ARCHITECTURE.md section
+3). Handed off mid-build on 2026-09-28 (prompt 116) with tasks 1 and 2
+done; resumed in prompt 118, which also chose Harbour Loft for the
+README's first picture. All six tasks are done. The owner merged holoml
+pull request #17 (prompt 119) and the browser's #36 (prompt 121,
+2026-09-29).
 
 Goal: a flat to tour, for an estate agent. Walk through the rooms of a
 loft by the harbour, open doors, switch lamps on and off, read about
@@ -3179,9 +3180,11 @@ sofa studio did not have: text of more than one line (holoml issue
       Published with GitHub Pages when holoml's pull request merges.
 - [x] 4. The examples section and the start panel: its card, its
       picture (`pnpm screenshots:examples`), and its row (prompt 118).
-- [ ] 5. Checks V1 to V12 (tests/e2e/m19.e2e.ts, holoml's tests), run on
-      Windows, with `pnpm test:linux`, and in the automatic builds.
-- [ ] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
+- [x] 5. Checks V1 to V12 (tests/e2e/m19.e2e.ts, holoml's tests), run on
+      Windows, with `pnpm test:linux`, and in the automatic builds
+      (V5's last version on Linux in the automatic builds only; see the
+      results).
+- [x] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
       THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the README's
       pictures.
 
@@ -3326,6 +3329,12 @@ sofa studio did not have: text of more than one line (holoml issue
   and drawing in software, and its first version passed with `pnpm
   test:linux`. Not yet: this V5 with `pnpm test:linux` and in the
   automatic builds (running).
+- The automatic builds of #36's last commit (704edf1, with this V5): Linux
+  passed (26 minutes) and Windows passed (19 minutes). Milestone 20's
+  pull request #37, which contains it, passed on both too (see milestone
+  20's results). This V5 has not run with `pnpm test:linux`.
+- Merged (2026-09-29, prompt 121): the owner merged #36 (135aa25), after
+  holoml #17 (prompt 119).
 
 ### Done when
 
@@ -3333,12 +3342,16 @@ sofa studio did not have: text of more than one line (holoml issue
 
 ## Milestone 20 — Sneaker store
 
-Status: Planned and started (prompt 120): the owner said to start the
-next milestone and to take the recommendations for its questions, so
-Q1 to Q5 are answered as recommended and the build is approved. Rule 13
-check done (ARCHITECTURE.md section 3). Pushed before the milestone
-(milestone 19's branch, browser pull request #36, not yet accepted:
-this milestone's branch starts from it).
+Status: Done. Accepted by the owner on 2026-09-29 (prompt 122), after
+holoml pull request #18 and the browser's #37 merged. Planned and started
+(prompt 120): the owner said to start the next milestone and to take
+the recommendations for its questions, so Q1 to Q5 are answered as
+recommended and the build is approved. Rule 13 check done
+(ARCHITECTURE.md section 3). Pushed before the milestone (milestone
+19's branch, browser pull request #36, not yet accepted: this
+milestone's branch starts from it). All six tasks are done. The owner
+merged holoml pull request #18 and the browser's #37 (prompt 121,
+2026-09-29).
 
 Goal: a sneaker store, in place of Coral Bay, a resort (prompts 101 and
 102): a wall of sneakers to pick up, turn, and see up close (the sole,
@@ -3428,8 +3441,10 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
       pull request is merged).
 - [x] 4. The examples section and the start panel: its card, its
       picture, and its row.
-- [ ] 5. Checks W1 to W12 (tests/e2e/m20.e2e.ts, holoml's tests), run on
-      Windows, with `pnpm test:linux`, and in the automatic builds.
+- [x] 5. Checks W1 to W12 (tests/e2e/m20.e2e.ts, holoml's tests), run on
+      Windows, with `pnpm test:linux`, and in the automatic builds
+      (four clipboard checks fail on this computer, whose clipboard is
+      broken, and pass elsewhere; see the results).
 - [x] 6. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
       THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the README's
       pictures.
@@ -3556,10 +3571,446 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
 - Pull requests: holoml #18 and the browser's #37 (2026-09-29). Not
   yet: their automatic builds, and W11 by hand once #18 is merged and
   GitHub Pages publishes the store.
+- The automatic builds (2026-09-29): holoml #18 passed on Linux and
+  Windows. The browser's #37 (4450929, with milestone 19's last V5)
+  passed on both: the unit tests 266 passed and 2 skipped, and the
+  end-to-end checks 269 passed and 1 skipped of 270, on each. Linux took
+  38 minutes 44 seconds of the 45 its job may take; Windows 20 minutes.
+  On GitHub's Windows machine D8's and K2's clipboard checks passed.
+- Merged (2026-09-29, prompt 121): the owner merged holoml #18 (a6c88d9)
+  and the browser's #36 and #37 (585c5ae), and GitHub Pages published
+  the store. The copy of HoloML is synced from holoml's main (a6c88d9);
+  only the copies' first comment line (the ref) and SOURCE.json changed.
+- W11 (2026-09-29, prompt 121): the built app opened
+  https://srajpal.github.io/holoml/sneaker-store/index.holoml (a one-off
+  run with the network, not a test, as V11): HoloML 0.2, ready in 3.2 s
+  over the internet, no problems, nothing left out; 154 models, 2.4 MB
+  and 429,084 triangles counted in 22 model files; 12 places and 12
+  links. At the start the two bays nearest the viewer were loaded and
+  the other eight showed their stand-ins. Down the hall the six far bays
+  loaded and the four nearest the start were let go and showed their
+  stand-ins again (5.3 MB, 973,884 triangles, 26 files). The Sunset
+  shoe's link opened its page through a fade, in Sunset, with no
+  problems; size 43 and "Add to cart" made the cart "1 pair · $125",
+  and the checkout page listed the Sunset shoe in EU size 43 at $125.
+  Pass.
+- The Windows clipboard on this computer still failed on 2026-09-29
+  (PowerShell's Set-Clipboard), so D8's and K2's four clipboard checks
+  have not run again here; they pass on Linux and on GitHub's Windows
+  machine.
 
 ### Done when
 
 - W1 to W12 pass, screenshots are saved, and the owner accepts.
+
+## Milestone 21 — Aquarium
+
+Status: In progress. Planned (prompt 121): the owner merged milestones
+19 and 20 and asked for the next milestone, and this plan was drafted
+with questions and recommendations. The owner answered Q1 to Q7 with
+the recommendations (prompt 122), which, with prompt 121's "Next
+milestone", is taken as approval of the plan and its build, as prompt
+120 was. The plan's own check-ins stay: the fish are shown to the owner
+before the tank is built around them (task 3), and HoloML 0.2 is tagged
+after acceptance, when the owner says go (task 9). Rule 13 check done
+(ARCHITECTURE.md section 3). Pushed before the milestone (branch
+`m21-aquarium`, from main after #37).
+
+Goal: an aquarium to visit (prompt 85). 5 to 10 real-looking fish of
+different kinds swim around a big tank with their own swimming
+movement, among rocks, plants, and bubbles, with light coming down
+through the water. A Feed button drops food, and the fish swim to it
+and eat. HoloML 0.2 gets its last part here, and 0.2 is tagged when the
+milestone ends (milestone 17's plan, Q5 a).
+
+### How it would work (proposed)
+
+- **HoloML 0.2, fifth and last part** (holoml repository: SPEC.md, the
+  checker, conformance samples; earlier pages unchanged):
+  - Water: a `water` element fills a box with water (`position` and
+    `size`; its top is the surface), with a `color` and a `clarity`
+    (how many metres one can see through it). Things seen through the
+    water fade into its colour with the distance the view travels
+    through it, from inside the water or from outside through glass.
+    With `caustics`, the moving net of light that the waves of the
+    surface cast below plays over everything in the water. A renderer
+    chooses how to draw it, holds the light still for reduced motion,
+    and may leave the moving light out when it must (drawing in
+    software), as with shadows.
+  - Sounds from a place, which the spec promises for 0.2: a `sound`
+    with a `position` comes from there, quieter with distance and
+    silent beyond its `range`.
+  - The scene API: a model's `animationSpeed` (how fast its own
+    animation plays; 0 holds it still), so that a fish beats its tail
+    faster when it hurries to food.
+  - Movement along paths, the other item the spec lists as still to
+    come in 0.2, moves to the ideas for later versions (Q3): the fish
+    move by the site's script.
+  - With that, 0.2 is complete: the spec no longer calls it a draft or
+    lists anything still to come, and holoml is tagged v0.2.0 (Q6).
+- **The browser**: water in the viewer's materials (the haze and the
+  moving light), sounds from a place (the listener follows the
+  viewer), and animation speed; the copy of the parser and checker.
+- **The aquarium** (holoml repository, examples/aquarium, published
+  with GitHub Pages like the others):
+  - A walk-through tunnel along the floor of a big tank (Q2): water all
+    round and overhead, the fish passing over and beside it, rocks,
+    driftwood, and sand (Poly Haven, CC0), and water plants made by
+    the site's tools, swaying.
+  - 5 to 10 kinds of fish (Q1), each with a swimming animation (a glTF
+    skin). A fish that comes without one gets a skeleton and a swim
+    from the site's tools: tools/prepare.mjs bends its body in a wave
+    from head to tail. The small kinds swim in a small school.
+  - The fish move by the site's script: each kind at its own depth and
+    pace, schools together, the big ones alone, all inside the water
+    and clear of the tunnel, the rocks, and each other.
+  - Bubbles rising from air stones (the script), heard from where they
+    rise, and light through the water from the surface.
+  - Feed: a button by the tunnel's glass (a click action with a sound;
+    Enter on its button in the outline too). Flakes drop from the
+    surface and sink, and the nearest fish swim to them and eat them,
+    one by one.
+  - A click on a fish, or its button in the outline, shows its name and
+    a few lines about it on a panel by the glass.
+  - Reduced motion: the fish, the bubbles, and the light hold still;
+    Feed puts the food down and says that the fish have eaten.
+  - Sounds (the water, the bubbles, the food's plop) made by a script
+    in the repository, as Blockworld's were: no download.
+  - An about page with the credits.
+- **The examples section and the start panel**: its card, its picture,
+  and its row.
+- **The automatic builds**: the Linux job took 38 minutes 44 seconds of
+  the 45 it may take (#37), and this milestone's checks add more (Q7).
+
+### Questions (answered with the recommendations, prompt 122)
+
+- Q1, the fish. Real-looking fish that are CC0 and free without an
+  account are scarce. Only one was found: Khronos's Barramundi Fish (a
+  glTF sample model, CC0, without animation). Poly Haven has no fish,
+  Poly Pizza's are low-poly, and NOAA had none. Sketchfab and model
+  generators such as Meshy need an account, and the Smithsonian's 3D
+  collection turned this computer's requests away and its API needs a
+  key; I may not make accounts or get keys. Two
+  open sets have fish of unclear origin: ir-engine's ocean models claim
+  CC0 with no record of each model's source, and several of their names
+  read like prompts to a generator; another repository's fish were made
+  by a generator. Real-looking fish under CC BY 4.0, free without an
+  account, are in two places: Babylon.js's asset library (a grey
+  snapper from its underwater demo, a shark, and a fish; not yet looked
+  at closely), and Objaverse, the Allen Institute for AI's copy of
+  about 800,000 of Sketchfab's free models on Hugging Face (each keeps
+  its author and licence; 721,000 of them are CC BY 4.0).
+  a: CC BY 4.0 fish, credited as the shoe was (the about page, the
+  credits, and THIRD-PARTY), from those two places, and the
+  Barramundi; CC BY 4.0 or CC0 only, never "non-commercial", "no
+  derivatives", or "share alike". I pick 5 to 10 kinds, fish that come
+  with their own swimming animation first, and show you their pictures
+  and credits before building the tank around them (recommended:
+  real-looking, and no account). b: CC0 only: the Barramundi with
+  low-poly CC0 fish (not real-looking). c: you choose the fish (for
+  example on Sketchfab, with your own account) and put the files in a
+  folder, and I prepare and credit them.
+- Q2, the aquarium's shape. a: a walk-through tunnel under a big tank
+  (recommended: water all round and overhead, and the fish pass over
+  you; the water's haze is simplest to get right from inside it). b: a
+  dark gallery in front of one big window. c: a home tank on a stand,
+  to orbit.
+- Q3, how the fish move. a: by the site's script, with the scene API as
+  it is and animation speed: wandering, schooling, and steering to
+  food (recommended: more lifelike than loops, and feeding needs the
+  script anyway); movement along paths moves to the ideas for later
+  versions. b: a `path` element in the language: each fish follows a
+  loop, and the script takes fish off their loops to feed.
+- Q4, the water's look. a: the `water` element above (recommended: the
+  page says where the water is and how clear it is; the renderer draws
+  the haze and the moving light). b: only what 0.2 has now: blue light
+  and a blue background (much less real). c: more general, separate
+  pieces: fog for the whole scene, and a light that casts a moving
+  picture (more for each page to set up, and fog cannot stop at the
+  glass).
+- Q5, sounds from a place. a: in 0.2 now, for the air stones and the
+  feeder (recommended: small, and the spec promises it for 0.2). b:
+  later; the aquarium's sounds come from everywhere, as sounds do now.
+- Q6, tagging HoloML 0.2. a: after you accept this milestone, and when
+  you say go, holoml's main is tagged v0.2.0 with a short release note
+  on GitHub, as the browser's v0.9.0 was (recommended). b: 0.2 stays a
+  draft until the documentation milestone (22).
+- Q7, the automatic builds' time. a: split the end-to-end checks on
+  each system into two jobs that run side by side (recommended: Linux
+  from about 39 minutes to about 20, with room to grow). b: raise the
+  limit from 45 minutes to 60.
+
+### Tasks
+
+- [x] 1. HoloML 0.2, fifth part: SPEC.md (water, sounds from a place,
+      animation speed; paths to the ideas for later versions), the
+      checker, and conformance samples (holoml branch `aquarium`).
+- [x] 2. The browser: water, sounds from a place, and animation speed;
+      the copy (`pnpm holoml:sync`, from holoml's `aquarium` branch for
+      now).
+- [x] 3. The fish (Q1): chosen, checked (licence, size, triangles),
+      credited, and prepared (a swimming animation for those without
+      one); shown to the owner before task 4 (approved, prompt 123).
+- [x] 4. The aquarium: the tank and the tunnel, rocks, plants, bubbles,
+      sounds, the script (swimming, feeding, and the fish's panel), and
+      the about page; published with GitHub Pages when holoml's pull
+      request is merged.
+- [x] 5. The examples section and the start panel: its card, its
+      picture, and its row.
+- [x] 6. The automatic builds (Q7): the end-to-end checks in two parts
+      side by side on each system (ci.yml and vitest.e2e.config.ts,
+      written; the automatic builds of the pull request will show it).
+- [ ] 7. Checks X1 to X12 (tests/e2e/m21.e2e.ts, holoml's tests), run on
+      Windows, with `pnpm test:linux`, and in the automatic builds.
+- [x] 8. Documents: both READMEs, SPEC, ARCHITECTURE, docs/privacy.md,
+      THIRD-PARTY, AGENTS testing, HANDOFF; screenshots and the
+      README's pictures.
+- [ ] 9. HoloML 0.2 tagged (Q6), after the owner accepts the milestone.
+
+### Checks (named X; milestone 20 used W)
+
+| # | Check | Expected result |
+|---|---|---|
+| X1 | The language | holoml's tests: water, sounds from a place, and animation speed have valid and problem samples; a 0.1 page may not use them; the spec lists nothing still to come in 0.2 |
+| X2 | Water | Through the water a far model takes more of the water's colour than a near one, and a model outside the water keeps its own (the page's pixels); the light moves over a floor in the water, and holds still with reduced motion; drawing in software it may be left out, and the console says so |
+| X3 | Sounds from a place | A sound with a position is quieter as the viewer walks away from it, and silent beyond its range; it comes from its side (the sound's report) |
+| X4 | Animation speed | A script's animation speed makes a model's animation run that much faster, and 0 holds it still |
+| X5 | The aquarium | Ready and drawn within 5 s from 127.0.0.1 with a graphics card (logged in software); every model loaded, no problems; the fish swim (their places change) and stay in the water, clear of the tunnel and the rocks; the tunnel's walls stop the walker |
+| X6 | Feeding | Feed (a click, and Enter on its button) drops the food; fish come to it and eat every flake within a minute; the sound plays |
+| X7 | The fish | A click on a fish, and its button in the outline, shows its name and its lines on the panel |
+| X8 | For everyone | The whole visit from the keyboard; screen readers name the fish and the Feed button; the text view; reduced motion (everything holds still, and Feed says the fish have eaten) |
+| X9 | Efficient | At least 30 frames a second while the fish swim, with a graphics card (logged in software, as T5); no frames in a hidden tab, and none while idle with reduced motion; the page's memory does not grow over two minutes of bubbles and feeding |
+| X10 | Published | From its public address in the built app (by hand, as W11) |
+| X11 | The automatic builds | Each job finishes within its limit (Q7) |
+| X12 | Regression | The full run on Windows, `pnpm test:linux`, the unit tests, holoml's tests, and the automatic builds |
+
+### Decisions made while building
+
+- Water: the haze is the length of the view's way through the water's
+  box over its clarity, so what is seen through the water takes its
+  colour in proportion, from inside the water or from outside through
+  glass; labels and panels are left as they are, to be read (holoml
+  7d17c35). The moving light goes on lit materials only, strongest on
+  faces turned up to the surface and fainter with depth; it holds still
+  with reduced motion and is left out drawing in software (the console
+  says so), as shadows are.
+- Sounds from a place: Web Audio's panner (equal power), the loudness
+  falling in a straight line to nothing at the sound's range, full
+  within a metre; the listener is the viewer, facing where the viewer
+  looks. The page's hook soundLevels(id) reads what each ear hears, for
+  X3.
+- The fish (Q1 a): from Babylon.js's asset library, Objaverse's copies
+  of Sketchfab's CC BY models, and Khronos's Barramundi. The site's
+  tools convert five that use an old material form
+  (specular-glossiness), turn each head to +z, size it to its length,
+  and give the six without a swim a skeleton (a chain of bones along the
+  body) and a wave from head to tail (the tuna's only behind its
+  middle); the turtle's own skeleton gets flipper strokes.
+- The tank: 24 m wide, 34 m long, and 6.5 m deep, with a glass tunnel
+  26 m long (2.4 m in radius) along its floor and a gallery at the
+  entrance; its walls, painted in the water's colour behind rockwork,
+  fade into the water. Ledges along the tunnel and a rail at its end
+  keep the walker off the glass.
+- The fish swim by the site's script (Q3 a, aquarium.js): each heads
+  for a wandering goal within its kind's depths at its kind's pace and
+  turns no faster than its kind can; the small kinds keep together in
+  schools; all keep clear of each other, the tunnel, the rocks, and the
+  walls, and are pushed back if they ever cross; a fish's tail beats
+  faster as it swims faster (`animationSpeed`, 0.5 to 2.5 times).
+  Feeding drops 24 flakes from the surface by the feeder; the nearest
+  fish that eat (not the sharks or the turtle) turn to the nearest flake
+  within reach and eat it. A flake that reaches the sand stays there,
+  and the corner of the screen says how many did.
+- A click on the tunnel's glass finds the fish behind it (the script's
+  own ray through the glass, since the glass is the nearest thing), and
+  each kind's first fish is a click action with a sound, so that it is
+  a button in the outline for the keyboard and screen readers.
+- Found while building, in the viewer: new materials' shaders compile
+  without blocking the page, a page behind another tab draws nothing,
+  and the water's moving light samples a picture drawn once
+  (ARCHITECTURE.md). Since a page is now ready before its shaders have
+  compiled, X5 times the aquarium to its first drawn frame.
+- Triangles (found on Linux, where the tank drew in software at a frame
+  or so a second): a fish or a Poly Haven model may have at most so many
+  triangles (fish.mjs and prepare.mjs; the shark 12,000, the turtle
+  14,000, the mackerel 4,000, the boulder 5,000, the log 6,000, the
+  shell 3,000); a more detailed file is made lighter by joining its
+  vertices by place, one vertex for each part of its picture at each
+  place, keeping a skeleton's joints and weights, and small parts such
+  as eyes whole. Looked at beside the approved fish, they are the same;
+  the mackerel's outline is a little less smooth close up.
+- A page compiling shaders is not yet idle: since shaders compile
+  without holding up the page, it draws once they are ready, which can
+  be seconds later drawing in software. The checks that count an idle
+  page's frames (P10, S6, U15, V10, W10) start from the harness's
+  sceneStill: drawn, no shaders compiling, and the frame count holding.
+  They check the same: an idle page draws nothing.
+- The aquarium's checks may take up to 600 s each (TANK_TIME), as drawn
+  in software they take minutes; not a requirement, as with
+  Blockworld's. X9 counts frames once the page has been told its tab is
+  behind (its hook `behind`), after a frame it had begun has finished.
+
+### Results so far
+
+- Task 3 (the fish, 2026-09-29): Sketchfab's public search (no account)
+  for CC BY fish, matched with Objaverse's copies (its index and
+  licence records on Hugging Face), Babylon.js's asset library, and
+  Khronos's Barramundi; 17 candidates downloaded, looked at in the
+  viewer's own Three.js, and 9 picked: 8 kinds of fish and a sea
+  turtle, every one CC BY 4.0 or CC0 in Objaverse's record of when it
+  was copied. Five use an old material form (specular-glossiness) that
+  three.js no longer reads, and one carries colours for Babylon.js's own
+  animation: the site's tools convert them. Sent to the owner for
+  approval before the tank is built (the plan's check-in), and approved
+  (prompt 123); the models are committed in holoml (2140889).
+- The fish's tools (holoml `aquarium`, 90c3790): fish.mjs (the nine,
+  each at a fixed version with its checksum and credit), download.mjs
+  (all nine fetched and matching), and prepare.mjs with glb.mjs,
+  fit.mjs, and rig.mjs. Prepared, the nine are 11.8 MB (48 MB as
+  downloaded), each its length in metres with its head to +z, as drawn
+  in the viewer's own Three.js: the shark and the bream keep their own
+  swims; the barramundi, snapper, mackerel, clownfish, butterflyfish,
+  and tuna get a skeleton and a wave from head to tail (the tuna's only
+  behind its middle, as tuna swim, and straightened, as its file had it
+  turned 17 degrees); the turtle's own skeleton gets flipper strokes.
+  The model files were committed once the owner approved the fish
+  (2140889).
+- Task 1 (holoml `aquarium`, ed72075 and 7d17c35): SPEC.md, the
+  checker (a size of three numbers more than 0, a range that needs a
+  position, at most one water in a scene), a valid sample
+  (v02-water-and-sound-places), a problem sample (bad-water), and the
+  0.1 sample that may not use water; holoml's tests 209 passed, lint and
+  types clean. Found while building: water leaves labels and panels as
+  they are, to be read (7d17c35).
+- Task 2: water.ts (the haze and the moving light in the materials'
+  shaders), sound.ts (a panner and each ear's level for a sound from a
+  place), scene.ts and api.ts (the water, a sound's place, a model's
+  animation speed), and the page's hooks (water, waterFadeAt,
+  soundLevels). Unit tests 273 passed (five new: the way through the
+  water, its fade, its light, which materials it goes over, and the
+  loudness with distance); lint and types clean.
+- X2 to X4 (tests/e2e/m21.e2e.ts, fixture pages water.holoml,
+  caustics.holoml, sound-place.holoml, and animation-speed.holoml): all
+  pass on Windows with the graphics card and drawing in software
+  (HYPERSOL_TEST_SOFTWARE=1; there the moving light is left out, as the
+  check expects). X3 reads the real sound in each ear (Web Audio
+  analysers): 4 m to the right, the left ear hears under a fifth of the
+  right; 13 m away, past its 12 m range, silence.
+- Task 4 (holoml `aquarium`, b1116c7 to 54f174a): the ocean tunnel, as
+  in the decisions above: 30 fish of nine kinds (2 great white sharks, a
+  flatback sea turtle, 2 tuna, 2 barramundi, 6 gilt-head bream, 8
+  Atlantic mackerel, 4 grey snapper, 3 clownfish, and 2 copperband
+  butterflyfish), rocks, rockwork, a log, shells, and sand from Poly
+  Haven, swaying plants, bubbles from three air stones (18 each), each
+  heard from where it rises, feeding, a board about each kind, the
+  about page with the credits, and index.html for other browsers. The
+  sounds (the water, the bubbles, the food's plop, and a blip) are made
+  by tools/prepare.mjs. Published, it is 16.5 MB in 36 files (the
+  models 15.9 MB). holoml's tests 215 passed (six new: its two pages,
+  and its files and limits, its fish and their swims, its water and
+  Feed button, and its credits).
+- Found while building (the browser, 450e733): the aquarium's 40 or so
+  shader programs compiled one after another on the page's main thread
+  (3.7 s; on the screen after 4.9 s), so new materials now compile
+  without blocking it; a HoloML page in a tab behind another still drew
+  about a frame a second (Chromium counts a tab hidden by style as
+  seen), so the shell now tells the page, and it draws nothing; and the
+  water's light samples a picture drawn once, as computing it in the
+  shader took seconds to compile on Windows for each material. The
+  HoloML checks of milestones 14, 18, and 20 then caught clicks and
+  screen points going astray while shaders compiled (the scene's places
+  were not kept current meanwhile), fixed in the same change; holoml's
+  SPEC.md says a page that cannot be seen need not be drawn (f7650ce).
+- Task 5 (bd3fca3): the copy from holoml's `aquarium`, the card
+  ("Ocean tunnel") and its picture (`EXAMPLES_ONLY=aquarium pnpm
+  screenshots:examples`, taken again after the light changed, 31aed53),
+  and the row; T8 with the new card and row passes.
+- X5 to X9 (tests/e2e/m21.e2e.ts): all pass on Windows with the
+  graphics card. X5: ready in 1636 ms and drawn in 2785 ms.
+- HoloML 0.2 complete (holoml 682b64e): SPEC.md, the README, and the
+  examples no longer call it a draft, and spec.test.ts checks that no
+  sentence about 0.2 does, nor lists anything still to come in it
+  (X1); holoml's tests 217 passed. Its NOTICE credits the fish
+  (58607f1); the copy is synced from it (b90432b).
+- The HoloML checks after the viewer's changes (milestones 14 to 21):
+  102 passed (8 minutes).
+- The full run on Windows (`pnpm test:e2e --reporter=verbose`,
+  2026-09-29, 15.5 minutes): 278 checks, all passed, the clipboard's
+  among them. Logged: X5, the aquarium ready in 2182 ms and drawn in
+  3614 ms; X6, none of the 27 fish that eat within 3 m of the feeder
+  before the food fell, and 3 came to it; X9, 145.5 frames a second
+  while the fish swim, and over two minutes of bubbles and feeding the
+  page's heap 11.6 MB then 11.9 MB, and its ArrayBuffers 10.8 MB both
+  times. The unit tests 273 passed; lint and type check clean.
+- Documents (31aed53): both READMEs, SPEC, ARCHITECTURE, CHANGELOG,
+  docs/privacy.md, THIRD-PARTY, and AGENTS.md's testing list; the
+  screenshots (docs/screenshots/m21: the tunnel, the shark's board, and
+  feeding are 61 to 63) and the README's four pictures again, looked at.
+- The full run on Linux on this computer (`pnpm test:linux`,
+  2026-09-29, 53 minutes): lint and the unit tests pass (271, and 2
+  skipped: the copy's checks against holoml beside it), and 274 of 278
+  end-to-end checks pass, 1 skipped; X7, X8, and X9 failed. Drawn in
+  software the aquarium made 1.5 frames a second: X7 and X8 ran out of
+  their time (240 s and 300 s), and X9 counted two frames drawn before
+  the page was told its tab was behind. The m21 file took 21 minutes.
+- The pull requests (2026-09-29): holoml #19 and the browser's #38. The
+  browser's automatic builds, the first in two parts on each system:
+  Linux part 1 passed in 21 min 40 s, Windows part 1 in 15 min 34 s,
+  and Windows part 2 in 10 min 51 s; Linux part 2 failed as on this
+  computer, in 31 min 21 s (X5 drawn in 10.6 s there, X9 at 2.5 frames
+  a second). holoml #19's Windows build failed: the aquarium's credits
+  test split the file's lines on \n alone, and Git gives it Windows line
+  ends there (fixed, 7469fb1).
+- The fix: the most detailed models made lighter (holoml 43c5b30, as in
+  the decisions above): from the tunnel 191,000 triangles in view
+  (577,000), drawn in software on this computer 2.1 frames a second
+  (0.87); published, the aquarium is 11.7 MB (the models 11.0 MB). The
+  copy synced from it, the example's picture taken again, and the
+  checks' time and X9's wait as above. Then: m21 in software on this
+  computer, all 8 passed (6 minutes); with the graphics card X2 to X9 and
+  T8 passed (X5 ready in 1307 ms and drawn in 2801 ms, X9 143.5 frames a
+  second, the page's ArrayBuffers 6.2 MB where they were 10.8); and
+  `pnpm test:linux tests/e2e/m21.e2e.ts`, all 8 passed (18 minutes, X7
+  5.3 of them; X5 drawn in 17.3 s; X9 1.0 frames a second, and the heap
+  11.1 MB then 11.3 MB).
+- The automatic builds on the fix (d6b168d, 2026-09-29): every job
+  within its 45 minutes (X11). Linux part 1 passed in 19 min 29 s and
+  Windows part 2 in 11 min 5 s. Linux part 2 took 32 min 13 s: every
+  m21 check passed there (17 minutes; X5 ready in 10.3 s and drawn in
+  13.3 s, X9 1.0 frames a second and the heap 11.0 MB then 11.2 MB), and
+  V5 (milestone 19) failed: the arriving page was busy for about 5 s
+  drawing in software, so no picture of it came back before its fade-in
+  began (in this pull request's first build, with the same viewer, it
+  was not busy and V5 passed). Windows part 1 failed E6b (milestone 3):
+  quitting took 6551 ms where 6000 are allowed. Both failed jobs run
+  again: Linux part 2 passed (31 min 56 s), and Windows part 1 failed
+  #10 (milestone 8): five of the 100 small downloads had all their bytes
+  but were not marked finished within the minute (E6b passed). None of
+  the three touches this milestone's changes, and each passed before on
+  the same code; they are not changed.
+- Prompt 124: holoml #19 merged (710d8b9), and GitHub Pages published
+  it. The copy synced from holoml's main (only SOURCE.json and the
+  copied files' first lines changed). X10: the built app opened
+  https://srajpal.github.io/holoml/aquarium/index.holoml#tunnel from the
+  internet: ready in 3751 ms and drawn in 3955 ms, 171 models loaded,
+  no problems, 12.1 MB counted, the water's light shown; the fish swam
+  (1.2 to 2.2 m in 3 s); Feed dropped the food and the fish ate it; the
+  great white shark's button told about it on the board; the about page
+  opened with its credits.
+- The automatic builds on a860c28: both Windows jobs failed. Part 1: two
+  unit tests ran out of their 5 s on a slow machine (the password
+  vault's "Clear data" and the storage service's bad requests; 21 s for
+  all the unit tests, where they take 13 to 15). Part 2: U15 (milestone
+  18) counted one frame in its idle window: U14 had changed the sofa's
+  choices, and the new shaders, compiled without holding up the page,
+  were ready and drawn after U15 had begun, drawing in software. Fixed
+  as in the decisions above; P10, S6, U13 to U15, V10, and W10 pass
+  drawing in software on this computer and with the graphics card.
+
+### Done when
+
+- X1 to X12 pass, screenshots are saved, and the owner accepts; then
+  HoloML 0.2 is tagged (Q6).
 
 ## The README: a broken link, and four pictures (2026-09-28, prompt 99)
 

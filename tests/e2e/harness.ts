@@ -517,6 +517,34 @@ export async function framesDrawn(h: Harness, page: PageRef, count = 2, timeoutM
 }
 
 /**
+ * Waits until a HoloML scene is still, and returns its frame count: it
+ * has drawn, no shaders are compiling, and the count holds. A scene draws
+ * only when something changes, and new materials' shaders compile without
+ * holding up the page, the scene drawn once they are ready (milestone 21),
+ * so a page compiling is not yet idle. Checks that an idle page draws
+ * nothing start from here.
+ */
+export async function sceneStill(h: Harness, page: PageRef, timeoutMs = 20_000): Promise<number> {
+  let last = -1;
+  return waitFor(
+    'the scene drawn and still',
+    async () => {
+      const { frames, compiling } = await inPage<{ frames: number; compiling: boolean }>(
+        h,
+        '({ frames: window.__holoml.frames, compiling: window.__holoml.compiling === true })',
+        page,
+      );
+      const still = frames > 0 && frames === last && !compiling;
+      last = frames;
+      await sleep(300);
+      return still ? frames : -1;
+    },
+    (n) => n >= 0,
+    timeoutMs,
+  );
+}
+
+/**
  * How long to wait for something a HoloML scene does over time (a walker
  * landing, a turn): drawing in software, as on GitHub's machines, frames
  * come slowly and a walker's time runs slower than the clock (a frame

@@ -1,0 +1,12 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML animation speed</title>
+  </head>
+  <!-- Two spinners play the same 2-second animation; a script sets how
+       fast each plays (the check does it through holoml). -->
+  <scene>
+    <viewpoint position="0 1.6 6" look-at="0 0.8 0" />
+    <model id="spin" src="models/spinner.gltf" position="-1.5 0 0" animation="Spin" autoplay />
+    <model id="steady" src="models/spinner.gltf" position="1.5 0 0" animation="Spin" autoplay />
+  </scene>
+</holoml>

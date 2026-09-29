@@ -81,6 +81,8 @@ export class TabView implements PagePanel {
    * when that input came; the tab's own mute is kept apart.
    */
   private soundGateUrl: string | null = null;
+  /** The tab is the one in front (milestone 21: a HoloML page behind another draws nothing). */
+  private inFront = true;
   /**
    * Asleep (milestone 10): the page is closed to save memory; the tab keeps
    * its address and title, and the page whose history comes back on waking.
@@ -171,6 +173,17 @@ export class TabView implements PagePanel {
   /** Switches a HoloML page's text view. */
   setTextView(on: boolean): void {
     if (this.isHoloml) this.sendHoloml(on ? 'text-view-on' : 'text-view-off');
+  }
+
+  /**
+   * Whether the tab is the one in front (milestone 21). A HoloML page is
+   * told, so that it draws no frames while behind another tab; a HoloML
+   * page that arrives while its tab is behind is told when it shows.
+   */
+  setInFront(on: boolean): void {
+    if (this.inFront === on) return;
+    this.inFront = on;
+    if (this.isHoloml) this.sendHoloml(on ? 'in-front' : 'behind');
   }
 
   /** Stops loading: the page's own load, or a HoloML page's models. */
@@ -513,6 +526,7 @@ export class TabView implements PagePanel {
         // A new HoloML document: no sound until its first click or key.
         this.soundGateUrl = this.holomlUrl;
         this.applyMute(wv);
+        if (!this.inFront) this.sendHoloml('behind');
         this.events.onHoloml?.();
         return;
       }

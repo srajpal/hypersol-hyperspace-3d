@@ -134,6 +134,32 @@
   nothing (the shoe is Shopify's, from the Khronos glTF sample models,
   CC BY 4.0; its name and prices are made up). It is in the HoloML
   examples section and the start panel.
+- Water, sounds from a place, and animation speed (milestone 21), in
+  HoloML 0.2 pages, which completes HoloML 0.2:
+  - `water`: a box of water with a colour and a clarity. What is seen
+    through it fades into its colour with the distance the view travels
+    through the water, from inside it or from outside through glass;
+    labels and panels stay as they are, to be read. With `caustics`,
+    the light from its waves moves over what is in it; it holds still
+    with reduced motion, and is left out when drawing in software (the
+    console says so).
+  - Sounds from a place: a sound with a `position` comes from there,
+    quieter with distance, silent beyond its `range`, and from its
+    side; the listener follows the viewer.
+  - Scripts: a model's `animationSpeed` (0 holds its animation still;
+    up to 4 times as fast) and a sound's `position`.
+- HoloML pages are ready sooner: new materials' shaders compile without
+  holding up the page (the last picture stays meanwhile). A HoloML page
+  in a tab behind another draws nothing until its tab is in front again.
+- The ocean tunnel (milestone 21): an aquarium to walk through,
+  published at https://srajpal.github.io/holoml/aquarium/: a glass
+  tunnel along the floor of a big tank, where 30 fish of nine kinds
+  (sharks, a sea turtle, tuna, barramundi, and schools of smaller fish)
+  swim over and around you among rocks, driftwood, plants, and rising
+  bubbles, with the light from the waves on the sand. Feed them, and
+  they come to eat; click a fish, or its button in the outline, to read
+  about it. Its fish are CC BY 4.0 and CC0 models, credited on its about
+  page. It is in the HoloML examples section and the start panel.
 
 ## 0.9.0 — developer preview (2026-09-26)
 

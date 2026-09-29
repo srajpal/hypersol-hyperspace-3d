@@ -155,17 +155,23 @@ see .github/workflows/ci.yml; macOS not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
 - Toolchain: Node 22.13 or newer; pnpm 12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 268 tests passed on 2026-09-29)
+- Unit: `pnpm test` (Vitest; 273 tests passed on 2026-09-29)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about twelve minutes; 270 checks in the full run on
-  2026-09-29 in milestone 20, 265 passed: the four clipboard checks
-  failed while the Windows clipboard itself failed on this computer, and
-  L9 once, then passed alone; TODO.md has the details). Needs openssl on PATH for
-  the certificate-error check (Git for Windows includes one). Every
+  against it (about sixteen minutes; 278 checks in the full run on
+  2026-09-29 in milestone 21, all passed; TODO.md has the details). On
+  this computer vitest's report leaves out what passing checks log (the
+  load times, frame rates, and memory); `pnpm test:e2e
+  --reporter=verbose` shows it, as the automatic builds do. Needs
+  openssl on PATH for the certificate-error check (Git for Windows
+  includes one). Every
   host except 127.0.0.1 is blocked during the run, and the test windows
   ignore the real mouse, so a resting cursor cannot disturb results. See
-  TODO.md for results.
+  TODO.md for results. The automatic builds run the end-to-end checks
+  in two parts side by side on each system (owner, prompt 122, Q7 a):
+  HYPERSOL_E2E_PART=2 runs HoloML's example sites from milestone 18 on,
+  HYPERSOL_E2E_PART=1 everything else (vitest.e2e.config.ts lists the
+  sites); without it, every check runs.
 - Test windows stay out of the way (owner request, 2026-09-25): they
   open off screen, never take focus, and have no taskbar button, so the
   computer can be used during a run; `pnpm screenshots` works the same
@@ -182,7 +188,9 @@ date given and grow with each milestone; TODO.md has the latest.
   then measured and logged, not checked, as there (owner, prompts 59,
   95, and 96). Checks of scenes wait
   for what they check, not for fixed times (holdKeyUntil, framesDrawn,
-  and sceneWait in tests/e2e/harness.ts).
+  sceneStill, and sceneWait in tests/e2e/harness.ts); a check that an
+  idle page draws nothing starts from sceneStill, as a page compiling
+  shaders is not yet idle (milestone 21).
 - Linux on this computer, the way GitHub's Linux machines run the
   checks: `pnpm test:linux` (needs Docker; first run 2026-09-28, owner,
   prompts 103 and 104). It builds tests/linux/Dockerfile (Ubuntu 24.04,
@@ -323,9 +331,24 @@ milestone; the current milestone's checks are defined in TODO.md):
   readers, the text view, reduced motion, no frames while idle, and the
   page's memory falling again once far shelves are let go. W1 is
   holoml's own tests; W11 (the published site) is checked by hand.
-- Later milestones add: the last HoloML example site (21), HoloML's
-  documentation (22), privacy and data tools (23), and installers (24
-  and 25).
+- Milestone 21 checks X2 to X9 (same command, tests/e2e/m21.e2e.ts):
+  water (a far model takes more of the water's colour than a near one,
+  one outside the water keeps its own, and the light from the waves
+  moves over a floor, holds still with reduced motion, and is left out
+  in software), sounds from a place (each ear's level as the viewer
+  walks away, and silence beyond the range), and a script's animation
+  speed (fixture pages water.holoml, caustics.holoml,
+  sound-place.holoml, and animation-speed.holoml); and the ocean tunnel
+  (a copy in tests/fixtures/holoml/aquarium): ready within 5 s (logged
+  in software), the fish in the water and clear of the tunnel and the
+  rocks, the ledges and the rail stopping the walker, feeding (every
+  flake eaten), a fish's panel from a click through the glass and from
+  its button, the keyboard alone, screen readers, the text view,
+  reduced motion, the frame rate (logged in software), no frames behind
+  another tab, and the page's memory over two minutes. X1 is holoml's
+  own tests; X10 (the published site) is checked by hand.
+- Later milestones add: HoloML's documentation (22), privacy and data
+  tools (23), and installers (24 and 25).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

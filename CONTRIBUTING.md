@@ -49,7 +49,9 @@ fails on file paths over Windows' 260-character limit.
 | `pnpm test:linux` | With Docker, on any computer: all of the above on Linux, as GitHub's Linux machines run them (Ubuntu 24.04, 4 processors, 16 GB, no graphics card), in a container with a fresh copy of the repository. `pnpm test:linux tests/e2e/m1.e2e.ts` runs chosen end-to-end files |
 
 Every push and pull request runs all of these on Windows and Linux in
-GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
+GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)),
+the end-to-end checks in two parts side by side on each system
+(`HYPERSOL_E2E_PART=1` or `2`; see vitest.e2e.config.ts).
 Please make sure they pass before asking for a review.
 
 Where things are: the app in `apps/browser` (main process, preloads, the

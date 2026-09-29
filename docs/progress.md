@@ -218,7 +218,7 @@ own shadows.
 
 ![The sofa studio in the evening: brown leather on an ebony frame, lit by the table lamp](screenshots/m18/54-sofa-studio-evening.png)
 
-**Milestone 19: Harbour Loft** (built; waiting for acceptance).
+**Milestone 19: Harbour Loft** (accepted 2026-09-29).
 HoloML 0.2's third part: text of more than one line on a board in the
 scene, doors and lamps that work with a click (and from the keyboard),
 places to go to, a fade between a site's pages, a sky, and a floor plan.
@@ -231,7 +231,7 @@ each room, lamps to switch on in the evening, and a roof terrace.
 
 ![Harbour Loft's roof terrace: sun loungers on a deck behind glass railings, the marina all round](screenshots/m19/57-harbour-loft-terrace.png)
 
-**Milestone 20: sneaker store** (built; waiting for acceptance).
+**Milestone 20: sneaker store** (accepted 2026-09-29).
 HoloML 0.2's fourth part: groups of models that load only while the
 viewer is near, and are let go (their memory released) when the viewer
 walks away, with a lighter stand-in in each model's place until then.
@@ -244,3 +244,18 @@ to turn it over, choose its colour and size, and add it to a cart.
 ![A shoe's page: the Sunset colourway on its turntable, the colour and size choices, and its buttons](screenshots/m20/59-sneaker-store-shoe.png)
 
 ![The checkout page: two pairs, their sizes, and the total, with a button that places nothing](screenshots/m20/60-sneaker-store-checkout.png)
+
+**Milestone 21: ocean tunnel** (built; waiting for acceptance).
+HoloML 0.2's fifth and last part, which completes it: water that things
+are seen through, fading into its colour with distance, with the light
+from its waves moving over what is in it; sounds that come from a place;
+and a model's animation speed for scripts. The ocean tunnel shows them:
+an aquarium to walk through, where 30 fish of nine kinds swim over and
+around a glass tunnel among rocks, plants, and rising bubbles. Feed
+them, and the nearest come to eat; click a fish to read about it.
+
+![The ocean tunnel: a great white shark over the glass, a school of mackerel, tuna, and the sea turtle beyond, rocks and plants along the tunnel](screenshots/m21/61-aquarium.png)
+
+![The great white shark behind the glass, and the board by the tunnel with its name and a few lines about it; the light from the waves on the sand](screenshots/m21/62-aquarium-shark.png)
+
+![Feeding: flakes falling from the surface, two mackerel at them, and more fish coming](screenshots/m21/63-aquarium-feeding.png)

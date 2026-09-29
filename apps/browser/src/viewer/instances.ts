@@ -1,5 +1,5 @@
 /**
- * Drawing the same model many times cheaply (HoloML 0.2 draft; HyperSpace
+ * Drawing the same model many times cheaply (HoloML 0.2; HyperSpace
  * 3D milestone 17). A model file is loaded once; every model element
  * that uses it without changing it (no materials of its own, no
  * animation) is one instance of an InstancedMesh per mesh of the file,

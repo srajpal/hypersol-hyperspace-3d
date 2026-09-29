@@ -1,6 +1,10 @@
 # Builds and tests every push and pull request on Windows and Linux
 # (milestone 12, GitHub issue #5; approved by the owner, prompt 56, C a).
-# macOS joins with the macOS release milestone.
+# macOS joins with the macOS release milestone. Each system runs the
+# end-to-end checks in two parts side by side, to stay within the time a
+# job may take (milestone 21, owner, prompt 122, Q7 a): part 2 is HoloML's
+# example sites from milestone 18 on (vitest.e2e.config.ts), part 1
+# everything else, with lint, types, and the unit tests.
 name: CI
 
 on:
@@ -18,11 +22,12 @@ concurrency:
 
 jobs:
   test:
-    name: ${{ matrix.os }}
+    name: ${{ matrix.os }} (part ${{ matrix.part }})
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest]
+        part: [1, 2]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     steps:
@@ -39,12 +44,15 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Lint
+        if: matrix.part == 1
         run: pnpm lint
 
       - name: Types
+        if: matrix.part == 1
         run: pnpm typecheck
 
       - name: Unit tests
+        if: matrix.part == 1
         run: pnpm test
 
       # Electron's sandbox needs unprivileged user namespaces, which Ubuntu
@@ -61,6 +69,8 @@ jobs:
       # password; both disappear with the runner.
       - name: End-to-end checks (Linux)
         if: runner.os == 'Linux'
+        env:
+          HYPERSOL_E2E_PART: ${{ matrix.part }}
         run: |
           dbus-run-session -- bash -c '
             echo -n throwaway | gnome-keyring-daemon --unlock --components=secrets > /dev/null
@@ -68,4 +78,6 @@ jobs:
 
       - name: End-to-end checks (Windows)
         if: runner.os == 'Windows'
+        env:
+          HYPERSOL_E2E_PART: ${{ matrix.part }}
         run: pnpm test:e2e

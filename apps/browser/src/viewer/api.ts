@@ -1,5 +1,5 @@
 /**
- * The scene API for a HoloML page's scripts (HoloML 0.2 draft, SPEC.md
+ * The scene API for a HoloML page's scripts (HoloML 0.2, SPEC.md
  * section 10; HyperSpace 3D milestone 17, owner prompt 86, Q1 a): one
  * object, `holoml`, to find, change, add, and remove elements, and to
  * hear clicks, keys, frames, and sliders. Scripts get handles ("things"),
@@ -7,6 +7,7 @@
  * in. Milestone 18 (prompt 92): the viewer's speeds, and sliders; then
  * (prompt 98) choices. Milestone 19: panels. Milestone 20: whether models
  * and groups are loaded, and the `load` event (loading by area).
+ * Milestone 21: a sound's place, and a model's animation speed.
  */
 import type { Entry, HolomlView, Hit, SceneEvent } from './scene';
 import type { Vec3 } from './values';
@@ -145,6 +146,12 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
       );
     }
     if (has('model')) {
+      // How fast its own animation plays (milestone 21): 1 as made, 0 held still.
+      define(
+        'animationSpeed',
+        () => view.animationSpeedOf(e),
+        (v) => view.setAnimationSpeed(e, within(v, 0, 4, 'animationSpeed')),
+      );
       t['material'] = (name: unknown, change: unknown) => {
         if (e.removed) return;
         if (typeof name !== 'string') throw new TypeError('material(name, change): name must be text');
@@ -161,6 +168,12 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
       t['play'] = () => (e.removed ? undefined : e.sound?.play());
       t['stop'] = () => (e.removed ? undefined : e.sound?.stop());
       define('playing', () => e.soundReport?.playing === true);
+      // Where it comes from (milestone 21): null for a sound from everywhere; a place makes it a sound from there.
+      define(
+        'position',
+        () => view.soundPosition(e),
+        (v) => view.setSoundPosition(e, vector(v, 'position')),
+      );
       define(
         'volume',
         () => e.sound?.volume,
