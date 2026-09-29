@@ -1,11 +1,12 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-09-28 (milestones 1 to 18 accepted; milestone 19,
-Harbour Loft, is built, prompt 118, and waits for its pull requests and
-the owner's acceptance: see "Milestone 19, built" below. Milestone 20 is a sneaker store
-(prompts 101 and 102), and 22 is HoloML's documentation (prompt 115).
-The roadmap is in TODO.md).
+Last updated 2026-09-29 (milestones 1 to 18 accepted; milestone 19,
+Harbour Loft, is built, prompt 118, and waits for the owner's
+acceptance: see "Milestone 19, built" below. Milestone 20, the sneaker
+store, is built, prompt 120, and waits for its pull requests and the
+owner's acceptance: see "Milestone 20, built". 22 is HoloML's
+documentation (prompt 115). The roadmap is in TODO.md).
 
 ## Where things stand
 
@@ -45,8 +46,9 @@ state; this is a summary.
   2026-09-28, prompt 112; merged in holoml, pull requests #14 to #16,
   and the browser, #34 and #35; published at
   https://srajpal.github.io/holoml/sofa-studio/); 19 Harbour Loft
-  (built, waiting for acceptance); 20 a sneaker store (in place of Coral
-  Bay, a resort, prompts 101 and 102); 21 Aquarium, where HoloML 0.2 is
+  (built, waiting for acceptance); 20 a sneaker store, with loading by
+  area (built, waiting for acceptance; in place of Coral Bay, a resort,
+  prompts 101 and 102); 21 Aquarium, where HoloML 0.2 is
   tagged); 22 documentation for HoloML to recognised standards (prompt
   115); 23 privacy and data tools (HTTPS-only, per-site storage,
   bookmark import and export: #24, #26, #27); then installers as 1.0
@@ -58,12 +60,70 @@ state; this is a summary.
   personal project honouring it, not marketed for now. Copyright: "The
   HyperSpace 3D Authors" and "The HoloML Authors" (AUTHORS files).
 
-Two repositories, both on `main` (milestone 19's work is on branches,
-below), kept as sibling folders (never one inside the other):
+Two repositories, both on `main` (milestones 19 and 20's work is on
+branches, below), kept as sibling folders (never one inside the other):
 
 - Browser: https://github.com/srajpal/hypersol-hyperspace-3d (renamed
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
+
+## Milestone 20, built (2026-09-29, prompt 120)
+
+The plan and its checks (W1 to W12) are in TODO.md, "Milestone 20 —
+Sneaker store"; the owner approved the plan, with the recommended
+answers, and the build in prompt 120.
+
+Where the work is:
+
+- Browser: branch `m20-sneaker-store`, from `m19-harbour-loft` (pull
+  request #36, not yet merged: merge it first). Loading by area in the
+  viewer (scene.ts: areas, stand-ins, letting go; budget.ts and
+  pictures.ts: what is let go stops counting; api.ts: `loaded` and the
+  `load` event; main.ts: the areas(), standIns(), and totals() hooks),
+  the store's copy (tests/fixtures/holoml/sneaker-store), its examples
+  card and picture, checks W2 to W10 (tests/e2e/m20.e2e.ts, with the
+  fixture pages areas.holoml, stand-in.holoml, and areas-limits.holoml),
+  T8 grown, the documents, and the screenshots (docs/screenshots/m20).
+- holoml: branch `sneaker-store`, from its main after pull request #17:
+  the language (SPEC.md, the checker, conformance samples), the store
+  (examples/sneaker-store: its pages, scripts, colourways.js, models,
+  and tools/download.mjs and prepare.mjs; the download's cache,
+  tools/cache/, is ignored by git), its tests, and the README and
+  NOTICE.
+- The browser's copy of HoloML (packages/holoml) comes from holoml's
+  `sneaker-store` branch; once holoml's pull request is merged, sync it
+  from main (`pnpm holoml:sync main --examples main`), as milestone 19
+  did.
+
+What comes next: the pull requests are open, holoml's #18 and the
+browser's #37 (merge #36 first: #37 starts from milestone 19's branch);
+their automatic builds, W11 by hand once #18 is merged and GitHub Pages
+publishes the store, and the owner's acceptance.
+
+Worth knowing:
+
+- The store is made by its tools: change colourways.js (the colourways,
+  their colours, their prices) or tools/prepare.mjs, then run
+  `node examples/sneaker-store/tools/download.mjs` (once) and
+  `electron examples/sneaker-store/tools/prepare.mjs` from holoml's
+  root, look at the store, and commit; prepare.mjs rewrites the places,
+  shelves, bays, and ledges in index.holoml and the colour options in
+  shoe.holoml, between their prepare.mjs comments.
+- The shoe's licence (CC BY 4.0) leaves out logos and trademarks:
+  prepare.mjs paints out the mark on its heel tab (in its colour,
+  relief, and roughness pictures) and "///FOAM" on its midsole (in its
+  relief), at fixed places in the pictures. A new picture of the shoe
+  needs the same look.
+- Loading by area keeps count of each model file's and picture's users:
+  the last model let go releases the file (unload and releaseTemplate in
+  scene.ts). A load that finishes after its model was let go is dropped
+  (entry.loads).
+- Electron names the arrow keys Right, Left, Up, and Down (not
+  ArrowRight) for sendInputEvent.
+- W10 reads the page's memory through its debugger (collecting garbage
+  first); the process's working set is only logged.
+- The store's bench is in the middle of the hall: W6 walks the left-hand
+  lane (the right-hand one has the About sign's stand in it).
 
 ## Milestone 19, built (2026-09-28, prompt 118)
 
@@ -99,7 +159,7 @@ app). The AGENTS.md wording for the README's pictures is approved and
 in (prompt 119). For an owner decision later: ARCHITECTURE.md section
 10, item 4 (large scenes: shaders compiled on the page's main thread,
 every model a Tab stop). Milestone 20, the sneaker store, is being
-planned and started (prompt 120).
+planned and started (prompt 120), and is built (see above).
 
 Worth knowing:
 

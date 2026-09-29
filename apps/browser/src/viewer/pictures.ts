@@ -5,6 +5,9 @@
  * comes from the page's own site within its limits (budget.ts), each
  * address once, and its size is read from its header before it is
  * decoded, so a huge picture is left out, not decoded.
+ *
+ * Milestone 20 (loading by area): a material's picture that no model
+ * uses any more is let go, and its bytes stop counting.
  */
 import {
   DataTexture,
@@ -36,6 +39,10 @@ export class Pictures {
   private readonly textures = new Map<string, Promise<Texture>>();
   /** Panoramas: the surroundings and the sky may be one file, loaded (and counted) once. */
   private readonly panoramas = new Map<string, Promise<Texture>>();
+  /** How many materials use each material picture (by address), so one no model uses any more can be let go. */
+  private readonly uses = new Map<string, number>();
+  /** Pictures the page shows itself (the surroundings, the sky, a floor plan): kept while the page lives. */
+  private readonly kept = new Set<string>();
 
   constructor(
     private readonly budget: Budget,
@@ -104,6 +111,7 @@ export class Pictures {
    */
   async texture(url: URL, use: PictureUse, repeat: readonly [number, number]): Promise<Texture> {
     const key = `${use} ${url.href}`;
+    this.uses.set(url.href, (this.uses.get(url.href) ?? 0) + 1);
     let base = this.textures.get(key);
     if (!base) {
       base = this.bitmap(url).then((image) => {
@@ -120,14 +128,59 @@ export class Pictures {
       });
       this.textures.set(key, base);
     }
-    const copy = (await base).clone();
+    let copy: Texture;
+    try {
+      copy = (await base).clone();
+    } catch (e) {
+      // Not shown, so never released: the use ends here (the failure stays known, and is not fetched again).
+      this.uses.set(url.href, (this.uses.get(url.href) ?? 1) - 1);
+      throw e;
+    }
     copy.repeat.set(repeat[0], repeat[1]);
     copy.needsUpdate = true;
     return copy;
   }
 
+  /**
+   * A material's picture that a model no longer uses: its copy is
+   * released at once. With `drop` (a model let go, loading by area,
+   * milestone 20), the picture itself (its bytes, its decoded image, its
+   * textures) is let go too once no material uses it and the page does
+   * not show it itself; without (a model removed), it stays for the next.
+   */
+  release(t: Texture, drop: boolean): void {
+    const href = t.userData['src'] as string | undefined;
+    t.dispose();
+    if (!href) return;
+    const left = (this.uses.get(href) ?? 1) - 1;
+    if (left > 0) {
+      this.uses.set(href, left);
+      return;
+    }
+    this.uses.delete(href);
+    if (!drop || this.kept.has(href)) return;
+    for (const use of ['color', 'data'] as const) {
+      const base = this.textures.get(`${use} ${href}`);
+      this.textures.delete(`${use} ${href}`);
+      void base?.then((x) => x.dispose(), () => undefined);
+    }
+    const bitmap = this.bitmaps.get(href);
+    this.bitmaps.delete(href);
+    void bitmap?.then((b) => b.close(), () => undefined);
+    const file = this.files.get(href);
+    this.files.delete(href);
+    void file?.then(
+      ({ bytes }) => {
+        // A picture that failed after it arrived had its bytes released then.
+        if (!this.released.delete(href)) this.budget.releaseBytes(bytes);
+      },
+      () => this.released.delete(href),
+    );
+  }
+
   /** A panorama, an HDR, PNG, or JPEG picture: the surroundings, to light the scene, or the sky, to draw behind it. */
   environment(url: URL): Promise<Texture> {
+    this.kept.add(url.href);
     let panorama = this.panoramas.get(url.href);
     if (!panorama) {
       panorama = this.panorama(url);
@@ -141,6 +194,7 @@ export class Pictures {
    * address of its bytes, once its size has been read and checked.
    */
   async address(url: URL): Promise<string> {
+    this.kept.add(url.href);
     const { data } = await this.checked(url);
     return URL.createObjectURL(new Blob([data]));
   }

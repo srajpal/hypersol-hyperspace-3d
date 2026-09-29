@@ -1,0 +1,21 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML loading by area</title>
+    <script src="areas.js" />
+  </head>
+  <scene background="#1c2030">
+    <viewpoint mode="walk" position="0 1.6 0" look-at="0 1.6 -10" />
+    <light type="ambient" intensity="0.8" />
+    <light type="directional" position="3 10 6" look-at="0 0 0" intensity="1.2" />
+    <hud id="status" corner="top-left">none yet</hud>
+    <!-- Within reach of the start: loads with the page. -->
+    <group id="near-shelf" load="near" near="8" position="0 0 -4">
+      <model id="near-box" src="gen/box.gltf?tris=2000&amp;mb=1&amp;n=near" />
+    </group>
+    <!-- 40 m away: loads once the viewer is within 8 m, and is let go beyond 12 m. The car arrives when the check lets it. -->
+    <group id="far-shelf" load="near" near="8" position="0 0 -40">
+      <model id="far-car" src="gen/late-car.gltf?gate=far-car" stand-in="models/stand-in.gltf" />
+      <model id="far-box" src="gen/box.gltf?tris=3000&amp;mb=2&amp;n=far" position="3 0 0" />
+    </group>
+  </scene>
+</holoml>

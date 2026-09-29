@@ -549,7 +549,7 @@ export class HsInstruments extends LitElement {
             <button data-index=${e.index} aria-current=${e.index === s.selected ? 'true' : 'false'}
               style=${`padding-left:${4 + Math.min(e.depth, 12) * 10}px`}
               @click=${() => this.fire('hs-scene-select', e.index)}>${e.kind}${e.name ? html` <span class="muted">${e.name}</span>` : nothing}${e.state && e.state !== 'loaded'
-                ? html` <span data-state="bad">(${stateName(e.state)})</span>`
+                ? html` <span data-state=${e.state === 'loading' || e.state === 'waiting' ? '' : 'bad'}>(${stateName(e.state)})</span>`
                 : nothing}</button>
           </li>`,
         )}

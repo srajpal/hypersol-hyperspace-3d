@@ -9,6 +9,9 @@
  * Milestone 17 (HoloML 0.2 draft): a model file is loaded once however
  * many models use it, so the limit is on model files; each model drawn
  * counts its triangles; sound files count like model files.
+ *
+ * Milestone 20 (loading by area): what a page lets go stops counting, so
+ * the limits count only what is loaded now.
  */
 
 export const LIMITS = {
@@ -30,9 +33,17 @@ export const LIMITS = {
   fileMs: 30_000,
 } as const;
 
-/** Why a model was left out, in words for the notice and the inspector. */
+/**
+ * Why a model was left out, in words for the notice and the inspector.
+ * overTotal: it would pass the page's totals (bytes or triangles), which
+ * fall again as models are let go, so a model that loads by area can wait
+ * for room (milestone 20).
+ */
 export class LeftOut extends Error {
-  constructor(readonly reason: string) {
+  constructor(
+    readonly reason: string,
+    readonly overTotal = false,
+  ) {
     super(reason);
     this.name = 'LeftOut';
   }
@@ -91,7 +102,7 @@ export class Budget {
       const parsed = describe(main);
       // Triangles are known from the file's own description: refuse before decoding.
       if (this.triangles + parsed.triangles > LIMITS.triangles) {
-        throw new LeftOut(`${parsed.triangles.toLocaleString('en')} triangles would pass the page's ${LIMITS.triangles.toLocaleString('en')}`);
+        throw new LeftOut(`${parsed.triangles.toLocaleString('en')} triangles would pass the page's ${LIMITS.triangles.toLocaleString('en')}`, true);
       }
       // Held at once, so models loading side by side cannot pass the limit together.
       this.triangles += parsed.triangles;
@@ -130,17 +141,17 @@ export class Budget {
    */
   useTriangles(n: number): void {
     if (this.triangles + n > LIMITS.triangles) {
-      throw new LeftOut(`${n.toLocaleString('en')} more triangles would pass the page's ${LIMITS.triangles.toLocaleString('en')}`);
+      throw new LeftOut(`${n.toLocaleString('en')} more triangles would pass the page's ${LIMITS.triangles.toLocaleString('en')}`, true);
     }
     this.triangles += n;
   }
 
-  /** A model removed by a script: its triangles no longer count. */
+  /** A model removed by a script, or let go (loading by area): its triangles no longer count. */
   releaseTriangles(n: number): void {
     this.triangles = Math.max(0, this.triangles - n);
   }
 
-  /** A picture left out after it arrived (too large, or not a picture): its bytes no longer count. */
+  /** A picture left out after it arrived (too large, or not a picture), or a file let go (loading by area): its bytes no longer count. */
   releaseBytes(n: number): void {
     this.bytes = Math.max(0, this.bytes - n);
   }
@@ -203,7 +214,7 @@ export class Budget {
       if (this.bytes > LIMITS.totalBytes) {
         void reader.cancel();
         this.release(tally);
-        throw new LeftOut(`the page's files would pass ${MB(LIMITS.totalBytes)} in all`);
+        throw new LeftOut(`the page's files would pass ${MB(LIMITS.totalBytes)} in all`, true);
       }
       chunks.push(value);
     }

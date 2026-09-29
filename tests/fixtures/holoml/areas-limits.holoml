@@ -1,0 +1,19 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML loading by area within the limits</title>
+  </head>
+  <scene background="#1c2030">
+    <viewpoint mode="walk" position="0 1.6 0" look-at="10 1.6 0" />
+    <light type="ambient" intensity="0.8" />
+    <!-- Each model is 1,200,000 triangles: any two together pass the page's 2,000,000. -->
+    <group id="a" load="near" near="12" position="0 0 0">
+      <model id="ma" src="gen/box.gltf?tris=1200000&amp;n=area-a" />
+    </group>
+    <group id="b" load="near" near="12" position="15 0 0">
+      <model id="mb" src="gen/box.gltf?tris=1200000&amp;n=area-b" />
+    </group>
+    <group id="c" load="near" near="12" position="45 0 0">
+      <model id="mc" src="gen/box.gltf?tris=1200000&amp;n=area-c" />
+    </group>
+  </scene>
+</holoml>

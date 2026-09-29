@@ -32,7 +32,7 @@ a made-up sample page.*
 For Windows and Linux (checked by automatic tests on both); macOS is
 planned but untested. Apache 2.0. No telemetry.
 
-**Status (2026-09-28).** Released: the
+**Status (2026-09-29).** Released: the
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
 as source for developers (no installers yet). Since then, HoloML 0.1 has
 been written down in its own repository (milestone 13), and this browser
@@ -47,7 +47,11 @@ sofa studio, a shop page with shadows, textured fabrics, and choices
 that change the sofa in place. Milestone 19 adds text panels, doors and
 lamps that work with a click, places to go to, a sky, a floor plan, and
 Harbour Loft, a flat by a harbour to tour (built; waiting for
-acceptance). Then two more example sites, HoloML's documentation,
+acceptance). Milestone 20 adds groups of models that load only while
+you are near them, with lighter stand-ins until then, and the sneaker
+store, one shoe in ten colourways to walk among, turn over, and add to a
+cart (built; waiting for acceptance). Then one more example site,
+HoloML's documentation,
 privacy and data tools, and installers as 1.0. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
@@ -146,7 +150,10 @@ An archived copy of the 2001 site is available through the
   text of more than one line on a board in the scene, doors and lamps
   that work with a click (and from the keyboard), places to go to, a
   fade between a site's pages, a sky, and a floor plan, shown by
-  Harbour Loft.
+  Harbour Loft. Milestone 20: groups of models that load only while the
+  viewer is near and are let go (their memory released) when the viewer
+  walks away, with a lighter stand-in in each model's place until then,
+  shown by the sneaker store.
 - Mouse and keyboard throughout; touch for scenes.
 
 ## Built with the Buildwright approach
@@ -210,7 +217,8 @@ sliders, and the sofa studio, a shop page with shadows, textured
 fabrics, and choices that change the sofa in place. Milestone 19, built
 and waiting for acceptance, adds Harbour Loft, a flat to tour, with
 panels of text, doors and lamps to click, places, a sky, and a floor
-plan.
+plan. Milestone 20, built and waiting for acceptance, adds loading by
+area and the sneaker store.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
@@ -229,14 +237,16 @@ left out and marked, and a notice says why.
 
 To try one, open a new tab and choose one under Try HoloML, or open the
 HoloML examples (the menu, or Ctrl+Shift+E): the showroom (milestone 16),
-Blockworld (milestone 17), the sofa studio (milestone 18), and Harbour
-Loft (milestone 19). They come from the holoml repository,
-https://github.com/srajpal/holoml, which publishes each with GitHub
-Pages: https://srajpal.github.io/holoml/showroom/,
+Blockworld (milestone 17), the sofa studio (milestone 18), Harbour
+Loft (milestone 19), and the sneaker store (milestone 20). They come
+from the holoml repository, https://github.com/srajpal/holoml, which
+publishes each with GitHub Pages:
+https://srajpal.github.io/holoml/showroom/,
 https://srajpal.github.io/holoml/blockworld/,
-https://srajpal.github.io/holoml/sofa-studio/, and
-https://srajpal.github.io/holoml/harbour-loft/. The browser asks nothing
-of those sites until you choose one.
+https://srajpal.github.io/holoml/sofa-studio/,
+https://srajpal.github.io/holoml/harbour-loft/, and
+https://srajpal.github.io/holoml/sneaker-store/. The browser asks
+nothing of those sites until you choose one.
 
 ## Project documents
 

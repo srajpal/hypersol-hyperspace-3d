@@ -4,6 +4,7 @@
  * pnpm holoml:sync), so this run uses no network.
  *
  *   pnpm screenshots:examples
+ *   EXAMPLES_ONLY=sneaker-store pnpm screenshots:examples   (just one, or several separated by commas)
  *
  * They are part of the browser (apps/browser/src/renderer/examples/), so
  * run it before `pnpm screenshots` when an example changes, and build
@@ -54,6 +55,16 @@ const SHOTS: { id: string; page: string; steps?: [string, number][]; until?: str
       ['holoml.viewer.lookAt([-3, 1, 3]), true', 0],
     ],
   },
+  {
+    // Beside the first bay, its six blue shoes close and the hall going back
+    // to the counter (the bays near the entrance load with the page).
+    id: 'sneaker-store',
+    page: 'sneaker-store/index.holoml',
+    steps: [
+      ['holoml.viewer.position = [-0.8, 1.55, -1.8], true', 300],
+      ['holoml.viewer.lookAt([-4.6, 1.4, -7]), true', 0],
+    ],
+  },
 ];
 
 /** Stone blocks from the ground up to a height, at one column. */
@@ -68,7 +79,8 @@ it('captures the pictures of the HoloML examples', async () => {
   const h = await launch(server.url('link-a.html'));
   try {
     await waitForPage(h, 'link-a.html');
-    for (const shot of SHOTS) {
+    const only = process.env['EXAMPLES_ONLY']?.split(',');
+    for (const shot of SHOTS.filter((s) => !only || only.includes(s.id))) {
       await shellCall(h, 'showUrl', server.url(`holoml/${shot.page}`));
       const part = shot.page.split('?')[0]!;
       await waitForPage(h, part);

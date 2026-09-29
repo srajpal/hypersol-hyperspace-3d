@@ -118,6 +118,22 @@
   (a second page, reached with a fade), and book a viewing (a form that
   sends nothing; the flat and its price are made up). It is in the
   HoloML examples section and the start panel.
+- Loading by area (milestone 20), in HoloML 0.2 pages: a group with
+  `load="near"` loads its models only while the viewer is within its
+  `near` of it, and lets them go (their files, pictures, and memory, and
+  their share of the page's limits) once the viewer is farther than half
+  as much again; what would pass the limits waits until something is
+  let go. A model's `stand-in`, a lighter copy, shows in its place until
+  the model has loaded, and again once it is let go. Scripts read
+  `loaded` and hear the `load` event.
+- The sneaker store (milestone 20): one shoe in ten colourways on the
+  walls of a store to walk through, each bay's shoes loaded as you come
+  near, published at https://srajpal.github.io/holoml/sneaker-store/:
+  open a shoe to see it on a turntable, turn it over, choose its colour
+  and size, add it to your cart, and go to a checkout page that places
+  nothing (the shoe is Shopify's, from the Khronos glTF sample models,
+  CC BY 4.0; its name and prices are made up). It is in the HoloML
+  examples section and the start panel.
 
 ## 0.9.0 — developer preview (2026-09-26)
 
