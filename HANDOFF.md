@@ -278,7 +278,9 @@ Worth knowing:
   soundLevels(id) reads what each ear hears, and X3 checks it.
 - Drawn in software (GitHub's Linux machines) the aquarium is slow: its
   checks may take up to 600 s each (TANK_TIME in m21.e2e.ts), and the
-  m21 file about 18 minutes on `pnpm test:linux`'s 4 processors. Its
+  m21 file about 18 minutes on `pnpm test:linux`'s 4 processors (that
+  was before scenes were drawn at half resolution in software, prompt
+  135; since then [TIME]). Its
   models have triangle budgets (fish.mjs, and prepare.mjs for Poly
   Haven's): shapes.mjs thinTo makes a more detailed file lighter. A new
   fish or rock should get one.
