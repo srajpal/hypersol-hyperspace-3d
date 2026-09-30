@@ -1,15 +1,37 @@
 /**
  * Checks for the review of 2026-09-30 (prompts 134 and 135), the main
  * process and the page preload: what a page may do without asking (M1),
- * WebSockets through the shield (M3), leaving a page that asks to be
- * kept (M4), and what counts as a HoloML page (V1).
+ * WebSockets through the shield (M3), a link that leads to a download
+ * (M8), leaving a page that asks to be kept (M4), what counts as a HoloML
+ * page (V1), HoloML files from the computer (M6, M11), and a start or a
+ * shell that fails (M9, M10).
  */
+import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { copyFileSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FIXTURES_DIR, startFixtureServer, type FixtureServer } from './fixture-server';
-import { clickUntil, focusedPage, focusedTab, inPage, launch, navigateTo, pressInShell, removeFolder, screenPointOf, shellCall, waitFor, waitForPage, type Harness } from './harness';
+import {
+  APP_DIR,
+  OFFLINE_RULES,
+  clickUntil,
+  focusedPage,
+  focusedTab,
+  graphicsSwitches,
+  inPage,
+  launch,
+  navigateTo,
+  pressInShell,
+  removeFolder,
+  screenPointOf,
+  shellCall,
+  waitFor,
+  waitForExit,
+  waitForPage,
+  type Harness,
+} from './harness';
 
 let server: FixtureServer;
 const folders: string[] = [];
@@ -371,6 +393,62 @@ describe('M11: a .holoml file dropped on a page', () => {
       await drop(scene);
       await waitFor('the dropped page in the tab', () => focusedTab(h), (t) => /^hypersol-file:\/\/[0-9a-f]{16}\/dropped\.holoml$/.test(t.url));
       await sceneReady(h, 'hypersol-file');
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('M9: a start that fails', () => {
+  it('ends with a message and an error code, where it used to stay running without a window', async () => {
+    // The folder the refreshed filter lists are saved in cannot be made: a file has its name.
+    const profile = newProfile();
+    writeFileSync(join(profile, 'filters'), 'in the way');
+    const env = { ...process.env, HYPERSOL_TEST: '1', HYPERSOL_TEST_BACKGROUND: '1' } as Record<string, string>;
+    delete env['ELECTRON_RUN_AS_NODE'];
+    delete env['NODE_OPTIONS'];
+    const electronPath = createRequire(join(APP_DIR, 'package.json'))('electron') as unknown as string;
+    const app = spawn(electronPath, [APP_DIR, `--hypersol-user-data=${profile}`, OFFLINE_RULES, ...graphicsSwitches()], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+    let output = '';
+    app.stdout.on('data', (d: Buffer) => (output += d.toString()));
+    app.stderr.on('data', (d: Buffer) => (output += d.toString()));
+    const code = await new Promise<number | null | 'still running'>((resolve) => {
+      const timer = setTimeout(() => {
+        app.kill();
+        resolve('still running');
+      }, 30_000);
+      app.once('exit', (exit) => {
+        clearTimeout(timer);
+        resolve(exit);
+      });
+    });
+    expect(code, output).toBe(1);
+    expect(output).toContain("HyperSpace 3D couldn't start");
+    expect(output).toContain(`Its data folder is ${profile}.`);
+  });
+});
+
+describe('M10: a shell that crashes', () => {
+  it('is reloaded once, and a second crash within a minute ends the app with a message', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    let output = '';
+    h.proc.stderr?.on('data', (d: Buffer) => (output += d.toString()));
+    try {
+      await waitForPage(h, 'link-a');
+      const shell = () =>
+        h.app.evaluate(({ BrowserWindow }) => {
+          const contents = BrowserWindow.getAllWindows()[0]?.webContents;
+          return contents ? { crashed: contents.isCrashed(), loading: contents.isLoading(), pid: contents.getOSProcessId() } : null;
+        });
+      const first = (await shell())!.pid;
+      await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.webContents.forcefullyCrashRenderer());
+      // Reloaded: the window has a working shell again, in a new process.
+      await waitFor('the shell reloaded', shell, (s) => s !== null && !s.crashed && !s.loading && s.pid !== 0 && s.pid !== first, 30_000);
+      await waitFor('a tab open again', () => h.app.evaluate(({ webContents }) => webContents.getAllWebContents().some((w) => w.getType() === 'webview')), (any) => any, 30_000);
+      await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.webContents.forcefullyCrashRenderer()).catch(() => undefined);
+      await waitForExit(h, 15_000);
+      expect(h.proc.exitCode).toBe(1);
+      expect(output).toContain('HyperSpace 3D has stopped');
     } finally {
       await h.close();
     }

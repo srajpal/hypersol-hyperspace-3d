@@ -32,6 +32,7 @@ import { chooseProfileFolder } from './profile-folder';
 import { Privacy } from './privacy';
 import { hardenShell, isAcceptableDrop, refuseClientCertificates } from './security';
 import { confirmLeave } from './leave-page';
+import { afterShellCrash, SHELL_FAILED_MESSAGE, SHELL_FAILED_TITLE, START_FAILED_TITLE, startFailedMessage } from './start-up';
 import { shellOnly } from './ipc';
 import { HolomlPages } from './holoml';
 import { HOLOML_DROP_CHANNEL, LOCAL_SCHEME, VIEWER_SCHEME } from '../shared/holoml-page';
@@ -99,6 +100,17 @@ let privateSession: Session | null = null;
 /** The app's own shell: the only sender the privileged request channels answer (main/ipc.ts). */
 const isShell = (contents: WebContents) => mainWindow !== null && contents === mainWindow.webContents;
 const handleFromShell = shellOnly(isShell);
+
+/**
+ * The app cannot go on (main/start-up.ts): say so in plain words and end,
+ * so no process without a window is left holding the single-instance
+ * lock. Test runs open no box: the message goes to the log.
+ */
+function giveUp(title: string, message: string): void {
+  if (options.testMode) console.error(`${title}\n${message}`);
+  else dialog.showErrorBox(title, message);
+  app.exit(1);
+}
 
 /**
  * Windows and Linux: no menu bar; shortcuts are handled per web contents
@@ -181,8 +193,20 @@ function createWindow(): void {
     // must not find the old private data (PR #16 review).
     endPrivate();
   });
-  // A crashed shell takes its tabs with it too.
-  win.webContents.on('render-process-gone', () => endPrivate());
+  // A crashed shell takes its tabs with it too. It is reloaded once; if it
+  // goes again within a minute the app says so and ends (main/start-up.ts).
+  let lastCrashAt: number | null = null;
+  win.webContents.on('render-process-gone', (_event, details) => {
+    endPrivate();
+    if (details.reason === 'clean-exit' || win.isDestroyed()) return;
+    const now = Date.now();
+    if (afterShellCrash(lastCrashAt, now) === 'quit') {
+      giveUp(SHELL_FAILED_TITLE, SHELL_FAILED_MESSAGE);
+      return;
+    }
+    lastCrashAt = now;
+    win.webContents.reload();
+  });
   // Economy mode can follow the power source (milestone 10).
   // Test runs start as if on mains power, so a laptop on battery runs the
   // same checks; the economy checks switch the power source themselves.
@@ -340,7 +364,7 @@ if (!app.requestSingleInstanceLock()) {
     { scheme: LOCAL_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
   ]);
 
-  void app.whenReady().then(() => {
+  const start = (): void => {
     if (options.testMode) testLog = installTestHooks();
 
     const ses = session.defaultSession;
@@ -595,7 +619,15 @@ if (!app.requestSingleInstanceLock()) {
       if (privateClearing) void privateClearing.then(() => BrowserWindow.getAllWindows().length === 0 && createWindow());
       else createWindow();
     });
-  });
+  };
+
+  // A throw while starting (a full disk, a data folder that cannot be
+  // written) ends the app with a message, where it used to stay running
+  // without a window (review of 2026-09-30, M9).
+  void app
+    .whenReady()
+    .then(start)
+    .catch((e: unknown) => giveUp(START_FAILED_TITLE, startFailedMessage(e, app.getPath('userData'))));
 
   app.on('before-quit', () => {
     quitting = true;
