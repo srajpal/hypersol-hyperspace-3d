@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, startHttpsFixtureServer, type FixtureServer } from './fixture-server';
 import {
   ADDRESS,
+  clickCard,
   clickUntil,
   setContentSize,
   settled,
@@ -114,6 +115,36 @@ const errorCardShown = (h: Harness) =>
     const front = document.querySelector(`[data-testid="page-panel"][data-tab-id="${id}"]`);
     return front?.querySelector('[data-testid="page-overlay"]')?.hasAttribute('data-visible') ?? false;
   });
+
+/**
+ * Loses the room's WebGL context on request, as a graphics reset would,
+ * and waits for the event that says so. Drawing in software (GitHub's
+ * Linux machines), Chromium loses the room's context once soon after the
+ * app starts and restores it a moment later; a context already lost
+ * cannot be lost on request (its extensions answer null), so this first
+ * waits until it is there.
+ */
+async function loseContext(h: Harness): Promise<void> {
+  await waitFor(
+    "the room's WebGL context",
+    () =>
+      h.shell.evaluate(() => {
+        const gl = (document.querySelector('#room canvas') as HTMLCanvasElement).getContext('webgl2');
+        return gl !== null && !gl.isContextLost();
+      }),
+    (there) => there,
+  );
+  const lost = await h.shell.evaluate(() => {
+    const canvas = document.querySelector('#room canvas') as HTMLCanvasElement;
+    const ext = canvas.getContext('webgl2')?.getExtension('WEBGL_lose_context');
+    if (!ext) return false;
+    return new Promise<boolean>((resolve) => {
+      canvas.addEventListener('webglcontextlost', () => resolve(true), { once: true });
+      ext.loseContext();
+    });
+  });
+  expect(lost).toBe(true);
+}
 
 /** An address on this computer that nothing answers yet: its port, to start a server on later. */
 async function unansweredPort(): Promise<number> {
@@ -800,29 +831,7 @@ describe('R6: the room draws what is needed, where it is needed', () => {
           );
         });
       expect(await offBy()).toBeLessThan(3);
-      // Drawing in software (GitHub's Linux machines), Chromium loses the
-      // room's context once soon after the app starts and restores it a
-      // moment later; a context already lost cannot be lost on request
-      // (its extensions answer null), so wait until it is there.
-      await waitFor(
-        "the room's WebGL context",
-        () =>
-          h.shell.evaluate(() => {
-            const gl = (document.querySelector('#room canvas') as HTMLCanvasElement).getContext('webgl2');
-            return gl !== null && !gl.isContextLost();
-          }),
-        (there) => there,
-      );
-      const lost = await h.shell.evaluate(() => {
-        const canvas = document.querySelector('#room canvas') as HTMLCanvasElement;
-        const ext = canvas.getContext('webgl2')?.getExtension('WEBGL_lose_context');
-        if (!ext) return false;
-        return new Promise<boolean>((resolve) => {
-          canvas.addEventListener('webglcontextlost', () => resolve(true), { once: true });
-          ext.loseContext();
-        });
-      });
-      expect(lost).toBe(true);
+      await loseContext(h);
       // A resize: the page is drawn where the room now places it.
       const size = await h.shell.evaluate(() => [window.innerWidth, window.innerHeight]);
       await setContentSize(h, size[0]! - 160, size[1]! - 90);
@@ -832,6 +841,29 @@ describe('R6: the room draws what is needed, where it is needed', () => {
       await waitFor('a new tab', () => focusedTab(h), (t) => t.state === 'start');
       await settled(h);
       await waitFor('the new page in place', offBy, (d) => d < 3, 5000);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('with the WebGL context lost, the cards take clicks where the rail lays them out', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      await loseContext(h);
+      // The rail appears while the room is not drawn: its cards are laid
+      // out, but no frame has placed them since, and the "+" card was
+      // still hit where it sat before the rail, which is where the second
+      // tab's card now is (check L3 on GitHub's Linux machines: a click
+      // on that card's speaker opened a new tab).
+      await pressInShell(h, 'T', ['control']);
+      await waitFor('a second tab', () => tabs(h), (t) => t.length === 2);
+      await cycleToTab(h, 1);
+      await clickCard(h, 2);
+      await waitFor('the second tab in front, and no new one', () => tabs(h), (t) => t.length === 2 && t.find((x) => x.focused)?.id === 2);
+      // And the "+" card, where the rail put it, opens a tab.
+      await clickCard(h, 'plus');
+      await waitFor('a third tab from the "+" card', () => tabs(h), (t) => t.length === 3);
     } finally {
       await h.close();
     }
