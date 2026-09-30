@@ -26,9 +26,13 @@ export interface Example {
 
 const PUBLISHED = 'https://srajpal.github.io/holoml/';
 
-/** HoloML's own repository, and its specification (owner, prompt 88). */
+/**
+ * HoloML's own repository, and its specification (owner, prompt 88): the
+ * published page since milestone 22, which HoloML's site makes from the
+ * repository's SPEC.md.
+ */
 export const HOLOML_REPOSITORY = 'https://github.com/srajpal/holoml';
-export const HOLOML_SPEC = `${HOLOML_REPOSITORY}/blob/main/SPEC.md`;
+export const HOLOML_SPEC = `${PUBLISHED}spec/`;
 
 /** An example's source: its folder in the repository. */
 export function exampleSource(id: string): string {

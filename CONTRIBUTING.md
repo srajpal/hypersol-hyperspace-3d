@@ -50,8 +50,9 @@ fails on file paths over Windows' 260-character limit.
 
 Every push and pull request runs all of these on Windows and Linux in
 GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)),
-the end-to-end checks in two parts side by side on each system
-(`HYPERSOL_E2E_PART=1` or `2`; see vitest.e2e.config.ts).
+the end-to-end checks in four parts side by side on each system
+(`HYPERSOL_E2E_PART=1` to `4`; see vitest.e2e.config.ts). A change to
+documents only (the `*.md` files at the top and `docs/`) skips them.
 Please make sure they pass before asking for a review.
 
 Where things are: the app in `apps/browser` (main process, preloads, the
@@ -74,6 +75,9 @@ Where things are: the app in `apps/browser` (main process, preloads, the
 - The browser adds no network calls, services, or telemetry beyond those
   listed in docs/privacy.md; propose any new one in an issue first.
 - AI agents working in this repository follow [AGENTS.md](AGENTS.md).
+- `main` is protected: it cannot be force-pushed or deleted, and a pull
+  request is merged once its "All checks" job passes (Windows and Linux,
+  each in four parts).
 
 ## Licence of contributions
 

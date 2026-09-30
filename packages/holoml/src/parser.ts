@@ -1,5 +1,5 @@
 // Copied from the holoml repository (https://github.com/srajpal/holoml),
-// packages/parser/src/index.ts at v0.2.0. Apache License 2.0, The HoloML Authors.
+// packages/parser/src/index.ts at main. Apache License 2.0, The HoloML Authors.
 // Do not edit here: change HoloML there and run pnpm holoml:sync.
 
 /**

@@ -155,7 +155,7 @@ see .github/workflows/ci.yml; macOS not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
 - Toolchain: Node 22.13 or newer; pnpm 12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 273 tests passed on 2026-09-29)
+- Unit: `pnpm test` (Vitest; 289 tests passed on 2026-09-29)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
   against it (about sixteen minutes; 278 checks in the full run on
@@ -168,10 +168,17 @@ date given and grow with each milestone; TODO.md has the latest.
   host except 127.0.0.1 is blocked during the run, and the test windows
   ignore the real mouse, so a resting cursor cannot disturb results. See
   TODO.md for results. The automatic builds run the end-to-end checks
-  in two parts side by side on each system (owner, prompt 122, Q7 a):
-  HYPERSOL_E2E_PART=2 runs HoloML's example sites from milestone 18 on,
-  HYPERSOL_E2E_PART=1 everything else (vitest.e2e.config.ts lists the
-  sites); without it, every check runs.
+  in four parts side by side on each system, so a build takes as long
+  as its longest part (two parts from prompt 122, Q7 a; four from
+  prompt 134): HYPERSOL_E2E_PART=2 runs milestones 14 to 17's files
+  (HoloML pages, the showroom, Blockworld), 3 milestones 18 to 20's
+  (the sofa studio, Harbour Loft, the sneaker store), 4 milestone 21's
+  (the ocean tunnel), and 1 everything else (vitest.e2e.config.ts lists
+  them); without it, every check runs. A last job, "All checks", passes
+  only when every part has. A push or pull request that changes
+  documents only (the *.md files at the top and the docs folder, which
+  no check reads) skips the parts, and "All checks" passes at once
+  (owner, prompt 135).
 - Test windows stay out of the way (owner request, 2026-09-25): they
   open off screen, never take focus, and have no taskbar button, so the
   computer can be used during a run; `pnpm screenshots` works the same
@@ -347,8 +354,21 @@ milestone; the current milestone's checks are defined in TODO.md):
   reduced motion, the frame rate (logged in software), no frames behind
   another tab, and the page's memory over two minutes. X1 is holoml's
   own tests; X10 (the published site) is checked by hand.
-- Later milestones add: HoloML's documentation (22), HoloML 0.3 (23),
-  privacy and data tools (24), and installers (25 and 26).
+- Milestone 22 checks Y1 to Y10 (TODO.md): HoloML's documentation. Most
+  are holoml's own tests (the specification's form, its grammar, its
+  Web IDL, the guides' examples, the reference pages, and the site's
+  links, headings, pictures' text, keyboard access, and contrast); in
+  this repository, apps/browser/src/viewer/api.test.ts holds the
+  viewer's scene API to the Web IDL, and T8 checks the examples
+  section's link to the published specification, and Y7b
+  (tests/e2e/m22.e2e.ts) that a page too tall to lift in one layer
+  stays flat and draws in the layers view. The screenshots add
+  the documentation in the browser, built from the holoml repository
+  beside this one. Y5 and Y9 (the published site) and Y6's screen
+  reader are checked by hand.
+- Later milestones add: HoloML 0.3 (23), privacy and data tools (24),
+  free camera (25), lift to 3D (26), polish (27), and installers (28
+  and 29).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

@@ -37,3 +37,6 @@ CLAUDE.local.md
 
 # Graphics driver logs written into the working folder during test runs
 NVIDIA Corporation/
+
+# HoloML's site, built for the screenshots and removed afterwards (tests/screenshots/capture.shots.ts)
+tests/fixtures/holoml-site/

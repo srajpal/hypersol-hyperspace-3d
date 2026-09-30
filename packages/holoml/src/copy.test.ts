@@ -32,7 +32,7 @@ describe('the copy of HoloML (owner, prompt 65, Q4 a)', () => {
   const holoml = join(here, '..', '..', '..', 'holoml');
   // Only where the holoml repository sits beside this one (not in GitHub Actions).
   it.skipIf(!existsSync(join(holoml, '.git')))(`matches the holoml repository at ${source.tag}`, () => {
-    const commit = execFileSync('git', ['-C', holoml, 'rev-list', '-n', '1', source.tag], { encoding: 'utf8' }).trim();
+    const commit = execFileSync('git', ['-C', holoml, 'rev-list', '-n', '1', source.tag, '--'], { encoding: 'utf8' }).trim();
     expect(commit).toBe(source.commit);
     for (const { from, to } of copies) {
       const original = execFileSync('git', ['-C', holoml, 'show', `${source.tag}:${from}`], { encoding: 'utf8' });

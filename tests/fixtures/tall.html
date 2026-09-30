@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Tall page</title>
+    <!-- Milestone 22, check Y7b: a main section taller than one lifted layer can be drawn
+         (HoloML's published specification is 52,000 pixels tall). A second tall section,
+         which can be lifted, keeps the body the page's container at any window width:
+         alone, the main section would cover most of a narrow page and be taken for a
+         wrapper, its paragraphs lifted instead. -->
+    <style>
+      body {
+        margin: 0;
+        font: 18px/1.6 sans-serif;
+        background: #ffffff;
+        color: #111111;
+      }
+      header {
+        height: 60px;
+        padding: 10px 20px;
+        box-sizing: border-box;
+        background: #e8ecff;
+      }
+      main {
+        max-width: 700px;
+        height: 30000px;
+        margin: 0 auto;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+      aside {
+        height: 2500px;
+        padding: 20px;
+        box-sizing: border-box;
+        background: #f4f6fb;
+      }
+      footer {
+        height: 60px;
+        padding: 10px 20px;
+        box-sizing: border-box;
+        background: #e8ecff;
+      }
+    </style>
+  </head>
+  <body>
+    <header id="top">A tall page</header>
+    <main id="long">
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+    </main>
+    <aside id="side">A second section, short enough to lift</aside>
+    <footer id="end">The end</footer>
+  </body>
+</html>

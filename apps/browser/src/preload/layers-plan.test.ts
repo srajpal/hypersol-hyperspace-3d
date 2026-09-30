@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseImageReport, parseLayersState } from '../shared/layers';
-import { LAYERS, findSectionContainer, largest, liftTransform, sameExceptLift, vanishingPoint, withoutLift, type Box } from './layers-plan';
+import { LAYERS, findSectionContainer, largest, liftTransform, liftable, sameExceptLift, vanishingPoint, withoutLift, type Box } from './layers-plan';
 
 const box = (width: number, height: number): Box => ({ x: 0, y: 0, width, height });
 
@@ -101,5 +101,25 @@ describe('layers messages', () => {
     expect(parseImageReport([{ ...good, width: -5 }])).toBeNull();
     expect(parseImageReport(Array.from({ length: 101 }, () => good))).toBeNull();
     expect(parseImageReport('nope')).toBeNull();
+  });
+});
+
+describe('liftable (milestone 22)', () => {
+  it('lifts what the graphics card can draw as one layer, in device pixels', () => {
+    expect(liftable(1200, 8000, 1)).toBe(true);
+    expect(liftable(1200, LAYERS.maxLiftDevicePixels, 1)).toBe(true);
+    // HoloML's specification: its main section is over 52,000 CSS pixels tall.
+    expect(liftable(896, 52_427, 1)).toBe(false);
+    // The same section at twice the pixels (a high-density screen, or zoomed in) is too tall sooner.
+    expect(liftable(1200, 5000, 2)).toBe(false);
+    expect(liftable(1200, 4000, 2)).toBe(true);
+    // Too wide is too large too.
+    expect(liftable(9000, 400, 1)).toBe(false);
+  });
+
+  it('takes a missing or odd device pixel ratio as 1', () => {
+    expect(liftable(1200, 8000, Number.NaN)).toBe(true);
+    expect(liftable(1200, 8000, 0)).toBe(true);
+    expect(liftable(1200, 9000, 0)).toBe(false);
   });
 });

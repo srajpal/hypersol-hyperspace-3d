@@ -1458,3 +1458,84 @@ documents in the holoml repository.
 ```text
 Use the recommendations and start the build
 ```
+
+## 129 — 2026-09-29 · Claude Opus 5.5, max effort
+
+The first line answers the agent's question whether to turn on Auto-fix
+for holoml pull request #20's automatic builds: yes. The rest is new.
+
+```text
+Yes, turn on auto-fix.
+Also move milestones 25 and 26 to the end, we are not ready for builds.
+Should we mark these as experimental? Investigate.
+```
+
+## 130 — 2026-09-29 · Claude Opus 5.5, max effort
+
+GitHub's notice on both repositories, quoted in the prompt: the main
+branch is not protected (from force pushing or deletion, or by status
+checks required before merging).
+
+```text
+Please fix this issue with the repos: "Your main branch isn't protected.
+Protect this branch from force pushing or deletion, or require status
+checks before merging. View documentation." You have my permission to
+modify.
+```
+
+## 131 — 2026-09-29 · Claude Opus 5.5, max effort
+
+Answering the agent's question after its findings on prompt 129 (whether
+to mark the projects experimental): both. HoloML is marked experimental
+in its specification's status, its README, and its site, with v0.2.0
+switched to a pre-release on GitHub and v0.2.1 to be released as one;
+the browser is called an experimental developer preview in its README
+and its About dialog, its releases staying pre-releases until 1.0.
+
+```text
+Both
+```
+
+## 132 — 2026-09-29 · Claude Opus 5.5, max effort
+
+```text
+Turn on auto-fix for #39 too
+```
+
+## 133 — 2026-09-29 · Claude Opus 5.5, max effort
+
+```text
+holoml #20 merged
+```
+
+## 134 — 2026-09-30 · Claude Fable 5.1, high effort
+
+```text
+We are at a good checkpoint for both repos. Time to do a very thorough
+review of them. Find any bugs or issues that have not been fixed. I need
+you to act as a very senior developer and look at the whole project from
+that perspective and review it. It is time for a serious check. Did we
+miss something? Also check why the CI workflows take so long to finish
+each time and why they fail sometimes; see if you can get them to run
+faster. Check every aspect of both repos.
+
+Also use the info from this skill to do the checks:
+https://github.com/mattpocock/skills/blob/main/skills/engineering/code-review/SKILL.md
+```
+
+## 135 — 2026-09-30 · Claude Fable 5.1, high effort
+
+Answering the agent's six questions after the review (prompt 134), each
+with its recommendation, and asking for every finding to be fixed: the
+aquarium's turtle (licensed non-commercial, credited as CC BY) replaced
+by a CC BY or CC0 model; the automatic builds' commit pushed to pull
+request #39; the rule on main changed to require the one "All checks"
+job, with the checks skipped for pushes that change documents only;
+HoloML drawn at half resolution without anti-aliasing where Chromium
+draws in software; the checks that race repaired without loosening what
+they assert; and the findings recorded as private security advisories
+(the security ones) and GitHub issues (the rest).
+
+```text
+Use the recommendations and fix everything
+```

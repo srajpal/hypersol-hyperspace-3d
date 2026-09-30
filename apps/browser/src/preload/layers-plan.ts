@@ -33,6 +33,18 @@ export const LAYERS = {
   /** Smallest section and image worth lifting, in CSS pixels. */
   minSectionHeight: 40,
   minImageSide: 48,
+  /**
+   * Largest width or height of a lifted section or image, in device
+   * pixels (CSS pixels times the device pixel ratio). A lifted element is
+   * drawn as one 3D-transformed layer, and Chromium draws nothing of a
+   * layer larger than the graphics card can hold: a long page's main
+   * section went blank (milestone 22; HoloML's specification is 52,000
+   * pixels tall). A larger element stays flat, and the rest still lift.
+   * Well under where drawing failed on the development machine (about
+   * 14,000 device pixels, with a graphics card), for other graphics cards
+   * and for drawing in software.
+   */
+  maxLiftDevicePixels: 8192,
   /** A child covering this share of its parent is a wrapper: look inside it. */
   wrapperShare: 0.8,
   maxWrapperDepth: 6,
@@ -58,6 +70,12 @@ export function findSectionContainer(children: (path: number[]) => Box[], rootAr
     area = only.a;
   }
   return path;
+}
+
+/** Whether an element of this size, in CSS pixels, can be lifted at this device pixel ratio (see maxLiftDevicePixels). */
+export function liftable(width: number, height: number, devicePixelRatio: number): boolean {
+  const scale = Number.isFinite(devicePixelRatio) && devicePixelRatio > 0 ? devicePixelRatio : 1;
+  return width * scale <= LAYERS.maxLiftDevicePixels && height * scale <= LAYERS.maxLiftDevicePixels;
 }
 
 /**

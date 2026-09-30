@@ -221,7 +221,7 @@ rule's upgrade comes before a public release.
 | Window frame, reconsidered | Standard OS frame kept | Considered in milestone 6: a custom frame would lose native dragging, snapping, and accessibility; the theme now sets the frame's light or dark scheme. |
 | Bookmarks and history | SQLite through Node's built-in node:sqlite (owner decision 2026-09-25, prompt 20) | Fast search over thousands of rows; standard for browsers. Built into Electron's Node, so no native module and no extra package. |
 | UI widgets (address bar, menus) | Lit web components | Tiny, standards-based, no framework lock-in; themed with CSS variables. |
-| Build | electron-vite (Vite) now; electron-builder planned for the installers (milestones 25 and 26; not yet installed) | Fast dev reload; installers for Windows, macOS, Linux. |
+| Build | electron-vite (Vite) now; electron-builder planned for the installers (milestones 28 and 29; not yet installed) | Fast dev reload; installers for Windows, macOS, Linux. |
 | Toolchain | Node 22.13 or newer; pnpm 12.4.1 pinned in package.json (`packageManager`, with the pnpm version recorded in the lockfile); installs use `--frozen-lockfile` | Reproducible installs (GitHub issue #5). |
 | Tests | Vitest (unit), Playwright (Electron end-to-end); `pnpm test:linux` runs them in a Docker container that copies GitHub's Linux machines (tests/linux/, prompts 103 and 104) | Standard, cross-platform. The container finds Linux problems on this computer; the automatic builds on GitHub stay the check a pull request is merged on. |
 | Repos | hypersol-hyperspace-3d (browser; renamed from hypersol-websurfer-3d on 2026-09-26), holoml (language) | Each useful on its own; browser depends on holoml packages via npm. |
@@ -385,7 +385,21 @@ hypersol-hyperspace-3d/
 holoml/
   SPEC.md                      the language: version 0.1 (milestone 13),
                                and 0.2, which grew with the example
-                               sites (milestones 17 to 21)
+                               sites (milestones 17 to 21); from
+                               milestone 22 in the form of W3C
+                               specifications (0.2's second edition),
+                               with an index made from the code
+  spec/                        its grammar (milestone 22): the syntax in
+                               ABNF (by hand), the structure in RELAX NG
+                               (made from the checker's table, pnpm
+                               grammar:update), the scene API in Web IDL
+  docs/                        the guides (milestone 22): tutorials,
+                               how-to guides, reference (elements, API,
+                               and codes made by pnpm reference:update),
+                               and explanation; every example checked
+  site/                        build.mjs (pnpm site:build, with marked):
+                               the published site from SPEC.md, docs/,
+                               and examples/, checking every link
   LICENSE, LICENSE-SPEC        Apache 2.0 and CC BY 4.0
   packages/
     parser/                    @holoml/parser: text to a tree with line and
@@ -424,8 +438,12 @@ holoml/
                                rocks (CC0), gives the fish without one a
                                swim, and makes the tank and the sounds
   .github/workflows/ci.yml     lint, types, and tests on Windows and Linux
-  .github/workflows/pages.yml  publishes examples/ with GitHub Pages
-                               (without the tools/ folders)
+  .github/workflows/pages.yml  builds and publishes the site with GitHub
+                               Pages: the home page at
+                               https://srajpal.github.io/holoml/, the
+                               specification at /spec/, the guides
+                               under /docs/, and each example site at
+                               its own address (without its tools/)
 ```
 
 Decisions (milestone 13, owner prompt 63): files are `.holoml`, served
@@ -435,6 +453,24 @@ milestone 14 shows; the packages stay in the repository, unpublished.
 Tests hold SPEC.md and the code together: every code, element, and
 attribute in the code must be in SPEC.md with an example and in a valid
 sample.
+
+Decisions (milestone 22, owner prompt 128, Q1 to Q7 a): the
+specification follows W3C's conventions (BCP 14 requirement words,
+conformance classes, a processing model, the four considerations, an
+IANA template for `model/vnd.holoml`, references, an index, and the
+changes), without going through a standards body; the syntax is given in
+ABNF and the structure in RELAX NG made from the checker's table; the
+guides follow Diataxis; the site is built by one script with one
+development package, `marked`, and published by holoml's Pages workflow;
+the missing features found by the feature check became milestone 23,
+HoloML 0.3; the media type is not registered with IANA; the
+clarifications go into 0.2's text as its second edition, tagged v0.2.1
+at the end, on the owner's go. Tests keep the documents true: the
+grammar, the Web IDL and the scene API's tables, the reference pages,
+the index, every HoloML example in the guides, and the site's links,
+headings, pictures' text, keyboard access, and colour contrast.
+HyperSpace 3D's copy of HoloML includes the Web IDL, and its own test
+holds the viewer's API to it.
 
 ## 7. Data flow
 
@@ -666,7 +702,7 @@ Progress screenshots: `MILESTONE=m3 pnpm screenshots` builds the app and
 saves its main screens to docs/screenshots/m3/ (Electron's own capture,
 local test pages only).
 
-Not checked yet: `pnpm package` (installers per OS, milestones 25 and 26).
+Not checked yet: `pnpm package` (installers per OS, milestones 28 and 29).
 
 Launch options, for development and tests: `--start-url=<address>`
 (default: a start tab), `--tilt=<0 to 20>`,

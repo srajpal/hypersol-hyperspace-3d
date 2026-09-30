@@ -554,6 +554,8 @@ describe('D11 about', () => {
     const { version } = JSON.parse(readFileSync(join(APP_DIR, 'package.json'), 'utf8')) as { version: string };
     expect(await h.shell.locator('hs-about [data-testid="about-version"]').textContent()).toContain(`Version ${version}`);
     expect(version).toBe('0.9.0');
+    // An experimental developer preview until 1.0 (owner, prompt 131).
+    expect(await h.shell.locator('hs-about [data-testid="about-status"]').textContent()).toContain('experimental developer preview');
     await h.shell.keyboard.press('Escape');
     await waitFor('about closed', () => about.isVisible(), (v) => !v);
   });

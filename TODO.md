@@ -36,11 +36,11 @@ Plan approved 2026-09-24.
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Current (the plan and build approved with the recommended answers, prompt 128) |
 | 23 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
 | 24 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
-| 25 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
-| 26 | macOS release | Signing, notarization, Mac checks | Later |
-| 27 | Free camera and room navigation | Move freely around the room | Later |
-| 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
-| 29 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
+| 25 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
+| 26 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
+| 27 | Polish | Custom font, sound design, theme editor, motion tuning | Later (was 29, prompt 129) |
+| 28 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Last (was 25; moved to the end, prompt 129: not ready for builds) |
+| 29 | macOS release | Signing, notarization, Mac checks | Last (was 26, prompt 129) |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS and Android | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
@@ -370,7 +370,7 @@ the machine; `notfound.test` exercises "address not found".
 | D8 | Right-click menu | Automated | Link menu opens the link in a background tab and copies its address; text field menu offers paste; selected text copies |
 | D9 | Start panel | Automated | Empty state reads "Nothing saved yet" with a hint; its search box searches |
 | D10 | Shortcuts | Automated, from the shell and from inside a page | Each shortcut does its job |
-| D11 | About | Automated | Shows versions; Escape closes |
+| D11 | About | Automated | Shows versions; Escape closes; says it is an experimental developer preview (added in prompt 131) |
 | D12 | Look and feel | Manual, owner | Tab arc, cards, top bar, animations feel right |
 | C1–C11 | Milestone 1 regression | Automated | Still pass |
 
@@ -4029,7 +4029,7 @@ milestone ends (milestone 17's plan, Q5 a).
 
 ## Milestone 22 — HoloML documentation
 
-Status: In progress. Planned (prompt 127): the owner asked for this
+Status: Built; checks running (2026-09-29). Planned (prompt 127): the owner asked for this
 plan, and for HoloML's features to be checked while the documents are
 made, with a plan for anything missing; that check was done for the
 draft (below). The owner answered Q1 to Q7 with the recommendations and
@@ -4184,23 +4184,28 @@ finished documents.
 
 ### Tasks
 
-- [ ] 1. The specification in W3C style (Q1): the sections above, BCP
+- [x] 1. The specification in W3C style (Q1): the sections above, BCP
       14, conformance classes, the considerations, IANA (Q5),
       references, the index, the changes, and the clarifications (Q6);
-      holoml's tests keep it true.
-- [ ] 2. The formal grammar (Q2): ABNF, and the RELAX NG schema made from
-      the checker's table, with tests.
-- [ ] 3. The scene API in Web IDL, with tests that it, the tables, and
-      HyperSpace 3D's API list the same members.
-- [ ] 4. The guides (Diátaxis): tutorials, how-to guides, reference, and
-      explanation, every example checked by the tests.
-- [ ] 5. The site (Q3, Q7): the home page, the specification, the guides,
+      holoml's tests keep it true (holoml `docs`, 3dadd41; the index,
+      f69af9f).
+- [x] 2. The formal grammar (Q2): ABNF, and the RELAX NG schema made from
+      the checker's table, with tests (3dadd41).
+- [x] 3. The scene API in Web IDL, with tests that it, the tables, and
+      HyperSpace 3D's API list the same members (3dadd41; the browser's
+      api.test.ts, f2c5973).
+- [x] 4. The guides (Diátaxis): tutorials, how-to guides, reference, and
+      explanation, every example checked by the tests (39a8ca5; the
+      reference pages made from the code, f69af9f).
+- [x] 5. The site (Q3, Q7): the home page, the specification, the guides,
       and the example sites; accessible, light and dark, and nothing
-      fetched from other sites; published by holoml's Pages workflow.
-- [ ] 6. The browser: the examples section's link to the published
-      specification, and T8.
-- [ ] 7. The feature check repeated over the finished documents, and what
-      is missing planned (Q4) in the roadmap.
+      fetched from other sites; published by holoml's Pages workflow
+      (f69af9f and cdad9a4; published when holoml's pull request is
+      merged).
+- [x] 6. The browser: the examples section's link to the published
+      specification, and T8 (f2c5973).
+- [x] 7. The feature check repeated over the finished documents, and what
+      is missing planned (Q4) in the roadmap (below; milestone 23).
 - [ ] 8. Checks Y1 to Y10, run on Windows, with `pnpm test:linux`, and in
       the automatic builds.
 - [ ] 9. Documents: both READMEs, ARCHITECTURE, CHANGELOG, HANDOFF, and
@@ -4218,14 +4223,195 @@ finished documents.
 | Y5 | The site | https://srajpal.github.io/holoml/ answers with the home page, /spec/ with the specification, and the guides and example sites at their addresses; no page asks anything of another site |
 | Y6 | For everyone | Headings in order, text for every picture, colour contrast to WCAG 2.2 AA in light and dark, and every page usable with the keyboard alone; read with a screen reader (Narrator) by hand |
 | Y7 | The browser | The examples section's specification link opens the published specification; T8 passes |
+| Y7b | A very tall page | (Added while building, as the specification, 52,000 pixels tall, drew blank in the layers view.) A section too large to draw as one lifted layer stays flat and draws, and the page's other sections still lift (tests/e2e/m22.e2e.ts) |
 | Y8 | The feature check | Repeated over the finished documents; every gap is in the roadmap with its plan (Q4) |
 | Y9 | Published | The site from its public address (by hand, as X10) |
 | Y10 | Regression | The full run on Windows, `pnpm test:linux`, the unit tests, holoml's tests, and the automatic builds |
+
+### Decisions made while building
+
+- The specification's index (elements, attributes, terms, and codes) is
+  made from the checker's table, the codes, and the terms by `pnpm
+  reference:update`, which also writes three reference pages: elements
+  and attributes (which there are and where each may be, from the
+  checker's table; the words from the specification), the scene API
+  (each member with its declaration in Web IDL and the words of
+  section 10's tables), and the codes (with the conformance samples
+  that show each). It stops when the specification and the checker
+  disagree on an attribute being required or new in 0.2; they agreed on
+  every one. The reference pages write the specification's requirement
+  words in lower case, as the guides leave those words to the
+  specification.
+- The site links pages by relative addresses with their file names
+  (`docs/how-to/index.html`), so `_site/index.html` opens from the disk
+  as well as from GitHub Pages; headings get GitHub's anchors, so the
+  same links work on GitHub and on the site; links to other files of
+  the repository (the example sites' sources, the grammar files, the
+  conformance samples) go to GitHub. The pages have no scripts at all,
+  use the system's fonts, and follow the system's light or dark
+  setting. Code is coloured (HoloML, JavaScript, and the grammars'
+  comments), and tables scroll in regions the keyboard reaches.
+- The home page links each example site to its address, whose index.html
+  tells a browser without HoloML where to find index.holoml, as the
+  READMEs do.
+- The guides were drafted by three helper agents from a brief (plain
+  English, British spelling, facts only from SPEC.md and the example
+  sites), then every page was read against SPEC.md, the example sites
+  and their tools, and HyperSpace 3D's code, with 13 changes in 10
+  pages (for example: a floor plan is a picture that screen readers name, not
+  something Tab reaches; where the walker starts without a viewpoint;
+  which loft light a snippet showed). The publishing guide's check
+  script was run on a valid page, a page with problems, and one with a
+  syntax error.
+- The browser's screenshots show the documentation from a pages-only
+  build of the site (`node site/build.mjs <folder> --pages-only`,
+  856 KB without the example sites), made into an ignored folder of the
+  fixtures and removed afterwards.
+- holoml's packages are now at version 0.2.1, for the tag at the end;
+  they had stayed at 0.1.1 through v0.2.0.
+- `pnpm holoml:sync` ends git's revisions with `--`: holoml's new docs/
+  folder made the branch name `docs` ambiguous.
+- Found in the screenshots: in the layers view (on by default), the
+  specification drew nothing below its top bar. Its main section, 52,000
+  pixels tall, was lifted as one 3D-transformed layer, and Chromium draws
+  nothing of a layer larger than the graphics card can hold. Measured on
+  this computer (device pixel ratio 1), a lifted section of 10,900
+  pixels drew, with the graphics card and in software, and from about
+  13,800 it drew partly or not at all. A section or picture larger than
+  8,192 device pixels (CSS pixels times the pixel ratio) now stays flat,
+  and the rest of the page still lifts (3249591; check Y7b, which fails
+  without the limit).
+
+### Results so far
+
+- holoml (branch `docs`): 362 tests passed on Windows on 2026-09-29
+  (Y1 to Y6 in part: the specification's form, requirement words,
+  references, links, and index; the grammar; the Web IDL and the
+  tables; every HoloML example in the specification (more than 25) and
+  the guides; the reference pages up to date; and the site: every link
+  and anchor within it, nothing asked of another site, one title and
+  headings in order on every page, text for every picture, code and
+  tables reachable by the keyboard, and every colour pair at WCAG 2.2 AA
+  in light and dark). Lint and types clean.
+- The site, looked at in the built-in browser from 127.0.0.1: the home
+  page's example cards, the specification's contents, and the guides,
+  light and dark; at 375 pixels wide no page scrolls sideways (the wide
+  tables scroll in their own regions), and at desktop width no table
+  does.
+- The browser: unit tests 289 passed (16 new: api.test.ts, Y3, and the
+  layers view's size limit); lint and types clean.
+- The full end-to-end run on Windows (2026-09-29, before the layers
+  fix): 278 checks in 21 files passed in 14 minutes 45 seconds, T8
+  with the new address included (Y7). After the fix, the layers view's
+  checks G1 to G9 and Y7b passed (14).
+- Screenshots (`MILESTONE=m22 pnpm screenshots`, after the fix): 66
+  pictures, 64 to 66 new: the site's example sites, the specification,
+  and a how-to guide, in the browser. The README's four pictures
+  refreshed (`pnpm screenshots:readme`) and looked at.
+- holoml's pull request is #20 (Auto-fix on, prompt 129); the browser's
+  copy of HoloML is synced from its `docs` branch (c60840f).
+- Prompt 133: holoml #20 merged (3ce0ab2); CI and the Pages workflow
+  passed on main, and the copy is synced from holoml's main.
+- Y5: from its public address, https://srajpal.github.io/holoml/ answers
+  with the home page (the experimental note and the six example sites),
+  /spec/ with the specification, and the guides, the style, the
+  pictures, and each example site's index.holoml at their addresses;
+  the example sites' tools are not published (404).
+- Y9 (2026-09-29): the built app, let reach the internet for this check
+  only, opened the home page; the HoloML examples section's link opened
+  https://srajpal.github.io/holoml/spec/ (Y7 in use): 56,239 pixels tall,
+  its status "experimental", its main section not lifted and its text
+  drawn; a how-to guide with its HoloML coloured; and Harbour Loft from
+  the published site, ready with no problems.
+- `pnpm test:linux` (2026-09-29, on e856aad: the layers fix and the
+  pictures, before the About dialog's line): lint and types clean, unit
+  tests 287 passed (the copy's 2 comparisons with the holoml folder
+  skipped, as it is not in the container), and end to end 278 passed and
+  1 skipped (C9's frame rate, as decided for drawing in software) in 22
+  files, in 49 minutes 35 seconds; Y7b passed there (the tall page's
+  text drawn in software).
+- D11 with the About dialog's new line: milestone 2's checks, 43 of 43,
+  passed on Windows.
+- The automatic builds on #39 (run 36665616826): Windows part 1 failed
+  twice. Y7b waited for the header to lift, but on GitHub's Windows
+  machine the page had less room, its main section covered most of it,
+  and the layers view took it for a wrapper and lifted its paragraphs:
+  the page drew, but the check assumed a window width. Its page now has
+  a second tall section, so the body is the container at any width, and
+  the check runs at 1280 by 800 and at 1024 by 700; it passes at both,
+  and still fails without the size limit. I2 (milestone 7) counted 79
+  bytes for its 877-byte page: not near this milestone's changes, and
+  passed in every run before (this computer, Linux in Docker, and the
+  automatic builds); left unchanged and reported, as milestone 21's
+  intermittent checks were. main's automatic builds had failed
+  intermittently since milestone 21 as well (V5's fade on Linux three
+  times, and once each: milestone 3's quit after the shell's 2-second
+  wait, check #10's slow download in milestone 8, and a key press in the
+  top bar), reported to the owner.
+- Prompt 134 (2026-09-30), a review of both repositories and of the
+  automatic builds. The builds' time is the end-to-end checks drawn in
+  software: in run 36667528292 Linux part 2 took 31 min 40 s (m21 16 min
+  45 s of it, the aquarium at 1.0 frame a second), Linux part 1 20 min
+  32 s, Windows 12 min and 9 min 25 s. The end-to-end checks now run in
+  four parts on each system (vitest.e2e.config.ts and ci.yml: part 1
+  everything not listed, 2 milestones 14 to 17, 3 milestones 18 to 20, 4
+  milestone 21), with a last job, "All checks", that passes only when
+  every part has; no check is dropped or changed. Each part selects its
+  files on this computer (`vitest list`); not checked yet on GitHub,
+  which needs a push. The review's findings, and what else would
+  shorten the builds (each needing the owner's decision), are in
+  REVIEW-2026-09-30.md, not committed, as it lists weaknesses not yet
+  fixed.
+- Y8, the feature check repeated over the finished documents: nothing
+  missing beyond milestone 23's list. Found and fixed: SPEC.md's note
+  on a page from the computer (it may load from its folder and the
+  folders inside it), and the sneaker store's tool comment (its
+  stand-ins have a ninth of the shoe's triangles, not a seventh).
 
 ### Done when
 
 - Y1 to Y10 pass, the documentation is published, and the owner
   accepts; then holoml is tagged v0.2.1 on the owner's go (Q6).
+
+## The roadmap: installers last (2026-09-29, prompt 129)
+
+The owner moved the installers to the end of the roadmap, as the
+browser is not ready for builds: free camera is now 25, lift to 3D 26,
+and polish 27, and the Windows and Linux release (1.0) is 28 and the
+macOS release 29. README, AGENTS.md, HANDOFF, and ARCHITECTURE follow.
+The owner also asked whether the browser and HoloML should be marked
+experimental. The findings (by MDN's definition, a technology with one
+implementation, or a specification that may still change incompatibly,
+is experimental; the IETF publishes such specifications "for
+examination, experimental implementation, and evaluation"; SemVer's
+0.x means that anything may change) went to the owner, who chose both
+(prompt 131):
+
+- HoloML: its specification's status, README, and site say it is
+  experimental (one renderer so far; until 1.0 a later version may
+  change or remove what an earlier one has), and that 0.1 and 0.2 are
+  fixed rather than final (holoml d1d1e9c, in pull request #20); the
+  v0.2.0 release is now a pre-release, and v0.2.1 will be one.
+- The browser: its README and About dialog call it an experimental
+  developer preview, not yet for everyday browsing (D11 checks the
+  About dialog's line); its releases stay pre-releases until 1.0.
+
+## Branch protection (2026-09-29, prompt 130)
+
+At the owner's request (GitHub noted that neither main branch was
+protected), each repository has two rulesets on its default branch,
+made with GitHub's API on 2026-09-29:
+
+- "Protect main": no deletion and no force pushes, for everyone, the
+  owner included (rule 11: never rewrite published history).
+- "Checks before merging into main": a pull request is merged only once
+  its CI checks pass: the browser's four (Windows and Ubuntu, parts 1
+  and 2) and holoml's two (Windows and Ubuntu). The repository's admins
+  may bypass it: the owner can still merge past a check that fails for
+  a reason outside the change, and the agreed direct pushes to main (a
+  milestone's acceptance, a plan for approval) still go through.
+
+To change them: each repository's Settings, Rules, Rulesets.
 
 ## The README: a broken link, and four pictures (2026-09-28, prompt 99)
 
