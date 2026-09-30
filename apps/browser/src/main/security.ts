@@ -1,6 +1,7 @@
-import type { WebContents, WebPreferences } from 'electron';
+import type { App, WebContents, WebPreferences } from 'electron';
 import { PRIVATE_PARTITION, RESTORE_BLANK } from '../shared/commands';
 import { LOCAL_SCHEME } from '../shared/holoml-page';
+import { USER_ACTIVATION_MS } from './popups';
 
 /** Web pages may only be http, https, or the blank page. */
 export function isAllowedPageUrl(url: string): boolean {
@@ -33,6 +34,46 @@ export function isAllowedPageNavigation(from: string, to: string): boolean {
   return new URL(from).host === new URL(to).host;
 }
 
+/** What happens to a navigation a page starts by itself: it goes ahead, is refused, or another address is loaded in its place. */
+export type NavigationVerdict = 'allow' | 'refuse' | { load: string };
+
+/**
+ * A page's own navigation, decided (review of 2026-09-30, M6). On top of
+ * isAllowedPageNavigation: a HoloML file opened from the computer can
+ * read the files beside it, so its script must not be able to carry what
+ * it read to the web in an address. It may leave for a web address only
+ * right after a real click or key press on the page (as a link needs),
+ * and then without the address's query string and fragment.
+ *
+ * @param msSinceGesture Time since the last real click or key press in
+ *   the page, or null if there has been none since it loaded.
+ */
+export function decidePageNavigation(from: string, to: string, msSinceGesture: number | null): NavigationVerdict {
+  if (!isAllowedPageNavigation(from, to)) return 'refuse';
+  if (!isLocalHolomlUrl(from) || isLocalHolomlUrl(to) || to === '' || to === 'about:blank') return 'allow';
+  if (msSinceGesture === null || msSinceGesture < 0 || msSinceGesture > USER_ACTIVATION_MS) return 'refuse';
+  const url = new URL(to);
+  url.search = '';
+  url.hash = '';
+  // Compared as the parser writes them, so an address that only differs in form goes ahead as it is.
+  return url.href === new URL(to).href ? 'allow' : { load: url.href };
+}
+
+/**
+ * A site that asks for a client certificate gets none (review of
+ * 2026-09-30, M2). With no listener Electron hands over the first
+ * certificate in the system's store without asking, in private tabs too:
+ * the site, or a third party's part of a page, would learn the name and
+ * e-mail address on a work or identity certificate. Until there is a
+ * chooser, the answer is "no certificate".
+ */
+export function refuseClientCertificates(app: Pick<App, 'on'>): void {
+  app.on('select-client-certificate', (event, _contents, _url, _list, callback) => {
+    event.preventDefault();
+    callback();
+  });
+}
+
 export interface AttachRecord {
   /** Preload the webview asked for, if any. */
   requestedPreload: string | null;
@@ -58,6 +99,8 @@ export function lockDownWebPreferences(prefs: WebPreferences, pagePreloadPath: s
   prefs.experimentalFeatures = false;
   prefs.spellcheck = false;
   prefs.webviewTag = false;
+  // After a page's second alert or confirm in a row, the dialog offers to stop them: `while (1) alert()` can be left.
+  prefs.safeDialogs = true;
   // Test mode only: pages as on a computer that cannot draw WebGL (milestone 14, P11).
   if (noWebGL) prefs.webgl = false;
   return requested === pagePreloadPath ? null : requested;

@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
-import { clickUntil, focusedPage, inPage, launch, removeFolder, screenPointOf, waitFor, waitForPage, type Harness } from './harness';
+import { clickUntil, focusedPage, inPage, launch, navigateTo, pressInShell, removeFolder, screenPointOf, waitFor, waitForPage, type Harness } from './harness';
 
 let server: FixtureServer;
 const folders: string[] = [];
@@ -29,6 +29,12 @@ function newProfile(settings?: object): string {
   writeFileSync(join(dir, 'settings.json'), JSON.stringify({ layersOnOpen: false, ...settings }));
   return dir;
 }
+
+/** One of the main process's test logs (main/test-hooks.ts). */
+const testLog = <T>(h: Harness, key: string) =>
+  h.app.evaluate((_e, k) => (globalThis as unknown as { __hypersolTest: Record<string, unknown> }).__hypersolTest[k], key) as Promise<T>;
+/** The address a page's web contents is at, as the main process has it. */
+const addressOf = (h: Harness, page: { id: number }) => h.app.evaluate(({ webContents }, id) => webContents.fromId(id)!.getURL(), page.id);
 
 describe('M1: what a page may do without asking', () => {
   let h: Harness;
@@ -84,5 +90,52 @@ describe('M1: what a page may do without asking', () => {
     expect(await did()).toBe('done');
     expect(await inPage<boolean>(h, 'document.fullscreenElement === document.documentElement', page)).toBe(true);
     await inPage(h, 'document.exitFullscreen().then(() => true)', page);
+  });
+});
+
+describe('M4: leaving a page that asks to be kept', () => {
+  it('after a real click the person is asked: Leave leaves, Stay stays, by a typed address and by Reload', async () => {
+    const kept = server.url('review-134-beforeunload.html');
+    const h = await launch(kept, { userDataDir: newProfile() });
+    // The test driver hears of the page's question too and would answer it
+    // itself, after the app already has: with a listener it leaves it alone.
+    h.app.context().on('dialog', () => undefined);
+    try {
+      await waitForPage(h, 'review-134-beforeunload');
+      const page = await focusedPage(h);
+      const asks = () => testLog<string[]>(h, 'leaveAsks');
+      const state = () => inPage<string>(h, 'document.getElementById("state").textContent', page);
+      const edit = async () => clickUntil(h, await screenPointOf(h, '#edit', page), 'the page edited', async () => (await state()) === 'Edited');
+
+      // Used, then an address typed: asked once, and "Leave" (the test runs' answer) leaves.
+      await edit();
+      await navigateTo(h, server.url('link-b.html'));
+      await waitForPage(h, 'link-b');
+      expect(await asks()).toEqual([kept]);
+
+      // "Stay" keeps the page, with what was done in it, and nothing is fetched.
+      await navigateTo(h, kept);
+      await waitForPage(h, 'review-134-beforeunload');
+      await edit();
+      await h.app.evaluate(() => void ((globalThis as unknown as { __hypersolTest: { leaveAnswer: string } }).__hypersolTest.leaveAnswer = 'stay'));
+      const before = server.hits.get('/link-a.html') ?? 0;
+      await navigateTo(h, server.url('link-a.html'));
+      await waitFor('asked a second time', asks, (a) => a.length === 2);
+      expect(await addressOf(h, page)).toBe(kept);
+      expect(await state()).toBe('Edited');
+      expect(server.hits.get('/link-a.html') ?? 0).toBe(before);
+      // Reload asks too, and "Stay" keeps the page as it is.
+      await pressInShell(h, 'R', ['control']);
+      await waitFor('asked a third time', asks, (a) => a.length === 3);
+      expect(await state()).toBe('Edited');
+
+      // "Leave" on a reload: the page starts afresh.
+      await h.app.evaluate(() => void ((globalThis as unknown as { __hypersolTest: { leaveAnswer: string } }).__hypersolTest.leaveAnswer = 'leave'));
+      await pressInShell(h, 'R', ['control']);
+      await waitFor('reloaded', state, (s) => s === 'Not yet touched');
+      expect(await asks()).toEqual([kept, kept, kept, kept]);
+    } finally {
+      await h.close();
+    }
   });
 });

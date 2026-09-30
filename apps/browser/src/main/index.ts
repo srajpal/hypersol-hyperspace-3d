@@ -30,7 +30,8 @@ import { wireGuest, wireShortcuts } from './guests';
 import { parseLaunchOptions } from './launch-options';
 import { chooseProfileFolder } from './profile-folder';
 import { Privacy } from './privacy';
-import { hardenShell } from './security';
+import { hardenShell, refuseClientCertificates } from './security';
+import { confirmLeave } from './leave-page';
 import { shellOnly } from './ipc';
 import { HolomlPages } from './holoml';
 import { HOLOML_DROP_CHANNEL, LOCAL_SCHEME, VIEWER_SCHEME } from '../shared/holoml-page';
@@ -316,8 +317,20 @@ if (!app.requestSingleInstanceLock()) {
       // Files opened from the computer are not history: their addresses last one run (milestone 14).
       recordVisit: (url, title) => (isPrivate || url.startsWith(`${LOCAL_SCHEME}:`) ? null : (storage?.recordVisit(url, title) ?? null)),
       updateVisitTitle: (id, title) => void storage?.updateVisitTitle(id, title),
+      confirmLeave: (url) => {
+        // Test runs open no native box: the ask is recorded and answered by the check.
+        if (testLog) {
+          testLog.leaveAsks.push(url);
+          return testLog.leaveAnswer === 'leave';
+        }
+        const win = mainWindow;
+        return win === null || win.isDestroyed() ? true : confirmLeave((box) => dialog.showMessageBoxSync(win, box));
+      },
+      fetchFavicon: (url, init) => contents.session.fetch(url, init),
     });
   });
+
+  refuseClientCertificates(app);
 
   // HoloML pages (milestone 14): the viewer's script, and files opened
   // from the computer. Registered before the app is ready, as Electron asks.

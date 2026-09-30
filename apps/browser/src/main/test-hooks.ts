@@ -21,6 +21,13 @@ export interface TestLog {
   historyWorker?: () => boolean;
   /** Opens a HoloML file from the computer as Ctrl+O would, without the file chooser (milestone 14). */
   openLocal?: (path: string) => Promise<string | null>;
+  /**
+   * "Leave this page?" (main/leave-page.ts): test runs open no native box.
+   * Each ask is recorded by the page's address, and answered with
+   * leaveAnswer, which a check may set to 'stay'.
+   */
+  leaveAsks: string[];
+  leaveAnswer: 'leave' | 'stay';
 }
 
 declare global {
@@ -28,7 +35,7 @@ declare global {
 }
 
 export function installTestHooks(): TestLog {
-  const log: TestLog = { attaches: [], requests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [] };
+  const log: TestLog = { attaches: [], requests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave' };
   globalThis.__hypersolTest = log;
   // log.requests is filled by the privacy shield's request listener
   // (main/privacy/index.ts): Electron allows one listener per session.
