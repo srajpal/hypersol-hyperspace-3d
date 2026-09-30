@@ -410,7 +410,7 @@ describe('M7: Block ends capture in a page that asks to be kept', () => {
       // The page holds the camera, and would keep its tab if asked.
       const live = inPage<string>(h, 'navigator.mediaDevices.getUserMedia({ video: true }).then((s) => { window.keep = s; return "live"; }, (e) => e.name)', page);
       await waitFor('the camera prompt', async () => (await shellCall(h, 'prompts')).permission, (p) => p !== null);
-      await h.shell.click('hs-prompts [data-testid="perm-allow"]');
+      await h.shell.click('hs-prompts [data-testid="perm-allow"][data-armed]');
       expect(await live).toBe('live');
       await inPage(h, `addEventListener('beforeunload', (e) => { e.preventDefault(); e.returnValue = ''; }); true`, page);
       await h.app.evaluate(() => void ((globalThis as unknown as { __hypersolTest: { leaveAnswer: string } }).__hypersolTest.leaveAnswer = 'stay'));
