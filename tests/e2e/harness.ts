@@ -1158,9 +1158,14 @@ export async function clickCard(h: Harness, key: number | 'plus', part: 'body' |
   await settled(h);
   const p = await shellCall(h, 'cardPoint', key, part);
   if (!p) throw new Error(`Card ${key} is not showing`);
+  // Noted with its place, so a check that fails after it says where the
+  // click went (L3 once failed on GitHub's Linux machines with a new tab
+  // in front after a click on a card's speaker; not seen again).
+  const done = step(`a click on card ${key}'s ${part} at ${Math.round(p.x)},${Math.round(p.y)}`);
   // Hover first, as a person would, so the close button appears.
   await h.shell.mouse.move(p.x, p.y, { steps: 3 });
   await h.shell.mouse.click(p.x, p.y);
+  done('sent');
 }
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

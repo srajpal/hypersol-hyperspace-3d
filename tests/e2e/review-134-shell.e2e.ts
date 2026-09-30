@@ -31,6 +31,7 @@ import {
   waitFor,
   waitForPage,
   type Harness,
+  type ShellWindow,
 } from './harness';
 
 let server: FixtureServer;
@@ -101,11 +102,16 @@ async function menu(h: Harness, item: string): Promise<void> {
   await h.shell.click(BAR(`menu-${item}`));
 }
 
-/** Whether the tab in front shows an error card. */
+/**
+ * Whether the tab in front shows an error card: the focused tab's own
+ * page, not the first page still visible, as the page it replaces stays
+ * visible until the switch animation ends (found on GitHub's Linux
+ * machines, where a load can fail before the animation is over).
+ */
 const errorCardShown = (h: Harness) =>
   h.shell.evaluate(() => {
-    const panels = [...document.querySelectorAll<HTMLElement>('[data-testid="page-panel"]')];
-    const front = panels.find((p) => p.style.visibility !== 'hidden');
+    const id = (window as unknown as ShellWindow).__hypersolShellTest.focusedTabId();
+    const front = document.querySelector(`[data-testid="page-panel"][data-tab-id="${id}"]`);
     return front?.querySelector('[data-testid="page-overlay"]')?.hasAttribute('data-visible') ?? false;
   });
 
@@ -286,7 +292,7 @@ describe('R2: an error card goes when its error does', () => {
       const failing = (await focusedTab(h)).id;
       await navigateTo(h, `http://127.0.0.1:${port}/link-b.html`);
       await waitFor('the load to fail', () => focusedTab(h), (t) => t.state === 'failed');
-      expect(await errorCardShown(h)).toBe(true);
+      await waitFor('the error card', () => errorCardShown(h), (shown) => shown);
       // Behind the first tab, it sleeps.
       await cycleToTab(h, front);
       await waitFor(
@@ -794,6 +800,19 @@ describe('R6: the room draws what is needed, where it is needed', () => {
           );
         });
       expect(await offBy()).toBeLessThan(3);
+      // Drawing in software (GitHub's Linux machines), Chromium loses the
+      // room's context once soon after the app starts and restores it a
+      // moment later; a context already lost cannot be lost on request
+      // (its extensions answer null), so wait until it is there.
+      await waitFor(
+        "the room's WebGL context",
+        () =>
+          h.shell.evaluate(() => {
+            const gl = (document.querySelector('#room canvas') as HTMLCanvasElement).getContext('webgl2');
+            return gl !== null && !gl.isContextLost();
+          }),
+        (there) => there,
+      );
       const lost = await h.shell.evaluate(() => {
         const canvas = document.querySelector('#room canvas') as HTMLCanvasElement;
         const ext = canvas.getContext('webgl2')?.getExtension('WEBGL_lose_context');
