@@ -100,8 +100,8 @@ interface ViewEntry {
  * desk camera with a small pointer parallax.
  *
  * Frames are drawn only while something changes (a resize, the camera
- * moving, a switch animation, a card spinner), so an idle room costs
- * nothing.
+ * moving, a switch animation, the spinner of a card in view), so an idle
+ * room costs nothing.
  */
 export class Room {
   /** Frames drawn so far; read by the idle-efficiency check (C9). */
@@ -138,7 +138,7 @@ export class Room {
   private framePending = false;
   private lastFrameTime = 0;
   private hoveredCard: TabCard | null = null;
-  /** The WebGL context is lost (a graphics reset): no drawing until it is restored. */
+  /** The WebGL context is lost (a graphics reset): the room is not drawn until it is restored; the pages still are. */
   private contextLost = false;
   /** Whether the tab rail shows: only with two or more tabs. */
   private railShown = false;
@@ -180,10 +180,11 @@ export class Room {
     this.canvas = webgl?.domElement ?? document.createElement('canvas');
     container.append(this.canvas);
     // A graphics reset (driver update, GPU switch, sleep) loses the WebGL
-    // context. Nothing is drawn while it is lost; when it comes back, the
-    // room draws again at once, without waiting for input (GitHub issue #12).
-    // Three.js uploads the textures (room, cards, snapshots) again from
-    // their images on that first frame.
+    // context. The room is not drawn while it is lost (the pages, placed
+    // with CSS, still follow tab switches and resizes); when it comes
+    // back, the room draws again at once, without waiting for input
+    // (GitHub issue #12). Three.js uploads the textures (room, cards,
+    // snapshots) again from their images on that first frame.
     this.canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault(); // allows the browser to restore it
       this.contextLost = true;
@@ -254,6 +255,7 @@ export class Room {
       this.layout();
       this.requestRender();
     });
+    this.watchPixelRatio();
     this.wirePointer();
     this.requestRender();
   }
@@ -410,7 +412,7 @@ export class Room {
   setEconomy(on: boolean): void {
     if (on === this.economy) return;
     this.economy = on;
-    this.webgl?.setPixelRatio(on ? Math.max(0.5, window.devicePixelRatio * 0.5) : window.devicePixelRatio);
+    this.applyPixelRatio();
     this.horizon.visible = !on;
     this.sun.visible = this.theme.room.sun && !on;
     if (on) this.centreCamera();
@@ -420,6 +422,31 @@ export class Room {
 
   get economyOn(): boolean {
     return this.economy;
+  }
+
+  /** The room's resolution: the display's, or half of it in economy mode. */
+  private applyPixelRatio(): void {
+    this.webgl?.setPixelRatio(this.economy ? Math.max(0.5, window.devicePixelRatio * 0.5) : window.devicePixelRatio);
+  }
+
+  /**
+   * Follows the display's pixel ratio, which changes when the window moves
+   * to a display with another scaling or the system's scaling changes;
+   * set only at the start, the room stayed blurred or too costly after.
+   * A media query matches one ratio, so each change is watched for anew.
+   */
+  private watchPixelRatio(): void {
+    const query = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+    query.addEventListener(
+      'change',
+      () => {
+        this.applyPixelRatio();
+        this.layout();
+        this.requestRender();
+        this.watchPixelRatio();
+      },
+      { once: true },
+    );
   }
 
   /**
@@ -665,7 +692,7 @@ export class Room {
   // ---- Rendering ----------------------------------------------------------
 
   requestRender(): void {
-    if (this.framePending || this.contextLost) return;
+    if (this.framePending) return;
     this.framePending = true;
     // Economy mode: at most ECONOMY_FPS frames a second.
     const wait = this.economy ? 1000 / ECONOMY_FPS - (performance.now() - this.lastDrawn) : 0;
@@ -675,7 +702,6 @@ export class Room {
 
   private frame(time: number): void {
     this.framePending = false;
-    if (this.contextLost) return;
     this.lastDrawn = performance.now();
     const dt = this.lastFrameTime === 0 ? 16 : Math.min(50, time - this.lastFrameTime);
     this.lastFrameTime = time;
@@ -686,16 +712,21 @@ export class Room {
       this.onCameraMove({ x: x / DEFAULT_PARALLAX.maxOffset, y: y / DEFAULT_PARALLAX.maxOffset });
     }
     this.stepTweens(performance.now());
+    // A spinner asks for frames only where it is seen: not on a card out
+    // of view (one tab, tabs shown as a list, a card scrolled off the
+    // rail), and not while the room is not drawn. Otherwise every page
+    // load kept the frame loop running for nothing.
+    const roomDrawn = this.webgl !== null && !this.contextLost;
     let spinning = false;
     for (const card of this.cards.values()) {
-      if (card.spinning) {
+      if (roomDrawn && card.spinning && card.mesh.visible) {
         card.tick(dt);
         spinning = true;
       }
     }
     this.applyCamera();
     this.placeGlow();
-    this.webgl?.render(this.scene, this.camera);
+    if (!this.contextLost) this.webgl?.render(this.scene, this.camera);
     this.css.render(this.cssScene, this.camera);
     this.frames += 1;
     if (moving || this.tweens.length > 0 || spinning) this.requestRender();

@@ -12,6 +12,8 @@ import { startFixtureServer, startHttpsFixtureServer, type FixtureServer } from 
 import {
   ADDRESS,
   clickUntil,
+  setContentSize,
+  settled,
   cycleToTab,
   focusedPage,
   focusedTab,
@@ -710,6 +712,99 @@ describe('R6: smaller faults of the top bar, tabs, and panels', () => {
       await waitFor('the download done', () => shellCall(h, 'downloads'), (d) => d.length === 1 && d[0]!.state === 'completed');
       const back = await waitFor('the tab back on its page', () => focusedTab(h), (t) => t.state === 'loaded' && t.url === slow);
       expect(back.title).toBe('Slow page');
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('R6: the room draws what is needed, where it is needed', () => {
+  it('a loading tab whose card is out of view asks for no frames; a card in view still spins', async () => {
+    // One tab, so no rail of cards; its page takes a while, and has no picture yet.
+    const h = await launch(server.url('slow?ms=4000'), { userDataDir: newProfile() });
+    try {
+      await sleep(500); // the window's first frames
+      const before = await shellCall(h, 'frames');
+      await sleep(1000);
+      const after = await shellCall(h, 'frames');
+      expect((await focusedTab(h)).state).toBe('loading');
+      expect(await shellCall(h, 'railVisible')).toBe(false);
+      expect(after - before).toBeLessThanOrEqual(2);
+      // Two tabs: the rail shows, and the loading tab's card spins.
+      await waitFor('the page loaded', () => focusedTab(h), (t) => t.state === 'loaded', 20_000);
+      await pressInShell(h, 'T', ['control']);
+      await waitFor('a new tab', () => focusedTab(h), (t) => t.state === 'start');
+      await navigateTo(h, server.url('slow?ms=3000&second'));
+      await waitFor('loading', () => focusedTab(h), (t) => t.state === 'loading');
+      await settled(h);
+      const spinStart = await shellCall(h, 'frames');
+      await waitFor('the spinner drawn', () => shellCall(h, 'frames'), (n) => n > spinStart + 10, 2500);
+      expect((await focusedTab(h)).state).toBe('loading');
+    } finally {
+      await h.close();
+    }
+  });
+
+  it("the room's resolution follows the display's pixel ratio when it changes", async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      const start = await shellCall(h, 'economy');
+      expect(start.pixelRatio).toBe(start.devicePixelRatio);
+      // As a move to a display with another scaling does: the window's pixel ratio changes.
+      await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.webContents.setZoomFactor(1.5));
+      const changed = await waitFor('the new pixel ratio', () => shellCall(h, 'economy'), (e) => e.devicePixelRatio !== start.devicePixelRatio);
+      expect(changed.devicePixelRatio).toBeCloseTo(start.devicePixelRatio * 1.5, 3);
+      await waitFor('the room at the new ratio', () => shellCall(h, 'economy'), (e) => e.pixelRatio === e.devicePixelRatio, 5000);
+      // And again: each change is followed, not only the first.
+      await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.webContents.setZoomFactor(1));
+      await waitFor('the first ratio again', () => shellCall(h, 'economy'), (e) => e.devicePixelRatio === start.devicePixelRatio && e.pixelRatio === e.devicePixelRatio, 5000);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('with the WebGL context lost, pages still follow a resize and a tab switch', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      /** How far the page in front, as the window draws it, is from where the room places it (pixels). */
+      const offBy = () =>
+        h.shell.evaluate(() => {
+          const hooks = (window as unknown as { __hypersolShellTest: { panelQuad(): { x: number; y: number }[] } }).__hypersolShellTest;
+          const quad = hooks.panelQuad();
+          const front = [...document.querySelectorAll<HTMLElement>('[data-testid="page-panel"]')].find((p) => p.style.visibility !== 'hidden');
+          if (!front) return Number.POSITIVE_INFINITY;
+          const box = front.getBoundingClientRect();
+          const xs = quad.map((p) => p.x);
+          const ys = quad.map((p) => p.y);
+          return Math.max(
+            Math.abs(box.left - Math.min(...xs)),
+            Math.abs(box.right - Math.max(...xs)),
+            Math.abs(box.top - Math.min(...ys)),
+            Math.abs(box.bottom - Math.max(...ys)),
+          );
+        });
+      expect(await offBy()).toBeLessThan(3);
+      const lost = await h.shell.evaluate(() => {
+        const canvas = document.querySelector('#room canvas') as HTMLCanvasElement;
+        const ext = canvas.getContext('webgl2')?.getExtension('WEBGL_lose_context');
+        if (!ext) return false;
+        return new Promise<boolean>((resolve) => {
+          canvas.addEventListener('webglcontextlost', () => resolve(true), { once: true });
+          ext.loseContext();
+        });
+      });
+      expect(lost).toBe(true);
+      // A resize: the page is drawn where the room now places it.
+      const size = await h.shell.evaluate(() => [window.innerWidth, window.innerHeight]);
+      await setContentSize(h, size[0]! - 160, size[1]! - 90);
+      await waitFor('the page in its new place', offBy, (d) => d < 3, 5000);
+      // A tab switch: the new tab's page comes to the centre.
+      await pressInShell(h, 'T', ['control']);
+      await waitFor('a new tab', () => focusedTab(h), (t) => t.state === 'start');
+      await settled(h);
+      await waitFor('the new page in place', offBy, (d) => d < 3, 5000);
     } finally {
       await h.close();
     }
