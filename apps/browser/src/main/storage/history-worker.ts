@@ -5,14 +5,12 @@
  * (history-backend.ts), so searches over a long history never hold up
  * the main process.
  */
-import { DatabaseSync } from 'node:sqlite';
 import { parentPort, workerData } from 'node:worker_threads';
 import { answerHistory, type HistoryMessage } from './history-backend';
 import { HistoryStore } from './history';
+import { connect } from './scrub';
 
 const { path } = workerData as { path: string };
-const db = new DatabaseSync(path);
-db.exec('PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;');
-const store = new HistoryStore(db);
+const store = new HistoryStore(connect(path));
 
 parentPort!.on('message', (m: HistoryMessage) => parentPort!.postMessage(answerHistory(store, m)));

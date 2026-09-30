@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import type { Bookmark, HistoryEntry } from '../../shared/data';
 import type { SavedLogin } from '../../shared/passwords';
 import { HISTORY_INDEX_MIGRATION, HISTORY_SITES_MIGRATION, HistoryStore } from './history';
+import { CONNECTION_SETTINGS, scrubDeleted } from './scrub';
 
 /** Current schema; raise it and add a step to MIGRATIONS for any change. */
 export const SCHEMA_VERSION = 4;
@@ -96,8 +97,8 @@ export class Store {
   /** Opens (or creates) the database at path; ':memory:' for tests. Throws if it cannot. */
   constructor(path: string) {
     this.db = new DatabaseSync(path);
-    // The history worker has its own connection; a writer waits for the other rather than failing.
-    this.db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
+    // The history worker has its own connection, opened the same way (storage/scrub.ts).
+    this.db.exec(`${CONNECTION_SETTINGS} PRAGMA foreign_keys = ON;`);
     this.migrate();
     this.history = new HistoryStore(this.db);
   }
@@ -217,10 +218,12 @@ export class Store {
 
   deleteLogin(id: number): void {
     this.db.prepare('DELETE FROM logins WHERE id = ?').run(id);
+    scrubDeleted(this.db);
   }
 
   clearLogins(): void {
     this.db.exec('DELETE FROM logins; DELETE FROM login_never;');
+    scrubDeleted(this.db);
   }
 
   neverList(): string[] {
@@ -237,6 +240,7 @@ export class Store {
 
   removeNever(origin: string): void {
     this.db.prepare('DELETE FROM login_never WHERE origin = ?').run(origin);
+    scrubDeleted(this.db);
   }
 
   close(): void {
