@@ -326,7 +326,9 @@ export class App {
    */
   private startLoad(tabId: number, view: TabView, url: string): void {
     const from = view.status.url;
-    this.typedLoads.set(tabId, { from, to: url });
+    // The same address again has no other address to flash back to.
+    if (from === url) this.typedLoads.delete(tabId);
+    else this.typedLoads.set(tabId, { from, to: url });
     // Another page: the favicon of the one being left goes.
     this.store.update(tabId, { url, state: 'loading', title: url, ...(isSamePage(from, url) ? {} : { favicon: undefined }) });
     view.load(url);
