@@ -486,8 +486,11 @@ describe('review 134: the HoloML viewer', () => {
       PAGE,
     );
     expect(forged).toBe('object');
-    // The instrument panel's picking and choosing can come over the private line, as the main process would send
-    // them, so that nothing on the window need act: picking on, a thing chosen, picking off.
+    // Nothing on the window acts for the instrument panel any more, in a test run or a normal one (viewer/main.test.ts
+    // holds the normal run's window to `scene` alone).
+    expect(await inPage<string[]>(h, '[typeof window.__holoml.select, typeof window.__holoml.pick]', PAGE)).toEqual(['undefined', 'undefined']);
+    // The instrument panel's picking and choosing come over the private line, as the main process sends them
+    // (main/inspect; m15's R9 checks them from the panel itself): picking on, a thing chosen, picking off.
     const send = (command: string) =>
       h.app.evaluate(
         ({ webContents }, { page, command }) => {

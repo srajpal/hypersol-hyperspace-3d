@@ -113,19 +113,15 @@ function sceneFacts(): unknown {
 
 /**
  * What every HoloML page has on its window, in every run (review 134,
- * D12): only what the instrument panel's Scene part uses. `scene` is
- * read-only. `select` and `pick` act, on the page's own scene alone (they
- * outline a thing, and make the next click choose one): the main process
- * calls them by name in the page (main/inspect), so they stay here until
- * it sends them over the private line instead, which takes them already
- * ("select:<index>", "pick-on", "pick-off" on the command channel). The
- * object is frozen: a page's script cannot put its own answers in their
- * place.
+ * D12): only what the instrument panel's Scene part reads, `scene`,
+ * which is read-only. Nothing here acts: choosing a thing and picking
+ * come from the main process over the private line ("select:<index>",
+ * "pick-on", "pick-off" on the command channel; main/inspect sends them).
+ * The object is frozen: a page's script cannot put its own answers in
+ * their place.
  */
 const inspector = {
   scene: sceneFacts,
-  select: (index: number) => state.view?.select(index),
-  pick: (on: boolean) => state.view?.setPicking(on),
 };
 
 /**
