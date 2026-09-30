@@ -54,6 +54,34 @@ const BAR = (id: string) => `hs-toolbar [data-testid="${id}"]`;
 const PROMPT = (id: string) => `hs-prompts [data-testid="${id}"]`;
 const LIB = (id: string) => `hs-library [data-testid="${id}"]`;
 const SET = (id: string) => `hs-settings [data-testid="${id}"]`;
+const NOTICE = (id: string) => `hs-notice [data-testid^="${id}"]`;
+const testLog = <T>(h: Harness, key: string) =>
+  h.app.evaluate((_e, k) => (globalThis as unknown as { __hypersolTest: Record<string, unknown> }).__hypersolTest[k], key) as Promise<T>;
+
+/**
+ * Clicks a button of a prompt or notice in the very frame it appears, as
+ * a click already on its way would land. Set up before the prompt is
+ * caused; answers whether the button was armed when it was clicked.
+ */
+function clickAsItAppears(h: Harness, host: string, button: string): Promise<{ armed: boolean }> {
+  return h.shell.evaluate(
+    ([host, button]) =>
+      new Promise<{ armed: boolean }>((resolve) => {
+        const look = () => {
+          const found = document.querySelector(host!)?.shadowRoot?.querySelector<HTMLButtonElement>(`[data-testid^="${button}"]`);
+          if (!found) {
+            requestAnimationFrame(look);
+            return;
+          }
+          const armed = found.hasAttribute('data-armed');
+          found.click();
+          resolve({ armed });
+        };
+        look();
+      }),
+    [host, button],
+  );
+}
 
 /** Chooses an entry of the top bar's menu. */
 async function menu(h: Harness, item: string): Promise<void> {
@@ -239,6 +267,98 @@ describe('R2: an error card goes when its error does', () => {
     } finally {
       await h.close();
       await late?.close();
+    }
+  });
+});
+
+describe('R3: a prompt or notice takes no click the instant it appears', () => {
+  it('a click as the permission prompt appears answers nothing; once armed, Allow works', async () => {
+    const h = await launch(server.url('media.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'media');
+      const page = await focusedPage(h);
+      const early = clickAsItAppears(h, 'hs-prompts', 'perm-allow');
+      let settled = false;
+      const answer = inPage<string>(h, 'camera()', page).then((a) => {
+        settled = true;
+        return a;
+      });
+      expect(await early).toEqual({ armed: false });
+      // The prompt is still there, unanswered, and says the same to screen readers.
+      const card = h.shell.locator(PROMPT('permission-prompt'));
+      await h.shell.waitForSelector(`${PROMPT('permission-prompt')}[data-armed]`);
+      expect((await shellCall(h, 'prompts')).permission).not.toBeNull();
+      expect(settled).toBe(false);
+      expect(await card.getAttribute('role')).toBe('alertdialog');
+      expect(await h.shell.locator(PROMPT('perm-allow')).getAttribute('aria-disabled')).toBeNull();
+      expect(await h.shell.locator(PROMPT('perm-allow')).isEnabled()).toBe(true);
+      await h.shell.click(`${PROMPT('perm-allow')}[data-armed]`);
+      expect(await answer).toBe('granted:video');
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('the key on a focused button counts as a click: Enter answers nothing before the prompt is armed', async () => {
+    const h = await launch(server.url('media.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'media');
+      const page = await focusedPage(h);
+      // Focus the button and press Enter in the frame the prompt appears.
+      const early = h.shell.evaluate(
+        () =>
+          new Promise<{ armed: boolean }>((resolve) => {
+            const look = () => {
+              const found = document.querySelector('hs-prompts')?.shadowRoot?.querySelector<HTMLButtonElement>('[data-testid="perm-allow"]');
+              if (!found) {
+                requestAnimationFrame(look);
+                return;
+              }
+              found.focus();
+              const armed = found.hasAttribute('data-armed');
+              // A button turns Enter into a click; the key itself is sent too.
+              found.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true }));
+              found.click();
+              resolve({ armed });
+            };
+            look();
+          }),
+      );
+      const answer = inPage<string>(h, 'microphone()', page);
+      expect(await early).toEqual({ armed: false });
+      await h.shell.waitForSelector(`${PROMPT('perm-block')}[data-armed]`);
+      expect((await shellCall(h, 'prompts')).permission).not.toBeNull();
+      await h.shell.locator(PROMPT('perm-block')).press('Enter');
+      expect(await answer).toBe('denied:NotAllowedError');
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('a click as a download\'s notice appears opens nothing; once armed, Open works, and Dismiss works at once', async () => {
+    const folder = mkdtempSync(join(tmpdir(), 'hypersol-e2e-downloads-'));
+    folders.push(folder);
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile(), downloadsDir: folder });
+    try {
+      await waitForPage(h, 'link-a');
+      const opened = () => testLog<{ what: string; path: string }[]>(h, 'opened');
+      const early = clickAsItAppears(h, 'hs-notice', 'notice-open');
+      await navigateTo(h, server.url('download/sample.txt'));
+      expect(await early).toEqual({ armed: false });
+      await h.shell.waitForSelector(`${NOTICE('notice-open')}[data-armed]`);
+      // Nothing was opened, and the notice is still up.
+      expect(await opened()).toEqual([]);
+      expect(await shellCall(h, 'notice')).toMatchObject({ kind: 'done', text: 'Downloaded sample.txt' });
+      await h.shell.click(`${NOTICE('notice-open')}[data-armed]`);
+      await waitFor('the file opened', opened, (o) => o.some((x) => x.what === 'open' && x.path.endsWith('sample.txt')));
+      // Dismiss is not held back.
+      const dismissed = clickAsItAppears(h, 'hs-notice', 'notice-close');
+      await navigateTo(h, server.url('download/sample.txt'));
+      expect(await dismissed).toEqual({ armed: false });
+      await waitFor('the notice gone', () => shellCall(h, 'notice'), (n) => n === null);
+      expect((await opened()).length).toBe(1);
+    } finally {
+      await h.close();
     }
   });
 });

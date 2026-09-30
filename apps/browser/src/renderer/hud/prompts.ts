@@ -1,6 +1,7 @@
-import { LitElement, css, html, nothing } from 'lit';
+import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
 import { describeKinds, type PermissionPrompt, type PromptAnswer } from '../../shared/permissions';
 import type { OfferAnswer, PasswordOffer } from '../../shared/passwords';
+import { ARM_MS } from './arm';
 
 /** "127.0.0.1:8123" or "example.com" for an origin. */
 export function siteName(origin: string): string {
@@ -16,7 +17,8 @@ export function siteName(origin: string): string {
  * site asking for the camera, microphone, or location (Allow, Allow this
  * time, Block: owner, prompt 45, Q2 a), and an offer to save or update a
  * password after signing in. Each belongs to one tab; the controller shows
- * the focused tab's.
+ * the focused tab's. A permission prompt takes no click or key for its
+ * first half second (hud/arm.ts).
  *
  * Events: hs-permission-answer (detail: { id, answer }),
  * hs-password-answer (detail: { id, answer }), hs-offer-dismissed (detail: id).
@@ -25,15 +27,33 @@ export class HsPrompts extends LitElement {
   static override properties = {
     permission: { attribute: false },
     offer: { attribute: false },
+    armed: { state: true },
   };
 
   declare permission: PermissionPrompt | null;
   declare offer: PasswordOffer | null;
+  /** The permission prompt showing has been up long enough to take an answer. */
+  declare armed: boolean;
+  /** The prompt the wait was started for, by its id. */
+  private armedFor: number | null = null;
+  private armTimer: number | undefined;
 
   constructor() {
     super();
     this.permission = null;
     this.offer = null;
+    this.armed = false;
+  }
+
+  /** Each permission prompt that appears, the next in a tab's queue included, waits before it takes an answer. */
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    if (!changed.has('permission')) return;
+    const id = this.permission?.id ?? null;
+    if (id === this.armedFor) return;
+    this.armedFor = id;
+    window.clearTimeout(this.armTimer);
+    this.armed = false;
+    if (id !== null) this.armTimer = window.setTimeout(() => (this.armed = true), ARM_MS);
   }
 
   static override styles = css`
@@ -107,13 +127,15 @@ export class HsPrompts extends LitElement {
   }
 
   private permissionCard(p: PermissionPrompt) {
-    const answer = (a: PromptAnswer) => this.fire('hs-permission-answer', { id: p.id, answer: a });
-    return html`<div class="card" data-kind="permission" role="alertdialog" aria-label="Permission request" data-testid="permission-prompt">
+    const answer = (a: PromptAnswer) => {
+      if (this.armed) this.fire('hs-permission-answer', { id: p.id, answer: a });
+    };
+    return html`<div class="card" data-kind="permission" role="alertdialog" aria-label="Permission request" data-testid="permission-prompt" ?data-armed=${this.armed}>
       <p><strong>${siteName(p.origin)}</strong> wants to use ${describeKinds(p.kinds)}.</p>
       <div class="actions">
-        <button class="primary" data-testid="perm-allow" @click=${() => answer('allow')}>Allow</button>
-        <button data-testid="perm-once" @click=${() => answer('once')}>Allow this time</button>
-        <button data-testid="perm-block" @click=${() => answer('block')}>Block</button>
+        <button class="primary" data-testid="perm-allow" ?data-armed=${this.armed} @click=${() => answer('allow')}>Allow</button>
+        <button data-testid="perm-once" ?data-armed=${this.armed} @click=${() => answer('once')}>Allow this time</button>
+        <button data-testid="perm-block" ?data-armed=${this.armed} @click=${() => answer('block')}>Block</button>
       </div>
     </div>`;
   }
