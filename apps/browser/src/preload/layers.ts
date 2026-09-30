@@ -17,7 +17,7 @@
 import { ipcRenderer, webFrame } from 'electron';
 import { LAYERS_CHANNEL, MAX_PAGE_IMAGES, PAGE_IMAGES_CHANNEL, parseLayersState, type PageImage } from '../shared/layers';
 import { isHolomlDocument } from './holoml';
-import { LAYERS, findSectionContainer, largest, liftTransform, sameExceptLift, vanishingPoint, type Box } from './layers-plan';
+import { LAYERS, findSectionContainer, largest, liftTransform, liftable, sameExceptLift, vanishingPoint, type Box } from './layers-plan';
 
 const ATTR = 'data-hs-layer';
 const ANIMATING = 'data-hs-animating';
@@ -232,15 +232,17 @@ function pick(): Map<HTMLElement, Layer> {
   );
   container = at(path);
   const children = visibleChildren(container);
+  // Too large to draw as one lifted layer: it stays flat (milestone 22).
+  const fits = (el: HTMLElement) => liftable(el.offsetWidth, el.offsetHeight, devicePixelRatio);
   // A very long run of children is a list (a feed, a table), not a few sections.
   const sectionCandidates =
     children.length > MAX_SECTION_CANDIDATES
       ? []
-      : children.filter((c) => c.offsetHeight >= LAYERS.minSectionHeight && !holdsPinned(c) && shown(c));
+      : children.filter((c) => c.offsetHeight >= LAYERS.minSectionHeight && fits(c) && !holdsPinned(c) && shown(c));
   const media: HTMLElement[] = [];
   for (const el of body.querySelectorAll<HTMLElement>('img, video, canvas')) {
     if (media.length >= MAX_MEDIA_CANDIDATES) break;
-    if (el.offsetWidth >= LAYERS.minImageSide && el.offsetHeight >= LAYERS.minImageSide) media.push(el);
+    if (el.offsetWidth >= LAYERS.minImageSide && el.offsetHeight >= LAYERS.minImageSide && fits(el)) media.push(el);
   }
   const imageCandidates = media.filter((el) => !holdsPinned(el) && shown(el));
   // The page's own transforms and animations are left alone, even ones it adds after an element was lifted.
