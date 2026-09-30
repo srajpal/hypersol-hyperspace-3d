@@ -88,7 +88,7 @@ is run from source: a packaged app ignores its switch.)
 |---|---|---|---|
 | Bookmarks: each page's address, title, and small icon | `hypersol.sqlite` | When you press the star or Ctrl+D | Remove them in the Library, or press the star again |
 | History: each page's address, title, and time of visit | `hypersol.sqlite` | When a tab arrives at a page; the same page again in the same tab (a reload) adds nothing | Delete entries in the Library, "Clear all history", or Settings > Clear browsing data |
-| Settings: search engine, what opens at startup, encrypted DNS mode, daily list updates on or off, sites where the shield is paused, whether pages open in the layers view, and the sites where you switched the layers view, the theme, the page tilt, the instrument panel's switches and its console's level, the zoom level of sites you zoomed, the size of the tab cards, whether tabs show as cards or as a list, economy mode, and when tabs go to sleep | `settings.json` | When you change a setting, pause the shield on a site, or switch the layers view on a page | Delete the file; the defaults return. Settings > "Forget site choices" clears the layers view choices |
+| Settings: search engine, what opens at startup, encrypted DNS mode, daily list updates on or off, sites where the shield is paused, whether pages open in the layers view, and the sites where you switched the layers view, the theme, the page tilt, the instrument panel's switches and its console's level, the zoom level of sites you zoomed, the size of the tab cards, whether tabs show as cards or as a list, economy mode, and when tabs go to sleep; and the window's size and place on the screen, and whether it was maximised, so it opens as you left it | `settings.json` | When you change a setting, pause the shield on a site, or switch the layers view on a page; the window's size half a second after you stop moving or resizing it, and when it closes | Delete the file; the defaults return. Settings > "Forget site choices" clears the layers view choices |
 | Filter lists from the last update, and when they were downloaded | `filters/engine.bin`, `filters/engine.json` | After a list update | Delete the folder; the starter copy included in the app is used |
 | Open tabs: their addresses and which one is in front | `session.json` | While you browse, shortly after tabs change | Reopened only when Settings > On startup is "Reopen your tabs from last time"; delete the file to forget them |
 | Saved passwords: the site, the user name, and the password encrypted with your system's keychain (Windows' data protection, the macOS Keychain, or the Linux secret service); when each was saved and last used; sites where you chose "Never" | `hypersol.sqlite` | Only when you choose Save or Update after signing in, or Never | The Library's Passwords tab, or Settings > Clear browsing data > Saved passwords |
@@ -163,6 +163,21 @@ only when you click a sign-in field and pick the account, and only on
 the exact site it was saved for. Without a working system keychain,
 nothing is saved, and the offer says why.
 
+Some sites, and some proxies, ask for a user name and password in the
+browser's own dialog rather than on a page (HTTP sign-in). The browser
+then shows a prompt under the top bar of that tab. What you type goes to
+Chromium's own handling of that site's request and nowhere else: the
+browser's own code keeps none of it, and it is never saved or offered
+to the password manager; Chromium remembers it for the session, as any
+browser does. Private tabs are treated the same. The prompt names the site from the request's own
+address, never from what the server says, and shows the server's own
+name for the sign-in (its "realm") as a quotation, cut to 80
+characters; it says so when the connection is not over https, since the
+password could then be read on the way. Only a page in one of your tabs
+can bring up the prompt, and a part of a page from another site (a
+picture, a script's request) cannot. Cancel shows the site's own page
+instead.
+
 HoloML files opened from the computer (Ctrl+O, the menu, or dropping a
 file on the window): the page may read the files of the kinds a HoloML
 page uses (pages, models, pictures, sounds, scripts) in its own folder
@@ -198,7 +213,10 @@ putting text on the clipboard when you click a page's "Copy" button. A
 site that asks for a client certificate (a certificate on your computer
 that says who you are) gets none, in private tabs too. Choosing Block
 for the camera or microphone reloads the site's pages that were given
-them, which ends what they were capturing whatever the page does. Your
+them, which ends what they were capturing whatever the page does. A
+choice made in the site panel names the site the panel was opened for:
+if the tab has moved to another site meanwhile, nothing is changed, and
+the panel says so. Your
 location comes from your operating system's location service; the
 browser adds no location service of its own.
 
