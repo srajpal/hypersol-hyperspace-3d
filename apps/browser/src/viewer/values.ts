@@ -9,7 +9,7 @@
  * the checker takes is read here, and one it reports falls back.
  */
 import type { ElementNode, Problem } from '@hypersol/holoml';
-// The checker's patterns of values. The package's own entry does not pass them on, so they are read from its rules.
+// The checker's patterns of values, so that the viewer reads a value exactly as the checker does.
 import { COUNT_PATTERN, DURATION_PATTERN, INDEFINITE, NUMBER_PATTERN, whole } from '@hypersol/holoml';
 
 export type Vec3 = [number, number, number];
