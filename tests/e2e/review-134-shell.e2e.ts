@@ -10,14 +10,22 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
+  clickUntil,
+  focusedPage,
   focusedTab,
+  inPage,
   launch,
   navigateTo,
+  pressInShell,
   project,
   removeFolder,
+  screenPointOf,
+  settingsTo,
   shellCall,
   sleep,
+  tabs,
   waitFor,
+  waitForPage,
   type Harness,
 } from './harness';
 
@@ -39,6 +47,17 @@ function newProfile(settings: object = {}): string {
   folders.push(dir);
   writeFileSync(join(dir, 'settings.json'), JSON.stringify({ economy: 'off', ...settings }));
   return dir;
+}
+
+const BAR = (id: string) => `hs-toolbar [data-testid="${id}"]`;
+const PROMPT = (id: string) => `hs-prompts [data-testid="${id}"]`;
+const LIB = (id: string) => `hs-library [data-testid="${id}"]`;
+const SET = (id: string) => `hs-settings [data-testid="${id}"]`;
+
+/** Chooses an entry of the top bar's menu. */
+async function menu(h: Harness, item: string): Promise<void> {
+  await h.shell.click(BAR('menu'));
+  await h.shell.click(BAR(`menu-${item}`));
 }
 
 /** Moves the pointer into the room's bottom-left corner and waits for the camera to settle off-centre. */
@@ -80,6 +99,68 @@ describe('R4: a HoloML page that fills the window is flat', () => {
       expect(Math.abs(bl!.y - br!.y)).toBeLessThan(0.01);
       expect(Math.abs(tl!.x - bl!.x)).toBeLessThan(0.01);
       expect(Math.abs(tr!.x - br!.x)).toBeLessThan(0.01);
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('R1: switching panels closes the one that was open', () => {
+  it('a password shown in the Library is hidden again after a visit to Settings', async () => {
+    const h = await launch(server.url('login.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'login');
+      const page = await focusedPage(h);
+      // A sign-in with made-up values, saved.
+      await inPage(h, `document.getElementById('user').value = 'ada'; document.getElementById('pass').value = 'test-pass-1'; true`, page);
+      const signedIn = async () => (await inPage<string>(h, `document.getElementById('state').textContent`, page)) === 'Signed in';
+      await clickUntil(h, await screenPointOf(h, '#go', page), 'the sign-in button', signedIn);
+      await waitFor('an offer to save', async () => (await shellCall(h, 'prompts')).offer, (o) => o !== null);
+      await h.shell.click(PROMPT('pw-save'));
+      // Library > Passwords > Show.
+      await menu(h, 'library');
+      await waitFor('the Library', () => shellCall(h, 'openPanel'), (p) => p === 'library');
+      await h.shell.click(LIB('lib-tab-passwords'));
+      await waitFor('the saved sign-in', () => h.shell.locator(LIB('pw-item')).count(), (n) => n === 1);
+      await h.shell.click(LIB('pw-reveal'));
+      await waitFor('the password shown', () => h.shell.locator(LIB('pw-value')).textContent(), (t) => t === 'test-pass-1');
+      // To Settings and back: the Library opens on Passwords again, with nothing shown.
+      await menu(h, 'settings');
+      await waitFor('Settings', () => shellCall(h, 'openPanel'), (p) => p === 'settings');
+      await menu(h, 'library');
+      await waitFor('the Library again', () => shellCall(h, 'openPanel'), (p) => p === 'library');
+      await waitFor('the saved sign-in again', () => h.shell.locator(LIB('pw-item')).count(), (n) => n === 1);
+      expect(await h.shell.locator(LIB('lib-tab-passwords')).getAttribute('aria-selected')).toBe('true');
+      expect(await h.shell.locator(LIB('pw-value')).count()).toBe(0);
+      expect(await h.shell.locator(LIB('pw-reveal')).textContent()).toBe('Show');
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('a shortcut waiting for its new keys stops waiting: shortcuts work, and the next key is not saved', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      await menu(h, 'shortcuts');
+      await waitFor('Settings', () => shellCall(h, 'openPanel'), (p) => p === 'settings');
+      const findKeys = () => h.shell.locator(`${SET('set-key-row')}[data-name="find"] kbd`).allTextContents();
+      const before = await findKeys();
+      expect(before.length).toBeGreaterThan(0);
+      await h.shell.click(SET('set-key-change-find'));
+      await waitFor('waiting for keys', () => h.shell.locator(SET('set-key-waiting')).count(), (n) => n === 1);
+      // Another panel opens while it waits.
+      await menu(h, 'library');
+      await waitFor('the Library', () => shellCall(h, 'openPanel'), (p) => p === 'library');
+      // A shortcut works again, and its keys did not become the binding.
+      await pressInShell(h, 'T', ['control']);
+      await waitFor('a new tab from Ctrl+T', () => tabs(h), (t) => t.length === 2);
+      await menu(h, 'shortcuts');
+      await waitFor('Settings again', () => shellCall(h, 'openPanel'), (p) => p === 'settings');
+      await settingsTo(h, 'set-key-change-find');
+      expect(await h.shell.locator(SET('set-key-waiting')).count()).toBe(0);
+      expect(await findKeys()).toEqual(before);
+      expect(await h.shell.locator(SET('set-keys-message')).count()).toBe(0);
     } finally {
       await h.close();
     }

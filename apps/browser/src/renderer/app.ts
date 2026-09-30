@@ -151,6 +151,8 @@ export class App {
   private starUrl = '';
   private openPanelName: PanelName | null = null;
   private focusBeforePanel: Element | null = null;
+  /** One panel is closing because another is opening: the focus stays for the new one. */
+  private switchingPanels = false;
 
   constructor(private readonly options: AppOptions) {
     this.theme = options.theme;
@@ -734,9 +736,12 @@ export class App {
       return;
     }
     if (this.openPanelName) {
-      const other = this.openPanelName;
-      this.openPanelName = null; // switching panels: keep the focus to return to
-      this.panel(other).open = false;
+      // Switching panels: the open one closes itself, so what closing does
+      // is done (a shown password is hidden again, a shortcut waiting for
+      // its keys stops waiting); the focus to return to is kept.
+      this.switchingPanels = true;
+      this.panel(this.openPanelName).close();
+      this.switchingPanels = false;
     } else {
       this.focusBeforePanel = document.activeElement;
     }
@@ -753,6 +758,7 @@ export class App {
   /** Focus goes back where it was before the panel opened. */
   private onPanelClosed(): void {
     this.openPanelName = null;
+    if (this.switchingPanels) return;
     const before = this.focusBeforePanel;
     this.focusBeforePanel = null;
     if (before === this.options.toolbar) this.options.toolbar.focusAddress();
