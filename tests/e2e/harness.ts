@@ -1,10 +1,13 @@
+import { mkdtempSync, writeFileSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { ChildProcess } from 'node:child_process';
+import { execFileSync, type ChildProcess } from 'node:child_process';
 import { _electron as electron, type ElectronApplication, type Page } from 'playwright';
+import { afterAll, afterEach } from 'vitest';
+import type { TestLog } from '../../apps/browser/src/main/test-hooks';
 
 // No trailing separator: on Windows a backslash before the closing quote
 // of a command-line argument escapes the quote and garbles every argument after it.
@@ -121,6 +124,52 @@ function cleanEnv(keepRunning = false): Record<string, string> {
   return env;
 }
 
+/**
+ * The apps launched here and not yet closed. Once every one of them has
+ * gone, a wait whose question is refused stops at once: a dead app
+ * refuses every question, and asking it for the full time only hides
+ * what happened.
+ */
+const launched = new Set<ChildProcess>();
+
+/** How a process ended, or null while it runs. */
+function ended(proc: ChildProcess): string | null {
+  if (proc.exitCode !== null) return `exit code ${proc.exitCode}`;
+  if (proc.signalCode !== null) return `signal ${proc.signalCode}`;
+  return null;
+}
+
+/** How the app ended, once every app launched here has; null while one runs, or before any was launched. */
+function appGone(): string | null {
+  if (launched.size === 0) return null;
+  const ends = [...launched].map(ended);
+  return ends.every((e) => e !== null) ? ends.join(', ') : null;
+}
+
+/** Thrown by a wait when the app's process has ended: nothing more can come of waiting. */
+export class AppGone extends Error {}
+
+/**
+ * Closes an app however it is: asked first, and ended if it has not gone
+ * within ten seconds. On Windows the process started is a command shell
+ * with the app under it (Playwright starts Electron through one there),
+ * and ending that alone would leave the app running: the whole tree goes.
+ */
+async function closeApp(app: ElectronApplication, proc: ChildProcess): Promise<void> {
+  if (ended(proc) !== null) return;
+  await Promise.race([app.close(), sleep(10_000)]).catch(() => undefined);
+  if (ended(proc) !== null) return;
+  if (process.platform === 'win32' && proc.pid !== undefined) {
+    try {
+      execFileSync('taskkill', ['/pid', String(proc.pid), '/T', '/F'], { stdio: 'ignore' });
+    } catch {
+      // Gone in the meantime.
+    }
+  } else {
+    proc.kill('SIGKILL');
+  }
+}
+
 /** Launches the built app with a throwaway profile and test hooks on. An empty start address opens a start tab. */
 export async function launch(startUrl: string, opts: LaunchOptions = {}): Promise<Harness> {
   const keepProfile = opts.userDataDir !== undefined;
@@ -155,60 +204,79 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
       env: cleanEnv(opts.keepRunning),
       timeout: 30_000,
     })
-    .catch(loud);
-  const errors: string[] = [];
-  const output: string[] = [];
-  const proc = app.process();
-  proc.stderr?.on('data', (d: Buffer) => output.push(d.toString()));
-  app.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(`main: ${msg.text()}`);
-  });
-  const shell = await app
-    .firstWindow({ timeout: 30_000 })
-    .catch((e: unknown) => loud(new Error(`No window appeared: ${String(e)}\nApp output:\n${output.join('')}`)));
-  shell.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(`shell: ${msg.text()}`);
-  });
-  shell.on('pageerror', (err) => errors.push(`shell: ${err.message}`));
-  await shell
-    .waitForFunction(() => (window as unknown as ShellWindow).__hypersolShellTest?.ready === true)
-    .catch((e: unknown) => loud(new Error(`The shell never became ready: ${String(e)}\nApp output:\n${output.join('')}`)));
-  // The real mouse must not take part: a cursor resting over the test
-  // window sends its own pointer events, which move the parallax and the
-  // card hover (found 2026-09-25 as the cause of occasional C3 and D4
-  // failures). Test input comes in through Chromium and is unaffected.
-  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setIgnoreMouseEvents(true));
-  // The window must be showing before input is sent. In the background it
-  // never takes focus (test input does not need it); when shown for
-  // watching, wait for it to come to the front as a person's would.
-  await waitFor(
-    'the app window to show',
-    () => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isVisible() ?? false),
-    (v) => v,
-    10_000,
-  );
-  if (SHOW_WINDOWS) {
-    const focused = () => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isFocused() ?? false);
-    try {
-      await waitFor('the app window to have focus', focused, (f) => f, 3000);
-    } catch {
-      await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.focus());
-      await waitFor('the app window to have focus', focused, (f) => f, 7000);
-    }
-  }
-  return {
-    app,
-    proc,
-    shell,
-    errors,
-    close: async () => {
-      // The app may already have quit on its own (quit checks).
-      if (proc.exitCode === null && proc.signalCode === null) await app.close();
-      // Electron can hold a file for a moment after closing; a leftover
-      // temporary folder is harmless, so cleanup does not fail the run.
+    .catch(async (e: unknown) => {
       if (!keepProfile) await removeFolder(userDataDir);
-    },
-  };
+      return loud(e);
+    });
+  const proc = app.process();
+  launched.add(proc);
+  // From here on the app is running. If a later step of launching fails,
+  // the app is closed before the failure is passed on, so none is left
+  // behind to run (and draw) for the rest of the job.
+  try {
+    const errors: string[] = [];
+    const output: string[] = [];
+    proc.stderr?.on('data', (d: Buffer) => output.push(d.toString()));
+    app.on('console', (msg) => {
+      if (msg.type() === 'error') errors.push(`main: ${msg.text()}`);
+    });
+    const shell = await app
+      .firstWindow({ timeout: 30_000 })
+      .catch((e: unknown) => loud(new Error(`No window appeared: ${String(e)}\nApp output:\n${output.join('')}`)));
+    shell.on('console', (msg) => {
+      if (msg.type() === 'error') errors.push(`shell: ${msg.text()}`);
+    });
+    shell.on('pageerror', (err) => errors.push(`shell: ${err.message}`));
+    await shell
+      .waitForFunction(() => (window as unknown as ShellWindow).__hypersolShellTest?.ready === true)
+      .catch((e: unknown) => loud(new Error(`The shell never became ready: ${String(e)}\nApp output:\n${output.join('')}`)));
+    // The real mouse must not take part: a cursor resting over the test
+    // window sends its own pointer events, which move the parallax and the
+    // card hover (found 2026-09-25 as the cause of occasional C3 and D4
+    // failures). Test input comes in through Chromium and is unaffected.
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setIgnoreMouseEvents(true));
+    // The window must be showing before input is sent. In the background it
+    // never takes focus (test input does not need it); when shown for
+    // watching, wait for it to come to the front as a person's would.
+    await waitFor(
+      'the app window to show',
+      () => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isVisible() ?? false),
+      (v) => v,
+      10_000,
+    );
+    if (SHOW_WINDOWS) {
+      const focused = () => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isFocused() ?? false);
+      try {
+        await waitFor('the app window to have focus', focused, (f) => f, 3000);
+      } catch (e) {
+        if (e instanceof AppGone) throw e;
+        await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.focus());
+        await waitFor('the app window to have focus', focused, (f) => f, 7000);
+      }
+    }
+    return {
+      app,
+      proc,
+      shell,
+      errors,
+      close: async () => {
+        try {
+          // The app may already have quit on its own (quit checks).
+          if (ended(proc) === null) await app.close();
+        } finally {
+          launched.delete(proc);
+        }
+        // Electron can hold a file for a moment after closing; a leftover
+        // temporary folder is harmless, so cleanup does not fail the run.
+        if (!keepProfile) await removeFolder(userDataDir);
+      },
+    };
+  } catch (e) {
+    await closeApp(app, proc);
+    launched.delete(proc);
+    if (!keepProfile) await removeFolder(userDataDir);
+    throw e;
+  }
 }
 
 /** Waits for the app's process to end; returns how long that took, in ms. */
@@ -231,7 +299,54 @@ export async function removeFolder(dir: string): Promise<void> {
   await rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }).catch(() => undefined);
 }
 
-/** The read-only hooks the shell exposes in test runs (renderer/main.ts). */
+/** Temporary folders made for a file's checks, deleted when the file is done. */
+const folders: string[] = [];
+
+/**
+ * A new temporary folder whose name starts with `prefix`, deleted when
+ * the file's checks are done. Settings, if given, are saved in it as the
+ * app's settings file, for a folder used as a profile.
+ */
+export function newFolder(prefix: string, settings?: object): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  folders.push(dir);
+  if (settings) writeFileSync(join(dir, 'settings.json'), JSON.stringify(settings));
+  return dir;
+}
+
+/**
+ * A new profile folder for checks that restart the app, read its saved
+ * files, or start from settings of their own (launch's userDataDir);
+ * deleted when the file's checks are done.
+ */
+export function newProfile(settings?: object): string {
+  return newFolder('hypersol-e2e-profile-', settings);
+}
+
+// Runs after the file's own afterAll hooks (the last registered runs
+// first, and this module is loaded before the file's own code), so the
+// apps that used the folders have closed.
+afterAll(async () => {
+  for (const dir of folders.splice(0)) await removeFolder(dir);
+});
+
+/** The parts of the main process's test log that can be read as they are (the others hold functions). */
+type LogList = 'attaches' | 'requests' | 'blockedPopups' | 'dataOps' | 'dnsApplied' | 'opened';
+
+/**
+ * Reads a part of the log the main process keeps in test runs
+ * (apps/browser/src/main/test-hooks.ts, whose types also describe
+ * globalThis.__hypersolTest for the checks that read it themselves).
+ */
+export function mainLog<K extends LogList>(h: Harness, part: K): Promise<TestLog[K]> {
+  return h.app.evaluate((_electron, k) => globalThis.__hypersolTest![k], part) as Promise<TestLog[K]>;
+}
+
+/**
+ * The read-only hooks the shell exposes in test runs (renderer/main.ts).
+ * Written out here: the shell builds them as one object and exports no
+ * type for it.
+ */
 export interface ShellHooks {
   ready: boolean;
   openPanel(): 'library' | 'settings' | 'downloads' | null;
@@ -360,6 +475,60 @@ export async function focusedPage(h: Harness): Promise<{ id: number }> {
   return { id };
 }
 
+/** A value for a message: as JSON, cut to a line or two. */
+function shown(value: unknown): string {
+  let text: string | undefined;
+  try {
+    text = JSON.stringify(value);
+  } catch {
+    text = String(value);
+  }
+  text ??= String(value);
+  return text.length > 600 ? `${text.slice(0, 600)}… (${text.length} characters)` : text;
+}
+
+/**
+ * What the harness did last, for the message of a check that fails: a
+ * check stopped at its time limit says only that, and a loop of key
+ * presses or clicks leaves no other word of where it was. Each step has
+ * when it began (on this process's clock), and how it ended.
+ */
+interface Step {
+  at: number;
+  what: string;
+  /** How it ended; while it is still going on, null. */
+  end: string | null;
+}
+const steps: Step[] = [];
+const STEPS_KEPT = 14;
+
+/** Notes a step of the harness; the returned function notes how it ended. */
+function step(what: string): (end: string) => void {
+  const s: Step = { at: Date.now(), what, end: null };
+  steps.push(s);
+  if (steps.length > STEPS_KEPT) steps.shift();
+  return (end) => {
+    s.end = `${end} after ${Date.now() - s.at} ms`;
+  };
+}
+
+// A check that failed says what the harness was doing when it ended; a
+// step still going on then is what a check stopped at its time limit was
+// waiting for. Each check starts with an empty list.
+afterEach(({ task }) => {
+  if (task.result?.state === 'fail' && steps.length > 0) {
+    const now = Date.now();
+    const line = (s: Step) => `  ${((s.at - now) / 1000).toFixed(1)} s: ${s.what}: ${s.end ?? 'STILL GOING ON when the check ended'}`;
+    const open = steps.filter((s) => s.end === null);
+    console.warn(
+      `[harness] "${task.name}" failed. The harness's last steps (times from the check's end)${
+        open.length > 0 ? `, ${open.length} still going on` : ''
+      }:\n${steps.map(line).join('\n')}`,
+    );
+  }
+  steps.length = 0;
+});
+
 export async function waitFor<T>(
   what: string,
   probe: () => Promise<T>,
@@ -367,19 +536,39 @@ export async function waitFor<T>(
   timeoutMs = 15_000,
 ): Promise<T> {
   const start = Date.now();
+  const done = step(`waiting for ${what}`);
   let last: T | undefined;
   let lastError: unknown;
+  let asked = 0;
   while (Date.now() - start < timeoutMs) {
+    asked++;
     try {
       last = await probe();
-      if (ok(last)) return last;
+      if (ok(last)) {
+        done('came');
+        return last;
+      }
     } catch (e) {
+      if (e instanceof AppGone) {
+        done('the app had gone');
+        throw e;
+      }
       lastError = e;
+      // The question was refused and the app's process has ended: no
+      // answer will come, so stop now and say so.
+      const gone = appGone();
+      if (gone) {
+        done('the app had gone');
+        throw new AppGone(
+          `The app's process has ended (${gone}): no answer will come (waiting for ${what}, ${Date.now() - start} ms in; last value ${shown(last)}; last error: ${String(e)})`,
+        );
+      }
     }
     await new Promise((r) => setTimeout(r, 50));
   }
+  done(`timed out, last value ${shown(last)}`);
   throw new Error(
-    `Timed out waiting for ${what}. Last value: ${JSON.stringify(last)}${
+    `Timed out after ${Date.now() - start} ms (asked ${asked} times) waiting for ${what}. Last value: ${JSON.stringify(last)}${
       lastError ? `; last error: ${String(lastError)}` : ''
     }`,
   );
@@ -504,7 +693,7 @@ export async function holdKeyUntil<T>(h: Harness, page: string, keyCode: string,
     );
   await send('keyDown');
   try {
-    return (await waitFor(what, read, done, await sceneWait(h, timeoutMs)))!;
+    return (await waitFor(`${what} (holding ${keyCode} down in ${page})`, read, done, await sceneWait(h, timeoutMs)))!;
   } finally {
     await send('keyUp');
   }
@@ -559,6 +748,53 @@ export function settled(h: Harness): Promise<boolean> {
   return waitFor('switch animation to finish', () => shellCall(h, 'animating'), (a) => !a);
 }
 
+/**
+ * Waits until the room is still, and returns its frame count: no switch
+ * animation, and the count held for 300 ms. The room draws only while
+ * something changes (a page flying to its card, a spinner on a loading
+ * card, a card's new picture, the camera following the pointer), and how
+ * long that takes depends on the machine. Checks that an idle room draws
+ * nothing start from here, as a HoloML scene's start from sceneStill;
+ * their own measuring time follows, and a room that kept drawing would
+ * never get this far.
+ */
+export async function roomStill(h: Harness, timeoutMs = 15_000): Promise<number> {
+  let last = -1;
+  return waitFor(
+    'the room still (no switch animation, no frames drawn for 300 ms)',
+    async () => {
+      const [animating, frames] = [await shellCall(h, 'animating'), await shellCall(h, 'frames')];
+      const still = !animating && frames === last;
+      last = frames;
+      await sleep(300);
+      return still ? frames : -1;
+    },
+    (n) => n >= 0,
+    timeoutMs,
+  );
+}
+
+/**
+ * Waits until the app has dealt with everything a page had sent it up to
+ * now, and the shell and the page have what the app sent them because of
+ * it. For checks that something does NOT happen: a sleep proves nothing
+ * on a slow machine, where the thing may simply not have happened yet.
+ *
+ * Messages between a page and the app, and between the app and the
+ * shell, keep their order. So: the page's own waiting timers run (the
+ * list of saved sign-ins is asked for on a timer set by the click), and
+ * the page answers the app, after whatever it had sent before; then the
+ * shell answers the app, after whatever the app had sent it before; then
+ * the page answers once more, after the app's replies to it.
+ */
+export async function caughtUp(h: Harness, page: PageRef): Promise<void> {
+  const done = step(`the app catching up with page ${JSON.stringify(page)}`);
+  await inPage(h, 'new Promise((r) => setTimeout(() => r(true), 0))', page);
+  await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.executeJavaScript('true'));
+  await inPage(h, 'true', page);
+  done('caught up');
+}
+
 export function project(h: Harness, u: number, v: number): Promise<Point> {
   return shellCall(h, 'projectPagePoint', u, v);
 }
@@ -588,9 +824,11 @@ export async function screenPointOf(h: Harness, selector: string, page: PageRef 
  * that has already arrived is routed correctly.
  */
 export async function clickAt(h: Harness, p: Point, options: { button?: 'left' | 'right' } = {}): Promise<void> {
+  const done = step(`a ${options.button === 'right' ? 'right-' : ''}click at ${Math.round(p.x)},${Math.round(p.y)}`);
   await h.shell.mouse.move(p.x, p.y);
   await h.shell.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(true)))));
   await h.shell.mouse.click(p.x, p.y, options);
+  done('sent');
 }
 
 /**
@@ -643,11 +881,13 @@ export async function clickUntil(
   for (let attempt = 1; ; attempt++) {
     await clickAt(h, p, options);
     try {
-      await waitFor(what, done, (v) => v, attempt < 3 ? 4000 : 15_000);
+      await waitFor(`${what} (click ${attempt} of 3 at ${Math.round(p.x)},${Math.round(p.y)})`, done, (v) => v, attempt < 3 ? 4000 : 15_000);
       return;
     } catch (e) {
+      if (e instanceof AppGone) throw e;
       if (attempt >= 3) throw explain ? new Error(`${String(e)}
 ${await explain().catch((x: unknown) => `(no details: ${String(x)})`)}`) : e;
+      await retried(h, 'clicks');
       console.warn(`[harness] ${what}: the click did not reach the page; clicking again (attempt ${attempt + 1})`);
     }
   }
@@ -665,15 +905,39 @@ export async function moveUntil(h: Harness, p: Point, what: string, done: () => 
   for (let attempt = 1; ; attempt++) {
     await h.shell.mouse.move(p.x, p.y, { steps: 5 });
     try {
-      await waitFor(what, done, (v) => v, attempt < 3 ? 4000 : 15_000);
+      await waitFor(`${what} (pointer move ${attempt} of 3 to ${Math.round(p.x)},${Math.round(p.y)})`, done, (v) => v, attempt < 3 ? 4000 : 15_000);
       return;
     } catch (e) {
-      if (attempt >= 3) throw e;
+      if (e instanceof AppGone || attempt >= 3) throw e;
+      await retried(h, 'pointer moves');
       console.warn(`[harness] ${what}: the pointer's move did not reach the page; moving again (attempt ${attempt + 1})`);
       await h.shell.mouse.move(p.x + 1, p.y + 1);
     }
   }
 }
+
+/**
+ * Input the harness sent again because the first had no effect (GitHub
+ * issue #30, not yet explained), counted by kind. Each is logged where it
+ * happens; one line at the end of each file gives the count, so a run's
+ * log shows how often it happens, in which file, and on which system.
+ */
+const retries = new Map<string, number>();
+/** What the app drew with when input was first sent again: the software renderer's name, or a graphics card. */
+let retriedWith: string | null = null;
+
+async function retried(h: Harness, kind: 'clicks' | 'pointer moves' | 'presses after a resize'): Promise<void> {
+  retries.set(kind, (retries.get(kind) ?? 0) + 1);
+  retriedWith ??= await softwareRenderer(h).then((name) => (name ? `drawing in software (${name})` : 'drawing with a graphics card'), () => null);
+}
+
+afterAll(({}, suite) => {
+  const total = [...retries.values()].reduce((a, b) => a + b, 0);
+  const kinds = [...retries.entries()].map(([kind, n]) => `${kind} ${n}`).join(', ');
+  console.log(
+    `[harness] ${suite.name}: ${total} input retries${total > 0 ? ` (${kinds})` : ''} on ${process.platform}${retriedWith ? `, ${retriedWith}` : ''}`,
+  );
+});
 
 /**
  * The WebGL renderer's name when Chromium draws in software (no graphics
@@ -742,10 +1006,15 @@ export async function setContentSize(h: Harness, width: number, height: number):
   if (!spot) return; // no empty spot on this page: nothing safe to press
   await inPage(h, `window.__hsInputProbe = 0; window.__hsProbeFn = () => { window.__hsInputProbe += 1; }; addEventListener('pointerdown', window.__hsProbeFn, true)`, page);
   const at = await project(h, spot[0], spot[1]);
+  let presses = 0;
   await waitFor(
     'a press to reach the resized page',
     async () => {
       if ((await inPage<number>(h, 'window.__hsInputProbe', page)) > 0) return true;
+      if (presses++ > 0) {
+        await retried(h, 'presses after a resize');
+        console.warn(`[harness] a press had not reached the resized page after 300 ms; pressing again (attempt ${presses})`);
+      }
       await clickAt(h, at);
       await sleep(300);
       return (await inPage<number>(h, 'window.__hsInputProbe', page)) > 0;
@@ -766,6 +1035,7 @@ export async function setContentSize(h: Harness, width: number, height: number):
  * through the window's real routing and hit-testing.
  */
 export async function typeInPage(h: Harness, text: string, page: PageRef = ''): Promise<void> {
+  const done = step(`typing ${text.length} characters into page ${JSON.stringify(page)}`);
   await h.app.evaluate(
     ({ webContents }, { text, page }) => {
       const guests = webContents
@@ -786,6 +1056,7 @@ export async function typeInPage(h: Harness, text: string, page: PageRef = ''): 
     },
     { text, page },
   );
+  done('sent');
 }
 
 /** Presses a key, with modifiers, inside a web page (see typeInPage). */
@@ -796,6 +1067,7 @@ export async function pressInPage(
   page?: PageRef,
 ): Promise<void> {
   const target = page ?? (await focusedPage(h));
+  const done = step(`pressing ${[...modifiers, keyCode].join('+')} in page ${JSON.stringify(target)}`);
   await h.app.evaluate(
     ({ webContents }, { keyCode, modifiers, target }) => {
       const guest = webContents
@@ -812,6 +1084,7 @@ export async function pressInPage(
     },
     { keyCode, modifiers, target },
   );
+  done('sent');
 }
 
 /**
@@ -824,6 +1097,7 @@ export async function pressInShell(
   keyCode: string,
   modifiers: ('control' | 'shift' | 'alt' | 'meta')[] = [],
 ): Promise<void> {
+  const done = step(`pressing ${[...modifiers, keyCode].join('+')} in the shell`);
   await h.app.evaluate(
     ({ BrowserWindow }, { keyCode, modifiers }) => {
       const wc = BrowserWindow.getAllWindows()[0]!.webContents;
@@ -832,6 +1106,7 @@ export async function pressInShell(
     },
     { keyCode, modifiers },
   );
+  done('sent');
 }
 
 // ---- Top bar, tabs, and cards -------------------------------------------
@@ -873,11 +1148,16 @@ export async function focusedTab(h: Harness): Promise<TabInfo> {
  * slow machine (found on GitHub's Linux machines, milestone 12).
  */
 export async function cycleToTab(h: Harness, id: number): Promise<void> {
-  for (let step = 0; (await focusedTab(h)).id !== id; step++) {
-    if (step > (await tabs(h)).length) throw new Error(`Ctrl+Tab never reached tab ${id}`);
+  for (let pressed = 0; (await focusedTab(h)).id !== id; pressed++) {
+    const all = await tabs(h);
+    if (pressed > all.length) {
+      throw new Error(
+        `Ctrl+Tab never reached tab ${id} in ${pressed} presses. Tabs: ${all.map((t) => `${t.id}${t.focused ? ' (in front)' : ''}`).join(', ')}`,
+      );
+    }
     const before = (await focusedTab(h)).id;
     await pressInShell(h, 'Tab', ['control']);
-    await waitFor('the next tab in front', async () => (await focusedTab(h)).id, (f) => f !== before);
+    await waitFor(`the tab after ${before} in front (Ctrl+Tab ${pressed + 1}, on the way to tab ${id})`, async () => (await focusedTab(h)).id, (f) => f !== before);
   }
 }
 

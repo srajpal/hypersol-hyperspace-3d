@@ -80,7 +80,7 @@ export interface FixtureServer {
   openNow: Map<string, number>;
   /** Body bytes written, by path and query (streaming favicon routes). */
   sent: Map<string, number>;
-  /** Lets requests held at a gate (…?gate=NAME) through, now and from then on. */
+  /** Lets requests held at a gate (…?gate=NAME; the slow download's is "slow.bin") through, now and from then on. */
   release(gate: string): void;
 }
 
@@ -153,7 +153,8 @@ function page(title: string, body: string): string {
  *   /dns-portal                a captive portal's web page where the resolver should be
  *   /ddm/...                   an "ad landing" page, served for the ad host mapped to this machine
  *   /download/sample.txt       a small file sent as an attachment (a download)
- *   /download/slow.bin         2 MB sent slowly as an attachment (to cancel)
+ *   /download/slow.bin         a 2 MB attachment that stays unfinished (to cancel): the first 64 KB are sent,
+ *                              the rest only when the check calls release('slow.bin') (or, with gate=NAME, release(NAME))
  *   /download/broken.bin       an attachment whose connection breaks part way (a failed download)
  *   /holoml/by-type            holoml/still.holoml, known only by its media type (no .holoml in the address)
  *   /holoml/as-text.holoml     holoml/second.holoml sent as text/plain, known only by its address
@@ -448,18 +449,21 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
       'content-length': String(total),
       'cache-control': 'no-store',
     });
-    let sent = 0;
-    const piece = Buffer.alloc(16 * 1024);
-    const timer = setInterval(() => {
-      if (res.destroyed || sent >= total) {
-        clearInterval(timer);
-        if (!res.destroyed) res.end();
-        return;
-      }
-      sent += piece.length;
-      res.write(piece);
-    }, 100);
-    res.on('close', () => clearInterval(timer));
+    // The first pieces, then nothing until the check lets the rest go or
+    // the client gives up. Sent against the clock (16 KB every 100 ms,
+    // until 2026-09-30) the file finished by itself after 12.8 s, and a
+    // check that needed it still running lost the race on a slow machine
+    // (issue #10's check, on GitHub's Windows machines).
+    const first = 64 * 1024;
+    res.write(Buffer.alloc(first));
+    const name = url.searchParams.get('gate') ?? 'slow.bin';
+    const gate = c.gates.get(name) ?? { open: false, waiting: [] };
+    c.gates.set(name, gate);
+    const rest = () => {
+      if (!res.destroyed) res.end(Buffer.alloc(total - first));
+    };
+    if (gate.open) rest();
+    else gate.waiting.push(rest);
     return;
   }
   if (path === '/download/broken.bin') {
