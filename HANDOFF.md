@@ -3,8 +3,9 @@
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-09-29 (milestones 1 to 21 accepted, 21 in prompt
 125, and HoloML 0.2 released as v0.2.0 in prompt 126: see "Milestone 21,
-accepted" below. 22 is HoloML's documentation (prompt 115), not yet
-planned. The roadmap is in TODO.md).
+accepted" below. 22 is HoloML's documentation (prompt 115): its plan
+is drafted for the owner's approval, with a check of HoloML's features
+(prompt 127; TODO.md, "Milestone 22"). The roadmap is in TODO.md).
 
 ## Where things stand
 

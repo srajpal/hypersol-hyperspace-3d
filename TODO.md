@@ -33,7 +33,7 @@ Plan approved 2026-09-24.
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Done (accepted, prompt 122) |
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Done (accepted, prompt 122) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Done (accepted, prompt 125; HoloML v0.2.0 released, prompt 126) |
-| 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Later (prompt 115) |
+| 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Planned, a draft for approval (prompt 127) |
 | 23 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85, and from 22, prompt 115) |
 | 24 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
 | 25 | macOS release | Signing, notarization, Mac checks | Later |
@@ -4025,6 +4025,204 @@ milestone ends (milestone 17's plan, Q5 a).
 
 - X1 to X12 pass, screenshots are saved, and the owner accepts; then
   HoloML 0.2 is tagged (Q6).
+
+## Milestone 22 — HoloML documentation
+
+Status: Planned, a draft for the owner's approval (prompt 127). The
+owner asked for this plan, and for HoloML's features to be checked while
+the documents are made, with a plan for anything missing; that check is
+done for this draft (below). Nothing is built until the owner approves
+the plan and answers its questions. Rule 13 check at the start.
+
+Goal: HoloML documented to recognised standards (prompt 115): a
+specification written as W3C specifications are, with a formal grammar
+and the scene API in the standard notation, and guides organised as
+tutorials, how-to guides, reference, and explanation, published with
+GitHub Pages at https://srajpal.github.io/holoml/ (where there is no
+page today). With them, the features checked against the documents, and
+what is missing planned (prompt 127).
+
+### How it would work (proposed)
+
+- **The specification.** holoml's SPEC.md stays the source, reviewed in
+  pull requests; a build turns it into the published page. It follows
+  W3C practice, though HoloML does not go through W3C's process:
+  - An abstract, the status of the document (0.1 and 0.2 final; how to
+    comment: GitHub issues), and a table of contents.
+  - Conformance: the requirement words of BCP 14 (RFC 2119 and RFC
+    8174: MUST, SHOULD, and MAY, in capitals, only where they are
+    requirements), the classes that conform (documents, checkers, and
+    renderers, each with what it must do), and which parts are
+    normative (examples and notes are not).
+  - Terminology, and the processing model in one place: reading a page,
+    checking it, building the scene, loading, and drawing.
+  - A formal grammar (Q2): the text syntax in ABNF (RFC 5234), and the
+    structure (which element may hold which, and each attribute's
+    values) as a RELAX NG schema made from the checker's own table, so
+    that the two cannot drift apart.
+  - The scene API in Web IDL (the notation W3C and WHATWG
+    specifications use for web APIs), beside its tables.
+  - Considerations, as W3C's reviews ask: security (from today's
+    "Safety"), privacy (after W3C's security and privacy
+    questionnaire), accessibility, and internationalization.
+  - IANA considerations: the media type `model/vnd.holoml` in RFC
+    6838's registration template (Q5).
+  - References (normative: glTF 2.0, the URL standard, Web IDL, BCP 14,
+    and Unicode; informative), an index of every element and attribute,
+    the changes between versions, and acknowledgements.
+  - The clarifications the feature check calls for (below), marked as
+    such; what a page means does not change (Q6).
+- **The guides**, organised by Diátaxis (a documentation framework that
+  keeps four kinds of writing apart):
+  - Tutorials: "Your first HoloML page" (a model, a place to stand,
+    light, a label, and a link, opened in HyperSpace 3D), and "Your
+    first script".
+  - How-to guides, one task each, drawn from the example sites: models
+    and materials; walking, walls, and gravity; lights, shadows,
+    textures, surroundings, and sky; sound, and sounds from a place;
+    text in the scene and on the screen; sliders and choices; doors and
+    lamps; places and a floor plan; big sites (loading by area,
+    stand-ins); water; preparing glTF models (size and triangles, as
+    the aquarium taught); and publishing a site (a web server, the
+    media type, GitHub Pages).
+  - Reference: the specification; a page for each element (made from
+    the checker's table and the specification); the scene API; the
+    syntax error and problem codes; and HyperSpace 3D's limits, as one
+    renderer's.
+  - Explanation: why HoloML; how a renderer shows a page; the safety
+    model; accessibility in 3D; and versions and what comes next.
+  - Every HoloML example in them is checked by holoml's tests.
+- **The site** (Q3, Q7): a home page at https://srajpal.github.io/holoml/
+  (what HoloML is, the example sites with their pictures, the
+  specification, and the guides), the specification at /spec/, and the
+  guides under /docs/; the example sites stay at their addresses. Plain
+  pages, light and dark, usable with the keyboard and screen readers
+  (WCAG 2.2 AA), fetching nothing from other sites; built by holoml's
+  Pages workflow.
+- **The browser**: the examples section's link to the specification
+  goes to the published specification instead of SPEC.md on GitHub.
+
+### What the feature check found (prompt 127)
+
+Done for this draft on 2026-09-29, and repeated at the end over the
+finished documents.
+
+- What matches: every element and attribute in the checker's table is
+  used by HyperSpace 3D's viewer, except `meta` (the browser shows
+  neither a page's description nor its author); every member in the
+  scene API's tables is in the viewer's API; and every element and
+  attribute has a valid conformance sample (a test already checks it).
+- Missing from the specification, to be clarified in this milestone
+  (no new features):
+  - Which glTF 2.0 extensions a renderer reads. Files that need decoding
+    (Draco or meshopt geometry, KTX2 pictures), common on the web, do
+    not load in HyperSpace 3D, and nothing says whether they should.
+  - What a renderer owes screen readers and the keyboard, now written
+    element by element; the accessibility section gathers it.
+  - The sections a standard has and HoloML's does not: conformance
+    classes, terminology, security, privacy, accessibility, and
+    internationalization considerations, references, and an index.
+- Missing features (Q4):
+  1. Names for models and groups. Screen readers and the text view hear
+     a model's id or file name ("shark-1", "boulder.glb"); sounds, click
+     actions, choices, places, and plans have a `label`, and models and
+     groups do not.
+  2. The language and direction of text: there is no `lang` or `dir`,
+     so a page in another language, or with right-to-left text, cannot
+     say so.
+  3. Compressed models (Draco, meshopt, KTX2) in HyperSpace 3D: three.js,
+     already used, has the decoders.
+  4. Level of detail: a lighter model shown far away (the aquarium had
+     to thin its models by hand).
+  5. The scene API: scripts cannot start or stop an `animate`, go to a
+     place or know which one the viewer is at, or change the water.
+  6. A page's description (`meta`): HyperSpace 3D could show it, for
+     example on the examples section's cards or in a tab's tooltip.
+  7. Already listed for later versions: movement along paths, physics,
+     named colours, styles shared between elements, and spaces shared by
+     several people.
+
+### Questions (with recommendations)
+
+- Q1, the specification's form. a: W3C style, as above (recommended:
+  the conventions of web standards, which HoloML's readers know). b:
+  IETF style: an Internet-Draft in RFC format, as plain text. c: today's
+  plain Markdown, with only the missing sections added.
+- Q2, the formal grammar. a: ABNF for the syntax, and RELAX NG (its
+  compact form) for the structure, made from the checker's table
+  (recommended: each is a standard, and the table keeps them true). b:
+  XML Schema for the structure (HoloML is not XML, as an attribute may
+  be written alone, so it would describe only the tree). c: JSON Schema
+  for the tree a reader produces (what the conformance samples hold).
+- Q3, making the pages. a: a build script in holoml with one new
+  development package, `marked` (a Markdown reader, MIT licence, with
+  no dependencies of its own; recommended). b: the same script with a
+  Markdown reader written in the repository (no package, more to keep
+  up). c: GitHub Pages' own Jekyll (Ruby, run on GitHub's side; the
+  pages could not be built on this computer without installing it).
+- Q4, the missing features. a: a new milestone after this one, "HoloML
+  0.3", with features 1 to 6 and their checks, its plan drafted when
+  this milestone ends, and the later milestones one number on
+  (recommended: this milestone documents 0.2 as released, and new
+  features need their own checks). b: add them to this milestone. c:
+  list them in the roadmap only, for later.
+- Q5, the media type. a: its registration template in the
+  specification; registering it with IANA waits (recommended: a
+  registration is public and lasting, and the owner's to make). b: also
+  send the registration to IANA (a form on iana.org, in the owner's
+  name).
+- Q6, the clarifications. a: in 0.2's text, marked as clarifications
+  with a note of the changes, and holoml tagged v0.2.1 when the
+  milestone ends, on the owner's go (recommended: nothing a page means
+  changes). b: leave 0.2's text as released, and put them into 0.3.
+- Q7, where the documents live. a: in the holoml repository, published
+  at https://srajpal.github.io/holoml/ (recommended). b: a repository of
+  their own.
+
+### Tasks
+
+- [ ] 1. The specification in W3C style (Q1): the sections above, BCP
+      14, conformance classes, the considerations, IANA (Q5),
+      references, the index, the changes, and the clarifications (Q6);
+      holoml's tests keep it true.
+- [ ] 2. The formal grammar (Q2): ABNF, and the RELAX NG schema made from
+      the checker's table, with tests.
+- [ ] 3. The scene API in Web IDL, with tests that it, the tables, and
+      HyperSpace 3D's API list the same members.
+- [ ] 4. The guides (Diátaxis): tutorials, how-to guides, reference, and
+      explanation, every example checked by the tests.
+- [ ] 5. The site (Q3, Q7): the home page, the specification, the guides,
+      and the example sites; accessible, light and dark, and nothing
+      fetched from other sites; published by holoml's Pages workflow.
+- [ ] 6. The browser: the examples section's link to the published
+      specification, and T8.
+- [ ] 7. The feature check repeated over the finished documents, and what
+      is missing planned (Q4) in the roadmap.
+- [ ] 8. Checks Y1 to Y10, run on Windows, with `pnpm test:linux`, and in
+      the automatic builds.
+- [ ] 9. Documents: both READMEs, ARCHITECTURE, CHANGELOG, HANDOFF, and
+      AGENTS.md's testing list; screenshots, with the documentation in
+      the browser; holoml tagged v0.2.1 on the owner's go (Q6).
+
+### Checks (named Y; milestone 21 used X)
+
+| # | Check | Expected result |
+|---|---|---|
+| Y1 | The specification's form | An abstract, a status, conformance with BCP 14 and its classes, terminology, the processing model, the four considerations, IANA considerations, references, an index, and the changes; holoml's tests: the requirement words are in capitals and only in normative text, and the index lists every element, attribute, error code, and problem code |
+| Y2 | The grammar | The ABNF covers every construct the parser reads, and names the rule each syntax error code breaks; the RELAX NG schema is the one made from the checker's table (a test makes it again and compares) |
+| Y3 | The scene API | Its Web IDL and its tables list the same members, and HyperSpace 3D's API has every one (a test in each repository) |
+| Y4 | The guides | All four kinds are there; every HoloML example in them passes the checker; every link within the site answers |
+| Y5 | The site | https://srajpal.github.io/holoml/ answers with the home page, /spec/ with the specification, and the guides and example sites at their addresses; no page asks anything of another site |
+| Y6 | For everyone | Headings in order, text for every picture, colour contrast to WCAG 2.2 AA in light and dark, and every page usable with the keyboard alone; read with a screen reader (Narrator) by hand |
+| Y7 | The browser | The examples section's specification link opens the published specification; T8 passes |
+| Y8 | The feature check | Repeated over the finished documents; every gap is in the roadmap with its plan (Q4) |
+| Y9 | Published | The site from its public address (by hand, as X10) |
+| Y10 | Regression | The full run on Windows, `pnpm test:linux`, the unit tests, holoml's tests, and the automatic builds |
+
+### Done when
+
+- Y1 to Y10 pass, the documentation is published, and the owner
+  accepts; then holoml is tagged v0.2.1 on the owner's go (Q6).
 
 ## The README: a broken link, and four pictures (2026-09-28, prompt 99)
 

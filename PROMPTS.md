@@ -1436,3 +1436,8 @@ the licences), as a regular release rather than a pre-release.
 ```text
 Go and publish
 ```
+
+## 127 — 2026-09-29 · Claude Opus 5.5, max effort
+
+Please draft the plan. While building the docs, check the features, and
+if anything is missing, plan for it as well.
