@@ -1545,3 +1545,9 @@ Use the recommendations and fix everything
 ```text
 Can you check the CI failures?
 ```
+
+## 137 — 2026-09-30 · Claude Fable 5.1, high effort
+
+```text
+It still failed. Wait for it to pass before merging?
+```
