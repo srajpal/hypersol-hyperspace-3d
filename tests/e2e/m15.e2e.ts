@@ -172,25 +172,61 @@ describe('R3: a page of 20,000 elements', () => {
    * first check measures them, and the second holds them to the budget.
    */
   let answered: { times: number[]; why: string; last: number } | null = null;
+  /**
+   * Longest one answer of the shell may take before the first check gives
+   * up: far past the 200 ms budget, and past the 2.7 s an answer has taken
+   * drawn in software (GitHub's Linux machines). A question to the shell
+   * has no limit of its own, so once, in software, the check waited its
+   * whole 60 s on one answer and said only that its time was up; now it
+   * says what it waited for, and how long the answer before it took.
+   */
+  const ANSWER_LIMIT_MS = 20_000;
+  const STALL_REPORT_LIMIT_MS = 5000;
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'));
   });
   afterAll(async () => h?.close());
+
+  /** `p`'s value, or, when none has come within `limitMs`, an error with `message`'s words (asked for only then). */
+  async function within<T>(p: Promise<T>, limitMs: number, message: () => Promise<string>): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const late = new Promise<'late'>((resolve) => {
+      timer = setTimeout(() => resolve('late'), limitMs);
+    });
+    try {
+      const result = await Promise.race([p.then((value) => ({ value })), late]);
+      if (result === 'late') throw new Error(await message());
+      return result.value;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
 
   it('R3 shows the first part, says the rest was left out, and the browser goes on answering', async () => {
     const PAGE = 'many.holoml';
     await shellCall(h, 'showUrl', server.url('holoml/gen/many.holoml?n=20000'));
     // While the page loads and builds, the browser's own controls answer at once.
     const stalls = await watchStalls(h);
+    const asked = Date.now();
     const times: number[] = [];
+    /** The stall watch's report, if it can be had (a hung shell answers that neither). */
+    const stallReport = () =>
+      within(stalls(), STALL_REPORT_LIMIT_MS, async () => `the stall watch did not answer within ${STALL_REPORT_LIMIT_MS} ms`).catch((e: unknown) => String(e instanceof Error ? e.message : e));
+    /** One answer of the shell (its tabs hook) and how long it took, or an error saying what was waited for. */
+    const answer = async (when: string) => {
+      const t = performance.now();
+      await within(shellCall(h, 'tabs'), ANSWER_LIMIT_MS, async () => {
+        const before = times.length === 0 ? 'no answer before it' : `${times.length} answers before it, the last took ${times[times.length - 1]!.toFixed(0)} ms`;
+        return `The shell did not answer within ${ANSWER_LIMIT_MS} ms (asked for its tabs ${when}, ${Date.now() - asked} ms after the page was asked for; ${before}; ${await stallReport()})`;
+      });
+      return performance.now() - t;
+    };
     const until = Date.now() + 3000;
     while (Date.now() < until) {
-      const t = performance.now();
-      await shellCall(h, 'tabs');
-      times.push(performance.now() - t);
+      times.push(await answer('while the page loaded and built'));
       await sleep(50);
     }
-    const why = await stalls();
+    const why = await stallReport();
     await waitForPage(h, PAGE);
     await sceneReady(h, PAGE);
     expect(await holo<string[]>(h, 'window.__holoml.labels()', PAGE)).toContain('First of many');
@@ -199,9 +235,7 @@ describe('R3: a page of 20,000 elements', () => {
     expect(out[0]!.what).toMatch(/^[\d,]+ elements$/);
     expect(out[0]!.why).toBe("past the page's limit of 10,000");
     expect(await noticeText(h, PAGE)).toMatch(/elements: past the page's limit of 10,000/);
-    const t = performance.now();
-    await shellCall(h, 'tabs');
-    const last = performance.now() - t;
+    const last = await answer('once the page was shown');
     // Every question was answered; how soon is the next check's.
     expect(times.length).toBeGreaterThan(0);
     answered = { times, why, last };
