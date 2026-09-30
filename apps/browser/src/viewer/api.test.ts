@@ -113,3 +113,152 @@ describe('Y3: HyperSpace 3D has the scene API of the Web IDL, and no more (miles
     expect(sorted(seen.flatMap((e) => Object.keys(e)))).toEqual(sorted(membersOf('HoloMLEvent')));
   });
 });
+
+describe('things as the specification says (review 134; SPEC.md section 10, "Things" and "The viewer")', () => {
+  /** A stand-in for a Three.js object: a place, a turn, and a size, each with its `set`. */
+  const object = () => {
+    const xyz = (x: number, y: number, z: number) => {
+      const v = { x, y, z, set: (nx: number, ny: number, nz: number) => Object.assign(v, { x: nx, y: ny, z: nz }) };
+      return v;
+    };
+    return { position: xyz(1, 2, 3), rotation: xyz(0, Math.PI / 2, 0), scale: xyz(1, 1, 1), visible: true };
+  };
+
+  /** The scene API over a small scene: a group that holds a link that holds a model and a label, a light, and two sounds. */
+  function scene() {
+    const made = new Map<string, Entry>();
+    const entry = (kind: string, id: string, parent: Entry | null) => {
+      const e = { kind, id, parent, removed: false, object: object(), children: [] } as unknown as Entry;
+      made.set(id, e);
+      return e;
+    };
+    const hall = entry('group', 'hall', null);
+    const room = entry('group', 'room', hall);
+    const link = entry('a', 'link', room);
+    const inner = entry('a', 'inner', link);
+    entry('model', 'car', inner);
+    entry('label', 'sign', link);
+    entry('model', 'loose', null);
+    entry('model', 'linked', entry('a', 'alone', null));
+    entry('light', 'lamp', room);
+    entry('sound', 'here', null);
+    entry('sound', 'everywhere', null);
+    const moved: string[] = [];
+    const places = new Map<string, [number, number, number] | null>([['here', [4, 1.6, 0]]]);
+    const view = {
+      pageVersion: '0.2',
+      findEntry: (id: string) => made.get(id) ?? null,
+      moved: (e: Entry) => moved.push(e.id!),
+      viewerPosition: [0, 1.6, 5],
+      viewerDirection: [0, 0, -1],
+      soundPosition: (e: Entry) => places.get(e.id!) ?? null,
+      setSoundPosition: (e: Entry, at: [number, number, number]) => places.set(e.id!, at),
+      removeEntry: (e: Entry) => (e.removed = true),
+    } as unknown as HolomlView;
+    const win: { holoml?: Api } = {};
+    (globalThis as { window?: unknown }).window = win;
+    installApi(view, Promise.resolve());
+    return { holoml: win.holoml!, made, moved };
+  }
+
+  it('setting a member its kind does not have is not an error and changes nothing: the member is undefined still', () => {
+    const { holoml, made } = scene();
+    const sign = holoml.find('sign')!;
+    const keys = Object.keys(sign);
+    // A label has no rotation, no scale, and no intensity; "colour" and "nonsense" are no members of anything.
+    for (const name of ['rotation', 'scale', 'intensity', 'solid', 'value', 'colour', 'nonsense', 'constructor']) {
+      expect(() => {
+        sign[name] = [0, 90, 0];
+      }, name).not.toThrow();
+      expect(Object.hasOwn(sign, name), name).toBe(false);
+    }
+    expect(sign['rotation']).toBeUndefined();
+    expect(sign['nonsense']).toBeUndefined();
+    expect('nonsense' in sign).toBe(false);
+    expect(Object.keys(sign)).toEqual(keys);
+    // Nothing of the label itself changed either.
+    expect((made.get('sign')!.object as unknown as ReturnType<typeof object>).rotation).toMatchObject({ x: 0, y: Math.PI / 2, z: 0 });
+    // The same for every kind, and for a symbol.
+    for (const id of ['car', 'hall', 'lamp', 'here']) {
+      const thing = holoml.find(id)!;
+      expect(() => {
+        thing['nonsense'] = 1;
+        (thing as Record<symbol, unknown>)[Symbol.iterator] = 1;
+      }, id).not.toThrow();
+      expect(thing['nonsense'], id).toBeUndefined();
+    }
+  });
+
+  it('a member it has is still set, and checked; a member that is read-only is still read-only; it is the same thing each time', () => {
+    const { holoml, made, moved } = scene();
+    const car = holoml.find('car')!;
+    car['position'] = [4, 5, 6];
+    expect(car['position']).toEqual([4, 5, 6]);
+    expect((made.get('car')!.object as unknown as ReturnType<typeof object>).position).toMatchObject({ x: 4, y: 5, z: 6 });
+    expect(moved).toEqual(['car']);
+    expect(() => (car['position'] = [1, 2])).toThrow(TypeError);
+    expect(() => (car['id'] = 'other')).toThrow(TypeError);
+    expect(() => (car['remove'] = () => undefined)).toThrow(TypeError);
+    expect(car['id']).toBe('car');
+    expect(Object.isFrozen(car)).toBe(true);
+    expect(holoml.find('car')).toBe(car);
+    // Removed: setting its members does nothing, those it has and those it has not.
+    (car['remove'] as () => void)();
+    expect(() => {
+      car['position'] = [9, 9, 9];
+      car['nonsense'] = 1;
+    }).not.toThrow();
+    expect((made.get('car')!.object as unknown as ReturnType<typeof object>).position).toMatchObject({ x: 4, y: 5, z: 6 });
+  });
+
+  it("a thing's parent is the nearest group it is in, also through a link, and a link inside a link", () => {
+    const { holoml } = scene();
+    const room = holoml.find('room')!;
+    expect(holoml.find('car')!['parent']).toBe(room);
+    expect(holoml.find('sign')!['parent']).toBe(room);
+    expect(holoml.find('lamp')!['parent']).toBe(room);
+    expect(room['parent']).toBe(holoml.find('hall'));
+    // In no group: null, with a link around it or without.
+    expect(holoml.find('hall')!['parent']).toBeNull();
+    expect(holoml.find('loose')!['parent']).toBeNull();
+    expect(holoml.find('linked')!['parent']).toBeNull();
+    // A link is not a thing.
+    expect(holoml.find('link')).toBeNull();
+  });
+
+  it("the arrays a thing or the viewer gives are frozen: a script sets the member to a new array", () => {
+    const { holoml } = scene();
+    const car = holoml.find('car')!;
+    for (const name of ['position', 'rotation', 'scale']) {
+      const v = car[name] as number[];
+      expect(Array.isArray(v), name).toBe(true);
+      expect(Object.isFrozen(v), name).toBe(true);
+      expect(() => (v[0] = 9), name).toThrow(TypeError);
+      expect(() => v.push(1), name).toThrow(TypeError);
+    }
+    expect(car['rotation']).toEqual([0, 90, 0]);
+    expect(Object.isFrozen(holoml.find('sign')!['position'])).toBe(true);
+    expect(Object.isFrozen(holoml.find('lamp')!['position'])).toBe(true);
+    expect(Object.isFrozen(holoml.find('hall')!['scale'])).toBe(true);
+    // The viewer's.
+    expect(holoml.viewer['position']).toEqual([0, 1.6, 5]);
+    expect(Object.isFrozen(holoml.viewer['position'])).toBe(true);
+    expect(Object.isFrozen(holoml.viewer['direction'])).toBe(true);
+    // A frozen array is a fine value to set: the thing takes its numbers.
+    car['position'] = holoml.viewer['position'];
+    expect(car['position']).toEqual([0, 1.6, 5]);
+  });
+
+  it("a sound's place is a frozen array, or null for a sound from everywhere; setting null is an error, and the place stays", () => {
+    const { holoml } = scene();
+    const here = holoml.find('here')!;
+    expect(here['position']).toEqual([4, 1.6, 0]);
+    expect(Object.isFrozen(here['position'])).toBe(true);
+    expect(holoml.find('everywhere')!['position']).toBeNull();
+    expect(() => (here['position'] = null)).toThrow(TypeError);
+    expect(() => (here['position'] = undefined)).toThrow(TypeError);
+    expect(here['position']).toEqual([4, 1.6, 0]);
+    here['position'] = [0, 1, 2];
+    expect(here['position']).toEqual([0, 1, 2]);
+  });
+});

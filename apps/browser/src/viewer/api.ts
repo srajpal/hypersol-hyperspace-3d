@@ -8,6 +8,11 @@
  * (prompt 98) choices. Milestone 19: panels. Milestone 20: whether models
  * and groups are loaded, and the `load` event (loading by area).
  * Milestone 21: a sound's place, and a model's animation speed.
+ *
+ * Review 134, as the specification's third edition says (SPEC.md section
+ * 10): setting a member that a thing's kind does not have is no error and
+ * changes nothing; the arrays a thing or the viewer gives are frozen; and
+ * a thing's parent is the nearest group it is in, also through a link.
  */
 import type { Entry, HolomlView, Hit, SceneEvent } from './scene';
 import type { Vec3 } from './values';
@@ -31,6 +36,11 @@ function colour(v: unknown, what: string): string {
 function unit(v: unknown, what: string): number {
   if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 1) throw new TypeError(`${what} must be a number from 0 to 1`);
   return v;
+}
+
+/** A vector as a thing or the viewer gives it: frozen, so a script sets the member to a new array to move the thing (the Web IDL's FrozenArray). */
+function given(x: number, y: number, z: number): Readonly<Vec3> {
+  return Object.freeze<Vec3>([x, y, z]);
 }
 
 function within(v: unknown, min: number, max: number, what: string): number {
@@ -61,13 +71,18 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
       Object.defineProperty(t, name, { enumerable: true, get, ...(set ? { set: (v: unknown) => (e.removed ? undefined : set(v)) } : {}) });
     define('id', () => e.id);
     define('kind', () => kind);
-    define('parent', () => (e.parent && e.parent.kind === 'group' ? thing(e.parent) : null));
+    // The nearest group it is in. A link is not a thing, and does not count: a model in a link in a group has that group.
+    define('parent', () => {
+      let p = e.parent;
+      while (p && p.kind === 'a') p = p.parent;
+      return p && p.kind === 'group' ? thing(p) : null;
+    });
     if (has('model', 'group', 'label', 'panel', 'light')) {
       define(
         'position',
         () => {
           const p = o()?.position;
-          return p ? [p.x, p.y, p.z] : undefined;
+          return p ? given(p.x, p.y, p.z) : undefined;
         },
         (v) => {
           o()?.position.set(...vector(v, 'position'));
@@ -80,7 +95,7 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
         'rotation',
         () => {
           const r = o()?.rotation;
-          return r ? [deg(r.x), deg(r.y), deg(r.z)] : undefined;
+          return r ? given(deg(r.x), deg(r.y), deg(r.z)) : undefined;
         },
         (v) => {
           const [x, y, z] = vector(v, 'rotation').map((d) => (d * Math.PI) / 180) as Vec3;
@@ -94,7 +109,7 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
         'scale',
         () => {
           const s = o()?.scale;
-          return s ? [s.x, s.y, s.z] : undefined;
+          return s ? given(s.x, s.y, s.z) : undefined;
         },
         (v) => {
           o()?.scale.set(...vector(v, 'scale'));
@@ -169,9 +184,13 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
       t['stop'] = () => (e.removed ? undefined : e.sound?.stop());
       define('playing', () => e.soundReport?.playing === true);
       // Where it comes from (milestone 21): null for a sound from everywhere; a place makes it a sound from there.
+      // Setting null is an error, as anything that is not a place is: a sound that has a place keeps one.
       define(
         'position',
-        () => view.soundPosition(e),
+        () => {
+          const p = view.soundPosition(e);
+          return p ? given(...p) : null;
+        },
         (v) => view.setSoundPosition(e, vector(v, 'position')),
       );
       define(
@@ -208,24 +227,29 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
       define('options', () => Object.freeze([...(view.choiceOptions(e) ?? [])]));
     }
     t['remove'] = () => view.removeEntry(e);
-    const frozen = Object.freeze(t) as unknown as HolomlThing;
-    thingOf.set(e, frozen);
-    entryOf.set(frozen, e);
-    return frozen;
+    // Frozen, and behind a handler that takes the setting of a member its kind does not have (any name) without
+    // a word: nothing changes, the member is undefined still, and it is no error, though a page's script is a
+    // module, where setting a member of a frozen object otherwise throws. A member it has goes to the member.
+    const handle = new Proxy(Object.freeze(t), {
+      set: (target, name, value, receiver) => (Object.hasOwn(target, name) ? Reflect.set(target, name, value, receiver) : true),
+    }) as unknown as HolomlThing;
+    thingOf.set(e, handle);
+    entryOf.set(handle, e);
+    return handle;
   };
 
   const hitOut = (h: Hit | null) => (h ? { thing: thing(h.entry), point: h.point, normal: h.normal } : null);
   const TYPES = new Set<SceneEvent['type']>(['click', 'key', 'frame', 'change', 'load']);
 
   const viewer = Object.freeze({
-    get position(): Vec3 {
-      return view.viewerPosition;
+    get position(): Readonly<Vec3> {
+      return given(...view.viewerPosition);
     },
     set position(v: unknown) {
       view.viewerPosition = vector(v, 'viewer.position');
     },
-    get direction(): Vec3 {
-      return view.viewerDirection;
+    get direction(): Readonly<Vec3> {
+      return given(...view.viewerDirection);
     },
     lookAt(point: unknown) {
       view.viewerLookAt(vector(point, 'lookAt(point)'));
