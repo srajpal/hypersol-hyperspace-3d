@@ -175,7 +175,10 @@ date given and grow with each milestone; TODO.md has the latest.
   (the sofa studio, Harbour Loft, the sneaker store), 4 milestone 21's
   (the ocean tunnel), and 1 everything else (vitest.e2e.config.ts lists
   them); without it, every check runs. A last job, "All checks", passes
-  only when every part has.
+  only when every part has. A push or pull request that changes
+  documents only (the *.md files at the top and the docs folder, which
+  no check reads) skips the parts, and "All checks" passes at once
+  (owner, prompt 135).
 - Test windows stay out of the way (owner request, 2026-09-25): they
   open off screen, never take focus, and have no taskbar button, so the
   computer can be used during a run; `pnpm screenshots` works the same

@@ -1,5 +1,8 @@
 # Builds and tests every push and pull request on Windows and Linux
-# (milestone 12, GitHub issue #5; approved by the owner, prompt 56, C a).
+# (milestone 12, GitHub issue #5; approved by the owner, prompt 56, C a),
+# except one that changes documents only (the *.md files at the top and
+# the docs folder, which no check reads): its parts are skipped and "All
+# checks" passes at once (owner, prompt 135).
 # macOS joins with the macOS release milestone. Each system runs the
 # end-to-end checks in four parts side by side, so a build takes as long
 # as its longest part (two parts from milestone 21, owner, prompt 122,
@@ -22,8 +25,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Documents only? Then there is nothing for the parts to check. Anything
+  # else changed, or a run started by hand, or a range that cannot be
+  # compared (a first push, a rewritten branch): every part runs.
+  changes:
+    name: What changed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      - id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.sha }}
+        run: |
+          code=true
+          case "$EVENT" in
+            pull_request) range="$PR_BASE...$PR_HEAD" ;;
+            push) range="$PUSH_BEFORE..$PUSH_AFTER" ;;
+            *) range="" ;;
+          esac
+          if [ -n "$range" ] && files=$(git diff --name-only "$range" 2>/dev/null) && [ -n "$files" ]; then
+            if ! echo "$files" | grep -qvE '^([^/]+[.]md|docs/.*)$'; then code=false; fi
+            echo "$files" | head -50
+          fi
+          echo "code=$code" | tee -a "$GITHUB_OUTPUT"
+
   test:
     name: ${{ matrix.os }} (part ${{ matrix.part }})
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -33,11 +73,11 @@ jobs:
     # The longest part (part 4 on Linux) takes about 18 minutes.
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: pnpm
@@ -85,14 +125,22 @@ jobs:
         run: pnpm test:e2e
 
   # One check that stands for every part, whatever their number: passes
-  # only when all of them passed. A rule that requires checks before
-  # merging can name this one and need no change when the parts do.
+  # only when all of them passed, or when only documents changed and
+  # they were skipped. A rule that requires checks before merging can
+  # name this one and need no change when the parts do.
   all:
     name: All checks
     if: always()
-    needs: test
+    needs: [changes, test]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Every part passed
-        run: test "${{ needs.test.result }}" = "success"
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          CODE: ${{ needs.changes.outputs.code }}
+          TEST: ${{ needs.test.result }}
+        run: |
+          echo "What changed: $CHANGES (code: $CODE); the parts: $TEST"
+          test "$CHANGES" = "success"
+          if [ "$CODE" = "false" ]; then test "$TEST" = "skipped"; else test "$TEST" = "success"; fi
