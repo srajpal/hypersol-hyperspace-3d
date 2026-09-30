@@ -29,6 +29,12 @@ export interface TestLog {
    */
   leaveAsks: string[];
   leaveAnswer: 'leave' | 'stay';
+  /**
+   * Permissions refused to a page that asked, without a prompt, by
+   * Electron's names (main/permissions.ts). A refused request for full
+   * screen tells the page nothing, so a check can only see it here.
+   */
+  refusedPermissions: string[];
 }
 
 declare global {
@@ -36,7 +42,7 @@ declare global {
 }
 
 export function installTestHooks(): TestLog {
-  const log: TestLog = { attaches: [], requests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave' };
+  const log: TestLog = { attaches: [], requests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave', refusedPermissions: [] };
   globalThis.__hypersolTest = log;
   // log.requests is filled by the privacy shield's request listener
   // (main/privacy/index.ts): Electron allows one listener per session.

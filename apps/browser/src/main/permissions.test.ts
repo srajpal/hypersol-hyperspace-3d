@@ -38,12 +38,14 @@ function setup(saved: Record<string, SiteChoices> = {}) {
     setPermissionRequestHandler: (h: Request) => void (request = h),
   };
   const sent: ShellCommand[] = [];
+  const refused: string[] = [];
   const state = { saved };
   const permissions = new Permissions({
     isPrivate: () => false,
     saved: () => state.saved,
     save: (sites) => void (state.saved = sites),
     send: (_contents, command) => void sent.push(command),
+    refused: (permission) => void refused.push(permission),
   });
   permissions.protect(session as never);
   const page = fakePage(1, session);
@@ -56,7 +58,7 @@ function setup(saved: Record<string, SiteChoices> = {}) {
   };
   const looks = (permission: string, mediaType?: string) => check(page, permission, SITE, { requestingUrl: `${SITE}/page`, ...(mediaType ? { mediaType } : {}) });
   const prompt = () => (sent.filter((c) => c.type === 'permission-prompt').at(-1) as Prompt).prompt;
-  return { permissions, session, page, sent, state, ask, looks, check, prompt };
+  return { permissions, session, page, sent, refused, state, ask, looks, check, prompt };
 }
 
 const fromShell = (page: { hostWebContents: object }) => ({ sender: page.hostWebContents }) as never;
@@ -118,10 +120,12 @@ describe('what a page may do without asking (review of 2026-09-30, M1)', () => {
   });
 
   it('a page that asks is refused the same names at once, full screen and the pointer among them, and may copy text without a prompt', () => {
-    const { ask, sent } = setup();
+    const { ask, sent, refused } = setup();
     for (const name of REFUSED) expect(ask(name), name).toBe(false);
     for (const name of ALLOWED_WITHOUT_ASKING) expect(ask(name), name).toBe(true);
     expect(sent).toEqual([]);
+    // Test runs are told of each refusal (a page refused full screen is told nothing).
+    expect(refused).toEqual(REFUSED);
   });
 
   it('a check with no page (a worker) gets the same answers', () => {

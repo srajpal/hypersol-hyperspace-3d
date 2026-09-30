@@ -531,6 +531,7 @@ if (!app.requestSingleInstanceLock()) {
       saved: () => saved.settingsFile.settings.sitePermissions,
       save: (sites) => saved.updateSettings({ sitePermissions: sites }),
       send: sendToHost,
+      ...(testLog ? { refused: (permission: string) => testLog?.refusedPermissions.push(permission) } : {}),
     });
     permissions = perms;
     perms.protect(ses);

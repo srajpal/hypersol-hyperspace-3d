@@ -56,7 +56,11 @@
           (e) => (window.did[name] = 'refused:' + e.name),
         );
       document.getElementById('copy').onclick = () => note('copy', navigator.clipboard.writeText('review-134 copied'));
-      document.getElementById('full').onclick = () => note('full', document.documentElement.requestFullscreen());
+      // A refused request for full screen is never settled, so the click itself is noted too.
+      document.getElementById('full').onclick = () => {
+        window.did.fullAsked = true;
+        note('full', document.documentElement.requestFullscreen());
+      };
       // Reading the clipboard is never allowed, a click or not.
       window.readClipboard = () => navigator.clipboard.readText().then((t) => 'read:' + t, (e) => 'refused:' + e.name);
     </script>

@@ -21,6 +21,8 @@ export interface PermissionDeps {
   save(sites: Record<string, SiteChoices>): void;
   /** Sends a command to the shell that hosts a page. */
   send(contents: WebContents, command: ShellCommand): void;
+  /** Test runs: told each permission refused to a page without asking the person, by Electron's name. */
+  refused?(permission: string): void;
 }
 
 interface Pending {
@@ -94,6 +96,7 @@ export class Permissions {
             : [];
       const origin = originOf(details.requestingUrl);
       if (kinds.length === 0 || !origin || contents.getType() !== 'webview') {
+        this.deps.refused?.(permission);
         callback(false);
         return;
       }
