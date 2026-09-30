@@ -875,7 +875,7 @@ computer (`pnpm test:linux`) since 2026-09-28. macOS not checked yet.
 - Lint and type check: `pnpm lint` (about half a minute: three of its
   rules need the types, section 4, "Tests"), `pnpm typecheck`
 - End-to-end: `pnpm test:e2e` (every milestone's checks and the review's,
-  [TIME]; needs openssl on PATH for the certificate-error check, which
+  about nineteen minutes on this computer; needs openssl on PATH for the certificate-error check, which
   Git for Windows provides)
 - Linux, as GitHub's machines run it: `pnpm test:linux` (needs Docker)
 

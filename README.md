@@ -365,7 +365,7 @@ What the browser stores and sends is listed in
 profile in the `userData/` folder, never your normal browser data.
 
 Tests: `pnpm test` (unit), `pnpm lint`, `pnpm typecheck`, and
-`pnpm test:e2e` (builds the app and drives it for [TIME];
+`pnpm test:e2e` (builds the app and drives it for about twenty minutes;
 needs openssl on PATH, which Git for Windows provides). Its windows stay
 off screen and never take focus, so you can keep working; set
 `HYPERSOL_TEST_SHOW=1` to watch instead. With Docker, `pnpm test:linux`

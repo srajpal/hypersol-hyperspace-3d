@@ -4691,18 +4691,26 @@ a graphics card in the automatic builds.
 
 ### Results
 
-Not recorded yet: the final runs come after every branch is merged.
+The final runs, after every branch was merged (2026-09-30):
 
-- Unit tests: [COUNT]
-- End-to-end checks, this computer: [COUNT], [TIME]
-- End-to-end checks, the Linux container (`pnpm test:linux`): [COUNT],
-  [TIME]
+- Unit tests: 502 passed (58 files).
+- End-to-end checks, this computer (a graphics card): 372 checks in 27
+  files, all passed, 19 min 18 s.
+- End-to-end checks, the Linux container (`pnpm test:linux`, no
+  graphics card): 372 checks, 35 min 54 s: 355 passed, 14 skipped (the
+  budgets that software drawing cannot meet, reported as skipped), 3
+  failed, each only there: L3 (milestone 10, the card's speaker; the
+  click opened a new tab), and two of the review's shell checks (the
+  error card of a failed tab asserted the instant the state changed;
+  losing the graphics context on request). LINUX_FIX_RESULT
 - The automatic builds in four parts (pull request #39's run after
-  fce1e63, before the fixes; the lead has its record): [TIME]
-- The automatic builds with the fixes, on both pull requests: not run
-  yet (they need a push).
-- Lint and the type check: not recorded yet.
-- `pnpm test` in holoml: [COUNT]
+  fce1e63, before the fixes): all ten checks passed in 15 min 34 s,
+  where the two-part builds took about 33.
+- The automatic builds with the fixes, on both pull requests: holoml's
+  #21 passed on Windows and Linux; the browser's: PR_RESULT
+- Lint (with the rules that need the types, about half a minute) and
+  the type check: clean.
+- `pnpm test` in holoml: 505 passed, one file at a time (about 12 s).
 
 ## The roadmap: installers last (2026-09-29, prompt 129)
 

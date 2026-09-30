@@ -132,29 +132,24 @@ Where the work is (nothing here is pushed yet):
   old merged branches (left for the owner), and requiring actions by
   commit (only after both pull requests are merged).
 
+Done since (2026-09-30): every branch is merged; the final runs are
+recorded in TODO.md's review section (Windows: 372 checks, all passed;
+the Linux container: three checks failed only there and were repaired);
+the examples' pictures of the aquarium and Blockworld are taken again
+(the progress screenshots of milestones 21 and 22 still show the old
+turtle: they are the record of their time); the issues (#40 to #44
+here, #22 and #23 in holoml) and the draft security advisories (seven
+here, two in holoml) are open; REVIEW-2026-09-30.md carries its status.
+
 How to resume:
 
-1. Merge `review-134/docs2` (this documents pass) into
-   `review-134-fixes`; every feature branch is merged already.
-2. Make the final runs and record them: `pnpm lint`, `pnpm typecheck`,
-   `pnpm test`, `pnpm test:e2e`, and `pnpm test:linux` here, and `pnpm
-   test` in holoml. The documents hold `[COUNT]` and `[TIME]` where a
-   number belongs (README.md, ARCHITECTURE.md section 11, AGENTS.md's
-   Testing section, CONTRIBUTING.md, and TODO.md's results for the
-   review); search for the square brackets and fill every one.
-3. Take the ocean tunnel's pictures again (`pnpm screenshots:examples`,
-   then the progress screenshots): those in the repository were taken
-   with the old turtle (THIRD-PARTY.md).
-4. Push `review-134-fixes` and open the browser's pull request
-   (holoml's, #21, is open). Once holoml's is merged, make the
-   browser's copy from holoml's main (`pnpm holoml:sync main
-   --examples main`), and from a tag once the owner tags one.
-5. Open the security advisories (for what the review found that a
-   release could have shipped) and the issues for the rest, and bring
-   REVIEW-2026-09-30.md's statuses up to date, on the owner's computer.
-6. After both are merged: switch on "actions by commit" in each
-   repository's settings, and take the owner's decisions listed under
-   "Deliberately not done" in TODO.md.
+1. Once holoml's #21 is merged, make the browser's copy from holoml's
+   main (`pnpm holoml:sync main --examples main`), and from a tag once
+   the owner tags one (0.2.2, as a pre-release).
+2. After both pull requests are merged: switch on "actions by commit"
+   in each repository's settings, publish or close the draft
+   advisories as the owner decides, and take the owner's decisions
+   listed under "Deliberately not done" in TODO.md.
 
 Worth knowing:
 
@@ -307,7 +302,7 @@ Worth knowing:
   checks may take up to 600 s each (TANK_TIME in m21.e2e.ts), and the
   m21 file about 18 minutes on `pnpm test:linux`'s 4 processors (that
   was before scenes were drawn at half resolution in software, prompt
-  135; since then [TIME]). Its
+  135; since then 8 min 11 s, in the run of 2026-09-30). Its
   models have triangle budgets (fish.mjs, and prepare.mjs for Poly
   Haven's): shapes.mjs thinTo makes a more detailed file lighter. A new
   fish or rock should get one.

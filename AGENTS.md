@@ -155,15 +155,16 @@ see .github/workflows/ci.yml; macOS not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
 - Toolchain: Node 22.13 or newer; pnpm 12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; [COUNT] tests in the run of 2026-09-30;
+- Unit: `pnpm test` (Vitest; 502 tests passed on 2026-09-30;
   each test may take up to 20 seconds, vitest.config.ts)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean;
   lint takes about half a minute, as three of its rules need the types:
   a promise nobody awaits or catches is an error, since the review of
   2026-09-30)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it ([TIME]; [COUNT] checks in the full run on 2026-09-30,
-  after the review's fixes; TODO.md has the details). On
+  against it (about nineteen minutes; 372 checks in 27 files in the
+  full run on 2026-09-30, after the review's fixes, all passed on this
+  computer; TODO.md has the details). On
   this computer vitest's report leaves out what passing checks log (the
   load times, frame rates, and memory); `pnpm test:e2e
   --reporter=verbose` shows it, as the automatic builds do. Needs
