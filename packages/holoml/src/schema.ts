@@ -36,6 +36,8 @@ import {
 } from './rules';
 
 export { ANIMATABLE, ANIMATION_VALUES, CLICKABLE, ELEMENTS, LIGHT_ONLY, ROOT, VERSION, VERSIONS, atLeast } from './rules';
+// The patterns a value must match, for a renderer that reads values as the checker does (HyperSpace 3D's viewer).
+export { COUNT_PATTERN, DURATION_PATTERN, INDEFINITE, NUMBER_PATTERN, whole } from './rules';
 export type { AttributeRule, ElementRule, ValueKind, Version } from './rules';
 
 export interface CheckOptions {

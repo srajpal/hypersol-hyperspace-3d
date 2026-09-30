@@ -10,7 +10,7 @@
  */
 import type { ElementNode, Problem } from '@hypersol/holoml';
 // The checker's patterns of values. The package's own entry does not pass them on, so they are read from its rules.
-import { COUNT_PATTERN, DURATION_PATTERN, INDEFINITE, NUMBER_PATTERN, whole } from '../../../../packages/holoml/src/rules';
+import { COUNT_PATTERN, DURATION_PATTERN, INDEFINITE, NUMBER_PATTERN, whole } from '@hypersol/holoml';
 
 export type Vec3 = [number, number, number];
 
