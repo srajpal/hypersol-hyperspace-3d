@@ -260,6 +260,9 @@ export class TabView implements PagePanel {
     const asleep = this.asleepFrom;
     if (!asleep) return;
     this.asleepFrom = null;
+    // A tab that slept on a failed load wakes to a fresh load, not under its old error card.
+    this.hideError();
+    this.failed = false;
     this.emit({ ...this.currentStatus, state: 'loading', url: asleep.url });
     if (asleep.from !== null) this.createRestored(asleep.url, asleep.from);
     else this.createWebview(asleep.url);
@@ -561,6 +564,9 @@ export class TabView implements PagePanel {
       this.loadSeq += 1;
       this.pageImages = [];
       this.failed = false;
+      // Whatever started the load (the page itself, the right-click menu's
+      // Back or Reload), an earlier failure's card does not stay over it.
+      this.hideError();
       this.emit({ ...this.currentStatus, state: 'loading', message: undefined });
     });
     wv.addEventListener('did-navigate', (e) => {

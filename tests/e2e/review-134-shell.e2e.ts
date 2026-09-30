@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
   clickUntil,
+  cycleToTab,
   focusedPage,
   focusedTab,
   inPage,
@@ -58,6 +59,22 @@ const SET = (id: string) => `hs-settings [data-testid="${id}"]`;
 async function menu(h: Harness, item: string): Promise<void> {
   await h.shell.click(BAR('menu'));
   await h.shell.click(BAR(`menu-${item}`));
+}
+
+/** Whether the tab in front shows an error card. */
+const errorCardShown = (h: Harness) =>
+  h.shell.evaluate(() => {
+    const panels = [...document.querySelectorAll<HTMLElement>('[data-testid="page-panel"]')];
+    const front = panels.find((p) => p.style.visibility !== 'hidden');
+    return front?.querySelector('[data-testid="page-overlay"]')?.hasAttribute('data-visible') ?? false;
+  });
+
+/** An address on this computer that nothing answers yet: its port, to start a server on later. */
+async function unansweredPort(): Promise<number> {
+  const probe = await startFixtureServer();
+  const port = Number(new URL(probe.base).port);
+  await probe.close();
+  return port;
 }
 
 /** Moves the pointer into the room's bottom-left corner and waits for the camera to settle off-centre. */
@@ -163,6 +180,65 @@ describe('R1: switching panels closes the one that was open', () => {
       expect(await h.shell.locator(SET('set-keys-message')).count()).toBe(0);
     } finally {
       await h.close();
+    }
+  });
+});
+
+describe('R2: an error card goes when its error does', () => {
+  it('a failed tab whose page then loads by itself shows no card', async () => {
+    const port = await unansweredPort();
+    const h = await launch(`http://127.0.0.1:${port}/link-a.html`, { userDataDir: newProfile() });
+    let late: FixtureServer | undefined;
+    try {
+      await waitFor('the load to fail', () => shellCall(h, 'status'), (s) => s?.state === 'failed');
+      expect(await errorCardShown(h)).toBe(true);
+      // The site comes up, and the page is loaded again from outside the
+      // tab's own controls (as the right-click menu's Reload does).
+      late = await startFixtureServer(port);
+      const page = await focusedPage(h);
+      await h.app.evaluate(({ webContents }, id) => webContents.fromId(id)!.reload(), page.id);
+      await waitFor('the page loaded', () => shellCall(h, 'status'), (s) => s?.state === 'loaded');
+      await waitForPage(h, 'link-a');
+      expect(await errorCardShown(h)).toBe(false);
+    } finally {
+      await h.close();
+      await late?.close();
+    }
+  });
+
+  it('a failed tab that sleeps and wakes loads its page without the old card', async () => {
+    const port = await unansweredPort();
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile({ tabSleep: 5 }), sleepMinuteMs: 100 });
+    let late: FixtureServer | undefined;
+    try {
+      await waitForPage(h, 'link-a');
+      const front = (await focusedTab(h)).id;
+      // A second tab whose load fails.
+      await pressInShell(h, 'T', ['control']);
+      await waitFor('a new tab', () => focusedTab(h), (t) => t.state === 'start');
+      const failing = (await focusedTab(h)).id;
+      await navigateTo(h, `http://127.0.0.1:${port}/link-b.html`);
+      await waitFor('the load to fail', () => focusedTab(h), (t) => t.state === 'failed');
+      expect(await errorCardShown(h)).toBe(true);
+      // Behind the first tab, it sleeps.
+      await cycleToTab(h, front);
+      await waitFor(
+        'the failed tab asleep',
+        async () => {
+          await shellCall(h, 'sleepNow');
+          return tabs(h);
+        },
+        (t) => t.find((x) => x.id === failing)?.asleep === true,
+      );
+      // The site comes up; opening the tab wakes it.
+      late = await startFixtureServer(port);
+      await cycleToTab(h, failing);
+      await waitFor('the page loaded', () => focusedTab(h), (t) => t.state === 'loaded' && !t.asleep);
+      await waitForPage(h, 'link-b');
+      expect(await errorCardShown(h)).toBe(false);
+    } finally {
+      await h.close();
+      await late?.close();
     }
   });
 });
