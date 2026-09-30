@@ -159,6 +159,9 @@ function reachProblems(h: Harness, panel: string): Promise<string[]> {
 }
 
 describe('I2, I4 to I6, I8: the readouts on a test page', () => {
+  // These share one app and run in order: I2 leaves a second tab open,
+  // I4 sets the console's level and clears it, and I5b and I5c read the
+  // four requests I5 has waited for.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url(PAGE), { userDataDir: newProfile({ layersOnOpen: false, instruments: true }) });

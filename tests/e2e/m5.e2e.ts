@@ -72,6 +72,8 @@ async function openSettings(h: Harness): Promise<void> {
 }
 
 describe('G1 to G3, G7: the layers view on a page', () => {
+  // These share one app and run in order: G1 leaves the view off, G2
+  // switches it on and scrolls to the form, and G3 and G7 need it on.
   let h: Harness;
   let flat: Record<string, number[]>;
   beforeAll(async () => {

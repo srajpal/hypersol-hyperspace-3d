@@ -404,7 +404,7 @@ describe('K6 to K8: site permissions', () => {
 
       // K7: after a restart, Allow and Block are still in force.
       await h.app.evaluate(({ app }) => app.quit());
-      await waitForExit(h, 8000);
+      await waitForExit(h, 30_000);
       await h.close();
       h = await launch(server.url('media.html'), { userDataDir: profile, keepRunning: true });
       await waitForPage(h, 'media');

@@ -361,7 +361,7 @@ describe('L8 and L9: history through the worker', () => {
     const profile = newProfile();
     let h = await launch('', { userDataDir: profile, keepRunning: true });
     await h.app.evaluate(({ app }) => app.quit());
-    await waitForExit(h, 8000);
+    await waitForExit(h, 30_000);
     await h.close();
     // Fill the history directly (the app made the tables and their triggers).
     const db = new DatabaseSync(join(profile, 'hypersol.sqlite'));

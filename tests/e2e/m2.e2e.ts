@@ -65,6 +65,8 @@ function addressHasFocus(h: Harness): Promise<boolean> {
 }
 
 describe('D1 top bar', () => {
+  // These share one app and run in order: back and forward need the page
+  // the check before them loaded.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'), { searchUrl: searchUrl() });
@@ -110,6 +112,9 @@ describe('D1 top bar', () => {
 });
 
 describe('D2 tabs', () => {
+  // These share one app and run in order, each starting from the tabs the
+  // one before left: one, two, two with a form filled in, two, one, a
+  // fresh start tab.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'), { searchUrl: searchUrl() });
@@ -266,6 +271,9 @@ describe('D4 many tabs', () => {
 });
 
 describe('D5 new-window links', () => {
+  // These share one app and run in order: each counts the tabs the ones
+  // before opened (one, two, three), and the last needs the first page in
+  // front, as the third leaves it.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url('new-window.html'));
@@ -390,6 +398,9 @@ describe('D7 error cards', () => {
 });
 
 describe('D8 right-click menu', () => {
+  // These share one app and run in order: the third counts the tabs (two,
+  // with the one it opens), and the last leaves the first page for the
+  // form.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'));
@@ -481,6 +492,9 @@ describe('D9 start panel', () => {
 });
 
 describe('D10 shortcuts from inside a page', () => {
+  // These share one app and run in order: back and forward need the two
+  // pages the hook loaded, and "Ctrl+W" closes the tab "Ctrl+T" left
+  // beside the start tab.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'));

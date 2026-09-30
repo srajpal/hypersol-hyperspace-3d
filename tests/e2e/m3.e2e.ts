@@ -72,6 +72,9 @@ async function openSettings(h: Harness): Promise<void> {
 }
 
 describe('E1 to E3: bookmarks, history, and the Library', () => {
+  // These share one app and run in order: E3 opens and removes the
+  // bookmark E1 left, and the first E2 check clears the history the
+  // second then adds one visit to.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });

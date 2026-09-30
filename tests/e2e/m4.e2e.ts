@@ -88,6 +88,9 @@ async function openPopover(h: Harness): Promise<void> {
 }
 
 describe('F1 to F5: the shield on a page', () => {
+  // These share one app and run in order: F1 to F3 read the page the app
+  // opened with (F2 opens a second tab and comes back to the first), and
+  // F5 leaves that page.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(shieldPage());

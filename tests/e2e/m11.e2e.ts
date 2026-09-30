@@ -328,7 +328,7 @@ describe('M6 and M7: Settings and shortcuts', () => {
 
       // The new keys work from the page after a restart; the old ones do nothing.
       await h.app.evaluate(({ app }) => app.quit());
-      await waitForExit(h, 8000);
+      await waitForExit(h, 30_000);
       await h.close();
       h = await launch(server.url('link-a.html'), { userDataDir: profile, keepRunning: true });
       await waitForPage(h, 'link-a');

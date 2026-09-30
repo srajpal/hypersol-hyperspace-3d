@@ -81,6 +81,8 @@ async function expectTheme(h: Harness, theme: Theme): Promise<void> {
 }
 
 describe('H1, H3, H4, H7: switching themes', () => {
+  // These share one app and run in order, each starting from the theme
+  // the one before left: Nebula, Daylight, Nebula.
   let h: Harness;
   let profile: string;
   beforeAll(async () => {

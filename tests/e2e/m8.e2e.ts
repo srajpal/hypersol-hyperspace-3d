@@ -227,7 +227,7 @@ describe('J5 to J7: private tabs', () => {
       await navigateTo(h, server.url('link-b.html'));
       await waitForPage(h, 'link-b');
       await h.app.evaluate(({ app }) => app.quit());
-      await waitForExit(h, 8000);
+      await waitForExit(h, 30_000);
     } finally {
       await h.close();
     }

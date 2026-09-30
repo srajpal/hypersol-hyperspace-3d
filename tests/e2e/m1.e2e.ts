@@ -307,6 +307,8 @@ describe('C5 scrolling', () => {
 });
 
 describe('C6 hover and links', () => {
+  // These share one app and run in order: the second leaves the page the
+  // first hovers over.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url('hover.html'));
