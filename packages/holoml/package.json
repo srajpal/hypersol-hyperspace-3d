@@ -1,6 +1,6 @@
 {
   "name": "@hypersol/holoml",
-  "version": "0.1.1",
+  "version": "0.2.2",
   "private": true,
   "description": "A copy of HoloML's parser and checker (holoml repository, the tag in SOURCE.json), made by sync.mjs; do not edit here.",
   "license": "Apache-2.0",

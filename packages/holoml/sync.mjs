@@ -56,6 +56,16 @@ for (const name of EXAMPLES.names) {
   console.log(`${from} -> tests/fixtures/holoml/${name}/`);
 }
 
+// The copy's own package file says which version of HoloML's packages it holds (review of 2026-09-30).
+const version = JSON.parse(git('show', `${tag}:packages/schema/package.json`)).version;
+const packageFile = join(here, 'package.json');
+const pkg = JSON.parse(readFileSync(packageFile, 'utf8'));
+if (pkg.version !== version) {
+  pkg.version = version;
+  writeFileSync(packageFile, `${JSON.stringify(pkg, null, 2)}\n`);
+  console.log(`package.json: version ${version}`);
+}
+
 const examples = { ref, commit: examplesCommit, files: exampleFiles };
 writeFileSync(join(here, 'SOURCE.json'), JSON.stringify({ repository: 'https://github.com/srajpal/holoml', tag, commit, files, examples }, null, 2) + '\n');
 console.log(`copied HoloML ${tag} (${commit.slice(0, 7)}), examples ${ref} (${examplesCommit.slice(0, 7)}): ${Object.keys(exampleFiles).length} files`);
