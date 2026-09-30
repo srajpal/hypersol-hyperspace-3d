@@ -11,7 +11,13 @@
  * grows quieter evenly with distance, is silent from its range on, and
  * comes from the viewer's left or right as the place is (Web Audio's
  * panner, with the listener following the viewer).
+ *
+ * Review 134: a sound removed while its file is decoded never plays (V9);
+ * what a sound holds of the page's totals is given back when it is
+ * removed or cannot be played; sounds are decoded one at a time, and one
+ * that would take the page past its seconds of sound is left out (V6).
  */
+import { LeftOut, soundSeconds, type Claim } from './budget';
 import type { Vec3 } from './values';
 
 /** Where a sound from a place is heard from, as last worked out: for the tests and the inspector. */
@@ -56,6 +62,12 @@ interface Sound {
   decoding: Promise<void> | null;
   source: AudioBufferSourceNode | null;
   gain: GainNode | null;
+  /** A sound from a place: how loud distance leaves it (the panner only says which side it comes from). */
+  fade: GainNode | null;
+  /** What it holds of the page's totals: its file's bytes, and its seconds once known. */
+  claim: Claim | null;
+  /** Removed from the page: whatever of it is still under way (its decoding) comes to nothing. */
+  removed: boolean;
   /** play() asked for while the file was still loading or decoding. */
   wanted: boolean;
   /** A sound from a place: where it is in the world now, and how far it reaches. */
@@ -70,7 +82,13 @@ export class SoundBank {
   private context: AudioContext | null = null;
   private readonly sounds = new Set<Sound>();
   private allowed = false;
+  /** Where the viewer's ears were last (sounds from a place fade by how far they are from here). */
+  private listener: Vec3 = [0, 0, 0];
+  /** One file is decoded at a time, in the order asked: each waits for the one before. */
+  private decodes: Promise<void> = Promise.resolve();
   onChange: (() => void) | null = null;
+  /** A sound was left out after its file arrived (it could not be decoded, or is too long): the notice. */
+  onLeftOut: (() => void) | null = null;
 
   constructor() {
     // Only real input counts: a page's script cannot make a trusted event.
@@ -96,12 +114,25 @@ export class SoundBank {
 
   /** A sound element, with its file still to come (arrive or fail). */
   add(report: SoundReport, options: { loop: boolean; volume: number; autoplay: boolean }): SoundHandle {
-    const s: Sound = { report, ...options, data: null, buffer: null, decoding: null, source: null, gain: null, wanted: false, where: null, range: 20, panner: null, ears: null };
+    const s: Sound = { report, ...options, data: null, buffer: null, decoding: null, source: null, gain: null, fade: null, claim: null, removed: false, wanted: false, where: null, range: 20, panner: null, ears: null };
     this.sounds.add(s);
     return {
-      arrive: (data) => {
+      arrive: (data, claim) => {
+        if (s.removed) {
+          claim.release();
+          return;
+        }
         s.data = data;
+        s.claim = claim;
         report.state = 'loaded';
+        // Its length, where its file's header tells it: too long a sound is left out now, not decoded first.
+        const seconds = soundSeconds(new Uint8Array(data));
+        try {
+          if (seconds !== null) claim.setSeconds(seconds);
+        } catch (e) {
+          this.leaveOut(s, e);
+          return;
+        }
         if (this.allowed) void this.decode(s).then(() => (s.autoplay || s.wanted ? this.play(s) : undefined));
       },
       fail: (state, reason) => {
@@ -127,8 +158,12 @@ export class SoundBank {
       },
       levels: () => this.levels(s),
       remove: () => {
+        s.removed = true;
         this.stop(s);
         this.sounds.delete(s);
+        s.data = null;
+        s.buffer = null;
+        s.claim?.release();
       },
     };
   }
@@ -145,6 +180,7 @@ export class SoundBank {
    */
   follow(position: Vec3, forward: Vec3, up: Vec3): void {
     const right = cross(forward, up);
+    this.listener = position;
     for (const s of this.sounds) {
       if (!s.where) continue;
       const p = s.where();
@@ -152,6 +188,7 @@ export class SoundBank {
       const distance = Math.hypot(...d);
       const pan = distance < 1e-6 ? 0 : (d[0] * right[0] + d[1] * right[1] + d[2] * right[2]) / distance;
       s.report.place = { distance, gain: distanceGain(distance, s.range), pan, range: s.range };
+      if (s.fade) s.fade.gain.value = s.report.place.gain;
       if (s.panner) {
         s.panner.positionX.value = p[0];
         s.panner.positionY.value = p[1];
@@ -188,10 +225,20 @@ export class SoundBank {
     return { left: rms(s.ears[0]), right: rms(s.ears[1]) };
   }
 
-  /** From the sound's gain to the speakers: through a panner at its place, or straight, for a sound from everywhere. */
+  /**
+   * From the sound's gain to the speakers: for a sound from a place,
+   * through how loud distance leaves it and a panner at its place; or
+   * straight, for a sound from everywhere. The distance is worked out
+   * here (distanceGain), not by the panner: Web Audio's own "linear"
+   * distance is silent at every distance when a sound's range is 1 metre
+   * or less (its reference distance and its greatest are then the same),
+   * where the rule says full volume within the range (review 134, V10).
+   */
   private connect(s: Sound, gain: GainNode): void {
     const ctx = this.context!;
     gain.disconnect();
+    s.fade?.disconnect();
+    s.fade = null;
     s.panner?.disconnect();
     s.panner = null;
     s.ears = null;
@@ -201,15 +248,16 @@ export class SoundBank {
     }
     const panner = ctx.createPanner();
     panner.panningModel = 'equalpower';
-    panner.distanceModel = 'linear';
-    panner.refDistance = Math.min(1, s.range);
-    panner.maxDistance = s.range;
-    panner.rolloffFactor = 1;
+    // No fall-off of its own: `fade` has it.
+    panner.rolloffFactor = 0;
     const p = s.where();
     panner.positionX.value = p[0];
     panner.positionY.value = p[1];
     panner.positionZ.value = p[2];
-    gain.connect(panner).connect(ctx.destination);
+    const fade = ctx.createGain();
+    fade.gain.value = distanceGain(Math.hypot(p[0] - this.listener[0], p[1] - this.listener[1], p[2] - this.listener[2]), s.range);
+    gain.connect(fade).connect(panner).connect(ctx.destination);
+    s.fade = fade;
     // What each ear gets, for the page's hooks (they lead nowhere else).
     const split = ctx.createChannelSplitter(2);
     const left = ctx.createAnalyser();
@@ -233,23 +281,49 @@ export class SoundBank {
     }
   }
 
+  /**
+   * Decodes a sound's file, after those asked for before it (one at a
+   * time, so the page's seconds of sound are counted in order and no two
+   * long sounds are unpacked side by side). A sound removed meanwhile is
+   * dropped; one that cannot be decoded, or that takes the page past its
+   * seconds of sound, is left out and holds nothing.
+   */
   private decode(s: Sound): Promise<void> {
-    if (s.buffer || !this.context || !s.data) return Promise.resolve();
-    s.decoding ??= this.context
-      .decodeAudioData(s.data.slice(0))
-      .then((b) => {
-        s.buffer = b;
-      })
-      .catch((e: unknown) => {
-        s.report.state = 'failed';
-        s.report.reason = `could not be decoded (${e instanceof Error ? e.message : String(e)})`;
-        console.warn(`HoloML: the sound "${s.report.src}" ${s.report.reason}.`);
-      });
+    if (s.buffer || !this.context || !s.data || s.removed) return Promise.resolve();
+    s.decoding ??= this.decodes = this.decodes.then(async () => {
+      const data = s.data;
+      if (!data || s.removed || !this.context) return;
+      try {
+        let buffer: AudioBuffer;
+        try {
+          buffer = await this.context.decodeAudioData(data.slice(0));
+        } catch (e) {
+          throw new Error(`could not be decoded (${e instanceof Error ? e.message : String(e)})`);
+        }
+        if (s.removed) return;
+        // As long as it really is, whatever its header said.
+        s.claim?.setSeconds(buffer.duration);
+        s.buffer = buffer;
+      } catch (e) {
+        this.leaveOut(s, e);
+      }
+    });
     return s.decoding;
   }
 
+  /** A sound that arrived and cannot be played: it holds nothing more, and the console and the notice say why. */
+  private leaveOut(s: Sound, e: unknown): void {
+    s.report.state = e instanceof LeftOut ? 'left-out' : 'failed';
+    s.report.reason = e instanceof LeftOut ? e.reason : e instanceof Error ? e.message : String(e);
+    console.warn(e instanceof LeftOut ? `HoloML: the sound "${s.report.src}" was left out: ${s.report.reason}.` : `HoloML: the sound "${s.report.src}" ${s.report.reason}.`);
+    s.data = null;
+    s.wanted = false;
+    s.claim?.release();
+    this.onLeftOut?.();
+  }
+
   private play(s: Sound): void {
-    if (!this.allowed || !this.context) return; // nothing plays before the first click or key
+    if (!this.allowed || !this.context || s.removed) return; // nothing plays before the first click or key
     if (!s.buffer) {
       s.wanted = s.report.state === 'loading' || s.report.state === 'loaded';
       if (s.data) void this.decode(s).then(() => (s.wanted ? this.play(s) : undefined));
@@ -291,6 +365,8 @@ export class SoundBank {
     }
     source.disconnect();
     s.gain?.disconnect();
+    s.fade?.disconnect();
+    s.fade = null;
     s.panner?.disconnect();
     s.panner = null;
     s.ears = null;
@@ -306,7 +382,8 @@ export class SoundBank {
 }
 
 export interface SoundHandle {
-  arrive(data: ArrayBuffer): void;
+  /** Its file has arrived, with what it holds of the page's totals (given back if the sound is removed or cannot be played). */
+  arrive(data: ArrayBuffer, claim: Claim): void;
   fail(state: 'failed' | 'left-out' | 'refused', reason: string): void;
   play(): void;
   stop(): void;
