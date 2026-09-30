@@ -25,6 +25,27 @@ describe("a panel's text (HoloML 0.2 panel, milestone 19)", () => {
       expect(line.length).toBeLessThanOrEqual(12);
     }
   });
+
+  it('breaks one very long word without spaces in well under a second (review 134, V5)', () => {
+    // A measure that costs by the length of what it measures, as drawing text does.
+    let measured = 0;
+    const costly = (s: string) => {
+      measured += s.length;
+      return s.length;
+    };
+    const word = '海'.repeat(1_000_000);
+    const start = performance.now();
+    const lines = wrap(`a ${word} b`, 40, costly);
+    expect(performance.now() - start).toBeLessThan(1000);
+    expect(lines).toHaveLength(25_002);
+    expect(lines[0]).toBe('a');
+    expect(lines.slice(1, -1).every((l) => l.length === 40)).toBe(true);
+    expect(lines.join('')).toBe(`a${word}b`);
+    // A few measurements of a line's length for each line, and one of the word: not the whole word for each line.
+    expect(measured).toBeLessThan(word.length * 12);
+    // A wide character alone on a line too narrow for it is still placed.
+    expect(wrap('ab', 0.5, chars)).toEqual(['a', 'b']);
+  });
 });
 
 describe("a floor plan's area (HoloML 0.2 plan, milestone 19)", () => {

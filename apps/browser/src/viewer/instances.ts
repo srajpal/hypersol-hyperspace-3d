@@ -9,7 +9,7 @@
  * tree, for its place, its id, and its parent's moves; the pool copies
  * the holders' world matrices into the instances when told they moved.
  */
-import { Box3, InstancedMesh, Matrix4, Mesh, Object3D, Vector3, type Material, type Scene } from 'three';
+import { Box3, InstancedMesh, Matrix4, Mesh, Object3D, SkinnedMesh, Vector3, type Material, type Scene } from 'three';
 
 /** A model file, loaded and decoded once. */
 export interface Template {
@@ -21,7 +21,11 @@ export interface Template {
   triangles: number;
   bytes: number;
   pictures: { width: number; height: number }[];
-  /** Whether it can be instanced: no skins and no animations. */
+  /**
+   * Whether it can be instanced: no skins, no animations, and no mesh the
+   * file itself draws many times (EXT_mesh_gpu_instancing), whose own
+   * copies an instance of an instance would lose (review 134, V4).
+   */
   instanceable: boolean;
 }
 
@@ -133,10 +137,22 @@ export class InstancePool {
   }
 }
 
-/** Whether an object and every parent of it are shown. */
-function isShown(o: Object3D): boolean {
+/** Whether an object and every parent of it are shown (a script's `visible = false` hides what it holds too). */
+export function isShown(o: Object3D): boolean {
   for (let p: Object3D | null = o; p; p = p.parent) if (!p.visible) return false;
   return true;
+}
+
+/**
+ * Whether a model file can be drawn as instances: it has no skin, no
+ * animation, and no mesh it draws many times itself.
+ */
+export function canInstance(root: Object3D, animated: boolean): boolean {
+  let plain = !animated;
+  root.traverse((o) => {
+    if (o instanceof SkinnedMesh || o instanceof InstancedMesh) plain = false;
+  });
+  return plain;
 }
 
 /** A template's box placed by a holder's world matrix: the model's bounding box in the world. */
@@ -144,13 +160,18 @@ export function worldBox(template: Template, holder: Object3D, into = new Box3()
   return into.copy(template.box).applyMatrix4(holder.matrixWorld);
 }
 
-/** Triangles in a model (each mesh counted as drawn). */
+/**
+ * Triangles in a model once decoded, each mesh counted as drawn: a mesh
+ * the file draws many times (EXT_mesh_gpu_instancing) counts that many
+ * times. This is the count the page is charged (review 134, V4).
+ */
 export function countTriangles(root: Object3D): number {
   let n = 0;
   root.traverse((o) => {
     if (!(o instanceof Mesh)) return;
     const g = o.geometry;
-    n += (g.index ? g.index.count : (g.getAttribute('position')?.count ?? 0)) / 3;
+    const one = (g.index ? g.index.count : (g.getAttribute('position')?.count ?? 0)) / 3;
+    n += one * (o instanceof InstancedMesh ? o.count : 1);
   });
   return Math.round(n);
 }

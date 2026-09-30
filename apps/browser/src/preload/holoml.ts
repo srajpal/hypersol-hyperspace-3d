@@ -29,27 +29,52 @@ if (isHolomlDocument) {
   // The source stays in the page for the viewer, hidden from the start.
   webFrame.insertCSS('html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0f1e; } body > pre { display: none; }');
   ipcRenderer.sendToHost(HOLOML_SHOWN_CHANNEL, location.href);
+  // The browser's own tests read the scene through hooks the viewer puts on the page only when it finds
+  // this mark on its script element (review 134, D12); a normal run has no mark, and no hooks.
+  const testRun = process.env['HYPERSOL_TEST'] === '1';
   const addViewer = () => {
     const script = document.createElement('script');
     script.type = 'module';
     script.src = VIEWER_ENTRY;
+    if (testRun) script.dataset['hypersolHolomlTest'] = '';
     (document.head ?? document.documentElement).append(script);
   };
   if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', addViewer, { once: true });
   else addViewer();
   // The viewer's state out to the shell (loading models, the text view),
-  // and the shell's commands in (milestone 15).
-  window.addEventListener('message', (e) => {
-    if (e.source !== window || typeof e.data !== 'object' || e.data === null) return;
-    const data = e.data as { hypersolHolomlBusy?: unknown; hypersolHolomlTextView?: unknown; hypersolHolomlDrawn?: unknown };
-    if (typeof data.hypersolHolomlBusy === 'boolean') ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { busy: data.hypersolHolomlBusy });
-    if (typeof data.hypersolHolomlTextView === 'boolean') ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { textView: data.hypersolHolomlTextView });
-    if (data.hypersolHolomlDrawn === true) ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { drawn: true });
-  });
+  // and the shell's commands in (milestone 15), over a private line
+  // (review 134, V10): a message channel whose other end is handed to the
+  // viewer when it asks, as it starts, before any script of the page
+  // exists. Only the first asking is answered, and messages on the window
+  // are neither state nor commands any more, so a page's script cannot
+  // tell the shell the scene is drawn or loading, nor tell the viewer its
+  // tab is in front.
+  let line: MessagePort | null = null;
+  const waiting: string[] = [];
+  const asked = (e: MessageEvent) => {
+    if (e.source !== window || (e.data as { hypersolHolomlViewer?: unknown } | null)?.hypersolHolomlViewer !== true) return;
+    window.removeEventListener('message', asked);
+    const channel = new MessageChannel();
+    line = channel.port1;
+    line.onmessage = (m) => {
+      const data = m.data as { busy?: unknown; textView?: unknown; drawn?: unknown } | null;
+      if (typeof data !== 'object' || data === null) return;
+      if (typeof data.busy === 'boolean') ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { busy: data.busy });
+      if (typeof data.textView === 'boolean') ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { textView: data.textView });
+      if (data.drawn === true) ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { drawn: true });
+    };
+    window.postMessage({ hypersolHolomlLine: true }, '*', [channel.port2]);
+    for (const command of waiting.splice(0)) line.postMessage(command);
+  };
+  window.addEventListener('message', asked);
+  // The instrument panel's Scene part can choose a thing and switch picking the same way ("select:<index>",
+  // "pick-on", "pick-off"), so that nothing on the page's window need act for it.
+  const commands = /^(?:stop|text-view-on|text-view-off|behind|in-front|pick-on|pick-off|select:-?\d{1,7})$/;
   ipcRenderer.on(HOLOML_COMMAND_CHANNEL, (_event, command: unknown) => {
-    if (command === 'stop' || command === 'text-view-on' || command === 'text-view-off' || command === 'behind' || command === 'in-front') {
-      window.postMessage({ hypersolHolomlCommand: command }, '*');
-    }
+    if (typeof command !== 'string' || !commands.test(command)) return;
+    // A command that comes before the viewer has asked for the line waits for it.
+    if (line) line.postMessage(command);
+    else waiting.push(command);
   });
   // The first real click, tap, or key on the page lets it play sound (HoloML
   // 0.2, milestone 17). Heard here, in the preload's own world: a page's

@@ -1,0 +1,11 @@
+<holoml>
+  <head>
+    <title>A page that does not say its version</title>
+  </head>
+  <!-- Review 134, V2: a page that names no version is refused, as one of an unknown version is. -->
+  <scene background="#203040">
+    <viewpoint position="0 1.6 7" look-at="0 0.8 0" />
+    <light type="ambient" intensity="0.8" />
+    <model id="car" src="models/no-version-car.gltf" />
+  </scene>
+</holoml>

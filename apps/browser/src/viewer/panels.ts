@@ -109,9 +109,9 @@ export function wrap(paragraph: string, width: number, measure: (s: string) => n
     }
     if (current) lines.push(current);
     let rest = word;
-    while (rest.length > 1 && measure(rest) > width) {
-      let n = rest.length - 1;
-      while (n > 1 && measure(rest.slice(0, n)) > width) n--;
+    while (rest.length > 1) {
+      const n = fitting(rest, width, measure);
+      if (n === rest.length) break;
       lines.push(rest.slice(0, n));
       rest = rest.slice(n);
     }
@@ -119,4 +119,28 @@ export function wrap(paragraph: string, width: number, measure: (s: string) => n
   }
   if (current) lines.push(current);
   return lines;
+}
+
+/**
+ * How many characters from the start of a word fit on a line (at least
+ * one). Found by doubling and then halving, and never by measuring the
+ * whole word, so one very long word without spaces costs by its length,
+ * not by its length three times over (review 134, V5).
+ */
+function fitting(word: string, width: number, measure: (s: string) => number): number {
+  let fits = 1;
+  let reach = Math.min(word.length, 2);
+  while (measure(word.slice(0, reach)) <= width) {
+    fits = reach;
+    if (reach === word.length) return fits;
+    reach = Math.min(word.length, reach * 2);
+  }
+  // Between what fits and what does not.
+  let over = reach;
+  while (over - fits > 1) {
+    const mid = (fits + over) >> 1;
+    if (measure(word.slice(0, mid)) <= width) fits = mid;
+    else over = mid;
+  }
+  return fits;
 }

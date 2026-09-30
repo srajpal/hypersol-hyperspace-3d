@@ -3,11 +3,23 @@
  * spec's defaults. The checker has already reported bad values; here a bad
  * value simply falls back to the default, so the rest of the scene shows.
  */
-import type { ElementNode } from '@hypersol/holoml';
+import type { ElementNode, Problem } from '@hypersol/holoml';
 
 export type Vec3 = [number, number, number];
 
-const NUMBER = /^-?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
+// Digits, then at most one point: written so that a long run of digits is read once (review 134, L1).
+const NUMBER = /^-?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
+
+/**
+ * How far from the middle of the scene anything may be placed, in metres
+ * (and how many times anything may be scaled): a thousand kilometres.
+ * Beyond it numbers lose the millimetres, and walls and walking stop
+ * making sense, so a place farther away falls back to the default, and
+ * the console says so (review 134, V5).
+ */
+export const REACH = 1e6;
+/** The attributes that are places or sizes in metres: the reach applies to these (a turn of many degrees is only a turn). */
+const PLACES = new Set(['position', 'look-at', 'size']);
 
 /** A number the scene can use: written as one, and finite (1e999 is not; holoml issue #3). */
 function finite(p: string): boolean {
@@ -29,18 +41,32 @@ export function num(el: ElementNode, name: string, fallback: number, min = -Infi
   return n < min || n > max ? fallback : n;
 }
 
+const toldBeyond = new WeakSet<object>();
+
+/** Whether every number is within reach; one that is not is said once, in the console, for its attribute. */
+function withinReach(el: ElementNode, name: string, numbers: number[]): boolean {
+  if (numbers.every((n) => Math.abs(n) <= REACH)) return true;
+  const written = el.attributes.find((a) => a.name === name);
+  if (written && !toldBeyond.has(written)) {
+    toldBeyond.add(written);
+    console.warn(`HoloML: line ${written.start.line}, column ${written.start.column}: "${name}" is beyond ${REACH.toLocaleString('en')}; the default is used instead.`);
+  }
+  return false;
+}
+
 export function vec3(el: ElementNode, name: string, fallback: Vec3): Vec3 {
   const parts = attr(el, name)?.trim().split(/\s+/);
   if (!parts || parts.length !== 3 || !parts.every(finite)) return fallback;
-  return parts.map(Number) as Vec3;
+  const v = parts.map(Number) as Vec3;
+  return !PLACES.has(name) || withinReach(el, name, v) ? v : fallback;
 }
 
 /** One number (the same on every axis) or three. */
 export function scale(el: ElementNode, fallback: Vec3 = [1, 1, 1]): Vec3 {
   const parts = attr(el, 'scale')?.trim().split(/\s+/);
-  if (!parts || !parts.every(finite)) return fallback;
-  if (parts.length === 1) return [Number(parts[0]), Number(parts[0]), Number(parts[0])];
-  return parts.length === 3 ? (parts.map(Number) as Vec3) : fallback;
+  if (!parts || !parts.every(finite) || (parts.length !== 1 && parts.length !== 3)) return fallback;
+  const v: Vec3 = parts.length === 1 ? [Number(parts[0]), Number(parts[0]), Number(parts[0])] : (parts.map(Number) as Vec3);
+  return withinReach(el, 'scale', v) ? v : fallback;
 }
 
 /** "#rgb" or "#rrggbb", as "#rrggbb"; null when absent or bad. */
@@ -129,6 +155,16 @@ export function resolveAddress(value: string | null | undefined, base: string): 
   } catch {
     return null;
   }
+}
+
+/**
+ * The problems the checker reported on one element itself: at its tag, at
+ * one of its attributes, or at something written inside it. A problem of
+ * another element that merely shares its line is not its own.
+ */
+export function ownProblems(el: ElementNode, problems: readonly Problem[]): Problem[] {
+  const places = [el.start, ...el.attributes.map((a) => a.start), ...el.children.map((c) => c.start)];
+  return problems.filter((p) => places.some((at) => at.line === p.line && at.column === p.column));
 }
 
 /** Light and contrasting text colours for a background, by its brightness. */

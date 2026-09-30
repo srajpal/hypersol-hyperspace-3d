@@ -370,6 +370,67 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
       );
       return;
     }
+    // ---- Review 134, the HoloML viewer's checks (tests/e2e/review-134-viewer.e2e.ts) ----
+    //   /holoml/gen/corrupt.glb?mb=N        a .glb of N MB (default 1) that says it holds one triangle and cannot be
+    //                                       decoded: its mesh names a part of the file that is not there
+    //   /holoml/gen/instanced.gltf?tris=T&copies=C
+    //                                       a glTF of one mesh of T triangles that the file itself draws C times
+    //                                       (EXT_mesh_gpu_instancing), over a buffer of zeros
+    if (what === 'corrupt.glb') {
+      const text = JSON.stringify({
+        asset: { version: '2.0' },
+        scene: 0,
+        scenes: [{ nodes: [0] }],
+        nodes: [{ mesh: 0 }],
+        meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }],
+        accessors: [{ bufferView: 7, componentType: 5126, count: 3, type: 'VEC3' }],
+      });
+      const json = Buffer.from(text.padEnd(Math.ceil(text.length / 4) * 4, ' '));
+      const bin = Buffer.alloc(Math.round(Math.min(32, Math.max(0.001, Number(p.get('mb') ?? '1') || 1)) * 1024 * 1024));
+      const head = Buffer.alloc(20);
+      head.writeUInt32LE(0x46546c67, 0);
+      head.writeUInt32LE(2, 4);
+      head.writeUInt32LE(28 + json.length + bin.length, 8);
+      head.writeUInt32LE(json.length, 12);
+      head.writeUInt32LE(0x4e4f534a, 16);
+      const binHead = Buffer.alloc(8);
+      binHead.writeUInt32LE(bin.length, 0);
+      binHead.writeUInt32LE(0x004e4942, 4);
+      res.writeHead(200, { 'content-type': 'model/gltf-binary', 'cache-control': 'no-store' });
+      res.end(Buffer.concat([head, json, binHead, bin]));
+      return;
+    }
+    if (what === 'instanced.gltf') {
+      const tris = Math.max(1, Math.min(1_000_000, Number(p.get('tris') ?? '1') || 1));
+      const copies = Math.max(1, Math.min(100_000, Number(p.get('copies') ?? '1') || 1));
+      // Three corners, the corners' order (6 bytes a triangle, to a multiple of four), then each copy's place.
+      const places = 36 + Math.ceil((tris * 6) / 4) * 4;
+      const byteLength = places + copies * 12;
+      res.writeHead(200, { 'content-type': TYPES['.gltf']!, 'cache-control': 'no-store' });
+      res.end(
+        JSON.stringify({
+          asset: { version: '2.0' },
+          extensionsUsed: ['EXT_mesh_gpu_instancing'],
+          scene: 0,
+          scenes: [{ nodes: [0] }],
+          nodes: [{ mesh: 0, extensions: { EXT_mesh_gpu_instancing: { attributes: { TRANSLATION: 2 } } } }],
+          meshes: [{ primitives: [{ attributes: { POSITION: 0 }, indices: 1 }] }],
+          accessors: [
+            { bufferView: 0, componentType: 5126, count: 3, type: 'VEC3', min: [0, 0, 0], max: [0, 0, 0] },
+            { bufferView: 1, componentType: 5123, count: tris * 3, type: 'SCALAR' },
+            { bufferView: 2, componentType: 5126, count: copies, type: 'VEC3' },
+          ],
+          bufferViews: [
+            { buffer: 0, byteOffset: 0, byteLength: 36 },
+            { buffer: 0, byteOffset: 36, byteLength: tris * 6 },
+            { buffer: 0, byteOffset: places, byteLength: copies * 12 },
+          ],
+          buffers: [{ uri: `zeros.bin?bytes=${byteLength}`, byteLength }],
+        }),
+      );
+      return;
+    }
+    // ---- End of review 134's viewer routes ----
     res.writeHead(404).end();
     return;
   }
