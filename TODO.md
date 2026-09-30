@@ -4348,6 +4348,20 @@ finished documents.
   times, and once each: milestone 3's quit after the shell's 2-second
   wait, check #10's slow download in milestone 8, and a key press in the
   top bar), reported to the owner.
+- Prompt 134 (2026-09-30), a review of both repositories and of the
+  automatic builds. The builds' time is the end-to-end checks drawn in
+  software: in run 36667528292 Linux part 2 took 31 min 40 s (m21 16 min
+  45 s of it, the aquarium at 1.0 frame a second), Linux part 1 20 min
+  32 s, Windows 12 min and 9 min 25 s. The end-to-end checks now run in
+  four parts on each system (vitest.e2e.config.ts and ci.yml: part 1
+  everything not listed, 2 milestones 14 to 17, 3 milestones 18 to 20, 4
+  milestone 21), with a last job, "All checks", that passes only when
+  every part has; no check is dropped or changed. Each part selects its
+  files on this computer (`vitest list`); not checked yet on GitHub,
+  which needs a push. The review's findings, and what else would
+  shorten the builds (each needing the owner's decision), are in
+  REVIEW-2026-09-30.md, not committed, as it lists weaknesses not yet
+  fixed.
 - Y8, the feature check repeated over the finished documents: nothing
   missing beyond milestone 23's list. Found and fixed: SPEC.md's note
   on a page from the computer (it may load from its folder and the

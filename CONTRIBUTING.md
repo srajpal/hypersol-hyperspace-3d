@@ -50,8 +50,8 @@ fails on file paths over Windows' 260-character limit.
 
 Every push and pull request runs all of these on Windows and Linux in
 GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)),
-the end-to-end checks in two parts side by side on each system
-(`HYPERSOL_E2E_PART=1` or `2`; see vitest.e2e.config.ts).
+the end-to-end checks in four parts side by side on each system
+(`HYPERSOL_E2E_PART=1` to `4`; see vitest.e2e.config.ts).
 Please make sure they pass before asking for a review.
 
 Where things are: the app in `apps/browser` (main process, preloads, the
@@ -76,7 +76,7 @@ Where things are: the app in `apps/browser` (main process, preloads, the
 - AI agents working in this repository follow [AGENTS.md](AGENTS.md).
 - `main` is protected: it cannot be force-pushed or deleted, and a pull
   request is merged once its automatic builds pass (Windows and Linux,
-  each in two parts).
+  each in four parts).
 
 ## Licence of contributions
 

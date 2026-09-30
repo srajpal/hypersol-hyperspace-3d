@@ -1,10 +1,11 @@
 # Builds and tests every push and pull request on Windows and Linux
 # (milestone 12, GitHub issue #5; approved by the owner, prompt 56, C a).
 # macOS joins with the macOS release milestone. Each system runs the
-# end-to-end checks in two parts side by side, to stay within the time a
-# job may take (milestone 21, owner, prompt 122, Q7 a): part 2 is HoloML's
-# example sites from milestone 18 on (vitest.e2e.config.ts), part 1
-# everything else, with lint, types, and the unit tests.
+# end-to-end checks in four parts side by side, so a build takes as long
+# as its longest part (two parts from milestone 21, owner, prompt 122,
+# Q7 a; four from prompt 134): parts 2 to 4 are the HoloML files listed
+# in vitest.e2e.config.ts, part 1 everything else, with lint, types, and
+# the unit tests.
 name: CI
 
 on:
@@ -27,9 +28,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest]
-        part: [1, 2]
+        part: [1, 2, 3, 4]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    # The longest part (part 4 on Linux) takes about 18 minutes.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -81,3 +83,16 @@ jobs:
         env:
           HYPERSOL_E2E_PART: ${{ matrix.part }}
         run: pnpm test:e2e
+
+  # One check that stands for every part, whatever their number: passes
+  # only when all of them passed. A rule that requires checks before
+  # merging can name this one and need no change when the parts do.
+  all:
+    name: All checks
+    if: always()
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every part passed
+        run: test "${{ needs.test.result }}" = "success"

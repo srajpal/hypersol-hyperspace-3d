@@ -112,8 +112,14 @@ Built (2026-09-29), on branches not yet merged:
 - holoml #20 is merged (3ce0ab2, prompt 133) and the site is published:
   Y5 and Y9 pass from its public address. The browser's copy is synced
   from holoml's main.
-- Still to do: the Linux run and the browser's automatic builds (pull
-  request #39, Auto-fix on), a screen reader by hand (Y6, the owner's),
+- A review of both repositories (prompt 134, 2026-09-30) is in
+  REVIEW-2026-09-30.md at this repository's root, not committed, as it
+  lists weaknesses not yet fixed; the owner decides what is fixed and
+  when. From it, so far, only the automatic builds changed: the
+  end-to-end checks run in four parts on each system, with an "All
+  checks" job (committed on this branch, not pushed; the rule on main
+  still names parts 1 and 2 only).
+- Still to do: a screen reader by hand (Y6, the owner's),
   the owner's acceptance, and the v0.2.1 tag on
   the owner's go (as a pre-release). Both projects are marked
   experimental (prompts 129 and 131): HoloML in its specification,
