@@ -750,24 +750,29 @@ export function settled(h: Harness): Promise<boolean> {
 
 /**
  * Waits until the room is still, and returns its frame count: no switch
- * animation, and the count held for 300 ms. The room draws only while
- * something changes (a page flying to its card, a spinner on a loading
- * card, a card's new picture, the camera following the pointer), and how
- * long that takes depends on the machine. Checks that an idle room draws
- * nothing start from here, as a HoloML scene's start from sceneStill;
- * their own measuring time follows, and a room that kept drawing would
- * never get this far.
+ * animation, every loaded page's picture on its card, and no frame drawn
+ * for a second and a half. The room draws only while something changes
+ * (a page flying to its card, a spinner on a loading card, the camera
+ * following the pointer), and once more when a card gets its picture,
+ * which is taken 400 ms after the page has loaded and takes as long as
+ * the machine needs. Checks that an idle room draws nothing start from
+ * here, as a HoloML scene's start from sceneStill; their own measuring
+ * time follows, and a room that kept drawing would never get this far.
  */
-export async function roomStill(h: Harness, timeoutMs = 15_000): Promise<number> {
+export async function roomStill(h: Harness, timeoutMs = 20_000): Promise<number> {
+  const QUIET_MS = 1500;
   let last = -1;
+  let since = Date.now();
   return waitFor(
-    'the room still (no switch animation, no frames drawn for 300 ms)',
+    `the room still (no switch animation, a picture on every loaded page's card, no frame drawn for ${QUIET_MS} ms)`,
     async () => {
-      const [animating, frames] = [await shellCall(h, 'animating'), await shellCall(h, 'frames')];
-      const still = !animating && frames === last;
-      last = frames;
-      await sleep(300);
-      return still ? frames : -1;
+      const [animating, frames, all] = [await shellCall(h, 'animating'), await shellCall(h, 'frames'), await tabs(h)];
+      if (frames !== last) {
+        last = frames;
+        since = Date.now();
+      }
+      const pictured = all.every((t) => t.state !== 'loaded' || t.asleep || t.hasSnapshot);
+      return !animating && pictured && Date.now() - since >= QUIET_MS ? frames : -1;
     },
     (n) => n >= 0,
     timeoutMs,
