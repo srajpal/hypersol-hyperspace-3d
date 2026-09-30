@@ -729,7 +729,7 @@ export class HsToolbar extends LitElement {
           ? html`<button
               data-testid="text-view"
               aria-label="Text view"
-              title="Text view: the scene as a plain page (Ctrl+Shift+V)"
+              title=${`Text view: the scene as a plain page (${this.keys['text-view'] ?? ''})`}
               aria-pressed=${this.textView ? 'true' : 'false'}
               @click=${() => this.fire('hs-text-view')}
             >

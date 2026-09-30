@@ -2,7 +2,7 @@ import type { PageStatus } from '@hypersol/scene-core';
 import { daylight, nebula, themeById, type Theme } from '@hypersol/themes';
 import type { ShellBridge, ShellCommand, ShortcutName } from '../shared/commands';
 import { DEFAULT_SETTINGS, defaults, SEARCH_ENGINES, searchUrlFor, type Settings } from '../shared/settings';
-import { bindings, describeCombo } from '../shared/shortcuts';
+import { bindings, describeCombo, holomlOnly, matchCombo } from '../shared/shortcuts';
 import { DataClient, PasswordsClient, PermissionsClient, PrivacyClient } from './data';
 import type { HsPrompts } from './hud/prompts';
 import type { HsSitePanel } from './hud/site-panel';
@@ -195,15 +195,23 @@ export class App {
       });
     };
     options.themeButton.addEventListener('hs-theme-toggle', () => void this.toggleTheme());
-    // Ctrl+Shift+V: the text view, only with a HoloML page in front and
-    // not while typing (elsewhere it stays "paste as plain text").
+    // A shortcut for HoloML pages only (the text view, Ctrl+Shift+V unless
+    // changed in Settings > Shortcuts), pressed while the shell has the
+    // keyboard. Pressed in the page it arrives as a command, like every
+    // shortcut; pressed here the main process leaves the keys to the
+    // shell (main/shortcuts.ts), which knows what it cannot: whether a
+    // text field has the keyboard, where they keep their usual meaning
+    // ("paste as plain text").
     document.addEventListener('keydown', (e) => {
-      const view = this.focusedView;
-      if (!view?.isHoloml || !(e.ctrlKey || e.metaKey) || !e.shiftKey || e.altKey || e.key.toLowerCase() !== 'v') return;
+      if (e.defaultPrevented || !this.focusedView?.isHoloml) return;
+      const platform = options.bridge.platform;
+      const pressed = { ctrl: e.ctrlKey, alt: e.altKey, shift: e.shiftKey, meta: e.metaKey, key: e.key };
+      const name = matchCombo(pressed, bindings(this.settings.shortcuts, platform), platform);
+      if (name === null || !holomlOnly(name)) return;
       const typing = e.composedPath().some((n) => n instanceof HTMLInputElement || n instanceof HTMLTextAreaElement);
       if (typing) return;
       e.preventDefault();
-      view.setTextView(!view.textView);
+      this.onShortcut(name);
     });
     // A .holoml file dropped on the window outside the page opens in the tab in front.
     document.addEventListener('dragover', (e) => {
@@ -1374,6 +1382,12 @@ export class App {
       case 'examples':
         this.showExamples();
         break;
+      case 'text-view': {
+        // For a HoloML page only: the main process and the listener above send it for nothing else.
+        const view = this.focusedView;
+        if (view?.isHoloml) view.setTextView(!view.textView);
+        break;
+      }
     }
   }
 

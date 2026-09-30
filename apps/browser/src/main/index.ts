@@ -349,6 +349,7 @@ if (!app.requestSingleInstanceLock()) {
       platform: process.platform,
       shortcutKeys,
       capturingKeys: () => capturingKeys,
+      holomlPage: () => !contents.isDestroyed() && (holoml?.isDocument(contents.id, contents.getURL()) ?? false),
       get testLog() {
         return testLog;
       },

@@ -60,7 +60,8 @@ export type ShortcutName =
   | 'back'
   | 'forward'
   | 'open-file'
-  | 'examples';
+  | 'examples'
+  | 'text-view';
 
 export type ShellCommand =
   | { type: 'shortcut'; name: ShortcutName }
