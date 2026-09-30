@@ -1522,3 +1522,20 @@ faster. Check every aspect of both repos.
 Also use the info from this skill to do the checks:
 https://github.com/mattpocock/skills/blob/main/skills/engineering/code-review/SKILL.md
 ```
+
+## 135 — 2026-09-30 · Claude Fable 5.1, high effort
+
+Answering the agent's six questions after the review (prompt 134), each
+with its recommendation, and asking for every finding to be fixed: the
+aquarium's turtle (licensed non-commercial, credited as CC BY) replaced
+by a CC BY or CC0 model; the automatic builds' commit pushed to pull
+request #39; the rule on main changed to require the one "All checks"
+job, with the checks skipped for pushes that change documents only;
+HoloML drawn at half resolution without anti-aliasing where Chromium
+draws in software; the checks that race repaired without loosening what
+they assert; and the findings recorded as private security advisories
+(the security ones) and GitHub issues (the rest).
+
+```text
+Use the recommendations and fix everything
+```
