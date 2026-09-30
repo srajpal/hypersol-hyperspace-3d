@@ -3,7 +3,7 @@ import { parseDataRequest, type DataOp, type DataReply, type DataRequest } from 
 import { applySettingsPatch, type Settings } from '../../shared/settings';
 import { Store } from './database';
 import { inProcess, WorkerHistory, type HistoryBackend } from './history-backend';
-import { siteKey } from './history';
+import { siteKey } from '../../shared/site';
 import { SessionFile, SettingsFile } from './settings-file';
 
 export type DataChange = 'bookmarks' | 'history' | 'settings' | 'passwords';

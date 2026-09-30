@@ -9,6 +9,7 @@ import {
   type NetEntry,
   type PageReadout,
 } from '../../shared/inspect';
+import { hostOf } from '../../shared/site';
 
 interface TabRecord {
   url: string;
@@ -34,14 +35,6 @@ interface Numbers {
 const withoutHash = (url: string) => url.split('#', 1)[0];
 
 const BLOCKED = 'net::ERR_BLOCKED_BY_CLIENT';
-
-function hostOf(url: string): string {
-  try {
-    return new URL(url).hostname.toLowerCase();
-  } catch {
-    return '';
-  }
-}
 
 /** A response's declared size, or -1. */
 export function declaredBytes(headers: Record<string, string[]> | undefined): number {

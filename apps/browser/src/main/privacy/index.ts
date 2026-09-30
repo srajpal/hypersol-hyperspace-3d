@@ -17,7 +17,8 @@ import { DnsControl, QUAD9 } from './dns';
 import { FilterService, type ListManifest } from './filters';
 import { verifyStarter, type StarterInfo } from './filters-build';
 import { OwnRequests } from './own-requests';
-import { hostOf, Shield, type Matcher } from './shield';
+import { hostOf } from '../../shared/site';
+import { Shield, type Matcher } from './shield';
 import createBuildWorker from './filters-worker?nodeWorker';
 
 /** The blocker's page script asks on these channels (@ghostery/adblocker-electron-preload). */

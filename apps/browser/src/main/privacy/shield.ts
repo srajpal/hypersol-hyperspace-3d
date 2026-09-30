@@ -1,4 +1,5 @@
 import { MAX_BLOCKED_ITEMS, type BlockedItem, type ShieldReport } from '../../shared/privacy';
+import { hostOf } from '../../shared/site';
 
 /** What the shield needs to know about one request. */
 export interface RequestInfo {
@@ -35,14 +36,6 @@ interface TabRecord {
   site: string;
   count: number;
   items: BlockedItem[];
-}
-
-export function hostOf(url: string): string {
-  try {
-    return new URL(url).hostname.toLowerCase();
-  } catch {
-    return '';
-  }
 }
 
 const withoutHash = (url: string) => url.split('#', 1)[0];

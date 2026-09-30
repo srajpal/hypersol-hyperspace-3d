@@ -34,6 +34,7 @@ import { Room } from './scene/room';
 import type { StartData } from './scene/start-panel';
 import { TabView } from './scene/tab-view';
 import { TabStore, type Tab, type TabState } from './state/tabs';
+import { hostOf } from '../shared/site';
 import { resolveInput, siteMarker } from './url';
 
 export interface AppOptions {
@@ -75,15 +76,6 @@ type PanelName = 'library' | 'settings' | 'downloads';
 const SNAPSHOT_DELAY_MS = 400;
 const SESSION_SAVE_DELAY_MS = 400;
 const isWeb = (url: string) => /^https?:\/\//i.test(url);
-
-/** An address's host name in lower case; '' for anything that is not an address. */
-function hostOf(url: string): string {
-  try {
-    return new URL(url).hostname.toLowerCase();
-  } catch {
-    return '';
-  }
-}
 
 /** Same page apart from the #fragment (an in-page jump keeps the favicon). */
 function isSamePage(a: string, b: string): boolean {
