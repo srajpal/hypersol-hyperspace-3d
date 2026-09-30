@@ -40,7 +40,7 @@ import { inProcess, WorkerHistory } from './storage/history-backend';
 import { Worker } from 'node:worker_threads';
 import { installTestHooks, type TestLog } from './test-hooks';
 
-const options = parseLaunchOptions(process.argv, process.env);
+const options = parseLaunchOptions(process.argv, process.env, app.isPackaged);
 
 // Development and test runs never use a real profile (AGENTS.md rule 1).
 if (options.userDataDir) {

@@ -2,7 +2,8 @@ import type { AttachRecord } from './security';
 
 /**
  * Logs the end-to-end tests read through Playwright's main-process
- * evaluate. Installed only when HYPERSOL_TEST=1.
+ * evaluate. Installed only when HYPERSOL_TEST=1, and never in a packaged
+ * build (main/launch-options.ts).
  */
 export interface TestLog {
   attaches: AttachRecord[];
