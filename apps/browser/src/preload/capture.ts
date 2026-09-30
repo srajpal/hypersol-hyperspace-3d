@@ -4,15 +4,15 @@
  * that getUserMedia and getDisplayMedia hand out, and every clone made of
  * them (track.clone(), stream.clone(); PR #29 review), until they end or
  * are stopped, and says so by a window message; this preload passes it to the
- * shell, so a tab that is capturing is not put to sleep (#18). When the
- * person blocks the camera or microphone for the site, the main process
- * asks here to stop those tracks at once (#22).
+ * shell, so a tab that is capturing is not put to sleep (#18). Blocking
+ * the camera or microphone for the site is the main process's work: it
+ * reloads the page (#22; main/permissions.ts), as nothing in the page's
+ * own world can be relied on to stop a track.
  *
  * The page could send the same message itself; all it could do with it is
  * keep its own tab awake, which is not worth guarding.
  */
-import { contextBridge, ipcRenderer } from 'electron';
-import { CAPTURE_STOP_CHANNEL } from '../shared/page-state';
+import { contextBridge } from 'electron';
 import { tellShell } from './page-state';
 
 /** Runs in the page's world, before the page's own scripts. */
@@ -91,11 +91,6 @@ function tracker(): void {
       },
     });
   }
-  window.addEventListener('message', (e) => {
-    const kinds = (e.data as { hypersolCaptureStop?: unknown } | null)?.hypersolCaptureStop;
-    if (e.source !== window || !Array.isArray(kinds)) return;
-    for (const t of [...live]) if (kinds.includes(t.kind)) t.stop();
-  });
 }
 
 if (window === window.top) {
@@ -108,10 +103,5 @@ if (window === window.top) {
     const state = (e.data as { hypersolCapture?: { audio?: unknown; video?: unknown } } | null)?.hypersolCapture;
     if (e.source !== window || !state) return;
     tellShell({ capturing: state.audio === true || state.video === true });
-  });
-  ipcRenderer.on(CAPTURE_STOP_CHANNEL, (_event, kinds: unknown) => {
-    if (!Array.isArray(kinds)) return;
-    const tracks = kinds.filter((k) => k === 'audio' || k === 'video');
-    window.postMessage({ hypersolCaptureStop: tracks }, '*');
   });
 }

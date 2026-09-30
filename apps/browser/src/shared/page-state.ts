@@ -6,8 +6,6 @@
  * sees it.
  */
 export const PAGE_STATE_CHANNEL = 'hypersol:page-state';
-/** From the main process to a page: stop capturing these track kinds ('audio', 'video'); issue #22. */
-export const CAPTURE_STOP_CHANNEL = 'hypersol:capture-stop';
 
 export interface PageState {
   typed: boolean;

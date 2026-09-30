@@ -208,10 +208,10 @@ describe('issue #22: blocking the camera stops it', () => {
       await h.shell.click(BAR('site-button'));
       await waitFor('site panel', () => shellCall(h, 'sitePanel'), (s) => s.open && s.site !== null);
       await h.shell.selectOption(SITE('site-camera'), 'block');
-      const state = (page: { id: number }) => inPage<string>(h, 'window.keep.getVideoTracks()[0].readyState', page);
-      await waitFor('first tab stopped', () => state(one), (s) => s === 'ended');
-      await waitFor('clones stopped', () => inPage<string>(h, '[window.trackCopy.readyState, window.streamCopy.getVideoTracks()[0].readyState].join()', one), (s) => s === 'ended,ended');
-      await waitFor('second tab stopped', () => state(two), (s) => s === 'ended');
+      // Each page that held the camera is reloaded (review of 2026-09-30, M7):
+      // its stream and the clones end with the old page, whatever its scripts do.
+      await waitFor('first tab reloaded: its stream and clones gone', () => inPage<string>(h, '[typeof window.keep, typeof window.trackCopy, typeof window.streamCopy].join()', one), (s) => s === 'undefined,undefined,undefined');
+      await waitFor('second tab reloaded: its stream gone', () => inPage<string>(h, 'typeof window.keep', two), (s) => s === 'undefined');
       await waitFor('marker gone', () => shellCall(h, 'accessOf', tabOne), (k) => !k.includes('camera'));
       expect(await h.shell.locator(SITE('site-given-camera')).count()).toBe(0);
       expect(await start(one)).toBe('NotAllowedError');
@@ -253,7 +253,8 @@ describe('issue #22: blocking the camera stops it', () => {
         await waitFor('site panel', () => shellCall(h, 'sitePanel'), (s) => s.open && s.site !== null);
         await h.shell.selectOption(SITE('site-camera'), 'block');
         const state = (page: { id: number }) => inPage<string>(h, 'window.keep.getVideoTracks()[0].readyState', page);
-        await waitFor('the blocking tab stopped', () => state(blocking), (s) => s === 'ended');
+        // The blocking tab's page is reloaded, which ends its capture (review of 2026-09-30, M7).
+        await waitFor('the blocking tab reloaded: its stream gone', () => inPage<string>(h, 'typeof window.keep', blocking), (s) => s === 'undefined');
         await sleep(500);
         expect(await state(other)).toBe('live');
       } finally {

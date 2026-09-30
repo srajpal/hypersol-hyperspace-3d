@@ -1,6 +1,5 @@
 import { webContents as allContents, type IpcMainInvokeEvent, type Session, type WebContents } from 'electron';
 import type { ShellCommand } from '../shared/commands';
-import { CAPTURE_STOP_CHANNEL } from '../shared/page-state';
 import {
   PERMISSION_KINDS,
   decide,
@@ -32,6 +31,17 @@ interface Pending {
   callback: (granted: boolean) => void;
 }
 
+/**
+ * What a page may do without asking (review of 2026-09-30, M1), by
+ * Electron's names: put text on the clipboard, fill the screen, and hold
+ * the pointer. None tells the page anything about the person or the
+ * computer, ordinary pages need them (a "Copy" button, a video, a game),
+ * and Chromium itself allows each only during a real click or key press.
+ * Every other name, known or not, is refused unless it is asked for with
+ * a prompt (the camera, the microphone, the location).
+ */
+export const ALLOWED_WITHOUT_ASKING: ReadonlySet<string> = new Set(['clipboard-sanitized-write', 'fullscreen', 'pointerLock']);
+
 /** What one tab's page may use: "this time" grants and what it was given (the marker). */
 interface TabGrants {
   origin: string;
@@ -46,7 +56,10 @@ interface TabGrants {
  * origin, in settings.json for normal tabs and in memory for private tabs
  * (forgotten with the last private tab, as GitHub issue #8). "This time"
  * lasts until the tab leaves the site or closes. Every other permission
- * is refused, as before. Only web pages (webviews) are ever asked about.
+ * is refused, to a page that asks and to one that only looks (a page
+ * that never asked reads "denied" for notifications, and nothing as
+ * "granted"), except the few in ALLOWED_WITHOUT_ASKING. Only web pages
+ * (webviews) are ever asked about.
  */
 export class Permissions {
   private readonly pending = new Map<number, Pending>();
@@ -59,6 +72,10 @@ export class Permissions {
   /** Puts the handlers on a session (the default one and the private one). */
   protect(session: Session): void {
     session.setPermissionRequestHandler((contents, permission, callback, details) => {
+      if (ALLOWED_WITHOUT_ASKING.has(permission)) {
+        callback(true);
+        return;
+      }
       const kinds =
         permission === 'media'
           ? mediaKinds((details as { mediaTypes?: string[] }).mediaTypes)
@@ -73,9 +90,12 @@ export class Permissions {
       this.request(contents, origin, kinds, callback);
     });
     session.setPermissionCheckHandler((contents, permission, requestingOrigin, details) => {
-      // Checks for anything else keep Electron's answer from before this
-      // milestone (no check handler), so clipboard writes and the like work.
-      if (permission !== 'media' && permission !== 'geolocation') return true;
+      // With no handler Electron answers "yes" to every check, and until the
+      // review of 2026-09-30 this one did too for all but the three kinds
+      // below: notifications, MIDI, reading the clipboard, and the rest
+      // read as granted to every page.
+      if (ALLOWED_WITHOUT_ASKING.has(permission)) return true;
+      if (permission !== 'media' && permission !== 'geolocation') return false;
       if (!contents || contents.getType() !== 'webview') return false;
       const origin = originOf(details.requestingUrl ?? requestingOrigin) ?? originOf(requestingOrigin);
       if (!origin) return false;
@@ -174,16 +194,19 @@ export class Permissions {
   /**
    * Blocking a site's camera or microphone ends what its pages are already
    * capturing, in every tab on that site, not only new requests (GitHub
-   * issue #22); the in-use marker goes with it. Only in the session the
-   * choice was made in: normal and private tabs keep separate choices
-   * (PR #29 review).
+   * issue #22); the in-use marker goes with it. A page that was given the
+   * camera or microphone is reloaded: that ends its capture whatever its
+   * scripts do, where asking the page to stop its own tracks (as until the
+   * review of 2026-09-30, M7) left a hostile page capturing under a marker
+   * that had gone out. Only in the session the choice was made in: normal
+   * and private tabs keep separate choices (PR #29 review).
    */
   private revoke(origin: string, kind: PermissionKind, session: Session): void {
-    const track = kind === 'camera' ? 'video' : kind === 'microphone' ? 'audio' : null;
     for (const [contents, grants] of this.tabs) {
       if (grants.origin !== origin || contents.isDestroyed() || contents.session !== session) continue;
-      if (track) contents.send(CAPTURE_STOP_CHANNEL, [track]);
-      if (grants.given.delete(kind)) this.deps.send(contents, { type: 'site-access', webContentsId: contents.id, kinds: [...grants.given] });
+      if (!grants.given.delete(kind)) continue;
+      this.deps.send(contents, { type: 'site-access', webContentsId: contents.id, kinds: [...grants.given] });
+      if (kind !== 'location') contents.reload();
     }
   }
 
