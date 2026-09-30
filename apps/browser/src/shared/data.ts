@@ -3,7 +3,7 @@
  * process (main/storage/service.ts). Every request is checked there with
  * parseDataRequest before anything is read or written.
  */
-import type { Settings } from './settings';
+import type { Settings, SettingsPatch } from './settings';
 
 export const DATA_CHANNEL = 'hypersol:data';
 
@@ -53,7 +53,8 @@ export type DataRequest =
   | { op: 'history.suggest'; text: string; limit: number }
   | { op: 'history.forget-url'; url: string }
   | { op: 'settings.get' }
-  | { op: 'settings.set'; patch: Partial<Settings> }
+  /** A change to settings; what it may hold is checked when it is applied (shared/settings.ts). */
+  | { op: 'settings.set'; patch: SettingsPatch }
   | { op: 'session.save'; tabs: string[]; focused: number }
   | { op: 'startup' }
   | { op: 'data.clear'; history: boolean; cookies: boolean; cache: boolean; passwords?: boolean };
@@ -139,7 +140,7 @@ export function parseDataRequest(raw: unknown): { request: DataRequest } | { err
       return { request: { op: 'history.delete', id: r['id'] } };
     case 'settings.set':
       if (typeof r['patch'] !== 'object' || r['patch'] === null) return bad('patch must be an object');
-      return { request: { op: 'settings.set', patch: r['patch'] as Partial<Settings> } };
+      return { request: { op: 'settings.set', patch: r['patch'] as SettingsPatch } };
     case 'session.save': {
       const tabs = r['tabs'];
       if (!Array.isArray(tabs) || tabs.length > MAX_TABS || !tabs.every(isWebUrl)) {

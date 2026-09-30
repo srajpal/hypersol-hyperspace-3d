@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { parseDataRequest, type DataOp, type DataReply, type DataRequest } from '../../shared/data';
-import { applySettingsPatch, type Settings } from '../../shared/settings';
+import { applySettingsPatch, type Settings, type SettingsPatch } from '../../shared/settings';
 import { Store } from './database';
 import { inProcess, WorkerHistory, type HistoryBackend } from './history-backend';
 import { siteKey } from '../../shared/site';
@@ -74,7 +74,7 @@ export class StorageService {
   }
 
   /** Changes settings from the main process (site permissions); throws with the reason if refused. */
-  updateSettings(patch: Partial<Settings>): Settings {
+  updateSettings(patch: SettingsPatch): Settings {
     const result = applySettingsPatch(this.settingsFile.settings, patch);
     if ('error' in result) throw new Error(result.error);
     this.settingsFile.save(result.settings);

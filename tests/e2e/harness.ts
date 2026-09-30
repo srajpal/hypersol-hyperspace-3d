@@ -8,6 +8,7 @@ import { execFileSync, type ChildProcess } from 'node:child_process';
 import { _electron as electron, type ElectronApplication, type Page } from 'playwright';
 import { afterAll, afterEach } from 'vitest';
 import type { TestLog } from '../../apps/browser/src/main/test-hooks';
+import type { ShellTestHooks } from '../../apps/browser/src/renderer/main';
 
 // No trailing separator: on Windows a backslash before the closing quote
 // of a command-line argument escapes the quote and garbles every argument after it.
@@ -343,85 +344,14 @@ export function mainLog<K extends LogList>(h: Harness, part: K): Promise<TestLog
 }
 
 /**
- * The read-only hooks the shell exposes in test runs (renderer/main.ts).
- * Written out here: the shell builds them as one object and exports no
- * type for it.
+ * The read-only hooks the shell exposes in test runs, typed by the shell
+ * itself (renderer/main.ts builds them and exports their type), so a
+ * hook that changes there cannot go unnoticed here.
  */
-export interface ShellHooks {
-  ready: boolean;
-  openPanel(): 'library' | 'settings' | 'downloads' | null;
-  ignorePrepareClose(): void;
-  frames(): number;
-  drawsRoom(): boolean;
-  holoml(): { fill: boolean; shown: boolean };
-  showUrl(url: string): void;
-  layout(): { panelWidth: number; panelHeight: number; cameraZ: number; viewportWidth: number; viewportHeight: number; rotationY: number };
-  cameraOffset(): Point;
-  parallaxPaused(): boolean;
-  pointerLog(): { x: number; y: number; target: string; overPage: boolean }[];
-  projectPagePoint(u: number, v: number): Point;
-  panelQuad(): Point[];
-  sceneColors(): Record<string, string>;
-  status(): { state: string; url: string; title?: string; message?: string } | null;
-  tabs(): TabInfo[];
-  /** The picture on a tab's card (a data address), or null. */
-  cardPicture(tabId: number): string | null;
-  focusedTabId(): number;
-  cardPoint(key: number | 'plus', part: 'body' | 'close' | 'audio'): Point | null;
-  rail(): { scroll: number; maxScroll: number; fits: number };
-  railVisible(): boolean;
-  animating(): boolean;
-  webContentsIdOf(tabId: number): number | null;
-  shield(): { count: number; disabled: boolean; open: boolean };
-  layersOf(tabId: number): boolean;
-  theme(): string;
-  zoom(): { factor: number; label: number };
-  find(): { open: boolean; matches: number; active: number };
-  prints(): number;
-  prompts(): {
-    permission: { id: number; webContentsId: number; origin: string; kinds: string[] } | null;
-    offer: { id: number; origin: string; username: string; update: boolean; insecure: boolean; problem?: string } | null;
-  };
-  accessOf(tabId: number): string[];
-  closedCount(): number;
-  sleepNow(): number;
-  economy(): { on: boolean; pixelRatio: number; devicePixelRatio: number; frames: number };
-  tabDisplay(): { scale: number; display: string; revealed: boolean; railVisible: boolean; strip: boolean };
-  view(): { direction: number; margin: number; parallax: number };
-  showSetting(id: string): Promise<boolean>;
-  notice(): { text: string; kind: string; actions: { id: string; label: string }[] } | null;
-  sitePanel(): { open: boolean; site: { origin: string; private: boolean; states: Record<string, string>; given: string[] } | null };
-  downloads(): { id: number; filename: string; path: string; received: number; total: number; state: string }[];
-  instruments(): {
-    open: boolean;
-    polling: boolean;
-    parts: { readouts: boolean; gauges: boolean; console: boolean; network: boolean };
-    page: { url: string; secure: boolean; loadMs: number; requests: number; bytes: number; blocked: number; failed: number; cert: { issuer: string; verification: string } | null; memoryKB: number } | null;
-    net: number;
-    console: string[];
-    gauges: { tabs: number; fps: number; filtersAge: string; dns: string; clock: string; uptime: string };
-  };
-  tilt(): number;
-  layers(): { on: boolean; images: { x: number; y: number; width: number; height: number; src: string; alt: string; kind: string }[] };
-}
+export type ShellHooks = ShellTestHooks;
 
-export interface TabInfo {
-  id: number;
-  url: string;
-  title: string;
-  state: string;
-  focused: boolean;
-  hasSnapshot: boolean;
-  /** When the card last got a picture (the shell's performance.now(); 0 for never). */
-  snapshotAt: number;
-  hasFavicon: boolean;
-  canGoBack: boolean;
-  canGoForward: boolean;
-  private: boolean;
-  audible: boolean;
-  muted: boolean;
-  asleep: boolean;
-}
+/** A tab as the shell's `tabs` hook describes it. */
+export type TabInfo = ReturnType<ShellHooks['tabs']>[number];
 
 export type ShellWindow = Window & { __hypersolShellTest: ShellHooks };
 
