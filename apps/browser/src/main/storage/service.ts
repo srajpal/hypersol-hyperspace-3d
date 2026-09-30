@@ -73,12 +73,18 @@ export class StorageService {
     return this.store;
   }
 
-  /** Changes settings from the main process (site permissions); throws with the reason if refused. */
-  updateSettings(patch: SettingsPatch): Settings {
+  /**
+   * Changes settings from the main process (site permissions, the
+   * window's size and place); throws with the reason if refused.
+   *
+   * @param tell Whether listeners hear of the change. The shell shows
+   *   nothing of the window's size and place, so it is not told of those.
+   */
+  updateSettings(patch: SettingsPatch, tell = true): Settings {
     const result = applySettingsPatch(this.settingsFile.settings, patch);
     if ('error' in result) throw new Error(result.error);
     this.settingsFile.save(result.settings);
-    this.emit('settings');
+    if (tell) this.emit('settings');
     return result.settings;
   }
 

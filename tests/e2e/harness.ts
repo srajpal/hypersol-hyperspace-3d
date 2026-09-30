@@ -69,6 +69,11 @@ export interface LaunchOptions {
   sleepMinuteMs?: number;
   /** Start Chromium with WebGL switched off, as on a computer that cannot draw the room (milestone 12). */
   noWebGL?: boolean;
+  /**
+   * Remember the window's size as a normal run does (test mode switch).
+   * Without it a test window is 1280 by 800 whatever the profile holds.
+   */
+  rememberWindow?: boolean;
 }
 
 /**
@@ -185,6 +190,7 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
   if (opts.examplesBase !== undefined) args.push(`--examples-base=${opts.examplesBase}`);
   if (opts.downloadsDir !== undefined) args.push(`--downloads-dir=${opts.downloadsDir}`);
   if (opts.noKeychain) args.push('--test-no-keychain');
+  if (opts.rememberWindow) args.push('--test-remember-window');
   if (opts.sleepMinuteMs !== undefined) args.push(`--test-sleep-minute-ms=${opts.sleepMinuteMs}`);
   args.push(...graphicsSwitches({ noWebGL: opts.noWebGL }));
   // Without a desktop session, Chromium would pick its fixed-key password

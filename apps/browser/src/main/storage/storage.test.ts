@@ -266,6 +266,21 @@ describe('StorageService', () => {
     expect(changes).toEqual(['history', 'history']);
   });
 
+  it('a change from the main process is saved, and listeners hear of it unless it is one nothing shows (the window)', async () => {
+    const s = open();
+    const changes: string[] = [];
+    s.onChange((w) => changes.push(w));
+    s.updateSettings({ sitePermissions: { 'https://site.example': { camera: 'allow' } } });
+    expect(changes).toEqual(['settings']);
+    const left = { x: 40, y: 30, width: 1100, height: 720, maximized: false };
+    s.updateSettings({ windowBounds: left }, false);
+    expect(changes).toEqual(['settings']);
+    // Saved all the same, beside what was there, and there at the next start.
+    expect(s.settingsFile.settings).toMatchObject({ windowBounds: left, sitePermissions: { 'https://site.example': { camera: 'allow' } } });
+    expect(open().settingsFile.settings.windowBounds).toEqual(left);
+    expect(() => s.updateSettings({ windowBounds: { ...left, width: 1 } }, false)).toThrow(/windowBounds/);
+  });
+
   it('refuses bad requests without throwing', async () => {
     const s = open();
     expect(await s.handle({ op: 'nope' })).toEqual({ ok: false, error: 'Unknown request: nope' });

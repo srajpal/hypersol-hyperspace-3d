@@ -44,6 +44,13 @@ export interface LaunchOptions {
   testNoWebGL: boolean;
   /** Test mode only (--test-sleep-minute-ms=N): a "minute" for sleeping tabs, so the checks need not wait (milestone 10). */
   testSleepMinuteMs?: number;
+  /**
+   * Whether the window's size and place are remembered and used again
+   * (main/window-bounds.ts). Always, except in test mode: test windows
+   * are 1280 by 800 whatever was saved, unless --test-remember-window
+   * asks for the real behaviour (the check of it does).
+   */
+  rememberWindow: boolean;
 }
 
 function switchValue(argv: readonly string[], name: string): string | undefined {
@@ -73,6 +80,7 @@ function localAddress(value: string | undefined): string | undefined {
  *   --dns-probe=<address>           DNS reachability check, test mode only (127.0.0.1)
  *   --test-no-keychain              passwords act as if the keychain were missing, test mode only
  *   --test-no-webgl                 the shell without WebGL (no 3D room), test mode only
+ *   --test-remember-window          the window's size is remembered as in a normal run, test mode only
  * and HYPERSOL_TEST=1 for test mode, HYPERSOL_TEST_BACKGROUND=1 for
  * test windows that stay out of the way.
  *
@@ -118,5 +126,6 @@ export function parseLaunchOptions(
     testNoKeychain: testMode && argv.includes('--test-no-keychain'),
     testNoWebGL: testMode && argv.includes('--test-no-webgl'),
     ...(sleepMinute !== undefined ? { testSleepMinuteMs: sleepMinute } : {}),
+    rememberWindow: !testMode || argv.includes('--test-remember-window'),
   };
 }

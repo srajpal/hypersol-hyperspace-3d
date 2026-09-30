@@ -12,6 +12,7 @@ describe('parseLaunchOptions', () => {
       testKeepRunning: false,
       testNoKeychain: false,
       testNoWebGL: false,
+      rememberWindow: true,
     });
   });
 
@@ -30,6 +31,7 @@ describe('parseLaunchOptions', () => {
       testKeepRunning: false,
       testNoKeychain: false,
       testNoWebGL: false,
+      rememberWindow: false,
     });
   });
 
@@ -38,6 +40,15 @@ describe('parseLaunchOptions', () => {
     expect(parseLaunchOptions(['--test-no-keychain'], { HYPERSOL_TEST: '1' }, false).testNoKeychain).toBe(true);
     expect(parseLaunchOptions(['--test-no-webgl'], {}, false).testNoWebGL).toBe(false);
     expect(parseLaunchOptions(['--test-no-webgl'], { HYPERSOL_TEST: '1' }, false).testNoWebGL).toBe(true);
+  });
+
+  it('remembers the window in every run but a test run, unless the test run asks for it (review of 2026-09-30, D7)', () => {
+    const test = { HYPERSOL_TEST: '1' };
+    expect(parseLaunchOptions([], {}, false).rememberWindow).toBe(true);
+    expect(parseLaunchOptions([], test, false).rememberWindow).toBe(false);
+    expect(parseLaunchOptions(['--test-remember-window'], test, false).rememberWindow).toBe(true);
+    // A packaged build has no test mode, so nothing there can switch it off.
+    expect(parseLaunchOptions([], test, true).rememberWindow).toBe(true);
   });
 
   it('shortens the sleeping-tab minute only in test mode (milestone 10)', () => {
@@ -111,6 +122,7 @@ describe('parseLaunchOptions in a packaged build (review of 2026-09-30, D11)', (
       testKeepRunning: false,
       testNoKeychain: false,
       testNoWebGL: false,
+      rememberWindow: true,
     });
   });
 
@@ -131,6 +143,7 @@ describe('parseLaunchOptions in a packaged build (review of 2026-09-30, D11)', (
       testNoKeychain: true,
       testNoWebGL: true,
       testSleepMinuteMs: 200,
+      rememberWindow: false,
     });
   });
 });

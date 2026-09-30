@@ -30,6 +30,7 @@ import { INSPECT_CHANNEL } from '../shared/inspect';
 import { Inspector } from './inspect';
 import { wireGuest, wireShortcuts } from './guests';
 import { parseLaunchOptions } from './launch-options';
+import { DEFAULT_WINDOW, openingBounds, sameBounds, type Opening } from './window-bounds';
 import { chooseProfileFolder } from './profile-folder';
 import { Privacy } from './privacy';
 import { hardenShell, isAcceptableDrop, refuseClientCertificates } from './security';
@@ -164,10 +165,64 @@ function offScreenPosition(): { x: number; y: number } {
   return { x: right + 200, y: 0 };
 }
 
+/**
+ * Where the window opens (main/window-bounds.ts): as it was last left, if
+ * that is remembered and still on a connected display. A background test
+ * window sits off every display by design, so only its size is taken.
+ */
+function windowOpening(): Opening {
+  const saved = options.rememberWindow ? (storage?.settingsFile.settings.windowBounds ?? null) : null;
+  if (options.testBackground) return { width: saved?.width ?? DEFAULT_WINDOW.width, height: saved?.height ?? DEFAULT_WINDOW.height, maximized: false };
+  return openingBounds(
+    saved,
+    screen.getAllDisplays().map((d) => d.workArea),
+  );
+}
+
+/** How long the window's size and place must hold still before they are saved. */
+const WINDOW_SAVE_DELAY_MS = 500;
+
+/**
+ * Saves the window's size and place in settings.json as they change,
+ * once they have settled, and at once when the window closes (review of
+ * 2026-09-30, D7). The bounds saved are the ones it has while not
+ * maximised, with whether it is maximised beside them, so leaving the
+ * maximised state goes back to the size it had. A failed save is logged
+ * and tried again at the next change.
+ */
+function rememberWindow(win: BrowserWindow): void {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const save = () => {
+    clearTimeout(timer);
+    const saved = storage;
+    if (!saved || win.isDestroyed() || win.isFullScreen()) return;
+    const { x, y, width, height } = win.getNormalBounds();
+    const now = { x, y, width, height, maximized: win.isMaximized() };
+    if (sameBounds(saved.settingsFile.settings.windowBounds, now)) return;
+    try {
+      saved.updateSettings({ windowBounds: now }, false);
+    } catch (e) {
+      console.warn(`Couldn't save the window's size: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
+  const soon = () => {
+    clearTimeout(timer);
+    timer = setTimeout(save, WINDOW_SAVE_DELAY_MS);
+  };
+  win.on('resize', soon);
+  win.on('move', soon);
+  win.on('maximize', soon);
+  win.on('unmaximize', soon);
+  win.on('close', save);
+  win.on('closed', () => clearTimeout(timer));
+}
+
 function createWindow(): void {
+  const opening = windowOpening();
   const win = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width: opening.width,
+    height: opening.height,
+    ...(opening.x !== undefined && opening.y !== undefined ? { x: opening.x, y: opening.y } : {}),
     ...(options.testBackground ? { ...offScreenPosition(), skipTaskbar: true } : {}),
     minWidth: 900,
     minHeight: 600,
@@ -199,8 +254,14 @@ function createWindow(): void {
       if (input.type === 'keyDown' && input.key === 'F12') win.webContents.toggleDevTools();
     });
   }
-  // Background test windows appear without taking focus.
-  win.once('ready-to-show', () => (options.testBackground ? win.showInactive() : win.show()));
+  // Background test windows appear without taking focus. A window that
+  // was left maximised opens maximised.
+  win.once('ready-to-show', () => {
+    if (options.testBackground) win.showInactive();
+    else if (opening.maximized) win.maximize();
+    else win.show();
+  });
+  if (options.rememberWindow) rememberWindow(win);
   win.on('closed', () => {
     mainWindow = null;
     // Every tab went with the window, private ones included: clear the
