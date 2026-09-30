@@ -34,8 +34,8 @@ Three.js inside that page's own sandboxed process (apps/browser/src/viewer).
   the screen, so we can paint it onto a 3D surface.
 - DoH (DNS over HTTPS): encrypted lookups of website addresses, so the
   network cannot read or change the lookups. The network still sees the
-  address each connection goes to and, as the connection is made, the
-  site's name.
+  address each connection goes to and, for most sites, the site's name
+  as the connection is made.
 - SQLite: a small single-file database. Chrome and Firefox store history
   and bookmarks this way.
 - Monorepo: one git repository holding several packages that version and
