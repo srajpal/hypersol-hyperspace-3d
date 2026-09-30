@@ -8,8 +8,9 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { startFixtureServer, type FixtureServer } from './fixture-server';
+import { startFixtureServer, startHttpsFixtureServer, type FixtureServer } from './fixture-server';
 import {
+  ADDRESS,
   clickUntil,
   cycleToTab,
   focusedPage,
@@ -359,6 +360,111 @@ describe('R3: a prompt or notice takes no click the instant it appears', () => {
       expect((await opened()).length).toBe(1);
     } finally {
       await h.close();
+    }
+  });
+});
+
+describe('R5: the address bar', () => {
+  it("shows the end of a long host, not its start, and the whole address when it takes the keyboard", async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      const port = new URL(server.base).port;
+      // No such site (every name but this computer's fails to resolve in test runs): the address still shows.
+      const long = `http://accounts.google.com.${'a'.repeat(60)}.${'b'.repeat(60)}.${'c'.repeat(60)}.evil.example:${port}/signin`;
+      await navigateTo(h, long);
+      await waitFor('the load to fail', () => focusedTab(h), (t) => t.state === 'failed');
+      const shown = await h.shell.inputValue(ADDRESS);
+      expect(shown.startsWith('http://…')).toBe(true);
+      expect(shown.endsWith(`evil.example:${port}/signin`)).toBe(true);
+      expect(shown).not.toContain('accounts.google.com');
+      // The scheme and what is left of the host fit the bar as drawn.
+      const fit = await h.shell.evaluate((port) => {
+        const input = document.querySelector('hs-toolbar')!.shadowRoot!.querySelector<HTMLInputElement>('[data-testid="address"]')!;
+        const style = getComputedStyle(input);
+        const ctx = document.createElement('canvas').getContext('2d')!;
+        ctx.font = style.font;
+        const start = input.value.slice(0, input.value.indexOf(`:${port}`) + port.length + 1);
+        return { text: ctx.measureText(start).width, room: input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight), scrolled: input.scrollLeft };
+      }, port);
+      expect(fit.text).toBeLessThanOrEqual(fit.room);
+      expect(fit.scrolled).toBe(0);
+      // With the keyboard: the whole address, to read or edit.
+      await h.shell.focus(ADDRESS);
+      expect(await h.shell.inputValue(ADDRESS)).toBe(long);
+      await h.shell.locator(ADDRESS).blur();
+      expect(await h.shell.inputValue(ADDRESS)).toBe(shown);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('never shows a user name and password, while loading or after', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      const { host } = new URL(server.base);
+      await navigateTo(h, `http://reader:not-a-real-secret@${host}/slow?ms=1500`);
+      await waitFor('the address being loaded in the bar', () => h.shell.inputValue(ADDRESS), (v) => v.includes('/slow'));
+      expect(await h.shell.inputValue(ADDRESS)).toBe(`http://${host}/slow?ms=1500`);
+      await waitFor('the page loaded', () => focusedTab(h), (t) => t.state === 'loaded' && t.title === 'Slow page', 20_000);
+      expect(await h.shell.inputValue(ADDRESS)).toBe(`http://${host}/slow?ms=1500`);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('left unedited, shows where the tab is now when it loses the keyboard', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      await h.shell.focus(ADDRESS);
+      expect(await h.shell.inputValue(ADDRESS)).toBe(server.url('link-a.html'));
+      // The page moves on by itself while the bar has the keyboard.
+      await inPage(h, `location.href = ${JSON.stringify(server.url('link-b.html'))}; true`, 'link-a');
+      await waitFor('the tab on the next page', () => focusedTab(h), (t) => t.url === server.url('link-b.html') && t.state === 'loaded');
+      // Text under the cursor is not swapped while the person may be reading or about to type.
+      expect(await h.shell.inputValue(ADDRESS)).toBe(server.url('link-a.html'));
+      await h.shell.locator(ADDRESS).blur();
+      expect(await h.shell.inputValue(ADDRESS)).toBe(server.url('link-b.html'));
+      // Text the person typed and left is kept.
+      await h.shell.fill(ADDRESS, 'half an addr');
+      await h.shell.locator(ADDRESS).blur();
+      expect(await h.shell.inputValue(ADDRESS)).toBe('half an addr');
+      await h.shell.focus(ADDRESS);
+      expect(await h.shell.inputValue(ADDRESS)).toBe('half an addr');
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('shows no lock for a certificate error, and "Not secure" only for a page that loaded over http', async () => {
+    const tls = await startHttpsFixtureServer();
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      expect(await h.shell.locator(BAR('site-button')).getAttribute('data-kind')).toBe('insecure');
+      await navigateTo(h, tls.url('link-b.html'));
+      await waitFor(
+        'the certificate card',
+        () => h.shell.locator('[data-testid="page-panel"][aria-hidden="false"] .hs-error-card').getAttribute('data-kind'),
+        (k) => k === 'certificate',
+      );
+      expect((await focusedTab(h)).state).toBe('failed');
+      expect(await h.shell.inputValue(ADDRESS)).toBe(tls.url('link-b.html'));
+      expect(await h.shell.locator(BAR('site-button')).count()).toBe(0);
+      // A site that does not answer: no marker either.
+      await navigateTo(h, `http://127.0.0.1:${await unansweredPort()}/`);
+      await waitFor('the load to fail', () => shellCall(h, 'status'), (s) => s?.state === 'failed' && s.url.startsWith('http://127.0.0.1'));
+      expect(await h.shell.locator(BAR('site-button')).count()).toBe(0);
+      // Back on a page that loads: the marker is back.
+      await navigateTo(h, server.url('link-b.html'));
+      await waitForPage(h, 'link-b');
+      await waitFor('the marker', () => h.shell.locator(BAR('site-button')).count(), (n) => n === 1);
+      expect(await h.shell.locator(BAR('site-button')).getAttribute('data-kind')).toBe('insecure');
+    } finally {
+      await h.close();
+      await tls.close();
     }
   });
 });

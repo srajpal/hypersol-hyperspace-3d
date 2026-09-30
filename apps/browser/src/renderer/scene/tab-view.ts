@@ -59,6 +59,8 @@ export class TabView implements PagePanel {
   private failed = false;
   /** Counts page loads, so a late answer about an earlier failure is ignored. */
   private loadSeq = 0;
+  /** The address of the document the page last loaded (not one still on its way, or one that failed). */
+  private committed = '';
   private pageImages: PageImage[] = [];
   private currentStatus: PageStatus;
   private w = 0;
@@ -153,6 +155,11 @@ export class TabView implements PagePanel {
 
   get isAsleep(): boolean {
     return this.asleepFrom !== null;
+  }
+
+  /** The address of the document the page last loaded; '' before the first (the site button's marker). */
+  get committedUrl(): string {
+    return this.webview ? this.committed : '';
   }
 
   /** The tab shows a HoloML page (milestone 14): its preload said so for the current address. */
@@ -486,6 +493,7 @@ export class TabView implements PagePanel {
     if (this.isPrivate) wv.setAttribute('partition', PRIVATE_PARTITION);
     wv.setAttribute('src', url);
     this.webview = wv;
+    this.committed = '';
     this.shimmer.setAttribute('data-visible', '');
     // Before the error and shimmer layers, so they cover the page.
     this.element.prepend(wv);
@@ -580,12 +588,16 @@ export class TabView implements PagePanel {
       this.typedInForm = false;
       this.capturingMedia = false;
       const wasHoloml = this.isHoloml;
+      this.committed = e.url;
       this.emit({ ...this.currentStatus, url: e.url });
       if (wasHoloml !== this.isHoloml) this.events.onHoloml?.();
       navState();
     });
     wv.addEventListener('did-navigate-in-page', (e) => {
-      if (e.isMainFrame) this.emit({ ...this.currentStatus, url: e.url });
+      if (e.isMainFrame) {
+        this.committed = e.url;
+        this.emit({ ...this.currentStatus, url: e.url });
+      }
       navState();
     });
     wv.addEventListener('page-title-updated', (e) => {

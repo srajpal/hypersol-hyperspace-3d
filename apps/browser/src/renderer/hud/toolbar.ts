@@ -2,6 +2,7 @@ import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
 import { PERMISSION_LABELS, type PermissionKind } from '../../shared/permissions';
 import { watchDismiss } from './dismiss';
 import type { Suggestion, Suggestions } from '../../shared/data';
+import { displayAddress } from '../url';
 
 /** An address as the address bar matches it: without the scheme or "www.", in lower case. */
 export function typedKey(text: string): string {
@@ -115,7 +116,7 @@ export class HsToolbar extends LitElement {
   declare private: boolean;
   /** A download is in progress: a dot on the menu button. */
   declare downloading: boolean;
-  /** The page in front: https ('secure'), plain http ('insecure'), or none (a start tab). */
+  /** The page in front: loaded over https ('secure'), over plain http ('insecure'), or none (a start tab, a failed page, a page not loaded yet). */
   declare site: 'secure' | 'insecure' | 'none';
   /** What the page in front was given (camera, microphone, location): the in-use marker (milestone 9). */
   declare access: PermissionKind[];
@@ -139,6 +140,11 @@ export class HsToolbar extends LitElement {
   searchName = 'the web';
   /** What was typed, and the address it was completed to. */
   private typed = '';
+  /** The person has changed the text in the bar since it last showed the tab's address. */
+  private edited = false;
+  /** For measuring how much of an address fits the bar. */
+  private measure: CanvasRenderingContext2D | null = null;
+  private resizeWatch: ResizeObserver | null = null;
   private inline: { key: string; url: string } | null = null;
   /**
    * Every address offered while typing, by the key it completes to: Enter
@@ -510,9 +516,45 @@ export class HsToolbar extends LitElement {
       const input = this.renderRoot.querySelector('input');
       if (!input) return;
       input.value = this.url;
+      this.edited = false;
       input.focus();
       input.select();
     });
+  }
+
+  private get addressFocused(): boolean {
+    const input = this.addressInput;
+    return input !== null && (this.renderRoot as ShadowRoot).activeElement === input;
+  }
+
+  /**
+   * Puts the tab's address in the bar as it reads without the keyboard:
+   * the end of its host always in view, however narrow the bar, and no
+   * user name or password (url.ts, displayAddress).
+   */
+  private showAddress(input: HTMLInputElement): void {
+    this.edited = false;
+    const style = getComputedStyle(input);
+    const room = input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    this.measure ??= document.createElement('canvas').getContext('2d');
+    const ctx = this.measure;
+    if (!ctx || !(room > 0)) {
+      input.value = displayAddress(this.url);
+      return;
+    }
+    ctx.font = style.font;
+    input.value = displayAddress(this.url, (start) => ctx.measureText(start).width <= room);
+  }
+
+  protected override firstUpdated(): void {
+    // The bar widens and narrows with the window and with what else the
+    // top bar shows; the address is fitted again each time.
+    const input = this.addressInput;
+    if (!input) return;
+    this.resizeWatch = new ResizeObserver(() => {
+      if (!this.addressFocused && !this.edited) this.showAddress(input);
+    });
+    this.resizeWatch.observe(input);
   }
 
   private stopDismiss: (() => void) | null = null;
@@ -530,6 +572,8 @@ export class HsToolbar extends LitElement {
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     this.stopDismiss?.();
+    this.resizeWatch?.disconnect();
+    this.resizeWatch = null;
     document.removeEventListener('keydown', this.onEscape);
   }
 
@@ -552,10 +596,8 @@ export class HsToolbar extends LitElement {
   }
 
   protected override updated(changed: PropertyValues<this>): void {
-    const input = this.renderRoot.querySelector('input');
-    if (input && changed.has('url') && (this.renderRoot as ShadowRoot).activeElement !== input) {
-      input.value = this.url;
-    }
+    const input = this.addressInput;
+    if (input && changed.has('url') && !this.addressFocused) this.showAddress(input);
   }
 
   override render() {
@@ -623,16 +665,22 @@ export class HsToolbar extends LitElement {
             spellcheck="false"
             autocomplete="off"
             @focus=${(e: FocusEvent) => {
-              // A new typing session.
+              // A new typing session, on the whole address (unless text typed earlier is still there).
               this.offered.clear();
-              (e.target as HTMLInputElement).select();
+              const input = e.target as HTMLInputElement;
+              if (!this.edited) input.value = this.url;
+              input.select();
             }}
             @input=${this.onInput}
-            @blur=${() =>
+            @blur=${(e: FocusEvent) => {
+              // Left as it was: the bar shows where the tab is now (the
+              // page may have moved on while the bar had the keyboard).
+              if (!this.edited) this.showAddress(e.target as HTMLInputElement);
               window.setTimeout(() => {
                 // Unless the bar has the keyboard again by then.
-                if ((this.renderRoot as ShadowRoot).activeElement !== this.addressInput) this.closeSuggestions();
-              }, 150)}
+                if (!this.addressFocused) this.closeSuggestions();
+              }, 150);
+            }}
             @keydown=${this.onKey}
           />
           ${this.suggestionList()}
@@ -807,6 +855,7 @@ export class HsToolbar extends LitElement {
     const input = e.target as HTMLInputElement;
     const value = input.value;
     this.typed = value;
+    this.edited = true;
     this.inline = null;
     this.selected = -1;
     const deleting = (e as InputEvent).inputType?.startsWith('delete') ?? false;
@@ -851,6 +900,7 @@ export class HsToolbar extends LitElement {
 
   private go(url: string): void {
     this.closeSuggestions();
+    this.edited = false;
     this.fire('hs-navigate', url);
     this.addressInput?.blur();
   }
@@ -858,6 +908,7 @@ export class HsToolbar extends LitElement {
   private searchTyped(): void {
     const text = this.typed.trim();
     this.closeSuggestions();
+    this.edited = false;
     if (text) this.fire('hs-search', text);
     this.addressInput?.blur();
   }
@@ -910,9 +961,9 @@ export class HsToolbar extends LitElement {
       const text = input.value.trim();
       this.closeSuggestions();
       this.offered.clear();
-      if (known) this.fire('hs-navigate', known);
-      else if (text !== '') this.fire('hs-navigate', text);
-      else return;
+      if (text === '' && !known) return;
+      this.edited = false;
+      this.fire('hs-navigate', known ?? text);
       input.blur();
     } else if (e.key === 'Escape') {
       if (this.listShown || this.inline) {
@@ -923,6 +974,7 @@ export class HsToolbar extends LitElement {
         return;
       }
       input.value = this.url;
+      this.edited = false;
       input.select();
     }
   };

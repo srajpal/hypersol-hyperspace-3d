@@ -34,7 +34,7 @@ import { Room } from './scene/room';
 import type { StartData } from './scene/start-panel';
 import { TabView } from './scene/tab-view';
 import { TabStore, type Tab, type TabState } from './state/tabs';
-import { resolveInput } from './url';
+import { resolveInput, siteMarker } from './url';
 
 export interface AppOptions {
   startUrl: string;
@@ -618,6 +618,9 @@ export class App {
       ...(status.url ? { url: status.url } : {}),
       ...(status.title ? { title: status.title } : status.url && tab.title === tab.url ? { title: status.url } : {}),
     });
+    // The page may have loaded the address the tab already shows: nothing
+    // in the tab changed, but the site button's marker did.
+    if (tabId === this.store.focusedId) this.updateToolbar();
   }
 
   private scheduleSnapshot(tabId: number): void {
@@ -821,7 +824,9 @@ export class App {
     t.canLayers = isWeb(tab.url) && tab.state !== 'start' && tab.state !== 'failed' && !scene;
     t.holoml = scene;
     t.textView = this.focusedView?.textView ?? false;
-    t.site = !isWeb(tab.url) || tab.state === 'start' ? 'none' : /^https:/i.test(tab.url) ? 'secure' : 'insecure';
+    // The lock is for a page that really loaded over https, not for an
+    // address still on its way in or one that failed (a certificate error).
+    t.site = siteMarker(tab.state, tab.url, this.focusedView?.committedUrl ?? '');
     t.access = this.access.get(tab.id) ?? [];
     t.muted = tab.muted;
     t.canReopen = this.closedTabs.size > 0;
