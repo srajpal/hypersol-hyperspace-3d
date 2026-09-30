@@ -64,6 +64,23 @@ describe('Parallax', () => {
     expect(p.offset.x).toBe(-24);
   });
 
+  it('reset() centres the camera at once, even while paused', () => {
+    const p = new Parallax({ maxOffset: 24 });
+    p.setPointer(1, -1);
+    settle(p, 1000);
+    expect(p.offset).toEqual({ x: 24, y: -24 });
+    p.setPaused(true);
+    p.setPointer(0, 0); // ignored: the pointer is over the page
+    expect(p.offset).toEqual({ x: 24, y: -24 });
+    p.reset();
+    expect(p.offset).toEqual({ x: 0, y: 0 });
+    // Nothing is left to ease towards when the pointer leaves the page.
+    p.setPaused(false);
+    expect(p.moving).toBe(false);
+    expect(p.step(16)).toBe(false);
+    expect(p.offset).toEqual({ x: 0, y: 0 });
+  });
+
   it('ignores non-numeric pointer values', () => {
     const p = new Parallax();
     p.setPointer(Number.NaN, Number.POSITIVE_INFINITY);

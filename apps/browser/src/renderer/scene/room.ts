@@ -387,7 +387,7 @@ export class Room {
   setView(view: { direction: 1 | -1; margin: PageMarginSize; parallax: keyof typeof PARALLAX_AMOUNTS }): void {
     const margin = PAGE_MARGINS[view.margin];
     this.parallax.options.maxOffset = DEFAULT_PARALLAX.maxOffset * PARALLAX_AMOUNTS[view.parallax];
-    if (view.parallax === 'off') this.parallax.setPointer(0, 0);
+    if (view.parallax === 'off') this.centreCamera();
     if (view.direction === this.direction && margin === this.margin) {
       this.requestRender();
       return;
@@ -413,7 +413,7 @@ export class Room {
     this.webgl?.setPixelRatio(on ? Math.max(0.5, window.devicePixelRatio * 0.5) : window.devicePixelRatio);
     this.horizon.visible = !on;
     this.sun.visible = this.theme.room.sun && !on;
-    if (on) this.parallax.setPointer(0, 0);
+    if (on) this.centreCamera();
     this.layout();
     this.requestRender();
   }
@@ -430,13 +430,24 @@ export class Room {
   setFill(on: boolean): void {
     if (on === this.fill) return;
     this.fill = on;
-    if (on) this.parallax.setPointer(0, 0);
+    if (on) this.centreCamera();
     this.layout();
     this.requestRender();
   }
 
   get filling(): boolean {
     return this.fill;
+  }
+
+  /**
+   * Puts the camera back at the centre at once, for a view that must be
+   * flat and still. The pointer is usually over the page then, where the
+   * parallax is paused and would ignore a new target, so the page stayed
+   * slightly skewed (review of 2026-09-30, R4).
+   */
+  private centreCamera(): void {
+    this.parallax.reset();
+    this.onCameraMove?.({ x: 0, y: 0 });
   }
 
   get pixelRatio(): number {
