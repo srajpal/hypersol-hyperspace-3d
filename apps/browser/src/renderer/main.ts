@@ -132,7 +132,7 @@ function testHooks() {
     closedCount: () => app.closedCount,
     sleepNow: () => app.sleepUnused(),
     economy: () => ({ on: app.economy, pixelRatio: room.pixelRatio, devicePixelRatio: window.devicePixelRatio, frames: room.frames }),
-    tabDisplay: () => ({ ...room.display_, railVisible: room.railVisible, strip: document.querySelector('hs-tab-strip')!.open }),
+    tabDisplay: () => ({ ...room.tabLayout, railVisible: room.railVisible, strip: document.querySelector('hs-tab-strip')!.open }),
     view: () => room.view,
     showSetting: (id: string) => document.querySelector('hs-settings')!.reveal(id),
     librarySearchTimes: () => ({ pauseMs: SEARCH_PAUSE_MS, times: document.querySelector('hs-library')!.searchTimes }),

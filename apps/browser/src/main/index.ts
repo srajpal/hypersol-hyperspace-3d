@@ -516,7 +516,9 @@ if (!app.requestSingleInstanceLock()) {
     });
     if (testLog) testLog.openLocal = (path) => pages.openFile(path);
 
-    const log0 = testLog;
+    // A copy for the closures below: testLog is a variable of the module, so
+    // inside them TypeScript cannot know it is still set.
+    const downloadsLog = testLog;
     const downloads = new Downloads({
       folder: () => downloadsFolder,
       onChange: (items) => {
@@ -524,7 +526,7 @@ if (!app.requestSingleInstanceLock()) {
           mainWindow.webContents.send(SHELL_COMMAND_CHANNEL, { type: 'downloads', items } satisfies ShellCommand);
         }
       },
-      ...(log0 ? { opened: (what: string, path: string) => log0.opened.push({ what, path }) } : {}),
+      ...(downloadsLog ? { opened: (what: string, path: string) => downloadsLog.opened.push({ what, path }) } : {}),
     });
     downloads.watch(ses);
     downloads.watch(privateSes);

@@ -378,7 +378,8 @@ export class Room {
     }
   }
 
-  get display_(): { scale: number; display: TabDisplayMode } {
+  /** The card size and the way tabs are shown, as setTabLayout last set them (for the end-to-end checks). */
+  get tabLayout(): { scale: number; display: TabDisplayMode } {
     return { scale: this.cardScale, display: this.display };
   }
 
