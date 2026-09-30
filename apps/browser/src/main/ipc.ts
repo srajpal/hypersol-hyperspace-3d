@@ -11,7 +11,10 @@ export type ShellHandler = (event: IpcMainInvokeEvent, request: unknown) => unkn
  * answers every sender that is not the shell with the refusal, without
  * calling the handler: a web page, or anything else that finds the
  * channel's name, learns nothing and changes nothing. Every privileged
- * request channel is registered through it (main/index.ts).
+ * request channel is registered through it (main/index.ts). The two
+ * one-way event channels (the shell says its keys are being captured,
+ * or that it is ready to close) are plain listeners that compare the
+ * sender with the shell's window themselves.
  */
 export function shellOnly(isShell: (contents: WebContents) => boolean, ipc: Pick<IpcMain, 'handle'> = ipcMain) {
   return function handleFromShell(channel: string, handler: ShellHandler, refusal: unknown = NOT_ALLOWED): void {

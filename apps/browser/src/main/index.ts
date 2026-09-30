@@ -541,7 +541,7 @@ if (!app.requestSingleInstanceLock()) {
     });
 
     // Tab snapshots for the cards: only for a web page the asking shell hosts.
-    ipcMain.handle(CAPTURE_TAB_CHANNEL, async (event, id: unknown) => {
+    handleFromShell(CAPTURE_TAB_CHANNEL, async (event, id: unknown) => {
       if (typeof id !== 'number') return null;
       const guest = webContents.fromId(id);
       if (!guest || guest.isDestroyed() || guest.getType() !== 'webview') return null;
@@ -553,7 +553,7 @@ if (!app.requestSingleInstanceLock()) {
       } catch {
         return null;
       }
-    });
+    }, null);
 
     // Saved data lives in the app data folder (a throwaway one in dev and tests).
     storage = new StorageService(
