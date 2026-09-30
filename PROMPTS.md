@@ -1557,3 +1557,9 @@ It still failed. Wait for it to pass before merging?
 ```text
 holoml #21 has a failure too, check that
 ```
+
+## 139 — 2026-09-30 · Claude Fable 5.1, high effort
+
+```text
+3 failures on #45
+```
