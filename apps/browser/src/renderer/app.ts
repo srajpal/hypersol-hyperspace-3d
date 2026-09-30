@@ -76,7 +76,7 @@ const SNAPSHOT_DELAY_MS = 400;
 const SESSION_SAVE_DELAY_MS = 400;
 const isWeb = (url: string) => /^https?:\/\//i.test(url);
 
-/** Same page apart from the #fragment (an in-page jump keeps the favicon). */
+/** An address's host name in lower case; '' for anything that is not an address. */
 function hostOf(url: string): string {
   try {
     return new URL(url).hostname.toLowerCase();
@@ -85,6 +85,7 @@ function hostOf(url: string): string {
   }
 }
 
+/** Same page apart from the #fragment (an in-page jump keeps the favicon). */
 function isSamePage(a: string, b: string): boolean {
   return a.split('#')[0] === b.split('#')[0];
 }

@@ -51,14 +51,19 @@ const icon = {
 };
 
 /**
- * The top bar: back, forward, reload, the address and search field, the
- * menu, and the loading strip under it. Emits events; the shell's
- * controller does the work.
+ * The top bar: new tab, back, forward, reload or stop, the site button,
+ * the address and search field with its completion, zoom, the instrument
+ * panel, layers, and text view buttons, the bookmark star, the menu, and
+ * the loading strip under it. Emits events; the shell's controller does
+ * the work.
  *
- * Events (bubbling, composed): hs-navigate (detail: typed text), hs-back,
- * hs-forward, hs-reload, hs-bookmark, hs-layers, hs-instruments, hs-new-tab, hs-zoom (detail: 1, -1, or 0 to
- * reset), hs-menu (detail: MenuAction), hs-site (the site button: open the site panel),
- * hs-search (detail: text to search for, from the address bar's "Search ... for" row).
+ * Events (bubbling, composed): hs-navigate (detail: typed text, or a
+ * suggestion's address), hs-search (detail: text to search for, from the
+ * address bar's "Search ... for" row), hs-back, hs-forward, hs-reload,
+ * hs-stop, hs-new-tab, hs-site (the site button: open the site panel),
+ * hs-zoom (detail: 1, -1, or 0 to reset), hs-instruments, hs-layers,
+ * hs-text-view (a HoloML page's text view), hs-bookmark, and hs-menu
+ * (detail: MenuAction).
  *
  * The "+" button opens a new tab; its arrow, or a right-click on it, offers
  * New tab and New private tab (milestone 9, owner feedback on milestone 8).

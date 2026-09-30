@@ -53,7 +53,6 @@ export class TabView implements PagePanel {
   private start: StartPanel | null;
   private readonly shimmer: HTMLDivElement;
   private readonly errorCard: HTMLDivElement;
-  private readonly listeners = new Set<(status: PageStatus) => void>();
   private ready = false;
   private pendingUrl: string | null = null;
   private failed = false;
@@ -411,14 +410,7 @@ export class TabView implements PagePanel {
     this.element.style.height = `${this.h}px`;
   }
 
-  onStatus(listener: (status: PageStatus) => void): () => void {
-    this.listeners.add(listener);
-    listener(this.status);
-    return () => this.listeners.delete(listener);
-  }
-
   dispose(): void {
-    this.listeners.clear();
     this.element.remove();
   }
 
@@ -728,7 +720,6 @@ export class TabView implements PagePanel {
       status = { ...status, url: this.restoring.url, state: 'loading' };
     }
     this.currentStatus = status;
-    for (const listener of this.listeners) listener(this.status);
     this.events.onStatus(this.status);
   }
 }

@@ -364,15 +364,6 @@ export class Room {
     return this.tabCount >= 2 && this.display === 'cards';
   }
 
-  private updateRail(): void {
-    const shown = this.wantRail();
-    if (shown === this.railShown) return;
-    this.railShown = shown;
-    if (!shown && this.hoveredCard) this.setHovered(null);
-    this.layout();
-    this.requestRender();
-  }
-
   /** Card size, how tabs are shown, and the room the tab list takes above the page. */
   setTabLayout(options: { scale: number; display: TabDisplayMode; topExtra: number }): void {
     const changed = options.scale !== this.cardScale || options.topExtra !== this.topExtra;
@@ -959,8 +950,7 @@ export class Room {
   }
 }
 
-/** A soft rectangle that fades to transparent at the edges, for the glow. */
-/** A soft horizontal band: clear at the top and bottom, strongest in the middle. */
+/** A soft horizontal band for the horizon: clear at the top and bottom, strongest in the middle. */
 function makeBandTexture(): CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 4;
@@ -1002,6 +992,7 @@ function makeSunTexture(theme: Theme): CanvasTexture {
   return new CanvasTexture(canvas);
 }
 
+/** A soft rectangle that fades to transparent at the edges, for the glow behind the page. */
 function makeGlowTexture(): CanvasTexture {
   const size = 256;
   const canvas = document.createElement('canvas');
