@@ -188,7 +188,7 @@ function createWindow(): void {
   const send = (command: ShellCommand) => {
     if (!win.isDestroyed()) win.webContents.send(SHELL_COMMAND_CHANNEL, command);
   };
-  hardenShell(win.webContents, PAGE_PRELOAD, (record) => testLog?.attaches.push(record), options.testNoWebGL);
+  hardenShell(win.webContents, PAGE_PRELOAD, (record) => testLog?.attaches.push(record), options.testNoWebGL, options.testMode);
   wireShortcuts(win.webContents, { send, platform: process.platform, shortcutKeys, capturingKeys: () => capturingKeys });
   if (!app.isPackaged) {
     // Developer tools for the shell in development runs only.

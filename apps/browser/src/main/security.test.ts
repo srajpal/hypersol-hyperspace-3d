@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { describe, expect, it, vi } from 'vitest';
 import { PRIVATE_PARTITION, RESTORE_BLANK } from '../shared/commands';
+import { isTestRun, TEST_RUN_ARGUMENT } from '../shared/test-run';
 import { USER_ACTIVATION_MS } from './popups';
 import {
   decidePageNavigation,
@@ -167,13 +168,31 @@ describe('lockDownWebPreferences', () => {
     lockDownWebPreferences(without as never, '/p.js', true);
     expect(without['webgl']).toBe(false);
   });
+
+  it('tells the page preload of a test run only in test mode, whatever the webview asked for (review of 2026-09-30, D11)', () => {
+    // A normal run: no argument, and one the webview asked for itself is taken off.
+    const plain: Record<string, unknown> = {};
+    lockDownWebPreferences(plain as never, '/p.js');
+    expect('additionalArguments' in plain).toBe(false);
+    const asked: Record<string, unknown> = { additionalArguments: [TEST_RUN_ARGUMENT, '--other'] };
+    lockDownWebPreferences(asked as never, '/p.js', false, false);
+    expect('additionalArguments' in asked).toBe(false);
+    // Test mode: that argument and no other.
+    const test: Record<string, unknown> = { additionalArguments: ['--other'] };
+    lockDownWebPreferences(test as never, '/p.js', false, true);
+    expect(test['additionalArguments']).toEqual([TEST_RUN_ARGUMENT]);
+    // The preload's reading of it.
+    expect(isTestRun(['electron', '--type=renderer', TEST_RUN_ARGUMENT])).toBe(true);
+    expect(isTestRun(['electron', '--type=renderer'])).toBe(false);
+    expect(isTestRun(['electron', `${TEST_RUN_ARGUMENT}=1`])).toBe(false);
+  });
 });
 
 describe('hardenShell', () => {
-  function shell() {
+  function shell(testMode = false) {
     const contents = Object.assign(new EventEmitter(), { opened: null as unknown, setWindowOpenHandler: (h: () => unknown) => void (contents.opened = h()) });
     const records: AttachRecord[] = [];
-    hardenShell(contents as never, '/app/preload/page.js', (r) => records.push(r));
+    hardenShell(contents as never, '/app/preload/page.js', (r) => records.push(r), false, testMode);
     const attach = (params: Record<string, string>) => {
       const event = { preventDefault: vi.fn() };
       const prefs: Record<string, unknown> = {};
@@ -192,6 +211,11 @@ describe('hardenShell', () => {
     }
     expect(attach({ src: 'https://site.example/', partition: PRIVATE_PARTITION }).refused).toBe(false);
     expect(records.every((r) => r.allowed && r.appliedPreload === '/app/preload/page.js')).toBe(true);
+  });
+
+  it('starts the process of a page with the test-run argument in test mode only', () => {
+    expect(shell(true).attach({ src: 'https://site.example/' }).prefs['additionalArguments']).toEqual([TEST_RUN_ARGUMENT]);
+    expect('additionalArguments' in shell().attach({ src: 'https://site.example/' }).prefs).toBe(false);
   });
 
   it('refuses a webview with another scheme or another session, and records a preload it asked for', () => {

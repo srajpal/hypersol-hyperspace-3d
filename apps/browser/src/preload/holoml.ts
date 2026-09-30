@@ -11,6 +11,7 @@
  */
 import { ipcRenderer, webFrame, webUtils } from 'electron';
 import { HOLOML_COMMAND_CHANNEL, HOLOML_DOCUMENT_CHANNEL, HOLOML_DROP_CHANNEL, HOLOML_SHOWN_CHANNEL, HOLOML_STATE_CHANNEL, VIEWER_ENTRY } from '../shared/holoml-page';
+import { isTestRun } from '../shared/test-run';
 
 function detect(): boolean {
   // Only a main frame's plain-text document can be one; ask no more for others.
@@ -30,8 +31,9 @@ if (isHolomlDocument) {
   webFrame.insertCSS('html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0f1e; } body > pre { display: none; }');
   ipcRenderer.sendToHost(HOLOML_SHOWN_CHANNEL, location.href);
   // The browser's own tests read the scene through hooks the viewer puts on the page only when it finds
-  // this mark on its script element (review 134, D12); a normal run has no mark, and no hooks.
-  const testRun = process.env['HYPERSOL_TEST'] === '1';
+  // this mark on its script element (review 134, D12); a normal run has no mark, and no hooks. Whether
+  // this is a test run is the main process's to say (shared/test-run.ts), not the environment's.
+  const testRun = isTestRun(process.argv);
   const addViewer = () => {
     const script = document.createElement('script');
     script.type = 'module';
