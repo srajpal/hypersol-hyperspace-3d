@@ -134,7 +134,10 @@ describe('E1 to E3: bookmarks, history, and the Library', () => {
       (r) => r.times.slice(timesBefore).filter((t) => t.what === 'typed').length === 6 && r.times.at(-1)?.what === 'searched',
     );
     await waitFor('search result', () => libTitles(h), (t) => t.join() === 'Link B');
-    const times = all.slice(timesBefore);
+    // From the first key typed: a search of what was there before (the empty box) can end after the
+    // count was read and belongs to that, not to this typing (GitHub's Windows machines, run 3 of #45).
+    const sliced = all.slice(timesBefore);
+    const times = sliced.slice(Math.max(0, sliced.findIndex((t) => t.what === 'typed')));
     expect(times.filter((t) => t.what === 'typed')).toHaveLength(6);
     const searched = times.map((t, i) => [t, i] as const).filter(([t]) => t.what === 'searched');
     expect(searched.length).toBeGreaterThanOrEqual(1);

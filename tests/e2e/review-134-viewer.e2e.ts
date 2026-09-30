@@ -122,6 +122,20 @@ function colourAt(page: string, p: Point, half = 3): Promise<Colour> {
   );
 }
 
+/** Presses a key in a page as a keyboard does: down, the character it gives, up. */
+async function sendKeyWithChar(h: Harness, page: string, keyCode: string, char: string): Promise<void> {
+  await h.app.evaluate(
+    ({ webContents }, { page, keyCode, char }) => {
+      const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes(page)).pop();
+      if (!guest) throw new Error('No web page to press keys in');
+      guest.sendInputEvent({ type: 'keyDown', keyCode });
+      guest.sendInputEvent({ type: 'char', keyCode: char });
+      guest.sendInputEvent({ type: 'keyUp', keyCode });
+    },
+    { page, keyCode, char },
+  );
+}
+
 describe('review 134: the HoloML viewer', () => {
   it('V2 a page written for a version the viewer does not know, or that names none, is refused, with a card that says so; it is not drawn as an older version', async () => {
     const PAGE = 'review-134-version.holoml';
@@ -278,6 +292,19 @@ describe('review 134: the HoloML viewer', () => {
     await waitFor('the text view', () => holo<boolean>(PAGE, 'window.__holoml.textView'), (v) => v === true);
     const f0 = await frames(PAGE);
     const scrolled = () => inPage<number>(h, 'Math.max(document.scrollingElement.scrollTop, document.body.scrollTop)', PAGE);
+    /** Where the text has scrolled to once it has stopped moving (the same place read twice, 150 ms apart). */
+    const settledScroll = () =>
+      waitFor(
+        'the scroll to settle',
+        async () => {
+          const before = await scrolled();
+          await sleep(150);
+          const after = await scrolled();
+          return after === before ? after : -1;
+        },
+        (y) => y >= 0,
+        5000,
+      );
     expect(await scrolled()).toBe(0);
     // Page Down, the down arrow, and the space bar each scroll the text further. The space bar scrolls only
     // while no button has the keyboard (on a button it presses the button, as on any page), so the keyboard
@@ -285,11 +312,17 @@ describe('review 134: the HoloML viewer', () => {
     await inPage(h, '(document.activeElement instanceof HTMLElement && document.activeElement.blur(), true)', PAGE);
     let at = 0;
     for (const keyCode of ['PageDown', 'Down', 'Space']) {
-      await pressInPage(h, keyCode, [], PAGE);
+      // A keyboard's space bar also gives the page the character (a "char" event, Chromium's keypress),
+      // and it is on that, not on the key going down, that a page scrolls; the other two scroll on the
+      // key alone. GitHub's Windows machines scrolled on none without it.
+      if (keyCode === 'Space') await sendKeyWithChar(h, PAGE, 'Space', ' ');
+      else await pressInPage(h, keyCode, [], PAGE);
       at = await waitFor(`${keyCode} scrolling the text (the keyboard on ${await inPage<string>(h, 'document.activeElement?.tagName ?? "nothing"', PAGE)})`, scrolled, (y) => y > at);
+      // The scroll is smooth: where it ends is the place the next key scrolls from.
+      at = await settledScroll();
     }
     await pressInPage(h, 'PageUp', [], PAGE);
-    await waitFor('Page Up scrolling back', scrolled, (y) => y < at);
+    await waitFor(`Page Up scrolling back from ${at}`, scrolled, (y) => y < at);
     // The scene did not walk, turn, or look down, and drew nothing.
     expect(await view(PAGE)).toEqual(before);
     expect(await frames(PAGE), 'no frames in the text view').toBe(f0);
