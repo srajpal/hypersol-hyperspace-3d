@@ -47,6 +47,9 @@ interface Pending {
  */
 export const ALLOWED_WITHOUT_ASKING: ReadonlySet<string> = new Set(['clipboard-sanitized-write']);
 
+/** What the site panel is told when its tab is no longer on the site a change was for. */
+export const LEFT_SITE = 'This tab has left that site, so nothing was changed.';
+
 /** What one tab's page may use: "this time" grants and what it was given (the marker). */
 interface TabGrants {
   origin: string;
@@ -174,6 +177,11 @@ export class Permissions {
         const contents = this.page(r.tab, shell);
         const origin = contents ? originOf(contents.getURL()) : null;
         if (!contents || !origin) return null;
+        // The choice was made for the site the panel showed. A tab that has
+        // gone to another site since (the panel closes then, but its last
+        // request may already be on its way) is not given it (review of
+        // 2026-09-30, R6).
+        if (origin !== r.origin) throw new Error(LEFT_SITE);
         this.remember(contents, origin, [r.kind], r.state === 'ask' ? null : r.state);
         this.grantsFor(contents, origin)?.once.delete(r.kind);
         if (r.state === 'block') this.revoke(origin, r.kind, contents.session);

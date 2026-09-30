@@ -5,7 +5,7 @@ import type { SiteChoices } from '../shared/permissions';
 
 const all = new Map<number, unknown>();
 vi.mock('electron', () => ({ webContents: { fromId: (id: number) => all.get(id) } }));
-const { ALLOWED_WITHOUT_ASKING, Permissions } = await import('./permissions');
+const { ALLOWED_WITHOUT_ASKING, LEFT_SITE, Permissions } = await import('./permissions');
 
 type Check = (contents: unknown, permission: string, origin: string, details: { requestingUrl?: string; mediaType?: string }) => boolean;
 type Request = (contents: unknown, permission: string, callback: (granted: boolean) => void, details: { requestingUrl: string; mediaTypes?: string[] }) => void;
@@ -173,7 +173,7 @@ describe('the camera, the microphone, and the location (milestone 9)', () => {
     expect(ask('media', ['video'], elsewhere)).toBe(true);
     sent.length = 0;
 
-    const reply = await permissions.handle(fromShell(page), { op: 'site.set', tab: 1, kind: 'camera', state: 'block' });
+    const reply = await permissions.handle(fromShell(page), { op: 'site.set', tab: 1, origin: SITE, kind: 'camera', state: 'block' });
     expect(reply).toMatchObject({ ok: true, value: { states: { camera: 'block' }, given: [] } });
     expect([page.reloads, second.reloads, third.reloads, elsewhere.reloads]).toEqual([1, 1, 0, 0]);
     // A page that asks to be kept is not asked about while this reload is under way.
@@ -191,13 +191,28 @@ describe('the camera, the microphone, and the location (milestone 9)', () => {
 
   it('Block for a page that holds nothing, or for the location, reloads nothing', async () => {
     const { permissions, page, ask, prompt } = setup();
-    await permissions.handle(fromShell(page), { op: 'site.set', tab: 1, kind: 'microphone', state: 'block' });
+    await permissions.handle(fromShell(page), { op: 'site.set', tab: 1, origin: SITE, kind: 'microphone', state: 'block' });
     expect(page.reloads).toBe(0);
     ask('geolocation');
     await permissions.handle(fromShell(page), { op: 'answer', id: prompt().id, answer: 'allow' });
-    await permissions.handle(fromShell(page), { op: 'site.set', tab: 1, kind: 'location', state: 'block' });
+    await permissions.handle(fromShell(page), { op: 'site.set', tab: 1, origin: SITE, kind: 'location', state: 'block' });
     expect(page.reloads).toBe(0);
     expect(ask('geolocation')).toBe(false);
+  });
+
+  it('a change from the site panel is for the site it names: a tab that has gone elsewhere is left alone (review of 2026-09-30, R6)', async () => {
+    const OTHER = 'https://other.example';
+    const { permissions, session, state } = setup();
+    // The panel showed site.example; its tab is on other.example by the time the change arrives.
+    const moved = fakePage(5, session, `${OTHER}/page`);
+    permissions.trackTab(moved as never);
+    const late = await permissions.handle(fromShell(moved), { op: 'site.set', tab: 5, origin: SITE, kind: 'camera', state: 'allow' });
+    expect(late).toEqual({ ok: false, error: LEFT_SITE });
+    expect(state.saved).toEqual({});
+    // Named for the site the tab is on, it is taken.
+    const now = await permissions.handle(fromShell(moved), { op: 'site.set', tab: 5, origin: OTHER, kind: 'camera', state: 'allow' });
+    expect(now).toMatchObject({ ok: true, value: { origin: OTHER, states: { camera: 'allow' } } });
+    expect(state.saved).toEqual({ [OTHER]: { camera: 'allow' } });
   });
 
   it('only web pages are asked about: anything else is refused', () => {

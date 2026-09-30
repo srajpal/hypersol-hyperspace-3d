@@ -69,9 +69,14 @@ describe('site permissions (milestone 9)', () => {
     expect(parsePermissionRequest({ op: 'answer', id: 3, answer: 'always' })).toHaveProperty('error');
     expect(parsePermissionRequest({ op: 'answer', id: 0, answer: 'allow' })).toHaveProperty('error');
     expect(parsePermissionRequest({ op: 'site', tab: 7 })).toEqual({ request: { op: 'site', tab: 7 } });
-    expect(parsePermissionRequest({ op: 'site.set', tab: 7, kind: 'location', state: 'ask' })).toHaveProperty('request');
-    expect(parsePermissionRequest({ op: 'site.set', tab: 7, kind: 'usb', state: 'allow' })).toHaveProperty('error');
-    expect(parsePermissionRequest({ op: 'site.set', tab: 7, kind: 'camera', state: 'once' })).toHaveProperty('error');
+    const site = 'https://site.example';
+    expect(parsePermissionRequest({ op: 'site.set', tab: 7, origin: site, kind: 'location', state: 'ask' })).toHaveProperty('request');
+    expect(parsePermissionRequest({ op: 'site.set', tab: 7, origin: site, kind: 'usb', state: 'allow' })).toHaveProperty('error');
+    expect(parsePermissionRequest({ op: 'site.set', tab: 7, origin: site, kind: 'camera', state: 'once' })).toHaveProperty('error');
+    // A change names the site it is for (its origin, as URL.origin writes it).
+    expect(parsePermissionRequest({ op: 'site.set', tab: 7, kind: 'location', state: 'ask' })).toEqual({ error: 'site.set: origin must be a web origin' });
+    expect(parsePermissionRequest({ op: 'site.set', tab: 7, origin: `${site}/page`, kind: 'location', state: 'ask' })).toHaveProperty('error');
+    expect(parsePermissionRequest({ op: 'site.set', tab: 7, origin: 'file:///C:/', kind: 'location', state: 'ask' })).toHaveProperty('error');
     expect(parsePermissionRequest({ op: 'grant-everything' })).toHaveProperty('error');
     expect(parsePermissionRequest(null)).toHaveProperty('error');
   });
