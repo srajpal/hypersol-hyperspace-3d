@@ -8,8 +8,7 @@
  * machine (harness.ts), so anything the shield let through would reach
  * the local test server and show in its counts.
  */
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
@@ -19,8 +18,8 @@ import {
   launch,
   mainLog,
   navigateTo,
+  newProfile,
   pressInShell,
-  removeFolder,
   shellCall,
   sleep,
   waitFor,
@@ -30,15 +29,8 @@ import {
 } from './harness';
 
 let server: FixtureServer;
-const profiles: string[] = [];
 const FILTERS_DIR = join(APP_DIR, 'resources', 'filters');
 const QUAD9 = 'https://dns.quad9.net/dns-query';
-
-function newProfile(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'hypersol-e2e-profile-'));
-  profiles.push(dir);
-  return dir;
-}
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -46,7 +38,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server?.close();
-  for (const dir of profiles) await removeFolder(dir);
 });
 
 /** The test server under a host name (element hiding skips raw IP addresses). */
@@ -72,8 +63,6 @@ async function readShieldPage(h: Harness): Promise<Record<string, string>> {
 }
 
 const shield = (h: Harness) => shellCall(h, 'shield');
-const testLog = <T>(h: Harness, key: string) =>
-  h.app.evaluate((_e, k) => (globalThis as unknown as { __hypersolTest: Record<string, unknown> }).__hypersolTest[k], key) as Promise<T>;
 
 async function openSettings(h: Harness): Promise<void> {
   if ((await shellCall(h, 'openPanel')) !== 'settings') await pressInShell(h, ',', ['control']);
@@ -204,19 +193,19 @@ describe('F7 and F8: encrypted DNS', () => {
     const profile = newProfile();
     let h = await launch(server.url('link-a.html'), { userDataDir: profile });
     try {
-      expect(await testLog<unknown[]>(h, 'dnsApplied')).toEqual([{ mode: 'secure', resolver: QUAD9 }]);
+      expect(await mainLog(h, 'dnsApplied')).toEqual([{ mode: 'secure', resolver: QUAD9 }]);
       await openSettings(h);
       await settingsTo(h, 'set-dns-secure');
       expect(await h.shell.locator(SET('set-dns-secure')).isChecked()).toBe(true);
       await settingsTo(h, 'set-dns-automatic');
       await h.shell.click(SET('set-dns-automatic'));
-      await waitFor('automatic applied', () => testLog<{ mode: string }[]>(h, 'dnsApplied'), (a) => a.at(-1)?.mode === 'automatic');
+      await waitFor('automatic applied', () => mainLog(h, 'dnsApplied'), (a) => a.at(-1)?.mode === 'automatic');
     } finally {
       await h.close();
     }
     h = await launch(server.url('link-a.html'), { userDataDir: profile });
     try {
-      expect(await testLog<unknown[]>(h, 'dnsApplied')).toEqual([{ mode: 'automatic', resolver: QUAD9 }]);
+      expect(await mainLog(h, 'dnsApplied')).toEqual([{ mode: 'automatic', resolver: QUAD9 }]);
     } finally {
       await h.close();
     }
@@ -229,7 +218,7 @@ describe('F7 and F8: encrypted DNS', () => {
       await navigateTo(h, 'http://nowhere.invalid/');
       await waitFor('DNS card', () => h.shell.locator(CARD).getAttribute('data-kind'), (k) => k === 'dns-blocked');
       await h.shell.click(`${CARD} #panel-use-network-dns`);
-      await waitFor('automatic for now', () => testLog<{ mode: string }[]>(h, 'dnsApplied'), (a) => a.at(-1)?.mode === 'automatic');
+      await waitFor('automatic for now', () => mainLog(h, 'dnsApplied'), (a) => a.at(-1)?.mode === 'automatic');
       // The name still does not exist: now it is simply "not found".
       await waitFor('not-found card', () => h.shell.locator(CARD).getAttribute('data-kind'), (k) => k === 'not-found');
       await openSettings(h);
@@ -367,7 +356,7 @@ describe('F9 and F10: the filter lists', () => {
     const h = await launch(server.url('link-a.html'), { userDataDir: staleProfile(base), filtersBase: base });
     try {
       await waitFor('scheduled refresh', async () => filterHits('/filters/') - before, (n) => n === listUrls(base).length, 20_000);
-      const web = (await testLog<string[]>(h, 'requests')).filter((u) => /^https?:/i.test(u));
+      const web = (await mainLog(h, 'requests')).filter((u) => /^https?:/i.test(u));
       expect(web.filter((u) => new URL(u).hostname !== '127.0.0.1')).toEqual([]);
     } finally {
       await h.close();
@@ -385,7 +374,7 @@ describe('F9 and F10: the filter lists', () => {
       await waitForPage(h, 'link-a');
       await sleep(4000); // the schedule's first check comes after 1 s in tests
       expect(filterHits('/filters/')).toBe(before);
-      const web = (await testLog<string[]>(h, 'requests')).filter((u) => /^https?:/i.test(u));
+      const web = (await mainLog(h, 'requests')).filter((u) => /^https?:/i.test(u));
       expect(web.every((u) => u.startsWith(server.base))).toBe(true);
     } finally {
       await h.close();

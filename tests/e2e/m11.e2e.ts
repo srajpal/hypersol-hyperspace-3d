@@ -4,8 +4,7 @@
  * that close, the reorganized Settings, shortcut remapping, and the
  * Library's search reset.
  */
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
@@ -16,10 +15,10 @@ import {
   focusedTab,
   launch,
   navigateTo,
+  newProfile as freshProfile,
   pressInPage,
   pressInShell,
   project,
-  removeFolder,
   settingsTo,
   settled,
   shellCall,
@@ -32,15 +31,9 @@ import {
 } from './harness';
 
 let server: FixtureServer;
-const folders: string[] = [];
 
-function newFolder(prefix: string, settings?: object): string {
-  const dir = mkdtempSync(join(tmpdir(), prefix));
-  folders.push(dir);
-  if (settings) writeFileSync(join(dir, 'settings.json'), JSON.stringify(settings));
-  return dir;
-}
-const newProfile = (settings?: object) => newFolder('hypersol-e2e-profile-', { layersOnOpen: false, ...settings });
+/** A new profile whose pages open flat (the layers view off), unless the settings say otherwise. */
+const newProfile = (settings?: object) => freshProfile({ layersOnOpen: false, ...settings });
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -48,7 +41,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server?.close();
-  for (const dir of folders) await removeFolder(dir);
 });
 
 const BAR = (id: string) => `hs-toolbar [data-testid="${id}"]`;

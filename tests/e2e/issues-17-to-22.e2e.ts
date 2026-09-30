@@ -4,9 +4,6 @@
  * cannot bring up a password offer, and blocking the camera stops it.
  * Issue #20 is fixed in m4 (F9) and m7 (I6).
  */
-import { mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
@@ -17,8 +14,8 @@ import {
   inPage,
   launch,
   navigateTo,
+  newProfile,
   pressInShell,
-  removeFolder,
   screenPointOf,
   shellCall,
   sleep,
@@ -30,7 +27,6 @@ import {
 } from './harness';
 
 let server: FixtureServer;
-const folders: string[] = [];
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -38,15 +34,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server?.close();
-  for (const f of folders) await removeFolder(f);
 });
-
-function newProfile(settings?: object): string {
-  const dir = mkdtempSync(join(tmpdir(), 'hypersol-e2e-profile-'));
-  folders.push(dir);
-  if (settings) writeFileSync(join(dir, 'settings.json'), JSON.stringify(settings));
-  return dir;
-}
 
 const PROMPT = (id: string) => `hs-prompts [data-testid="${id}"]`;
 const BAR = (id: string) => `hs-toolbar [data-testid="${id}"]`;

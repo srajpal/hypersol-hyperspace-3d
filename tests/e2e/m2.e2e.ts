@@ -17,6 +17,7 @@ import {
   focusedTab,
   inPage,
   launch,
+  mainLog,
   navigateTo,
   pressInPage,
   pressInShell,
@@ -125,10 +126,7 @@ describe('D2 tabs', () => {
 
   it('fetches each page once (found in milestone 3: every new tab loaded twice)', async () => {
     const count = (url: string) =>
-      h.app.evaluate(
-        (_e, url) => (globalThis as unknown as { __hypersolTest: { requests: string[] } }).__hypersolTest.requests.filter((r) => r === url).length,
-        url,
-      );
+      h.app.evaluate((_e, url) => globalThis.__hypersolTest!.requests.filter((r) => r === url).length, url);
     expect(await count(server.url('link-a.html'))).toBe(1);
   });
 
@@ -284,7 +282,7 @@ describe('D5 new-window links', () => {
   it('blocks a pop-up nobody clicked for', async () => {
     const blocked = await waitFor(
       'the unrequested pop-up to be blocked',
-      () => h.app.evaluate(() => (globalThis as unknown as MainLog).__hypersolTest.blockedPopups),
+      () => mainLog(h, 'blockedPopups'),
       (b) => b.some((u) => u.includes('from=auto')),
     );
     expect(blocked.some((u) => u.includes('from=auto'))).toBe(true);
@@ -409,7 +407,7 @@ describe('D8 right-click menu', () => {
   afterAll(async () => h?.close());
 
   async function rightClick(selector: string, page = 'link-a'): Promise<string[]> {
-    const menus = () => h.app.evaluate(() => (globalThis as unknown as MainLog).__hypersolTest.menus.map((m) => m.labels));
+    const menus = () => h.app.evaluate(() => globalThis.__hypersolTest!.menus.map((m) => m.labels));
     const count = (await menus()).length;
     const p = await screenPointOf(h, selector, page);
     // A right-click lost on its way to the page brings no menu at all (issue #30).
@@ -420,7 +418,7 @@ describe('D8 right-click menu', () => {
 
   function choose(label: string): Promise<void> {
     return h.app.evaluate((_electron, label) => {
-      const log = (globalThis as unknown as MainLog).__hypersolTest;
+      const log = globalThis.__hypersolTest!;
       log.menus[log.menus.length - 1]!.run(label);
     }, label);
   }
@@ -583,15 +581,6 @@ describe('D11 about', () => {
     await tabCount(h, 1);
   });
 });
-
-/** The main-process test log (apps/browser/src/main/test-hooks.ts). */
-interface MainLog {
-  __hypersolTest: {
-    blockedPopups: string[];
-    menus: { labels: string[]; run(label: string): void }[];
-  };
-}
-
 
 describe('D13 favicon limits (GitHub issue #1)', () => {
   let h: Harness;

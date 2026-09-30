@@ -3,8 +3,7 @@
  * the Library and Settings panels, the start panel's data, restarts,
  * clearing data, damaged saved data, and keyboard access.
  */
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
@@ -12,10 +11,11 @@ import {
   focusedTab,
   inPage,
   launch,
+  mainLog,
   navigateTo,
+  newProfile,
   pressInPage,
   pressInShell,
-  removeFolder,
   settled,
   shellCall,
   sleep,
@@ -28,14 +28,7 @@ import {
 } from './harness';
 
 let server: FixtureServer;
-const profiles: string[] = [];
 const searchUrl = () => `${server.base}search?q=%s`;
-
-function newProfile(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'hypersol-e2e-profile-'));
-  profiles.push(dir);
-  return dir;
-}
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -43,7 +36,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server?.close();
-  for (const dir of profiles) await removeFolder(dir);
 });
 
 const STAR = 'hs-toolbar [data-testid="star"]';
@@ -127,8 +119,7 @@ describe('E1 to E3: bookmarks, history, and the Library', () => {
     await waitForPage(h, 'link-b');
     await openLibrary(h, 'history');
     await waitFor('a visit listed', () => libTitles(h), (t) => t.length > 0);
-    const searches = () =>
-      h.app.evaluate(() => (globalThis as unknown as { __hypersolTest: { dataOps: Record<string, number> } }).__hypersolTest.dataOps['history.search'] ?? 0);
+    const searches = async () => (await mainLog(h, 'dataOps'))['history.search'] ?? 0;
     const before = await searches();
     await h.shell.locator(LIB('lib-search')).pressSequentially('link b', { delay: 30 });
     await waitFor('search result', () => libTitles(h), (t) => t.join() === 'Link B');

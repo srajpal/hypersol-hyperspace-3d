@@ -5,8 +5,7 @@
  * download notice, the "+" menu, and flat printing. Every sign-in here is
  * a made-up test value on a 127.0.0.1 fixture page.
  */
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -19,9 +18,12 @@ import {
   focusedTab,
   inPage,
   launch,
+  mainLog,
   navigateTo,
+  newFolder,
+  newProfile as freshProfile,
   pressInShell,
-  removeFolder,
+  project,
   screenPointOf,
   shellCall,
   sleep,
@@ -37,15 +39,9 @@ import {
 let server: FixtureServer;
 /** A second site: the same pages on another port, so another origin. */
 let other: FixtureServer;
-const folders: string[] = [];
 
-function newFolder(prefix: string, settings?: object): string {
-  const dir = mkdtempSync(join(tmpdir(), prefix));
-  folders.push(dir);
-  if (settings) writeFileSync(join(dir, 'settings.json'), JSON.stringify(settings));
-  return dir;
-}
-const newProfile = (settings?: object) => newFolder('hypersol-e2e-profile-', { layersOnOpen: false, ...settings });
+/** A new profile whose pages open flat (the layers view off), unless the settings say otherwise. */
+const newProfile = (settings?: object) => freshProfile({ layersOnOpen: false, ...settings });
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -55,7 +51,6 @@ beforeAll(async () => {
 afterAll(async () => {
   await server?.close();
   await other?.close();
-  for (const dir of folders) await removeFolder(dir);
 });
 
 const BAR = (id: string) => `hs-toolbar [data-testid="${id}"]`;
@@ -66,8 +61,6 @@ const SET = (id: string) => `hs-settings [data-testid="${id}"]`;
 const NOTICE = (id: string) => `hs-notice [data-testid^="${id}"]`;
 const origin = (s: FixtureServer) => new URL(s.base).origin;
 const saved = (profile: string) => JSON.parse(readFileSync(join(profile, 'settings.json'), 'utf8')) as Record<string, unknown>;
-const testLog = <T>(h: Harness, key: string) =>
-  h.app.evaluate((_e, k) => (globalThis as unknown as { __hypersolTest: Record<string, unknown> }).__hypersolTest[k], key) as Promise<T>;
 
 /** The saved sign-ins as the database holds them, read directly from the file. */
 function logins(profile: string): { origin: string; username: string; secret: Uint8Array }[] {
@@ -119,11 +112,7 @@ async function pickFirstAccount(h: Harness, page: PageRef): Promise<void> {
     `(() => { const r = document.querySelector('hypersol-sign-ins').getBoundingClientRect(); return { left: r.left, bottom: r.bottom }; })()`,
     page,
   );
-  const shell = await h.shell.evaluate(
-    ([x, y]) => (window as unknown as { __hypersolShellTest: { projectPagePoint(u: number, v: number): { x: number; y: number } } }).__hypersolShellTest.projectPagePoint(x!, y!),
-    [box.left + 40, box.bottom - 22],
-  );
-  await clickAt(h, shell);
+  await clickAt(h, await project(h, box.left + 40, box.bottom - 22));
 }
 
 describe('K1 to K3: passwords', () => {
@@ -464,14 +453,14 @@ describe('K9 and K10: download notice, the "+" menu, and printing', () => {
       const done = await waitFor('notice', () => shellCall(h, 'notice'), (n) => n !== null);
       expect(done).toMatchObject({ kind: 'done', text: 'Downloaded sample.txt' });
       await h.shell.click(NOTICE('notice-show'));
-      await waitFor('shown in its folder', () => testLog<{ what: string; path: string }[]>(h, 'opened'), (o) =>
+      await waitFor('shown in its folder', () => mainLog(h, 'opened'), (o) =>
         o.some((x) => x.what === 'show' && x.path.endsWith('sample.txt')));
       expect(await shellCall(h, 'notice')).toBeNull();
 
       await navigateTo(h, server.url('download/sample.txt'));
       await waitFor('second notice', () => shellCall(h, 'notice'), (n) => n?.text === 'Downloaded sample (1).txt');
       await h.shell.click(NOTICE('notice-open'));
-      await waitFor('opened', () => testLog<{ what: string; path: string }[]>(h, 'opened'), (o) =>
+      await waitFor('opened', () => mainLog(h, 'opened'), (o) =>
         o.some((x) => x.what === 'open' && x.path.endsWith('sample (1).txt')));
 
       await navigateTo(h, server.url('download/broken.bin'));

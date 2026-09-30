@@ -4,8 +4,7 @@
  * theme, the window, page tilt, and the layers view's outline. H5
  * (contrast) and H8 (no hard-coded colours) are unit tests.
  */
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { daylight, nebula, type Theme } from '../../packages/themes/src/index';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -15,8 +14,8 @@ import {
   describeMissedClick,
   inPage,
   launch,
+  newProfile,
   pressInShell,
-  removeFolder,
   screenPointOf,
   shellCall,
   sleep,
@@ -27,14 +26,6 @@ import {
 } from './harness';
 
 let server: FixtureServer;
-const profiles: string[] = [];
-
-function newProfile(settings?: object): string {
-  const dir = mkdtempSync(join(tmpdir(), 'hypersol-e2e-profile-'));
-  profiles.push(dir);
-  if (settings) writeFileSync(join(dir, 'settings.json'), JSON.stringify(settings));
-  return dir;
-}
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -42,7 +33,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server?.close();
-  for (const dir of profiles) await removeFolder(dir);
 });
 
 const THEME_BUTTON = 'hs-theme-button [data-testid="theme"]';

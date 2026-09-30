@@ -4,7 +4,7 @@
  * sleeping tabs, history through the worker and its budget, and the
  * new shortcuts and menu entries.
  */
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -18,9 +18,10 @@ import {
   inPage,
   launch,
   navigateTo,
+  newFolder,
+  newProfile as freshProfile,
   pressInPage,
   pressInShell,
-  removeFolder,
   screenPointOf,
   settled,
   shellCall,
@@ -36,15 +37,9 @@ import {
 } from './harness';
 
 let server: FixtureServer;
-const folders: string[] = [];
 
-function newFolder(prefix: string, settings?: object): string {
-  const dir = mkdtempSync(join(tmpdir(), prefix));
-  folders.push(dir);
-  if (settings) writeFileSync(join(dir, 'settings.json'), JSON.stringify(settings));
-  return dir;
-}
-const newProfile = (settings?: object) => newFolder('hypersol-e2e-profile-', { layersOnOpen: false, ...settings });
+/** A new profile whose pages open flat (the layers view off), unless the settings say otherwise. */
+const newProfile = (settings?: object) => freshProfile({ layersOnOpen: false, ...settings });
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -52,7 +47,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server?.close();
-  for (const dir of folders) await removeFolder(dir);
 });
 
 const BAR = (id: string) => `hs-toolbar [data-testid="${id}"]`;
@@ -350,7 +344,7 @@ describe('L8 and L9: history through the worker', () => {
       await waitForPage(h, 'link-a');
       await navigateTo(h, server.url('link-b.html'));
       await waitForPage(h, 'link-b');
-      expect(await h.app.evaluate(() => (globalThis as unknown as { __hypersolTest: { historyWorker(): boolean } }).__hypersolTest.historyWorker())).toBe(true);
+      expect(await h.app.evaluate(() => globalThis.__hypersolTest!.historyWorker!())).toBe(true);
       const found = await waitFor(
         'history search',
         () =>
@@ -383,7 +377,7 @@ describe('L8 and L9: history through the worker', () => {
 
     h = await launch('', { userDataDir: profile });
     try {
-      expect(await h.app.evaluate(() => (globalThis as unknown as { __hypersolTest: { historyWorker(): boolean } }).__hypersolTest.historyWorker())).toBe(true);
+      expect(await h.app.evaluate(() => globalThis.__hypersolTest!.historyWorker!())).toBe(true);
       const searches = () =>
         h.shell.evaluate(async () => {
           const w = window as unknown as { hypersol: { data(r: object): Promise<{ ok: boolean; value: unknown[] }> } };
