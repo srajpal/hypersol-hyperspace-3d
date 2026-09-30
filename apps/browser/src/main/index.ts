@@ -647,7 +647,9 @@ if (!app.requestSingleInstanceLock()) {
     const pw = new Passwords(new PasswordVault(() => saved.database, keychain), {
       isPrivate: isPrivateTab,
       send: sendToHost,
-      writeClipboard: (text) => clipboard.writeText(text),
+      writeClipboard: (text) => {
+        void clipboard.writeText(text);
+      },
       onChange: () => saved.notify('passwords'),
       colors: () => {
         const { text, textMuted, panelGlass, accent } = themeFor(saved.settingsFile.settings.theme).colors;

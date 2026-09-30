@@ -172,7 +172,8 @@ function runMenuAction(guest: WebContents, action: MenuAction, linkURL: string, 
       deps.send({ type: 'open-tab', url: linkURL, background: true, openerWebContentsId: guest.id });
       break;
     case 'copy-link':
-      clipboard.writeText(linkURL);
+      // Electron's typing gives a promise; the call itself is synchronous.
+      void clipboard.writeText(linkURL);
       break;
     case 'cut':
       guest.cut();

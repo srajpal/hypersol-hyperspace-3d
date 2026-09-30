@@ -201,7 +201,7 @@ export class TabView implements PagePanel {
 
   private sendHoloml(command: string): void {
     try {
-      this.webview?.send(HOLOML_COMMAND_CHANNEL, command);
+      this.webview?.send(HOLOML_COMMAND_CHANNEL, command).catch(() => undefined);
     } catch {
       // Between documents: nothing to stop or switch.
     }
@@ -346,7 +346,7 @@ export class TabView implements PagePanel {
   sendLayers(state: LayersState): void {
     if (!this.webview || !this.ready) return;
     try {
-      this.webview.send(LAYERS_CHANNEL, state);
+      this.webview.send(LAYERS_CHANNEL, state).catch(() => undefined);
     } catch {
       // The page is between documents; it asks again when ready.
     }

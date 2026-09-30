@@ -211,7 +211,7 @@ describe('StorageService', () => {
   it('keeps bookmarks, history, and settings across a restart', async () => {
     const a = open();
     await a.handle({ op: 'bookmarks.add', url: 'https://a.example/', title: 'A', favicon: null });
-    a.recordVisit('https://a.example/', 'A');
+    await a.recordVisit('https://a.example/', 'A');
     await a.handle({ op: 'settings.set', patch: { searchEngine: 'bing' } });
     // The restart: the first is closed here, as part of the check.
     running.delete(a);
