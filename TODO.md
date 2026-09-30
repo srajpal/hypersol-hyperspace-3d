@@ -102,12 +102,10 @@ added items to milestones 23, 24, 27, 28, and 29, marked "(review,
   reader reports for a further copy of an element a page may have only
   once; whether text on both sides of a comment is one text; and the
   generated RELAX NG grammar checked by a validator in the tests.
-- Milestone 24 (privacy and data tools): one gap found while writing
-  docs/privacy.md. After single history entries are deleted, the
-  history search index can still hold three-letter pieces of their
-  text until all history is cleared (SQLite's FTS5 index marks entries
-  as deleted; its own "secure-delete" option is not on). To be closed
-  with the per-site data tools, or sooner if the owner prefers.
+- Milestone 24 (privacy and data tools): nothing new. (A gap found while
+  writing docs/privacy.md, three-letter pieces of a deleted visit left
+  in the history search index, was closed the same day: schema 5 sets
+  the index's own secure-delete; scrub.test.ts checks it.)
 - Proposed, not placed in a milestone (for the owner to place): a run
   of the frame-rate and load-time budgets on a machine with a graphics
   card in the automatic builds. Today GitHub's machines draw in

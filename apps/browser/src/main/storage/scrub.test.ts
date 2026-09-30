@@ -8,6 +8,8 @@ import { connect } from './scrub';
 
 // Text that appears nowhere but in what these tests save.
 const MARK = 'zq7-private-marker';
+// The same, whose every three letters in a row appear nowhere else either (not in a table's or a column's name).
+const PIECED = 'zq7xq9wq3kq5vq';
 
 const folders: string[] = [];
 const stores: { close(): void }[] = [];
@@ -30,6 +32,17 @@ function open(): { store: Store; path: string } {
 function onDisk(path: string, text: string): boolean {
   const files = [path, `${path}-wal`].filter((f) => existsSync(f)).map((f) => readFileSync(f));
   return Buffer.concat(files).includes(text);
+}
+
+/**
+ * Whether any three letters of the text, in a row, are on disk: the
+ * search index keeps text as such pieces (a trigram index), so a marker
+ * can be gone as a whole while its pieces remain.
+ */
+function piecesOnDisk(path: string, text: string): string[] {
+  const pieces = new Set<string>();
+  for (let i = 0; i + 3 <= text.length; i++) pieces.add(text.slice(i, i + 3));
+  return [...pieces].filter((p) => onDisk(path, p));
 }
 
 describe('deleted means gone from the file (review of 2026-09-30, D6)', () => {
@@ -57,15 +70,19 @@ describe('deleted means gone from the file (review of 2026-09-30, D6)', () => {
 
   it('removing one visit, or every visit to an address, takes its text out too', () => {
     const { store, path } = open();
-    const id = store.recordVisit(`https://one.example/${MARK}`, `One visit ${MARK}`);
+    const id = store.recordVisit(`https://one.example/${MARK}-${PIECED}`, `One visit ${MARK} ${PIECED}`);
     store.recordVisit('https://kept.example/', 'Kept');
+    expect(piecesOnDisk(path, PIECED)).not.toEqual([]);
     store.deleteVisit(id);
     expect(onDisk(path, MARK)).toBe(false);
-    store.recordVisit(`https://two.example/${MARK}`, `Twice ${MARK}`);
-    store.recordVisit(`https://two.example/${MARK}`, `Twice ${MARK}`);
+    // The search index too: it keeps three-letter pieces, which it must also remove at once.
+    expect(piecesOnDisk(path, PIECED)).toEqual([]);
+    store.recordVisit(`https://two.example/${MARK}-${PIECED}`, `Twice ${MARK}`);
+    store.recordVisit(`https://two.example/${MARK}-${PIECED}`, `Twice ${MARK}`);
     expect(onDisk(path, MARK)).toBe(true);
-    store.history.forgetUrl(`https://two.example/${MARK}`);
+    store.history.forgetUrl(`https://two.example/${MARK}-${PIECED}`);
     expect(onDisk(path, MARK)).toBe(false);
+    expect(piecesOnDisk(path, PIECED)).toEqual([]);
     expect(store.recentHistory(10).map((h) => h.url)).toEqual(['https://kept.example/']);
   });
 

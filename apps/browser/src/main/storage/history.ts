@@ -217,6 +217,18 @@ export const HISTORY_INDEX_MIGRATION = `
  * address without "https://", "http://", or "www.", in lower case, which
  * an index serves for "starts with" matches.
  */
+/**
+ * Schema 5 (review of 2026-09-30, D6): the full-text index removes a
+ * deleted entry's pieces at once. Without this FTS5 only marks them as
+ * deleted and keeps the three-letter pieces of the address and title
+ * until the index is next rebuilt or emptied, past SQLite's
+ * secure_delete, which covers the tables. The setting is kept in the
+ * index itself, so it is asked for once.
+ */
+export const HISTORY_INDEX_SECURE_DELETE = `
+  INSERT INTO history_fts (history_fts, rank) VALUES ('secure-delete', 1);
+`;
+
 export const HISTORY_SITES_MIGRATION = `
   ALTER TABLE history_latest ADD COLUMN visits INTEGER NOT NULL DEFAULT 1;
   ALTER TABLE history_latest ADD COLUMN key TEXT NOT NULL DEFAULT '';

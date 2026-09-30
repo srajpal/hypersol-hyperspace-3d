@@ -118,11 +118,10 @@ When you delete history (one entry, every visit to an address, or
 "Clear all history") or a saved sign-in, its text is overwritten with
 zeros in `hypersol.sqlite`, not only marked as free space, and the
 changes waiting beside the file (its `-wal` file) are written into it
-and emptied. One limit: after single history entries are deleted, the
-index that history search uses can still hold three-letter pieces of
-their addresses and titles for a while; "Clear all history" empties
-that index. Older copies of the file that your operating system or
-drive keeps (backups, snapshots) are out of the browser's reach.
+and emptied; the index that history search uses removes the entry's
+pieces at once as well. Older copies of the file that your operating
+system or drive keeps (backups, snapshots) are out of the browser's
+reach.
 
 If `settings.json` is damaged, it is renamed to
 `settings.json.damaged-<date and time>` and kept for inspection, and the

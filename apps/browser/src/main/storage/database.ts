@@ -1,11 +1,11 @@
 import { DatabaseSync } from 'node:sqlite';
 import type { Bookmark, HistoryEntry } from '../../shared/data';
 import type { SavedLogin } from '../../shared/passwords';
-import { HISTORY_INDEX_MIGRATION, HISTORY_SITES_MIGRATION, HistoryStore } from './history';
+import { HISTORY_INDEX_MIGRATION, HISTORY_INDEX_SECURE_DELETE, HISTORY_SITES_MIGRATION, HistoryStore } from './history';
 import { CONNECTION_SETTINGS, scrubDeleted } from './scrub';
 
 /** Current schema; raise it and add a step to MIGRATIONS for any change. */
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 const MIGRATIONS: Record<number, string> = {
   1: `
@@ -47,6 +47,8 @@ const MIGRATIONS: Record<number, string> = {
   3: HISTORY_INDEX_MIGRATION,
   // Milestone 11: visit counts and address keys, for the address bar's completions.
   4: HISTORY_SITES_MIGRATION,
+  // Review of 2026-09-30 (D6): the search index overwrites what is deleted too.
+  5: HISTORY_INDEX_SECURE_DELETE,
 };
 
 interface BookmarkRow {
