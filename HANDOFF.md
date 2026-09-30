@@ -5,8 +5,9 @@ Last updated 2026-09-30 (milestones 1 to 21 accepted, 21 in prompt
 125, and HoloML 0.2 released as v0.2.0 in prompt 126: see "Milestone 21,
 accepted" below. 22, HoloML's documentation, is being built (prompts
 127 and 128: see "Milestone 22, in progress" below). A review of both
-repositories and its fixes are in progress on branches not yet pushed
-(prompts 134 and 135: see "The review of 2026-09-30, in progress"
+repositories and its fixes are built and merged on the browser's
+`review-134-fixes`, not yet pushed, and open as holoml's pull request
+#21 (prompts 134 and 135: see "The review of 2026-09-30, in progress"
 below). The roadmap is in TODO.md).
 
 ## Where things stand
@@ -94,30 +95,36 @@ owner's decision.
 Where the work is (nothing here is pushed yet):
 
 - Browser: branch `review-134-fixes`, made from `m22-holoml-docs`
-  (pull request #39). Merged into it: the main process and preloads
-  (`review-134/main`), the shell (`review-134/shell`), the tests and
-  their tools (`review-134/tests`), the viewer (`review-134/viewer`),
-  the copy of HoloML from holoml's `review-134-fixes` (bdf4863), and
-  the lead's own changes (Electron 44.5.1 with its rule 13 record,
-  Dependabot and the repository's files, `.claude/` ignored, the
-  viewer's review checks in part 2 of the automatic builds).
-- Still being built when this was written, each in its own working
-  copy under `.claude/worktrees/` (ignored by git) and to be merged
-  into `review-134-fixes`: `review-134/viewer2` (the viewer doing what
-  HoloML's specification says, and repairs to the viewer's checks);
+  (pull request #39). Merged into it, in two waves: the main process
+  and preloads (`review-134/main`), the shell (`review-134/shell`), the
+  tests and their tools (`review-134/tests`), the viewer
+  (`review-134/viewer`), the documents (`review-134/docs`); then
+  `review-134/viewer2` (the viewer doing what HoloML's specification's
+  third edition says, the Scene inspector's commands over the
+  browser's own line, and repairs to the viewer's checks: key holds by
+  the scene's clock, budgets skipped in software) and
   `review-134/features` (a prompt for HTTP sign-in, the window's size
-  remembered, Ctrl+Shift+V in the shortcuts table; it also refuses
-  full screen and pointer lock again, 75fa0c2, and makes a permission
-  change name its site, 8a40a22); and `review-134/docs` (the
-  documents). The documents do not describe the first two branches'
-  features: add them when they are merged. Two things the documents
-  do say rest on commits outside `review-134/docs`: that full screen
-  and pointer lock are refused (75fa0c2), and that part 2 of the
-  automatic builds runs the viewer's review checks (cfd4a48).
+  remembered, Ctrl+Shift+V in the shortcuts table, full screen and
+  pointer lock refused again, a permission change naming its site, the
+  test-run argument to page preloads, three checks measuring inside
+  the app, one record per tab in the shell); and the lead's own changes
+  (Electron 44.5.1 with its rule 13 record, Dependabot and the
+  repository's files, `.claude/` ignored, the viewer's review checks
+  in part 2 of the automatic builds, the history search index's
+  secure delete, tab snapshots through the shell-only helper, the
+  copy's version from the copied packages, `pnpm filters:update` run,
+  lint that knows the types). The documents describe all of it (this
+  branch's second documents pass, `review-134/docs2`, to be merged
+  too).
 - holoml: branch `review-134-fixes`, made from main (3ce0ab2), with
   the language's and the examples' fixes merged: the specification's
   third edition, the packages at 0.2.2, a change log, 44 new
-  conformance samples, the new turtle. Nothing is tagged since v0.2.0.
+  conformance samples, the new turtle, type-aware lint, and its tests
+  run file by file. Its pull request #21 is open
+  (https://github.com/srajpal/holoml/pull/21). Nothing is tagged
+  since v0.2.0. The browser's copy of HoloML (packages/holoml,
+  SOURCE.json) is made from that branch at 9e59907, and the copy's
+  package file takes its version, 0.2.2, from the copied packages.
 - On GitHub (the lead's record, 2026-09-30): the rule on main requires
   the one check "All checks"; Dependabot's alerts and security updates
   are on, and code scanning is set up, in both repositories; merged
@@ -127,8 +134,8 @@ Where the work is (nothing here is pushed yet):
 
 How to resume:
 
-1. Merge the branches still being built into `review-134-fixes`, and
-   bring the documents up to what they add.
+1. Merge `review-134/docs2` (this documents pass) into
+   `review-134-fixes`; every feature branch is merged already.
 2. Make the final runs and record them: `pnpm lint`, `pnpm typecheck`,
    `pnpm test`, `pnpm test:e2e`, and `pnpm test:linux` here, and `pnpm
    test` in holoml. The documents hold `[COUNT]` and `[TIME]` where a
@@ -138,10 +145,14 @@ How to resume:
 3. Take the ocean tunnel's pictures again (`pnpm screenshots:examples`,
    then the progress screenshots): those in the repository were taken
    with the old turtle (THIRD-PARTY.md).
-4. Open the pull requests, holoml's first. Once holoml's is merged,
-   make the browser's copy from holoml's main (`pnpm holoml:sync main
+4. Push `review-134-fixes` and open the browser's pull request
+   (holoml's, #21, is open). Once holoml's is merged, make the
+   browser's copy from holoml's main (`pnpm holoml:sync main
    --examples main`), and from a tag once the owner tags one.
-5. After both are merged: switch on "actions by commit" in each
+5. Open the security advisories (for what the review found that a
+   release could have shipped) and the issues for the rest, and bring
+   REVIEW-2026-09-30.md's statuses up to date, on the owner's computer.
+6. After both are merged: switch on "actions by commit" in each
    repository's settings, and take the owner's decisions listed under
    "Deliberately not done" in TODO.md.
 
@@ -157,14 +168,30 @@ Worth knowing:
 - The clipboard checks (D8, K2, and M1's "a real click may still copy
   text") failed on this computer during the fixes while its clipboard
   was out of reach; they are to be run again in the final runs.
-- The viewer's test hooks appear on a HoloML page when the page's
-  preload finds HYPERSOL_TEST=1 in its environment; the preload does
-  not yet ask whether the app is packaged, as the main process's test
-  mode does (ARCHITECTURE.md, Scene inspector; a check for milestone
-  28).
-- A deleted history entry's three-letter pieces stay in the search
-  index until all history is cleared (TODO.md, milestone 24's new
-  item; docs/privacy.md says so).
+- The viewer's test hooks appear on a HoloML page only when the main
+  process started the page's process with `--hypersol-test-run`
+  (shared/test-run.ts), which it does in test mode alone, never in a
+  packaged app; the page preload reads nothing from the environment
+  (ARCHITECTURE.md, Scene inspector). Milestone 28 keeps a check that
+  a packaged app has neither test mode nor the hooks.
+- The Scene inspector's choosing and picking reach the viewer as
+  `select:<index>`, `pick-on`, and `pick-off` on the HoloML command
+  channel (main/inspect/index.ts); `window.__holoml` in a normal run
+  holds only `scene`.
+- A deleted history entry's pieces leave the search index at once
+  (schema 5 sets FTS5's secure-delete; storage/scrub.test.ts).
+- The viewer's checks hold a key for an amount of the scene's own time
+  (the `clock` hook; the `hold` and `sceneTime` helpers in the
+  milestone files), since a frame drawn slowly in software makes scene
+  time run behind the clock; the budgets that need a graphics card
+  report "skipped" in software (AGENTS.md, Testing).
+- A check of HTTP sign-in uses the fixture server's
+  `/review-134/basic/*` and `/review-134/basic-long/*` (a long realm);
+  the test log's `signInsWaiting()` counts the prompts showing or
+  waiting. The window-size check launches with `rememberWindow` (the
+  harness passes `--test-remember-window`).
+- `pnpm lint` takes about half a minute now that three of its rules
+  need the types (eslint.config.js).
 
 ## Milestone 22, in progress (2026-09-29, prompts 127 and 128)
 

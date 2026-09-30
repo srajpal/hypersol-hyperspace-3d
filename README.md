@@ -132,8 +132,11 @@ An archived copy of the 2001 site is available through the
   depths.
 - Privacy on by default: ad and tracker blocking with a shield, encrypted
   DNS, private tabs, and no telemetry.
-- A password manager using the system's keychain, and site permissions
-  for the camera, microphone, and location.
+- A password manager using the system's keychain, site permissions
+  for the camera, microphone, and location, and a prompt for sites and
+  proxies that ask for a user name and password in the browser's own
+  dialog (HTTP sign-in; what you type goes to Chromium's handling of the
+  request only, and is never saved).
 - Two themes, Nebula (a synthwave night) and Daylight (a pastel 1990s
   day), an instrument panel with live readouts, zoom, find in page,
   downloads, printing, remappable shortcuts, and an economy mode with
@@ -327,9 +330,11 @@ Electron's GitHub releases) and checks it against the checksums shipped
 in the electron package. The end-to-end tests also need `openssl` on
 PATH, which Git for Windows provides.
 
-`pnpm dev` opens the app on a start tab. Type an address or a search in
+`pnpm dev` opens the app on a start tab, at the size and place the
+window was last left (or 1280 by 800 the first time). Type an address or a search in
 the top bar, or click a card on the left to switch tabs. The main keys
-(all listed, and changeable, in Settings > Shortcuts):
+(all listed, and changeable, in Settings > Shortcuts; the text view's
+keys act only with a HoloML page in front):
 
 - Ctrl+T, Ctrl+W, Ctrl+Tab: open, close, and move between tabs;
   Ctrl+Shift+N opens a private tab.
