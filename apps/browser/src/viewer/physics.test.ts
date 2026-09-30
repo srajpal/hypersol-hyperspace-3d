@@ -89,4 +89,35 @@ describe('walking with walls and gravity (HoloML 0.2)', () => {
     expect(near.length).toBeGreaterThan(0);
     expect(near.length).toBeLessThan(40);
   });
+
+  it('a solid kilometres across, or one far beyond the scene, takes no time to add and still stops the walker (review 134, V5)', () => {
+    const start = performance.now();
+    // A floor 100 km by 100 km, a wall scaled to 1e15 m, and a box out where numbers no longer count by ones.
+    const floor: Box = { min: [-50_000, 0.9, -50_000], max: [50_000, 1, 50_000] };
+    const wall: Box = { min: [3, 0, -1e15], max: [4, 1e15, 1e15] };
+    const beyond: Box = { min: [1e17, 0, 1e17], max: [1e17 + 64, 1, 1e17 + 64] };
+    const nothing: Box = { min: [0, NaN, 0], max: [1, 1, 1] };
+    const grid = new SolidGrid([floor, wall, beyond, nothing, block(2, 1, -3)]);
+    expect(grid.size).toBe(5);
+    const w = new Walker([0.5, 8, 0.5], true, false);
+    run(w, 3, grid);
+    expect(w.feet[1]).toBeCloseTo(1, 3);
+    run(w, 3, grid, 2, 0);
+    expect(w.feet[0]).toBeLessThanOrEqual(3 - BODY.half);
+    expect(w.feet[0]).toBeGreaterThan(3 - BODY.half - 0.01);
+    run(w, 3, grid, 0, -2);
+    expect(w.feet[2]).toBeGreaterThan(-2 + BODY.half - 0.01);
+    expect(performance.now() - start).toBeLessThan(500);
+  });
+
+  it('a walker placed beyond any sane place steps without hanging (a viewpoint at 1e17)', () => {
+    const grid = new SolidGrid([block(0, 0, 0), block(1, 0, 0)]);
+    const start = performance.now();
+    for (const at of [1e17, -1e17, 1e300, 3e9]) {
+      const w = new Walker([at, 2, 0], true, false);
+      run(w, 0.5, grid, 2, 2);
+      expect([...grid.near(w.body().min, w.body().max)].length).toBeLessThanOrEqual(2);
+    }
+    expect(performance.now() - start).toBeLessThan(500);
+  });
 });
