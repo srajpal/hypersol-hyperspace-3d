@@ -54,6 +54,7 @@ describe('PageMonitor', () => {
     m.console(1, 'info', 'old', '', 0, 0);
     const a = m.snapshot(1, 0, 0);
     m.request(1, 2, 'http://b.example/', 'mainFrame', 'GET', 10);
+    m.pageCommitted(1, 'http://b.example/', 20);
     const b = m.snapshot(1, 0, 0);
     expect(b.pageNumber).toBe(a.pageNumber + 1);
     expect(b.page.url).toBe('http://b.example/');
@@ -96,7 +97,51 @@ describe('PageMonitor', () => {
     m.request(1, 1, 'https://a.example/x', 'mainFrame', 'GET', 0);
     expect(m.snapshot(1, 0, 0).page.cert).toMatchObject({ issuer: 'Test CA', verification: 'OK' });
     m.request(1, 2, 'http://a.example/x', 'mainFrame', 'GET', 0);
+    m.pageCommitted(1, 'http://a.example/x', 1);
     expect(m.snapshot(1, 0, 0).page.cert).toBeNull(); // not over HTTPS
+  });
+
+  it('keeps the showing page when a request for a new page never arrives: a download, or "no content" (review of 2026-09-30, M8)', () => {
+    const m = new PageMonitor();
+    m.request(1, 1, 'https://a.example/', 'mainFrame', 'GET', 0);
+    m.pageCommitted(1, 'https://a.example/', 5);
+    m.request(1, 2, 'https://a.example/app.js', 'script', 'GET', 10);
+    m.completed(1, 1, 200, 900, false, 8);
+    m.completed(1, 2, 200, 100, false, 20);
+    m.console(1, 'info', 'hello', '', 0, 20);
+    m.pageFinished(1, 30);
+    const before = m.snapshot(1, 0, 0);
+    // A link to a file: the request starts as a page load, and ends as a download.
+    m.request(1, 3, 'https://files.example/big.zip', 'mainFrame', 'GET', 100);
+    m.completed(1, 3, 200, 5000, false, 150);
+    m.pageFinished(1, 160);
+    const after = m.snapshot(1, 0, 0);
+    expect(after.pageNumber).toBe(before.pageNumber); // the shell keeps its lists
+    expect(after.page).toMatchObject({ url: 'https://a.example/', loadMs: 30, requests: 3, bytes: 6000 });
+    expect(after.console.map((c) => c.message)).toEqual(['hello']);
+    expect(after.net.map((e) => e.url)).toEqual(['https://a.example/', 'https://a.example/app.js', 'https://files.example/big.zip']);
+    // The next page that does arrive starts from its own request only.
+    m.request(1, 4, 'https://b.example/', 'mainFrame', 'GET', 200);
+    m.request(1, 5, 'https://a.example/beacon', 'ping', 'POST', 201); // the old page, on its way out
+    expect(m.snapshot(1, 0, 0).page).toMatchObject({ url: 'https://a.example/', requests: 5 });
+    m.pageCommitted(1, 'https://b.example/', 210);
+    const next = m.snapshot(1, 0, 0);
+    expect(next.pageNumber).toBeGreaterThan(after.pageNumber);
+    expect(next.page).toMatchObject({ url: 'https://b.example/', requests: 2, bytes: 0 });
+    expect(next.console).toEqual([]);
+    m.completed(1, 4, 200, 700, false, 260);
+    expect(m.snapshot(1, 0, 0).page.bytes).toBe(700);
+  });
+
+  it('a page reached without a request (history) starts afresh, and the same page again does not', () => {
+    const m = new PageMonitor();
+    m.request(1, 1, 'https://a.example/', 'mainFrame', 'GET', 0);
+    m.pageCommitted(1, 'https://a.example/', 5);
+    const first = m.snapshot(1, 0, 0).pageNumber;
+    m.pageCommitted(1, 'https://a.example/#top', 6);
+    expect(m.snapshot(1, 0, 0).pageNumber).toBe(first);
+    m.pageCommitted(1, 'https://c.example/', 50);
+    expect(m.snapshot(1, 0, 0)).toMatchObject({ pageNumber: first + 1, page: { url: 'https://c.example/', requests: 0 } });
   });
 
   it('bounds requests still waiting as well as the list (issue #13)', () => {
@@ -108,7 +153,8 @@ describe('PageMonitor', () => {
     m.completed(1, 1, 200, 10, false, 20_000); // no longer followed: ignored, no error
     m.completed(1, 10_000, 200, 10, false, 20_000);
     expect(m.snapshot(1, 0, 0).page.bytes).toBe(10);
-    m.request(1, 20_000, 'http://b.example/', 'mainFrame', 'GET', 30_000); // a new page starts empty
+    m.request(1, 20_000, 'http://b.example/', 'mainFrame', 'GET', 30_000);
+    m.pageCommitted(1, 'http://b.example/', 30_001); // a new page starts empty
     expect(m.pendingCount(1)).toBe(1);
     m.forget(1);
     expect(m.pendingCount(1)).toBe(0);

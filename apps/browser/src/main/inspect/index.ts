@@ -15,6 +15,9 @@ import { declaredBytes, PageMonitor } from './monitor';
 /** Chromium's own certificate verdict, passed through unchanged (setCertificateVerifyProc). */
 const USE_CHROMIUM_RESULT = -3;
 
+/** Chromium's code for a load that was given up: stopped, replaced, or turned into a download. */
+const ERR_ABORTED = -3;
+
 const LEVELS: readonly ConsoleLevel[] = ['debug', 'info', 'warning', 'error'];
 
 export interface InspectorOptions {
@@ -90,6 +93,12 @@ export class Inspector {
     const id = contents.id;
     this.tabs.add(id);
     if (this.privateSession !== null && contents.session === this.privateSession) this.privateTabs.add(id);
+    contents.on('did-navigate', (_event, url) => this.monitor.pageCommitted(id, url, Date.now()));
+    // A page that failed to load: the tab shows its error card, so the readouts are that page's
+    // (its certificate, say). A load given up or turned into a download is not a failure.
+    contents.on('did-fail-load', (_event, code, _description, url, isMainFrame) => {
+      if (isMainFrame && code !== ERR_ABORTED) this.monitor.pageCommitted(id, url, Date.now());
+    });
     contents.on('did-stop-loading', () => this.monitor.pageFinished(id, Date.now()));
     contents.on('console-message', (event) => {
       const level = LEVELS.includes(event.level) ? event.level : 'info';

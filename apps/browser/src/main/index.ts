@@ -326,7 +326,7 @@ if (!app.requestSingleInstanceLock()) {
         const win = mainWindow;
         return win === null || win.isDestroyed() ? true : confirmLeave((box) => dialog.showMessageBoxSync(win, box));
       },
-      fetchFavicon: (url, init) => contents.session.fetch(url, init),
+      fetchFavicon: (url, init) => (privacy ? privacy.fetchFavicon(contents, url, init) : contents.session.fetch(url, init)),
     });
   });
 

@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
-import { clickUntil, focusedPage, inPage, launch, navigateTo, pressInShell, removeFolder, screenPointOf, waitFor, waitForPage, type Harness } from './harness';
+import { clickUntil, focusedPage, inPage, launch, navigateTo, pressInShell, removeFolder, screenPointOf, shellCall, waitFor, waitForPage, type Harness } from './harness';
 
 let server: FixtureServer;
 const folders: string[] = [];
@@ -90,6 +90,63 @@ describe('M1: what a page may do without asking', () => {
     expect(await did()).toBe('done');
     expect(await inPage<boolean>(h, 'document.fullscreenElement === document.documentElement', page)).toBe(true);
     await inPage(h, 'document.exitFullscreen().then(() => true)', page);
+  });
+});
+
+describe('M3: WebSockets through the shield', () => {
+  it('a WebSocket to a listed host never leaves the browser, and is counted and listed; one to the page\'s own site goes through', async () => {
+    // A named host, as in the shield's own checks; the ad host is mapped to this machine (harness.ts).
+    const page = server.url('review-134-websocket.html').replace('127.0.0.1', 'shop.test');
+    const port = new URL(server.base).port;
+    const h = await launch(page, { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'review-134-websocket');
+      await waitFor('every socket closed', () => inPage<string>(h, 'document.title', 'review-134-websocket'), (t) => t === 'WebSocket test ready');
+      // The page's own socket reached the server; the ad host's, plain ws like it, did not.
+      expect(server.hits.get('/ddm/own-socket') ?? 0).toBe(1);
+      expect(server.hits.get('/ddm/ad-socket') ?? 0).toBe(0);
+      // Both listed sockets are in the shield's count and its list, the encrypted one too.
+      await waitFor('two blocked', () => shellCall(h, 'shield'), (s) => s.count === 2);
+      const tab = (await focusedPage(h)).id;
+      const report = await h.shell.evaluate(
+        (id) => (window as unknown as { hypersol: { privacy(r: object): Promise<{ value: { count: number; items: { url: string; type: string }[] } }> } }).hypersol.privacy({ op: 'shield.report', tab: id }),
+        tab,
+      );
+      expect(report.value.items).toEqual([
+        { url: `ws://ad.doubleclick.net:${port}/ddm/ad-socket`, type: 'webSocket' },
+        { url: `wss://ad.doubleclick.net:${port}/ddm/secure-socket`, type: 'webSocket' },
+      ]);
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('M8: a link that leads to a download', () => {
+  it('leaves the showing page\'s site and count as they are', async () => {
+    const downloads = mkdtempSync(join(tmpdir(), 'hypersol-e2e-downloads-'));
+    folders.push(downloads);
+    const page = server.url('shield.html').replace('127.0.0.1', 'shop.test');
+    const h = await launch(page, { userDataDir: newProfile(), downloadsDir: downloads });
+    try {
+      await waitForPage(h, 'shield.html');
+      await waitFor('two blocked', () => shellCall(h, 'shield'), (s) => s.count === 2);
+      const tab = (await focusedPage(h)).id;
+      const report = () =>
+        h.shell.evaluate(
+          (id) => (window as unknown as { hypersol: { privacy(r: object): Promise<{ value: { site: string; count: number } }> } }).hypersol.privacy({ op: 'shield.report', tab: id }),
+          tab,
+        );
+      expect((await report()).value).toMatchObject({ site: 'shop.test', count: 2 });
+      // A file on another host: the request starts as a page load and ends as a download.
+      await inPage(h, `location.href = ${JSON.stringify(server.url('download/sample.txt'))}; true`, 'shield.html');
+      await waitFor('the download done', () => shellCall(h, 'downloads'), (d) => d.length === 1 && d[0]!.state === 'completed');
+      await waitFor('the tab at rest', () => h.app.evaluate(({ webContents }, id) => webContents.fromId(id)!.isLoading(), tab), (loading) => !loading);
+      expect((await report()).value).toMatchObject({ site: 'shop.test', count: 2 });
+      expect((await shellCall(h, 'shield')).count).toBe(2);
+    } finally {
+      await h.close();
+    }
   });
 });
 

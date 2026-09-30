@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { MAX_BLOCKED_ITEMS, parsePrivacyRequest } from '../../shared/privacy';
 import { DnsControl, base64Url, dnsQuery, isDnsAnswer } from './dns';
 import { DAY_MS, FilterService, RETRY_MS, type FilterDeps, type ListManifest } from './filters';
+import { OwnRequests } from './own-requests';
 import { Shield, type Matcher } from './shield';
 
 // ---- Shield -----------------------------------------------------------------
@@ -45,13 +46,86 @@ describe('Shield', () => {
     ]);
   });
 
-  it('starts a fresh count when the tab loads a new page', () => {
+  it('starts a fresh count when the tab arrives at a new page', () => {
     const { s, counts } = shield();
     s.decide({ tab: 1, resourceType: 'mainFrame', url: 'https://a.example/' });
+    s.committed(1, 'https://a.example/');
     s.decide({ tab: 1, resourceType: 'script', url: 'https://tracker.example/t.js' });
     s.decide({ tab: 1, resourceType: 'mainFrame', url: 'https://b.example/' });
+    s.committed(1, 'https://b.example/');
     expect(s.report(1)).toEqual({ site: 'b.example', paused: false, count: 0, items: [] });
     expect(counts.at(-1)).toEqual([1, 0]);
+  });
+
+  it('keeps the showing page\'s site, count, and pause when a request for a new page never arrives (review of 2026-09-30, M8)', () => {
+    const paused: string[] = [];
+    const { s, counts } = shield(paused);
+    s.decide({ tab: 1, resourceType: 'mainFrame', url: 'https://news.example/' });
+    s.committed(1, 'https://news.example/');
+    s.decide({ tab: 1, resourceType: 'script', url: 'https://tracker.example/t.js' });
+    const before = s.report(1);
+    expect(before).toMatchObject({ site: 'news.example', count: 1 });
+    // A link to a file on another host: a page load that becomes a download; or an answer of "no content".
+    expect(s.decide({ tab: 1, resourceType: 'mainFrame', url: 'https://files.example/big.zip' })).toEqual({});
+    expect(s.report(1)).toEqual(before);
+    // The shield paused on the download's host changes nothing for the page that shows.
+    paused.push('files.example');
+    expect(s.decide({ tab: 1, resourceType: 'image', url: 'https://tracker.example/p.gif' })).toEqual({ cancel: true });
+    s.settled(1);
+    expect(s.report(1)).toMatchObject({ site: 'news.example', paused: false, count: 2 });
+    expect(counts).toEqual([
+      [1, 1],
+      [1, 2],
+    ]);
+    // Arriving somewhere by history afterwards is not mistaken for the download's page.
+    s.committed(1, 'https://other.example/');
+    expect(s.report(1)).toMatchObject({ site: 'other.example', count: 0 });
+  });
+
+  it('counts a request blocked while a page is on its way for the page that arrives too', () => {
+    const { s, counts } = shield();
+    s.decide({ tab: 1, resourceType: 'mainFrame', url: 'https://a.example/' });
+    s.committed(1, 'https://a.example/');
+    s.decide({ tab: 1, resourceType: 'mainFrame', url: 'https://b.example/' });
+    // Either page's: the old one on its way out, or the new one a moment before its arrival is known.
+    s.decide({ tab: 1, resourceType: 'script', url: 'https://tracker.example/t.js' });
+    expect(s.report(1)).toMatchObject({ site: 'a.example', count: 1 });
+    s.committed(1, 'https://b.example/');
+    expect(s.report(1)).toMatchObject({ site: 'b.example', count: 1 });
+    s.decide({ tab: 1, resourceType: 'image', url: 'https://tracker.example/p.gif' });
+    expect(s.report(1).count).toBe(2);
+    expect(counts.at(-1)).toEqual([1, 2]);
+  });
+
+  it('asks the lists about WebSockets too (review of 2026-09-30, M3)', () => {
+    const { s } = shield();
+    s.decide({ tab: 1, resourceType: 'mainFrame', url: 'https://news.example/' });
+    expect(s.decide({ tab: 1, resourceType: 'webSocket', url: 'wss://tracker.example/live' })).toEqual({ cancel: true });
+    expect(s.decide({ tab: 1, resourceType: 'webSocket', url: 'ws://tracker.example/live' })).toEqual({ cancel: true });
+    expect(s.decide({ tab: 1, resourceType: 'webSocket', url: 'wss://chat.example/room' })).toEqual({});
+    expect(s.report(1).items).toEqual([
+      { url: 'wss://tracker.example/live', type: 'webSocket' },
+      { url: 'ws://tracker.example/live', type: 'webSocket' },
+    ]);
+  });
+
+  it('asks about a request no tab made, with its referrer as the page, and counts nothing (review of 2026-09-30, M3)', () => {
+    const pages: string[] = [];
+    const counts: [number, number][] = [];
+    const s = new Shield(
+      () => (url, type, pageUrl) => (pages.push(pageUrl), matcher(url, type, pageUrl)),
+      () => false,
+      (tab, count) => counts.push([tab, count]),
+    );
+    const paused = (site: string) => site === 'paused.example';
+    expect(s.decideUntabbed({ url: 'https://tracker.example/beacon', resourceType: 'xhr', referrer: 'https://news.example/sw.js' }, paused)).toEqual({ cancel: true });
+    expect(pages).toEqual(['https://news.example/sw.js']);
+    expect(s.decideUntabbed({ url: 'wss://tracker.example/live', resourceType: 'webSocket', referrer: '' }, paused)).toEqual({ cancel: true });
+    expect(s.decideUntabbed({ url: 'https://cdn.example/lib.js', resourceType: 'script', referrer: 'https://news.example/' }, paused)).toEqual({});
+    // A site the person paused the shield on is left alone here too.
+    expect(s.decideUntabbed({ url: 'https://tracker.example/beacon', resourceType: 'xhr', referrer: 'https://paused.example/sw.js' }, paused)).toEqual({});
+    expect(s.decideUntabbed({ url: 'file:///C:/x', resourceType: 'other', referrer: '' }, paused)).toEqual({});
+    expect(counts).toEqual([]);
   });
 
   it('a page reached without a request (history) also starts fresh, but not the same page', () => {
@@ -118,6 +192,24 @@ describe('Shield', () => {
     s.decide({ tab: 1, resourceType: 'image', url: 'https://tracker.example/p.gif' });
     s.forget(1);
     expect(s.report(1)).toEqual({ site: '', paused: false, count: 0, items: [] });
+  });
+});
+
+describe('OwnRequests (review of 2026-09-30, M3)', () => {
+  it('exempts the app\'s own fetch only while it is under way, however it ends', async () => {
+    const own = new OwnRequests();
+    const url = 'https://lists.example/a.txt';
+    let release!: (text: string) => void;
+    const running = own.run(url, () => new Promise<string>((resolve) => void (release = resolve)));
+    expect(own.has(url)).toBe(true);
+    expect(own.has('https://lists.example/b.txt')).toBe(false);
+    // A second fetch of the same address: exempt until both are done.
+    const failing = own.run(url, () => Promise.reject(new Error('offline')));
+    await expect(failing).rejects.toThrow('offline');
+    expect(own.has(url)).toBe(true);
+    release('list');
+    expect(await running).toBe('list');
+    expect(own.has(url)).toBe(false);
   });
 });
 
@@ -348,6 +440,14 @@ describe('starter copy (resources/filters)', () => {
     expect(blocked('https://ad.doubleclick.net/ddm/ad.gif', 'image')).toBe(true);
     expect(blocked('https://ad.doubleclick.net/ddm/clk/1', 'mainFrame')).toBe(true);
     expect(blocked('https://news.example/app.js', 'script')).toBe(false);
+  });
+
+  it('blocks WebSockets to the same addresses, as Electron names them (review of 2026-09-30, M3)', () => {
+    const engine = FiltersEngine.deserialize(new Uint8Array(readFileSync(join(dir, 'starter.bin'))));
+    const blocked = (url: string) => engine.match(Request.fromRawDetails({ url, type: 'webSocket', sourceUrl: 'https://news.example/' })).match;
+    expect(blocked('wss://www.google-analytics.com/collect')).toBe(true);
+    expect(blocked('ws://ad.doubleclick.net/ddm/socket')).toBe(true);
+    expect(blocked('wss://news.example/live')).toBe(false);
   });
 
   it('leaves out the download-only lists and records what went in', () => {
