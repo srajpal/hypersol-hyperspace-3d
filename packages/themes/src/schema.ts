@@ -26,6 +26,10 @@ export interface ThemeColors {
   floorGrid: string;
   /** Colour of the desk surface under the page. */
   desk: string;
+  /** The retro sun's disc, from its top, through the middle, to its bottom (drawn where room.sun is on). */
+  sunTop: string;
+  sunMiddle: string;
+  sunBottom: string;
 }
 
 export type ColorToken = keyof ThemeColors;

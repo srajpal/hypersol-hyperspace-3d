@@ -222,7 +222,7 @@ export class Room {
     );
     this.sun = new Mesh(
       new PlaneGeometry(1, 1),
-      new MeshBasicMaterial({ map: makeSunTexture(), transparent: true, depthWrite: false, fog: false }),
+      new MeshBasicMaterial({ map: makeSunTexture(theme), transparent: true, depthWrite: false, fog: false }),
     );
     this.sun.visible = theme.room.sun;
     // Drawn first, behind everything else in the room.
@@ -858,6 +858,9 @@ export class Room {
     this.glow.material.color.set(c.accent);
     this.glow.material.opacity = theme.glowStrength;
     this.horizon.material.color.set(c.horizon);
+    // The sun's disc is a picture in the theme's colours: drawn again for the new theme.
+    this.sun.material.map?.dispose();
+    this.sun.material.map = makeSunTexture(theme);
     this.sun.visible = theme.room.sun && !this.economy;
     for (const card of this.cards.values()) card.setTheme(theme);
     this.requestRender();
@@ -974,8 +977,8 @@ function makeBandTexture(): CanvasTexture {
   return new CanvasTexture(canvas);
 }
 
-/** The 1980s sun: a disc fading from gold to magenta, its lower half cut by widening stripes. */
-function makeSunTexture(): CanvasTexture {
+/** The 1980s sun: a disc fading through the theme's three sun colours (gold to magenta in Nebula), its lower half cut by widening stripes. */
+function makeSunTexture(theme: Theme): CanvasTexture {
   const size = 512;
   const canvas = document.createElement('canvas');
   canvas.width = size;
@@ -983,9 +986,9 @@ function makeSunTexture(): CanvasTexture {
   const ctx = canvas.getContext('2d');
   if (ctx) {
     const g = ctx.createLinearGradient(0, 0, 0, size);
-    g.addColorStop(0, '#ffe36b');
-    g.addColorStop(0.55, '#ff8a4c');
-    g.addColorStop(1, '#ff2f92');
+    g.addColorStop(0, theme.colors.sunTop);
+    g.addColorStop(0.55, theme.colors.sunMiddle);
+    g.addColorStop(1, theme.colors.sunBottom);
     ctx.fillStyle = g;
     ctx.beginPath();
     ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
