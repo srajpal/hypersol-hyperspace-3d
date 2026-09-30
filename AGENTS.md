@@ -162,9 +162,10 @@ date given and grow with each milestone; TODO.md has the latest.
   a promise nobody awaits or catches is an error, since the review of
   2026-09-30)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about nineteen minutes; 372 checks in 27 files in the
-  full run on 2026-09-30, after the review's fixes, all passed on this
-  computer; TODO.md has the details). On
+  against it (about nineteen minutes; 373 checks in 27 files: 372 in
+  the full run on 2026-09-30, after the review's fixes, all passed on
+  this computer, and one added after it, run in its file; TODO.md has
+  the details). On
   this computer vitest's report leaves out what passing checks log (the
   load times, frame rates, and memory); `pnpm test:e2e
   --reporter=verbose` shows it, as the automatic builds do. Needs
@@ -431,7 +432,8 @@ milestone; the current milestone's checks are defined in TODO.md):
     page that fills the window drawn flat, switching panels, error cards
     that go, a prompt and a notice that take no click at first, the
     address bar, eight smaller faults of the top bar, tabs, and panels,
-    the room drawing only what is needed, and access (the tab list,
+    the room drawing only what is needed and its cards hit where the
+    rail lays them out while the context is lost, and access (the tab list,
     error cards, dialogs, reduced motion, composed text, menu keys,
     Escape).
   - tests/e2e/review-134-viewer.e2e.ts, the HoloML viewer (V2 to V10 and

@@ -4537,7 +4537,8 @@ The shell:
 - R1 to R7, each a group in review-134-shell: switching panels, error
   cards that go, the prompt and the notice that take no click for half
   a second, a filled HoloML page drawn flat, the address bar, the eight
-  smaller faults, the room's drawing, and access. Unit renderer/url
+  smaller faults, the room's drawing and its cards' click targets
+  while the context is lost, and access. Unit renderer/url
   (how an address is shown, the site button's marker).
 - St3. The sun's colours are theme tokens, and what the page preload
   draws takes the theme's colours. Unit H8 (now over the room's code
@@ -4702,7 +4703,16 @@ The final runs, after every branch was merged (2026-09-30):
   failed, each only there: L3 (milestone 10, the card's speaker; the
   click opened a new tab), and two of the review's shell checks (the
   error card of a failed tab asserted the instant the state changed;
-  losing the graphics context on request). LINUX_FIX_RESULT
+  losing the graphics context on request). The three were repaired the
+  same day, and one was a fault in the browser: GitHub's Linux machines
+  lose the room's graphics context once soon after the start and
+  restore it a second or two later, and while it was lost the cards'
+  click targets stayed where the last drawn frame had put them, so the
+  click meant for a card's speaker opened a new tab (the "+" card had
+  been there). Hit testing now brings the layout up to date itself; a
+  new check holds it, and fails without the fix on Windows too. After
+  the repairs: m10 and review-134-shell in the container, 40 of 40;
+  the same on Windows, 40 of 40.
 - The automatic builds in four parts (pull request #39's run after
   fce1e63, before the fixes): all ten checks passed in 15 min 34 s,
   where the two-part builds took about 33.
