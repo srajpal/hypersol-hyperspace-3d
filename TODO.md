@@ -4717,7 +4717,21 @@ The final runs, after every branch was merged (2026-09-30):
   fce1e63, before the fixes): all ten checks passed in 15 min 34 s,
   where the two-part builds took about 33.
 - The automatic builds with the fixes, on both pull requests: holoml's
-  #21 passed on Windows and Linux; the browser's: PR_RESULT
+  #21 passed on Windows and Linux. The browser's #45, first run
+  (c9c513c): Linux's four parts passed (8, 14, 9, and 8 minutes);
+  Windows' three failed on what its machines are (a 1024 by 768
+  display, so the window opens smaller than 1280 by 800 and cannot
+  shrink below its 900 by 600; drawing in software, at half resolution
+  since prompt 135): the two D7 checks compared with 1280 by 800, R6
+  shrank the window below its smallest, V8's text view was too short
+  to scroll three times there, V2's text rows were read from pixels
+  at half resolution, and one close of the app took over five minutes
+  and failed m7's file without a word. Repaired the same day: the
+  checks compare with the size a fresh window gets on the machine and
+  keep within its smallest; the text fixture has 240 lines; V2's
+  pixels are their own check, skipped in software as the other pixel
+  checks are; the harness ends an app that does not close within half
+  a minute and says so. Second run: PR_RESULT
 - Lint (with the rules that need the types, about half a minute) and
   the type check: clean.
 - `pnpm test` in holoml: 505 passed, one file at a time (about 12 s).

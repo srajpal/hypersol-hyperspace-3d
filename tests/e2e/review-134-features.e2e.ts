@@ -269,40 +269,59 @@ describe('D7: the window\'s size and place are remembered', () => {
     h.app.evaluate(({ BrowserWindow }, [w, ht]) => BrowserWindow.getAllWindows()[0]!.setSize(w!, ht!), [width, height]);
   type Left = { x: number; y: number; width: number; height: number; maximized: boolean } | null | undefined;
   const left = (profile: string) => saved(profile)['windowBounds'] as Left;
+  /**
+   * The size a window opens at when nothing is saved: 1280 by 800, unless
+   * the display is smaller (GitHub's Windows machines give a window of
+   * 1024 by 768), when the system makes it fit. Read once from a fresh
+   * window, so the checks below compare with what this machine gives.
+   */
+  let defaultSize: { width: number; height: number };
+  beforeAll(async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      const { width, height } = await bounds(h);
+      defaultSize = { width, height };
+      expect(width).toBeLessThanOrEqual(1280);
+      expect(height).toBeLessThanOrEqual(800);
+    } finally {
+      await h.close();
+    }
+  });
 
-  it('a restart opens the window at the size it was left; a test window not asked to stays 1280 by 800', async () => {
+  it('a restart opens the window at the size it was left; a test window not asked to stays at the default size', async () => {
     const profile = newProfile();
     // Test windows keep their 1280 by 800 (the other checks rely on it); this one asks for the real behaviour.
     let h = await launch(server.url('link-a.html'), { userDataDir: profile, rememberWindow: true });
     try {
       await waitForPage(h, 'link-a');
-      expect(await bounds(h)).toMatchObject({ width: 1280, height: 800 });
+      expect(await bounds(h)).toMatchObject(defaultSize);
 
       // Saved soon after a change, while the app runs.
-      await resize(h, 1100, 720);
+      await resize(h, 1000, 700);
       const first = await bounds(h);
-      expect(first).toMatchObject({ width: 1100, height: 720 });
-      await waitFor('the size saved in settings.json', async () => left(profile), (b) => b?.width === 1100 && b?.height === 720);
+      expect(first).toMatchObject({ width: 1000, height: 700 });
+      await waitFor('the size saved in settings.json', async () => left(profile), (b) => b?.width === 1000 && b?.height === 700);
       expect(left(profile)).toEqual({ ...first, maximized: false });
 
       // And at once when the window closes, before the wait is over.
-      await resize(h, 1000, 700);
+      await resize(h, 960, 640);
       const last = await bounds(h);
       await h.close();
       expect(left(profile)).toEqual({ ...last, maximized: false });
-      expect(last).toMatchObject({ width: 1000, height: 700 });
+      expect(last).toMatchObject({ width: 960, height: 640 });
 
       // The next start opens at that size.
       h = await launch(server.url('link-a.html'), { userDataDir: profile, rememberWindow: true });
       await waitForPage(h, 'link-a');
-      expect(await bounds(h)).toMatchObject({ width: 1000, height: 700 });
+      expect(await bounds(h)).toMatchObject({ width: 960, height: 640 });
       await h.close();
 
-      // A test window that does not ask is 1280 by 800, and leaves what is saved as it is.
+      // A test window that does not ask opens at the default size, and leaves what is saved as it is.
       h = await launch(server.url('link-a.html'), { userDataDir: profile });
       await waitForPage(h, 'link-a');
-      expect(await bounds(h)).toMatchObject({ width: 1280, height: 800 });
-      await resize(h, 1050, 650);
+      expect(await bounds(h)).toMatchObject(defaultSize);
+      await resize(h, 980, 660);
       await h.close();
       expect(left(profile)).toEqual({ ...last, maximized: false });
     } finally {
@@ -315,7 +334,7 @@ describe('D7: the window\'s size and place are remembered', () => {
     const h = await launch(server.url('link-a.html'), { userDataDir: profile, rememberWindow: true });
     try {
       await waitForPage(h, 'link-a');
-      expect(await bounds(h)).toMatchObject({ width: 1280, height: 800 });
+      expect(await bounds(h)).toMatchObject(defaultSize);
     } finally {
       await h.close();
     }

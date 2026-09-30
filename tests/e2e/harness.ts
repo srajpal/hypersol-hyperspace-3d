@@ -268,8 +268,17 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
       errors,
       close: async () => {
         try {
-          // The app may already have quit on its own (quit checks).
-          if (ended(proc) === null) await app.close();
+          // The app may already have quit on its own (quit checks). One that
+          // does not go within half a minute of being asked is ended, and
+          // the run says so: a hook that waits on it for ever fails its file
+          // without a word (GitHub's Windows machines, 2026-09-30).
+          if (ended(proc) === null) {
+            const gone = await Promise.race([app.close().then(() => true), sleep(30_000).then(() => false)]).catch(() => false);
+            if (!gone && ended(proc) === null) {
+              console.warn('[harness] the app did not close within 30 s of being asked; ending it');
+              await closeApp(app, proc);
+            }
+          }
         } finally {
           launched.delete(proc);
         }

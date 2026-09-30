@@ -833,8 +833,11 @@ describe('R6: the room draws what is needed, where it is needed', () => {
       expect(await offBy()).toBeLessThan(3);
       await loseContext(h);
       // A resize: the page is drawn where the room now places it.
+      // Smaller, unless the window is already near its smallest (900 by 600 outside; GitHub's Windows
+      // machines open it at 1024 by 768): then larger, as long as it is another size.
       const size = await h.shell.evaluate(() => [window.innerWidth, window.innerHeight]);
-      await setContentSize(h, size[0]! - 160, size[1]! - 90);
+      const shrink = size[0]! - 160 >= 940 && size[1]! - 90 >= 640;
+      await setContentSize(h, size[0]! + (shrink ? -160 : 60), size[1]! + (shrink ? -90 : 40));
       await waitFor('the page in its new place', offBy, (d) => d < 3, 5000);
       // A tab switch: the new tab's page comes to the centre.
       await pressInShell(h, 'T', ['control']);

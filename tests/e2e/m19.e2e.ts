@@ -265,21 +265,6 @@ describe('V2 to V4: panels, click actions, and places', () => {
     expect(info.lines[1]!.join(' ')).toBe(info.paragraphs[1]);
     expect(panels.find((p) => p.id === 'plain')).toMatchObject({ paragraphs: ['Words without a board'], background: null });
 
-    // The page's pixels: a band of dark text for each line, the paragraphs further apart than the lines of one.
-    await drawn(h, PAGE);
-    const rect = (await holo<Rect | null>(h, 'window.__holoml.rect("info")', PAGE))!;
-    const rows = await darkRows(h, PAGE, rect);
-    const bands = bandsOf(rows.rows);
-    expect(bands.length, `the text's rows: ${JSON.stringify(bands)}`).toBe(info.lines.flat().length);
-    const gaps = bands.slice(1).map((b, i) => b.start - bands[i]!.end);
-    const breaks = [info.lines[0]!.length - 1, info.lines[0]!.length + info.lines[1]!.length - 1];
-    const within = gaps.filter((_, i) => !breaks.includes(i));
-    for (const i of breaks) expect(gaps[i], `gaps between rows: ${gaps.join(', ')}`).toBeGreaterThan(Math.max(...within) * 1.3);
-    // Within the width: the words keep clear of the board's edges.
-    const margin = (((rect.right - rect.left) * info.size * 0.8) / info.width) * 0.5;
-    expect(rows.minX).toBeGreaterThan(rect.left + margin);
-    expect(rows.maxX).toBeLessThan(rect.right - margin);
-
     // Find in page finds the words.
     await pressInPage(h, 'f', ['control'], PAGE);
     await waitFor('the find bar', () => shellCall(h, 'find'), (f) => f.open);
@@ -308,6 +293,32 @@ describe('V2 to V4: panels, click actions, and places', () => {
     const changed = (await holo<Panel[]>(h, 'window.__holoml.panels()', PAGE)).find((p) => p.id === 'info')!;
     expect(changed.lines).toEqual([['One'], ['Two']]);
     expect(changed.height).toBeLessThan(info.height);
+  });
+
+  it("V2 the panel's pixels: a band of dark text for each line, the paragraphs further apart than the lines of one, within the board's edges (with a graphics card)", async (ctx) => {
+    // Drawn in software the scene has half its pixels each way (prompt 135), and the text's anti-aliasing
+    // then splits or joins rows at random; the layout itself (the lines and paragraphs) is checked above.
+    const software = await softwareRenderer(h);
+    if (software) {
+      ctx.skip(`the pixels are for graphics hardware; drawing in software (${software})`);
+      return;
+    }
+    const PAGE = 'panels.holoml';
+    await openPage(h, PAGE);
+    const info = (await holo<Panel[]>(h, 'window.__holoml.panels()', PAGE)).find((p) => p.id === 'info')!;
+    await drawn(h, PAGE);
+    const rect = (await holo<Rect | null>(h, 'window.__holoml.rect("info")', PAGE))!;
+    const rows = await darkRows(h, PAGE, rect);
+    const bands = bandsOf(rows.rows);
+    expect(bands.length, `the text's rows: ${JSON.stringify(bands)}`).toBe(info.lines.flat().length);
+    const gaps = bands.slice(1).map((b, i) => b.start - bands[i]!.end);
+    const breaks = [info.lines[0]!.length - 1, info.lines[0]!.length + info.lines[1]!.length - 1];
+    const within = gaps.filter((_, i) => !breaks.includes(i));
+    for (const i of breaks) expect(gaps[i], `gaps between rows: ${gaps.join(', ')}`).toBeGreaterThan(Math.max(...within) * 1.3);
+    // Within the width: the words keep clear of the board's edges.
+    const margin = (((rect.right - rect.left) * info.size * 0.8) / info.width) * 0.5;
+    expect(rows.minX).toBeGreaterThan(rect.left + margin);
+    expect(rows.maxX).toBeLessThan(rect.right - margin);
   });
 
   it('V3 click actions: a click, and Enter on its button, open the door and the next closes it; the switch works the lamp; the sound plays; reduced motion; scripts hear the clicks', async () => {
