@@ -381,11 +381,15 @@ describe('GitHub issues #9, #11, #14: the layers view and changing pages', () =>
       await waitForPage(h, 'large.html');
       await waitFor('built', () => inPage<string>(h, 'document.title', 'large.html'), (t) => t === 'Large page ready');
       expect(await layersOn(h)).toBe(true);
-      await sleep(1500); // the first scan settles
+      // The layers preload says, in test runs, each time it has settled after a change: its
+      // scan of the page done and its choice of layers made (preload/layers.ts).
+      const page = await focusedPage(h);
+      const settledCount = () => h.app.evaluate((_e, id) => globalThis.__hypersolTest!.layersSettled[id] ?? 0, page.id);
+      let settled = await waitFor('the first scan and choice of layers', settledCount, (n) => n >= 1);
       await inPage(h, 'window.longTasks = []', 'large.html');
       for (let i = 0; i < 6; i++) {
         await inPage(h, 'window.addRow()', 'large.html');
-        await sleep(600);
+        settled = await waitFor(`the layers settled after row ${i + 1}`, settledCount, (n) => n > settled);
       }
       const tasks = await inPage<number[]>(h, 'window.longTasks', 'large.html');
       console.log(`#11: long tasks while the page changed: ${JSON.stringify(tasks.map((t) => Math.round(t)))}`);

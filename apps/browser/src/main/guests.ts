@@ -152,6 +152,8 @@ export function wireGuest(guest: WebContents, deps: GuestDeps): void {
       const image = nativeImage.createFromBuffer(bytes);
       return image.isEmpty() ? null : image.resize({ width: 32, height: 32, quality: 'best' }).toDataURL();
     },
+    undefined,
+    deps.testLog ? (url, why) => deps.testLog?.faviconEnds.push({ url, why }) : undefined,
   );
   guest.on('page-favicon-updated', (_event, urls) => {
     favicons.request(urls, (dataUrl) => {

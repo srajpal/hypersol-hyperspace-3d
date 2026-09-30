@@ -338,7 +338,7 @@ afterAll(async () => {
 });
 
 /** The parts of the main process's test log that can be read as they are (the others hold functions). */
-type LogList = 'attaches' | 'requests' | 'blockedPopups' | 'dataOps' | 'dnsApplied' | 'opened' | 'refusedPermissions';
+type LogList = 'attaches' | 'requests' | 'blockedPopups' | 'dataOps' | 'dnsApplied' | 'opened' | 'refusedPermissions' | 'faviconEnds';
 
 /**
  * Reads a part of the log the main process keeps in test runs

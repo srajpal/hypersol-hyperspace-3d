@@ -121,10 +121,31 @@ describe('E1 to E3: bookmarks, history, and the Library', () => {
     await waitFor('a visit listed', () => libTitles(h), (t) => t.length > 0);
     const searches = async () => (await mainLog(h, 'dataOps'))['history.search'] ?? 0;
     const before = await searches();
+    const timesBefore = (await shellCall(h, 'librarySearchTimes')).times.length;
     await h.shell.locator(LIB('lib-search')).pressSequentially('link b', { delay: 30 });
+    // Six keys: a search starts only once typing has paused for 200 ms, on
+    // the shell's own clock (hud/library.ts, SEARCH_PAUSE_MS), and once after
+    // the last key. Typed quickly that is one search, not six; on a machine
+    // so loaded that the keys come further apart, one per pause, still
+    // never one per key.
+    const { pauseMs, times: all } = await waitFor(
+      'the search after the last key',
+      () => shellCall(h, 'librarySearchTimes'),
+      (r) => r.times.slice(timesBefore).filter((t) => t.what === 'typed').length === 6 && r.times.at(-1)?.what === 'searched',
+    );
     await waitFor('search result', () => libTitles(h), (t) => t.join() === 'Link B');
-    // Six keys typed quickly: one search after the pause, not six.
-    expect((await searches()) - before).toBeLessThanOrEqual(2);
+    const times = all.slice(timesBefore);
+    expect(times.filter((t) => t.what === 'typed')).toHaveLength(6);
+    const searched = times.map((t, i) => [t, i] as const).filter(([t]) => t.what === 'searched');
+    expect(searched.length).toBeGreaterThanOrEqual(1);
+    for (const [t, i] of searched) {
+      const lastKey = times.slice(0, i).filter((x) => x.what === 'typed').at(-1)!;
+      expect(t.at - lastKey.at, `search ${i} after the pause`).toBeGreaterThanOrEqual(pauseMs);
+    }
+    expect(times.at(-1)?.what).toBe('searched');
+    expect(times.filter((t, i) => t.what === 'searched' && i > times.findLastIndex((x) => x.what === 'typed'))).toHaveLength(1);
+    // Each search the shell started reached the main process, and no other did.
+    expect((await searches()) - before).toBe(searched.length);
     await h.shell.fill(LIB('lib-search'), '');
     await h.shell.keyboard.press('Escape');
   });

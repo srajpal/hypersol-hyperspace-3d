@@ -641,10 +641,11 @@ describe('D13 favicon limits (GitHub issue #1)', () => {
     const key = '/favicon/slow.png?ms=20001';
     await openWithIcon(key);
     await waitFor('the fetch to start', async () => server.hits.get(key) ?? 0, (n) => n > 0, 3000);
-    const start = Date.now();
     await navigateTo(h, server.url('link-b.html'));
     await waitFor('cancelled on navigation', async () => abortedFor(key), (n) => n > 0, 3000);
-    expect(Date.now() - start).toBeLessThan(3000); // well before the 5 s timeout
+    // The app's own account of it: the fetch was cancelled by the page moving on, not ended by the 5 s timeout.
+    const ends = await waitFor('the app to say how the fetch ended', () => mainLog(h, 'faviconEnds'), (e) => e.some((x) => x.url.endsWith(key)));
+    expect(ends.filter((e) => e.url.endsWith(key)).map((e) => e.why)).toEqual(['cancelled']);
   });
 
   it('fetches only the last favicon of a page that keeps changing it', async () => {

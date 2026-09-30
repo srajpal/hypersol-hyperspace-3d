@@ -6,6 +6,15 @@
  */
 
 /** Shell to page: the layers view's state. */
+/**
+ * Test runs only: the page preload tells the main process each time the
+ * layers view has settled after a change to the page, with no scan of
+ * the page and no choice of layers still to come (preload/layers.ts,
+ * main/test-hooks.ts). A check that the view keeps a changing page
+ * responsive waits for this instead of a fixed time (GitHub issue #11).
+ */
+export const LAYERS_SETTLED_CHANNEL = 'hypersol:layers-settled';
+
 export const LAYERS_CHANNEL = 'hypersol:layers';
 /** Page to shell: the rectangles of the page's images. */
 export const PAGE_IMAGES_CHANNEL = 'hypersol:page-images';

@@ -23,6 +23,7 @@ import { DEFAULT_TILT_DEG, clampTilt } from '@hypersol/scene-core';
 import { defaultTheme } from '@hypersol/themes';
 import type { ShellBridge } from '../shared/commands';
 import { App } from './app';
+import { SEARCH_PAUSE_MS } from './hud/library';
 import { setExampleUrl, setExamplesBase } from './examples';
 import type { CardPart } from './scene/tab-card';
 import { applyThemeCss } from './themes/apply';
@@ -134,6 +135,7 @@ function testHooks() {
     tabDisplay: () => ({ ...room.display_, railVisible: room.railVisible, strip: document.querySelector('hs-tab-strip')!.open }),
     view: () => room.view,
     showSetting: (id: string) => document.querySelector('hs-settings')!.reveal(id),
+    librarySearchTimes: () => ({ pauseMs: SEARCH_PAUSE_MS, times: document.querySelector('hs-library')!.searchTimes }),
     focusedTabId: () => store.focusedId,
     cardPoint: (key: number | 'plus', part: CardPart) => room.cardPoint(key, part),
     rail: () => room.rail,
@@ -186,4 +188,7 @@ function testHooks() {
 /** The hooks the end-to-end tests call, for their types (tests/e2e/harness.ts). */
 export type ShellTestHooks = ReturnType<typeof testHooks>;
 
-if (params.get('test') === '1') Object.assign(window, { __hypersolShellTest: testHooks() });
+if (params.get('test') === '1') {
+  document.querySelector('hs-library')!.keepSearchTimes = true;
+  Object.assign(window, { __hypersolShellTest: testHooks() });
+}
