@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: A security problem
+    url: https://github.com/srajpal/hypersol-hyperspace-3d/security/advisories/new
+    about: Report it privately, not in an issue (SECURITY.md).
+  - name: HoloML, the language
+    url: https://github.com/srajpal/holoml/issues
+    about: The language, its specification, and its example sites have their own repository.

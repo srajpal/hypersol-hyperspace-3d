@@ -90,3 +90,7 @@ sign. You may add yourself to [AUTHORS](AUTHORS).
 
 Please report security problems privately, as described in
 [SECURITY.md](SECURITY.md), not in a public issue.
+
+## Conduct
+
+Everyone taking part keeps to the [code of conduct](CODE_OF_CONDUCT.md).
