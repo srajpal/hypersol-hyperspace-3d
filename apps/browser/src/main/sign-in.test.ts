@@ -130,7 +130,7 @@ describe('HTTP sign-in (review of 2026-09-30, M10)', () => {
 
   it('a new page in the tab, a crash, or closing it cancels what was asked, waiting ones too', () => {
     for (const leave of ['navigate', 'crash', 'close'] as const) {
-      const { ask, told, page, ended } = setup();
+      const { signIns, ask, told, page, ended } = setup();
       ask();
       ask(challenge({ realm: 'Archive' }));
       // A jump inside the page, or a frame going elsewhere, is not leaving.
@@ -140,8 +140,9 @@ describe('HTTP sign-in (review of 2026-09-30, M10)', () => {
       if (leave === 'navigate') page.emit('did-start-navigation', { isMainFrame: true, isSameDocument: false });
       else if (leave === 'crash') page.emit('render-process-gone');
       else {
+        // The app tells of a destroyed page itself (main/index.ts has the one listener for it).
         page.destroyed = true;
-        page.emit('destroyed');
+        signIns.forget(page as never);
       }
       expect(told, leave).toEqual(['cancelled', 'cancelled']);
       // The shell is told to take the prompts away while there is a page to tell it for.

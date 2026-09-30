@@ -393,7 +393,10 @@ if (!app.requestSingleInstanceLock()) {
     passwords?.trackTab(contents);
     tabHistory?.track(contents);
     const guestId = contents.id;
-    contents.once('destroyed', () => holoml?.forget(guestId));
+    contents.once('destroyed', () => {
+      holoml?.forget(guestId);
+      signIns?.forget(contents);
+    });
     holoml?.track(contents);
     // Sound, for the speaker on the tab and for keeping it awake (milestone 10).
     contents.on('audio-state-changed', (event) => {

@@ -72,13 +72,22 @@ export class SignIns {
     if (waiting.length === 0) this.show(p);
   }
 
-  /** Watches a web page: a new page in the tab, a crash, or closing it cancels what it was asked. */
+  /**
+   * Watches a web page: a new page in the tab or a crash cancels what it
+   * was asked. Closing the tab does too, through forget(): the app has one
+   * "destroyed" listener per page for everything that must hear of it
+   * (Electron warns above ten).
+   */
   trackTab(contents: WebContents): void {
     contents.on('did-start-navigation', (details) => {
       if (details.isMainFrame && !details.isSameDocument) this.drop(contents);
     });
     contents.on('render-process-gone', () => this.drop(contents));
-    contents.once('destroyed', () => this.drop(contents));
+  }
+
+  /** The page's web contents has been destroyed (its tab closed): whatever it was asked is cancelled. */
+  forget(contents: WebContents): void {
+    this.drop(contents);
   }
 
   /** A request from the shell (registered with handleFromShell, main/ipc.ts). Never throws. */
