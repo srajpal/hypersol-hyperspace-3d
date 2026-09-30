@@ -4323,6 +4323,15 @@ finished documents.
   its status "experimental", its main section not lifted and its text
   drawn; a how-to guide with its HoloML coloured; and Harbour Loft from
   the published site, ready with no problems.
+- `pnpm test:linux` (2026-09-29, on e856aad: the layers fix and the
+  pictures, before the About dialog's line): lint and types clean, unit
+  tests 287 passed (the copy's 2 comparisons with the holoml folder
+  skipped, as it is not in the container), and end to end 278 passed and
+  1 skipped (C9's frame rate, as decided for drawing in software) in 22
+  files, in 49 minutes 35 seconds; Y7b passed there (the tall page's
+  text drawn in software).
+- D11 with the About dialog's new line: milestone 2's checks, 43 of 43,
+  passed on Windows.
 - Y8, the feature check repeated over the finished documents: nothing
   missing beyond milestone 23's list. Found and fixed: SPEC.md's note
   on a page from the computer (it may load from its folder and the
