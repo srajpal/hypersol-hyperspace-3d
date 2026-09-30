@@ -7,6 +7,8 @@ export const COPIES = [
   { from: 'packages/parser/src/index.ts', to: 'src/parser.ts' },
   { from: 'packages/schema/src/rules.ts', to: 'src/rules.ts' },
   { from: 'packages/schema/src/index.ts', to: 'src/schema.ts' },
+  // The scene API in Web IDL (milestone 22), which the viewer's API is checked against (apps/browser/src/viewer/api.test.ts).
+  { from: 'spec/holoml.webidl', to: 'src/holoml.webidl' },
 ];
 
 /**

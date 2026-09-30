@@ -8,12 +8,13 @@
  * page wider than it is. Pages are the local test fixtures, so no real
  * browsing data appears.
  */
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { it } from 'vitest';
-import { startFixtureServer } from '../e2e/fixture-server';
+import { FIXTURES_DIR, startFixtureServer } from '../e2e/fixture-server';
 import {
   clickAt,
   clickCard,
@@ -505,11 +506,47 @@ it('captures the main screens', async () => {
     await inPage(loft, `[...document.querySelectorAll('#holoml-outline button')].find((b) => b.textContent === 'Feed the fish').click(), true`, FED);
     await sleep(3400);
     await capture(loft, '63-aquarium-feeding');
+    // Milestone 22: HoloML's documentation in the browser, from the holoml repository beside this one (its pages
+    // only, built into an ignored folder of the fixtures and removed afterwards): the home page's example sites, the
+    // specification, and a how-to guide.
+    const site = holomlSite();
+    if (site) {
+      try {
+        for (const [page, name] of [
+          ['holoml-site/index.html#the-example-sites', '64-holoml-docs'],
+          ['holoml-site/spec/index.html', '65-holoml-spec'],
+          ['holoml-site/docs/how-to/doors-and-lamps.html#hang-a-door-on-a-hinge', '66-holoml-guide'],
+        ] as const) {
+          await shellCall(loft, 'showUrl', server.url(page));
+          await waitForPage(loft, page.split('#')[0]!);
+          await sleep(1500);
+          await capture(loft, name);
+        }
+      } finally {
+        rmSync(site, { recursive: true, force: true });
+      }
+    }
   } finally {
     await loft.close();
     await server.close();
   }
 }, 600_000);
+
+/**
+ * HoloML's site, its pages only, made by the holoml repository's own build
+ * (milestone 22) into tests/fixtures/holoml-site/ (ignored); null, with a
+ * note, when the holoml repository is not beside this one.
+ */
+function holomlSite(): string | null {
+  const build = fileURLToPath(new URL('../../../holoml/site/build.mjs', import.meta.url));
+  if (!existsSync(build)) {
+    console.warn('The milestone 22 pictures are left out: the holoml repository is not beside this one.');
+    return null;
+  }
+  const out = join(FIXTURES_DIR, 'holoml-site');
+  execFileSync(process.execPath, [build, out, '--pages-only'], { stdio: 'inherit' });
+  return out;
+}
 
 /** Emulates (or stops emulating) reduced motion in the tab's page; it lasts across the tab's navigations while on. */
 async function reducedMotion(h: Harness, on: boolean): Promise<void> {

@@ -557,9 +557,9 @@ describe('T8: the HoloML examples section', () => {
       expect(picture.alt).toMatch(/a picture of the site/);
     }
     expect(await h.shell.locator('hs-examples [data-testid="example-blockworld"]').innerText()).toMatch(/HoloML 0\.2/);
-    // Links to HoloML's repository, its specification, and each example's source (owner, prompt 88).
+    // Links to HoloML's repository, its specification (the published page since milestone 22, Y7), and each example's source (owner, prompt 88).
     expect(await h.shell.locator('hs-examples [data-testid="examples-repository"]').getAttribute('data-url')).toBe('https://github.com/srajpal/holoml');
-    expect(await h.shell.locator('hs-examples [data-testid="examples-spec"]').getAttribute('data-url')).toBe('https://github.com/srajpal/holoml/blob/main/SPEC.md');
+    expect(await h.shell.locator('hs-examples [data-testid="examples-spec"]').getAttribute('data-url')).toBe('https://srajpal.github.io/holoml/spec/');
     expect(await h.shell.locator('hs-examples [data-testid="example-source-blockworld"]').getAttribute('data-url')).toBe(
       'https://github.com/srajpal/holoml/tree/main/examples/blockworld',
     );

@@ -23,7 +23,8 @@ const examplesRef = flag >= 0 ? args.splice(flag, 2)[1] : undefined;
 const tag = args[0] ?? previous.tag;
 
 const git = (...a) => execFileSync('git', ['-C', holoml, ...a], { encoding: 'utf8' });
-const commit = git('rev-list', '-n', '1', tag).trim();
+// "--" ends the revisions: a branch may share its name with a folder (docs, milestone 22).
+const commit = git('rev-list', '-n', '1', tag, '--').trim();
 const files = {};
 for (const { from, to } of COPIES) {
   const text = transform(git('show', `${tag}:${from}`), from, tag);
@@ -36,7 +37,7 @@ for (const { from, to } of COPIES) {
 // replacing its last copy. The scripts that make them stay in holoml.
 const before = previous.examples ?? previous.showroom;
 const ref = examplesRef ?? (args[0] ? tag : (before?.ref ?? tag));
-const examplesCommit = git('rev-list', '-n', '1', ref).trim();
+const examplesCommit = git('rev-list', '-n', '1', ref, '--').trim();
 const exampleFiles = {};
 for (const name of EXAMPLES.names) {
   const from = `${EXAMPLES.from}${name}/`;
