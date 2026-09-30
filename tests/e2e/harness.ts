@@ -1113,23 +1113,65 @@ export async function pressInShell(
 
 export const ADDRESS = 'hs-toolbar [data-testid="address"]';
 
-/** Types into the address bar and presses Enter. */
+/**
+ * Types into the address bar and presses Enter.
+ *
+ * Filling the box leaves the keyboard in it. Enter then goes in through
+ * Electron's input path, as pressInShell sends keys, and the box itself
+ * says when the key has reached it: by then the app has started loading.
+ *
+ * Playwright's own press was used here until 2026-09-30. It comes back
+ * only when Chromium has acknowledged the key going down and coming up,
+ * and once, on GitHub's Windows machines, it had not come back after 10 s
+ * though the key had been pressed and its page had loaded (F5, run
+ * 36644065812). Pressing Enter moves the keyboard into the page, and a
+ * key coming up there is a known way for that acknowledgement to be lost
+ * (renderer/app.ts, focusPageAfterEnter); it could not be made to happen
+ * on this computer, so the cause is not proved. Sent this way, nothing
+ * waits on the acknowledgement.
+ */
 export async function navigateTo(h: Harness, text: string): Promise<void> {
+  const done = step(`typing ${shown(text)} in the address bar and pressing Enter`);
   await h.shell.fill(ADDRESS, text);
-  try {
-    await h.shell.press(ADDRESS, 'Enter', { timeout: 10_000 });
-  } catch (e) {
-    // Rarely seen: the press waits and never happens. Record what still
-    // answers, to find the cause.
-    const within = <T>(p: Promise<T>) =>
-      Promise.race([p.then((v) => JSON.stringify(v)), sleep(3000).then(() => 'no answer in 3 s')]).catch(
-        (err: unknown) => `error: ${String(err)}`,
-      );
-    const shell = await within(h.shell.evaluate(() => [document.readyState, document.activeElement?.tagName ?? '']));
-    const main = await within(h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length));
-    const pages = await within(Promise.resolve(h.app.windows().map((w) => w.url().slice(0, 60))));
-    throw new Error(`${String(e)}\nShell answers: ${shell}\nMain answers: ${main}\nWindows: ${pages}`);
+  // Runs before the box's own handler; the answer waits a turn, so that
+  // handler (which starts the load) has run by then.
+  await h.shell.evaluate(() => {
+    const w = window as unknown as { __hsEnterSeen?: Promise<boolean> };
+    w.__hsEnterSeen = new Promise((resolve) => {
+      const seen = (e: KeyboardEvent) => {
+        const at = e.composedPath()[0];
+        if (e.key !== 'Enter' || !(at instanceof Element) || at.getAttribute('data-testid') !== 'address') return;
+        window.removeEventListener('keydown', seen, true);
+        setTimeout(() => resolve(true), 0);
+      };
+      window.addEventListener('keydown', seen, true);
+    });
+  });
+  await pressInShell(h, 'Enter');
+  const within = <T>(p: Promise<T>, ms: number) => Promise.race([p, sleep(ms).then(() => `no answer in ${ms / 1000} s`)]);
+  const seen = await within(
+    h.shell.evaluate(() => (window as unknown as { __hsEnterSeen: Promise<boolean> }).__hsEnterSeen),
+    10_000,
+  ).catch((err: unknown) => `error: ${String(err)}`);
+  if (seen === true) {
+    done('Enter reached the box');
+    return;
   }
+  // Enter never reached the address box. Record what still answers, and
+  // where the keyboard is, to find the cause.
+  done(`Enter did not reach the box: ${String(seen)}`);
+  const said = <T>(p: Promise<T>) => within(p.then((v) => JSON.stringify(v)), 3000).catch((err: unknown) => `error: ${String(err)}`);
+  const shell = await said(
+    h.shell.evaluate(() => {
+      const a = document.activeElement;
+      return [document.readyState, a?.tagName ?? '', a?.shadowRoot?.activeElement?.getAttribute('data-testid') ?? ''];
+    }),
+  );
+  const main = await said(h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length));
+  const pages = await said(Promise.resolve(h.app.windows().map((w) => w.url().slice(0, 60))));
+  throw new Error(
+    `Enter did not reach the address bar within 10 s of typing ${shown(text)} (${String(seen)})\nShell answers: ${shell}\nMain answers: ${main}\nWindows: ${pages}`,
+  );
 }
 
 export function tabs(h: Harness): Promise<TabInfo[]> {
