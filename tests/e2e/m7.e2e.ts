@@ -168,7 +168,9 @@ describe('I2, I4 to I6, I8: the readouts on a test page', () => {
 
   it('I2 page readouts match what happened, and follow the tab in front', async () => {
     const size = statSync(join(FIXTURES_DIR, PAGE)).size;
-    const s = await waitFor('readouts', () => inst(h), (x) => (x.page?.requests ?? 0) >= 4 && x.page!.loadMs >= 0 && x.net >= 4);
+    // A request is counted when it starts and its bytes when it completes,
+    // so the wait is for the bytes too, not for the count alone.
+    const s = await waitFor('readouts', () => inst(h), (x) => (x.page?.requests ?? 0) >= 4 && x.page!.loadMs >= 0 && x.net >= 4 && x.page!.bytes >= size);
     expect(s.page).toMatchObject({ url: server.url(PAGE), secure: false, requests: 4, blocked: 1, failed: 0, cert: null });
     // The page, the icon (sizes declared), a 404 with its own size, and the blocked ad.
     expect(s.page!.bytes).toBeGreaterThanOrEqual(size);
