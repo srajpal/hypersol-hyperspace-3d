@@ -279,11 +279,14 @@ describe('review 134: the HoloML viewer', () => {
     const f0 = await frames(PAGE);
     const scrolled = () => inPage<number>(h, 'Math.max(document.scrollingElement.scrollTop, document.body.scrollTop)', PAGE);
     expect(await scrolled()).toBe(0);
-    // Page Down, the down arrow, and the space bar each scroll the text further.
+    // Page Down, the down arrow, and the space bar each scroll the text further. The space bar scrolls only
+    // while no button has the keyboard (on a button it presses the button, as on any page), so the keyboard
+    // is put on the text itself first, as a click on it would; on GitHub's Windows machines a button had it.
+    await inPage(h, '(document.activeElement instanceof HTMLElement && document.activeElement.blur(), true)', PAGE);
     let at = 0;
     for (const keyCode of ['PageDown', 'Down', 'Space']) {
       await pressInPage(h, keyCode, [], PAGE);
-      at = await waitFor(`${keyCode} scrolling the text`, scrolled, (y) => y > at);
+      at = await waitFor(`${keyCode} scrolling the text (the keyboard on ${await inPage<string>(h, 'document.activeElement?.tagName ?? "nothing"', PAGE)})`, scrolled, (y) => y > at);
     }
     await pressInPage(h, 'PageUp', [], PAGE);
     await waitFor('Page Up scrolling back', scrolled, (y) => y < at);
