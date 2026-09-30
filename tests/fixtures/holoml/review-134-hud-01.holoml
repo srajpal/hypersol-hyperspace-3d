@@ -1,0 +1,13 @@
+<holoml version="0.1">
+  <head>
+    <title>HoloML 0.1 with screen text</title>
+  </head>
+  <!-- Review 134 (SPEC.md section 9, Reading and checking): screen text is HoloML 0.2's. In a 0.1 page it
+       is a problem, said in the console, and it is not shown, as a slider in one is not. -->
+  <scene>
+    <viewpoint position="0 1.6 5" look-at="0 1.6 0" />
+    <hud id="score" corner="top-right">Score: 0</hud>
+    <slider id="pace" min="0" max="1">Pace</slider>
+    <label position="0 2 0">Still shown</label>
+  </scene>
+</holoml>

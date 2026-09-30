@@ -1,0 +1,20 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML: ambient lights a script removes</title>
+  </head>
+  <!-- Review 134 (SPEC.md section 7, light): the light from the surroundings, and the sky, dim with the
+       ambient lights that are in the scene at the time. Here they add up to 0.45 of the 0.6 that is full.
+       One a script removes no longer counts, and with all of them removed the surroundings and the sky
+       are at full again, not dark. -->
+  <scene background="#1c2030" environment="gen/panorama.hdr" sky="gen/sky.png?top=ff6010&amp;bottom=1060ff">
+    <viewpoint position="0 1 2.2" look-at="0 1 0" />
+    <light id="soft" type="ambient" intensity="0.3" />
+    <group id="lamps">
+      <light id="dim" type="ambient" intensity="0.15" />
+    </group>
+    <light id="sun" type="directional" position="3 10 6" look-at="0 0 0" />
+    <model id="mirror" src="blockworld/models/stone.gltf" position="0 1 0" rotation="0 30 0">
+      <material name="stone" metalness="1" roughness="0.25" />
+    </model>
+  </scene>
+</holoml>

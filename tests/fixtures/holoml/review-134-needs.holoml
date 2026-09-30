@@ -1,0 +1,18 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML: a model that needs what the viewer does not read</title>
+  </head>
+  <!-- Review 134 (SPEC.md section 9, Loading): a model whose file needs a glTF extension the viewer does
+       not read (its extensionsRequired) is left out with the reason, like any model that is left out, and
+       the rest of the scene shows. In a group that loads by area, its file is not fetched again at each
+       approach: it would be left out again. -->
+  <scene background="#1c2030">
+    <viewpoint mode="walk" position="0 1.6 5" look-at="0 1 0" />
+    <light type="ambient" intensity="0.8" />
+    <model id="needs" src="review-134-needs.gltf" position="-1 0.5 0" />
+    <model id="fine" src="blockworld/models/stone.gltf" position="1 0.5 0" />
+    <group id="far" load="near" near="8" position="0 0 -30">
+      <model id="far-needs" src="review-134-needs.gltf?far" position="0 0.5 0" />
+    </group>
+  </scene>
+</holoml>

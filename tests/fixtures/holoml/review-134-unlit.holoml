@@ -1,0 +1,25 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML: materials that take no light</title>
+  </head>
+  <!-- Review 134 (SPEC.md section 7, material): a material that takes no light (glTF's KHR_materials_unlit)
+       is changed like any other in what it has: its colour, its opacity, and its colour picture with its
+       tiling, by a material element, by a choice's option, and by a script. Metalness, roughness, and a
+       picture of bumps change nothing in it. The box's one material, "Sign", is white. -->
+  <scene background="#1c2030">
+    <viewpoint position="0 1 5" look-at="0 1 0" />
+    <light type="ambient" intensity="0.8" />
+    <model id="plain" src="review-134-unlit.gltf" position="-3 1 0" />
+    <model id="changed" src="review-134-unlit.gltf" position="-1 1 0">
+      <material name="Sign" color="#ff0000" opacity="0.5" metalness="1" roughness="0" />
+    </model>
+    <model id="pictured" src="review-134-unlit.gltf" position="1 1 0">
+      <material name="Sign" map="gen/stripes.png" normal-map="gen/stripes.png" repeat="3 2" />
+    </model>
+    <model id="chosen" src="review-134-unlit.gltf" position="3 1 0" />
+    <choice id="finish" corner="bottom-left" label="Finish" target="#chosen" material="Sign" value="own">
+      <option value="own">Its own</option>
+      <option value="blue" color="#0000ff" opacity="0.75">Blue</option>
+    </choice>
+  </scene>
+</holoml>
