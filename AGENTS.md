@@ -418,8 +418,9 @@ milestone; the current milestone's checks are defined in TODO.md):
 - The review of 2026-09-30 (prompts 134 and 135) adds five files (same
   command), each check named for the review's finding:
   - tests/e2e/review-134-main.e2e.ts, the main process and the page
-    preload: what a page may do without asking, WebSockets through the
-    shield, a link that leads to a download, leaving a page that asks to
+    preload: what a page may do without asking, WebSockets, a service
+    worker's requests, and a listed favicon through the shield, a link
+    that leads to a download, leaving a page that asks to
     be kept, what counts as a HoloML page (a download, a sandboxed
     answer, the site's own policy kept), HoloML files from the computer
     (from Downloads, leaving for the web, a dropped file), Block for a

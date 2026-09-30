@@ -19,8 +19,8 @@ WebSocket connections a page opens (lasting two-way connections to a
 server, which trackers use too), and the page's icon, which the browser
 fetches for the tab's card. Requests that reach the browser without a
 tab, as a site's background script (a service worker) can make them,
-are checked too; one that is blocked is not counted, as there is no tab
-to count it for. The browser's own requests (list updates and the DNS
+are checked too; one that is blocked is counted for every tab showing a
+page of that site, as the script serves them all. The browser's own requests (list updates and the DNS
 check below) are not checked. It also hides page elements the lists
 name as ads (element hiding). A page whose address is itself on a list
 shows "The shield blocked this page", with "Open anyway" (that address,

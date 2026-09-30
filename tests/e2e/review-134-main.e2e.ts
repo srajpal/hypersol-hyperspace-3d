@@ -191,24 +191,16 @@ describe('M3: WebSockets, a service worker\'s requests, and favicons through the
     }
   });
 
-  // Known gap (review of 2026-09-30, M3, found 2026-09-30 by this check):
-  // the request is blocked but counted for no tab and listed nowhere. It
-  // reaches the app with no web contents id and no frame, only a referrer
-  // (the page's origin, "http://127.0.0.1:<port>/", for a cross-site
-  // request), and the shield counts nothing it cannot put to a tab
-  // (main/privacy/shield.ts, decideUntabbed). This check says so by
-  // failing as expected; once the app counts such requests for the tab
-  // the worker serves, it passes, and "fails" here is to be removed.
-  it.fails('a service worker\'s blocked request is counted for the page it serves, and is in the tab\'s list with its address', async () => {
+  // The request reaches the app with no web contents id and no frame, only
+  // a referrer (the page's origin, "http://127.0.0.1:<port>/", for a
+  // cross-site request); the shield counts it for the tabs on the
+  // referrer's site (main/privacy/shield.ts, decideUntabbed). Found as a
+  // gap by this check on 2026-09-30, closed the same day.
+  it('a service worker\'s blocked request is counted for the page it serves, and is in the tab\'s list with its address', async () => {
     const h = await launch(server.url('review-134-sw.html'), { userDataDir: newProfile() });
     try {
       const { ad } = await throughWorker(h);
-      try {
-        await waitFor('one blocked', () => shellCall(h, 'shield'), (s) => s.count === 1, 5000);
-      } catch (e) {
-        console.warn(`[M3] known gap: a service worker's blocked request is not counted for its page (${String(e)})`);
-        throw e;
-      }
+      await waitFor('one blocked', () => shellCall(h, 'shield'), (s) => s.count === 1, 5000);
       const report = await shieldReport(h, (await focusedPage(h)).id);
       expect(report.value.items).toEqual([{ url: ad, type: 'xhr' }]);
     } finally {

@@ -92,13 +92,20 @@ export class Shield {
    * A request that comes from no tab (a service worker's, say) is asked
    * about like any other, with the address it names as its referrer as
    * the page; until the review of 2026-09-30 (M3) such requests passed
-   * unseen. Nothing is counted: there is no tab to count it for.
+   * unseen. A blocked one is counted for every tab showing a page of
+   * the referrer's site: a worker serves all the tabs on its site, and
+   * which one it worked for is not told.
    */
   decideUntabbed(request: UntabbedRequest, isPaused: (site: string) => boolean): Decision {
     const { url, resourceType, referrer } = request;
     if (!LISTED_SCHEMES.test(url) || resourceType === 'mainFrame') return {};
-    if (referrer !== '' && isPaused(hostOf(referrer))) return {};
-    return this.matcher()?.(url, resourceType, referrer)?.blocked ? { cancel: true } : {};
+    const site = referrer === '' ? '' : hostOf(referrer);
+    if (site !== '' && isPaused(site)) return {};
+    if (!this.matcher()?.(url, resourceType, referrer)?.blocked) return {};
+    if (site !== '') {
+      for (const [tab, record] of this.tabs) if (record.site === site) this.record(tab, { url, type: resourceType });
+    }
+    return { cancel: true };
   }
 
   /**

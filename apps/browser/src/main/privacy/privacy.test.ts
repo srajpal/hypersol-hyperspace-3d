@@ -110,7 +110,7 @@ describe('Shield', () => {
     ]);
   });
 
-  it('asks about a request no tab made, with its referrer as the page, and counts nothing (review of 2026-09-30, M3)', () => {
+  it('asks about a request no tab made, with its referrer as the page, and counts it for the tabs on that site (review of 2026-09-30, M3)', () => {
     const pages: string[] = [];
     const counts: [number, number][] = [];
     const s = new Shield(
@@ -119,13 +119,24 @@ describe('Shield', () => {
       (tab, count) => counts.push([tab, count]),
     );
     const paused = (site: string) => site === 'paused.example';
+    // Two tabs on the worker's site, one elsewhere.
+    for (const [tab, url] of [[1, 'https://news.example/a'], [2, 'https://news.example/b'], [3, 'https://other.example/']] as const) {
+      s.decide({ tab, resourceType: 'mainFrame', url });
+      s.committed(tab, url);
+    }
+    pages.length = 0;
     expect(s.decideUntabbed({ url: 'https://tracker.example/beacon', resourceType: 'xhr', referrer: 'https://news.example/sw.js' }, paused)).toEqual({ cancel: true });
     expect(pages).toEqual(['https://news.example/sw.js']);
+    expect(counts).toEqual([[1, 1], [2, 1]]);
+    expect(s.report(1).items).toEqual([{ url: 'https://tracker.example/beacon', type: 'xhr' }]);
+    expect(s.report(3).count).toBe(0);
+    counts.length = 0;
     expect(s.decideUntabbed({ url: 'wss://tracker.example/live', resourceType: 'webSocket', referrer: '' }, paused)).toEqual({ cancel: true });
     expect(s.decideUntabbed({ url: 'https://cdn.example/lib.js', resourceType: 'script', referrer: 'https://news.example/' }, paused)).toEqual({});
     // A site the person paused the shield on is left alone here too.
     expect(s.decideUntabbed({ url: 'https://tracker.example/beacon', resourceType: 'xhr', referrer: 'https://paused.example/sw.js' }, paused)).toEqual({});
     expect(s.decideUntabbed({ url: 'file:///C:/x', resourceType: 'other', referrer: '' }, paused)).toEqual({});
+    // Without a referrer, or from a site no tab shows, nothing can be counted.
     expect(counts).toEqual([]);
   });
 

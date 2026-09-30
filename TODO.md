@@ -4452,9 +4452,12 @@ The main process and preloads:
   the system's store).
 - M3. The shield is asked about WebSockets, requests that no tab made,
   and a tab's favicon. review-134-main "M3" (a WebSocket to a listed
-  host); unit main/privacy (WebSockets and requests without a tab). No
-  check yet runs a real service worker, or a favicon on a list: both
-  are in the code and not checked.
+  host; a service worker's request to a listed host blocked, and
+  counted for the tab it serves; a listed favicon not fetched and
+  counted, an own-site one fetched); unit main/privacy. The check found
+  that a service worker's blocked request was counted for no tab, as
+  it reaches the browser with no tab and only a referrer; it is now
+  counted for every tab on the referrer's site (2026-09-30).
 - M4. "Leave this page?" for a page that asks to be kept.
   review-134-main "M4"; unit main/leave-page.
 - M5 and H4. A list update downloads the lists' text only; the page
