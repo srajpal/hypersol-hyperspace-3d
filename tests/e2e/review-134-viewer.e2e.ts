@@ -123,7 +123,7 @@ function colourAt(page: string, p: Point, half = 3): Promise<Colour> {
 }
 
 describe('review 134: the HoloML viewer', () => {
-  it('V2 a page written for a version the viewer does not know is refused, with a card that says which; it is not drawn as an older version', async () => {
+  it('V2 a page written for a version the viewer does not know, or that names none, is refused, with a card that says so; it is not drawn as an older version', async () => {
     const PAGE = 'review-134-version.holoml';
     await openPage(PAGE);
     expect(await holo(PAGE, 'window.__holoml.error')).toMatchObject({ code: 'unsupported-version', line: 1, column: 9 });
@@ -135,6 +135,17 @@ describe('review 134: the HoloML viewer', () => {
     expect(await holo(PAGE, 'window.__holoml.version')).toBeNull();
     expect(await holo(PAGE, 'window.__holoml.models()')).toEqual([]);
     expect(await inPage<string>(h, 'document.title', PAGE)).toBe('HoloML page of another version');
+    // A page that names no version at all is not drawn either: nothing of its scene is built or asked for.
+    const NONE = 'review-134-no-version.holoml';
+    await openPage(NONE);
+    expect(await holo(NONE, 'window.__holoml.error')).toMatchObject({ code: 'unsupported-version', line: 1, column: 1 });
+    const none = await inPage<string>(h, `document.querySelector('[data-testid="holoml-error"]').innerText`, NONE);
+    expect(none).toContain('does not say its version');
+    expect(none).toContain('This browser reads HoloML 0.1 and 0.2.');
+    expect(await inPage<boolean>(h, 'document.querySelector("canvas") === null', NONE)).toBe(true);
+    expect(await holo(NONE, 'window.__holoml.models()')).toEqual([]);
+    expect(await inPage<string>(h, 'document.title', NONE)).toBe('HoloML page without a version');
+    expect(hits('/holoml/models/no-version-car.gltf')).toBe(0);
     // The versions it knows are drawn as before, each as itself.
     await openPage('still.holoml');
     expect(await holo('still.holoml', 'window.__holoml.version')).toBe('0.1');
@@ -408,8 +419,12 @@ describe('review 134: the HoloML viewer', () => {
     const z = async () => (await view(PAGE)).position[2];
     await holdKeyUntil(h, PAGE, 'W', 'the walker at the wall', z, (v) => v < 0.9);
     expect(await z()).toBeGreaterThan(0.79);
-    // Hidden, it stops no one: the walker goes through where it was.
+    // Face to face with it, the wall is what the middle of the view is on (holoml.aim, the crosshair).
+    const aimed = () => inPage<string | null>(h, '(() => { const a = holoml.aim(); return a && a.thing ? a.thing.id : null; })()', PAGE);
+    expect(await aimed()).toMatch(/^w[1-6]$/);
+    // Hidden, it is not aimed at, and stops no one: the walker goes through where it was.
     await inPage(h, `(holoml.find('wall').visible = false, true)`, PAGE);
+    expect(await aimed()).toBeNull();
     await holdKeyUntil(h, PAGE, 'W', 'the walker past the hidden wall', z, (v) => v < -1);
     // Shown again, it is a wall again: from behind it, the walker cannot come back through.
     await inPage(h, `(holoml.find('wall').visible = true, true)`, PAGE);

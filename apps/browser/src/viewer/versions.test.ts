@@ -21,9 +21,9 @@ describe("a page's HoloML version (SPEC.md section 11; review 134, V2)", () => {
     for (const other of ['0.3', '1.0', '0.20', '2', '', ' 0.2', '0.2 ', 'latest']) expect(pageVersion(root(other)), JSON.stringify(other)).toBeNull();
   });
 
-  it('reads a page that declares no version as the first (the checker reports the missing attribute)', () => {
-    expect(pageVersion(root())).toBe('0.1');
-    expect(pageVersion(root(null))).toBe('0.1');
+  it('refuses a page that declares no version at all, or the word alone: it is not read as any version', () => {
+    expect(pageVersion(root())).toBeNull();
+    expect(pageVersion(root(null))).toBeNull();
   });
 
   it('every version from 0.2 on has what 0.2 added: a later version keeps the earlier ones\' features', () => {

@@ -375,18 +375,30 @@ function start(): void {
   state.title = document.title;
   heading.textContent = title && text(title) ? text(title) : 'HoloML scene';
 
-  // A version this viewer does not know is refused, not guessed at (SPEC.md section 11; review 134, V2).
+  // A version this viewer does not know is refused, not guessed at, and so is a page that names none
+  // (SPEC.md section 11; review 134, V2).
   const version = pageVersion(doc.root);
   if (version === null) {
-    const written = doc.root.attributes.find((a) => a.name === 'version')!;
+    const written = doc.root.attributes.find((a) => a.name === 'version');
     const known = VERSIONS.join(' and ');
-    state.error = { code: 'unsupported-version', message: `This browser reads HoloML ${known}, not "${written.value}"`, line: written.start.line, column: written.start.column };
-    document.title = 'HoloML page of another version';
-    showCard(
-      'This HoloML page is written for another version',
-      [`The page is written in HoloML "${written.value}", which this browser does not read yet. It reads HoloML ${known}.`, 'A newer HyperSpace 3D may show it.'],
-      null,
-    );
+    const at = written?.start ?? doc.root.start;
+    if (typeof written?.value === 'string') {
+      state.error = { code: 'unsupported-version', message: `This browser reads HoloML ${known}, not "${written.value}"`, line: at.line, column: at.column };
+      document.title = 'HoloML page of another version';
+      showCard(
+        'This HoloML page is written for another version',
+        [`The page is written in HoloML "${written.value}", which this browser does not read yet. It reads HoloML ${known}.`, 'A newer HyperSpace 3D may show it.'],
+        null,
+      );
+    } else {
+      state.error = { code: 'unsupported-version', message: 'The page does not say which version of HoloML it is written for', line: at.line, column: at.column };
+      document.title = 'HoloML page without a version';
+      showCard(
+        'This HoloML page does not say its version',
+        [`A HoloML page names the version it is written for, as in <holoml version="${VERSIONS[VERSIONS.length - 1]}">. This one names none, so it is not shown. This browser reads HoloML ${known}.`],
+        null,
+      );
+    }
     state.ready = true;
     return;
   }
