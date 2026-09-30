@@ -12,7 +12,6 @@ export const FILL_GESTURE_MS = 5000;
 export interface PasswordDeps {
   /** The page is in a private tab: nothing is offered, saved, or filled there. */
   isPrivate(contents: WebContents): boolean;
-  isShell(contents: WebContents): boolean;
   /** Sends a command to the shell that hosts a page. */
   send(contents: WebContents, command: ShellCommand): void;
   writeClipboard(text: string): void;
@@ -109,9 +108,8 @@ export class Passwords {
     }
   }
 
-  /** A request from the shell. Never throws. */
-  async handleShell(event: IpcMainInvokeEvent, raw: unknown): Promise<{ ok: true; value: unknown } | { ok: false; error: string }> {
-    if (!this.deps.isShell(event.sender)) return { ok: false, error: 'Not allowed' };
+  /** A request from the shell (registered with handleFromShell, main/ipc.ts). Never throws. */
+  async handleShell(raw: unknown): Promise<{ ok: true; value: unknown } | { ok: false; error: string }> {
     const parsed = parsePasswordRequest(raw);
     if ('error' in parsed) return { ok: false, error: parsed.error };
     try {

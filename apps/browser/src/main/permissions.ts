@@ -16,7 +16,6 @@ import {
 } from '../shared/permissions';
 
 export interface PermissionDeps {
-  isShell(contents: WebContents): boolean;
   isPrivate(contents: WebContents): boolean;
   /** Remembered choices for normal tabs (settings.json). */
   saved(): Record<string, SiteChoices>;
@@ -122,9 +121,8 @@ export class Permissions {
     this.deps.send(contents, { type: 'permission-prompt', prompt: { id: p.id, webContentsId: contents.id, origin, kinds } });
   }
 
-  /** A request from the shell. Never throws. */
+  /** A request from the shell (registered with handleFromShell, main/ipc.ts). Never throws. */
   async handle(event: IpcMainInvokeEvent, raw: unknown): Promise<{ ok: true; value: unknown } | { ok: false; error: string }> {
-    if (!this.deps.isShell(event.sender)) return { ok: false, error: 'Not allowed' };
     const parsed = parsePermissionRequest(raw);
     if ('error' in parsed) return { ok: false, error: parsed.error };
     try {

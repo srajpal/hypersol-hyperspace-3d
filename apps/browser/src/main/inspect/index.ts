@@ -18,8 +18,6 @@ const USE_CHROMIUM_RESULT = -3;
 const LEVELS: readonly ConsoleLevel[] = ['debug', 'info', 'warning', 'error'];
 
 export interface InspectorOptions {
-  /** Is this the app's own shell (the only one allowed to ask)? */
-  isShell(contents: WebContents): boolean;
   /** Is this page a HoloML page, marked by the main process (milestone 15)? Only those are asked for a scene. */
   isHolomlPage?(contents: WebContents): boolean;
 }
@@ -105,9 +103,8 @@ export class Inspector {
     });
   }
 
-  /** Answers one request from the shell. Never throws. */
+  /** Answers one request from the shell (registered with handleFromShell, main/ipc.ts). Never throws. */
   async handle(event: IpcMainInvokeEvent, raw: unknown): Promise<InspectReply<InspectOp>> {
-    if (!this.options.isShell(event.sender)) return { ok: false, error: 'Not allowed' };
     const parsed = parseInspectRequest(raw);
     if ('error' in parsed) return { ok: false, error: parsed.error };
     try {

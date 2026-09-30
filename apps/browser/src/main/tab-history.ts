@@ -18,7 +18,7 @@ export class TabHistory {
   private readonly open = new Map<number, Kept>();
   private readonly closed = new Map<number, Kept>();
 
-  constructor(private readonly deps: { isShell(contents: WebContents): boolean; isPrivate(contents: WebContents): boolean }) {}
+  constructor(private readonly deps: { isPrivate(contents: WebContents): boolean }) {}
 
   track(contents: WebContents): void {
     const id = contents.id;
@@ -50,9 +50,8 @@ export class TabHistory {
     for (const [id, kept] of this.closed) if (kept.private) this.closed.delete(id);
   }
 
-  /** A request from the shell. Never throws. */
+  /** A request from the shell (registered with handleFromShell, main/ipc.ts). Never throws. */
   async handle(event: IpcMainInvokeEvent, raw: unknown): Promise<{ ok: true; value: unknown } | { ok: false; error: string }> {
-    if (!this.deps.isShell(event.sender)) return { ok: false, error: 'Not allowed' };
     const parsed = parseTabsRequest(raw);
     if ('error' in parsed) return { ok: false, error: parsed.error };
     const { tab, from } = parsed.request;

@@ -27,7 +27,7 @@ function fakeItem(name: string) {
 function setup() {
   const folder = mkdtempSync(join(tmpdir(), 'hypersol-unit-downloads-'));
   const ses = new EventEmitter();
-  const downloads = new Downloads({ folder: () => folder, isShell: () => true, onChange: () => undefined });
+  const downloads = new Downloads({ folder: () => folder, onChange: () => undefined });
   downloads.watch(ses as never);
   const start = (name: string) => {
     const item = fakeItem(name);
@@ -37,8 +37,6 @@ function setup() {
   return { downloads, start };
 }
 
-const shell = { sender: {} } as never;
-
 describe('Downloads list (GitHub issue #10)', () => {
   it('keeps a running download after 100 later ones finish: listed, cancellable, its name reserved', async () => {
     const { downloads, start } = setup();
@@ -47,7 +45,7 @@ describe('Downloads list (GitHub issue #10)', () => {
     const list = downloads.list();
     expect(list).toHaveLength(100); // the list is still trimmed, of finished ones only
     expect(list[0]).toMatchObject({ id: 1, state: 'progressing' });
-    expect(await downloads.handle(shell, { op: 'downloads.cancel', id: 1 })).toEqual({ ok: true, value: null });
+    expect(await downloads.handle({ op: 'downloads.cancel', id: 1 })).toEqual({ ok: true, value: null });
     expect(slow.cancel).toHaveBeenCalled();
     const same = start('collision.bin'); // the running one still holds its name
     expect(same.path).not.toBe(slow.path);
@@ -61,12 +59,12 @@ describe('Downloads list (GitHub issue #10)', () => {
     expect(downloads.list()[0]).toMatchObject({ id: 1, state: 'interrupted', finished: false });
     for (let i = 0; i < 100; i++) start(`small-${i}.txt`).emit('done', {}, 'completed');
     expect(downloads.list().some((d) => d.id === 1)).toBe(true);
-    expect(await downloads.handle(shell, { op: 'downloads.cancel', id: 1 })).toEqual({ ok: true, value: null });
+    expect(await downloads.handle({ op: 'downloads.cancel', id: 1 })).toEqual({ ok: true, value: null });
     expect(first.cancel).toHaveBeenCalled();
     // Once done for good, it is finished and "Clear list" removes it.
     first.emit('done', {}, 'interrupted');
     expect(downloads.list().find((d) => d.id === 1)).toMatchObject({ finished: true });
-    await downloads.handle(shell, { op: 'downloads.clear' });
+    await downloads.handle({ op: 'downloads.clear' });
     expect(downloads.list()).toEqual([]);
   });
 

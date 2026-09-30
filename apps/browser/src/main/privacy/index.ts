@@ -56,7 +56,7 @@ export interface PrivacyOptions {
   onTabRequest?: (tab: number, details: { id: number; url: string; resourceType: string; method: string; timestamp: number }) => void;
   /** Every DNS mode put into effect (test log). */
   onDnsApplied?: (mode: 'secure' | 'automatic', resolver: string) => void;
-  /** Is this the app's own shell (the only one allowed to ask)? */
+  /** Is this the app's own shell (it is told when the filter lists change)? */
   isShell(contents: WebContents): boolean;
   /** The shell's last private tab closed: forget everything private (main/index.ts). */
   onPrivateEnded?: () => Promise<void>;
@@ -274,9 +274,8 @@ export class Privacy {
     });
   }
 
-  /** Answers one request from the shell. Never throws. */
+  /** Answers one request from the shell (registered with handleFromShell, main/ipc.ts). Never throws. */
   async handle(event: IpcMainInvokeEvent, raw: unknown): Promise<PrivacyReply<PrivacyOp>> {
-    if (!this.options.isShell(event.sender)) return { ok: false, error: 'Not allowed' };
     const parsed = parsePrivacyRequest(raw);
     if ('error' in parsed) return { ok: false, error: parsed.error };
     try {

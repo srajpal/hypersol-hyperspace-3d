@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { shell, type DownloadItem, type IpcMainInvokeEvent, type Session, type WebContents } from 'electron';
+import { shell, type DownloadItem, type Session } from 'electron';
 import {
   parseDownloadRequest,
   uniqueName,
@@ -16,7 +16,6 @@ const UPDATE_MS = 250;
 export interface DownloadsOptions {
   /** The folder files are saved to (the system's Downloads folder; a temporary one in tests). */
   folder(): string;
-  isShell(contents: WebContents): boolean;
   /** The list changed. */
   onChange(list: DownloadInfo[]): void;
   /** Test runs: record what would be opened instead of opening it. */
@@ -82,8 +81,8 @@ export class Downloads {
     return [...this.items.values()].filter(({ info }) => !info.finished).length;
   }
 
-  async handle(event: IpcMainInvokeEvent, raw: unknown): Promise<DownloadReply<DownloadOp>> {
-    if (!this.options.isShell(event.sender)) return { ok: false, error: 'Not allowed' };
+  /** A request from the shell (registered with handleFromShell, main/ipc.ts). Never throws. */
+  async handle(raw: unknown): Promise<DownloadReply<DownloadOp>> {
     const parsed = parseDownloadRequest(raw);
     if ('error' in parsed) return { ok: false, error: parsed.error };
     try {
