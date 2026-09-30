@@ -40,6 +40,9 @@ describe('places within reach (review 134, V5)', () => {
     expect(vec3(far, 'position', [0, 1.6, 5])).toEqual([0, 1.6, 5]);
     expect(vec3(far, 'position', [0, 1.6, 5])).toEqual([0, 1.6, 5]);
     expect(scale(far)).toEqual([1, 1, 1]);
+    // A turn of many degrees is only a turn, and an animation's ends are the page's to choose.
+    expect(vec3(el({ rotation: '0 36000000 0' }), 'rotation', [0, 0, 0])).toEqual([0, 36000000, 0]);
+    expect(vec3(el({ to: '0 36000000 0' }), 'to', [0, 0, 0])).toEqual([0, 36000000, 0]);
     expect(warn.mock.calls.map((c) => String(c[0]))).toEqual([
       'HoloML: line 3, column 8: "position" is beyond 1,000,000; the default is used instead.',
       'HoloML: line 3, column 9: "scale" is beyond 1,000,000; the default is used instead.',

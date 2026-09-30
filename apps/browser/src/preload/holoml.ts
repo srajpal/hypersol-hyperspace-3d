@@ -67,12 +67,14 @@ if (isHolomlDocument) {
     for (const command of waiting.splice(0)) line.postMessage(command);
   };
   window.addEventListener('message', asked);
+  // The instrument panel's Scene part can choose a thing and switch picking the same way ("select:<index>",
+  // "pick-on", "pick-off"), so that nothing on the page's window need act for it.
+  const commands = /^(?:stop|text-view-on|text-view-off|behind|in-front|pick-on|pick-off|select:-?\d{1,7})$/;
   ipcRenderer.on(HOLOML_COMMAND_CHANNEL, (_event, command: unknown) => {
-    if (command === 'stop' || command === 'text-view-on' || command === 'text-view-off' || command === 'behind' || command === 'in-front') {
-      // A command that comes before the viewer has asked for the line waits for it.
-      if (line) line.postMessage(command);
-      else waiting.push(command);
-    }
+    if (typeof command !== 'string' || !commands.test(command)) return;
+    // A command that comes before the viewer has asked for the line waits for it.
+    if (line) line.postMessage(command);
+    else waiting.push(command);
   });
   // The first real click, tap, or key on the page lets it play sound (HoloML
   // 0.2, milestone 17). Heard here, in the preload's own world: a page's

@@ -117,8 +117,10 @@ function sceneFacts(): unknown {
  * read-only. `select` and `pick` act, on the page's own scene alone (they
  * outline a thing, and make the next click choose one): the main process
  * calls them by name in the page (main/inspect), so they stay here until
- * it sends them over the private line instead. The object is frozen: a
- * page's script cannot put its own answers in their place.
+ * it sends them over the private line instead, which takes them already
+ * ("select:<index>", "pick-on", "pick-off" on the command channel). The
+ * object is frozen: a page's script cannot put its own answers in their
+ * place.
  */
 const inspector = {
   scene: sceneFacts,
@@ -446,8 +448,7 @@ function start(): void {
   showLeftOut(view, notice);
   if (atLeast(view.pageVersion, '0.2')) {
     installApi(view, ready);
-    // Once the private line is here: no script of the page runs before the viewer has it.
-    void line.then(() => runScripts(doc.root, state.problems));
+    runScripts(doc.root, state.problems);
   }
   // Esc stops whatever is still loading (issue #23).
   window.addEventListener('keydown', (e) => {
@@ -466,6 +467,9 @@ function start(): void {
       if (command === 'stop') view.stop();
       else if (command === 'text-view-on' || command === 'text-view-off') setTextView(command === 'text-view-on');
       else if (command === 'behind' || command === 'in-front') view.setBehind(command === 'behind');
+      // The instrument panel's Scene part: picking, and the thing chosen in its tree.
+      else if (command === 'pick-on' || command === 'pick-off') view.setPicking(command === 'pick-on');
+      else if (typeof command === 'string' && /^select:-?\d{1,7}$/.test(command)) view.select(Number(command.slice('select:'.length)));
     };
   });
 }
@@ -505,12 +509,20 @@ function runScripts(root: ElementNode, problems: Problem[]): void {
       console.warn(`HoloML: the script "${src}" was not run: a script must be a .js or .mjs file.`);
       continue;
     }
-    const script = document.createElement('script');
-    script.type = 'module';
-    // Added one after another, they run in document order.
-    script.async = false;
-    script.src = url.href;
-    document.head.append(script);
+    // Fetched at once, as ever; run once the viewer has its private line (a moment later, and as a rule before
+    // the file has arrived), so that no script of the page is there to see the line handed over.
+    const early = document.createElement('link');
+    early.rel = 'modulepreload';
+    early.href = url.href;
+    document.head.append(early);
+    void line.then(() => {
+      const script = document.createElement('script');
+      script.type = 'module';
+      // Added one after another, they run in document order.
+      script.async = false;
+      script.src = url.href;
+      document.head.append(script);
+    });
   }
 }
 

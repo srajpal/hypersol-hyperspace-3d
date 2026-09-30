@@ -471,5 +471,30 @@ describe('review 134: the HoloML viewer', () => {
       PAGE,
     );
     expect(forged).toBe('object');
+    // The instrument panel's picking and choosing can come over the private line, as the main process would send
+    // them, so that nothing on the window need act: picking on, a thing chosen, picking off.
+    const send = (command: string) =>
+      h.app.evaluate(
+        ({ webContents }, { page, command }) => {
+          const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes(page)).pop()!;
+          guest.send('hypersol:holoml-command', command);
+        },
+        { page: PAGE, command },
+      );
+    const scene = () => holo<{ picking: boolean; selected: number }>(PAGE, 'window.__holoml.scene()');
+    expect(await scene()).toMatchObject({ picking: false, selected: -1 });
+    await send('pick-on');
+    await waitFor('picking on', scene, (s) => s.picking);
+    await send('select:2');
+    await waitFor('the third thing chosen', scene, (s) => s.selected === 2);
+    await send('pick-off');
+    await send('select:-1');
+    await waitFor('picking off, nothing chosen', scene, (s) => !s.picking && s.selected === -1);
+    // Anything else on that channel is dropped by the preload.
+    await send('select:2; alert(1)');
+    await send('pick-on');
+    await waitFor('picking on again', scene, (s) => s.picking);
+    expect((await scene()).selected).toBe(-1);
+    await send('pick-off');
   });
 });

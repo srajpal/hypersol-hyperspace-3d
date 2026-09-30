@@ -18,6 +18,8 @@ const NUMBER = /^-?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
  * the console says so (review 134, V5).
  */
 export const REACH = 1e6;
+/** The attributes that are places or sizes in metres: the reach applies to these (a turn of many degrees is only a turn). */
+const PLACES = new Set(['position', 'look-at', 'size']);
 
 /** A number the scene can use: written as one, and finite (1e999 is not; holoml issue #3). */
 function finite(p: string): boolean {
@@ -56,7 +58,7 @@ export function vec3(el: ElementNode, name: string, fallback: Vec3): Vec3 {
   const parts = attr(el, name)?.trim().split(/\s+/);
   if (!parts || parts.length !== 3 || !parts.every(finite)) return fallback;
   const v = parts.map(Number) as Vec3;
-  return withinReach(el, name, v) ? v : fallback;
+  return !PLACES.has(name) || withinReach(el, name, v) ? v : fallback;
 }
 
 /** One number (the same on every axis) or three. */
