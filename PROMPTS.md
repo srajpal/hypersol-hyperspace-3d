@@ -1507,3 +1507,18 @@ Turn on auto-fix for #39 too
 ```text
 holoml #20 merged
 ```
+
+## 134 — 2026-09-30 · Claude Fable 5.1, high effort
+
+```text
+We are at a good checkpoint for both repos. Time to do a very thorough
+review of them. Find any bugs or issues that have not been fixed. I need
+you to act as a very senior developer and look at the whole project from
+that perspective and review it. It is time for a serious check. Did we
+miss something? Also check why the CI workflows take so long to finish
+each time and why they fail sometimes; see if you can get them to run
+faster. Check every aspect of both repos.
+
+Also use the info from this skill to do the checks:
+https://github.com/mattpocock/skills/blob/main/skills/engineering/code-review/SKILL.md
+```
