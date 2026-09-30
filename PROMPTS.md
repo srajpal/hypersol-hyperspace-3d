@@ -1551,3 +1551,9 @@ Can you check the CI failures?
 ```text
 It still failed. Wait for it to pass before merging?
 ```
+
+## 138 — 2026-09-30 · Claude Fable 5.1, high effort
+
+```text
+holoml #21 has a failure too, check that
+```
