@@ -1539,3 +1539,9 @@ they assert; and the findings recorded as private security advisories
 ```text
 Use the recommendations and fix everything
 ```
+
+## 136 — 2026-09-30 · Claude Fable 5.1, high effort
+
+```text
+Can you check the CI failures?
+```
