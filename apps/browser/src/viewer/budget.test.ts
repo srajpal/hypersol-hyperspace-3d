@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe as group, expect, it, vi } from 'vitest';
-import { Budget, Claim, LIMITS, LeftOut, Unreadable, describe, hdrSize, headerSize, pictureSize, soundSeconds } from './budget';
+import { Budget, Claim, GLTF_EXTENSIONS, LIMITS, LeftOut, Unreadable, Unsupported, describe, hdrSize, headerSize, pictureSize, soundSeconds } from './budget';
 
 const enc = (o: unknown) => new TextEncoder().encode(JSON.stringify(o)).buffer as ArrayBuffer;
 
@@ -462,5 +463,74 @@ group("how long a sound is, from its file's header (review 134, V6)", () => {
       expect(seconds!, file).toBeGreaterThan(least);
       expect(seconds!, file).toBeLessThan(most);
     }
+  });
+});
+
+group('a model whose file needs a glTF extension (review 134; SPEC.md section 9, "Loading")', () => {
+  const ORIGIN = 'http://127.0.0.1:1';
+  const at = (p: string) => new URL(p, ORIGIN);
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** A model of 10 triangles with one buffer in a file of its own, and what it says of extensions. */
+  const withExtensions = (extensions: object) =>
+    enc({ nodes: [{ mesh: 0 }], meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }], accessors: [{ count: 30 }], buffers: [{ uri: 'mesh.bin', byteLength: 2000 }], ...extensions });
+
+  /** Serves the files, and keeps the paths asked for. */
+  function served(files: Record<string, ArrayBuffer | number>): string[] {
+    serve(files);
+    const answer = globalThis.fetch as unknown as (url: URL) => Promise<Response>;
+    const asked: string[] = [];
+    vi.stubGlobal('fetch', (url: URL) => {
+      asked.push(url.pathname);
+      return answer(url);
+    });
+    return asked;
+  }
+
+  it('reads what a file says it needs, and only names', () => {
+    expect(describe(enc({ extensionsUsed: ['KHR_materials_unlit'], extensionsRequired: ['KHR_draco_mesh_compression', 7, null, 'EXT_made_up'] })).needs).toEqual(['KHR_draco_mesh_compression', 'EXT_made_up']);
+    expect(describe(enc({ extensionsUsed: ['KHR_draco_mesh_compression'] })).needs).toEqual([]);
+    expect(describe(enc({ extensionsRequired: 'KHR_draco_mesh_compression' })).needs).toEqual([]);
+  });
+
+  it('one the viewer does not read: the model is left out with the reason, before its other files are asked for, and holds nothing', async () => {
+    const asked = served({
+      '/draco.gltf': withExtensions({ extensionsUsed: ['KHR_draco_mesh_compression'], extensionsRequired: ['KHR_draco_mesh_compression'] }),
+      '/unknown.gltf': withExtensions({ extensionsRequired: ['KHR_materials_unlit', 'EXT_made_up', 'KHR_texture_basisu', 'EXT_meshopt_compression', `VENDOR_${'x'.repeat(200)}`] }),
+      '/mesh.bin': 2000,
+    });
+    const budget = new Budget();
+    const draco = await budget.load(at('/draco.gltf'), ORIGIN).catch((e: unknown) => e);
+    // Left out like any other model that is left out, and marked as one that would be left out again.
+    expect(draco).toBeInstanceOf(LeftOut);
+    expect(draco).toBeInstanceOf(Unsupported);
+    expect(draco).toMatchObject({ reason: 'it needs the glTF extension KHR_draco_mesh_compression, which this browser does not read', overTotal: false });
+    // Several: the first three are named (one it reads is not among them), each at no great length.
+    const unknown = (await budget.load(at('/unknown.gltf'), ORIGIN).catch((e: unknown) => e)) as Unsupported;
+    expect(unknown).toBeInstanceOf(Unsupported);
+    expect(unknown.reason).toBe('it needs the glTF extensions EXT_made_up, KHR_texture_basisu, EXT_meshopt_compression, and more, which this browser does not read');
+    expect(asked).toEqual(['/draco.gltf', '/unknown.gltf']);
+    expect(budget).toMatchObject({ bytes: 0, triangles: 0, pixels: 0 });
+  });
+
+  it('an extension the viewer reads may be needed, and one it does not read may be used without being needed', async () => {
+    const asked = served({
+      '/fine.gltf': withExtensions({ extensionsUsed: [...GLTF_EXTENSIONS, 'EXT_made_up', 'KHR_draco_mesh_compression'], extensionsRequired: [...GLTF_EXTENSIONS] }),
+      '/mesh.bin': 2000,
+    });
+    const budget = new Budget();
+    const files = await budget.load(at('/fine.gltf'), ORIGIN);
+    expect(files.triangles).toBe(10);
+    expect(asked).toEqual(['/fine.gltf', '/mesh.bin']);
+  });
+
+  it("the extensions it reads are those Three.js's loader reads by itself: all it knows, less those that need a decoder", () => {
+    const loader = readFileSync(createRequire(import.meta.url).resolve('three/examples/jsm/loaders/GLTFLoader.js'), 'utf8');
+    const table = /const EXTENSIONS = \{([^}]*)\}/.exec(loader)![1]!;
+    const known = [...table.matchAll(/'([A-Za-z0-9_]+)'/g)].map((m) => m[1]!);
+    expect(known.length).toBeGreaterThan(15);
+    // KHR_binary_glTF is glTF 1.0's; the other four need decoders the viewer does not carry (SPEC.md's note says so).
+    const not = ['KHR_binary_glTF', 'KHR_draco_mesh_compression', 'EXT_meshopt_compression', 'KHR_meshopt_compression', 'KHR_texture_basisu'];
+    expect([...GLTF_EXTENSIONS].sort()).toEqual(known.filter((name) => !not.includes(name)).sort());
   });
 });

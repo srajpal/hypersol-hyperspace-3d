@@ -82,6 +82,49 @@ export class Unreadable extends Error {
   }
 }
 
+/**
+ * A model whose file needs something the viewer does not have (a glTF
+ * extension it does not read). It is left out, and would be left out
+ * again, so its file is not fetched again on the same page.
+ */
+export class Unsupported extends LeftOut {
+  constructor(reason: string) {
+    super(reason);
+    this.name = 'Unsupported';
+  }
+}
+
+/**
+ * The glTF extensions the viewer reads: those Three.js's loader reads by
+ * itself. The ones for compressed geometry and compressed pictures
+ * (KHR_draco_mesh_compression, EXT_meshopt_compression,
+ * KHR_meshopt_compression, KHR_texture_basisu) need decoders the viewer
+ * does not carry. A model whose file says it needs an extension that is
+ * not here (its `extensionsRequired`) is left out, and the page says
+ * why; one its file only uses is drawn without it (SPEC.md section 9,
+ * "Loading", whose note lists the same names).
+ */
+export const GLTF_EXTENSIONS: ReadonlySet<string> = new Set([
+  'KHR_lights_punctual',
+  'KHR_materials_anisotropy',
+  'KHR_materials_clearcoat',
+  'KHR_materials_dispersion',
+  'KHR_materials_emissive_strength',
+  'KHR_materials_ior',
+  'KHR_materials_iridescence',
+  'KHR_materials_sheen',
+  'KHR_materials_specular',
+  'KHR_materials_transmission',
+  'KHR_materials_unlit',
+  'KHR_materials_volume',
+  'KHR_mesh_quantization',
+  'KHR_texture_transform',
+  'EXT_materials_bump',
+  'EXT_mesh_gpu_instancing',
+  'EXT_texture_avif',
+  'EXT_texture_webp',
+]);
+
 const MB = (n: number) => `${Math.round(n / (1024 * 1024))} MB`;
 const count = (n: number) => Math.round(n).toLocaleString('en');
 
@@ -188,9 +231,10 @@ export class Budget {
 
   /**
    * Fetches a model and the files it names, within the limits. Resolves
-   * with the bytes to decode; rejects with LeftOut for a limit or a stop,
-   * with Unreadable when the file is not glTF, or with an Error when a
-   * file cannot be fetched. A load that rejects holds nothing.
+   * with the bytes to decode; rejects with LeftOut for a limit or a stop
+   * (Unsupported when the file needs a glTF extension the viewer does not
+   * read), with Unreadable when the file is not glTF, or with an Error
+   * when a file cannot be fetched. A load that rejects holds nothing.
    */
   async load(url: URL, origin: string): Promise<LoadedFiles> {
     if (this.stopped) throw new LeftOut('stopped before it finished loading');
@@ -207,6 +251,14 @@ export class Budget {
         parsed = describe(main);
       } catch (e) {
         throw new Unreadable(e instanceof Error ? e.message : String(e));
+      }
+      // An extension the file needs and the viewer does not read: left out before anything else of it is fetched.
+      const missing = parsed.needs.filter((name) => !GLTF_EXTENSIONS.has(name));
+      if (missing.length > 0) {
+        const names = missing.slice(0, 3).map((name) => name.slice(0, 64));
+        throw new Unsupported(
+          `it needs the glTF extension${missing.length === 1 ? '' : 's'} ${names.join(', ')}${missing.length > names.length ? ', and more' : ''}, which this browser does not read`,
+        );
       }
       // Triangles are known from the file's own description: refuse before decoding.
       // Held at once, so models loading side by side cannot pass the limit together.
@@ -343,6 +395,8 @@ interface Description {
   embeddedPictures: { width: number; height: number }[];
   /** Pictures kept inside a file the glTF names (by that file's address as written): where each starts, and how long it is. */
   picturesIn: Map<string, { offset: number; length: number }[]>;
+  /** The glTF extensions the file says it cannot be shown without (its `extensionsRequired`). */
+  needs: string[];
 }
 
 interface GltfJson {
@@ -354,6 +408,7 @@ interface GltfJson {
   buffers?: { uri?: string }[];
   images?: { uri?: string; bufferView?: number }[];
   bufferViews?: { buffer?: number; byteOffset?: number; byteLength?: number }[];
+  extensionsRequired?: unknown[];
 }
 
 /** A count as a file wrote it: a whole number of 0 or more, or 0 for anything else. */
@@ -467,7 +522,8 @@ export function describe(file: ArrayBuffer): Description {
     const size = head ? headerSize(head) : null;
     if (size) embeddedPictures.push(size);
   }
-  return { triangles, externalUris, pictureUris, embeddedPictures, picturesIn };
+  const needs = list(json.extensionsRequired).filter((name): name is string => typeof name === 'string');
+  return { triangles, externalUris, pictureUris, embeddedPictures, picturesIn, needs };
 }
 
 /** The first bytes (at most `most`) of a base64 data: address. */
