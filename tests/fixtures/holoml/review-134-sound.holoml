@@ -1,0 +1,13 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML: a sound heard only close by</title>
+  </head>
+  <!-- Review 134, V10: a sound from a place whose range is less than a metre. The viewer stands half a
+       metre from it, inside its range, and hears it at its volume; a step back, beyond it, nothing. -->
+  <scene background="#1c2030">
+    <viewpoint position="0 1.6 0" look-at="0 1.6 -5" mode="walk" />
+    <light type="ambient" intensity="0.8" />
+    <label id="sign" position="0 2 -4">Listen closely</label>
+    <sound id="close" src="gen/tone.wav" position="0 1.6 -0.5" range="0.8" loop autoplay />
+  </scene>
+</holoml>

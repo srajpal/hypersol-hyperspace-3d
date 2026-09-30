@@ -1,0 +1,14 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML: a script beside a mistake</title>
+    <meta nonsense="1" /><script src="review-134-script.js" />
+  </head>
+  <!-- Review 134, V10: the line above has a problem (the attribute of the meta), and it is not the
+       script's own: the script runs. -->
+  <scene background="#1c2030">
+    <viewpoint position="0 1.6 7" look-at="0 1 0" />
+    <light type="ambient" intensity="0.8" />
+    <hud id="status" corner="top-left">the script has not run</hud>
+    <model id="car" src="models/placeholder-car.gltf" />
+  </scene>
+</holoml>

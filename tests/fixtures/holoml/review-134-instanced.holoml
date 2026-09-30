@@ -1,0 +1,16 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML: a model that draws its mesh many times</title>
+  </head>
+  <!-- Review 134, V4: the triangles charged are those drawn, with the copies the file itself asks for:
+       100 triangles 50 times is 5,000. The second would be 3,000,000, past the 2,000,000 a page may
+       have, and is left out. -->
+  <scene background="#1c2030">
+    <viewpoint mode="walk" position="0 1.6 0" look-at="0 1.6 -10" />
+    <light type="ambient" intensity="0.8" />
+    <group id="shelf" load="near" near="8" position="0 0 -4">
+      <model id="many" src="gen/instanced.gltf?tris=100&amp;copies=50" />
+    </group>
+    <model id="too-many" src="gen/instanced.gltf?tris=1000&amp;copies=3000" position="3 0 -4" />
+  </scene>
+</holoml>

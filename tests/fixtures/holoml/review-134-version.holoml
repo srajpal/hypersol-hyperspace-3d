@@ -1,0 +1,12 @@
+<holoml version="0.3">
+  <head>
+    <title>A page of a later HoloML</title>
+  </head>
+  <!-- Review 134, V2: a version this viewer does not know is refused, not drawn as an older one. -->
+  <scene background="#203040">
+    <viewpoint position="0 1.6 7" look-at="0 0.8 0" />
+    <light type="ambient" intensity="0.8" />
+    <model id="car" src="models/placeholder-car.gltf" />
+    <label id="sign" position="0 2.4 0">Not shown</label>
+  </scene>
+</holoml>

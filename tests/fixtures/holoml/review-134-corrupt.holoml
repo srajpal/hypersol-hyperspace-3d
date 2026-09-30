@@ -1,0 +1,17 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML: a model that cannot be decoded, in a group that loads by area</title>
+  </head>
+  <!-- Review 134, V3: the file arrives (4 MB) and cannot be decoded. It holds nothing of the page's
+       totals afterwards, and is not fetched again at the next approach; the group beyond still loads. -->
+  <scene background="#1c2030">
+    <viewpoint mode="walk" position="0 1.6 0" look-at="0 1.6 -10" />
+    <light type="ambient" intensity="0.8" />
+    <group id="bad" load="near" near="8" position="0 0 -30">
+      <model id="broken" src="gen/corrupt.glb?mb=4" />
+    </group>
+    <group id="good" load="near" near="8" position="0 0 -60">
+      <model id="fine" src="gen/box.gltf?tris=100&amp;mb=1&amp;n=r134-good" />
+    </group>
+  </scene>
+</holoml>
