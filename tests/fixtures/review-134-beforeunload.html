@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>A page that asks to be kept</title>
+    <style>
+      body { margin: 0; padding: 40px; font-family: sans-serif; font-size: 22px; background: #fff; }
+      button { font: inherit; padding: 12px 20px; }
+    </style>
+  </head>
+  <body>
+    <!-- Review of 2026-09-30, finding M4: a page with a beforeunload
+         handler, as a webmail draft or a document editor has. Chromium
+         honours it only once the person has clicked or typed in the page. -->
+    <h1 id="state">Not yet touched</h1>
+    <button id="edit">Edit</button>
+    <script>
+      document.getElementById('edit').onclick = () => {
+        document.getElementById('state').textContent = 'Edited';
+      };
+      addEventListener('beforeunload', (e) => {
+        e.preventDefault();
+        e.returnValue = '';
+      });
+    </script>
+  </body>
+</html>

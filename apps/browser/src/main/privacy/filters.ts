@@ -1,6 +1,11 @@
 import type { FilterStatus } from '../../shared/privacy';
 
-/** resources/filters/lists.json: which lists, from where, and which may ship in the app. */
+/**
+ * resources/filters/lists.json: which lists, from where, and which may
+ * ship in the app. `resources` is the file of page scripts the blocker
+ * puts into pages; only `pnpm filters:update` fetches it (see
+ * FilterService), so the app never reads that entry.
+ */
 export interface ListManifest {
   base: string;
   lists: { path: string; name: string; license: string; ship: boolean }[];
@@ -15,14 +20,20 @@ export interface FilterFiles {
   writeSaved(bin: Uint8Array, meta: string): void;
   /** The starter copy included in the app, and when it was built. */
   readStarter(): { bin: Uint8Array; built: number };
+  /** The SHA-256 of the page scripts file included in the app, as recorded when the starter copy was built (starter.json). */
+  scriptsChecksum(): string;
 }
 
 export interface FilterDeps<E> {
   files: FilterFiles;
   /** Downloads one list as text. Rejects on failure. */
   download(url: string): Promise<string>;
-  /** Builds the engine from list texts and the resources file, off the main thread. */
-  build(lists: string[], resources: string): Promise<Uint8Array>;
+  /**
+   * Builds the engine from list texts, off the main thread, with the page
+   * scripts included in the app. Rejects if those scripts do not match
+   * their recorded checksum.
+   */
+  build(lists: string[]): Promise<Uint8Array>;
   /** Loads an engine from its saved form. Throws if the data is damaged or from another version. */
   load(bin: Uint8Array): E;
   now(): number;
@@ -36,6 +47,8 @@ interface SavedMeta {
   updatedAt: number;
   /** The addresses the saved copy was built from; a changed list set makes it due at once. */
   urls: string[];
+  /** The checksum of the page scripts the saved copy was built with: the ones included in the app, or it is not used. */
+  scripts: string;
 }
 
 function plain(e: unknown): string {
@@ -50,6 +63,14 @@ function plain(e: unknown): string {
  * A refresh downloads every list from its named address, builds the new
  * engine off the main thread, saves it, and only then puts it in use; any
  * failure keeps the lists in use.
+ *
+ * The lists are text: rules about addresses and page elements. The
+ * blocker also has page scripts, which it runs inside web pages; those
+ * come with the app (inside the starter copy) and are changed only by
+ * `pnpm filters:update` before a release, never by a refresh (review of
+ * 2026-09-30, M5: a refresh used to download them from a moving branch
+ * of another project and run them in every page within a day). A saved
+ * copy built with any other scripts is not used.
  */
 export class FilterService<E> {
   private current!: E;
@@ -79,9 +100,9 @@ export class FilterService<E> {
     return this.problemText;
   }
 
-  /** Every address a refresh downloads, in order. */
+  /** Every address a refresh downloads, in order: the list texts, and nothing else. */
   get urls(): string[] {
-    return [...this.manifest.lists.map((l) => this.base + l.path), this.base + this.manifest.resources.path];
+    return this.manifest.lists.map((l) => this.base + l.path);
   }
 
   status(): FilterStatus {
@@ -121,11 +142,11 @@ export class FilterService<E> {
   private async run(): Promise<FilterStatus> {
     try {
       const texts = await Promise.all(this.urls.map((url) => this.deps.download(url)));
-      const resources = texts.pop()!;
-      const bin = await this.deps.build(texts, resources);
+      const scripts = this.deps.files.scriptsChecksum();
+      const bin = await this.deps.build(texts);
       const engine = this.deps.load(bin);
       const updatedAt = this.deps.now();
-      const meta: SavedMeta = { updatedAt, urls: this.urls };
+      const meta: SavedMeta = { updatedAt, urls: this.urls, scripts };
       this.deps.files.writeSaved(bin, `${JSON.stringify(meta, null, 2)}\n`);
       this.current = engine;
       this.source = 'downloaded';
@@ -143,6 +164,7 @@ export class FilterService<E> {
       if (saved) {
         const meta = JSON.parse(saved.meta) as Partial<SavedMeta>;
         if (typeof meta.updatedAt !== 'number' || !Array.isArray(meta.urls)) throw new Error('its details file is damaged');
+        if (meta.scripts !== this.deps.files.scriptsChecksum()) throw new Error('it was not built with the page scripts included in this version');
         this.current = this.deps.load(saved.bin);
         this.source = 'downloaded';
         // Lists added or removed since: due for a refresh at once.

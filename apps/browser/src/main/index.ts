@@ -30,7 +30,10 @@ import { wireGuest, wireShortcuts } from './guests';
 import { parseLaunchOptions } from './launch-options';
 import { chooseProfileFolder } from './profile-folder';
 import { Privacy } from './privacy';
-import { hardenShell } from './security';
+import { hardenShell, isAcceptableDrop, refuseClientCertificates } from './security';
+import { confirmLeave } from './leave-page';
+import { afterShellCrash, SHELL_FAILED_MESSAGE, SHELL_FAILED_TITLE, START_FAILED_TITLE, startFailedMessage } from './start-up';
+import { shellOnly } from './ipc';
 import { HolomlPages } from './holoml';
 import { HOLOML_DROP_CHANNEL, LOCAL_SCHEME, VIEWER_SCHEME } from '../shared/holoml-page';
 import { StorageService } from './storage/service';
@@ -38,7 +41,7 @@ import { inProcess, WorkerHistory } from './storage/history-backend';
 import { Worker } from 'node:worker_threads';
 import { installTestHooks, type TestLog } from './test-hooks';
 
-const options = parseLaunchOptions(process.argv, process.env);
+const options = parseLaunchOptions(process.argv, process.env, app.isPackaged);
 
 // Development and test runs never use a real profile (AGENTS.md rule 1).
 if (options.userDataDir) {
@@ -94,6 +97,29 @@ const shortcutKeys = () => storage?.settingsFile.settings.shortcuts ?? {};
 /** The private tabs' in-memory session. */
 let privateSession: Session | null = null;
 
+/** The app's own shell: the only sender the privileged request channels answer (main/ipc.ts). */
+const isShell = (contents: WebContents) => mainWindow !== null && contents === mainWindow.webContents;
+const handleFromShell = shellOnly(isShell);
+
+/**
+ * The app cannot go on (main/start-up.ts): say so in plain words and end,
+ * so no process without a window is left holding the single-instance
+ * lock. Test runs open no box: the message goes to the log.
+ */
+function giveUp(title: string, message: string): void {
+  if (options.testMode) console.error(`${title}\n${message}`);
+  else dialog.showErrorBox(title, message);
+  // app.exit() skips will-quit, where saved data is otherwise closed: close
+  // it here, so the history worker's thread has stopped before the process
+  // ends (ending under a running worker crashed now and then, seen in the
+  // start-up check).
+  const saved = storage;
+  storage = null;
+  const end = () => app.exit(1);
+  if (saved) void saved.closed().then(end, end);
+  else setImmediate(end);
+}
+
 /**
  * Windows and Linux: no menu bar; shortcuts are handled per web contents
  * (main/guests.ts) and clipboard keys work natively. macOS needs an app
@@ -116,6 +142,11 @@ function setAppMenu(): void {
  */
 function windowTheme(choice: ThemeChoice): Theme {
   nativeTheme.themeSource = choice === 'system' ? 'system' : themeById(choice).scheme;
+  return themeFor(choice);
+}
+
+/** The theme a choice stands for: itself, or for "Match the system" the one for the system's scheme. */
+function themeFor(choice: ThemeChoice): Theme {
   return choice === 'system' ? (nativeTheme.shouldUseDarkColors ? nebula : daylight) : themeById(choice);
 }
 
@@ -175,8 +206,20 @@ function createWindow(): void {
     // must not find the old private data (PR #16 review).
     endPrivate();
   });
-  // A crashed shell takes its tabs with it too.
-  win.webContents.on('render-process-gone', () => endPrivate());
+  // A crashed shell takes its tabs with it too. It is reloaded once; if it
+  // goes again within a minute the app says so and ends (main/start-up.ts).
+  let lastCrashAt: number | null = null;
+  win.webContents.on('render-process-gone', (_event, details) => {
+    endPrivate();
+    if (details.reason === 'clean-exit' || win.isDestroyed()) return;
+    const now = Date.now();
+    if (afterShellCrash(lastCrashAt, now) === 'quit') {
+      giveUp(SHELL_FAILED_TITLE, SHELL_FAILED_MESSAGE);
+      return;
+    }
+    lastCrashAt = now;
+    win.webContents.reload();
+  });
   // Economy mode can follow the power source (milestone 10).
   // Test runs start as if on mains power, so a laptop on battery runs the
   // same checks; the economy checks switch the power source themselves.
@@ -286,6 +329,7 @@ if (!app.requestSingleInstanceLock()) {
     tabHistory?.track(contents);
     const guestId = contents.id;
     contents.once('destroyed', () => holoml?.forget(guestId));
+    holoml?.track(contents);
     // Sound, for the speaker on the tab and for keeping it awake (milestone 10).
     contents.on('audio-state-changed', (event) => {
       const host = contents.hostWebContents;
@@ -311,8 +355,22 @@ if (!app.requestSingleInstanceLock()) {
       // Files opened from the computer are not history: their addresses last one run (milestone 14).
       recordVisit: (url, title) => (isPrivate || url.startsWith(`${LOCAL_SCHEME}:`) ? null : (storage?.recordVisit(url, title) ?? null)),
       updateVisitTitle: (id, title) => void storage?.updateVisitTitle(id, title),
+      confirmLeave: (url) => {
+        // Block for the camera or microphone reloads the page whatever it says (main/permissions.ts).
+        if (permissions?.endingCapture(contents)) return true;
+        // Test runs open no native box: the ask is recorded and answered by the check.
+        if (testLog) {
+          testLog.leaveAsks.push(url);
+          return testLog.leaveAnswer === 'leave';
+        }
+        const win = mainWindow;
+        return win === null || win.isDestroyed() ? true : confirmLeave((box) => dialog.showMessageBoxSync(win, box));
+      },
+      fetchFavicon: (url, init) => (privacy ? privacy.fetchFavicon(contents, url, init) : contents.session.fetch(url, init)),
     });
   });
+
+  refuseClientCertificates(app);
 
   // HoloML pages (milestone 14): the viewer's script, and files opened
   // from the computer. Registered before the app is ready, as Electron asks.
@@ -321,7 +379,7 @@ if (!app.requestSingleInstanceLock()) {
     { scheme: LOCAL_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
   ]);
 
-  void app.whenReady().then(() => {
+  const start = (): void => {
     if (options.testMode) testLog = installTestHooks();
 
     const ses = session.defaultSession;
@@ -332,42 +390,69 @@ if (!app.requestSingleInstanceLock()) {
       s.setSpellCheckerEnabled(false);
     }
 
+    // Downloads go straight to the Downloads folder (milestone 8, Q2 a).
+    const downloadsFolder = options.downloadsDir ?? app.getPath('downloads');
+    // Folders that hold many unrelated files: a HoloML file opened from one
+    // reads the files beside it only (main/holoml.ts).
+    const sharedFolders = [downloadsFolder];
+    for (const name of ['desktop', 'documents', 'home'] as const) {
+      try {
+        sharedFolders.push(app.getPath(name));
+      } catch {
+        // A system without that folder has nothing to share from it.
+      }
+    }
+
     // HoloML pages (milestone 14, main/holoml.ts).
     const devServer = !app.isPackaged ? process.env['ELECTRON_RENDERER_URL'] : undefined;
     const pages = new HolomlPages({
       viewerFiles: devServer ? null : join(__dirname, '../renderer'),
       ...(devServer ? { devServer, viewerSource: join(__dirname, '../../src/viewer/main.ts') } : {}),
+      sharedFolders,
     });
     holoml = pages;
     pages.register(ses);
     pages.register(privateSes);
     pages.wire();
-    ipcMain.handle(OPEN_FILE_CHANNEL, async (event, path: unknown) => {
-      if (!mainWindow || event.sender !== mainWindow.webContents) return null;
-      if (typeof path === 'string') return pages.openFile(path);
-      const chosen = await dialog.showOpenDialog(mainWindow, {
-        title: 'Open a HoloML file',
-        properties: ['openFile'],
-        filters: [{ name: 'HoloML pages', extensions: ['holoml'] }],
-      });
-      return chosen.canceled || !chosen.filePaths[0] ? null : pages.openFile(chosen.filePaths[0]);
-    });
-    // A .holoml file dropped onto a page opens in that tab.
+    handleFromShell(
+      OPEN_FILE_CHANNEL,
+      async (_event, path) => {
+        if (!mainWindow) return null;
+        if (typeof path === 'string') return pages.openFile(path);
+        const chosen = await dialog.showOpenDialog(mainWindow, {
+          title: 'Open a HoloML file',
+          properties: ['openFile'],
+          filters: [{ name: 'HoloML pages', extensions: ['holoml'] }],
+        });
+        return chosen.canceled || !chosen.filePaths[0] ? null : pages.openFile(chosen.filePaths[0]);
+      },
+      null,
+    );
+    // A .holoml file dropped onto a page opens in that tab. The message is
+    // held to what the main process can know about it (isAcceptableDrop).
+    const dropping = new Set<number>();
     ipcMain.on(HOLOML_DROP_CHANNEL, (event, path: unknown) => {
       const guest = event.sender;
-      if (typeof path !== 'string' || guest.getType() !== 'webview') return;
-      void pages.openFile(path).then((url) => {
-        if (url && !guest.isDestroyed()) void guest.loadURL(url).catch(() => undefined);
-      });
+      const drop = {
+        path,
+        senderType: guest.getType(),
+        fromMainFrame: event.senderFrame !== null && event.senderFrame === guest.mainFrame,
+        hostedByShell: guest.hostWebContents !== null && guest.hostWebContents !== undefined && isShell(guest.hostWebContents),
+        alreadyOpening: dropping.has(guest.id),
+      };
+      if (!isAcceptableDrop(drop) || typeof path !== 'string') return;
+      dropping.add(guest.id);
+      void pages
+        .openFile(path)
+        .then((url) => (url && !guest.isDestroyed() ? guest.loadURL(url) : undefined))
+        .catch(() => undefined)
+        .finally(() => dropping.delete(guest.id));
     });
     if (testLog) testLog.openLocal = (path) => pages.openFile(path);
 
-    // Downloads go straight to the Downloads folder (milestone 8, Q2 a).
-    const downloadsFolder = options.downloadsDir ?? app.getPath('downloads');
     const log0 = testLog;
     const downloads = new Downloads({
       folder: () => downloadsFolder,
-      isShell: (contents) => mainWindow !== null && contents === mainWindow.webContents,
       onChange: (items) => {
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send(SHELL_COMMAND_CHANNEL, { type: 'downloads', items } satisfies ShellCommand);
@@ -377,7 +462,7 @@ if (!app.requestSingleInstanceLock()) {
     });
     downloads.watch(ses);
     downloads.watch(privateSes);
-    ipcMain.handle(DOWNLOADS_CHANNEL, (event, request: unknown) => downloads.handle(event, request));
+    handleFromShell(DOWNLOADS_CHANNEL, (_event, request) => downloads.handle(request));
 
     // Settings captures a shortcut's new keys: they must not act meanwhile.
     ipcMain.on(CAPTURE_KEYS_CHANNEL, (event, on: unknown) => {
@@ -426,10 +511,7 @@ if (!app.requestSingleInstanceLock()) {
       },
     );
     if (storage.problem) console.warn(`Saved data unavailable: ${storage.problem}`);
-    ipcMain.handle(DATA_CHANNEL, (event, request: unknown) => {
-      if (!mainWindow || event.sender !== mainWindow.webContents) {
-        return { ok: false, error: 'Not allowed' };
-      }
+    handleFromShell(DATA_CHANNEL, (_event, request) => {
       if (testLog && typeof request === 'object' && request !== null) {
         const op = String((request as { op?: unknown }).op);
         testLog.dataOps[op] = (testLog.dataOps[op] ?? 0) + 1;
@@ -440,13 +522,11 @@ if (!app.requestSingleInstanceLock()) {
     // ask first; everything else is refused, as before.
     const saved = storage;
     const isPrivateTab = (contents: WebContents) => contents.session === privateSes;
-    const isShellContents = (contents: WebContents) => mainWindow !== null && contents === mainWindow.webContents;
     const sendToHost = (contents: WebContents, command: ShellCommand) => {
       const host = contents.hostWebContents;
       if (host && !host.isDestroyed()) host.send(SHELL_COMMAND_CHANNEL, command);
     };
     const perms = new Permissions({
-      isShell: isShellContents,
       isPrivate: isPrivateTab,
       saved: () => saved.settingsFile.settings.sitePermissions,
       save: (sites) => saved.updateSettings({ sitePermissions: sites }),
@@ -455,7 +535,7 @@ if (!app.requestSingleInstanceLock()) {
     permissions = perms;
     perms.protect(ses);
     perms.protect(privateSes);
-    ipcMain.handle(PERMISSIONS_CHANNEL, (event, request: unknown) => perms.handle(event, request));
+    handleFromShell(PERMISSIONS_CHANNEL, (event, request) => perms.handle(event, request));
 
     // Saved passwords (milestone 9), encrypted with the system's keychain.
     const noKeychain = options.testNoKeychain;
@@ -472,19 +552,22 @@ if (!app.requestSingleInstanceLock()) {
     };
     const pw = new Passwords(new PasswordVault(() => saved.database, keychain), {
       isPrivate: isPrivateTab,
-      isShell: isShellContents,
       send: sendToHost,
       writeClipboard: (text) => clipboard.writeText(text),
       onChange: () => saved.notify('passwords'),
+      colors: () => {
+        const { text, textMuted, panelGlass, accent } = themeFor(saved.settingsFile.settings.theme).colors;
+        return { text, textMuted, surface: panelGlass, accent };
+      },
     });
     passwords = pw;
     ipcMain.handle(PAGE_PASSWORDS_CHANNEL, (event, request: unknown) => pw.handlePage(event, request));
-    ipcMain.handle(PASSWORDS_CHANNEL, (event, request: unknown) => pw.handleShell(event, request));
+    handleFromShell(PASSWORDS_CHANNEL, (_event, request) => pw.handleShell(request));
 
     // Back and forward history for reopened and waking tabs (milestone 10).
-    const tabsHistory = new TabHistory({ isShell: isShellContents, isPrivate: isPrivateTab });
+    const tabsHistory = new TabHistory({ isPrivate: isPrivateTab });
     tabHistory = tabsHistory;
-    ipcMain.handle(TABS_CHANNEL, (event, request: unknown) => tabsHistory.handle(event, request));
+    handleFromShell(TABS_CHANNEL, (event, request) => tabsHistory.handle(event, request));
     const sendPower = (onBattery: boolean) => {
       if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(SHELL_COMMAND_CHANNEL, { type: 'power', onBattery } satisfies ShellCommand);
     };
@@ -510,13 +593,12 @@ if (!app.requestSingleInstanceLock()) {
     // or is skipped.
     const log = testLog;
     // The instrument panel's readouts (milestone 7): in memory only.
-    const isShell = (contents: Electron.WebContents) => mainWindow !== null && contents === mainWindow.webContents;
-    const inspect = new Inspector(ses, { isShell, isHolomlPage: (c) => pages.isDocument(c.id, c.getURL()) });
+    const inspect = new Inspector(ses, { isHolomlPage: (c) => pages.isDocument(c.id, c.getURL()) });
     inspector = inspect;
     inspect.setPrivateSession(privateSes);
     inspect.start();
     inspect.watch(privateSes);
-    ipcMain.handle(INSPECT_CHANNEL, (event, request: unknown) => {
+    handleFromShell(INSPECT_CHANNEL, (event, request) => {
       if (testLog && typeof request === 'object' && request !== null) {
         const op = String((request as { op?: unknown }).op);
         testLog.dataOps[op] = (testLog.dataOps[op] ?? 0) + 1;
@@ -544,7 +626,7 @@ if (!app.requestSingleInstanceLock()) {
     privacy.protect(privateSes);
     privacy.setPrivateSession(privateSes);
     const shield = privacy;
-    ipcMain.handle(PRIVACY_CHANNEL, (event, request: unknown) => shield.handle(event, request));
+    handleFromShell(PRIVACY_CHANNEL, (event, request) => shield.handle(event, request));
 
     setAppMenu();
     createWindow();
@@ -556,7 +638,15 @@ if (!app.requestSingleInstanceLock()) {
       if (privateClearing) void privateClearing.then(() => BrowserWindow.getAllWindows().length === 0 && createWindow());
       else createWindow();
     });
-  });
+  };
+
+  // A throw while starting (a full disk, a data folder that cannot be
+  // written) ends the app with a message, where it used to stay running
+  // without a window (review of 2026-09-30, M9).
+  void app
+    .whenReady()
+    .then(start)
+    .catch((e: unknown) => giveUp(START_FAILED_TITLE, startFailedMessage(e, app.getPath('userData'))));
 
   app.on('before-quit', () => {
     quitting = true;

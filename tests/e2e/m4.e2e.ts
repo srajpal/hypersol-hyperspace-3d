@@ -254,11 +254,10 @@ describe('F7 and F8: encrypted DNS', () => {
 });
 
 describe('F9 and F10: the filter lists', () => {
-  const manifest = JSON.parse(readFileSync(join(FILTERS_DIR, 'lists.json'), 'utf8')) as {
-    lists: { path: string }[];
-    resources: { path: string };
-  };
-  const listUrls = (base: string) => [...manifest.lists.map((l) => base + l.path), base + manifest.resources.path];
+  const manifest = JSON.parse(readFileSync(join(FILTERS_DIR, 'lists.json'), 'utf8')) as { lists: { path: string }[] };
+  // The list texts only: the page scripts come with the app and are never downloaded by a refresh (review of 2026-09-30, M5).
+  const listUrls = (base: string) => manifest.lists.map((l) => base + l.path);
+  const scripts = (JSON.parse(readFileSync(join(FILTERS_DIR, 'starter.json'), 'utf8')) as { resources: { sha256: string } }).resources.sha256;
   const filterHits = (prefix: string) => [...server.hits.entries()].filter(([k]) => k.startsWith(prefix)).reduce((n, [, c]) => n + c, 0);
   const statusText = (h: Harness) => h.shell.locator(SET('set-filters-status')).textContent();
 
@@ -267,7 +266,7 @@ describe('F9 and F10: the filter lists', () => {
     const profile = newProfile();
     mkdirSync(join(profile, 'filters'));
     copyFileSync(join(FILTERS_DIR, 'starter.bin'), join(profile, 'filters', 'engine.bin'));
-    writeFileSync(join(profile, 'filters', 'engine.json'), JSON.stringify({ updatedAt: 1, urls: listUrls(base) }));
+    writeFileSync(join(profile, 'filters', 'engine.json'), JSON.stringify({ updatedAt: 1, urls: listUrls(base), scripts }));
     if (settings) writeFileSync(join(profile, 'settings.json'), JSON.stringify(settings));
     return profile;
   }

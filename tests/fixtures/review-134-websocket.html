@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>WebSocket test</title>
+    <style>
+      body { margin: 0; padding: 40px; font-family: sans-serif; font-size: 20px; background: #fff; }
+    </style>
+  </head>
+  <body>
+    <!-- Review of 2026-09-30, finding M3: trackers reached over WebSockets.
+         The ad host is mapped to this machine in tests, so a
+         connection the shield let through would reach the fixture server
+         (which answers a plain page, so every socket here ends in "closed"
+         either way: the server's count of requests tells them apart). -->
+    <h1 id="content">WebSocket test page</h1>
+    <p id="result">connecting</p>
+    <script>
+      const port = location.port;
+      const results = {};
+      const open = (name, url) => {
+        let socket;
+        try {
+          socket = new WebSocket(url);
+        } catch (e) {
+          results[name] = 'refused:' + e.name;
+          return;
+        }
+        socket.onopen = () => (results[name] = 'open');
+        socket.onclose = () => {
+          results[name] ??= 'closed';
+          if (Object.keys(results).length === 3) {
+            document.getElementById('result').textContent = JSON.stringify(results);
+            document.title = 'WebSocket test ready';
+          }
+        };
+      };
+      open('own', `ws://${location.host}/ddm/own-socket`);
+      open('ad', `ws://ad.doubleclick.net:${port}/ddm/ad-socket`);
+      open('adSecure', `wss://ad.doubleclick.net:${port}/ddm/secure-socket`);
+    </script>
+  </body>
+</html>

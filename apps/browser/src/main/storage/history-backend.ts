@@ -16,7 +16,8 @@ export interface HistoryBackend {
   clear(): Promise<void>;
   suggest(text: string, limit: number): Promise<Suggestions>;
   forgetUrl(url: string): Promise<void>;
-  close(): void;
+  /** Stops it; a worker thread's stopping takes a moment, which the promise waits for. */
+  close(): void | Promise<unknown>;
 }
 
 export type HistoryOp = 'record' | 'updateTitle' | 'search' | 'recent' | 'delete' | 'clear' | 'suggest' | 'forgetUrl';
@@ -167,8 +168,8 @@ export class WorkerHistory implements HistoryBackend {
   forgetUrl(url: string): Promise<void> {
     return this.ask('forgetUrl', [url], () => this.fallback.forgetUrl(url));
   }
-  close(): void {
+  close(): Promise<unknown> {
     this.broken ??= 'closed';
-    void this.worker.terminate();
+    return Promise.resolve(this.worker.terminate());
   }
 }

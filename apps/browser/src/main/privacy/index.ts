@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { app, ipcMain, net, webContents, type IpcMainInvokeEvent, type Session, type WebContents } from 'electron';
@@ -16,6 +15,8 @@ import type { StorageService } from '../storage/service';
 import { readTextIfExists, writeFileAtomic } from '../storage/files';
 import { DnsControl, QUAD9 } from './dns';
 import { FilterService, type ListManifest } from './filters';
+import { verifyStarter, type StarterInfo } from './filters-build';
+import { OwnRequests } from './own-requests';
 import { hostOf, Shield, type Matcher } from './shield';
 import createBuildWorker from './filters-worker?nodeWorker';
 
@@ -56,7 +57,7 @@ export interface PrivacyOptions {
   onTabRequest?: (tab: number, details: { id: number; url: string; resourceType: string; method: string; timestamp: number }) => void;
   /** Every DNS mode put into effect (test log). */
   onDnsApplied?: (mode: 'secure' | 'automatic', resolver: string) => void;
-  /** Is this the app's own shell (the only one allowed to ask)? */
+  /** Is this the app's own shell (it is told when the filter lists change)? */
   isShell(contents: WebContents): boolean;
   /** The shell's last private tab closed: forget everything private (main/index.ts). */
   onPrivateEnded?: () => Promise<void>;
@@ -75,9 +76,8 @@ async function downloadList(url: string): Promise<string> {
   return text;
 }
 
-/** Builds the engine in a worker thread (filters-worker.ts). */
-function buildInWorker(lists: string[], resources: string): Promise<Uint8Array> {
-  const checksum = createHash('sha256').update(resources).digest('hex');
+/** Builds the engine in a worker thread (filters-worker.ts), with the starter copy's page scripts. */
+function buildInWorker(lists: string[], starter: Uint8Array, scripts: string): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     const worker = createBuildWorker({});
     worker.once('message', (reply: { bin?: Uint8Array; error?: string }) => {
@@ -89,7 +89,7 @@ function buildInWorker(lists: string[], resources: string): Promise<Uint8Array> 
       void worker.terminate();
       reject(e);
     });
-    worker.postMessage({ lists, resources, checksum });
+    worker.postMessage({ lists, starter, scripts });
   });
 }
 
@@ -97,8 +97,9 @@ function buildInWorker(lists: string[], resources: string): Promise<Uint8Array> 
  * The privacy features in the main process (TODO.md milestone 4): the
  * shield on every web page request, element hiding, the filter lists
  * and their refresh, and encrypted DNS. Web pages and the shell share the
- * default session; only requests from web pages (webview tabs) are
- * filtered, never the shell's own.
+ * default session; requests from web pages (webview tabs) are filtered,
+ * and so are requests that come from no tab at all (a service worker's);
+ * never the shell's own, nor the app's (OwnRequests).
  */
 export class Privacy {
   readonly filters: FilterService<ElectronBlocker>;
@@ -116,6 +117,7 @@ export class Privacy {
   private privateSession: Session | null = null;
   private readonly pendingCounts = new Map<number, number>();
   private readonly countTimers = new Map<number, NodeJS.Timeout>();
+  private readonly own = new OwnRequests();
 
   constructor(
     private readonly ses: Session,
@@ -125,6 +127,8 @@ export class Privacy {
     const manifest = JSON.parse(readFileSync(join(options.filtersDir, 'lists.json'), 'utf8')) as ListManifest;
     mkdirSync(options.savedDir, { recursive: true });
     const saved = { bin: join(options.savedDir, 'engine.bin'), meta: join(options.savedDir, 'engine.json') };
+    const starterInfo = () => JSON.parse(readFileSync(join(options.filtersDir, 'starter.json'), 'utf8')) as StarterInfo;
+    const starterBin = () => new Uint8Array(readFileSync(join(options.filtersDir, 'starter.bin')));
     this.filters = new FilterService<ElectronBlocker>(
       manifest,
       {
@@ -137,13 +141,17 @@ export class Privacy {
             writeFileAtomic(saved.bin, bin);
             writeFileAtomic(saved.meta, meta);
           },
-          readStarter: () => {
-            const info = JSON.parse(readFileSync(join(options.filtersDir, 'starter.json'), 'utf8')) as { built: string };
-            return { bin: new Uint8Array(readFileSync(join(options.filtersDir, 'starter.bin'))), built: Date.parse(info.built) };
-          },
+          readStarter: () => ({ bin: starterBin(), built: Date.parse(starterInfo().built) }),
+          scriptsChecksum: () => starterInfo().resources.sha256,
         },
-        download: downloadList,
-        build: buildInWorker,
+        download: (url) => this.own.run(url, () => downloadList(url)),
+        build: (lists) => {
+          // The page scripts come from the starter copy, checked against its record first.
+          const info = starterInfo();
+          const bin = starterBin();
+          verifyStarter(bin, info);
+          return buildInWorker(lists, bin, info.resources.sha256);
+        },
         load: (bin) => ElectronBlocker.deserialize(bin),
         now: () => Date.now(),
       },
@@ -156,7 +164,7 @@ export class Privacy {
         app.configureHostResolver({ secureDnsMode: mode, secureDnsServers: [resolver] });
         options.onDnsApplied?.(mode, resolver);
       },
-      (url, init) => net.fetch(url, { ...init, cache: 'no-store' }),
+      (url, init) => this.own.run(url, () => net.fetch(url, { ...init, cache: 'no-store' })),
       QUAD9,
       options.dnsProbeUrl === undefined ? QUAD9 : options.dnsProbeUrl,
     );
@@ -212,7 +220,15 @@ export class Privacy {
     ses.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, callback) => {
       this.options.observe?.(details.url);
       const tab = details.webContentsId;
-      if (tab === undefined || !this.tabs.has(tab)) {
+      if (tab === undefined) {
+        // No tab made this request: the app itself, or a service worker
+        // (review of 2026-09-30, M3). The site's pause is its session's.
+        const paused = ses === this.privateSession ? this.privatePaused : this.paused;
+        callback(this.own.has(details.url) ? {} : this.shield.decideUntabbed(details, (site) => paused.has(site)));
+        return;
+      }
+      // The shell's own requests, and its developer tools'.
+      if (!this.tabs.has(tab)) {
         callback({});
         return;
       }
@@ -254,6 +270,21 @@ export class Privacy {
     this.privatePaused.clear();
   }
 
+  /**
+   * Fetches a tab's favicon for the browser's own interface. The address
+   * is the page's choice, so the shield is asked first, as for the page's
+   * own requests, and a listed address is not fetched (and is counted);
+   * until the review of 2026-09-30 (M3) it was fetched unseen, with the
+   * site's cookies.
+   */
+  fetchFavicon(contents: WebContents, url: string, init: { signal: AbortSignal }): Promise<Response> {
+    if (this.tabs.has(contents.id)) {
+      const decision = this.shield.decide({ url, resourceType: 'image', tab: contents.id });
+      if ('cancel' in decision || 'redirectURL' in decision) return Promise.reject(new Error('Blocked by the privacy shield'));
+    }
+    return this.own.run(url, () => contents.session.fetch(url, init));
+  }
+
   private isPausedFor(tab: number, site: string): boolean {
     return this.privateTabs.has(tab) ? this.privatePaused.has(site) : this.paused.has(site);
   }
@@ -264,6 +295,12 @@ export class Privacy {
     this.tabs.add(id);
     if (this.privateSession !== null && contents.session === this.privateSession) this.privateTabs.add(id);
     contents.on('did-navigate', (_event, url) => this.shield.committed(id, url));
+    // A page that failed to load: the tab shows its error card, so the record is that page's.
+    // A load given up or turned into a download (-3, aborted) is not a failure.
+    contents.on('did-fail-load', (_event, code, _description, url, isMainFrame) => {
+      if (isMainFrame && code !== -3) this.shield.committed(id, url);
+    });
+    contents.on('did-stop-loading', () => this.shield.settled(id));
     contents.once('destroyed', () => {
       this.tabs.delete(id);
       this.privateTabs.delete(id);
@@ -274,9 +311,8 @@ export class Privacy {
     });
   }
 
-  /** Answers one request from the shell. Never throws. */
+  /** Answers one request from the shell (registered with handleFromShell, main/ipc.ts). Never throws. */
   async handle(event: IpcMainInvokeEvent, raw: unknown): Promise<PrivacyReply<PrivacyOp>> {
-    if (!this.options.isShell(event.sender)) return { ok: false, error: 'Not allowed' };
     const parsed = parsePrivacyRequest(raw);
     if ('error' in parsed) return { ok: false, error: parsed.error };
     try {

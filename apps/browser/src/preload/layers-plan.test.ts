@@ -88,7 +88,9 @@ describe('layers messages', () => {
       parallax: { x: 0.5, y: -1 },
       accent: '#007c83',
     });
-    expect(parseLayersState({ on: true, animate: false, parallax: { x: 0, y: 0 }, accent: 'red; x' })?.accent).toBe('#39e6ff');
+    // No colour of its own to fall back on (review of 2026-09-30, St3): a malformed accent is no accent.
+    expect(parseLayersState({ on: true, animate: false, parallax: { x: 0, y: 0 }, accent: 'red; x' })?.accent).toBe('');
+    expect(parseLayersState({ on: true, animate: false, parallax: { x: 0, y: 0 } })?.accent).toBe('');
     expect(parseLayersState({ on: 'yes', animate: false, parallax: { x: 0, y: 0 } })).toBeNull();
     expect(parseLayersState({ on: true, animate: false, parallax: { x: Infinity, y: 0 } })).toBeNull();
   });

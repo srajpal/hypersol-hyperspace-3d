@@ -36,10 +36,36 @@ export type DownloadRequest =
   | { op: 'downloads.show'; id: number }
   | { op: 'downloads.cancel'; id: number };
 
+/**
+ * File types the system would run or install rather than show, by
+ * extension in lower case (review of 2026-09-30, R3). "Open" never starts
+ * one of these: a page can start a download by itself and the notice's
+ * Open is one click away, so a program is shown in its folder instead,
+ * where starting it is the person's own act.
+ */
+export const PROGRAM_EXTENSIONS: ReadonlySet<string> = new Set([
+  // Windows
+  '.exe', '.msi', '.msp', '.bat', '.cmd', '.com', '.scr', '.pif', '.cpl', '.msc', '.hta', '.ps1', '.vbs', '.vbe', '.js', '.jse', '.wsf', '.wsh', '.lnk', '.reg',
+  // macOS
+  '.app', '.command', '.dmg', '.pkg',
+  // Linux
+  '.sh', '.desktop', '.appimage', '.deb', '.rpm',
+  // Anywhere Java is installed
+  '.jar',
+]);
+
+/** Is this file (a name or a path) one the system would run? Windows ignores dots and spaces at a name's end, so they are too. */
+export function isProgramFile(name: string): boolean {
+  const trimmed = name.replace(/[. ]+$/, '');
+  const dot = trimmed.lastIndexOf('.');
+  return dot >= 0 && PROGRAM_EXTENSIONS.has(trimmed.slice(dot).toLowerCase());
+}
+
 export interface DownloadResults {
   'downloads.list': DownloadInfo[];
   'downloads.clear': null;
-  'downloads.open': null;
+  /** null when the file was opened; 'shown' when it is a program (isProgramFile) and was shown in its folder instead. */
+  'downloads.open': null | 'shown';
   'downloads.show': null;
   'downloads.cancel': null;
 }

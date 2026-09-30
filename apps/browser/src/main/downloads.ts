@@ -1,7 +1,8 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { shell, type DownloadItem, type IpcMainInvokeEvent, type Session, type WebContents } from 'electron';
+import { shell, type DownloadItem, type Session } from 'electron';
 import {
+  isProgramFile,
   parseDownloadRequest,
   uniqueName,
   type DownloadInfo,
@@ -16,7 +17,6 @@ const UPDATE_MS = 250;
 export interface DownloadsOptions {
   /** The folder files are saved to (the system's Downloads folder; a temporary one in tests). */
   folder(): string;
-  isShell(contents: WebContents): boolean;
   /** The list changed. */
   onChange(list: DownloadInfo[]): void;
   /** Test runs: record what would be opened instead of opening it. */
@@ -82,8 +82,8 @@ export class Downloads {
     return [...this.items.values()].filter(({ info }) => !info.finished).length;
   }
 
-  async handle(event: IpcMainInvokeEvent, raw: unknown): Promise<DownloadReply<DownloadOp>> {
-    if (!this.options.isShell(event.sender)) return { ok: false, error: 'Not allowed' };
+  /** A request from the shell (registered with handleFromShell, main/ipc.ts). Never throws. */
+  async handle(raw: unknown): Promise<DownloadReply<DownloadOp>> {
     const parsed = parseDownloadRequest(raw);
     if ('error' in parsed) return { ok: false, error: parsed.error };
     try {
@@ -111,13 +111,15 @@ export class Downloads {
           return null;
         }
         if (entry.info.state !== 'completed' && r.op === 'downloads.open') throw new Error('The download has not finished');
-        const what = r.op === 'downloads.open' ? 'open' : 'show';
+        // A program is never started from here: "Open" shows it in its folder (shared/downloads.ts).
+        const program = r.op === 'downloads.open' && isProgramFile(entry.info.path);
+        const what = r.op === 'downloads.open' && !program ? 'open' : 'show';
         if (this.options.opened) this.options.opened(what, entry.info.path);
         else if (what === 'open') {
           const problem = await shell.openPath(entry.info.path);
           if (problem) throw new Error(problem);
         } else shell.showItemInFolder(entry.info.path);
-        return null;
+        return program ? 'shown' : null;
       }
     }
   }

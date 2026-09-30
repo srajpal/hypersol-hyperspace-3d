@@ -131,8 +131,17 @@ export class StorageService {
   }
 
   close(): void {
-    this.history?.close();
+    void this.history?.close();
     this.store?.close();
+  }
+
+  /** Closes saved data, and answers once the history worker's thread has stopped (for ending the app outside a normal quit). */
+  async closed(): Promise<void> {
+    try {
+      await this.history?.close();
+    } finally {
+      this.store?.close();
+    }
   }
 
   private needStore(): Store {

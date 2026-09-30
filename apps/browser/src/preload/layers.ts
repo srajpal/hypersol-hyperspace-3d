@@ -36,7 +36,7 @@ const MAX_MEDIA_CANDIDATES = 2000;
 
 const CSS = `
 [${ATTR}] { transform: var(--hs-lift) !important; transform-origin: 0 0 !important; will-change: transform; }
-[${ATTR}='section'] { box-shadow: 0 18px 40px rgb(0 0 0 / 30%), 0 0 0 1px var(--hs-layer-accent, #39e6ff) !important; }
+[${ATTR}='section'] { box-shadow: 0 18px 40px rgb(0 0 0 / 30%), 0 0 0 1px var(--hs-layer-accent, currentColor) !important; }
 [${ATTR}='image'] { box-shadow: 0 14px 30px rgb(0 0 0 / 38%) !important; }
 html[${ANIMATING}] [${ATTR}] { transition: transform ${ANIMATION_MS}ms ease !important; }
 @media print {
@@ -480,8 +480,9 @@ if (window === window.top && !isHolomlDocument) {
     if (!state) return;
     const moved = state.parallax.x !== parallax.x || state.parallax.y !== parallax.y;
     parallax = state.parallax;
-    // The theme's accent outlines the lifted sections.
-    document.documentElement?.style.setProperty('--hs-layer-accent', `${state.accent}99`);
+    // The theme's accent outlines the lifted sections (without one, the page's own text colour does).
+    if (state.accent) document.documentElement?.style.setProperty('--hs-layer-accent', `${state.accent}99`);
+    else document.documentElement?.style.removeProperty('--hs-layer-accent');
     const run = () => {
       if (state.on !== on) setOn(state.on, state.animate);
       else if (on && moved) apply(true);

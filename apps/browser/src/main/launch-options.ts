@@ -8,7 +8,11 @@ export interface LaunchOptions {
   tiltDeg: number;
   /** Profile folder for this run, if given on the command line. */
   userDataDir?: string;
-  /** Set by the end-to-end tests: records logs and exposes test hooks. */
+  /**
+   * Set by the end-to-end tests: records logs and exposes test hooks. Never
+   * in a packaged build: there, HYPERSOL_TEST and every test-only switch
+   * below are ignored (review of 2026-09-30, D11).
+   */
   testMode: boolean;
   /** Test mode only: search address with %s, in place of DuckDuckGo. */
   searchUrl?: string;
@@ -71,15 +75,21 @@ function localAddress(value: string | undefined): string | undefined {
  *   --test-no-webgl                 the shell without WebGL (no 3D room), test mode only
  * and HYPERSOL_TEST=1 for test mode, HYPERSOL_TEST_BACKGROUND=1 for
  * test windows that stay out of the way.
+ *
+ * @param packaged Whether this is a packaged build (app.isPackaged). Test
+ *   mode keeps every request's address in memory, private tabs' too, uses
+ *   stand-in cameras, and puts test hooks in the shell, so a packaged
+ *   build has no test mode, whatever its environment says.
  */
 export function parseLaunchOptions(
   argv: readonly string[],
   env: Readonly<Record<string, string | undefined>>,
+  packaged: boolean,
 ): LaunchOptions {
   const url = switchValue(argv, 'start-url');
   const tilt = switchValue(argv, 'tilt');
   const userDataDir = switchValue(argv, 'hypersol-user-data');
-  const testMode = env['HYPERSOL_TEST'] === '1';
+  const testMode = !packaged && env['HYPERSOL_TEST'] === '1';
   const search = switchValue(argv, 'search-url');
   const filtersBase = testMode ? localAddress(switchValue(argv, 'filters-base')) : undefined;
   const dnsProbeUrl = testMode ? localAddress(switchValue(argv, 'dns-probe')) : undefined;

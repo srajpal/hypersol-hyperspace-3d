@@ -1,5 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 import type { HistoryEntry, Suggestion, Suggestions } from '../../shared/data';
+import { scrubDeleted } from './scrub';
 
 /**
  * History queries on one connection to hypersol.sqlite (milestone 10,
@@ -98,11 +99,13 @@ export class HistoryStore {
 
   delete(id: number): void {
     this.db.prepare('DELETE FROM history WHERE id = ?').run(id);
+    scrubDeleted(this.db);
   }
 
   /** Forgets every visit to an address (removing it from the address bar's suggestions). */
   forgetUrl(url: string): void {
     this.db.prepare('DELETE FROM history WHERE url = ?').run(url);
+    scrubDeleted(this.db);
   }
 
   /**
@@ -171,6 +174,8 @@ export class HistoryStore {
       this.db.exec('ROLLBACK');
       throw e;
     }
+    // "Clear all history" means gone from the file too, not only from the lists (storage/scrub.ts).
+    scrubDeleted(this.db);
   }
 }
 
