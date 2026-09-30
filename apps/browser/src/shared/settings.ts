@@ -119,15 +119,21 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   shortcuts: Object.freeze({}) as Partial<Record<ShortcutName, string>>,
 });
 
-const SETTING_KEYS = ['searchEngine', 'onStartup', 'dnsMode', 'filterRefresh', 'pausedSites', 'layersOnOpen', 'layersSites', 'theme', 'pageTilt',
-  'instruments', 'instrumentsReadouts', 'instrumentsGauges', 'instrumentsConsole', 'instrumentsNetwork', 'consoleLevel', 'zoomSites',
-  'sitePermissions', 'tabSize', 'tabDisplay', 'economy', 'tabSleep', 'tiltDirection', 'parallax', 'pageMargin', 'shortcuts'] as const;
+/**
+ * Every setting's name, from the defaults: the one list of them. A saved
+ * file is read by these names, so a list kept by hand beside the
+ * defaults could leave a new setting out, and its saved value would be
+ * dropped without a word at the next start (review of 2026-09-30, Sm5).
+ */
+const SETTING_KEYS: readonly string[] = Object.keys(DEFAULT_SETTINGS);
 
 /** The platform shortcut keys are checked for (the main process saves settings). */
 const platform = typeof process !== 'undefined' && typeof process.platform === 'string' ? process.platform : 'win32';
 const INSTRUMENT_SWITCHES = ['instruments', 'instrumentsReadouts', 'instrumentsGauges', 'instrumentsConsole', 'instrumentsNetwork'] as const;
 export const MAX_PAUSED_SITES = 1000;
 export const MAX_LAYERS_SITES = 1000;
+/** Sites with their own zoom: its own limit, the same number. */
+export const MAX_ZOOM_SITES = 1000;
 
 /** A host name as URL.hostname gives it: letters, digits, dots, hyphens, or a bracketed IPv6 address. */
 export function isHostName(v: unknown): v is string {
@@ -178,7 +184,7 @@ export function applySettingsPatch(current: Settings, patch: unknown): { setting
       if (typeof value !== 'object' || value === null || Array.isArray(value)) return { error: 'zoomSites must map host names to zoom factors' };
       const entries = Object.entries(value as Record<string, unknown>);
       const ok = (v: unknown) => typeof v === 'number' && v >= 0.25 && v <= 5;
-      if (entries.length > MAX_LAYERS_SITES || !entries.every(([h, v]) => isHostName(h) && ok(v))) {
+      if (entries.length > MAX_ZOOM_SITES || !entries.every(([h, v]) => isHostName(h) && ok(v))) {
         return { error: 'zoomSites must map host names to zoom factors from 0.25 to 5' };
       }
       next.zoomSites = Object.fromEntries(entries.map(([h, v]) => [h.toLowerCase(), v as number]));
@@ -264,9 +270,7 @@ export function parseSettings(text: string): { settings: Settings; problem?: str
   if (typeof data !== 'object' || data === null || Array.isArray(data)) {
     return { settings: defaults(), problem: 'not a settings object' };
   }
-  const known = Object.fromEntries(
-    Object.entries(data).filter(([k]) => (SETTING_KEYS as readonly string[]).includes(k)),
-  );
+  const known = Object.fromEntries(Object.entries(data).filter(([k]) => SETTING_KEYS.includes(k)));
   // "Cards that hide" was removed in milestone 11 (owner, prompt 50): it reads as cards.
   if (known['tabDisplay'] === 'autohide') known['tabDisplay'] = 'cards';
   const result = applySettingsPatch(defaults(), known);
