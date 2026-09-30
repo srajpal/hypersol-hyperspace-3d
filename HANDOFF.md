@@ -3,9 +3,9 @@
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-09-29 (milestones 1 to 21 accepted, 21 in prompt
 125, and HoloML 0.2 released as v0.2.0 in prompt 126: see "Milestone 21,
-accepted" below. 22 is HoloML's documentation (prompt 115): its plan
-is drafted for the owner's approval, with a check of HoloML's features
-(prompt 127; TODO.md, "Milestone 22"). The roadmap is in TODO.md).
+accepted" below. 22, HoloML's documentation, is being built (prompts
+127 and 128: see "Milestone 22, in progress" below). The roadmap is in
+TODO.md).
 
 ## Where things stand
 
@@ -56,10 +56,11 @@ state; this is a summary.
   125; merged in holoml, #19, and the browser, #38; published at
   https://srajpal.github.io/holoml/aquarium/; HoloML 0.2 released as
   v0.2.0, https://github.com/srajpal/holoml/releases/tag/v0.2.0)); 22 documentation for HoloML to recognised standards (prompt
-  115); 23 privacy and data tools (HTTPS-only, per-site storage,
-  bookmark import and export: #24, #26, #27); then installers as 1.0
-  (24 for Windows and Linux, 25 for macOS), with mobile later (owner,
-  prompt 67).
+  115; being built, prompt 128); 23 HoloML 0.3, the features its check
+  found missing (prompt 128, Q4 a); 24 privacy and data tools
+  (HTTPS-only, per-site storage, bookmark import and export: #24, #26,
+  #27); then installers as 1.0 (25 for Windows and Linux, 26 for
+  macOS), with mobile later (owner, prompt 67).
 - The logo direction is chosen (concept 4d in
   docs/branding/logo-concepts/); the real icons come with the installers.
 - HyperSol, the company founded in 2001, no longer exists. This is a
@@ -73,6 +74,19 @@ holoml's #19 merged, 2026-09-29):
 - Browser: https://github.com/srajpal/hypersol-hyperspace-3d (renamed
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
+
+## Milestone 22, in progress (2026-09-29, prompts 127 and 128)
+
+The plan and its checks (Y1 to Y10) are in TODO.md, "Milestone 22 —
+HoloML documentation". The owner answered Q1 to Q7 with the
+recommendations and approved the build (prompt 128): a specification in
+W3C style, ABNF and a RELAX NG schema made from the checker's table, the
+scene API in Web IDL, guides organised by Diátaxis, a site at
+https://srajpal.github.io/holoml/ built with `marked` (a new development
+package in holoml, approved as Q3 a), the media type's registration
+template without registering it, the clarifications in 0.2's text (then
+v0.2.1 on the owner's go), and everything in the holoml repository. The
+features found missing go to milestone 23, "HoloML 0.3" (Q4 a).
 
 ## Milestone 21, accepted (2026-09-29, prompts 121 to 125)
 
@@ -325,12 +339,12 @@ to this repository for rules and the prompt log.
 
 ## Open items (need an owner decision when their milestone comes)
 
-- With the installers (milestone 24): Windows signing (Microsoft's
+- With the installers (milestone 25): Windows signing (Microsoft's
   Artifact Signing recommended, or SignPath Foundation), updates
   (automatic from GitHub Releases recommended), Linux formats (AppImage
   and .deb recommended), the Windows installer type (per user
   recommended).
-- With the macOS release (milestone 25): the Apple Developer Program for
+- With the macOS release (milestone 26): the Apple Developer Program for
   signing and notarization.
 - Product gaps noted in the 2026-09-24 review and not yet scheduled:
   bookmark import and onboarding, a touch equivalent for closing tabs.
@@ -357,5 +371,5 @@ to this repository for rules and the prompt log.
 
 - HoloML's packages are not published to npm; the browser keeps a copy
   (packages/holoml, pnpm holoml:sync).
-- No installers, signing, or updates (milestones 24 and 25).
+- No installers, signing, or updates (milestones 25 and 26).
 - No installers attached to releases: v0.9.0 is source only.

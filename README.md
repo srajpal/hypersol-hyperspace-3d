@@ -193,10 +193,11 @@ starts with a small prototype and the same habits of direction and checking.
 
 ## What comes next
 
-Milestone 22, documentation for HoloML to recognised standards. 23,
-privacy and data tools: HTTPS-only browsing, per-site storage, and
-bookmark import and export. 24 and 25, installers as 1.0 for Windows
-and Linux, then macOS. Later: free camera
+Milestone 22, documentation for HoloML to recognised standards (being
+built). 23, HoloML 0.3: the features its check found missing, such as
+names for models and the language of text. 24, privacy and data tools:
+HTTPS-only browsing, per-site storage, and bookmark import and export.
+25 and 26, installers as 1.0 for Windows and Linux, then macOS. Later: free camera
 movement, pictures and 3D models lifted out of ordinary pages, mobile,
 and VR. The full roadmap is in [TODO.md](TODO.md).
 
@@ -280,7 +281,7 @@ Three.js (with its glTF loader, for HoloML pages), Lit, SQLite through
 Node's built-in node:sqlite, and Ghostery's open-source ad-blocking
 engine with open filter lists; Vite and electron-vite to build; Vitest
 and Playwright to test.
-Planned, not yet installed: electron-builder for installers (milestones 24 and 25).
+Planned, not yet installed: electron-builder for installers (milestones 25 and 26).
 Reasons for each choice are in ARCHITECTURE.md.
 
 Known limitations: Electron ships no DRM module, so video from Netflix

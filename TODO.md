@@ -33,13 +33,14 @@ Plan approved 2026-09-24.
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Done (accepted, prompt 122) |
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Done (accepted, prompt 122) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Done (accepted, prompt 125; HoloML v0.2.0 released, prompt 126) |
-| 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Planned, a draft for approval (prompt 127) |
-| 23 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85, and from 22, prompt 115) |
-| 24 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
-| 25 | macOS release | Signing, notarization, Mac checks | Later |
-| 26 | Free camera and room navigation | Move freely around the room | Later |
-| 27 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
-| 28 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
+| 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Current (the plan and build approved with the recommended answers, prompt 128) |
+| 23 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
+| 24 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
+| 25 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Later |
+| 26 | macOS release | Signing, notarization, Mac checks | Later |
+| 27 | Free camera and room navigation | Move freely around the room | Later |
+| 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Later |
+| 29 | Polish | Custom font, sound design, theme editor, motion tuning | Later |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS and Android | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
@@ -4028,11 +4029,13 @@ milestone ends (milestone 17's plan, Q5 a).
 
 ## Milestone 22 — HoloML documentation
 
-Status: Planned, a draft for the owner's approval (prompt 127). The
-owner asked for this plan, and for HoloML's features to be checked while
-the documents are made, with a plan for anything missing; that check is
-done for this draft (below). Nothing is built until the owner approves
-the plan and answers its questions. Rule 13 check at the start.
+Status: In progress. Planned (prompt 127): the owner asked for this
+plan, and for HoloML's features to be checked while the documents are
+made, with a plan for anything missing; that check was done for the
+draft (below). The owner answered Q1 to Q7 with the recommendations and
+approved the build (prompt 128). Rule 13 check done (ARCHITECTURE.md
+section 3). By Q4 a, milestone 23 is now "HoloML 0.3" (the features
+found missing), and the milestones after it moved one number on.
 
 Goal: HoloML documented to recognised standards (prompt 115): a
 specification written as W3C specifications are, with a formal grammar
@@ -4142,7 +4145,7 @@ finished documents.
      named colours, styles shared between elements, and spaces shared by
      several people.
 
-### Questions (with recommendations)
+### Questions (answered with the recommendations, prompt 128)
 
 - Q1, the specification's form. a: W3C style, as above (recommended:
   the conventions of web standards, which HoloML's readers know). b:

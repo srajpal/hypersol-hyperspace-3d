@@ -126,6 +126,15 @@ Rule 13 check, 2026-09-29 (start of milestone 21, the aquarium, prompt
 ("latest"; 45 is in alpha, still 45.0.0-alpha.13 of 2026-09-28), with no
 release of any line since. No upgrade needed.
 
+Rule 13 check, 2026-09-29 (start of milestone 22, HoloML's
+documentation, prompt 128): 44.5.0 (2026-09-29) is now the newest
+stable release on npm ("latest"), with 43.7.6 and 42.11.9 the same day;
+45 is still in alpha (45.0.0-alpha.13). 44.5.0's release notes list no
+security fixes: features, crash fixes, and performance (its one mention
+of security is a WebAuthn security key). The browser stays on 44.4.5,
+the same supported line, as this milestone releases no browser; the
+rule's upgrade comes before a public release.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |
@@ -212,7 +221,7 @@ release of any line since. No upgrade needed.
 | Window frame, reconsidered | Standard OS frame kept | Considered in milestone 6: a custom frame would lose native dragging, snapping, and accessibility; the theme now sets the frame's light or dark scheme. |
 | Bookmarks and history | SQLite through Node's built-in node:sqlite (owner decision 2026-09-25, prompt 20) | Fast search over thousands of rows; standard for browsers. Built into Electron's Node, so no native module and no extra package. |
 | UI widgets (address bar, menus) | Lit web components | Tiny, standards-based, no framework lock-in; themed with CSS variables. |
-| Build | electron-vite (Vite) now; electron-builder planned for the installers (milestones 24 and 25; not yet installed) | Fast dev reload; installers for Windows, macOS, Linux. |
+| Build | electron-vite (Vite) now; electron-builder planned for the installers (milestones 25 and 26; not yet installed) | Fast dev reload; installers for Windows, macOS, Linux. |
 | Toolchain | Node 22.13 or newer; pnpm 12.4.1 pinned in package.json (`packageManager`, with the pnpm version recorded in the lockfile); installs use `--frozen-lockfile` | Reproducible installs (GitHub issue #5). |
 | Tests | Vitest (unit), Playwright (Electron end-to-end); `pnpm test:linux` runs them in a Docker container that copies GitHub's Linux machines (tests/linux/, prompts 103 and 104) | Standard, cross-platform. The container finds Linux problems on this computer; the automatic builds on GitHub stay the check a pull request is merged on. |
 | Repos | hypersol-hyperspace-3d (browser; renamed from hypersol-websurfer-3d on 2026-09-26), holoml (language) | Each useful on its own; browser depends on holoml packages via npm. |
@@ -657,7 +666,7 @@ Progress screenshots: `MILESTONE=m3 pnpm screenshots` builds the app and
 saves its main screens to docs/screenshots/m3/ (Electron's own capture,
 local test pages only).
 
-Not checked yet: `pnpm package` (installers per OS, milestones 24 and 25).
+Not checked yet: `pnpm package` (installers per OS, milestones 25 and 26).
 
 Launch options, for development and tests: `--start-url=<address>`
 (default: a start tab), `--tilt=<0 to 20>`,

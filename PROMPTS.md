@@ -1441,3 +1441,20 @@ Go and publish
 
 Please draft the plan. While building the docs, check the features, and
 if anything is missing, plan for it as well.
+
+## 128 — 2026-09-29 · Claude Opus 5.5, max effort
+
+Answers to milestone 22's questions, and approval of its plan and build
+(HoloML's documentation, prompt 127): Q1 a, the specification in W3C
+style; Q2 a, ABNF for the syntax and a RELAX NG schema made from the
+checker's table for the structure; Q3 a, a build script with `marked` as
+one new development package; Q4 a, the missing features in a new
+milestone, "HoloML 0.3", after this one, the later milestones one number
+on; Q5 a, the media type's registration template in the specification,
+with no registration with IANA for now; Q6 a, the clarifications in
+0.2's text, and holoml tagged v0.2.1 on the owner's go; Q7 a, the
+documents in the holoml repository.
+
+```text
+Use the recommendations and start the build
+```

@@ -347,8 +347,8 @@ milestone; the current milestone's checks are defined in TODO.md):
   reduced motion, the frame rate (logged in software), no frames behind
   another tab, and the page's memory over two minutes. X1 is holoml's
   own tests; X10 (the published site) is checked by hand.
-- Later milestones add: HoloML's documentation (22), privacy and data
-  tools (23), and installers (24 and 25).
+- Later milestones add: HoloML's documentation (22), HoloML 0.3 (23),
+  privacy and data tools (24), and installers (25 and 26).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that
