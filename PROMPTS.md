@@ -1482,3 +1482,16 @@ Protect this branch from force pushing or deletion, or require status
 checks before merging. View documentation." You have my permission to
 modify.
 ```
+
+## 131 — 2026-09-29 · Claude Opus 5.5, max effort
+
+Answering the agent's question after its findings on prompt 129 (whether
+to mark the projects experimental): both. HoloML is marked experimental
+in its specification's status, its README, and its site, with v0.2.0
+switched to a pre-release on GitHub and v0.2.1 to be released as one;
+the browser is called an experimental developer preview in its README
+and its About dialog, its releases staying pre-releases until 1.0.
+
+```text
+Both
+```

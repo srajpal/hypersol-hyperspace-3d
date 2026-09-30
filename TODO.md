@@ -370,7 +370,7 @@ the machine; `notfound.test` exercises "address not found".
 | D8 | Right-click menu | Automated | Link menu opens the link in a background tab and copies its address; text field menu offers paste; selected text copies |
 | D9 | Start panel | Automated | Empty state reads "Nothing saved yet" with a hint; its search box searches |
 | D10 | Shortcuts | Automated, from the shell and from inside a page | Each shortcut does its job |
-| D11 | About | Automated | Shows versions; Escape closes |
+| D11 | About | Automated | Shows versions; Escape closes; says it is an experimental developer preview (added in prompt 131) |
 | D12 | Look and feel | Manual, owner | Tab arc, cards, top bar, animations feel right |
 | C1–C11 | Milestone 1 regression | Automated | Still pass |
 
@@ -4328,7 +4328,21 @@ browser is not ready for builds: free camera is now 25, lift to 3D 26,
 and polish 27, and the Windows and Linux release (1.0) is 28 and the
 macOS release 29. README, AGENTS.md, HANDOFF, and ARCHITECTURE follow.
 The owner also asked whether the browser and HoloML should be marked
-experimental; the findings went to the owner for a decision.
+experimental. The findings (by MDN's definition, a technology with one
+implementation, or a specification that may still change incompatibly,
+is experimental; the IETF publishes such specifications "for
+examination, experimental implementation, and evaluation"; SemVer's
+0.x means that anything may change) went to the owner, who chose both
+(prompt 131):
+
+- HoloML: its specification's status, README, and site say it is
+  experimental (one renderer so far; until 1.0 a later version may
+  change or remove what an earlier one has), and that 0.1 and 0.2 are
+  fixed rather than final (holoml d1d1e9c, in pull request #20); the
+  v0.2.0 release is now a pre-release, and v0.2.1 will be one.
+- The browser: its README and About dialog call it an experimental
+  developer preview, not yet for everyday browsing (D11 checks the
+  About dialog's line); its releases stay pre-releases until 1.0.
 
 ## Branch protection (2026-09-29, prompt 130)
 

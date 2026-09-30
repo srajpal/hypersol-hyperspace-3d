@@ -165,6 +165,8 @@
   https://srajpal.github.io/holoml/spec/, part of HoloML's new site with
   tutorials, how-to guides, reference pages, and explanation. The
   viewer's scene API is checked against the specification's Web IDL.
+- The About dialog says the browser is an experimental developer
+  preview, not yet for everyday browsing (owner, prompt 131).
 - Fixed: in the layers view, a very tall page (HoloML's specification is
   52,000 pixels tall) drew nothing below its top bar, as its long main
   section, lifted, was larger than the graphics card can draw as one

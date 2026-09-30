@@ -1,7 +1,8 @@
 # HyperSol HyperSpace 3D
 
 HyperSpace 3D is an open-source desktop web browser whose interface lives in three
-dimensions. Ordinary websites float as panels in a 3D room, page sections
+dimensions. It is experimental: a developer preview, not yet for
+everyday browsing. Ordinary websites float as panels in a 3D room, page sections
 lift into layered depth, and a companion markup language, HoloML, lets
 anyone publish a fully 3D website as easily as writing HTML.
 
@@ -32,9 +33,10 @@ a made-up sample page.*
 For Windows and Linux (checked by automatic tests on both); macOS is
 planned but untested. Apache 2.0. No telemetry.
 
-**Status (2026-09-29).** Released: the
+**Status (2026-09-29): experimental.** Released: the
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
-as source for developers (no installers yet). Since then, HoloML 0.1 has
+a pre-release, as source for developers (no installers yet; releases
+stay pre-releases until 1.0). Since then, HoloML 0.1 has
 been written down in its own repository (milestone 13), and this browser
 shows HoloML pages (milestones 14 to 20, accepted; not yet in a
 release), with limits for heavy scenes, keyboard and screen-reader
@@ -237,7 +239,9 @@ own repository so it stays independent and reusable:
 [github.com/srajpal/holoml](https://github.com/srajpal/holoml).
 Versions 0.1 and 0.2 are written down there (SPEC.md), with a parser, a
 checker, and sample pages; 0.2 grew with the example sites and is
-released as [v0.2.0](https://github.com/srajpal/holoml/releases/tag/v0.2.0).
+released as [v0.2.0](https://github.com/srajpal/holoml/releases/tag/v0.2.0),
+a pre-release, as HoloML is experimental (one renderer so far, and until
+1.0 a later version may change what an earlier one has).
 Its documentation, the specification with tutorials, how-to guides,
 reference pages, and explanation, is published at
 https://srajpal.github.io/holoml/ (milestone 22), and the HoloML

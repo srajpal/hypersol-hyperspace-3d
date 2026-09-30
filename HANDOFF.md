@@ -113,8 +113,10 @@ Built (2026-09-29), on branches not yet merged:
   "Results so far"), the browser's pull request (holoml's is #20, with
   Auto-fix on), the published site by hand (Y5, Y9), a screen reader by
   hand (Y6, the owner's), the owner's acceptance, and the v0.2.1 tag on
-  the owner's go. The owner asked whether to mark the browser and HoloML
-  experimental (prompt 129); the findings are with the owner.
+  the owner's go (as a pre-release). Both projects are marked
+  experimental (prompts 129 and 131): HoloML in its specification,
+  README, and site, with its releases as pre-releases; the browser in
+  its README and About dialog.
 
 ## Milestone 21, accepted (2026-09-29, prompts 121 to 125)
 
