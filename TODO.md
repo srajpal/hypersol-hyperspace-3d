@@ -4310,6 +4310,19 @@ finished documents.
   refreshed (`pnpm screenshots:readme`) and looked at.
 - holoml's pull request is #20 (Auto-fix on, prompt 129); the browser's
   copy of HoloML is synced from its `docs` branch (c60840f).
+- Prompt 133: holoml #20 merged (3ce0ab2); CI and the Pages workflow
+  passed on main, and the copy is synced from holoml's main.
+- Y5: from its public address, https://srajpal.github.io/holoml/ answers
+  with the home page (the experimental note and the six example sites),
+  /spec/ with the specification, and the guides, the style, the
+  pictures, and each example site's index.holoml at their addresses;
+  the example sites' tools are not published (404).
+- Y9 (2026-09-29): the built app, let reach the internet for this check
+  only, opened the home page; the HoloML examples section's link opened
+  https://srajpal.github.io/holoml/spec/ (Y7 in use): 56,239 pixels tall,
+  its status "experimental", its main section not lifted and its text
+  drawn; a how-to guide with its HoloML coloured; and Harbour Loft from
+  the published site, ready with no problems.
 - Y8, the feature check repeated over the finished documents: nothing
   missing beyond milestone 23's list. Found and fixed: SPEC.md's note
   on a page from the computer (it may load from its folder and the

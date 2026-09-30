@@ -109,10 +109,12 @@ Built (2026-09-29), on branches not yet merged:
   very tall page blank below its bar (the specification's main section
   is 52,000 pixels tall); a section too large to lift now stays flat
   (check Y7b).
-- Still to do: the checks' runs and the automatic builds (TODO.md,
-  "Results so far"), the browser's pull request (holoml's is #20, with
-  Auto-fix on), the published site by hand (Y5, Y9), a screen reader by
-  hand (Y6, the owner's), the owner's acceptance, and the v0.2.1 tag on
+- holoml #20 is merged (3ce0ab2, prompt 133) and the site is published:
+  Y5 and Y9 pass from its public address. The browser's copy is synced
+  from holoml's main.
+- Still to do: the Linux run and the browser's automatic builds (pull
+  request #39, Auto-fix on), a screen reader by hand (Y6, the owner's),
+  the owner's acceptance, and the v0.2.1 tag on
   the owner's go (as a pre-release). Both projects are marked
   experimental (prompts 129 and 131): HoloML in its specification,
   README, and site, with its releases as pre-releases; the browser in

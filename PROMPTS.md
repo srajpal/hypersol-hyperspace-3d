@@ -1495,3 +1495,15 @@ and its About dialog, its releases staying pre-releases until 1.0.
 ```text
 Both
 ```
+
+## 132 — 2026-09-29 · Claude Opus 5.5, max effort
+
+```text
+Turn on auto-fix for #39 too
+```
+
+## 133 — 2026-09-29 · Claude Opus 5.5, max effort
+
+```text
+holoml #20 merged
+```
