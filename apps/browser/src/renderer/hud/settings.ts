@@ -14,6 +14,7 @@ import {
   type ParallaxAmount,
   type SearchEngineId,
   type Settings,
+  type SettingsPatch,
   type StartupMode,
   type TabDisplay,
   type TabSize,
@@ -771,11 +772,7 @@ export class HsSettings extends LitElement {
         ([origin, choices]) => html`<li data-testid="set-perm-site">
           <span><strong>${siteName(origin)}</strong><br /><span class="muted">${words(choices)}</span></span>
           <button data-testid="set-perm-remove" aria-label=${`Forget the choices for ${siteName(origin)}`}
-            @click=${() => {
-              const rest = { ...this.settings.sitePermissions };
-              delete rest[origin];
-              void this.save({ sitePermissions: rest });
-            }}>Forget</button>
+            @click=${() => void this.save({ forgetSitePermissions: [origin] })}>Forget</button>
         </li>`,
       )}
     </ul>`;
@@ -848,7 +845,7 @@ export class HsSettings extends LitElement {
     </label>`;
   }
 
-  private async save(patch: Partial<Settings>): Promise<void> {
+  private async save(patch: SettingsPatch): Promise<void> {
     if (!this.client) return;
     try {
       this.settings = await this.client.get({ op: 'settings.set', patch });

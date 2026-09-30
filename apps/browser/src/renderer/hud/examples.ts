@@ -1,5 +1,6 @@
 import { LitElement, css, html, nothing } from 'lit';
 import { EXAMPLES, HOLOML_REPOSITORY, HOLOML_SPEC, exampleSource, exampleUrl } from '../examples';
+import { focusedElement, keepTabInside, returnFocus } from './dialog-focus';
 
 /**
  * The HoloML examples (milestone 17; owner, prompt 85, and prompt 86, Q2
@@ -8,8 +9,10 @@ import { EXAMPLES, HOLOML_REPOSITORY, HOLOML_SPEC, exampleSource, exampleUrl } f
  * repository and specification (prompt 88). Opened from the start panel's
  * "Try HoloML", the menu, and Ctrl+Shift+E; Escape closes it. Every link
  * opens in the tab in front, and nothing is fetched before one is chosen.
+ * Tab stays inside it, and closing puts the focus back where it was.
  *
- * Events: hs-open-example (detail: the address), hs-examples-closed.
+ * Events: hs-open-example (detail: the address), hs-examples-closed
+ * (detail: whether the focus went back to where it was).
  */
 export class HsExamples extends LitElement {
   static override properties = {
@@ -17,10 +20,16 @@ export class HsExamples extends LitElement {
   };
 
   declare open: boolean;
+  /** What had the keyboard when the dialog opened. */
+  private focusBefore: Element | null = null;
 
   constructor() {
     super();
     this.open = false;
+  }
+
+  protected override willUpdate(changed: Map<string, unknown>): void {
+    if (changed.has('open') && this.open) this.focusBefore = focusedElement();
   }
 
   static override styles = css`
@@ -201,7 +210,9 @@ export class HsExamples extends LitElement {
   close(): void {
     if (!this.open) return;
     this.open = false;
-    this.dispatchEvent(new CustomEvent('hs-examples-closed', { bubbles: true, composed: true }));
+    const returned = returnFocus(this.focusBefore);
+    this.focusBefore = null;
+    this.dispatchEvent(new CustomEvent('hs-examples-closed', { detail: returned, bubbles: true, composed: true }));
   }
 
   private openExample(id: string): void {
@@ -211,6 +222,7 @@ export class HsExamples extends LitElement {
   /** Opens an address in the tab in front, and closes. */
   private go(url: string): void {
     this.open = false;
+    this.focusBefore = null; // the page it opens takes the keyboard
     this.dispatchEvent(new CustomEvent('hs-open-example', { detail: url, bubbles: true, composed: true }));
   }
 
@@ -218,6 +230,8 @@ export class HsExamples extends LitElement {
     if (e.key === 'Escape') {
       e.stopPropagation();
       this.close();
+    } else {
+      keepTabInside(this.renderRoot as ShadowRoot, e);
     }
   };
 }

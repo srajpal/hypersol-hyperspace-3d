@@ -63,7 +63,7 @@ async function openTab(h: Harness, file: string): Promise<number> {
 /** Answers the camera or microphone prompt with Allow. */
 async function allow(h: Harness): Promise<void> {
   await waitFor('prompt', async () => (await shellCall(h, 'prompts')).permission, (p) => p !== null);
-  await h.shell.click(PROMPT('perm-allow'));
+  await h.shell.click(`${PROMPT('perm-allow')}[data-armed]`);
 }
 
 describe('issue #17: unsent drafts keep a tab awake', () => {

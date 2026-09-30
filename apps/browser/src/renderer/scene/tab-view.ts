@@ -53,12 +53,13 @@ export class TabView implements PagePanel {
   private start: StartPanel | null;
   private readonly shimmer: HTMLDivElement;
   private readonly errorCard: HTMLDivElement;
-  private readonly listeners = new Set<(status: PageStatus) => void>();
   private ready = false;
   private pendingUrl: string | null = null;
   private failed = false;
   /** Counts page loads, so a late answer about an earlier failure is ignored. */
   private loadSeq = 0;
+  /** The address of the document the page last loaded (not one still on its way, or one that failed). */
+  private committed = '';
   private pageImages: PageImage[] = [];
   private currentStatus: PageStatus;
   private w = 0;
@@ -153,6 +154,11 @@ export class TabView implements PagePanel {
 
   get isAsleep(): boolean {
     return this.asleepFrom !== null;
+  }
+
+  /** The address of the document the page last loaded; '' before the first (the site button's marker). */
+  get committedUrl(): string {
+    return this.webview ? this.committed : '';
   }
 
   /** The tab shows a HoloML page (milestone 14): its preload said so for the current address. */
@@ -260,6 +266,9 @@ export class TabView implements PagePanel {
     const asleep = this.asleepFrom;
     if (!asleep) return;
     this.asleepFrom = null;
+    // A tab that slept on a failed load wakes to a fresh load, not under its old error card.
+    this.hideError();
+    this.failed = false;
     this.emit({ ...this.currentStatus, state: 'loading', url: asleep.url });
     if (asleep.from !== null) this.createRestored(asleep.url, asleep.from);
     else this.createWebview(asleep.url);
@@ -401,14 +410,7 @@ export class TabView implements PagePanel {
     this.element.style.height = `${this.h}px`;
   }
 
-  onStatus(listener: (status: PageStatus) => void): () => void {
-    this.listeners.add(listener);
-    listener(this.status);
-    return () => this.listeners.delete(listener);
-  }
-
   dispose(): void {
-    this.listeners.clear();
     this.element.remove();
   }
 
@@ -483,6 +485,7 @@ export class TabView implements PagePanel {
     if (this.isPrivate) wv.setAttribute('partition', PRIVATE_PARTITION);
     wv.setAttribute('src', url);
     this.webview = wv;
+    this.committed = '';
     this.shimmer.setAttribute('data-visible', '');
     // Before the error and shimmer layers, so they cover the page.
     this.element.prepend(wv);
@@ -561,6 +564,9 @@ export class TabView implements PagePanel {
       this.loadSeq += 1;
       this.pageImages = [];
       this.failed = false;
+      // Whatever started the load (the page itself, the right-click menu's
+      // Back or Reload), an earlier failure's card does not stay over it.
+      this.hideError();
       this.emit({ ...this.currentStatus, state: 'loading', message: undefined });
     });
     wv.addEventListener('did-navigate', (e) => {
@@ -574,12 +580,16 @@ export class TabView implements PagePanel {
       this.typedInForm = false;
       this.capturingMedia = false;
       const wasHoloml = this.isHoloml;
+      this.committed = e.url;
       this.emit({ ...this.currentStatus, url: e.url });
       if (wasHoloml !== this.isHoloml) this.events.onHoloml?.();
       navState();
     });
     wv.addEventListener('did-navigate-in-page', (e) => {
-      if (e.isMainFrame) this.emit({ ...this.currentStatus, url: e.url });
+      if (e.isMainFrame) {
+        this.committed = e.url;
+        this.emit({ ...this.currentStatus, url: e.url });
+      }
       navState();
     });
     wv.addEventListener('page-title-updated', (e) => {
@@ -633,7 +643,11 @@ export class TabView implements PagePanel {
     const box = document.createElement('div');
     box.className = 'hs-error-card';
     box.dataset['kind'] = card.kind;
+    // Announced by screen readers when it appears, under its heading.
+    box.setAttribute('role', 'alert');
+    box.setAttribute('aria-labelledby', `hs-error-title-${this.tabId}`);
     const title = document.createElement('h2');
+    title.id = `hs-error-title-${this.tabId}`;
     title.textContent = card.title;
     const message = document.createElement('p');
     message.textContent = card.message;
@@ -706,7 +720,6 @@ export class TabView implements PagePanel {
       status = { ...status, url: this.restoring.url, state: 'loading' };
     }
     this.currentStatus = status;
-    for (const listener of this.listeners) listener(this.status);
     this.events.onStatus(this.status);
   }
 }

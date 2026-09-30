@@ -100,8 +100,8 @@ interface ViewEntry {
  * desk camera with a small pointer parallax.
  *
  * Frames are drawn only while something changes (a resize, the camera
- * moving, a switch animation, a card spinner), so an idle room costs
- * nothing.
+ * moving, a switch animation, the spinner of a card in view), so an idle
+ * room costs nothing.
  */
 export class Room {
   /** Frames drawn so far; read by the idle-efficiency check (C9). */
@@ -138,7 +138,7 @@ export class Room {
   private framePending = false;
   private lastFrameTime = 0;
   private hoveredCard: TabCard | null = null;
-  /** The WebGL context is lost (a graphics reset): no drawing until it is restored. */
+  /** The WebGL context is lost (a graphics reset): the room is not drawn until it is restored; the pages still are. */
   private contextLost = false;
   /** Whether the tab rail shows: only with two or more tabs. */
   private railShown = false;
@@ -180,10 +180,11 @@ export class Room {
     this.canvas = webgl?.domElement ?? document.createElement('canvas');
     container.append(this.canvas);
     // A graphics reset (driver update, GPU switch, sleep) loses the WebGL
-    // context. Nothing is drawn while it is lost; when it comes back, the
-    // room draws again at once, without waiting for input (GitHub issue #12).
-    // Three.js uploads the textures (room, cards, snapshots) again from
-    // their images on that first frame.
+    // context. The room is not drawn while it is lost (the pages, placed
+    // with CSS, still follow tab switches and resizes); when it comes
+    // back, the room draws again at once, without waiting for input
+    // (GitHub issue #12). Three.js uploads the textures (room, cards,
+    // snapshots) again from their images on that first frame.
     this.canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault(); // allows the browser to restore it
       this.contextLost = true;
@@ -221,7 +222,7 @@ export class Room {
     );
     this.sun = new Mesh(
       new PlaneGeometry(1, 1),
-      new MeshBasicMaterial({ map: makeSunTexture(), transparent: true, depthWrite: false, fog: false }),
+      new MeshBasicMaterial({ map: makeSunTexture(theme), transparent: true, depthWrite: false, fog: false }),
     );
     this.sun.visible = theme.room.sun;
     // Drawn first, behind everything else in the room.
@@ -252,6 +253,15 @@ export class Room {
     this.layout();
     window.addEventListener('resize', () => {
       this.layout();
+      this.requestRender();
+    });
+    this.watchPixelRatio();
+    // Reduced motion (the system's setting) covers the room's own movement
+    // too: the camera holds still and loading cards show a still mark.
+    this.reducedMotion.addEventListener('change', () => {
+      const still = this.reducedMotion.matches;
+      if (still) this.centreCamera();
+      for (const card of this.cards.values()) card.setStill(still);
       this.requestRender();
     });
     this.wirePointer();
@@ -312,6 +322,7 @@ export class Room {
       if (card) card.update(model);
       else {
         const created = new TabCard(model, this.theme, () => this.requestRender());
+        created.setStill(this.reducedMotion.matches);
         this.cards.set(model.key, created);
         this.scene.add(created.mesh);
       }
@@ -353,15 +364,6 @@ export class Room {
     return this.tabCount >= 2 && this.display === 'cards';
   }
 
-  private updateRail(): void {
-    const shown = this.wantRail();
-    if (shown === this.railShown) return;
-    this.railShown = shown;
-    if (!shown && this.hoveredCard) this.setHovered(null);
-    this.layout();
-    this.requestRender();
-  }
-
   /** Card size, how tabs are shown, and the room the tab list takes above the page. */
   setTabLayout(options: { scale: number; display: TabDisplayMode; topExtra: number }): void {
     const changed = options.scale !== this.cardScale || options.topExtra !== this.topExtra;
@@ -387,7 +389,7 @@ export class Room {
   setView(view: { direction: 1 | -1; margin: PageMarginSize; parallax: keyof typeof PARALLAX_AMOUNTS }): void {
     const margin = PAGE_MARGINS[view.margin];
     this.parallax.options.maxOffset = DEFAULT_PARALLAX.maxOffset * PARALLAX_AMOUNTS[view.parallax];
-    if (view.parallax === 'off') this.parallax.setPointer(0, 0);
+    if (view.parallax === 'off') this.centreCamera();
     if (view.direction === this.direction && margin === this.margin) {
       this.requestRender();
       return;
@@ -410,16 +412,41 @@ export class Room {
   setEconomy(on: boolean): void {
     if (on === this.economy) return;
     this.economy = on;
-    this.webgl?.setPixelRatio(on ? Math.max(0.5, window.devicePixelRatio * 0.5) : window.devicePixelRatio);
+    this.applyPixelRatio();
     this.horizon.visible = !on;
     this.sun.visible = this.theme.room.sun && !on;
-    if (on) this.parallax.setPointer(0, 0);
+    if (on) this.centreCamera();
     this.layout();
     this.requestRender();
   }
 
   get economyOn(): boolean {
     return this.economy;
+  }
+
+  /** The room's resolution: the display's, or half of it in economy mode. */
+  private applyPixelRatio(): void {
+    this.webgl?.setPixelRatio(this.economy ? Math.max(0.5, window.devicePixelRatio * 0.5) : window.devicePixelRatio);
+  }
+
+  /**
+   * Follows the display's pixel ratio, which changes when the window moves
+   * to a display with another scaling or the system's scaling changes;
+   * set only at the start, the room stayed blurred or too costly after.
+   * A media query matches one ratio, so each change is watched for anew.
+   */
+  private watchPixelRatio(): void {
+    const query = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+    query.addEventListener(
+      'change',
+      () => {
+        this.applyPixelRatio();
+        this.layout();
+        this.requestRender();
+        this.watchPixelRatio();
+      },
+      { once: true },
+    );
   }
 
   /**
@@ -430,13 +457,24 @@ export class Room {
   setFill(on: boolean): void {
     if (on === this.fill) return;
     this.fill = on;
-    if (on) this.parallax.setPointer(0, 0);
+    if (on) this.centreCamera();
     this.layout();
     this.requestRender();
   }
 
   get filling(): boolean {
     return this.fill;
+  }
+
+  /**
+   * Puts the camera back at the centre at once, for a view that must be
+   * flat and still. The pointer is usually over the page then, where the
+   * parallax is paused and would ignore a new target, so the page stayed
+   * slightly skewed (review of 2026-09-30, R4).
+   */
+  private centreCamera(): void {
+    this.parallax.reset();
+    this.onCameraMove?.({ x: 0, y: 0 });
   }
 
   get pixelRatio(): number {
@@ -654,7 +692,7 @@ export class Room {
   // ---- Rendering ----------------------------------------------------------
 
   requestRender(): void {
-    if (this.framePending || this.contextLost) return;
+    if (this.framePending) return;
     this.framePending = true;
     // Economy mode: at most ECONOMY_FPS frames a second.
     const wait = this.economy ? 1000 / ECONOMY_FPS - (performance.now() - this.lastDrawn) : 0;
@@ -664,7 +702,6 @@ export class Room {
 
   private frame(time: number): void {
     this.framePending = false;
-    if (this.contextLost) return;
     this.lastDrawn = performance.now();
     const dt = this.lastFrameTime === 0 ? 16 : Math.min(50, time - this.lastFrameTime);
     this.lastFrameTime = time;
@@ -675,16 +712,22 @@ export class Room {
       this.onCameraMove({ x: x / DEFAULT_PARALLAX.maxOffset, y: y / DEFAULT_PARALLAX.maxOffset });
     }
     this.stepTweens(performance.now());
+    // A spinner asks for frames only where it is seen: not on a card out
+    // of view (one tab, tabs shown as a list, a card scrolled off the
+    // rail), and not while the room is not drawn. Otherwise every page
+    // load kept the frame loop running for nothing. With reduced motion
+    // the card shows a still mark.
+    const roomDrawn = this.webgl !== null && !this.contextLost && !this.reducedMotion.matches;
     let spinning = false;
     for (const card of this.cards.values()) {
-      if (card.spinning) {
+      if (roomDrawn && card.spinning && card.mesh.visible) {
         card.tick(dt);
         spinning = true;
       }
     }
     this.applyCamera();
     this.placeGlow();
-    this.webgl?.render(this.scene, this.camera);
+    if (!this.contextLost) this.webgl?.render(this.scene, this.camera);
     this.css.render(this.cssScene, this.camera);
     this.frames += 1;
     if (moving || this.tweens.length > 0 || spinning) this.requestRender();
@@ -806,6 +849,9 @@ export class Room {
     this.glow.material.color.set(c.accent);
     this.glow.material.opacity = theme.glowStrength;
     this.horizon.material.color.set(c.horizon);
+    // The sun's disc is a picture in the theme's colours: drawn again for the new theme.
+    this.sun.material.map?.dispose();
+    this.sun.material.map = makeSunTexture(theme);
     this.sun.visible = theme.room.sun && !this.economy;
     for (const card of this.cards.values()) card.setTheme(theme);
     this.requestRender();
@@ -867,8 +913,8 @@ export class Room {
       this.parallax.setPaused(false);
       const nx = (e.clientX / window.innerWidth) * 2 - 1;
       const ny = 1 - (e.clientY / window.innerHeight) * 2;
-      // Economy mode keeps the camera still.
-      if (!this.economy && !this.fill) this.parallax.setPointer(nx, ny);
+      // Economy mode, a page that fills the window, and reduced motion keep the camera still.
+      if (!this.economy && !this.fill && !this.reducedMotion.matches) this.parallax.setPointer(nx, ny);
       this.setHovered(e.target === canvas ? this.cardAt(e.clientX, e.clientY) : null);
       if (this.parallax.moving) this.requestRender();
     });
@@ -904,8 +950,7 @@ export class Room {
   }
 }
 
-/** A soft rectangle that fades to transparent at the edges, for the glow. */
-/** A soft horizontal band: clear at the top and bottom, strongest in the middle. */
+/** A soft horizontal band for the horizon: clear at the top and bottom, strongest in the middle. */
 function makeBandTexture(): CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 4;
@@ -922,8 +967,8 @@ function makeBandTexture(): CanvasTexture {
   return new CanvasTexture(canvas);
 }
 
-/** The 1980s sun: a disc fading from gold to magenta, its lower half cut by widening stripes. */
-function makeSunTexture(): CanvasTexture {
+/** The 1980s sun: a disc fading through the theme's three sun colours (gold to magenta in Nebula), its lower half cut by widening stripes. */
+function makeSunTexture(theme: Theme): CanvasTexture {
   const size = 512;
   const canvas = document.createElement('canvas');
   canvas.width = size;
@@ -931,9 +976,9 @@ function makeSunTexture(): CanvasTexture {
   const ctx = canvas.getContext('2d');
   if (ctx) {
     const g = ctx.createLinearGradient(0, 0, 0, size);
-    g.addColorStop(0, '#ffe36b');
-    g.addColorStop(0.55, '#ff8a4c');
-    g.addColorStop(1, '#ff2f92');
+    g.addColorStop(0, theme.colors.sunTop);
+    g.addColorStop(0.55, theme.colors.sunMiddle);
+    g.addColorStop(1, theme.colors.sunBottom);
     ctx.fillStyle = g;
     ctx.beginPath();
     ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
@@ -947,6 +992,7 @@ function makeSunTexture(): CanvasTexture {
   return new CanvasTexture(canvas);
 }
 
+/** A soft rectangle that fades to transparent at the edges, for the glow behind the page. */
 function makeGlowTexture(): CanvasTexture {
   const size = 256;
   const canvas = document.createElement('canvas');

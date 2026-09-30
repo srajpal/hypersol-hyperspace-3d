@@ -149,7 +149,10 @@ export class HsTabStrip extends LitElement {
       ?data-private=${t.private}
       title=${`${title}${t.asleep ? ' (asleep)' : ''}${t.private ? ' (private)' : ''}`}
       @click=${() => this.fire('hs-strip-focus', t.id)}
-      @keydown=${(e: KeyboardEvent) => (e.key === 'Enter' || e.key === ' ') && this.fire('hs-strip-focus', t.id)}
+      @keydown=${(e: KeyboardEvent) => {
+        // Enter or Space on the tab itself; on its Close or Mute button the key is the button's.
+        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) this.fire('hs-strip-focus', t.id);
+      }}
     >
       ${t.favicon ? html`<img src=${t.favicon} alt="" />` : html`<span class="dot"></span>`}
       <span class="title">${title}</span>

@@ -2,6 +2,7 @@ import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
 import { PERMISSION_LABELS, type PermissionKind } from '../../shared/permissions';
 import { watchDismiss } from './dismiss';
 import type { Suggestion, Suggestions } from '../../shared/data';
+import { displayAddress } from '../url';
 
 /** An address as the address bar matches it: without the scheme or "www.", in lower case. */
 export function typedKey(text: string): string {
@@ -50,14 +51,19 @@ const icon = {
 };
 
 /**
- * The top bar: back, forward, reload, the address and search field, the
- * menu, and the loading strip under it. Emits events; the shell's
- * controller does the work.
+ * The top bar: new tab, back, forward, reload or stop, the site button,
+ * the address and search field with its completion, zoom, the instrument
+ * panel, layers, and text view buttons, the bookmark star, the menu, and
+ * the loading strip under it. Emits events; the shell's controller does
+ * the work.
  *
- * Events (bubbling, composed): hs-navigate (detail: typed text), hs-back,
- * hs-forward, hs-reload, hs-bookmark, hs-layers, hs-instruments, hs-new-tab, hs-zoom (detail: 1, -1, or 0 to
- * reset), hs-menu (detail: MenuAction), hs-site (the site button: open the site panel),
- * hs-search (detail: text to search for, from the address bar's "Search ... for" row).
+ * Events (bubbling, composed): hs-navigate (detail: typed text, or a
+ * suggestion's address), hs-search (detail: text to search for, from the
+ * address bar's "Search ... for" row), hs-back, hs-forward, hs-reload,
+ * hs-stop, hs-new-tab, hs-site (the site button: open the site panel),
+ * hs-zoom (detail: 1, -1, or 0 to reset), hs-instruments, hs-layers,
+ * hs-text-view (a HoloML page's text view), hs-bookmark, and hs-menu
+ * (detail: MenuAction).
  *
  * The "+" button opens a new tab; its arrow, or a right-click on it, offers
  * New tab and New private tab (milestone 9, owner feedback on milestone 8).
@@ -115,7 +121,7 @@ export class HsToolbar extends LitElement {
   declare private: boolean;
   /** A download is in progress: a dot on the menu button. */
   declare downloading: boolean;
-  /** The page in front: https ('secure'), plain http ('insecure'), or none (a start tab). */
+  /** The page in front: loaded over https ('secure'), over plain http ('insecure'), or none (a start tab, a failed page, a page not loaded yet). */
   declare site: 'secure' | 'insecure' | 'none';
   /** What the page in front was given (camera, microphone, location): the in-use marker (milestone 9). */
   declare access: PermissionKind[];
@@ -139,6 +145,11 @@ export class HsToolbar extends LitElement {
   searchName = 'the web';
   /** What was typed, and the address it was completed to. */
   private typed = '';
+  /** The person has changed the text in the bar since it last showed the tab's address. */
+  private edited = false;
+  /** For measuring how much of an address fits the bar. */
+  private measure: CanvasRenderingContext2D | null = null;
+  private resizeWatch: ResizeObserver | null = null;
   private inline: { key: string; url: string } | null = null;
   /**
    * Every address offered while typing, by the key it completes to: Enter
@@ -510,9 +521,45 @@ export class HsToolbar extends LitElement {
       const input = this.renderRoot.querySelector('input');
       if (!input) return;
       input.value = this.url;
+      this.edited = false;
       input.focus();
       input.select();
     });
+  }
+
+  private get addressFocused(): boolean {
+    const input = this.addressInput;
+    return input !== null && (this.renderRoot as ShadowRoot).activeElement === input;
+  }
+
+  /**
+   * Puts the tab's address in the bar as it reads without the keyboard:
+   * the end of its host always in view, however narrow the bar, and no
+   * user name or password (url.ts, displayAddress).
+   */
+  private showAddress(input: HTMLInputElement): void {
+    this.edited = false;
+    const style = getComputedStyle(input);
+    const room = input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    this.measure ??= document.createElement('canvas').getContext('2d');
+    const ctx = this.measure;
+    if (!ctx || !(room > 0)) {
+      input.value = displayAddress(this.url);
+      return;
+    }
+    ctx.font = style.font;
+    input.value = displayAddress(this.url, (start) => ctx.measureText(start).width <= room);
+  }
+
+  protected override firstUpdated(): void {
+    // The bar widens and narrows with the window and with what else the
+    // top bar shows; the address is fitted again each time.
+    const input = this.addressInput;
+    if (!input) return;
+    this.resizeWatch = new ResizeObserver(() => {
+      if (!this.addressFocused && !this.edited) this.showAddress(input);
+    });
+    this.resizeWatch.observe(input);
   }
 
   private stopDismiss: (() => void) | null = null;
@@ -530,6 +577,8 @@ export class HsToolbar extends LitElement {
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     this.stopDismiss?.();
+    this.resizeWatch?.disconnect();
+    this.resizeWatch = null;
     document.removeEventListener('keydown', this.onEscape);
   }
 
@@ -552,10 +601,19 @@ export class HsToolbar extends LitElement {
   }
 
   protected override updated(changed: PropertyValues<this>): void {
-    const input = this.renderRoot.querySelector('input');
-    if (input && changed.has('url') && (this.renderRoot as ShadowRoot).activeElement !== input) {
-      input.value = this.url;
-    }
+    const input = this.addressInput;
+    if (input && changed.has('url') && !this.addressFocused) this.showAddress(input);
+    // A menu that opens takes the keyboard, on its first entry: the arrow keys go on from there.
+    if ((changed.has('menuOpen') && this.menuOpen) || (changed.has('plusOpen') && this.plusOpen)) this.menuItems()[0]?.focus();
+  }
+
+  /** Something here is open that Escape closes or drops: a menu, or the address bar's list or completion. */
+  get escapeTaken(): boolean {
+    return this.menuOpen || this.plusOpen || this.listShown || this.inline !== null;
+  }
+
+  private menuItems(): HTMLButtonElement[] {
+    return [...this.renderRoot.querySelectorAll<HTMLButtonElement>('[role="menu"] [role="menuitem"]:not(:disabled)')];
   }
 
   override render() {
@@ -623,16 +681,23 @@ export class HsToolbar extends LitElement {
             spellcheck="false"
             autocomplete="off"
             @focus=${(e: FocusEvent) => {
-              // A new typing session.
+              // A new typing session, on the whole address (unless text typed earlier is still there).
               this.offered.clear();
-              (e.target as HTMLInputElement).select();
+              const input = e.target as HTMLInputElement;
+              if (!this.edited) input.value = this.url;
+              input.select();
             }}
             @input=${this.onInput}
-            @blur=${() =>
+            @compositionend=${this.onInput}
+            @blur=${(e: FocusEvent) => {
+              // Left as it was: the bar shows where the tab is now (the
+              // page may have moved on while the bar had the keyboard).
+              if (!this.edited) this.showAddress(e.target as HTMLInputElement);
               window.setTimeout(() => {
                 // Unless the bar has the keyboard again by then.
-                if ((this.renderRoot as ShadowRoot).activeElement !== this.addressInput) this.closeSuggestions();
-              }, 150)}
+                if (!this.addressFocused) this.closeSuggestions();
+              }, 150);
+            }}
             @keydown=${this.onKey}
           />
           ${this.suggestionList()}
@@ -807,15 +872,20 @@ export class HsToolbar extends LitElement {
     const input = e.target as HTMLInputElement;
     const value = input.value;
     this.typed = value;
+    this.edited = true;
     this.inline = null;
     this.selected = -1;
     const deleting = (e as InputEvent).inputType?.startsWith('delete') ?? false;
+    // Text still being composed (an input method's candidates) is not
+    // completed in place: that would break into the composition. The list
+    // still shows, and the text is completed once it is composed.
+    const composing = e.type === 'input' && ((e as InputEvent).isComposing ?? false);
     if (value.trim() === '') {
       this.closeSuggestions();
       return;
     }
     this.listShown = true;
-    void this.askSuggestions(value, !deleting);
+    void this.askSuggestions(value, !deleting && !composing);
   };
 
   private async askSuggestions(value: string, complete: boolean): Promise<void> {
@@ -830,8 +900,17 @@ export class HsToolbar extends LitElement {
     const input = this.addressInput;
     if (ticket !== this.suggestTicket || !input || input.value !== value) return;
     this.suggestions = found.items;
-    if (found.inline) this.offered.set(found.inline.key, found.inline.url);
-    for (const item of found.items) this.offered.set(typedKey(item.url), item.url);
+    // Two addresses can complete to the same text (http and https, or
+    // another spelling): the one Enter goes to is the one the top row
+    // shows, so in each reply the completion comes first and the first
+    // (best) address for a key is the one kept.
+    const fresh = new Map<string, string>();
+    if (found.inline) fresh.set(found.inline.key, found.inline.url);
+    for (const item of found.items) {
+      const key = typedKey(item.url);
+      if (!fresh.has(key)) fresh.set(key, item.url);
+    }
+    for (const [key, url] of fresh) this.offered.set(key, url);
     // Complete the rest of the site in place, selected, so typing goes on over it.
     if (complete && found.inline && input.selectionStart === value.length) {
       const key = typedKey(value);
@@ -851,6 +930,7 @@ export class HsToolbar extends LitElement {
 
   private go(url: string): void {
     this.closeSuggestions();
+    this.edited = false;
     this.fire('hs-navigate', url);
     this.addressInput?.blur();
   }
@@ -858,6 +938,7 @@ export class HsToolbar extends LitElement {
   private searchTyped(): void {
     const text = this.typed.trim();
     this.closeSuggestions();
+    this.edited = false;
     if (text) this.fire('hs-search', text);
     this.addressInput?.blur();
   }
@@ -891,6 +972,9 @@ export class HsToolbar extends LitElement {
 
   private readonly onKey = (e: KeyboardEvent) => {
     const input = e.target as HTMLInputElement;
+    // While text is being composed the keys are the input method's: Enter
+    // takes a candidate, the arrows move between them.
+    if (e.isComposing) return;
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       if (!this.listShown) return;
       e.preventDefault();
@@ -910,9 +994,9 @@ export class HsToolbar extends LitElement {
       const text = input.value.trim();
       this.closeSuggestions();
       this.offered.clear();
-      if (known) this.fire('hs-navigate', known);
-      else if (text !== '') this.fire('hs-navigate', text);
-      else return;
+      if (text === '' && !known) return;
+      this.edited = false;
+      this.fire('hs-navigate', known ?? text);
       input.blur();
     } else if (e.key === 'Escape') {
       if (this.listShown || this.inline) {
@@ -922,7 +1006,11 @@ export class HsToolbar extends LitElement {
         e.stopPropagation();
         return;
       }
+      // Text put back is what this Escape did; with nothing to put back
+      // the key goes on to the shell (it stops a loading page).
+      if (input.value !== this.url) e.preventDefault();
       input.value = this.url;
+      this.edited = false;
       input.select();
     }
   };
@@ -933,7 +1021,17 @@ export class HsToolbar extends LitElement {
       this.menuOpen = false;
       this.plusOpen = false;
       (this.renderRoot.querySelector(plus ? '[data-testid="new-tab-more"]' : '[data-testid="menu"]') as HTMLButtonElement | null)?.focus();
+      return;
     }
+    // Up and Down move between the entries, round the ends; Home and End go to the first and last.
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Home' && e.key !== 'End') return;
+    const items = this.menuItems();
+    if (items.length === 0) return;
+    e.preventDefault();
+    const at = items.indexOf((this.renderRoot as ShadowRoot).activeElement as HTMLButtonElement);
+    const next =
+      e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1 : e.key === 'ArrowDown' ? (at + 1) % items.length : at <= 0 ? items.length - 1 : at - 1;
+    items[next]!.focus();
   };
 
   private menu(action: MenuAction): void {

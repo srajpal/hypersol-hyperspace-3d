@@ -7,7 +7,7 @@ import { DataClient, PasswordsClient, PermissionsClient, PrivacyClient } from '.
 import type { HsPrompts } from './hud/prompts';
 import type { HsSitePanel } from './hud/site-panel';
 import type { HsNotice } from './hud/notice';
-import type { PermissionKind, PermissionPrompt, PromptAnswer } from '../shared/permissions';
+import { originOf, type PermissionKind, type PermissionPrompt, type PromptAnswer } from '../shared/permissions';
 import type { OfferAnswer, PasswordOffer } from '../shared/passwords';
 import type { HsTabStrip } from './hud/tab-strip';
 import { STRIP_HEIGHT } from './hud/tab-strip';
@@ -34,7 +34,7 @@ import { Room } from './scene/room';
 import type { StartData } from './scene/start-panel';
 import { TabView } from './scene/tab-view';
 import { TabStore, type Tab, type TabState } from './state/tabs';
-import { resolveInput } from './url';
+import { resolveInput, siteMarker } from './url';
 
 export interface AppOptions {
   startUrl: string;
@@ -76,7 +76,7 @@ const SNAPSHOT_DELAY_MS = 400;
 const SESSION_SAVE_DELAY_MS = 400;
 const isWeb = (url: string) => /^https?:\/\//i.test(url);
 
-/** Same page apart from the #fragment (an in-page jump keeps the favicon). */
+/** An address's host name in lower case; '' for anything that is not an address. */
 function hostOf(url: string): string {
   try {
     return new URL(url).hostname.toLowerCase();
@@ -85,6 +85,7 @@ function hostOf(url: string): string {
   }
 }
 
+/** Same page apart from the #fragment (an in-page jump keeps the favicon). */
 function isSamePage(a: string, b: string): boolean {
   return a.split('#')[0] === b.split('#')[0];
 }
@@ -123,6 +124,13 @@ export class App {
    * (GitHub issue #8).
    */
   private readonly privateLayersSites = new Map<string, boolean>();
+  /** Zoom set in private tabs, by site: kept the same way, never saved. */
+  private readonly privateZoomSites = new Map<string, number>();
+  /**
+   * An address typed or chosen for a tab, until its page arrives or fails:
+   * the address the page was on, and the one asked for.
+   */
+  private readonly typedLoads = new Map<number, { from: string; to: string }>();
   private hadPrivate = false;
   /** Test runs: print requests, counted instead of opening the dialog. */
   testPrints = 0;
@@ -151,6 +159,8 @@ export class App {
   private starUrl = '';
   private openPanelName: PanelName | null = null;
   private focusBeforePanel: Element | null = null;
+  /** One panel is closing because another is opening: the focus stays for the new one. */
+  private switchingPanels = false;
 
   constructor(private readonly options: AppOptions) {
     this.theme = options.theme;
@@ -306,9 +316,22 @@ export class App {
     const id = this.store.focusedId;
     const view = this.views.get(id);
     if (!view) return;
-    this.store.update(id, { url, state: 'loading', title: url });
-    view.load(url);
+    this.startLoad(id, view, url);
     view.focusContent();
+  }
+
+  /**
+   * Shows an address in a tab and starts loading it. The tab shows the
+   * address asked for from now until its page arrives or fails.
+   */
+  private startLoad(tabId: number, view: TabView, url: string): void {
+    const from = view.status.url;
+    // The same address again has no other address to flash back to.
+    if (from === url) this.typedLoads.delete(tabId);
+    else this.typedLoads.set(tabId, { from, to: url });
+    // Another page: the favicon of the one being left goes.
+    this.store.update(tabId, { url, state: 'loading', title: url, ...(isSamePage(from, url) ? {} : { favicon: undefined }) });
+    view.load(url);
   }
 
   /** Loads typed text in a tab: an address, or a search. */
@@ -316,8 +339,7 @@ export class App {
     const result = resolveInput(text, this.searchUrl);
     const view = this.views.get(tabId);
     if (!result || !view) return;
-    this.store.update(tabId, { url: result.url, state: 'loading', title: result.url });
-    view.load(result.url);
+    this.startLoad(tabId, view, result.url);
     if (tabId === this.store.focusedId) this.focusPageAfterEnter(view);
   }
 
@@ -369,7 +391,11 @@ export class App {
         this.offers.delete(id);
         this.access.delete(id);
         this.lastSeen.delete(id);
-        if (!store.tabs.some((t) => t.private)) this.privateLayersSites.clear();
+        this.typedLoads.delete(id);
+        if (!store.tabs.some((t) => t.private)) {
+          this.privateLayersSites.clear();
+          this.privateZoomSites.clear();
+        }
       }
     }
 
@@ -608,6 +634,15 @@ export class App {
     const view = this.views.get(tabId);
     if (!tab || !view) return;
     const state: TabState = view.isStart ? 'start' : status.state;
+    // An address just typed stays in the bar while it loads: until the new
+    // page arrives or fails, the page's "loading" still names the page it
+    // is leaving, which flashed the old address back (review of 2026-09-30, R6).
+    const typed = this.typedLoads.get(tabId);
+    if (typed && status.state === 'loading' && status.url === typed.from) {
+      status = { state: 'loading', url: typed.to };
+    } else if (typed) {
+      this.typedLoads.delete(tabId);
+    }
     // A different page starts without the previous page's favicon.
     const newPage = Boolean(status.url) && status.url !== tab.url && !isSamePage(status.url, tab.url);
     this.store.update(tabId, {
@@ -616,6 +651,15 @@ export class App {
       ...(status.url ? { url: status.url } : {}),
       ...(status.title ? { title: status.title } : status.url && tab.title === tab.url ? { title: status.url } : {}),
     });
+    if (tabId !== this.store.focusedId) return;
+    // The page may have loaded the address the tab already shows: nothing
+    // in the tab changed, but the site button's marker did.
+    this.updateToolbar();
+    // The site panel's choices are for the site it names: it closes when
+    // the tab leaves that site, so a change never lands on another one.
+    const panel = this.options.sitePanel;
+    const left = state === 'failed' || state === 'crashed' || originOf(view.committedUrl) !== panel.site?.origin;
+    if (panel.open && panel.site && left) panel.close();
   }
 
   private scheduleSnapshot(tabId: number): void {
@@ -734,9 +778,12 @@ export class App {
       return;
     }
     if (this.openPanelName) {
-      const other = this.openPanelName;
-      this.openPanelName = null; // switching panels: keep the focus to return to
-      this.panel(other).open = false;
+      // Switching panels: the open one closes itself, so what closing does
+      // is done (a shown password is hidden again, a shortcut waiting for
+      // its keys stops waiting); the focus to return to is kept.
+      this.switchingPanels = true;
+      this.panel(this.openPanelName).close();
+      this.switchingPanels = false;
     } else {
       this.focusBeforePanel = document.activeElement;
     }
@@ -753,6 +800,7 @@ export class App {
   /** Focus goes back where it was before the panel opened. */
   private onPanelClosed(): void {
     this.openPanelName = null;
+    if (this.switchingPanels) return;
     const before = this.focusBeforePanel;
     this.focusBeforePanel = null;
     if (before === this.options.toolbar) this.options.toolbar.focusAddress();
@@ -792,6 +840,30 @@ export class App {
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.openPanelName) this.panel(this.openPanelName).close();
     });
+    // With nothing open for it to close, Escape in the shell stops a loading
+    // page, as the Stop button's hint says. What is open is noted before
+    // anything handles the key, since closing is what handling it does.
+    let free = false;
+    document.addEventListener('keydown', (e) => e.key === 'Escape' && (free = !this.escapeTaken), true);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && free && !e.defaultPrevented && this.options.toolbar.loading) this.focusedView?.stop();
+    });
+  }
+
+  /** Something is open that Escape closes. */
+  private get escapeTaken(): boolean {
+    const o = this.options;
+    return (
+      this.openPanelName !== null ||
+      o.toolbar.escapeTaken ||
+      o.sitePanel.open ||
+      o.shield.open ||
+      o.findBar.open ||
+      o.tabSearch.open ||
+      o.about.open ||
+      o.examples.open ||
+      o.instruments.maximized !== ''
+    );
   }
 
   // ---- Top bar and commands ----------------------------------------------
@@ -815,7 +887,9 @@ export class App {
     t.canLayers = isWeb(tab.url) && tab.state !== 'start' && tab.state !== 'failed' && !scene;
     t.holoml = scene;
     t.textView = this.focusedView?.textView ?? false;
-    t.site = !isWeb(tab.url) || tab.state === 'start' ? 'none' : /^https:/i.test(tab.url) ? 'secure' : 'insecure';
+    // The lock is for a page that really loaded over https, not for an
+    // address still on its way in or one that failed (a certificate error).
+    t.site = siteMarker(tab.state, tab.url, this.focusedView?.committedUrl ?? '');
     t.access = this.access.get(tab.id) ?? [];
     t.muted = tab.muted;
     t.canReopen = this.closedTabs.size > 0;
@@ -961,12 +1035,18 @@ export class App {
 
   // ---- Zoom, find, print (milestone 8) --------------------------------------
 
-  /** A page opens at its site's saved zoom (private tabs too; their changes are not saved). */
+  /**
+   * A page opens at its site's saved zoom. A private tab's own changes are
+   * not saved: they are kept in memory, per site, while any private tab is
+   * open, as its layers choices are.
+   */
   private applyZoomOnOpen(tabId: number): void {
     const view = this.views.get(tabId);
     const url = view?.status.url ?? '';
     if (!view || !isWeb(url) || view.isHoloml) return;
-    view.setZoom(this.settings.zoomSites[hostOf(url)] ?? 1);
+    const site = hostOf(url);
+    const privateZoom = this.store.get(tabId)?.private ? this.privateZoomSites.get(site) : undefined;
+    view.setZoom(privateZoom ?? this.settings.zoomSites[site] ?? 1);
     if (tabId === this.store.focusedId) this.updateToolbar();
   }
 
@@ -978,8 +1058,11 @@ export class App {
     const factor = direction === 0 ? 1 : stepZoom(view.zoom, direction);
     view.setZoom(factor);
     this.options.toolbar.zoom = factor;
-    if (tab.private) return;
     const site = hostOf(tab.url);
+    if (tab.private) {
+      this.privateZoomSites.set(site, factor);
+      return;
+    }
     const sites = { ...this.settings.zoomSites };
     if (factor === 1) delete sites[site];
     else sites[site] = factor;
@@ -997,7 +1080,9 @@ export class App {
       this.focusedView?.find(text, forward, next);
     });
     bar.addEventListener('hs-find-closed', () => {
-      this.focusedView?.stopFind();
+      // The tab find was running on: when the bar closes for a tab switch,
+      // that is still the tab shown, not the one the switch goes to.
+      this.views.get(this.shownFocus)?.stopFind();
       this.focusedView?.focusContent();
     });
   }
@@ -1209,6 +1294,8 @@ export class App {
             })
             .catch(() => undefined);
           if (this.options.sitePanel.open) void this.options.sitePanel.refresh();
+          // Settings shows what is saved now, not what was when it opened.
+          if (this.openPanelName === 'settings') void this.options.settingsPanel.load();
           break;
         }
         // Visits and title changes come in bursts; answer once per burst.
@@ -1308,19 +1395,35 @@ export class App {
 
   /**
    * An off-screen list of tabs for keyboard and screen-reader users,
-   * mirroring the 3D cards.
+   * mirroring the 3D cards. Each tab keeps its button as the list
+   * changes (a title, a tab opened or closed), so the keyboard stays on
+   * the button it is on; rebuilt each time, the list dropped the focus
+   * whenever any page changed its title.
    */
   private renderTabList(): void {
     const list = this.options.tabList;
+    const had = new Map<number, HTMLButtonElement>();
+    for (const b of list.querySelectorAll<HTMLButtonElement>('button[data-tab-id]')) had.set(Number(b.dataset['tabId']), b);
     const buttons = this.store.tabs.map((tab) => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.setAttribute('role', 'tab');
-      b.setAttribute('aria-selected', tab.id === this.store.focusedId ? 'true' : 'false');
-      b.textContent = tab.title || 'Untitled';
-      b.addEventListener('click', () => this.store.focus(tab.id));
+      let b = had.get(tab.id);
+      had.delete(tab.id);
+      if (!b) {
+        b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('role', 'tab');
+        b.dataset['tabId'] = String(tab.id);
+        b.addEventListener('click', () => this.store.focus(tab.id));
+      }
+      const selected = tab.id === this.store.focusedId ? 'true' : 'false';
+      if (b.getAttribute('aria-selected') !== selected) b.setAttribute('aria-selected', selected);
+      const title = tab.title || 'Untitled';
+      if (b.textContent !== title) b.textContent = title;
       return b;
     });
-    list.replaceChildren(...buttons);
+    for (const closed of had.values()) closed.remove();
+    // Only a button out of place is moved: moving one takes the keyboard off it.
+    buttons.forEach((b, i) => {
+      if (list.children[i] !== b) list.insertBefore(b, list.children[i] ?? null);
+    });
   }
 }

@@ -34,13 +34,18 @@ const about = document.querySelector('hs-about')!;
 about.appVersion = params.get('appVersion') ?? '';
 about.electron = bridge.versions.electron;
 about.chrome = bridge.versions.chrome;
-about.addEventListener('hs-about-closed', () => app.focusedView?.focusContent());
+// Closing puts the focus back where it was; when that is gone (a menu entry), the page takes it.
+about.addEventListener('hs-about-closed', (e) => {
+  if (!(e as CustomEvent<boolean>).detail) app.focusedView?.focusContent();
+});
 
 // Test runs only: the HoloML examples (or just the showroom) from local copies.
 if (params.get('examplesBase')) setExamplesBase(params.get('examplesBase')!);
 if (params.get('showroomUrl')) setExampleUrl('showroom', params.get('showroomUrl')!);
 const examples = document.querySelector('hs-examples')!;
-examples.addEventListener('hs-examples-closed', () => app.focusedView?.focusContent());
+examples.addEventListener('hs-examples-closed', (e) => {
+  if (!(e as CustomEvent<boolean>).detail) app.focusedView?.focusContent();
+});
 
 const app = new App({
   startUrl: params.get('startUrl') ?? '',

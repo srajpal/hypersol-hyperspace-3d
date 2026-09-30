@@ -335,7 +335,7 @@ describe('K6 to K8: site permissions', () => {
       let p = await waitFor('camera prompt', prompt, (x) => x !== null);
       expect(p).toMatchObject({ origin: site, kinds: ['camera'] });
       expect(await h.shell.locator(PROMPT('permission-prompt')).textContent()).toContain('wants to use your camera');
-      await h.shell.click(PROMPT('perm-allow'));
+      await h.shell.click(`${PROMPT('perm-allow')}[data-armed]`);
       expect(await answer).toBe('granted:video');
       await waitFor('prompt gone', prompt, (x) => x === null);
       // K8: the marker, in the top bar and for the tab card.
@@ -346,14 +346,14 @@ describe('K6 to K8: site permissions', () => {
       answer = inPage<string>(h, 'microphone()', page);
       p = await waitFor('microphone prompt', prompt, (x) => x !== null);
       expect(p!.kinds).toEqual(['microphone']);
-      await h.shell.click(PROMPT('perm-once'));
+      await h.shell.click(`${PROMPT('perm-once')}[data-armed]`);
       expect(await answer).toBe('granted:audio');
 
       // Block.
       answer = inPage<string>(h, 'locate()', page);
       p = await waitFor('location prompt', prompt, (x) => x !== null);
       expect(p!.kinds).toEqual(['location']);
-      await h.shell.click(PROMPT('perm-block'));
+      await h.shell.click(`${PROMPT('perm-block')}[data-armed]`);
       expect(await answer).toBe('denied:1');
 
       // Remembered on this page without asking: allow, this time, block.
@@ -388,7 +388,7 @@ describe('K6 to K8: site permissions', () => {
       page = await focusedPage(h);
       answer = inPage<string>(h, 'microphone()', page);
       await waitFor('asked again', prompt, (x) => x?.kinds[0] === 'microphone');
-      await h.shell.click(PROMPT('perm-block'));
+      await h.shell.click(`${PROMPT('perm-block')}[data-armed]`);
       expect(await answer).toBe('denied:NotAllowedError');
 
       // K7: after a restart, Allow and Block are still in force.
@@ -409,7 +409,7 @@ describe('K6 to K8: site permissions', () => {
       page = await focusedPage(h);
       answer = inPage<string>(h, 'locate()', page);
       await waitFor('private prompt', async () => (await shellCall(h, 'prompts')).permission, (x) => x !== null);
-      await h.shell.click(PROMPT('perm-allow'));
+      await h.shell.click(`${PROMPT('perm-allow')}[data-armed]`);
       expect(await answer).not.toBe('denied:1');
       expect(await inPage<string>(h, 'locate()', page)).not.toBe('denied:1');
       expect((saved(profile)['sitePermissions'] as Record<string, Record<string, string>>)[site]!['location']).toBeUndefined();
@@ -421,7 +421,7 @@ describe('K6 to K8: site permissions', () => {
       await waitForPage(h, 'private=2');
       answer = inPage<string>(h, 'locate()', await focusedPage(h));
       await waitFor('asked again in a new private tab', async () => (await shellCall(h, 'prompts')).permission, (x) => x !== null);
-      await h.shell.click(PROMPT('perm-block'));
+      await h.shell.click(`${PROMPT('perm-block')}[data-armed]`);
       expect(await answer).toBe('denied:1');
       await pressInShell(h, 'W', ['control']);
 
@@ -452,21 +452,21 @@ describe('K9 and K10: download notice, the "+" menu, and printing', () => {
       await navigateTo(h, server.url('download/sample.txt'));
       const done = await waitFor('notice', () => shellCall(h, 'notice'), (n) => n !== null);
       expect(done).toMatchObject({ kind: 'done', text: 'Downloaded sample.txt' });
-      await h.shell.click(NOTICE('notice-show'));
+      await h.shell.click(`${NOTICE('notice-show')}[data-armed]`);
       await waitFor('shown in its folder', () => testLog<{ what: string; path: string }[]>(h, 'opened'), (o) =>
         o.some((x) => x.what === 'show' && x.path.endsWith('sample.txt')));
       expect(await shellCall(h, 'notice')).toBeNull();
 
       await navigateTo(h, server.url('download/sample.txt'));
       await waitFor('second notice', () => shellCall(h, 'notice'), (n) => n?.text === 'Downloaded sample (1).txt');
-      await h.shell.click(NOTICE('notice-open'));
+      await h.shell.click(`${NOTICE('notice-open')}[data-armed]`);
       await waitFor('opened', () => testLog<{ what: string; path: string }[]>(h, 'opened'), (o) =>
         o.some((x) => x.what === 'open' && x.path.endsWith('sample (1).txt')));
 
       await navigateTo(h, server.url('download/broken.bin'));
       const failed = await waitFor('failure notice', () => shellCall(h, 'notice'), (n) => n?.kind === 'failed');
       expect(failed!.text).toBe('Download failed: broken.bin');
-      await h.shell.click(NOTICE('notice-downloads'));
+      await h.shell.click(`${NOTICE('notice-downloads')}[data-armed]`);
       await waitFor('Downloads panel', () => shellCall(h, 'openPanel'), (p) => p === 'downloads');
     } finally {
       await h.close();

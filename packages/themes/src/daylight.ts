@@ -21,6 +21,10 @@ export const daylight: Theme = {
     textMuted: '#4f5175',
     floorGrid: '#a88ae8',
     desk: '#f4eeff',
+    // Daylight shows no sun; a pale one in its colours, should it be switched on.
+    sunTop: '#fff3b0',
+    sunMiddle: '#ffc9a8',
+    sunBottom: '#ff9ecf',
   },
   glowStrength: 0.35,
   lighting: {
