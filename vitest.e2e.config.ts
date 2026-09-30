@@ -31,7 +31,11 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, ...(part === '1' ? Object.values(PARTS).flat() : [])],
     environment: 'node',
     testTimeout: 60_000,
-    hookTimeout: 90_000,
+    // Longer than the waits inside the longest hook, so a wait that fails
+    // there says what it waited for before the hook's own limit cuts it
+    // off: launching (up to 100 s), a first page (30 s), a HoloML site
+    // drawn in software (105 s), and its models (60 s), in m18 and m19.
+    hookTimeout: 300_000,
     fileParallelism: false,
     sequence: { concurrent: false },
   },

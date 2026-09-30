@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FAVICON_LIMITS, FaviconLoader, checkFavicon, dataUrlBytes, imageInfo, readLimited, type Limits } from './favicon';
 
 /** A PNG header claiming the given size (enough for the size check; not decodable). */
@@ -100,6 +100,15 @@ describe('readLimited', () => {
 
 describe('FaviconLoader', () => {
   const ok = (bytes: Buffer) => new Response(new Uint8Array(bytes));
+  /**
+   * The loader's own wait before it fetches (settleMs) runs on a clock
+   * the check moves, so these do not depend on how fast the machine is:
+   * on real timers they slept 20 to 120 ms and hoped that was enough.
+   */
+  const ownClock = () => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   it('loads the first usable favicon', async () => {
     const loader = new FaviconLoader(async () => ok(pngHeader(16, 16)), () => 'data:image/png;base64,ok', fast);
@@ -144,12 +153,15 @@ describe('FaviconLoader', () => {
       { ...fast, timeoutMs: 5000 },
     );
     const results: string[] = [];
+    ownClock();
     loader.request(['https://a.example/first.png'], (d) => results.push(d));
-    await new Promise((r) => setTimeout(r, 20));
+    await vi.advanceTimersByTimeAsync(20);
+    expect(signals).toHaveLength(1); // the first fetch is under way
     loader.request(['https://a.example/second.png'], (d) => results.push(d));
-    await new Promise((r) => setTimeout(r, 50));
+    await vi.advanceTimersByTimeAsync(50);
     expect(signals[0]!.aborted).toBe(true);
-    expect(results).toEqual(['data:image/png;base64,latest']);
+    // The second fetch has begun; its answer is read and decoded in turns of its own.
+    await vi.waitFor(() => expect(results).toEqual(['data:image/png;base64,latest']));
   });
 
   it('waits for a page to stop changing its favicon before fetching', async () => {
@@ -159,17 +171,24 @@ describe('FaviconLoader', () => {
       () => 'data:image/png;base64,x',
       { ...fast, settleMs: 40 },
     );
+    ownClock();
     for (let i = 0; i < 20; i++) loader.request([`https://a.example/i.png?v=${i}`], () => undefined);
-    await new Promise((r) => setTimeout(r, 120));
+    await vi.advanceTimersByTimeAsync(39);
+    expect(fetched).toEqual([]); // still waiting, a moment before the 40 ms are up
+    await vi.advanceTimersByTimeAsync(81);
     expect(fetched).toEqual(['https://a.example/i.png?v=19']);
   });
 
   it('cancel() stops a pending request', async () => {
     const results: string[] = [];
-    const loader = new FaviconLoader(async () => ok(pngHeader(16, 16)), () => 'x', { ...fast, settleMs: 30 });
+    let fetches = 0;
+    const loader = new FaviconLoader(async () => (fetches++, ok(pngHeader(16, 16))), () => 'x', { ...fast, settleMs: 30 });
+    ownClock();
     loader.request(['https://a.example/i.png'], (d) => results.push(d));
     loader.cancel();
-    await new Promise((r) => setTimeout(r, 80));
+    await vi.advanceTimersByTimeAsync(80);
+    // Nothing was fetched (a fetch begins the moment the wait ends), so nothing can come later either.
+    expect(fetches).toBe(0);
     expect(results).toEqual([]);
   });
 });

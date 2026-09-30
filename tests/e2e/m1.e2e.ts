@@ -22,10 +22,12 @@ import {
   describeMissedClick,
   inPage,
   launch,
+  mainLog,
   moveUntil,
   navigateTo,
   pageCentre,
   project,
+  roomStill,
   screenPointOf,
   setContentSize,
   shellCall,
@@ -49,14 +51,6 @@ beforeAll(async () => {
 afterAll(async () => {
   await server?.close();
 });
-
-/** The log the main process keeps in test runs (apps/browser/src/main/test-hooks.ts). */
-interface MainTestGlobal {
-  __hypersolTest: {
-    attaches: { requestedPreload: string | null; appliedPreload: string; src: string; allowed: boolean }[];
-    requests: string[];
-  };
-}
 
 interface Click {
   id: string;
@@ -307,6 +301,8 @@ describe('C5 scrolling', () => {
 });
 
 describe('C6 hover and links', () => {
+  // These share one app and run in order: the second leaves the page the
+  // first hovers over.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url('hover.html'));
@@ -371,7 +367,7 @@ describe('C7 page isolation', () => {
     expect(probe['evilPreloadRan']).toBe('undefined');
     expect(probe['require']).toBe('undefined');
 
-    const attaches = await h.app.evaluate(() => (globalThis as unknown as MainTestGlobal).__hypersolTest.attaches);
+    const attaches = await mainLog(h, 'attaches');
     const last = attaches[attaches.length - 1]!;
     expect(last.src).toContain('second=1');
     expect(last.appliedPreload.replace(/\\/g, '/')).toMatch(/\/preload\/page\.js$/);
@@ -393,7 +389,7 @@ describe('C8 no unexpected traffic', () => {
       await waitForPage(h, page.replace('.html', ''));
     }
     await sleep(1000);
-    const requests = await h.app.evaluate(() => (globalThis as unknown as MainTestGlobal).__hypersolTest.requests);
+    const requests = await mainLog(h, 'requests');
     expect(requests.length).toBeGreaterThan(0);
     const local = (u: string) =>
       u.startsWith(server.base) || /^(file|data|blob|about|devtools|chrome-error):/.test(u);
@@ -410,9 +406,9 @@ describe('C9 idle efficiency', () => {
   afterAll(async () => h?.close());
 
   it('draws no frames while idle', async () => {
-    // Idle: page loaded, pointer still, no resize, camera settled.
-    await sleep(1500);
-    const before = await shellCall(h, 'frames');
+    // Idle: page loaded, pointer still, no resize, camera settled; however
+    // long that takes on this machine, the room has stopped drawing.
+    const before = await roomStill(h);
     await sleep(2000);
     expect(await shellCall(h, 'frames')).toBe(before);
   });

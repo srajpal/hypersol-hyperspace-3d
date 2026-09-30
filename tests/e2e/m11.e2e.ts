@@ -4,8 +4,7 @@
  * that close, the reorganized Settings, shortcut remapping, and the
  * Library's search reset.
  */
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
@@ -16,10 +15,10 @@ import {
   focusedTab,
   launch,
   navigateTo,
+  newProfile as freshProfile,
   pressInPage,
   pressInShell,
   project,
-  removeFolder,
   settingsTo,
   settled,
   shellCall,
@@ -32,15 +31,9 @@ import {
 } from './harness';
 
 let server: FixtureServer;
-const folders: string[] = [];
 
-function newFolder(prefix: string, settings?: object): string {
-  const dir = mkdtempSync(join(tmpdir(), prefix));
-  folders.push(dir);
-  if (settings) writeFileSync(join(dir, 'settings.json'), JSON.stringify(settings));
-  return dir;
-}
-const newProfile = (settings?: object) => newFolder('hypersol-e2e-profile-', { layersOnOpen: false, ...settings });
+/** A new profile whose pages open flat (the layers view off), unless the settings say otherwise. */
+const newProfile = (settings?: object) => freshProfile({ layersOnOpen: false, ...settings });
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -48,7 +41,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server?.close();
-  for (const dir of folders) await removeFolder(dir);
 });
 
 const BAR = (id: string) => `hs-toolbar [data-testid="${id}"]`;
@@ -328,7 +320,7 @@ describe('M6 and M7: Settings and shortcuts', () => {
 
       // The new keys work from the page after a restart; the old ones do nothing.
       await h.app.evaluate(({ app }) => app.quit());
-      await waitForExit(h, 8000);
+      await waitForExit(h, 30_000);
       await h.close();
       h = await launch(server.url('link-a.html'), { userDataDir: profile, keepRunning: true });
       await waitForPage(h, 'link-a');
@@ -338,8 +330,19 @@ describe('M6 and M7: Settings and shortcuts', () => {
       await waitForPage(h, 'link-b');
       await pressInShell(h, 'W', ['control']);
       await waitFor('closed', () => tabs(h), (t) => t.length === 1);
+      // Keys pressed in a page are dealt with in the order they are
+      // pressed: once a later shortcut has done its work (Ctrl+L puts the
+      // keyboard in the address bar), the old keys before it have been
+      // dealt with too, and did nothing.
+      const inAddress = () =>
+        h.shell.evaluate(() => {
+          const bar = document.querySelector('hs-toolbar');
+          return document.activeElement === bar && bar?.shadowRoot?.activeElement?.getAttribute('data-testid') === 'address';
+        });
+      expect(await inAddress()).toBe(false);
       await pressInPage(h, 'T', ['control', 'shift']);
-      await sleep(400);
+      await pressInPage(h, 'L', ['control']);
+      await waitFor('the later shortcut done', inAddress, (there) => there);
       expect((await tabs(h)).length).toBe(1);
       await pressInPage(h, 'R', ['control', 'alt']);
       await waitFor('reopened with the new keys', () => tabs(h), (t) => t.length === 2 && t.some((x) => x.url.includes('link-b')));

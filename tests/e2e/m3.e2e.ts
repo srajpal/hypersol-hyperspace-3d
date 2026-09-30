@@ -3,8 +3,7 @@
  * the Library and Settings panels, the start panel's data, restarts,
  * clearing data, damaged saved data, and keyboard access.
  */
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
@@ -12,10 +11,11 @@ import {
   focusedTab,
   inPage,
   launch,
+  mainLog,
   navigateTo,
+  newProfile,
   pressInPage,
   pressInShell,
-  removeFolder,
   settled,
   shellCall,
   sleep,
@@ -28,14 +28,7 @@ import {
 } from './harness';
 
 let server: FixtureServer;
-const profiles: string[] = [];
 const searchUrl = () => `${server.base}search?q=%s`;
-
-function newProfile(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'hypersol-e2e-profile-'));
-  profiles.push(dir);
-  return dir;
-}
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -43,7 +36,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server?.close();
-  for (const dir of profiles) await removeFolder(dir);
 });
 
 const STAR = 'hs-toolbar [data-testid="star"]';
@@ -72,6 +64,9 @@ async function openSettings(h: Harness): Promise<void> {
 }
 
 describe('E1 to E3: bookmarks, history, and the Library', () => {
+  // These share one app and run in order: E3 opens and removes the
+  // bookmark E1 left, and the first E2 check clears the history the
+  // second then adds one visit to.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
@@ -124,8 +119,7 @@ describe('E1 to E3: bookmarks, history, and the Library', () => {
     await waitForPage(h, 'link-b');
     await openLibrary(h, 'history');
     await waitFor('a visit listed', () => libTitles(h), (t) => t.length > 0);
-    const searches = () =>
-      h.app.evaluate(() => (globalThis as unknown as { __hypersolTest: { dataOps: Record<string, number> } }).__hypersolTest.dataOps['history.search'] ?? 0);
+    const searches = async () => (await mainLog(h, 'dataOps'))['history.search'] ?? 0;
     const before = await searches();
     await h.shell.locator(LIB('lib-search')).pressSequentially('link b', { delay: 30 });
     await waitFor('search result', () => libTitles(h), (t) => t.join() === 'Link B');
@@ -372,17 +366,39 @@ describe('E6b quitting and closing keep the latest tabs (PR #7 review)', () => {
     }
   });
 
+  // The two checks below time the wait itself, inside the app and on its
+  // own clock: from the request to the moment the app goes on without the
+  // shell's answer. Until 2026-09-30 they timed, from here, the whole way
+  // to the process being gone (or the window count read as 0), and the
+  // shutting down after the wait took GitHub's Windows machines past the
+  // 6 s allowed (6.5 s and 7.7 s) though the wait had been the 2 s it
+  // should be.
+
   it('if the shell never answers, Quit still ends the app after the 2 s wait', async () => {
     const h = await launch(server.url('link-a.html'), { userDataDir: newProfile(), keepRunning: true });
     try {
       await waitForPage(h, 'link-a');
       await shellCall(h, 'ignorePrepareClose');
-      const start = Date.now();
-      await h.app.evaluate(({ app }) => app.quit());
-      await waitForExit(h, 8000);
-      const took = Date.now() - start;
-      expect(took).toBeGreaterThanOrEqual(1800);
-      expect(took).toBeLessThan(6000);
+      // Quit asks the window to close, which holds the quit for the shell;
+      // when the wait is over the app quits again, for good: Electron says
+      // "before-quit" both times. The answer comes back just before the
+      // app goes.
+      const waited = await h.app.evaluate(
+        ({ app }) =>
+          new Promise<number>((resolve) => {
+            const start = Date.now();
+            let asked = 0;
+            app.on('before-quit', () => {
+              if (++asked === 2) resolve(Date.now() - start);
+            });
+            app.quit();
+          }),
+      );
+      console.log(`E6b: Quit went on ${waited} ms after it was asked, without the shell's answer`);
+      expect(waited).toBeGreaterThanOrEqual(1800);
+      expect(waited).toBeLessThan(6000);
+      // And the app does end.
+      await waitForExit(h, 30_000);
     } finally {
       await h.close();
     }
@@ -393,17 +409,19 @@ describe('E6b quitting and closing keep the latest tabs (PR #7 review)', () => {
     try {
       await waitForPage(h, 'link-a');
       await shellCall(h, 'ignorePrepareClose');
-      const start = Date.now();
-      await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.close());
-      await waitFor(
-        'the window to close',
-        () => h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length),
-        (n) => n === 0,
-        8000,
+      const waited = await h.app.evaluate(
+        ({ BrowserWindow }) =>
+          new Promise<number>((resolve) => {
+            const win = BrowserWindow.getAllWindows()[0]!;
+            const start = Date.now();
+            win.once('closed', () => resolve(Date.now() - start));
+            win.close();
+          }),
       );
-      const took = Date.now() - start;
-      expect(took).toBeGreaterThanOrEqual(1800);
-      expect(took).toBeLessThan(6000);
+      console.log(`E6b: the window closed ${waited} ms after it was asked, without the shell's answer`);
+      expect(waited).toBeGreaterThanOrEqual(1800);
+      expect(waited).toBeLessThan(6000);
+      expect(await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)).toBe(0);
       expect(h.proc.exitCode).toBeNull();
     } finally {
       await h.close();

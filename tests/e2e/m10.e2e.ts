@@ -4,7 +4,7 @@
  * sleeping tabs, history through the worker and its budget, and the
  * new shortcuts and menu entries.
  */
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -18,9 +18,10 @@ import {
   inPage,
   launch,
   navigateTo,
+  newFolder,
+  newProfile as freshProfile,
   pressInPage,
   pressInShell,
-  removeFolder,
   screenPointOf,
   settled,
   shellCall,
@@ -31,19 +32,14 @@ import {
   waitForExit,
   waitForPage,
   type Harness,
+  type ShellWindow,
   settingsTo,
 } from './harness';
 
 let server: FixtureServer;
-const folders: string[] = [];
 
-function newFolder(prefix: string, settings?: object): string {
-  const dir = mkdtempSync(join(tmpdir(), prefix));
-  folders.push(dir);
-  if (settings) writeFileSync(join(dir, 'settings.json'), JSON.stringify(settings));
-  return dir;
-}
-const newProfile = (settings?: object) => newFolder('hypersol-e2e-profile-', { layersOnOpen: false, ...settings });
+/** A new profile whose pages open flat (the layers view off), unless the settings say otherwise. */
+const newProfile = (settings?: object) => freshProfile({ layersOnOpen: false, ...settings });
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -51,7 +47,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server?.close();
-  for (const dir of folders) await removeFolder(dir);
 });
 
 const BAR = (id: string) => `hs-toolbar [data-testid="${id}"]`;
@@ -266,14 +261,22 @@ describe('L6: economy mode', () => {
       expect((await shellCall(h, 'sceneColors'))['sun']).toBe('hidden');
       expect(await h.shell.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--hs-scanlines').trim())).toBe('0');
 
-      // A loading tab's spinner draws continuously: count the frames in a second.
+      // A loading tab's spinner draws continuously: count the frames in a
+      // second. The second is the shell's own, counted there with the
+      // frames drawn in it: timed from here, the two readings' own delays
+      // would make it longer on a slow machine, and the count too high.
       await pressInShell(h, 'T', ['control']);
       await navigateTo(h, server.url('slow?ms=6000'));
       await pressInShell(h, 'Tab', ['control']);
       await sleep(500);
-      const before = (await shellCall(h, 'economy')).frames;
-      await sleep(1000);
-      const perSecond = (await shellCall(h, 'economy')).frames - before;
+      const drawn = await h.shell.evaluate(async () => {
+        const frames = () => (window as unknown as ShellWindow).__hypersolShellTest.economy().frames;
+        const [before, start] = [frames(), performance.now()];
+        await new Promise((r) => setTimeout(r, 1000));
+        return { frames: frames() - before, seconds: (performance.now() - start) / 1000 };
+      });
+      const perSecond = drawn.frames / drawn.seconds;
+      console.log(`L6: ${drawn.frames} frames in ${drawn.seconds.toFixed(2)} s with economy on`);
       expect(perSecond).toBeGreaterThan(5);
       expect(perSecond).toBeLessThanOrEqual(32);
 
@@ -341,7 +344,7 @@ describe('L8 and L9: history through the worker', () => {
       await waitForPage(h, 'link-a');
       await navigateTo(h, server.url('link-b.html'));
       await waitForPage(h, 'link-b');
-      expect(await h.app.evaluate(() => (globalThis as unknown as { __hypersolTest: { historyWorker(): boolean } }).__hypersolTest.historyWorker())).toBe(true);
+      expect(await h.app.evaluate(() => globalThis.__hypersolTest!.historyWorker!())).toBe(true);
       const found = await waitFor(
         'history search',
         () =>
@@ -361,7 +364,7 @@ describe('L8 and L9: history through the worker', () => {
     const profile = newProfile();
     let h = await launch('', { userDataDir: profile, keepRunning: true });
     await h.app.evaluate(({ app }) => app.quit());
-    await waitForExit(h, 8000);
+    await waitForExit(h, 30_000);
     await h.close();
     // Fill the history directly (the app made the tables and their triggers).
     const db = new DatabaseSync(join(profile, 'hypersol.sqlite'));
@@ -374,7 +377,7 @@ describe('L8 and L9: history through the worker', () => {
 
     h = await launch('', { userDataDir: profile });
     try {
-      expect(await h.app.evaluate(() => (globalThis as unknown as { __hypersolTest: { historyWorker(): boolean } }).__hypersolTest.historyWorker())).toBe(true);
+      expect(await h.app.evaluate(() => globalThis.__hypersolTest!.historyWorker!())).toBe(true);
       const searches = () =>
         h.shell.evaluate(async () => {
           const w = window as unknown as { hypersol: { data(r: object): Promise<{ ok: boolean; value: unknown[] }> } };

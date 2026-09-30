@@ -485,11 +485,15 @@ describe('V5: arriving through a fade', () => {
     // ...shows nothing of its scene until it begins to fade in (the lit scene reads about 226; the page's own dark
     // ground, before its fade is first painted, about 16; the fade, 0). It begins once its scene is drawn with nothing
     // left to load, or after the 4 s it waits at most; a page drawing its first frame in software may be busy for all
-    // of that time, and then the samples are those taken before it started, and after.
+    // of that time, and then the samples are those taken before it started, and after. A picture finished before the
+    // fade-in began counts, whatever it shows. So does one that began before and came back after (the browser's only
+    // picture of a page busy from 0.2 s to 5.2 s, on GitHub's machines), if it is dark: a page cannot have shown its
+    // scene and gone dark again before fading in. One that began before, came back after, and is not dark says
+    // nothing either way (the fade-in may have begun while it was taken) and is left out, as every later one is.
     const [started, origin] = [await fade(B), await inPage<number>(h, 'performance.timeOrigin', B)];
     expect(started.log[0]).toMatchObject({ to: 1 });
     const until = started.log[1] ? origin + started.log[1].at : Infinity;
-    const beforeFadeIn = samples.filter((x) => x.done <= until);
+    const beforeFadeIn = samples.filter((x) => x.done <= until || (x.t < until && x.light < 30));
     const seen = `the fade set at ${Math.round(started.log[0]!.at)} ms, the fade-in begun at ${Math.round(until - origin)} ms; samples: ${JSON.stringify(samples.map((x) => [Math.round(x.t - origin), Math.round(x.done - origin), Math.round(x.light)]))}`;
     expect(beforeFadeIn.length, seen).toBeGreaterThan(0);
     expect(Math.max(...beforeFadeIn.map((x) => x.light)), seen).toBeLessThan(30);
