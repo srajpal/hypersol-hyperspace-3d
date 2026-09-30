@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Service worker test</title>
+    <style>
+      body { margin: 0; padding: 40px; font-family: sans-serif; font-size: 20px; background: #fff; }
+    </style>
+  </head>
+  <body>
+    <!-- Review of 2026-09-30, finding M3: trackers reached through a service
+         worker. The page registers review-134-sw.js, which answers every
+         request by fetching it itself; once the worker controls the page
+         (a first load registers it and loads again), the page asks for its
+         own picture and for one on the ad host, which is mapped to this
+         machine in tests, so a request the shield let through would reach
+         the fixture server. -->
+    <h1 id="content">Service worker test page</h1>
+    <p id="result">registering</p>
+    <script>
+      const port = location.port;
+      const results = {};
+      const show = (text) => (document.getElementById('result').textContent = text);
+      const ask = (name, url) =>
+        fetch(url, { mode: 'no-cors', cache: 'no-store' }).then(
+          (r) => (results[name] = `answered:${r.type}`),
+          (e) => (results[name] = `failed:${e.name}`),
+        );
+      const handled = () =>
+        new Promise((resolve) => {
+          navigator.serviceWorker.addEventListener('message', (e) => resolve(e.data.handled), { once: true });
+          navigator.serviceWorker.controller.postMessage('handled?');
+        });
+      (async () => {
+        try {
+          await navigator.serviceWorker.register('review-134-sw.js');
+          await navigator.serviceWorker.ready;
+          if (!navigator.serviceWorker.controller) {
+            // Registered on this load: the next load is the one it controls.
+            show('registered, loading again');
+            location.reload();
+            return;
+          }
+          await Promise.all([ask('own', `/icon.png?sw=own`), ask('ad', `http://ad.doubleclick.net:${port}/ddm/ad.gif?sw=1`)]);
+          show(JSON.stringify({ controlled: true, handled: await handled(), results }));
+          document.title = 'Service worker test ready';
+        } catch (e) {
+          show(JSON.stringify({ controlled: false, error: `${e.name}: ${e.message}` }));
+          document.title = 'Service worker test failed';
+        }
+      })();
+    </script>
+  </body>
+</html>

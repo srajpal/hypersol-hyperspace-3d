@@ -1,7 +1,8 @@
 /**
  * Checks for the review of 2026-09-30 (prompts 134 and 135), the main
  * process and the page preload: what a page may do without asking (M1),
- * WebSockets through the shield (M3), a link that leads to a download
+ * WebSockets, a service worker's requests, and favicons through the
+ * shield (M3), a link that leads to a download
  * (M8), leaving a page that asks to be kept (M4), what counts as a HoloML
  * page (V1), HoloML files from the computer (M6, M11), Block for a page
  * that asks to be kept (M7), and a start or a shell that fails (M9, M10).
@@ -119,7 +120,7 @@ describe('M1: what a page may do without asking', () => {
   });
 });
 
-describe('M3: WebSockets through the shield', () => {
+describe('M3: WebSockets, a service worker\'s requests, and favicons through the shield', () => {
   it('a WebSocket to a listed host never leaves the browser, and is counted and listed; one to the page\'s own site goes through', async () => {
     // A named host, as in the shield's own checks; the ad host is mapped to this machine (harness.ts).
     const page = server.url('review-134-websocket.html').replace('127.0.0.1', 'shop.test');
@@ -142,6 +143,104 @@ describe('M3: WebSockets through the shield', () => {
         { url: `ws://ad.doubleclick.net:${port}/ddm/ad-socket`, type: 'webSocket' },
         { url: `wss://ad.doubleclick.net:${port}/ddm/secure-socket`, type: 'webSocket' },
       ]);
+    } finally {
+      await h.close();
+    }
+  });
+
+  /** The tab's shield report, as the shell asks for it. */
+  const shieldReport = (h: Harness, tab: number) =>
+    h.shell.evaluate(
+      (id) => (window as unknown as { hypersol: { privacy(r: object): Promise<{ value: { count: number; items: { url: string; type: string }[] } }> } }).hypersol.privacy({ op: 'shield.report', tab: id }),
+      tab,
+    );
+
+  /**
+   * A page served by its own service worker (tests/fixtures/review-134-sw.html):
+   * the worker fetches every request of the page itself, so the requests
+   * the app sees are the worker's, which name no tab. Opens the page and
+   * gives what it found: the addresses the worker handled, how each of
+   * the page's two requests ended, and the two addresses.
+   */
+  async function throughWorker(h: Harness): Promise<{ handled: string[]; results: Record<string, string>; own: string; ad: string }> {
+    const port = new URL(server.base).port;
+    // The page registers its worker, loads again under its control, and asks for both pictures through it.
+    const facts = await waitFor(
+      'the page controlled by its worker and its requests answered',
+      () => inPage<{ title: string; result: string }>(h, '({ title: document.title, result: document.getElementById("result").textContent })', 'review-134-sw'),
+      (f) => f.title !== 'Service worker test',
+      30_000,
+    );
+    expect(facts.title, facts.result).toBe('Service worker test ready');
+    const { handled, results } = JSON.parse(facts.result) as { handled: string[]; results: Record<string, string> };
+    return { handled, results, own: server.url('icon.png?sw=own'), ad: `http://ad.doubleclick.net:${port}/ddm/ad.gif?sw=1` };
+  }
+
+  it('a service worker\'s request to a listed host never leaves the browser; the page\'s own goes through the worker', async () => {
+    const h = await launch(server.url('review-134-sw.html'), { userDataDir: newProfile() });
+    try {
+      const { handled, results, own, ad } = await throughWorker(h);
+      // The worker handled both; the page's own picture came, the ad host's did not.
+      expect(handled).toEqual(expect.arrayContaining([own, ad]));
+      expect(results['own']).toBe('answered:basic');
+      expect(results['ad']).toMatch(/^failed:/);
+      expect(server.hits.get('/icon.png?sw=own') ?? 0).toBe(1);
+      expect(server.hits.get('/ddm/ad.gif?sw=1') ?? 0).toBe(0);
+    } finally {
+      await h.close();
+    }
+  });
+
+  // Known gap (review of 2026-09-30, M3, found 2026-09-30 by this check):
+  // the request is blocked but counted for no tab and listed nowhere. It
+  // reaches the app with no web contents id and no frame, only a referrer
+  // (the page's origin, "http://127.0.0.1:<port>/", for a cross-site
+  // request), and the shield counts nothing it cannot put to a tab
+  // (main/privacy/shield.ts, decideUntabbed). This check says so by
+  // failing as expected; once the app counts such requests for the tab
+  // the worker serves, it passes, and "fails" here is to be removed.
+  it.fails('a service worker\'s blocked request is counted for the page it serves, and is in the tab\'s list with its address', async () => {
+    const h = await launch(server.url('review-134-sw.html'), { userDataDir: newProfile() });
+    try {
+      const { ad } = await throughWorker(h);
+      try {
+        await waitFor('one blocked', () => shellCall(h, 'shield'), (s) => s.count === 1, 5000);
+      } catch (e) {
+        console.warn(`[M3] known gap: a service worker's blocked request is not counted for its page (${String(e)})`);
+        throw e;
+      }
+      const report = await shieldReport(h, (await focusedPage(h)).id);
+      expect(report.value.items).toEqual([{ url: ad, type: 'xhr' }]);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('a favicon on a listed host is never fetched, and is counted and listed; the tab keeps no icon, and one from the page\'s own site is fetched and shown', async () => {
+    const port = new URL(server.base).port;
+    const listed = `http://ad.doubleclick.net:${port}/ddm/icon.png`;
+    const h = await launch(server.url(`favicon.html?icon=${encodeURIComponent(listed)}`), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'favicon.html');
+      // The app's own account: the one attempt at the listed address could
+      // not be fetched (the shield refused it before any request was made).
+      const ends = await waitFor('the app to say how the icon ended', () => mainLog(h, 'faviconEnds'), (e) => e.some((x) => x.url === listed));
+      expect(ends.filter((e) => e.url === listed).map((e) => e.why)).toEqual(['failed']);
+      expect(server.hits.get('/ddm/icon.png') ?? 0).toBe(0);
+      await waitFor('one blocked', () => shellCall(h, 'shield'), (s) => s.count === 1);
+      const page = await focusedPage(h);
+      expect((await shieldReport(h, page.id)).value.items).toEqual([{ url: listed, type: 'image' }]);
+      expect((await focusedTab(h)).hasFavicon).toBe(false);
+
+      // An icon of the page's own site: fetched once, shown, and nothing counted.
+      const own = '/icon.png?own=1';
+      await navigateTo(h, server.url(`favicon.html?icon=${encodeURIComponent(own)}`));
+      await waitForPage(h, 'own%3D1');
+      await waitFor('the favicon shown', () => focusedTab(h), (t) => t.hasFavicon);
+      expect(server.hits.get(own) ?? 0).toBe(1);
+      expect((await mainLog(h, 'faviconEnds')).filter((e) => e.url === server.url(own.slice(1))).map((e) => e.why)).toEqual(['done']);
+      expect((await shellCall(h, 'shield')).count).toBe(0);
+      expect((await shieldReport(h, page.id)).value.items).toEqual([]);
     } finally {
       await h.close();
     }
