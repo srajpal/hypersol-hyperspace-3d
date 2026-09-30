@@ -21,6 +21,12 @@ export interface ViewControls {
   /** Walking: metres a second, and degrees a second for turning from the keyboard (orbit keeps them, unused). */
   speed: number;
   turnSpeed: number;
+  /**
+   * Paused (the text view is on, and the scene is not shown): keys and
+   * the pointer are left alone, so the arrow keys, Page Up, Page Down, and
+   * the space bar scroll the text (review 134, V8).
+   */
+  paused: boolean;
   dispose(): void;
 }
 
@@ -39,8 +45,9 @@ export function orbitControls(camera: PerspectiveCamera, element: HTMLElement, t
 
   const spherical = new Spherical();
   const offset = new Vector3();
+  let paused = false;
   const onKey = (e: KeyboardEvent) => {
-    if (e.altKey || e.ctrlKey || e.metaKey || keptByControl(e)) return;
+    if (paused || e.altKey || e.ctrlKey || e.metaKey || keptByControl(e)) return;
     offset.copy(camera.position).sub(controls.target);
     spherical.setFromVector3(offset);
     switch (e.key) {
@@ -89,6 +96,13 @@ export function orbitControls(camera: PerspectiveCamera, element: HTMLElement, t
     },
     set turnSpeed(v: number) {
       turnSpeed = v;
+    },
+    get paused() {
+      return paused;
+    },
+    set paused(on: boolean) {
+      paused = on;
+      controls.enabled = !on;
     },
     step: () => false,
     moveTo: (eye) => {
@@ -150,12 +164,25 @@ export function walkControls(
   const held = new Set<string>();
   const target = new Vector3();
   let running = false;
+  let paused = false;
   /** The walker is falling or in a jump: keep stepping until it lands. */
   let airborne = physics?.walker.gravity ?? false;
+  /** Where the eyes were and which way they looked when the scene was last told of a change. */
+  const told = { eye: new Vector3(NaN, NaN, NaN), yaw: NaN, pitch: NaN };
 
+  /**
+   * Points the camera, and tells the scene only when the eyes or the way
+   * they look really changed: with gravity every frame checks the ground,
+   * and a walker standing still must not ask for another frame each time
+   * (review 134, V7).
+   */
   const aim = () => {
     camera.rotation.set(pitch, yaw, 0, 'YXZ');
     target.set(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch)).add(camera.position);
+    if (told.yaw === yaw && told.pitch === pitch && told.eye.equals(camera.position)) return;
+    told.eye.copy(camera.position);
+    told.yaw = yaw;
+    told.pitch = pitch;
     changed();
   };
   aim();
@@ -163,6 +190,7 @@ export function walkControls(
   const pointers = new Map<number, { x: number; y: number }>();
   let pinch: number | null = null;
   const onDown = (e: PointerEvent) => {
+    if (paused) return;
     element.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     pinch = null;
@@ -207,6 +235,7 @@ export function walkControls(
     PageDown: 'look-down',
   };
   const onKeyDown = (e: KeyboardEvent) => {
+    if (paused) return;
     if (e.key === 'Shift') running = true;
     if (e.key === ' ' && physics && !e.altKey && !e.ctrlKey && !e.metaKey && !keptByControl(e)) {
       e.preventDefault();
@@ -270,6 +299,18 @@ export function walkControls(
     },
     set turnSpeed(v: number) {
       turnSpeed = v;
+    },
+    get paused() {
+      return paused;
+    },
+    set paused(on: boolean) {
+      paused = on;
+      // Keys held and fingers down when the text view came up are let go.
+      if (on) {
+        onBlur();
+        pointers.clear();
+        pinch = null;
+      }
     },
     step(dt) {
       // With gravity, every frame checks the ground: a block under the feet may be gone.
