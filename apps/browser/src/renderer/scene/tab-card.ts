@@ -53,6 +53,8 @@ export class TabCard {
   private hovered = false;
   private hoverClose = false;
   private spinAngle = 0;
+  /** Reduced motion: a loading card shows a still mark, not a spinner. */
+  private still = false;
 
   constructor(
     model: CardModel,
@@ -80,9 +82,16 @@ export class TabCard {
     return this.model.key;
   }
 
-  /** True while the card shows a spinner and needs frames. */
+  /** True while the card shows its loading mark: a spinner, which needs frames unless motion is reduced. */
   get spinning(): boolean {
     return this.model.key !== 'plus' && this.model.loading && this.snapshot === null;
+  }
+
+  /** With reduced motion, a loading card shows three still dots in place of the spinner. */
+  setStill(still: boolean): void {
+    if (still === this.still) return;
+    this.still = still;
+    if (this.spinning) this.draw();
   }
 
   get hasSnapshot(): boolean {
@@ -227,7 +236,14 @@ export class TabCard {
     } else {
       ctx.fillStyle = c.backgroundTop;
       ctx.fillRect(SNAP.x, SNAP.y, SNAP.w, SNAP.h);
-      if (this.spinning) {
+      if (this.spinning && this.still) {
+        ctx.fillStyle = c.accent;
+        for (const dx of [-30, 0, 30]) {
+          ctx.beginPath();
+          ctx.arc(W / 2 + dx, SNAP.y + SNAP.h / 2, 8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (this.spinning) {
         ctx.strokeStyle = c.accent;
         ctx.lineWidth = 6;
         ctx.lineCap = 'round';

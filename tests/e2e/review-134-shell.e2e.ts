@@ -117,6 +117,14 @@ async function unansweredPort(): Promise<number> {
   return port;
 }
 
+/** The test id of the element that has the keyboard in the shell, looked for inside its parts (a page counts as one); its tag where it has none. */
+const focusedId = (h: Harness) =>
+  h.shell.evaluate(() => {
+    let at = document.activeElement;
+    while (at && at.tagName !== 'WEBVIEW' && at.shadowRoot?.activeElement) at = at.shadowRoot.activeElement;
+    return at?.getAttribute('data-testid') ?? at?.tagName.toLowerCase() ?? '';
+  });
+
 /** Opens a page in a new tab and waits for it; returns the tab's id. */
 async function openTab(h: Harness, url: string, part: string): Promise<number> {
   await pressInShell(h, 'T', ['control']);
@@ -805,6 +813,224 @@ describe('R6: the room draws what is needed, where it is needed', () => {
       await waitFor('a new tab', () => focusedTab(h), (t) => t.state === 'start');
       await settled(h);
       await waitFor('the new page in place', offBy, (d) => d < 3, 5000);
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('R7: access', () => {
+  it("(a) the screen reader's list of tabs keeps its buttons, and the keyboard on them, as tabs change", async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      const page = await focusedPage(h);
+      type Kept = Window & { __kept?: Element | null };
+      await h.shell.evaluate(() => {
+        const button = document.querySelector<HTMLButtonElement>('#tab-list button')!;
+        button.focus();
+        (window as Kept).__kept = button;
+      });
+      const first = () =>
+        h.shell.evaluate(() => {
+          const button = document.querySelector('#tab-list button');
+          return { same: button === (window as Kept).__kept, focused: document.activeElement === button, text: button?.textContent ?? '', selected: button?.getAttribute('aria-selected') };
+        });
+      // The page changes its title: the same button, renamed, still with the keyboard.
+      await inPage(h, `document.title = 'Renamed by the page'; true`, page);
+      const renamed = await waitFor('the new title in the list', first, (b) => b.text === 'Renamed by the page');
+      expect(renamed).toMatchObject({ same: true, focused: true, selected: 'true' });
+      // A tab opens and closes beside it: still the same button, in its place.
+      await pressInShell(h, 'T', ['control']);
+      await waitFor('two tabs listed', () => h.shell.locator('#tab-list button').count(), (n) => n === 2);
+      expect(await first()).toMatchObject({ same: true, text: 'Renamed by the page', selected: 'false' });
+      expect(await h.shell.locator('#tab-list button').nth(1).getAttribute('aria-selected')).toBe('true');
+      await pressInShell(h, 'W', ['control']);
+      await waitFor('one tab listed', () => h.shell.locator('#tab-list button').count(), (n) => n === 1);
+      expect(await first()).toMatchObject({ same: true, selected: 'true' });
+      // A button still opens its tab.
+      await pressInShell(h, 'T', ['control']);
+      await waitFor('two tabs', () => tabs(h), (t) => t.length === 2 && t[1]!.focused);
+      await h.shell.evaluate(() => document.querySelector<HTMLButtonElement>('#tab-list button')!.click());
+      await waitFor('the first tab in front', () => tabs(h), (t) => t[0]!.focused);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('(b) an error card is announced: an alert named by its heading', async () => {
+    const h = await launch(`http://127.0.0.1:${await unansweredPort()}/`, { userDataDir: newProfile() });
+    try {
+      await waitFor('the load to fail', () => shellCall(h, 'status'), (s) => s?.state === 'failed');
+      const card = await h.shell.evaluate(() => {
+        const box = document.querySelector('[data-testid="page-panel"] .hs-error-card')!;
+        const heading = box.querySelector('h1, h2, h3');
+        return { role: box.getAttribute('role'), heading: heading?.textContent ?? '', labelledBy: document.getElementById(box.getAttribute('aria-labelledby') ?? '')?.textContent ?? '' };
+      });
+      expect(card.role).toBe('alert');
+      expect(card.heading.length).toBeGreaterThan(0);
+      expect(card.labelledBy).toBe(card.heading);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('(c) About and the examples keep Tab inside, and closing puts the keyboard back where it was', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile(), examplesBase: server.url('holoml/') });
+    try {
+      await waitForPage(h, 'link-a');
+      // About, from the menu: its one button keeps the keyboard.
+      await menu(h, 'about');
+      await waitFor('About', () => focusedId(h), (id) => id === 'about-close');
+      await h.shell.keyboard.press('Tab');
+      expect(await focusedId(h)).toBe('about-close');
+      await h.shell.keyboard.press('Shift+Tab');
+      expect(await focusedId(h)).toBe('about-close');
+      // The menu entry that opened it is gone: the page takes the keyboard.
+      await h.shell.keyboard.press('Escape');
+      await waitFor('the keyboard in the page', () => focusedId(h), (id) => id === 'webview');
+
+      // The examples, by their shortcut, from the address bar.
+      await h.shell.focus(ADDRESS);
+      await pressInShell(h, 'E', ['control', 'shift']);
+      await waitFor('the examples', () => focusedId(h), (id) => id.startsWith('example-open-'));
+      const last = h.shell.locator('hs-examples button').last();
+      await last.focus();
+      const lastId = await focusedId(h);
+      expect(lastId.startsWith('example-source-')).toBe(true);
+      await h.shell.keyboard.press('Tab');
+      expect(await focusedId(h)).toBe('examples-close'); // its first control
+      await h.shell.keyboard.press('Shift+Tab');
+      expect(await focusedId(h)).toBe(lastId);
+      await h.shell.keyboard.press('Escape');
+      await waitFor('the examples closed', () => h.shell.locator('hs-examples [data-testid="examples"]').count(), (n) => n === 0);
+      expect(await focusedId(h)).toBe('address');
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('(d) with reduced motion the camera holds still and a loading card shows a still mark', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      // Off-centre first, then reduced motion comes on: the camera goes to the centre.
+      await cameraOffCentre(h);
+      await h.shell.emulateMedia({ reducedMotion: 'reduce' });
+      await waitFor('the camera centred', () => shellCall(h, 'cameraOffset'), (o) => o.x === 0 && o.y === 0);
+      // The pointer moves about the room: the camera stays.
+      const height = await h.shell.evaluate(() => window.innerHeight);
+      await h.shell.mouse.move(60, height - 60, { steps: 4 });
+      await h.shell.mouse.move(10, height - 10, { steps: 4 });
+      await sleep(400);
+      expect(await shellCall(h, 'cameraOffset')).toEqual({ x: 0, y: 0 });
+      // A loading tab's card, in view on the rail, draws no frames for a spinner.
+      await pressInShell(h, 'T', ['control']);
+      await waitFor('a new tab', () => focusedTab(h), (t) => t.state === 'start');
+      await navigateTo(h, server.url('slow?ms=3000&still'));
+      await waitFor('loading', () => focusedTab(h), (t) => t.state === 'loading');
+      await settled(h);
+      await sleep(300);
+      const before = await shellCall(h, 'frames');
+      await sleep(800);
+      expect((await shellCall(h, 'frames')) - before).toBeLessThanOrEqual(2);
+      expect((await focusedTab(h)).state).toBe('loading');
+      expect(await shellCall(h, 'railVisible')).toBe(true);
+      // Motion allowed again: the spinner turns.
+      await h.shell.emulateMedia({ reducedMotion: 'no-preference' });
+      const again = await shellCall(h, 'frames');
+      await waitFor('the spinner drawn', () => shellCall(h, 'frames'), (n) => n > again + 10, 2000);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('(e) text being composed is not completed in place, and its Enter does not load anything', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      const { host } = new URL(server.base);
+      const input = h.shell.locator(ADDRESS);
+      await input.click();
+      await input.fill('');
+      // An input method composing "127": the list shows, the text is left alone.
+      const cdp = await h.shell.context().newCDPSession(h.shell);
+      await cdp.send('Input.imeSetComposition', { text: '127', selectionStart: 3, selectionEnd: 3 });
+      await waitFor('suggestions', () => h.shell.locator(BAR('suggestion')).count(), (n) => n >= 1);
+      await sleep(300);
+      expect(await input.inputValue()).toBe('127');
+      // Enter while composing belongs to the input method.
+      await input.evaluate((el) => el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true, composed: true, cancelable: true })));
+      await sleep(300);
+      expect(await focusedTab(h)).toMatchObject({ url: server.url('link-a.html'), state: 'loaded' });
+      expect(await input.inputValue()).toBe('127');
+      // Composed: now the site is completed as for typed text.
+      await cdp.send('Input.insertText', { text: '127' });
+      await waitFor('the site completed', () => input.inputValue(), (v) => v === `${host}/`);
+      await cdp.detach();
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('(f) the arrow keys, Home, and End move through a menu', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      await h.shell.click(BAR('menu'));
+      await waitFor('the first entry', () => focusedId(h), (id) => id === 'menu-new-tab');
+      await h.shell.keyboard.press('ArrowDown');
+      expect(await focusedId(h)).toBe('menu-private-tab');
+      await h.shell.keyboard.press('ArrowDown');
+      await h.shell.keyboard.press('ArrowDown');
+      expect(await focusedId(h)).toBe('menu-close-tab');
+      // "Reopen closed tab" has nothing to reopen: it is passed over.
+      await h.shell.keyboard.press('ArrowDown');
+      expect(await focusedId(h)).toBe('menu-search-tabs');
+      await h.shell.keyboard.press('End');
+      expect(await focusedId(h)).toBe('menu-about');
+      await h.shell.keyboard.press('ArrowDown');
+      expect(await focusedId(h)).toBe('menu-new-tab');
+      await h.shell.keyboard.press('ArrowUp');
+      expect(await focusedId(h)).toBe('menu-about');
+      await h.shell.keyboard.press('Home');
+      expect(await focusedId(h)).toBe('menu-new-tab');
+      await h.shell.keyboard.press('Escape');
+      await waitFor('the menu closed', () => focusedId(h), (id) => id === 'menu');
+      // The "+" menu too.
+      await h.shell.click(BAR('new-tab-more'));
+      await waitFor('the first entry', () => focusedId(h), (id) => id === 'plus-new-tab');
+      await h.shell.keyboard.press('ArrowUp');
+      expect(await focusedId(h)).toBe('plus-private-tab');
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('(g) Escape in the shell stops a loading page, once nothing else is open for it to close', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      await navigateTo(h, server.url('slow?ms=6000'));
+      await waitFor('loading', () => focusedTab(h), (t) => t.state === 'loading');
+      await waitFor('the Stop button', () => h.shell.locator(BAR('stop')).count(), (n) => n === 1);
+      // A panel is open: Escape closes it, and the page goes on loading.
+      await menu(h, 'library');
+      await waitFor('the Library', () => shellCall(h, 'openPanel'), (p) => p === 'library');
+      await h.shell.keyboard.press('Escape');
+      await waitFor('the Library closed', () => shellCall(h, 'openPanel'), (p) => p === null);
+      expect((await focusedTab(h)).state).toBe('loading');
+      // Text typed in the bar: Escape puts the address back, and the page goes on loading.
+      await h.shell.fill(ADDRESS, 'something else');
+      await h.shell.keyboard.press('Escape');
+      await h.shell.keyboard.press('Escape');
+      expect(await h.shell.inputValue(ADDRESS)).toBe(server.url('slow?ms=6000'));
+      expect((await focusedTab(h)).state).toBe('loading');
+      // Nothing left to close: Escape stops the load, long before the page would have come.
+      await h.shell.keyboard.press('Escape');
+      const stopped = await waitFor('the load stopped', () => focusedTab(h), (t) => t.state !== 'loading', 3000);
+      expect(stopped).toMatchObject({ state: 'loaded', url: server.url('link-a.html'), title: 'Link A' });
+      expect(await h.shell.locator(BAR('stop')).count()).toBe(0);
     } finally {
       await h.close();
     }

@@ -837,6 +837,30 @@ export class App {
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.openPanelName) this.panel(this.openPanelName).close();
     });
+    // With nothing open for it to close, Escape in the shell stops a loading
+    // page, as the Stop button's hint says. What is open is noted before
+    // anything handles the key, since closing is what handling it does.
+    let free = false;
+    document.addEventListener('keydown', (e) => e.key === 'Escape' && (free = !this.escapeTaken), true);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && free && !e.defaultPrevented && this.options.toolbar.loading) this.focusedView?.stop();
+    });
+  }
+
+  /** Something is open that Escape closes. */
+  private get escapeTaken(): boolean {
+    const o = this.options;
+    return (
+      this.openPanelName !== null ||
+      o.toolbar.escapeTaken ||
+      o.sitePanel.open ||
+      o.shield.open ||
+      o.findBar.open ||
+      o.tabSearch.open ||
+      o.about.open ||
+      o.examples.open ||
+      o.instruments.maximized !== ''
+    );
   }
 
   // ---- Top bar and commands ----------------------------------------------
@@ -1368,19 +1392,35 @@ export class App {
 
   /**
    * An off-screen list of tabs for keyboard and screen-reader users,
-   * mirroring the 3D cards.
+   * mirroring the 3D cards. Each tab keeps its button as the list
+   * changes (a title, a tab opened or closed), so the keyboard stays on
+   * the button it is on; rebuilt each time, the list dropped the focus
+   * whenever any page changed its title.
    */
   private renderTabList(): void {
     const list = this.options.tabList;
+    const had = new Map<number, HTMLButtonElement>();
+    for (const b of list.querySelectorAll<HTMLButtonElement>('button[data-tab-id]')) had.set(Number(b.dataset['tabId']), b);
     const buttons = this.store.tabs.map((tab) => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.setAttribute('role', 'tab');
-      b.setAttribute('aria-selected', tab.id === this.store.focusedId ? 'true' : 'false');
-      b.textContent = tab.title || 'Untitled';
-      b.addEventListener('click', () => this.store.focus(tab.id));
+      let b = had.get(tab.id);
+      had.delete(tab.id);
+      if (!b) {
+        b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('role', 'tab');
+        b.dataset['tabId'] = String(tab.id);
+        b.addEventListener('click', () => this.store.focus(tab.id));
+      }
+      const selected = tab.id === this.store.focusedId ? 'true' : 'false';
+      if (b.getAttribute('aria-selected') !== selected) b.setAttribute('aria-selected', selected);
+      const title = tab.title || 'Untitled';
+      if (b.textContent !== title) b.textContent = title;
       return b;
     });
-    list.replaceChildren(...buttons);
+    for (const closed of had.values()) closed.remove();
+    // Only a button out of place is moved: moving one takes the keyboard off it.
+    buttons.forEach((b, i) => {
+      if (list.children[i] !== b) list.insertBefore(b, list.children[i] ?? null);
+    });
   }
 }

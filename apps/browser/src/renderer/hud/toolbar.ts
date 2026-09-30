@@ -598,6 +598,17 @@ export class HsToolbar extends LitElement {
   protected override updated(changed: PropertyValues<this>): void {
     const input = this.addressInput;
     if (input && changed.has('url') && !this.addressFocused) this.showAddress(input);
+    // A menu that opens takes the keyboard, on its first entry: the arrow keys go on from there.
+    if ((changed.has('menuOpen') && this.menuOpen) || (changed.has('plusOpen') && this.plusOpen)) this.menuItems()[0]?.focus();
+  }
+
+  /** Something here is open that Escape closes or drops: a menu, or the address bar's list or completion. */
+  get escapeTaken(): boolean {
+    return this.menuOpen || this.plusOpen || this.listShown || this.inline !== null;
+  }
+
+  private menuItems(): HTMLButtonElement[] {
+    return [...this.renderRoot.querySelectorAll<HTMLButtonElement>('[role="menu"] [role="menuitem"]:not(:disabled)')];
   }
 
   override render() {
@@ -672,6 +683,7 @@ export class HsToolbar extends LitElement {
               input.select();
             }}
             @input=${this.onInput}
+            @compositionend=${this.onInput}
             @blur=${(e: FocusEvent) => {
               // Left as it was: the bar shows where the tab is now (the
               // page may have moved on while the bar had the keyboard).
@@ -859,12 +871,16 @@ export class HsToolbar extends LitElement {
     this.inline = null;
     this.selected = -1;
     const deleting = (e as InputEvent).inputType?.startsWith('delete') ?? false;
+    // Text still being composed (an input method's candidates) is not
+    // completed in place: that would break into the composition. The list
+    // still shows, and the text is completed once it is composed.
+    const composing = e.type === 'input' && ((e as InputEvent).isComposing ?? false);
     if (value.trim() === '') {
       this.closeSuggestions();
       return;
     }
     this.listShown = true;
-    void this.askSuggestions(value, !deleting);
+    void this.askSuggestions(value, !deleting && !composing);
   };
 
   private async askSuggestions(value: string, complete: boolean): Promise<void> {
@@ -951,6 +967,9 @@ export class HsToolbar extends LitElement {
 
   private readonly onKey = (e: KeyboardEvent) => {
     const input = e.target as HTMLInputElement;
+    // While text is being composed the keys are the input method's: Enter
+    // takes a candidate, the arrows move between them.
+    if (e.isComposing) return;
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       if (!this.listShown) return;
       e.preventDefault();
@@ -982,6 +1001,9 @@ export class HsToolbar extends LitElement {
         e.stopPropagation();
         return;
       }
+      // Text put back is what this Escape did; with nothing to put back
+      // the key goes on to the shell (it stops a loading page).
+      if (input.value !== this.url) e.preventDefault();
       input.value = this.url;
       this.edited = false;
       input.select();
@@ -994,7 +1016,17 @@ export class HsToolbar extends LitElement {
       this.menuOpen = false;
       this.plusOpen = false;
       (this.renderRoot.querySelector(plus ? '[data-testid="new-tab-more"]' : '[data-testid="menu"]') as HTMLButtonElement | null)?.focus();
+      return;
     }
+    // Up and Down move between the entries, round the ends; Home and End go to the first and last.
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Home' && e.key !== 'End') return;
+    const items = this.menuItems();
+    if (items.length === 0) return;
+    e.preventDefault();
+    const at = items.indexOf((this.renderRoot as ShadowRoot).activeElement as HTMLButtonElement);
+    const next =
+      e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1 : e.key === 'ArrowDown' ? (at + 1) % items.length : at <= 0 ? items.length - 1 : at - 1;
+    items[next]!.focus();
   };
 
   private menu(action: MenuAction): void {

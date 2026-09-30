@@ -256,6 +256,14 @@ export class Room {
       this.requestRender();
     });
     this.watchPixelRatio();
+    // Reduced motion (the system's setting) covers the room's own movement
+    // too: the camera holds still and loading cards show a still mark.
+    this.reducedMotion.addEventListener('change', () => {
+      const still = this.reducedMotion.matches;
+      if (still) this.centreCamera();
+      for (const card of this.cards.values()) card.setStill(still);
+      this.requestRender();
+    });
     this.wirePointer();
     this.requestRender();
   }
@@ -314,6 +322,7 @@ export class Room {
       if (card) card.update(model);
       else {
         const created = new TabCard(model, this.theme, () => this.requestRender());
+        created.setStill(this.reducedMotion.matches);
         this.cards.set(model.key, created);
         this.scene.add(created.mesh);
       }
@@ -715,8 +724,9 @@ export class Room {
     // A spinner asks for frames only where it is seen: not on a card out
     // of view (one tab, tabs shown as a list, a card scrolled off the
     // rail), and not while the room is not drawn. Otherwise every page
-    // load kept the frame loop running for nothing.
-    const roomDrawn = this.webgl !== null && !this.contextLost;
+    // load kept the frame loop running for nothing. With reduced motion
+    // the card shows a still mark.
+    const roomDrawn = this.webgl !== null && !this.contextLost && !this.reducedMotion.matches;
     let spinning = false;
     for (const card of this.cards.values()) {
       if (roomDrawn && card.spinning && card.mesh.visible) {
@@ -909,8 +919,8 @@ export class Room {
       this.parallax.setPaused(false);
       const nx = (e.clientX / window.innerWidth) * 2 - 1;
       const ny = 1 - (e.clientY / window.innerHeight) * 2;
-      // Economy mode keeps the camera still.
-      if (!this.economy && !this.fill) this.parallax.setPointer(nx, ny);
+      // Economy mode, a page that fills the window, and reduced motion keep the camera still.
+      if (!this.economy && !this.fill && !this.reducedMotion.matches) this.parallax.setPointer(nx, ny);
       this.setHovered(e.target === canvas ? this.cardAt(e.clientX, e.clientY) : null);
       if (this.parallax.moving) this.requestRender();
     });

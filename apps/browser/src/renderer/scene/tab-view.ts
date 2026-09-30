@@ -651,7 +651,11 @@ export class TabView implements PagePanel {
     const box = document.createElement('div');
     box.className = 'hs-error-card';
     box.dataset['kind'] = card.kind;
+    // Announced by screen readers when it appears, under its heading.
+    box.setAttribute('role', 'alert');
+    box.setAttribute('aria-labelledby', `hs-error-title-${this.tabId}`);
     const title = document.createElement('h2');
+    title.id = `hs-error-title-${this.tabId}`;
     title.textContent = card.title;
     const message = document.createElement('p');
     message.textContent = card.message;
