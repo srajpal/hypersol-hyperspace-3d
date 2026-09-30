@@ -351,7 +351,7 @@ to this repository for rules and the prompt log.
   protection", has the details.
 - Desktop first: Windows and Linux, then macOS; mobile later, as its own
   project. Mouse, keyboard, and touch.
-- Stack: Electron (the newest stable line; 44.4.5 on 2026-09-26),
+- Stack: Electron (the newest stable line; 44.5.1 since 2026-09-30),
   TypeScript, Three.js, Lit, SQLite through Node's node:sqlite,
   @ghostery/adblocker-electron, electron-vite, Vitest, Playwright. Node
   22.13 or newer, pnpm 12.4.1 pinned. Reasons in ARCHITECTURE.md

@@ -7,3 +7,10 @@ packages:
 # first use and verifies it against the checksums in its package.
 allowBuilds:
   esbuild: true
+
+# pnpm holds back a version published in the last few days. Electron
+# 44.5.1 (2026-09-30) carries fixes backported from Chromium, V8, ANGLE,
+# and Dawn, so it is taken at once (rule 13; ARCHITECTURE.md section 3).
+# Remove the line with the next Electron upgrade.
+minimumReleaseAgeExclude:
+  - electron@44.5.1

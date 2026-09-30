@@ -135,6 +135,16 @@ of security is a WebAuthn security key). The browser stays on 44.4.5,
 the same supported line, as this milestone releases no browser; the
 rule's upgrade comes before a public release.
 
+Rule 13 check, 2026-09-30 (the review, prompts 134 and 135): 44.5.1
+(2026-09-30) is the newest stable release on npm ("latest"; 43.7.7 and
+42.11.10 came the same day), its notes reading "Backported fixes from
+upstream ANGLE, Chromium, Dawn and V8", which is how Electron ships
+Chromium's security fixes. The browser is upgraded to 44.5.1. From now
+on a release whose notes name backported fixes from Chromium or V8 is
+taken as a security release, whether or not the word appears. No check
+was recorded at the start of milestones 2, 5, and 6 (milestone 1's is
+recorded as not done); they cannot be made up afterwards.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |

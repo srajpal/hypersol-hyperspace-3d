@@ -14,7 +14,7 @@ licence fields).
 
 | Project | Version | Licence | Used for |
 |---|---|---|---|
-| [Electron](https://www.electronjs.org/) | 44.4.5 | MIT; it includes Chromium, Node.js, and V8 under their own licences (BSD-3-Clause and others), listed in Electron's `LICENSES.chromium.html` | The browser engine and the app shell |
+| [Electron](https://www.electronjs.org/) | 44.5.1 | MIT; it includes Chromium, Node.js, and V8 under their own licences (BSD-3-Clause and others), listed in Electron's `LICENSES.chromium.html` | The browser engine and the app shell |
 | [Three.js](https://threejs.org/) | 0.186.0 | MIT | The 3D room |
 | [Lit](https://lit.dev/) (lit, lit-html, lit-element, @lit/reactive-element, @lit-labs/ssr-dom-shim) | 3.3.3 | BSD-3-Clause | The top bar, panels, and other controls |
 | [Ghostery adblocker](https://github.com/ghostery/adblocker) (@ghostery/adblocker, -electron, -electron-preload, -content, -extended-selectors, @ghostery/url-parser) | 2.18.2 | MPL-2.0 | Ad and tracker blocking, element hiding |
