@@ -879,8 +879,17 @@ export class HsToolbar extends LitElement {
     const input = this.addressInput;
     if (ticket !== this.suggestTicket || !input || input.value !== value) return;
     this.suggestions = found.items;
-    if (found.inline) this.offered.set(found.inline.key, found.inline.url);
-    for (const item of found.items) this.offered.set(typedKey(item.url), item.url);
+    // Two addresses can complete to the same text (http and https, or
+    // another spelling): the one Enter goes to is the one the top row
+    // shows, so in each reply the completion comes first and the first
+    // (best) address for a key is the one kept.
+    const fresh = new Map<string, string>();
+    if (found.inline) fresh.set(found.inline.key, found.inline.url);
+    for (const item of found.items) {
+      const key = typedKey(item.url);
+      if (!fresh.has(key)) fresh.set(key, item.url);
+    }
+    for (const [key, url] of fresh) this.offered.set(key, url);
     // Complete the rest of the site in place, selected, so typing goes on over it.
     if (complete && found.inline && input.selectionStart === value.length) {
       const key = typedKey(value);

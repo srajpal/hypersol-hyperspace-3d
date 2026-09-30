@@ -2,7 +2,7 @@
  * Settings shared by the main process (which stores them) and the shell
  * (which shows them). Pure, so both sides and the unit tests use it.
  */
-import { parseSiteChoices, type SiteChoices } from './permissions';
+import { isOrigin, MAX_PERMISSION_SITES, parseSiteChoices, type SiteChoices } from './permissions';
 import type { ShortcutName } from './commands';
 import { checkOverrides } from './shortcuts';
 
@@ -82,6 +82,14 @@ export interface Settings {
   pageMargin: PageMargin;
   shortcuts: Partial<Record<ShortcutName, string>>;
 }
+
+/**
+ * A change to settings: new values for some of them, and, not a setting
+ * itself, sites (origins) whose remembered permissions to forget. Naming
+ * the sites means a sender whose copy of the choices is out of date
+ * cannot write an old one back (review of 2026-09-30, R6).
+ */
+export type SettingsPatch = Partial<Settings> & { forgetSitePermissions?: string[] };
 
 export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   searchEngine: 'duckduckgo',
@@ -178,6 +186,11 @@ export function applySettingsPatch(current: Settings, patch: unknown): { setting
       const sites = parseSiteChoices(value);
       if (!sites) return { error: 'sitePermissions must map web origins to camera, microphone, and location choices' };
       next.sitePermissions = sites;
+    } else if (key === 'forgetSitePermissions') {
+      if (!Array.isArray(value) || value.length > MAX_PERMISSION_SITES || !value.every(isOrigin)) {
+        return { error: 'forgetSitePermissions must be a list of web origins' };
+      }
+      for (const origin of value) delete next.sitePermissions[origin];
     } else if (key === 'tabSize') {
       if (value !== 'small' && value !== 'medium' && value !== 'large') return { error: `Unknown tab size: ${String(value)}` };
       next.tabSize = value;

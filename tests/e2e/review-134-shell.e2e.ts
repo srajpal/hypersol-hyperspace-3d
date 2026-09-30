@@ -4,7 +4,7 @@
  * the panels, and the prompts; the main process's and the viewer's
  * findings have their own files.
  */
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -32,14 +32,18 @@ import {
 } from './harness';
 
 let server: FixtureServer;
+/** A second site: the same pages from another port, so another origin. */
+let other: FixtureServer;
 const folders: string[] = [];
 
 beforeAll(async () => {
   server = await startFixtureServer();
+  other = await startFixtureServer();
 });
 
 afterAll(async () => {
   await server?.close();
+  await other?.close();
   for (const f of folders) await removeFolder(f);
 });
 
@@ -55,6 +59,11 @@ const BAR = (id: string) => `hs-toolbar [data-testid="${id}"]`;
 const PROMPT = (id: string) => `hs-prompts [data-testid="${id}"]`;
 const LIB = (id: string) => `hs-library [data-testid="${id}"]`;
 const SET = (id: string) => `hs-settings [data-testid="${id}"]`;
+const SITE = (id: string) => `hs-site-panel [data-testid="${id}"]`;
+const FIND = (id: string) => `hs-find-bar [data-testid="${id}"]`;
+const STRIP = (id: string) => `hs-tab-strip [data-testid="${id}"]`;
+const INST = (id: string) => `hs-instruments [data-testid="${id}"]`;
+const saved = (profile: string) => JSON.parse(readFileSync(join(profile, 'settings.json'), 'utf8')) as Record<string, unknown>;
 const NOTICE = (id: string) => `hs-notice [data-testid^="${id}"]`;
 const testLog = <T>(h: Harness, key: string) =>
   h.app.evaluate((_e, k) => (globalThis as unknown as { __hypersolTest: Record<string, unknown> }).__hypersolTest[k], key) as Promise<T>;
@@ -104,6 +113,25 @@ async function unansweredPort(): Promise<number> {
   const port = Number(new URL(probe.base).port);
   await probe.close();
   return port;
+}
+
+/** Opens a page in a new tab and waits for it; returns the tab's id. */
+async function openTab(h: Harness, url: string, part: string): Promise<number> {
+  await pressInShell(h, 'T', ['control']);
+  await waitFor('a new tab', () => focusedTab(h), (t) => t.state === 'start');
+  await navigateTo(h, url);
+  await waitForPage(h, part);
+  return (await focusedTab(h)).id;
+}
+
+/** Pixels of a page as drawn that have the colours of find-in-page's marks (yellow, and orange for the match in turn). */
+async function findMarks(h: Harness, page: { id: number }): Promise<number> {
+  const data = await h.app.evaluate(async ({ webContents }, id) => (await webContents.fromId(id)!.capturePage()).toBitmap().toString('base64'), page.id);
+  const px = Buffer.from(data, 'base64');
+  let marks = 0;
+  // Blue, green, red, alpha: a strong red and green with little blue.
+  for (let i = 0; i < px.length; i += 4) if (px[i + 2]! > 200 && px[i + 1]! > 120 && px[i]! < 110) marks++;
+  return marks;
 }
 
 /** Moves the pointer into the room's bottom-left corner and waits for the camera to settle off-centre. */
@@ -465,6 +493,225 @@ describe('R5: the address bar', () => {
     } finally {
       await h.close();
       await tls.close();
+    }
+  });
+});
+
+describe('R6: smaller faults of the top bar, tabs, and panels', () => {
+  it('(a) Enter on a completed address loads the address the top row shows', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      const { host } = new URL(server.base);
+      // Two addresses that read the same in the bar (it matches without
+      // regard to case); the first is visited more, so it leads.
+      const often = `http://${host}/search?q=needle`;
+      const once = `http://${host}/search?q=NEEDLE`;
+      for (const url of [often, once, server.url('link-b.html'), often]) {
+        await navigateTo(h, url);
+        await waitFor('the page loaded', () => focusedTab(h), (t) => t.url === url && t.state === 'loaded');
+        await waitForPage(h, await focusedPage(h));
+      }
+      const input = h.shell.locator(ADDRESS);
+      await input.click();
+      await input.fill('');
+      await input.pressSequentially(`${host}/search?q=n`);
+      await waitFor('the address completed', () => input.inputValue(), (v) => v === `${host}/search?q=needle`);
+      await waitFor('both addresses listed', () => h.shell.locator(BAR('suggestion')).count(), (n) => n >= 2);
+      const top = await h.shell.locator(`${BAR('suggestion')} .url`).first().textContent();
+      expect(top).toBe(often);
+      await input.press('Enter');
+      const tab = await waitFor('the page loaded', () => focusedTab(h), (t) => t.state === 'loaded' && t.url.includes('/search'));
+      expect(tab.url).toBe(top);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('(b) the site panel closes when its tab goes to another site', async () => {
+    const h = await launch(server.url('media.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'media');
+      await h.shell.click(BAR('site-button'));
+      await waitFor('the site panel', () => shellCall(h, 'sitePanel'), (s) => s.open && s.site !== null);
+      expect(await h.shell.locator(SITE('site-origin')).textContent()).toBe(new URL(server.base).host);
+      // A page on the same site: the panel stays, its choices still apply.
+      await inPage(h, `location.href = ${JSON.stringify(server.url('link-a.html'))}; true`, 'media');
+      await waitFor('the next page', () => focusedTab(h), (t) => t.url === server.url('link-a.html') && t.state === 'loaded');
+      expect((await shellCall(h, 'sitePanel')).open).toBe(true);
+      // Another site: the panel goes, not left naming a site the tab has left.
+      await inPage(h, `location.href = ${JSON.stringify(other.url('link-b.html'))}; true`, 'link-a');
+      await waitFor('the other site', () => focusedTab(h), (t) => t.url === other.url('link-b.html'));
+      await waitFor('the site panel closed', () => shellCall(h, 'sitePanel'), (s) => !s.open);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('(c) Settings follows permission changes made elsewhere, and "Forget" forgets one site only', async () => {
+    const site = new URL(server.base).origin;
+    const profile = newProfile({ sitePermissions: { [site]: { camera: 'allow' }, 'https://elsewhere.example': { microphone: 'block' } } });
+    const h = await launch(server.url('media.html'), { userDataDir: profile });
+    try {
+      await waitForPage(h, 'media');
+      await menu(h, 'settings');
+      await waitFor('Settings', () => shellCall(h, 'openPanel'), (p) => p === 'settings');
+      await settingsTo(h, 'set-perm-site');
+      await waitFor('both sites listed', () => h.shell.locator(SET('set-perm-site')).count(), (n) => n === 2);
+      // With Settings open, the page's site is set back to "Ask" in the site panel.
+      await h.shell.click(BAR('site-button'));
+      await waitFor('the site panel', () => shellCall(h, 'sitePanel'), (s) => s.open && s.site !== null);
+      await h.shell.selectOption(SITE('site-camera'), 'ask');
+      await waitFor('forgotten in the file', async () => Object.keys(saved(profile)['sitePermissions'] as object), (k) => k.length === 1);
+      // Settings shows what is saved now.
+      await waitFor('one site listed', () => h.shell.locator(SET('set-perm-site')).count(), (n) => n === 1);
+      expect(await h.shell.locator(SET('set-perm-site')).textContent()).toContain('elsewhere.example');
+      // Forgetting the other site does not bring the first one back.
+      await h.shell.click(SET('set-perm-remove'));
+      await waitFor('nothing remembered', async () => JSON.stringify(saved(profile)['sitePermissions']), (v) => v === '{}');
+      await waitFor('the empty list', () => h.shell.locator(SET('set-perm-empty')).count(), (n) => n === 1);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('(d) find is stopped on the tab it was running on when another tab comes in front', async () => {
+    const h = await launch(server.url('find.html'), { userDataDir: newProfile({ layersOnOpen: false }) });
+    try {
+      await waitForPage(h, 'find');
+      const page = await focusedPage(h);
+      const first = (await focusedTab(h)).id;
+      // Before any search: only the fringes of the letters' edges have such colours.
+      const plain = await findMarks(h, page);
+      await pressInShell(h, 'F', ['control']);
+      await waitFor('the find bar', () => shellCall(h, 'find'), (f) => f.open);
+      await h.shell.fill(FIND('find-input'), 'needle');
+      await waitFor('three matches', () => shellCall(h, 'find'), (f) => f.matches === 3);
+      await waitFor('the matches marked', () => findMarks(h, page), (n) => n > plain + 1000);
+      // Another tab in front: the bar closes, and the search ends where it ran.
+      await pressInShell(h, 'T', ['control']);
+      await waitFor('a new tab in front', () => focusedTab(h), (t) => t.id !== first);
+      expect((await shellCall(h, 'find')).open).toBe(false);
+      await cycleToTab(h, first);
+      await waitForPage(h, page);
+      await waitFor('no marks left on the page', () => findMarks(h, page), (n) => n <= plain + 50, 5000);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it("(e) a private tab's zoom is kept for its site while private tabs are open, and never saved", async () => {
+    const profile = newProfile();
+    const h = await launch(server.url('link-a.html'), { userDataDir: profile });
+    try {
+      await waitForPage(h, 'link-a');
+      await pressInShell(h, 'N', ['control', 'shift']);
+      await waitFor('a private tab', () => focusedTab(h), (t) => t.private);
+      await navigateTo(h, server.url('link-a.html?private=1'));
+      await waitForPage(h, 'private=1');
+      await h.shell.click(BAR('zoom-in'));
+      const zoomed = await waitFor('zoomed in', () => shellCall(h, 'zoom'), (z) => z.factor > 1.05);
+      // Another page of the site, in the same private tab: the zoom holds.
+      await navigateTo(h, server.url('link-b.html?private=2'));
+      await waitForPage(h, 'private=2');
+      await waitFor('the page at its zoom', () => shellCall(h, 'zoom'), (z) => Math.abs(z.label - zoomed.factor) < 0.001);
+      expect((await shellCall(h, 'zoom')).factor).toBeCloseTo(zoomed.factor, 3);
+      expect(saved(profile)['zoomSites'] ?? {}).toEqual({});
+      // The last private tab closes: the next private tab starts at 100%.
+      await pressInShell(h, 'W', ['control']);
+      await waitFor('no private tab', () => tabs(h), (t) => !t.some((x) => x.private));
+      await pressInShell(h, 'N', ['control', 'shift']);
+      await waitFor('a private tab', () => focusedTab(h), (t) => t.private);
+      await navigateTo(h, server.url('link-a.html?private=3'));
+      await waitForPage(h, 'private=3');
+      await waitFor('the page ready', () => shellCall(h, 'status'), (s) => s?.state === 'loaded');
+      expect((await shellCall(h, 'zoom')).factor).toBeCloseTo(1, 3);
+      expect(saved(profile)['zoomSites'] ?? {}).toEqual({});
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('(f) the console stays where it was scrolled to while new lines arrive, and follows them from the bottom', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile({ instruments: true }) });
+    try {
+      await waitForPage(h, 'link-a');
+      const page = await focusedPage(h);
+      const lines = async () => (await shellCall(h, 'instruments')).console.length;
+      const scroll = () =>
+        h.shell.locator(INST('inst-console-list')).evaluate((el) => ({ top: el.scrollTop, fromEnd: el.scrollHeight - el.scrollTop - el.clientHeight }));
+      await inPage(h, `for (let i = 0; i < 60; i++) console.log('first line ' + i); true`, page);
+      await waitFor('the lines listed', lines, (n) => n >= 60);
+      await waitFor('the newest line in view', scroll, (s) => s.fromEnd < 4 && s.top > 0);
+      // Up to the first lines, to read them.
+      await h.shell.locator(INST('inst-console-list')).evaluate((el) => (el.scrollTop = 0));
+      const before = await lines();
+      await inPage(h, `for (let i = 0; i < 10; i++) console.log('later line ' + i); true`, page);
+      await waitFor('more lines listed', lines, (n) => n >= before + 10);
+      // The panel draws again every second (its clock): still at the top after that too.
+      const clock = await h.shell.locator(INST('inst-clock')).textContent();
+      await waitFor('the panel drawn again', () => h.shell.locator(INST('inst-clock')).textContent(), (t) => t !== clock);
+      expect((await scroll()).top).toBe(0);
+      // Back at the bottom, it follows new lines again.
+      await h.shell.locator(INST('inst-console-list')).evaluate((el) => (el.scrollTop = el.scrollHeight));
+      const then = await lines();
+      await inPage(h, `for (let i = 0; i < 10; i++) console.log('last line ' + i); true`, page);
+      await waitFor('more lines listed', lines, (n) => n >= then + 10);
+      await waitFor('the newest line in view', scroll, (s) => s.fromEnd < 4);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it("(g) Enter on a tab's Close button in the list closes that tab without first bringing it in front", async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile({ tabDisplay: 'list' }) });
+    try {
+      await waitForPage(h, 'link-a');
+      const a = (await focusedTab(h)).id;
+      const b = await openTab(h, server.url('link-b.html'), 'link-b');
+      const c = await openTab(h, server.url('find.html'), 'find');
+      await cycleToTab(h, a);
+      await waitFor('the list of tabs', () => h.shell.locator(STRIP('strip-tab')).count(), (n) => n === 3);
+      await h.shell.locator(`hs-tab-strip [data-id="${b}"] [data-testid="strip-close"]`).press('Enter');
+      const left = await waitFor('the tab closed', () => tabs(h), (t) => t.length === 2);
+      expect(left.map((t) => t.id)).toEqual([a, c]);
+      // Had the key also reached the tab, it would have come in front, and closing it would have passed the front to the next.
+      expect(left.find((t) => t.focused)!.id).toBe(a);
+      // The tab itself still answers Enter.
+      await h.shell.locator(`hs-tab-strip [data-id="${c}"]`).press('Enter');
+      await waitFor('the tab in front', () => focusedTab(h), (t) => t.id === c);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('(h) an address typed stays in the bar while it loads, not flashing the page it leaves', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      const slow = server.url('slow?ms=1200');
+      const seen = new Set<string>();
+      await navigateTo(h, slow);
+      const done = await waitFor(
+        'the slow page loaded',
+        async () => {
+          const tab = await focusedTab(h);
+          seen.add(tab.url);
+          seen.add(await h.shell.inputValue(ADDRESS));
+          return tab;
+        },
+        (t) => t.state === 'loaded' && t.title === 'Slow page',
+        20_000,
+      );
+      expect(done.url).toBe(slow);
+      expect([...seen]).toEqual([slow]);
+      // A load that never becomes a page (a download) gives the address back to the page still shown.
+      await navigateTo(h, server.url('download/sample.txt'));
+      await waitFor('the download done', () => shellCall(h, 'downloads'), (d) => d.length === 1 && d[0]!.state === 'completed');
+      const back = await waitFor('the tab back on its page', () => focusedTab(h), (t) => t.state === 'loaded' && t.url === slow);
+      expect(back.title).toBe('Slow page');
+    } finally {
+      await h.close();
     }
   });
 });

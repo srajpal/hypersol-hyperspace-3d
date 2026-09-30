@@ -7,7 +7,7 @@ import { DataClient, PasswordsClient, PermissionsClient, PrivacyClient } from '.
 import type { HsPrompts } from './hud/prompts';
 import type { HsSitePanel } from './hud/site-panel';
 import type { HsNotice } from './hud/notice';
-import type { PermissionKind, PermissionPrompt, PromptAnswer } from '../shared/permissions';
+import { originOf, type PermissionKind, type PermissionPrompt, type PromptAnswer } from '../shared/permissions';
 import type { OfferAnswer, PasswordOffer } from '../shared/passwords';
 import type { HsTabStrip } from './hud/tab-strip';
 import { STRIP_HEIGHT } from './hud/tab-strip';
@@ -123,6 +123,13 @@ export class App {
    * (GitHub issue #8).
    */
   private readonly privateLayersSites = new Map<string, boolean>();
+  /** Zoom set in private tabs, by site: kept the same way, never saved. */
+  private readonly privateZoomSites = new Map<string, number>();
+  /**
+   * An address typed or chosen for a tab, until its page arrives or fails:
+   * the address the page was on, and the one asked for.
+   */
+  private readonly typedLoads = new Map<number, { from: string; to: string }>();
   private hadPrivate = false;
   /** Test runs: print requests, counted instead of opening the dialog. */
   testPrints = 0;
@@ -308,9 +315,20 @@ export class App {
     const id = this.store.focusedId;
     const view = this.views.get(id);
     if (!view) return;
-    this.store.update(id, { url, state: 'loading', title: url });
-    view.load(url);
+    this.startLoad(id, view, url);
     view.focusContent();
+  }
+
+  /**
+   * Shows an address in a tab and starts loading it. The tab shows the
+   * address asked for from now until its page arrives or fails.
+   */
+  private startLoad(tabId: number, view: TabView, url: string): void {
+    const from = view.status.url;
+    this.typedLoads.set(tabId, { from, to: url });
+    // Another page: the favicon of the one being left goes.
+    this.store.update(tabId, { url, state: 'loading', title: url, ...(isSamePage(from, url) ? {} : { favicon: undefined }) });
+    view.load(url);
   }
 
   /** Loads typed text in a tab: an address, or a search. */
@@ -318,8 +336,7 @@ export class App {
     const result = resolveInput(text, this.searchUrl);
     const view = this.views.get(tabId);
     if (!result || !view) return;
-    this.store.update(tabId, { url: result.url, state: 'loading', title: result.url });
-    view.load(result.url);
+    this.startLoad(tabId, view, result.url);
     if (tabId === this.store.focusedId) this.focusPageAfterEnter(view);
   }
 
@@ -371,7 +388,11 @@ export class App {
         this.offers.delete(id);
         this.access.delete(id);
         this.lastSeen.delete(id);
-        if (!store.tabs.some((t) => t.private)) this.privateLayersSites.clear();
+        this.typedLoads.delete(id);
+        if (!store.tabs.some((t) => t.private)) {
+          this.privateLayersSites.clear();
+          this.privateZoomSites.clear();
+        }
       }
     }
 
@@ -610,6 +631,15 @@ export class App {
     const view = this.views.get(tabId);
     if (!tab || !view) return;
     const state: TabState = view.isStart ? 'start' : status.state;
+    // An address just typed stays in the bar while it loads: until the new
+    // page arrives or fails, the page's "loading" still names the page it
+    // is leaving, which flashed the old address back (review of 2026-09-30, R6).
+    const typed = this.typedLoads.get(tabId);
+    if (typed && status.state === 'loading' && status.url === typed.from) {
+      status = { state: 'loading', url: typed.to };
+    } else if (typed) {
+      this.typedLoads.delete(tabId);
+    }
     // A different page starts without the previous page's favicon.
     const newPage = Boolean(status.url) && status.url !== tab.url && !isSamePage(status.url, tab.url);
     this.store.update(tabId, {
@@ -618,9 +648,15 @@ export class App {
       ...(status.url ? { url: status.url } : {}),
       ...(status.title ? { title: status.title } : status.url && tab.title === tab.url ? { title: status.url } : {}),
     });
+    if (tabId !== this.store.focusedId) return;
     // The page may have loaded the address the tab already shows: nothing
     // in the tab changed, but the site button's marker did.
-    if (tabId === this.store.focusedId) this.updateToolbar();
+    this.updateToolbar();
+    // The site panel's choices are for the site it names: it closes when
+    // the tab leaves that site, so a change never lands on another one.
+    const panel = this.options.sitePanel;
+    const left = state === 'failed' || state === 'crashed' || originOf(view.committedUrl) !== panel.site?.origin;
+    if (panel.open && panel.site && left) panel.close();
   }
 
   private scheduleSnapshot(tabId: number): void {
@@ -972,12 +1008,18 @@ export class App {
 
   // ---- Zoom, find, print (milestone 8) --------------------------------------
 
-  /** A page opens at its site's saved zoom (private tabs too; their changes are not saved). */
+  /**
+   * A page opens at its site's saved zoom. A private tab's own changes are
+   * not saved: they are kept in memory, per site, while any private tab is
+   * open, as its layers choices are.
+   */
   private applyZoomOnOpen(tabId: number): void {
     const view = this.views.get(tabId);
     const url = view?.status.url ?? '';
     if (!view || !isWeb(url) || view.isHoloml) return;
-    view.setZoom(this.settings.zoomSites[hostOf(url)] ?? 1);
+    const site = hostOf(url);
+    const privateZoom = this.store.get(tabId)?.private ? this.privateZoomSites.get(site) : undefined;
+    view.setZoom(privateZoom ?? this.settings.zoomSites[site] ?? 1);
     if (tabId === this.store.focusedId) this.updateToolbar();
   }
 
@@ -989,8 +1031,11 @@ export class App {
     const factor = direction === 0 ? 1 : stepZoom(view.zoom, direction);
     view.setZoom(factor);
     this.options.toolbar.zoom = factor;
-    if (tab.private) return;
     const site = hostOf(tab.url);
+    if (tab.private) {
+      this.privateZoomSites.set(site, factor);
+      return;
+    }
     const sites = { ...this.settings.zoomSites };
     if (factor === 1) delete sites[site];
     else sites[site] = factor;
@@ -1008,7 +1053,9 @@ export class App {
       this.focusedView?.find(text, forward, next);
     });
     bar.addEventListener('hs-find-closed', () => {
-      this.focusedView?.stopFind();
+      // The tab find was running on: when the bar closes for a tab switch,
+      // that is still the tab shown, not the one the switch goes to.
+      this.views.get(this.shownFocus)?.stopFind();
       this.focusedView?.focusContent();
     });
   }
@@ -1220,6 +1267,8 @@ export class App {
             })
             .catch(() => undefined);
           if (this.options.sitePanel.open) void this.options.sitePanel.refresh();
+          // Settings shows what is saved now, not what was when it opened.
+          if (this.openPanelName === 'settings') void this.options.settingsPanel.load();
           break;
         }
         // Visits and title changes come in bursts; answer once per burst.
