@@ -134,6 +134,11 @@ function setAppMenu(): void {
  */
 function windowTheme(choice: ThemeChoice): Theme {
   nativeTheme.themeSource = choice === 'system' ? 'system' : themeById(choice).scheme;
+  return themeFor(choice);
+}
+
+/** The theme a choice stands for: itself, or for "Match the system" the one for the system's scheme. */
+function themeFor(choice: ThemeChoice): Theme {
   return choice === 'system' ? (nativeTheme.shouldUseDarkColors ? nebula : daylight) : themeById(choice);
 }
 
@@ -540,6 +545,10 @@ if (!app.requestSingleInstanceLock()) {
       send: sendToHost,
       writeClipboard: (text) => clipboard.writeText(text),
       onChange: () => saved.notify('passwords'),
+      colors: () => {
+        const { text, textMuted, panelGlass, accent } = themeFor(saved.settingsFile.settings.theme).colors;
+        return { text, textMuted, surface: panelGlass, accent };
+      },
     });
     passwords = pw;
     ipcMain.handle(PAGE_PASSWORDS_CHANNEL, (event, request: unknown) => pw.handlePage(event, request));

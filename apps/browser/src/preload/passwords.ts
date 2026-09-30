@@ -15,7 +15,7 @@
  * fills the fields.
  */
 import { ipcRenderer } from 'electron';
-import { PAGE_PASSWORDS_CHANNEL } from '../shared/page-passwords';
+import { PAGE_PASSWORDS_CHANNEL, parseAccountsReply, type AccountsReply } from '../shared/page-passwords';
 
 const TEXT_TYPES = new Set(['text', 'email', 'tel', '']);
 const SUBMIT_WORDS = /\b(log ?in|sign ?in|continue|next|submit|enter|go)\b/i;
@@ -105,7 +105,7 @@ async function fill(field: HTMLInputElement, username: string): Promise<void> {
   if (passwordField) setValue(passwordField, password);
 }
 
-function showList(field: HTMLInputElement, names: string[]): void {
+function showList(field: HTMLInputElement, { names, colors }: AccountsReply): void {
   hideList();
   const r = field.getBoundingClientRect();
   const host = document.createElement('hypersol-sign-ins');
@@ -134,12 +134,12 @@ function showList(field: HTMLInputElement, names: string[]): void {
   const root = host.attachShadow({ mode: 'closed' });
   const style = document.createElement('style');
   style.textContent = `
-    .box { font: 14px system-ui, sans-serif; color: #f1ecff; background: #16123a; border: 1px solid #39e6ff;
+    .box { font: 14px system-ui, sans-serif; color: ${colors.text}; background: ${colors.surface}; border: 1px solid ${colors.accent};
       border-radius: 8px; box-shadow: 0 8px 24px rgb(0 0 0 / 40%); padding: 4px; }
-    .head { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #aca3da; padding: 4px 8px; }
+    .head { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: ${colors.textMuted}; padding: 4px 8px; }
     button { display: block; width: 100%; box-sizing: border-box; text-align: left; font: inherit; color: inherit;
       background: transparent; border: 0; border-radius: 6px; padding: 8px 10px; cursor: pointer; }
-    button:hover, button:focus-visible { background: #2a2460; outline: none; }`;
+    button:hover, button:focus-visible { background: color-mix(in srgb, ${colors.accent} 25%, ${colors.surface}); outline: none; }`;
   const box = document.createElement('div');
   box.className = 'box';
   box.setAttribute('role', 'listbox');
@@ -172,10 +172,11 @@ function showList(field: HTMLInputElement, names: string[]): void {
 }
 
 async function offerAccounts(field: HTMLInputElement): Promise<void> {
-  const names = await ask({ op: 'accounts' });
-  if (!Array.isArray(names) || names.length === 0) return;
+  // The names, and the colours of the theme in use (the main process knows it).
+  const accounts = parseAccountsReply(await ask({ op: 'accounts' }));
+  if (!accounts) return;
   if (document.activeElement !== field && list === null) return; // the person moved on
-  showList(field, names.filter((n): n is string => typeof n === 'string'));
+  showList(field, accounts);
 }
 
 function start(): void {

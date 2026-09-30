@@ -16,7 +16,7 @@ export interface LayersState {
   animate: boolean;
   /** The room's parallax, each axis -1 to 1: the layers' vanishing point follows it. */
   parallax: { x: number; y: number };
-  /** The theme's accent, for the layers' outline (#rrggbb). */
+  /** The theme's accent, for the layers' outline (#rrggbb); '' when none was given: the outline then takes the page's own text colour. */
   accent: string;
 }
 
@@ -44,7 +44,8 @@ export function parseLayersState(raw: unknown): LayersState | null {
   if (typeof r['on'] !== 'boolean' || typeof r['animate'] !== 'boolean' || !p || !isNum(p['x']) || !isNum(p['y'])) {
     return null;
   }
-  const accent = typeof r['accent'] === 'string' && /^#[0-9a-f]{6}$/i.test(r['accent']) ? r['accent'] : '#39e6ff';
+  // Every colour comes from the theme in use (ARCHITECTURE.md section 9): there is no colour of this file's own to fall back on.
+  const accent = typeof r['accent'] === 'string' && /^#[0-9a-f]{6}$/i.test(r['accent']) ? r['accent'] : '';
   return { on: r['on'], animate: r['animate'], parallax: { x: p['x'], y: p['y'] }, accent };
 }
 

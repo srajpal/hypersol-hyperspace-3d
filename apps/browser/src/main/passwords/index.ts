@@ -1,7 +1,7 @@
 import type { IpcMainInvokeEvent, WebContents } from 'electron';
 import type { ShellCommand } from '../../shared/commands';
 import { originOf } from '../../shared/permissions';
-import { parsePagePasswordRequest, type PagePasswordRequest } from '../../shared/page-passwords';
+import { parsePagePasswordRequest, type PagePasswordRequest, type SignInListColors } from '../../shared/page-passwords';
 import { parsePasswordRequest, type PasswordOffer, type PasswordRequest } from '../../shared/passwords';
 import { GESTURE_EVENTS } from '../popups';
 import type { PasswordVault } from './vault';
@@ -17,6 +17,8 @@ export interface PasswordDeps {
   writeClipboard(text: string): void;
   /** Saved passwords changed (the Library refreshes). */
   onChange(): void;
+  /** The colours of the theme in use, for the list of sign-ins a page's preload draws. */
+  colors(): SignInListColors;
 }
 
 interface PendingOffer {
@@ -63,12 +65,12 @@ export class Passwords {
     if ('error' in parsed) return null;
     const origin = originOf(frame.url);
     const request = parsed.request;
-    if (!origin || this.deps.isPrivate(contents)) return request.op === 'accounts' ? [] : null;
+    if (!origin || this.deps.isPrivate(contents)) return null;
     try {
       return this.page(contents, origin, request);
     } catch (e) {
       console.warn(`Password request failed: ${e instanceof Error ? e.message : String(e)}`);
-      return request.op === 'accounts' ? [] : null;
+      return null;
     }
   }
 
@@ -98,8 +100,10 @@ export class Passwords {
         this.deps.send(contents, { type: 'password-offer', offer });
         return null;
       }
-      case 'accounts':
-        return this.vault.accounts(origin);
+      case 'accounts': {
+        const names = this.vault.accounts(origin);
+        return names.length === 0 ? null : { names, colors: this.deps.colors() };
+      }
       case 'fill': {
         const at = this.lastGesture.get(contents);
         if (at === undefined || Date.now() - at > FILL_GESTURE_MS) return null;
