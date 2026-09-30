@@ -11,8 +11,9 @@ import { configDefaults, defineConfig } from 'vitest/config';
  */
 const files = (...milestones: string[]) => milestones.map((m) => `tests/e2e/${m}.e2e.ts`);
 const PARTS: Record<string, string[]> = {
-  // HoloML pages in the viewer, its limits, the showroom, and Blockworld.
-  '2': files('m14', 'm15', 'm16', 'm17'),
+  // HoloML pages in the viewer, its limits, the showroom, and Blockworld,
+  // and the viewer's checks from the review of 2026-09-30.
+  '2': files('m14', 'm15', 'm16', 'm17', 'review-134-viewer'),
   // The sofa studio, Harbour Loft, and the sneaker store.
   '3': files('m18', 'm19', 'm20'),
   // The ocean tunnel: the slowest file drawn in software.
