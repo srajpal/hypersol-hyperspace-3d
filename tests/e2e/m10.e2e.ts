@@ -162,9 +162,12 @@ describe('L3: mute', () => {
       const page = await focusedPage(h);
       expect(await inPage<string>(h, 'play()', page)).toBe('running');
       await waitFor('the tab is audible', () => focusedTab(h), (t) => t.audible, 10_000);
-      // The card's speaker.
+      // The card's speaker. The wait looks at every tab, so that if the
+      // click lands elsewhere the failure says what happened to each (once
+      // on GitHub's Linux machines a new tab was in front afterwards;
+      // not seen again).
       await clickCard(h, tabId, 'audio');
-      await waitFor('muted', () => focusedTab(h), (t) => t.muted);
+      await waitFor('the sound tab muted and still in front', () => tabs(h), (all) => all.some((t) => t.id === tabId && t.focused && t.muted));
       expect(await h.app.evaluate(({ webContents }, id) => webContents.fromId(id)!.isAudioMuted(), page.id)).toBe(true);
       // The menu.
       await h.shell.click(BAR('menu'));

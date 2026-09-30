@@ -781,6 +781,10 @@ export class Room {
   // ---- Geometry for input and tests --------------------------------------
 
   private project(world: Vector3): Vec2 {
+    // Through the camera where it is now, not where it was last drawn: a
+    // frame after the camera moved has not always been drawn yet (a test
+    // asking right after a page filled the window read a leaning outline).
+    this.camera.updateMatrixWorld();
     const p = world.clone().project(this.camera);
     return { x: ((p.x + 1) / 2) * window.innerWidth, y: ((1 - p.y) / 2) * window.innerHeight };
   }
@@ -862,6 +866,16 @@ export class Room {
 
   private cardAt(x: number, y: number): { card: TabCard; part: CardPart } | null {
     if (!this.webgl) return null; // cards that are not drawn take no clicks
+    // The cards are hit where their world matrices say they are, and
+    // drawing a frame is what brings those up to date. While the WebGL
+    // context is lost no frame draws the room, so a card laid out since
+    // (the rail appearing, a scroll) was still hit at its old place: on
+    // GitHub's Linux machines, where the context is lost for a moment
+    // after the start, a click on a tab's speaker opened a new tab, the
+    // "+" card's place before the rail (review of 2026-09-30, check L3).
+    // So the matrices, the camera's too, are brought up to date here.
+    this.camera.updateMatrixWorld();
+    this.scene.updateMatrixWorld();
     const ndc = new Vector2((x / window.innerWidth) * 2 - 1, 1 - (y / window.innerHeight) * 2);
     this.raycaster.setFromCamera(ndc, this.camera);
     const meshes = [...this.cards.values()].map((c) => c.mesh).filter((m) => m.visible);
