@@ -20,6 +20,7 @@ import type { InspectOp, InspectReply, InspectRequest } from './inspect';
 import type { DownloadInfo, DownloadOp, DownloadReply, DownloadRequest } from './downloads';
 import type { PermissionKind, PermissionOp, PermissionPrompt, PermissionReply, PermissionRequest } from './permissions';
 import type { PasswordOffer, PasswordOp, PasswordReply, PasswordRequest } from './passwords';
+import type { SignInOp, SignInPrompt, SignInReply, SignInRequest } from './sign-in';
 import type { TabsOp, TabsReply, TabsRequest } from './tabs';
 
 /**
@@ -74,6 +75,10 @@ export type ShellCommand =
   | { type: 'permission-ended'; id: number }
   /** What a tab's page has been given access to (the in-use marker); [] clears it. */
   | { type: 'site-access'; webContentsId: number; kinds: PermissionKind[] }
+  /** A site or a proxy asks for a user name and password: show the sign-in prompt for its tab (shared/sign-in.ts). */
+  | { type: 'sign-in-prompt'; prompt: SignInPrompt }
+  /** A sign-in prompt is no longer wanted (answered, or the tab left the page or closed). */
+  | { type: 'sign-in-ended'; id: number }
   /** Offer to save or update a password for a tab (milestone 9). */
   | { type: 'password-offer'; offer: PasswordOffer }
   /** A tab's page started or stopped making sound (milestone 10). */
@@ -110,6 +115,8 @@ export interface ShellBridge {
   permissions<K extends PermissionOp>(request: Extract<PermissionRequest, { op: K }>): Promise<PermissionReply<K>>;
   /** Saved passwords: the Library tab and save offers (shared/passwords.ts). */
   passwords<K extends PasswordOp>(request: Extract<PasswordRequest, { op: K }>): Promise<PasswordReply<K>>;
+  /** HTTP sign-in: what was typed into a sign-in prompt, or its cancelling (shared/sign-in.ts). */
+  signIn<K extends SignInOp>(request: Extract<SignInRequest, { op: K }>): Promise<SignInReply<K>>;
   /** A closed or sleeping tab's history into a new page (shared/tabs.ts). */
   tabs<K extends TabsOp>(request: Extract<TabsRequest, { op: K }>): Promise<TabsReply<K>>;
   /** Answer to prepare-close: saving is done (or has failed), the window may close. */

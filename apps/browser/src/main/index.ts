@@ -19,6 +19,8 @@ import { PAGE_PASSWORDS_CHANNEL } from '../shared/page-passwords';
 import { Passwords } from './passwords';
 import { PasswordVault, type Keychain } from './passwords/vault';
 import { Permissions } from './permissions';
+import { SIGN_IN_CHANNEL } from '../shared/sign-in';
+import { SignIns } from './sign-in';
 import { TabHistory } from './tab-history';
 import { TABS_CHANNEL } from '../shared/tabs';
 import { Downloads } from './downloads';
@@ -87,6 +89,7 @@ let storage: StorageService | null = null;
 let privacy: Privacy | null = null;
 let inspector: Inspector | null = null;
 let permissions: Permissions | null = null;
+let signIns: SignIns | null = null;
 let passwords: Passwords | null = null;
 let tabHistory: TabHistory | null = null;
 let holoml: HolomlPages | null = null;
@@ -325,6 +328,7 @@ if (!app.requestSingleInstanceLock()) {
     privacy?.trackTab(contents);
     inspector?.trackTab(contents);
     permissions?.trackTab(contents);
+    signIns?.trackTab(contents);
     passwords?.trackTab(contents);
     tabHistory?.track(contents);
     const guestId = contents.id;
@@ -538,6 +542,28 @@ if (!app.requestSingleInstanceLock()) {
     perms.protect(ses);
     perms.protect(privateSes);
     handleFromShell(PERMISSIONS_CHANNEL, (event, request) => perms.handle(event, request));
+
+    // HTTP sign-in (main/sign-in.ts): a site or a proxy that asks for a user
+    // name and password is answered through a prompt in the tab's shell.
+    // With no listener Electron cancels every such request.
+    const asking = new SignIns({
+      isTab: (contents) => {
+        const host = contents.hostWebContents;
+        return host !== null && host !== undefined && isShell(host);
+      },
+      send: sendToHost,
+    });
+    signIns = asking;
+    app.on('login', (event, contents, details, authInfo, callback) => {
+      event.preventDefault();
+      asking.ask(
+        contents,
+        { url: details.url, isProxy: authInfo.isProxy, host: authInfo.host, port: authInfo.port, realm: authInfo.realm, forNavigation: details.isRequestForNavigation },
+        callback,
+      );
+    });
+    handleFromShell(SIGN_IN_CHANNEL, (event, request) => asking.handle(event, request));
+    if (testLog) testLog.signInsWaiting = () => asking.waiting;
 
     // Saved passwords (milestone 9), encrypted with the system's keychain.
     const noKeychain = options.testNoKeychain;

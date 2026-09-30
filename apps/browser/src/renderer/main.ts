@@ -40,7 +40,7 @@ about.electron = bridge.versions.electron;
 about.chrome = bridge.versions.chrome;
 // Closing puts the focus back where it was; when that is gone (a menu entry), the page takes it.
 about.addEventListener('hs-about-closed', (e) => {
-  if (!(e as CustomEvent<boolean>).detail) app.focusedView?.focusContent();
+  if (!(e as CustomEvent<boolean>).detail) app.focusPage();
 });
 
 // Test runs only: the HoloML examples (or just the showroom) from local copies.
@@ -48,7 +48,7 @@ if (params.get('examplesBase')) setExamplesBase(params.get('examplesBase')!);
 if (params.get('showroomUrl')) setExampleUrl('showroom', params.get('showroomUrl')!);
 const examples = document.querySelector('hs-examples')!;
 examples.addEventListener('hs-examples-closed', (e) => {
-  if (!(e as CustomEvent<boolean>).detail) app.focusedView?.focusContent();
+  if (!(e as CustomEvent<boolean>).detail) app.focusPage();
 });
 
 const app = new App({
@@ -150,7 +150,7 @@ function testHooks() {
     prints: () => app.testPrints,
     prompts: () => {
       const p = document.querySelector('hs-prompts')!;
-      return { permission: p.permission, offer: p.offer };
+      return { permission: p.permission, offer: p.offer, signIn: p.signIn, signInArmed: p.signInArmed };
     },
     accessOf: (tabId: number) => app.accessOf(tabId),
     notice: () => document.querySelector('hs-notice')!.notice,

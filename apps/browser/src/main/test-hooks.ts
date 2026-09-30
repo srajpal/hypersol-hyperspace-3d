@@ -29,6 +29,8 @@ export interface TestLog {
    */
   leaveAsks: string[];
   leaveAnswer: 'leave' | 'stay';
+  /** How many sign-in prompts are showing or waiting, in all tabs (main/sign-in.ts). */
+  signInsWaiting?: () => number;
   /**
    * Permissions refused to a page that asked, without a prompt, by
    * Electron's names (main/permissions.ts). A refused request for full

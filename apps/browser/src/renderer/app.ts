@@ -4,7 +4,8 @@ import type { ShellBridge, ShellCommand, ShortcutName } from '../shared/commands
 import { DEFAULT_SETTINGS, defaults, SEARCH_ENGINES, searchUrlFor, type Settings } from '../shared/settings';
 import { bindings, describeCombo, holomlOnly, matchCombo } from '../shared/shortcuts';
 import { DataClient, PasswordsClient, PermissionsClient, PrivacyClient } from './data';
-import type { HsPrompts } from './hud/prompts';
+import type { HsPrompts, SignInAnswer } from './hud/prompts';
+import type { SignInPrompt } from '../shared/sign-in';
 import type { HsSitePanel } from './hud/site-panel';
 import type { HsNotice } from './hud/notice';
 import { originOf, type PermissionKind, type PermissionPrompt, type PromptAnswer } from '../shared/permissions';
@@ -133,6 +134,8 @@ export class App {
   private readonly permissionQueue = new Map<number, PermissionPrompt[]>();
   /** An offer to save a password, per tab. */
   private readonly offers = new Map<number, PasswordOffer>();
+  /** The sign-in prompt of each tab whose page is asked for a user name and password (the main process sends a tab one at a time). */
+  private readonly signIns = new Map<number, SignInPrompt>();
   /** What each tab's page was given (camera, microphone, location): the in-use marker. */
   private readonly access = new Map<number, PermissionKind[]>();
   /** Milestone 10: recently closed tabs, when each tab was last in front, and the power source. */
@@ -317,7 +320,17 @@ export class App {
     const view = this.views.get(id);
     if (!view) return;
     this.startLoad(id, view, url);
-    view.focusContent();
+    this.focusPage(view);
+  }
+
+  /**
+   * Puts the keyboard in a tab's page. While a sign-in prompt for the tab
+   * in front is up, the prompt keeps it: a page that has just asked for a
+   * password must not get what is typed next.
+   */
+  focusPage(view: TabView | undefined = this.focusedView): void {
+    if (view !== undefined && view === this.focusedView && this.options.prompts.signIn) this.options.prompts.focusSignIn();
+    else view?.focusContent();
   }
 
   /**
@@ -352,13 +365,13 @@ export class App {
    */
   private focusPageAfterEnter(view: TabView): void {
     if (!this.enterDown) {
-      view.focusContent();
+      this.focusPage(view);
       return;
     }
     const go = () => {
       window.clearTimeout(timer);
       document.removeEventListener('keyup', onUp, true);
-      if (this.focusedView === view) view.focusContent();
+      if (this.focusedView === view) this.focusPage(view);
     };
     const onUp = (e: KeyboardEvent) => {
       if (e.key === 'Enter') go();
@@ -389,6 +402,7 @@ export class App {
         this.layersOn.delete(id);
         this.permissionQueue.delete(id);
         this.offers.delete(id);
+        this.signIns.delete(id);
         this.access.delete(id);
         this.lastSeen.delete(id);
         this.typedLoads.delete(id);
@@ -430,7 +444,7 @@ export class App {
       if (!this.openPanelName) {
         const view = this.focusedView;
         if (view?.isStart) this.options.toolbar.focusAddress();
-        else view?.focusContent();
+        else this.focusPage(view);
       }
     }
     this.renderTabList();
@@ -486,7 +500,7 @@ export class App {
     tabSearch.addEventListener('hs-tab-pick', (e) => this.store.focus((e as CustomEvent<number>).detail));
     tabSearch.addEventListener('hs-tab-close', (e) => this.store.close((e as CustomEvent<number>).detail));
     tabSearch.addEventListener('hs-tab-search-closed', () => {
-      if (!this.openPanelName) this.focusedView?.focusContent();
+      if (!this.openPanelName) this.focusPage();
     });
     const minute = this.options.sleepMinuteMs ?? 60_000;
     window.setInterval(() => this.sleepUnused(), Math.min(30_000, Math.max(100, minute / 2)));
@@ -805,7 +819,7 @@ export class App {
     this.focusBeforePanel = null;
     if (before === this.options.toolbar) this.options.toolbar.focusAddress();
     else if (before instanceof HTMLElement && before.isConnected && before !== document.body) before.focus();
-    else this.focusedView?.focusContent();
+    else this.focusPage();
   }
 
   /** The HoloML examples (milestone 17), over everything; again to close. */
@@ -846,8 +860,20 @@ export class App {
     let free = false;
     document.addEventListener('keydown', (e) => e.key === 'Escape' && (free = !this.escapeTaken), true);
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && free && !e.defaultPrevented && this.options.toolbar.loading) this.focusedView?.stop();
+      if (e.key === 'Escape' && free && !e.defaultPrevented && (this.options.toolbar.loading || this.options.prompts.signIn)) this.stop();
     });
+  }
+
+  /**
+   * Stop (the button, or Escape with nothing else to close). While a
+   * sign-in prompt for the page in front is up, Stop is the prompt's
+   * Cancel: the request goes on without a password, and the page that
+   * arrives is the site's own "401" page. A prompt too new to take an
+   * answer stays (hud/arm.ts). Otherwise whatever is still loading stops.
+   */
+  private stop(): void {
+    if (this.options.prompts.signIn) this.options.prompts.cancelSignIn();
+    else this.focusedView?.stop();
   }
 
   /** Something is open that Escape closes. */
@@ -897,11 +923,18 @@ export class App {
 
   // ---- Permission prompts, password offers, notices (milestone 9) ----------
 
-  /** Shows the focused tab's first permission prompt and its password offer. */
+  /** Shows the focused tab's first permission prompt, its password offer, and its sign-in prompt. */
   private updatePrompts(): void {
     const id = this.store.focusedId;
     this.options.prompts.permission = this.permissionQueue.get(id)?.[0] ?? null;
     this.options.prompts.offer = this.offers.get(id) ?? null;
+    this.options.prompts.signIn = this.signIns.get(id) ?? null;
+  }
+
+  /** A sign-in prompt is over (answered here, or ended by the main process): it leaves its tab. */
+  private dropSignIn(id: number): void {
+    for (const [tabId, prompt] of this.signIns) if (prompt.id === id) this.signIns.delete(tabId);
+    this.updatePrompts();
   }
 
   private dropPrompt(id: number): void {
@@ -919,7 +952,22 @@ export class App {
       const { id, answer } = (e as CustomEvent<{ id: number; answer: PromptAnswer }>).detail;
       this.dropPrompt(id);
       void this.permissions.get({ op: 'answer', id, answer }).catch((err: unknown) => console.warn(String(err)));
-      this.focusedView?.focusContent();
+      this.focusPage();
+    });
+    // What was typed goes to the main process and on to Chromium; nothing of it is kept here.
+    prompts.addEventListener('hs-sign-in-answer', (e) => {
+      const { id, typed } = (e as CustomEvent<SignInAnswer>).detail;
+      this.dropSignIn(id);
+      const request = typed ? ({ op: 'answer', id, ...typed } as const) : ({ op: 'cancel', id } as const);
+      void this.options.bridge.signIn(request).then(
+        (reply) => {
+          if (!reply.ok) console.warn(reply.error);
+        },
+        (err: unknown) => console.warn(String(err)),
+      );
+      // Enter in the prompt signs in: the page takes the keyboard once the key is up.
+      const view = this.focusedView;
+      if (view) this.focusPageAfterEnter(view);
     });
     prompts.addEventListener('hs-password-answer', (e) => {
       const { id, answer } = (e as CustomEvent<{ id: number; answer: OfferAnswer }>).detail;
@@ -932,7 +980,7 @@ export class App {
       for (const [tabId, offer] of this.offers) if (offer.id === id) this.offers.delete(tabId);
       this.updatePrompts();
     });
-    sitePanel.addEventListener('hs-site-closed', () => this.focusedView?.focusContent());
+    sitePanel.addEventListener('hs-site-closed', () => this.focusPage());
     notice.addEventListener('hs-notice-action', (e) => {
       const [action, id] = (e as CustomEvent<string>).detail.split(':');
       if (action === 'downloads') this.togglePanel('downloads');
@@ -1083,7 +1131,7 @@ export class App {
       // The tab find was running on: when the bar closes for a tab switch,
       // that is still the tab shown, not the one the switch goes to.
       this.views.get(this.shownFocus)?.stopFind();
-      this.focusedView?.focusContent();
+      this.focusPage();
     });
   }
 
@@ -1170,7 +1218,7 @@ export class App {
     t.addEventListener('hs-zoom', (e) => void this.zoom((e as CustomEvent<1 | -1 | 0>).detail));
     t.addEventListener('hs-instruments', () => void this.saveSettings({ instruments: !this.settings.instruments }));
     t.addEventListener('hs-layers', () => void this.toggleLayers());
-    t.addEventListener('hs-stop', () => this.focusedView?.stop());
+    t.addEventListener('hs-stop', () => this.stop());
     t.addEventListener('hs-text-view', () => {
       const view = this.focusedView;
       view?.setTextView(!view.textView);
@@ -1244,6 +1292,20 @@ export class App {
       }
       case 'permission-ended':
         this.dropPrompt(command.id);
+        break;
+      case 'sign-in-prompt': {
+        const tabId = this.tabForWebContents(command.prompt.webContentsId);
+        if (tabId === undefined) {
+          // No tab to ask in: the request is cancelled, not left waiting.
+          void this.options.bridge.signIn({ op: 'cancel', id: command.prompt.id }).catch(() => undefined);
+          break;
+        }
+        this.signIns.set(tabId, command.prompt);
+        this.updatePrompts();
+        break;
+      }
+      case 'sign-in-ended':
+        this.dropSignIn(command.id);
         break;
       case 'audio': {
         const tabId = this.tabForWebContents(command.webContentsId);
