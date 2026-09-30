@@ -52,8 +52,9 @@ until then, and the sneaker store, one shoe in ten colourways to walk
 among, turn over, and add to a cart. Milestone 21 adds water, sounds
 that come from a place, and the ocean tunnel, an aquarium to walk
 through with 30 fish swimming over and around you, and completes HoloML
-0.2. Then HoloML's documentation,
-privacy and data tools, and installers as 1.0. See [Progress](#progress),
+0.2. Milestone 22 documents HoloML: its specification, guides, and site.
+Then HoloML 0.3, privacy and data tools, and more of the 3D room;
+installers come last. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
 ## The story
@@ -197,9 +198,10 @@ Milestone 22, documentation for HoloML to recognised standards (being
 built). 23, HoloML 0.3: the features its check found missing, such as
 names for models and the language of text. 24, privacy and data tools:
 HTTPS-only browsing, per-site storage, and bookmark import and export.
-25 and 26, installers as 1.0 for Windows and Linux, then macOS. Later: free camera
-movement, pictures and 3D models lifted out of ordinary pages, mobile,
-and VR. The full roadmap is in [TODO.md](TODO.md).
+25, free camera movement around the room. 26, pictures and 3D models
+lifted out of ordinary pages. 27, polish. Last, 28 and 29, installers as
+1.0 for Windows and Linux, then macOS. Later: mobile, and VR. The full
+roadmap is in [TODO.md](TODO.md).
 
 ## Progress
 
@@ -224,6 +226,7 @@ Harbour Loft, a flat to tour, with panels of text, doors and lamps to
 click, places, a sky, and a floor plan. Milestone 20 adds loading by
 area and the sneaker store. Milestone 21 adds water, sounds from a
 place, and the ocean tunnel, an aquarium, and completes HoloML 0.2.
+Milestone 22 documents HoloML, with its specification, guides, and site.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
@@ -235,6 +238,10 @@ own repository so it stays independent and reusable:
 Versions 0.1 and 0.2 are written down there (SPEC.md), with a parser, a
 checker, and sample pages; 0.2 grew with the example sites and is
 released as [v0.2.0](https://github.com/srajpal/holoml/releases/tag/v0.2.0).
+Its documentation, the specification with tutorials, how-to guides,
+reference pages, and explanation, is published at
+https://srajpal.github.io/holoml/ (milestone 22), and the HoloML
+examples section links to the specification there.
 HoloML files use the extension `.holoml`. This browser
 shows HoloML pages (milestone 14): open a `.holoml` address, or a file
 with Ctrl+O, and walk or orbit around the scene. A page's size, models,
@@ -281,7 +288,7 @@ Three.js (with its glTF loader, for HoloML pages), Lit, SQLite through
 Node's built-in node:sqlite, and Ghostery's open-source ad-blocking
 engine with open filter lists; Vite and electron-vite to build; Vitest
 and Playwright to test.
-Planned, not yet installed: electron-builder for installers (milestones 25 and 26).
+Planned, not yet installed: electron-builder for installers (milestones 28 and 29).
 Reasons for each choice are in ARCHITECTURE.md.
 
 Known limitations: Electron ships no DRM module, so video from Netflix

@@ -259,3 +259,19 @@ them, and the nearest come to eat; click a fish to read about it.
 ![The great white shark behind the glass, and the board by the tunnel with its name and a few lines about it; the light from the waves on the sand](screenshots/m21/62-aquarium-shark.png)
 
 ![Feeding: flakes falling from the surface, two mackerel at them, and more fish coming](screenshots/m21/63-aquarium-feeding.png)
+
+**Milestone 22: HoloML's documentation** (built 2026-09-29).
+HoloML documented to recognised standards: its specification in the
+form of W3C specifications, with its grammar in ABNF and RELAX NG and
+its scene API in Web IDL, and guides organised as tutorials, how-to
+guides, reference, and explanation, published as a site with GitHub
+Pages. The HoloML examples section links to the published
+specification. Found while taking these pictures: the layers view drew
+a very tall page blank below its bar; a section too large to lift now
+stays flat and draws.
+
+![HoloML's site in the browser: the example sites as cards, with their pictures](screenshots/m22/64-holoml-docs.png)
+
+![The HoloML 0.2 specification in the browser, in the layers view: its title, status, and abstract](screenshots/m22/65-holoml-spec.png)
+
+![A how-to guide: hanging a door on a hinge, with its HoloML coloured](screenshots/m22/66-holoml-guide.png)

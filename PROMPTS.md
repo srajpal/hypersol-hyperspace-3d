@@ -1458,3 +1458,27 @@ documents in the holoml repository.
 ```text
 Use the recommendations and start the build
 ```
+
+## 129 — 2026-09-29 · Claude Opus 5.5, max effort
+
+The first line answers the agent's question whether to turn on Auto-fix
+for holoml pull request #20's automatic builds: yes. The rest is new.
+
+```text
+Yes, turn on auto-fix.
+Also move milestones 25 and 26 to the end, we are not ready for builds.
+Should we mark these as experimental? Investigate.
+```
+
+## 130 — 2026-09-29 · Claude Opus 5.5, max effort
+
+GitHub's notice on both repositories, quoted in the prompt: the main
+branch is not protected (from force pushing or deletion, or by status
+checks required before merging).
+
+```text
+Please fix this issue with the repos: "Your main branch isn't protected.
+Protect this branch from force pushing or deletion, or require status
+checks before merging. View documentation." You have my permission to
+modify.
+```

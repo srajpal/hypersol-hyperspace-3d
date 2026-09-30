@@ -155,7 +155,7 @@ see .github/workflows/ci.yml; macOS not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
 - Toolchain: Node 22.13 or newer; pnpm 12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 273 tests passed on 2026-09-29)
+- Unit: `pnpm test` (Vitest; 289 tests passed on 2026-09-29)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
   against it (about sixteen minutes; 278 checks in the full run on
@@ -347,8 +347,21 @@ milestone; the current milestone's checks are defined in TODO.md):
   reduced motion, the frame rate (logged in software), no frames behind
   another tab, and the page's memory over two minutes. X1 is holoml's
   own tests; X10 (the published site) is checked by hand.
-- Later milestones add: HoloML's documentation (22), HoloML 0.3 (23),
-  privacy and data tools (24), and installers (25 and 26).
+- Milestone 22 checks Y1 to Y10 (TODO.md): HoloML's documentation. Most
+  are holoml's own tests (the specification's form, its grammar, its
+  Web IDL, the guides' examples, the reference pages, and the site's
+  links, headings, pictures' text, keyboard access, and contrast); in
+  this repository, apps/browser/src/viewer/api.test.ts holds the
+  viewer's scene API to the Web IDL, and T8 checks the examples
+  section's link to the published specification, and Y7b
+  (tests/e2e/m22.e2e.ts) that a page too tall to lift in one layer
+  stays flat and draws in the layers view. The screenshots add
+  the documentation in the browser, built from the holoml repository
+  beside this one. Y5 and Y9 (the published site) and Y6's screen
+  reader are checked by hand.
+- Later milestones add: HoloML 0.3 (23), privacy and data tools (24),
+  free camera (25), lift to 3D (26), polish (27), and installers (28
+  and 29).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

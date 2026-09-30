@@ -59,8 +59,10 @@ state; this is a summary.
   115; being built, prompt 128); 23 HoloML 0.3, the features its check
   found missing (prompt 128, Q4 a); 24 privacy and data tools
   (HTTPS-only, per-site storage, bookmark import and export: #24, #26,
-  #27); then installers as 1.0 (25 for Windows and Linux, 26 for
-  macOS), with mobile later (owner, prompt 67).
+  #27); then free camera (25), lift to 3D (26), and polish (27);
+  installers as 1.0 come last (28 for Windows and Linux, 29 for macOS;
+  moved to the end in prompt 129, as the browser is not ready for
+  builds), with mobile later (owner, prompt 67).
 - The logo direction is chosen (concept 4d in
   docs/branding/logo-concepts/); the real icons come with the installers.
 - HyperSol, the company founded in 2001, no longer exists. This is a
@@ -87,6 +89,32 @@ package in holoml, approved as Q3 a), the media type's registration
 template without registering it, the clarifications in 0.2's text (then
 v0.2.1 on the owner's go), and everything in the holoml repository. The
 features found missing go to milestone 23, "HoloML 0.3" (Q4 a).
+
+Built (2026-09-29), on branches not yet merged:
+
+- holoml `docs`: SPEC.md in W3C form with its index; spec/ (ABNF,
+  RELAX NG made from the checker's table, Web IDL); docs/ (2 tutorials,
+  12 how-to guides, 4 reference pages, 5 explanation pages, and a home
+  page); site/build.mjs (`pnpm site:build`) and the Pages workflow that
+  now publishes the site; `pnpm reference:update` for the reference
+  pages and the index; the packages at version 0.2.1. 362 tests.
+- The browser `m22-holoml-docs`: the examples section's link to the
+  published specification (T8), the copy of HoloML with its Web IDL
+  (synced from holoml's `docs` branch; sync again from main once
+  holoml's pull request is merged, and from v0.2.1 once tagged),
+  api.test.ts (the viewer's API against the Web IDL), and screenshots 64
+  to 66 (the documentation in the browser, built from the holoml folder
+  beside this one).
+- Found and fixed while taking the screenshots: the layers view drew a
+  very tall page blank below its bar (the specification's main section
+  is 52,000 pixels tall); a section too large to lift now stays flat
+  (check Y7b).
+- Still to do: the checks' runs and the automatic builds (TODO.md,
+  "Results so far"), the browser's pull request (holoml's is #20, with
+  Auto-fix on), the published site by hand (Y5, Y9), a screen reader by
+  hand (Y6, the owner's), the owner's acceptance, and the v0.2.1 tag on
+  the owner's go. The owner asked whether to mark the browser and HoloML
+  experimental (prompt 129); the findings are with the owner.
 
 ## Milestone 21, accepted (2026-09-29, prompts 121 to 125)
 
@@ -306,6 +334,11 @@ to this repository for rules and the prompt log.
 
 ## Decisions already made (do not reopen without the owner)
 
+- Both repositories protect main with two rulesets (prompt 130): no
+  deletion or force pushes, for everyone; and a pull request merges once
+  its CI checks pass, which the owner, as admin, may bypass (so the
+  agreed direct pushes to main still work). TODO.md, "Branch
+  protection", has the details.
 - Desktop first: Windows and Linux, then macOS; mobile later, as its own
   project. Mouse, keyboard, and touch.
 - Stack: Electron (the newest stable line; 44.4.5 on 2026-09-26),
@@ -339,12 +372,12 @@ to this repository for rules and the prompt log.
 
 ## Open items (need an owner decision when their milestone comes)
 
-- With the installers (milestone 25): Windows signing (Microsoft's
+- With the installers (milestone 28): Windows signing (Microsoft's
   Artifact Signing recommended, or SignPath Foundation), updates
   (automatic from GitHub Releases recommended), Linux formats (AppImage
   and .deb recommended), the Windows installer type (per user
   recommended).
-- With the macOS release (milestone 26): the Apple Developer Program for
+- With the macOS release (milestone 29): the Apple Developer Program for
   signing and notarization.
 - Product gaps noted in the 2026-09-24 review and not yet scheduled:
   bookmark import and onboarding, a touch equivalent for closing tabs.
@@ -371,5 +404,5 @@ to this repository for rules and the prompt log.
 
 - HoloML's packages are not published to npm; the browser keeps a copy
   (packages/holoml, pnpm holoml:sync).
-- No installers, signing, or updates (milestones 25 and 26).
+- No installers, signing, or updates (milestones 28 and 29).
 - No installers attached to releases: v0.9.0 is source only.

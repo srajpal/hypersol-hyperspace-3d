@@ -160,6 +160,15 @@
   they come to eat; click a fish, or its button in the outline, to read
   about it. Its fish are CC BY 4.0 and CC0 models, credited on its about
   page. It is in the HoloML examples section and the start panel.
+- HoloML's documentation (milestone 22): the HoloML examples section's
+  link to the specification opens its published page,
+  https://srajpal.github.io/holoml/spec/, part of HoloML's new site with
+  tutorials, how-to guides, reference pages, and explanation. The
+  viewer's scene API is checked against the specification's Web IDL.
+- Fixed: in the layers view, a very tall page (HoloML's specification is
+  52,000 pixels tall) drew nothing below its top bar, as its long main
+  section, lifted, was larger than the graphics card can draw as one
+  layer. A section or picture that large now stays flat.
 
 ## 0.9.0 — developer preview (2026-09-26)
 

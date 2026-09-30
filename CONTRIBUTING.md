@@ -74,6 +74,9 @@ Where things are: the app in `apps/browser` (main process, preloads, the
 - The browser adds no network calls, services, or telemetry beyond those
   listed in docs/privacy.md; propose any new one in an issue first.
 - AI agents working in this repository follow [AGENTS.md](AGENTS.md).
+- `main` is protected: it cannot be force-pushed or deleted, and a pull
+  request is merged once its automatic builds pass (Windows and Linux,
+  each in two parts).
 
 ## Licence of contributions
 
