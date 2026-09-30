@@ -62,7 +62,7 @@ function setup(saved: Record<string, SiteChoices> = {}) {
 const fromShell = (page: { hostWebContents: object }) => ({ sender: page.hostWebContents }) as never;
 
 describe('what a page may do without asking (review of 2026-09-30, M1)', () => {
-  // Every name Electron 44 knows besides the three allowed and the two asked about, and one it does not know.
+  // Every name Electron 44 knows besides the one allowed and the two asked about, and one it does not know.
   const REFUSED = [
     'ar',
     'automatic-fullscreen',
@@ -73,6 +73,7 @@ describe('what a page may do without asking (review of 2026-09-30, M1)', () => {
     'deprecated-sync-clipboard-read',
     'display-capture',
     'fileSystem',
+    'fullscreen',
     'geolocation-approximate',
     'hand-tracking',
     'hid',
@@ -91,6 +92,7 @@ describe('what a page may do without asking (review of 2026-09-30, M1)', () => {
     'payment-handler',
     'periodic-background-sync',
     'persistent-storage',
+    'pointerLock',
     'screen-wake-lock',
     'sensors',
     'serial',
@@ -108,14 +110,14 @@ describe('what a page may do without asking (review of 2026-09-30, M1)', () => {
     'a-name-from-a-later-chromium',
   ];
 
-  it('a page that only looks is told "no" for every name but the short list', () => {
+  it('a page that only looks is told "no" for every name but copying text', () => {
     const { looks } = setup();
     for (const name of REFUSED) expect(looks(name), name).toBe(false);
-    expect([...ALLOWED_WITHOUT_ASKING].sort()).toEqual(['clipboard-sanitized-write', 'fullscreen', 'pointerLock']);
+    expect([...ALLOWED_WITHOUT_ASKING]).toEqual(['clipboard-sanitized-write']);
     for (const name of ALLOWED_WITHOUT_ASKING) expect(looks(name), name).toBe(true);
   });
 
-  it('a page that asks is refused the same names at once, and given the short list without a prompt', () => {
+  it('a page that asks is refused the same names at once, full screen and the pointer among them, and may copy text without a prompt', () => {
     const { ask, sent } = setup();
     for (const name of REFUSED) expect(ask(name), name).toBe(false);
     for (const name of ALLOWED_WITHOUT_ASKING) expect(ask(name), name).toBe(true);
