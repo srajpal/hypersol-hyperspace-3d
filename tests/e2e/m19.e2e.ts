@@ -102,11 +102,23 @@ function press(h: Harness, page: string, which: 'Enter' | 'Space'): Promise<void
   );
 }
 
-/** Holds a key down in the page for a while (walking and turning need keys held). */
+/**
+ * Holds a key down in the page for a while (walking and turning need
+ * keys held): for so many milliseconds of the scene's own time (the
+ * viewer's `clock`), which its frames move on, each by at most 100 ms.
+ * The viewer walks and turns by that time, not by the wall's clock, so on
+ * a machine that draws slowly it has gone as far, and turned as far, when
+ * the key comes up as on a fast one; only the wait is longer.
+ */
 async function hold(h: Harness, page: string, keyCode: string, ms: number): Promise<void> {
+  const clock = () => holo<number>(h, 'window.__holoml.clock', page);
+  const from = await clock();
   await key(h, page, keyCode, 'keyDown');
-  await sleep(ms);
-  await key(h, page, keyCode, 'keyUp');
+  try {
+    await waitFor(`${ms} ms of the scene's time with ${keyCode} held (from ${from} ms)`, clock, (t) => t >= from + ms, (await sceneWait(h, ms)) * 2 + 10_000);
+  } finally {
+    await key(h, page, keyCode, 'keyUp');
+  }
 }
 
 /** The page's own pixels as drawn: the average colour in a square around each point (page pixels; `half` each way). */
@@ -594,7 +606,7 @@ describe('V6 and V7: the sky and the floor plan', () => {
     await hold(h, PAGE, 'W', 900);
     const walked = await waitFor('walked', plan, (p) => p.marker.y < 0.7 - 0.08);
     expect(walked.marker.x).toBeCloseTo(0.5, 2);
-    // Turning right: the marker turns clockwise.
+    // Turning right, for half a second of the scene's time: the marker turns clockwise, by less than a quarter turn.
     await hold(h, PAGE, 'Right', 500);
     const turned = await waitFor('turned', plan, (p) => p.marker.angle > 20);
     expect(turned.marker.angle).toBeLessThan(90);
@@ -680,14 +692,20 @@ describe('V8 to V10: Harbour Loft', () => {
   });
   afterAll(async () => h?.close());
 
-  it('V8 ready within 5 s with everything loaded; walls and doors stop the walker; every door and lamp works; the terrace and back; the booking page', async () => {
+  it('V8 the flat is ready within 5 s (with a graphics card)', async (ctx) => {
+    // Within 5 s with a graphics card; drawn in software (GitHub's machines), the time is measured and logged,
+    // and the check is skipped, not passed (owner, prompts 59, 95, and 98 Q5 a).
     const software = await softwareRenderer(h);
-    // Within 5 s with a graphics card; drawn in software (GitHub's machines), logged (owner, prompts 59, 95, and 98 Q5 a).
-    if (software) console.log(`V8: ready in ${loadMs} ms; the 5-second budget not checked: drawing in software (${software})`);
-    else {
-      console.log(`V8: ready in ${loadMs} ms`);
-      expect(loadMs).toBeLessThan(5000);
+    if (software) {
+      console.log(`V8: ready in ${loadMs} ms; the 5-second budget not checked: drawing in software (${software})`);
+      ctx.skip(`the 5-second budget is for graphics hardware; drawing in software (${software})`);
     }
+    console.log(`V8: ready in ${loadMs} ms`);
+    expect(loadMs).toBeGreaterThan(0);
+    expect(loadMs).toBeLessThan(5000);
+  });
+
+  it('V8 ready with everything loaded; walls and doors stop the walker; every door and lamp works; the terrace and back; the booking page', async () => {
     expect(await holo<unknown[]>(h, 'window.__holoml.problems', LOFT)).toEqual([]);
     expect(await holo<unknown[]>(h, 'window.__holoml.leftOut()', LOFT)).toEqual([]);
     const source = await (await fetch(url(PAGE))).text();

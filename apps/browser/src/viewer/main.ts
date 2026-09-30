@@ -21,7 +21,7 @@ import { HoloParseError, check, parse, type ElementNode, type Problem } from '@h
 import { HolomlView } from './scene';
 import { installApi } from './api';
 import { LIMITS } from './budget';
-import { attr, ownProblems, text } from './values';
+import { attr, ownProblems, text, trimSpace } from './values';
 import { VERSIONS, atLeast, pageVersion } from './versions';
 
 interface ViewerState {
@@ -113,19 +113,15 @@ function sceneFacts(): unknown {
 
 /**
  * What every HoloML page has on its window, in every run (review 134,
- * D12): only what the instrument panel's Scene part uses. `scene` is
- * read-only. `select` and `pick` act, on the page's own scene alone (they
- * outline a thing, and make the next click choose one): the main process
- * calls them by name in the page (main/inspect), so they stay here until
- * it sends them over the private line instead, which takes them already
- * ("select:<index>", "pick-on", "pick-off" on the command channel). The
- * object is frozen: a page's script cannot put its own answers in their
- * place.
+ * D12): only what the instrument panel's Scene part reads, `scene`,
+ * which is read-only. Nothing here acts: choosing a thing and picking
+ * come from the main process over the private line ("select:<index>",
+ * "pick-on", "pick-off" on the command channel; main/inspect sends them).
+ * The object is frozen: a page's script cannot put its own answers in
+ * their place.
  */
 const inspector = {
   scene: sceneFacts,
-  select: (index: number) => state.view?.select(index),
-  pick: (on: boolean) => state.view?.setPicking(on),
 };
 
 /**
@@ -148,6 +144,10 @@ const testHooks = {
   },
   get frames() {
     return state.view?.frames ?? 0;
+  },
+  /** The scene's own time, in milliseconds: what its frames have moved it on by (walking and turning are measured against it). */
+  get clock() {
+    return state.view?.clock ?? 0;
   },
   get busy() {
     return state.view?.busy ?? false;
@@ -497,13 +497,13 @@ function runScripts(root: ElementNode, problems: Problem[]): void {
     const at = `line ${el.start.line}, column ${el.start.column}`;
     const src = attr(el, 'src');
     const flawed = ownProblems(el, problems).length > 0;
-    if (!src || flawed || el.children.some((c) => c.type === 'text' && c.value.trim() !== '')) {
+    if (!src || flawed || el.children.some((c) => c.type === 'text' && trimSpace(c.value) !== '')) {
       console.warn(`HoloML: the script at ${at} was not run: a script is a file named in "src", with nothing written inside it.`);
       continue;
     }
     let url: URL;
     try {
-      url = new URL(src.trim(), document.baseURI);
+      url = new URL(trimSpace(src), document.baseURI);
     } catch {
       console.warn(`HoloML: the script "${src}" was not run: its address is not valid.`);
       continue;
@@ -563,7 +563,8 @@ function setTextView(on: boolean): void {
 function showSyntaxError(e: HoloParseError, source: string): void {
   const line = source.split(/\r\n|\r|\n/)[e.position.line - 1] ?? '';
   const caret = `${' '.repeat(Math.max(0, e.position.column - 1))}^`;
-  showCard('This HoloML page has a mistake', [e.detail, `Line ${e.position.line}, column ${e.position.column}:`], `${line}\n${caret}`);
+  // The error's code with its place, as a reader reports both (SPEC.md section 5, "Syntax errors").
+  showCard('This HoloML page has a mistake', [e.detail, `Line ${e.position.line}, column ${e.position.column} (${e.code}):`], `${line}\n${caret}`);
 }
 
 function showCard(heading: string, lines: string[], code: string | null): void {

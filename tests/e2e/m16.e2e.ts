@@ -88,6 +88,9 @@ async function tabTo(h: Harness, page: string, text: string): Promise<void> {
 
 describe('S2 to S7: the showroom', () => {
   let h: Harness;
+  /** How long the hall took to load whole (S2), and how many frames it drew in a second while its turntable turned (S6): measured by those checks, and held to their budgets by the ones after them. */
+  let hallLoadMs: number | null = null;
+  let hallFrames: number | null = null;
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'), { showroomUrl: url('index.holoml') });
     await waitForPage(h, 'link-a.html');
@@ -109,18 +112,14 @@ describe('S2 to S7: the showroom', () => {
     expect(Math.abs(left - quad[0]!.x)).toBeLessThan(2);
   });
 
-  it('S2 the hall loads whole within 5 seconds, inside the budget', async () => {
+  it('S2 the hall loads whole, inside the budget of what a page may hold', async () => {
     const PAGE = 'index.holoml';
-    const software = await softwareRenderer(h);
     const started = Date.now();
     await shellCall(h, 'showUrl', url(`${PAGE}?s2`));
     await waitForPage(h, `${PAGE}?s2`);
-    await ready(h, `${PAGE}?s2`, software ? 60_000 : 5000);
-    const loadMs = Date.now() - started;
-    // Within 5 s with a graphics card. Drawn in software (GitHub's machines), the time is
-    // logged, not checked, as the frame-rate budgets are (owner, prompts 59 and 95).
-    if (software) console.log(`S2: loaded in ${loadMs} ms; the 5-second budget not checked: drawing in software (${software})`);
-    else expect(loadMs).toBeLessThan(5000);
+    // However long it takes on this machine: within 5 seconds is the next check's.
+    await ready(h, `${PAGE}?s2`, 60_000);
+    hallLoadMs = Date.now() - started;
     const states = (await models(h, PAGE)).map((m) => m.state);
     expect(states.length).toBe(11); // the hall, five plinths, five cars
     expect(states.every((s) => s === 'loaded'), JSON.stringify(states)).toBe(true);
@@ -133,6 +132,19 @@ describe('S2 to S7: the showroom', () => {
     expect(totals.triangles).toBeGreaterThan(5000);
     expect(totals.triangles).toBeLessThan(200_000);
     expect(await holo<string>(h, 'document.title', PAGE)).toBe('HoloML showroom');
+  });
+
+  it('S2 the hall loads within 5 seconds (with a graphics card)', async (ctx) => {
+    expect(hallLoadMs, 'the check before this one timed the load').not.toBeNull();
+    // Within 5 s with a graphics card. Drawn in software (GitHub's machines), the time is measured and
+    // logged, and the check is skipped, not passed, as the frame-rate budgets are (owner, prompts 59 and 95).
+    const software = await softwareRenderer(h);
+    if (software) {
+      console.log(`S2: loaded in ${hallLoadMs} ms; the 5-second budget not checked: drawing in software (${software})`);
+      ctx.skip(`the 5-second budget is for graphics hardware; drawing in software (${software})`);
+    }
+    console.log(`S2: loaded in ${hallLoadMs} ms`);
+    expect(hallLoadMs!).toBeLessThan(5000);
   });
 
   it('S4 a car in the hall opens its page; its colours and the way back work', async () => {
@@ -222,16 +234,27 @@ describe('S2 to S7: the showroom', () => {
     const f1 = await holo<number>(h, 'window.__holoml.frames', HALL);
     const r1 = (await holo<{ rotation: Vec }>(h, 'window.__holoml.object("turntable")', HALL))!.rotation[1];
     await sleep(1000);
-    // With a graphics card, at least 10 frames a second; drawn in software
-    // (GitHub's machines), only that it keeps drawing, as C9 and G9 do.
-    const software = await softwareRenderer(h);
-    expect(await holo<number>(h, 'window.__holoml.frames', HALL)).toBeGreaterThan(software ? f1 : f1 + 10);
+    // It keeps drawing, on any machine; how many frames a second is the next check's.
+    hallFrames = (await holo<number>(h, 'window.__holoml.frames', HALL)) - f1;
+    expect(hallFrames).toBeGreaterThan(0);
     expect((await holo<{ rotation: Vec }>(h, 'window.__holoml.object("turntable")', HALL))!.rotation[1]).not.toBe(r1);
     const CAR = 'pippet.holoml';
     await open(h, CAR);
     const f2 = await sceneStill(h, CAR, await sceneWait(h, 10_000));
     await sleep(1500);
     expect(await holo<number>(h, 'window.__holoml.frames', CAR)).toBe(f2);
+  });
+
+  it('S6 the hall draws more than 10 frames a second while its turntable turns (with a graphics card)', async (ctx) => {
+    expect(hallFrames, 'the check before this one counted the frames').not.toBeNull();
+    // With a graphics card, more than 10 frames in the second; drawn in software (GitHub's machines),
+    // measured and logged, and the check is skipped, not passed, as C9 and G9 are.
+    const software = await softwareRenderer(h);
+    if (software) {
+      console.log(`S6: ${hallFrames} frames in a second; the frame-rate budget not checked: drawing in software (${software})`);
+      ctx.skip(`the frame-rate budget is for graphics hardware; drawing in software (${software})`);
+    }
+    expect(hallFrames!).toBeGreaterThan(10);
   });
 
   it('S5 with reduced motion, the turntable stands still', async () => {

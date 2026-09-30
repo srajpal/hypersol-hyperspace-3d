@@ -1,0 +1,28 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML: the scene API as the specification says</title>
+  </head>
+  <!-- Review 134 (SPEC.md section 10): a page for the checks of the scene API in the running app. A model
+       in a link in a group (its parent is the group), a label (a kind without a rotation), a sound from a
+       place, and a panel in a link, whose every paragraph the text view shows. Nothing moves by itself. -->
+  <scene background="#1c2030">
+    <viewpoint position="0 1.6 6" look-at="0 1.2 0" />
+    <light type="ambient" intensity="0.8" />
+    <group id="stand" position="-2.5 0 0">
+      <a href="second.holoml">
+        <model id="car" src="models/placeholder-car.gltf" />
+      </a>
+    </group>
+    <label id="sign" position="0 2.6 0">A sign</label>
+    <sound id="tone" src="gen/tone.wav" position="0 1 0" range="12" />
+    <a href="second.holoml#top">
+      <panel id="notice" position="2.5 1.4 0" width="1.6" size="0.09" color="#1b1b1b" background="#f5f2eb">
+        Open the second page
+
+        The second paragraph of a panel in a link.
+
+        And its third.
+      </panel>
+    </a>
+  </scene>
+</holoml>

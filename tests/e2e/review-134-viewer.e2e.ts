@@ -486,8 +486,11 @@ describe('review 134: the HoloML viewer', () => {
       PAGE,
     );
     expect(forged).toBe('object');
-    // The instrument panel's picking and choosing can come over the private line, as the main process would send
-    // them, so that nothing on the window need act: picking on, a thing chosen, picking off.
+    // Nothing on the window acts for the instrument panel any more, in a test run or a normal one (viewer/main.test.ts
+    // holds the normal run's window to `scene` alone).
+    expect(await inPage<string[]>(h, '[typeof window.__holoml.select, typeof window.__holoml.pick]', PAGE)).toEqual(['undefined', 'undefined']);
+    // The instrument panel's picking and choosing come over the private line, as the main process sends them
+    // (main/inspect; m15's R9 checks them from the panel itself): picking on, a thing chosen, picking off.
     const send = (command: string) =>
       h.app.evaluate(
         ({ webContents }, { page, command }) => {
@@ -511,5 +514,278 @@ describe('review 134: the HoloML viewer', () => {
     await waitFor('picking on again', scene, (s) => s.picking);
     expect((await scene()).selected).toBe(-1);
     await send('pick-off');
+  });
+});
+
+/**
+ * The viewer does what the third edition of HoloML 0.2's specification
+ * says (2026-09-30; the language's own review settled each of these).
+ * The scene API's part is also held by unit tests (viewer/api.test.ts),
+ * the values' by viewer/values.test.ts, and the extensions' by
+ * viewer/budget.test.ts; these check the running app.
+ */
+describe("review 134: the viewer and the specification's third edition", () => {
+  const API = 'review-134-api.holoml';
+
+  it("Sp a thing in a page's module: setting a member its kind does not have is no error and changes nothing; the arrays it gives are frozen; its parent is its group through a link; a sound's place cannot be set to null", async () => {
+    await openPage(API);
+    type Out = { errors: string[]; after: [string, string, boolean]; parent: string | null; frozen: boolean[]; changed: string; nulled: string; place: Vec; position: Vec };
+    // As a page's script runs it: a module's code is strict, where setting a member of a frozen object throws.
+    const out = await inPage<Out>(
+      h,
+      `(() => {
+        'use strict';
+        const out = { errors: [] };
+        const sign = holoml.find('sign');
+        for (const name of ['rotation', 'scale', 'intensity', 'nonsense']) {
+          try { sign[name] = [0, 90, 0]; } catch (e) { out.errors.push(name + ': ' + e.name); }
+        }
+        out.after = [typeof sign.rotation, typeof sign.nonsense, Object.keys(sign).includes('nonsense')];
+        const car = holoml.find('car');
+        out.parent = car.parent ? car.parent.id : null;
+        const p = car.position;
+        const tone = holoml.find('tone');
+        out.frozen = [Object.isFrozen(p), Object.isFrozen(car.rotation), Object.isFrozen(car.scale), Object.isFrozen(holoml.viewer.position), Object.isFrozen(holoml.viewer.direction), Object.isFrozen(tone.position)];
+        try { p[0] = 9; out.changed = 'no error'; } catch (e) { out.changed = e.name; }
+        try { tone.position = null; out.nulled = 'no error'; } catch (e) { out.nulled = e.name; }
+        out.place = tone.position;
+        // A member it has is set as ever, with a new array.
+        car.position = [0.5, 0, 0];
+        out.position = car.position;
+        return out;
+      })()`,
+      API,
+    );
+    expect(out.errors).toEqual([]);
+    expect(out.after).toEqual(['undefined', 'undefined', false]);
+    expect(out.parent).toBe('stand');
+    expect(out.frozen).toEqual([true, true, true, true, true, true]);
+    expect(out.changed).toBe('TypeError');
+    expect(out.nulled).toBe('TypeError');
+    expect(out.place).toEqual([0, 1, 0]);
+    expect(out.position).toEqual([0.5, 0, 0]);
+    // The label was not turned by the rotation it does not have.
+    expect((await holo<{ rotation: Vec }>(API, 'window.__holoml.object("sign")')).rotation).toEqual([0, 0, 0]);
+  });
+
+  it("Sp the frame event's dt is never more than 100, and one frame's usual time, 16, for the first frame and for the first after drawing stopped", async () => {
+    await openPage(API);
+    await still(API);
+    // Six frames heard by a script; the third takes a third of a second, as a slow frame does.
+    const six = () =>
+      inPage<number[]>(
+        h,
+        `new Promise((resolve) => {
+          const dts = [];
+          const stop = holoml.on('frame', (e) => {
+            dts.push(e.dt);
+            if (dts.length === 3) { const until = performance.now() + 350; while (performance.now() < until); }
+            if (dts.length === 6) { stop(); resolve(dts); }
+          });
+        })`,
+        API,
+      );
+    const first = await six();
+    expect(first[0], `the first frame of ${JSON.stringify(first)}`).toBe(16);
+    expect(first[3], `the frame after the slow one of ${JSON.stringify(first)}`).toBe(100);
+    for (const dt of first) {
+      expect(dt).toBeGreaterThan(0);
+      expect(dt).toBeLessThanOrEqual(100);
+    }
+    // Nobody listens any more: drawing stops. The next listener's first frame has nothing to measure from.
+    await still(API);
+    const again = await six();
+    expect(again[0], `the first frame after drawing stopped, of ${JSON.stringify(again)}`).toBe(16);
+    expect(Math.max(...again)).toBeLessThanOrEqual(100);
+    // The scene's own clock, which the checks of walking measure against, went on by what its frames did.
+    await still(API);
+    expect(await holo<number>(API, 'window.__holoml.clock')).toBeGreaterThanOrEqual([...first, ...again].reduce((a, b) => a + b, 0));
+  });
+
+  it('Sp holoml.add leaves out an animate and a sound that begins on a click, wherever they are in the markup, and the console says why; the rest is added', async () => {
+    await openPage(API);
+    type Added = { group: (string | null)[]; pair: (string | null)[]; found: Record<string, string | null> };
+    const added = await inPage<Added>(
+      h,
+      `(() => {
+        const group = holoml.add('<group id="g"><model id="m" src="models/spinner.gltf" /><animate target="#m" attribute="rotation" to="0 90 0" duration="1s" /><sound id="rung" src="gen/tone.wav" begin="click" trigger="#m" /><label id="kept">Kept</label><sound id="played" src="gen/tone.wav" /></group>');
+        const pair = holoml.add('<model id="bell" src="models/spinner.gltf" position="3 0 0" /><sound id="ring" src="gen/tone.wav" begin="click" trigger="#bell" />');
+        const found = {};
+        for (const id of ['g', 'm', 'kept', 'played', 'rung', 'bell', 'ring']) { const t = holoml.find(id); found[id] = t ? t.kind : null; }
+        return { group: group.map((t) => t.id), pair: pair.map((t) => t.id), found };
+      })()`,
+      API,
+    );
+    // One thing for each of the markup's own elements that was added.
+    expect(added.group).toEqual(['g']);
+    expect(added.pair).toEqual(['bell']);
+    expect(added.found).toEqual({ g: 'group', m: 'model', kept: 'label', played: 'sound', rung: null, bell: 'model', ring: null });
+    // The sounds left out were not built (and not fetched to wait for a click that would never play them); no click action was made.
+    const sounds = await holo<{ id: string | null }[]>(API, 'window.__holoml.sounds()');
+    expect(sounds.map((s) => s.id).sort()).toEqual(['played', 'tone']);
+    expect(await holo<unknown[]>(API, 'window.__holoml.actions()')).toEqual([]);
+    const said = (await consoleText()).split('\n').filter((l) => l.startsWith('HoloML: holoml.add:'));
+    expect(said.filter((l) => /^HoloML: holoml\.add: line 1, column \d+: <animate> left out: what a script adds, the script moves itself\.$/.test(l))).toHaveLength(1);
+    expect(said.filter((l) => /^HoloML: holoml\.add: line 1, column \d+: a <sound> that begins on a click left out: what a script adds, the script plays itself, with play\(\)\.$/.test(l))).toHaveLength(2);
+    // Nothing was said of a limit: none was reached.
+    expect(said.filter((l) => /limit/.test(l))).toEqual([]);
+    await waitFor('the added models loaded', () => holo<{ src: string; state: string }[]>(API, 'window.__holoml.models()'), (m) => m.filter((x) => x.src === 'models/spinner.gltf' && x.state === 'loaded').length === 2, await sceneWait(h, 10_000));
+  });
+
+  it('Sp the text view shows every paragraph of a panel that is inside a link, after the link that has its first', async () => {
+    await openPage(API);
+    // The link is named by the panel's first paragraph, as before.
+    expect(await holo<string[]>(API, 'window.__holoml.outline()')).toContain('a:Open the second page');
+    const item = await inPage<string[]>(
+      h,
+      `(() => {
+        const li = [...document.querySelectorAll('#holoml-outline li')].find((x) => x.querySelector('a') && x.querySelector('a').textContent === 'Open the second page');
+        return li ? [...li.children].map((c) => c.tagName.toLowerCase() + ':' + [...(c.tagName === 'A' ? [c] : c.children)].map((p) => p.textContent).join('|')) : [];
+      })()`,
+      API,
+    );
+    expect(item).toEqual(['a:Open the second page', 'div:The second paragraph of a panel in a link.|And its third.']);
+    await h.shell.click(TEXT_VIEW);
+    await waitFor('the text view', () => holo<boolean>(API, 'window.__holoml.textView'), (v) => v === true);
+    const text = await inPage<string>(h, 'document.getElementById("holoml-outline-nav").innerText', API);
+    for (const words of ['Open the second page', 'The second paragraph of a panel in a link.', 'And its third.', 'A sign']) expect(text).toContain(words);
+    // In the page's order: the panel's paragraphs one after another.
+    expect(text.indexOf('Open the second page')).toBeLessThan(text.indexOf('The second paragraph'));
+    expect(text.indexOf('The second paragraph')).toBeLessThan(text.indexOf('And its third.'));
+    await h.shell.click(TEXT_VIEW);
+    await waitFor('3D again', () => holo<boolean>(API, 'window.__holoml.textView'), (v) => v === false);
+    // A script that changes the panel's words changes them there too.
+    await inPage(h, `(holoml.find('notice').text = 'Open the second page\\n\\nOther words now.', true)`, API);
+    expect(await inPage<string>(h, 'document.querySelector("#holoml-outline .holoml-panel-words").innerText.trim()', API)).toBe('Other words now.');
+  });
+
+  it('Sp only the ambient lights in the scene now dim the surroundings and the sky: with all of them removed, both are at full, not dark', async () => {
+    const PAGE = 'review-134-ambient.holoml';
+    await openPage(PAGE);
+    await still(PAGE);
+    const around = async () => [(await holo<{ intensity: number }>(PAGE, 'window.__holoml.environment()')).intensity, (await holo<{ intensity: number }>(PAGE, 'window.__holoml.sky()')).intensity];
+    const both = (level: number) => (now: number[]) => now.every((v) => Math.abs(v - level) < 1e-6);
+    // As the page wrote them: 0.3 and 0.15 of the 0.6 that is full.
+    expect(await around()).toSatisfy(both(0.75));
+    // The group that holds one goes: that light counts no more.
+    await inPage(h, `(holoml.remove(holoml.find('lamps')), true)`, PAGE);
+    await waitFor('dimmer, by the one ambient light left', around, both(0.5), await sceneWait(h, 5000));
+    // The last one goes: at full, as a page without ambient lights is.
+    await inPage(h, `(holoml.find('soft').remove(), true)`, PAGE);
+    await waitFor('at full without ambient lights', around, both(1), await sceneWait(h, 5000));
+    await still(PAGE);
+    // Not dark: the mirror-like block shows the green panorama, brightly.
+    const p = (await holo<Point | null>(PAGE, 'window.__holoml.point("mirror")'))!;
+    const c = await colourAt(PAGE, p, 12);
+    expect(c.g, `the block's colour ${JSON.stringify(c)}`).toBeGreaterThan(c.r + 40);
+    expect(c.g).toBeGreaterThan(90);
+    // One a script adds counts, from then on.
+    await inPage(h, `(holoml.add('<light id="night" type="ambient" intensity="0.15" />'), true)`, PAGE);
+    await waitFor('dimmed by the light the script added', around, both(0.25), await sceneWait(h, 5000));
+    await inPage(h, `(holoml.find('night').intensity = 0.45, true)`, PAGE);
+    await waitFor('brighter as that light is', around, both(0.75), await sceneWait(h, 5000));
+  });
+
+  it('Sp a model whose file needs a glTF extension the viewer does not read is left out, with the reason, like any model left out; its file is not fetched again at each approach', async () => {
+    const PAGE = 'review-134-needs.holoml';
+    const WHY = 'it needs the glTF extension EXT_made_up, which this browser does not read';
+    await openPage(PAGE);
+    type Model = { src: string; state: string; reason?: string };
+    const models = async () => (await holo<{ models: Model[] }>(PAGE, 'window.__holoml.scene()')).models;
+    const all = await models();
+    expect(all.find((m) => m.src === 'review-134-needs.gltf')).toMatchObject({ state: 'left-out', reason: WHY });
+    // The rest of the scene shows.
+    expect(all.find((m) => m.src.endsWith('stone.gltf'))).toMatchObject({ state: 'loaded' });
+    // Marked where it would be, in the notice, and in the console.
+    expect(await holo<boolean>(PAGE, 'window.__holoml.object("needs").marked')).toBe(true);
+    expect(await leftOut(PAGE)).toEqual([{ what: 'review-134-needs.gltf', why: WHY }]);
+    expect(await inPage<string>(h, `document.querySelector('[data-testid="holoml-notice"]').textContent`, PAGE)).toContain(`review-134-needs.gltf: ${WHY}`);
+    expect(await consoleText()).toContain(`HoloML: the model "review-134-needs.gltf" was left out: ${WHY}.`);
+    // In a group that loads by area: left out at each approach, and fetched once (it would be left out again).
+    const FAR = '/holoml/review-134-needs.gltf?far';
+    expect(hits(FAR)).toBe(0);
+    for (let approach = 1; approach <= 3; approach++) {
+      await moveTo(PAGE, [0, 1.6, -25]);
+      const far = await waitFor(`approach ${approach}: the far model left out`, () => area(PAGE, 'far'), (a) => a.in && a.models[0]!.state === 'left-out', await sceneWait(h, 10_000));
+      expect(far.models[0]!.reason).toBe(WHY);
+      await moveTo(PAGE, [0, 1.6, 5]);
+      await waitFor('away again', () => area(PAGE, 'far'), (a) => !a.in && a.models[0]!.state === 'waiting', await sceneWait(h, 10_000));
+    }
+    expect(hits(FAR)).toBe(1);
+  });
+
+  it('Sp a material that takes no light is changed in its colour, opacity, and picture by material, by an option, and by a script; the console does not say its name was not found', async () => {
+    const PAGE = 'review-134-unlit.holoml';
+    await openPage(PAGE);
+    type Material = { color: string; metalness: number | null; roughness: number | null; opacity: number; map: string | null; repeat: [number, number] | null };
+    const signs = async () => (await holo<{ materials: Record<string, Material | undefined> }[]>(PAGE, 'window.__holoml.models()')).map((m) => m.materials['Sign']);
+    const OWN = { color: '#ffffff', metalness: null, roughness: null, opacity: 1, map: null, repeat: null };
+    const [plain, changed, pictured, chosen] = await signs();
+    // As the file has it: white, with no metalness or roughness to tell of.
+    expect(plain).toEqual(OWN);
+    // A material element: its colour and opacity are taken; metalness and roughness are nothing to it.
+    expect(changed).toEqual({ ...OWN, color: '#ff0000', opacity: 0.5 });
+    // Its picture, tiled.
+    expect(pictured).toEqual({ ...OWN, map: url('gen/stripes.png'), repeat: [3, 2] });
+    expect(chosen).toEqual(OWN);
+    // On the page: the changed box is red, the plain one is not.
+    await still(PAGE);
+    const at = async (id: string) => colourAt(PAGE, (await holo<Point | null>(PAGE, `window.__holoml.point(${JSON.stringify(id)})`))!, 6);
+    const [red, white] = [await at('changed'), await at('plain')];
+    expect(red.r, `the changed box ${JSON.stringify(red)}`).toBeGreaterThan(red.g + 60);
+    expect(Math.abs(white.r - white.g), `the plain box ${JSON.stringify(white)}`).toBeLessThan(20);
+    expect(white.g).toBeGreaterThan(120);
+    // A choice's option.
+    await inPage(h, `(holoml.find('finish').value = 'blue', true)`, PAGE);
+    await waitFor('blue on the chosen box', signs, (s) => s[3]?.color === '#0000ff', await sceneWait(h, 5000));
+    expect((await signs())[3]).toEqual({ ...OWN, color: '#0000ff', opacity: 0.75 });
+    // A script's material(): the box was drawn as an instance until now, and gets its own copy.
+    await inPage(h, `(holoml.find('plain').material('Sign', { color: '#00ff00', opacity: 0.75, metalness: 1, roughness: 0 }), true)`, PAGE);
+    expect((await signs())[0]).toEqual({ ...OWN, color: '#00ff00', opacity: 0.75 });
+    // The others keep theirs.
+    expect((await signs())[1]).toEqual({ ...OWN, color: '#ff0000', opacity: 0.5 });
+    await still(PAGE);
+    const green = await at('plain');
+    expect(green.g, `the box a script changed ${JSON.stringify(green)}`).toBeGreaterThan(green.r + 30);
+    const text = await consoleText();
+    expect(text).not.toMatch(/review-134-unlit\.gltf" has no material named/);
+    expect(text).not.toMatch(/changes the material "Sign", which the model/);
+    expect(await leftOut(PAGE)).toEqual([]);
+  });
+
+  it("Sp the card of a syntax error shows the error's code with its message and its place", async () => {
+    const PAGE = 'mistake.holoml';
+    await openPage(PAGE);
+    expect(await holo(PAGE, 'window.__holoml.error')).toMatchObject({ code: 'unclosed-value', line: 5, column: 21 });
+    const card = await inPage<string>(h, `document.querySelector('[data-testid="holoml-error"]').innerText`, PAGE);
+    expect(card).toContain('The value of "background" is never closed with "');
+    expect(card).toContain('Line 5, column 21 (unclosed-value):');
+    expect(card).toContain('<scene background="#000>');
+  });
+
+  it("Sp a 0.1 page's screen text is not shown, as its slider is not, and the console says that neither is a 0.1 element", async () => {
+    const PAGE = 'review-134-hud-01.holoml';
+    await openPage(PAGE);
+    expect(await holo(PAGE, 'window.__holoml.version')).toBe('0.1');
+    const problems = await holo<{ code: string; line: number; column: number; message: string }[]>(PAGE, 'window.__holoml.problems');
+    expect(problems).toEqual([
+      { code: 'unknown-element', line: 9, column: 5, message: '<hud> is not a HoloML 0.1 element (it is in HoloML 0.2)' },
+      { code: 'unknown-element', line: 10, column: 5, message: '<slider> is not a HoloML 0.1 element (it is in HoloML 0.2)' },
+    ]);
+    const text = await consoleText();
+    expect(text).toContain('HoloML: line 9, column 5: <hud> is not a HoloML 0.1 element (it is in HoloML 0.2)');
+    // Neither is on the page, in the scene or in its text view; the rest shows.
+    expect(await holo<unknown[]>(PAGE, 'window.__holoml.huds()')).toEqual([]);
+    expect(await holo<unknown[]>(PAGE, 'window.__holoml.sliders()')).toEqual([]);
+    expect(await inPage<number>(h, 'document.querySelectorAll(".holoml-hud, .holoml-slider").length', PAGE)).toBe(0);
+    expect(await holo<string[]>(PAGE, 'window.__holoml.labels()')).toEqual(['Still shown']);
+    await h.shell.click(TEXT_VIEW);
+    await waitFor('the text view', () => holo<boolean>(PAGE, 'window.__holoml.textView'), (v) => v === true);
+    const words = await inPage<string>(h, 'document.body.innerText', PAGE);
+    expect(words).toContain('Still shown');
+    expect(words).not.toContain('Score: 0');
+    expect(words).not.toContain('Pace');
+    await h.shell.click(TEXT_VIEW);
+    await waitFor('3D again', () => holo<boolean>(PAGE, 'window.__holoml.textView'), (v) => v === false);
   });
 });

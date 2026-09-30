@@ -42,6 +42,14 @@
  * walker draws nothing; the text view stops the scene; what a script
  * hides cannot be clicked or walked into; and where Chromium draws in
  * software the scene is drawn at half its sharpness, to keep it moving.
+ *
+ * As HoloML 0.2's third edition says (2026-09-30): only the ambient
+ * lights in the scene now dim the light from around; a material that
+ * takes no light is changed in what it has; a 0.1 page's screen text is
+ * not shown; holoml.add leaves out an animate and a sound that begins on
+ * a click, and says so; a model that needs a glTF extension the viewer
+ * does not read is left out; and every paragraph of a panel inside a
+ * link is in the outline.
  */
 import {
   AmbientLight,
@@ -60,6 +68,7 @@ import {
   MathUtils,
   Matrix4,
   Mesh,
+  MeshBasicMaterial,
   MeshStandardMaterial,
   Object3D,
   PCFShadowMap,
@@ -87,7 +96,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneModel } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { check, CLICKABLE, HoloParseError, parse, type ElementNode, type HoloNode } from '@hypersol/holoml';
-import { Budget, LeftOut, LIMITS, Unreadable, type Claim, type LoadedFiles } from './budget';
+import { Budget, LeftOut, LIMITS, Unreadable, Unsupported, type Claim, type LoadedFiles } from './budget';
 import { keptByControl, orbitControls, TURN_SPEED, walkControls, WALK_SPEED, type ViewControls } from './controls';
 import { InstancePool, canInstance, centreOf, countTriangles, isShown, worldBox, type Template } from './instances';
 import { SolidGrid, Walker, type Box } from './physics';
@@ -95,7 +104,7 @@ import { disposePanel, drawPanel, type PanelLook } from './panels';
 import { Pictures, type PictureUse } from './pictures';
 import { SoundBank, type SoundHandle, type SoundReport } from './sound';
 import { Water } from './water';
-import { area, attr, color, contrastText, duration, has, num, paragraphs, rawText, repeat, resolveAddress, scale, text, tiling, vec3, type Vec3 } from './values';
+import { area, attr, collapse, color, contrastText, duration, has, num, paragraphs, rawText, repeat, resolveAddress, scale, text, tiling, trimSpace, vec3, type Vec3 } from './values';
 import { atLeast, type Version } from './versions';
 
 const DEG = Math.PI / 180;
@@ -248,8 +257,9 @@ interface Held {
  */
 export interface MaterialReport {
   color: string;
-  metalness: number;
-  roughness: number;
+  /** Null for a material that takes no light: it has no metalness and no roughness. */
+  metalness: number | null;
+  roughness: number | null;
   opacity: number;
   map: string | null;
   repeat: [number, number] | null;
@@ -267,6 +277,19 @@ interface Look {
   repeat: [number, number] | null;
 }
 
+/**
+ * A material whose look a page can change: one that takes light, or one
+ * that takes none (glTF's KHR_materials_unlit). The second is changed like
+ * any other in what it has, its colour, its opacity, and its colour
+ * picture with its tiling; it has no metalness, roughness, or bumps, so
+ * those change nothing in it (SPEC.md section 7, `material`).
+ */
+type Changeable = MeshStandardMaterial | MeshBasicMaterial;
+
+function changeable(m: Material): m is Changeable {
+  return m instanceof MeshStandardMaterial || m instanceof MeshBasicMaterial;
+}
+
 /** A material's pictures, which `repeat` tiles (the model's own as well as the page's). */
 const PICTURE_SLOTS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap', 'bumpMap'] as const;
 
@@ -282,7 +305,7 @@ interface ChoiceOption {
   value: string;
   label: string;
   look: Promise<Look> | null;
-  made: Map<Material, MeshStandardMaterial>;
+  made: Map<Material, Changeable>;
 }
 
 /** A choice (HoloML 0.2, milestone 18): its options, its radio buttons, and what it changes. */
@@ -375,6 +398,14 @@ export class HolomlView {
   readonly scene = new Scene();
   readonly camera = new PerspectiveCamera(50, 1, 0.05, 2000);
   frames = 0;
+  /**
+   * The scene's own time, in milliseconds: how far its frames have moved
+   * it on, each by its `dt` (at most 100, so it runs slower than the
+   * clock on a slow machine, and stands still while nothing is drawn).
+   * Walking, turning, and a script's frames go by it; the browser's tests
+   * measure speeds against it.
+   */
+  clock = 0;
   readonly models: ModelReport[] = [];
   readonly labels: { text: string; sprite: Sprite }[] = [];
   readonly links: Link[] = [];
@@ -430,7 +461,12 @@ export class HolomlView {
   };
   private readonly version: Version;
   private sceneId: string | null = null;
-  /** The page's own ambient lights (HoloML 0.2: the soft light from around follows them). */
+  /**
+   * The ambient lights in the scene now, the page's and those its scripts
+   * added (HoloML 0.2: the soft light from around follows them). One that
+   * is removed is taken out, so that a scene whose ambient lights have all
+   * been removed is at full again, not dark (SPEC.md section 7, `light`).
+   */
   private readonly ambients: AmbientLight[] = [];
   onReady: (() => void) | null = null;
   /** Loading began or ended (the shell's stop button and loading strip). */
@@ -558,7 +594,7 @@ export class HolomlView {
     // The models a choice changes get their own copies (not instances), so each is found before building.
     if (scene && this.since('0.2')) {
       for (const c of scene.children) {
-        const target = c.type === 'element' && c.name === 'choice' && attr(c, 'material') ? attr(c, 'target')?.trim() : null;
+        const target = c.type === 'element' && c.name === 'choice' && attr(c, 'material') ? trimSpace(attr(c, 'target') ?? '') : null;
         if (target?.startsWith('#')) this.choiceTargets.add(target.slice(1));
       }
     }
@@ -594,7 +630,9 @@ export class HolomlView {
           continue;
         }
         if (c.name === 'hud') {
-          if (this.count(c)) this.hud(c, false);
+          // Screen text is HoloML 0.2's: in a 0.1 page it is not shown, as a slider in one is not (the checker has
+          // said that it is not a 0.1 element; SPEC.md section 9, "Reading and checking").
+          if (this.count(c) && this.since('0.2')) this.hud(c, false);
           continue;
         }
         if (c.name === 'slider') {
@@ -965,6 +1003,13 @@ export class HolomlView {
    */
   private build(node: HoloNode, parent: Object3D, parentEntry: Entry | null, link: string | null, depth: number, fromScript: boolean, animates: ElementNode[]): Entry | null {
     if (node.type !== 'element') return null;
+    // What a script adds, the script moves and plays: an animate, and a sound that begins on a click, are left
+    // out wherever they are in its markup, and the console says so (SPEC.md section 10, `holoml.add`).
+    const notAdded = fromScript ? leftOutOfAdd(node) : null;
+    if (notAdded) {
+      console.warn(`HoloML: holoml.add: line ${node.start.line - 1}, column ${node.start.column}: ${notAdded}.`);
+      return null;
+    }
     // The page's limit on elements: later ones are left out (issue #23).
     if (!this.count(node)) return null;
     const id = attr(node, 'id') ?? null;
@@ -1120,7 +1165,8 @@ export class HolomlView {
       : this.budget.load(url, this.origin).then(
           (files) => this.decode(url, files),
           (e: unknown) => {
-            if (e instanceof Unreadable) this.unreadable.set(url.href, e);
+            // Nor is one that needs what the viewer does not have (a glTF extension it does not read).
+            if (e instanceof Unreadable || e instanceof Unsupported) this.unreadable.set(url.href, e);
             throw e;
           },
         );
@@ -1733,13 +1779,13 @@ export class HolomlView {
 
   /** <material> children: change the named materials, only what is given (with their looks, pictures included); the materials made. */
   private changeMaterials(changes: ElementNode[], looks: Look[], model: Object3D, report: ModelReport): Material[] {
-    const done = new Map<Material, MeshStandardMaterial>();
+    const done = new Map<Material, Changeable>();
     model.traverse((o) => {
       if (!(o instanceof Mesh)) return;
       const list = Array.isArray(o.material) ? o.material : [o.material];
       const next = list.map((m: Material) => {
         const i = changes.findIndex((c) => attr(c, 'name') === m.name);
-        if (i < 0 || !(m instanceof MeshStandardMaterial)) return m;
+        if (i < 0 || !changeable(m)) return m;
         let copy = done.get(m);
         if (!copy) {
           copy = m.clone();
@@ -1805,18 +1851,24 @@ export class HolomlView {
     this.onLeftOut?.();
   }
 
-  /** Gives a material a look: only what the look gives changes; `repeat` tiles the material's own pictures too. */
-  private applyLook(m: MeshStandardMaterial, look: Look): void {
+  /**
+   * Gives a material a look: only what the look gives changes; `repeat`
+   * tiles the material's own pictures too. A material that takes no light
+   * takes the look's colour, opacity, colour picture, and tiling; metalness,
+   * roughness, and the pictures of bumps and roughness are nothing to it.
+   */
+  private applyLook(m: Changeable, look: Look): void {
+    const lit = m instanceof MeshStandardMaterial;
     if (look.color) m.color.set(look.color);
-    if (look.metalness !== null) m.metalness = look.metalness;
-    if (look.roughness !== null) m.roughness = look.roughness;
+    if (lit && look.metalness !== null) m.metalness = look.metalness;
+    if (lit && look.roughness !== null) m.roughness = look.roughness;
     if (look.opacity !== null) {
       m.opacity = look.opacity;
       m.transparent = look.opacity < 1;
     }
-    const slots = m as unknown as Record<(typeof PICTURE_SLOTS)[number], Texture | null>;
+    const slots = m as unknown as Record<(typeof PICTURE_SLOTS)[number], Texture | null | undefined>;
     const given = new Set<Texture>();
-    for (const slot of ['map', 'normalMap', 'roughnessMap'] as const) {
+    for (const slot of lit ? (['map', 'normalMap', 'roughnessMap'] as const) : (['map'] as const)) {
       const t = look[slot];
       if (t) {
         slots[slot] = t;
@@ -1850,11 +1902,12 @@ export class HolomlView {
     model.traverse((o) => {
       if (!(o instanceof Mesh)) return;
       for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
-        if (m instanceof MeshStandardMaterial && m.name) {
+        if (changeable(m) && m.name) {
+          const lit = m instanceof MeshStandardMaterial;
           report.materials[m.name] = {
             color: `#${m.color.getHexString()}`,
-            metalness: m.metalness,
-            roughness: m.roughness,
+            metalness: lit ? m.metalness : null,
+            roughness: lit ? m.roughness : null,
             opacity: m.opacity,
             map: m.map ? ((m.map.userData['src'] as string | undefined) ?? 'own') : null,
             repeat: m.map ? [m.map.repeat.x, m.map.repeat.y] : null,
@@ -2092,15 +2145,25 @@ export class HolomlView {
         return p;
       });
     look.note.replaceChildren(...paras(look.paragraphs));
-    // The first paragraph names its button; the rest follow it.
-    if (entry.item) {
+    // The first paragraph names its button; the rest follow it. A panel inside a link has no button of its own:
+    // its first paragraph is in the link's words, and the rest follow the link, in its item, so that screen
+    // readers and the text view have every paragraph of it too.
+    const item = entry.item ?? this.linkItem(entry);
+    if (item) {
       if (!look.words) {
         look.words = document.createElement('div');
         look.words.className = 'holoml-panel-words';
-        entry.item.after(look.words);
+        if (entry.item) entry.item.after(look.words);
+        else item.parentElement?.append(look.words);
       }
       look.words.replaceChildren(...paras(look.paragraphs.slice(1)));
     }
+  }
+
+  /** The outline's link that an element is inside, if it is inside one that is listed there. */
+  private linkItem(entry: Entry): HTMLElement | null {
+    for (let e = entry.parent; e; e = e.parent) if (e.kind === 'a' && e.item) return e.item;
+    return null;
   }
 
   /**
@@ -2123,7 +2186,7 @@ export class HolomlView {
     box.dataset['testid'] = 'holoml-plan';
     box.style.width = `${num(el, 'width', 200, Number.MIN_VALUE)}px`;
     const img = document.createElement('img');
-    img.alt = attr(el, 'label')?.replace(/\s+/g, ' ').trim() || 'Floor plan';
+    img.alt = collapse(attr(el, 'label') ?? '') || 'Floor plan';
     const marker = document.createElement('div');
     marker.className = 'holoml-plan-marker';
     marker.setAttribute('aria-hidden', 'true');
@@ -2305,9 +2368,9 @@ export class HolomlView {
     this.choices.push(entry);
     // Its options count against the page's limit on elements too.
     this.elementCount += countElements(el);
-    const target = attr(el, 'target')?.trim();
+    const target = trimSpace(attr(el, 'target') ?? '');
     const material = attr(el, 'material') ?? null;
-    const changes = target?.startsWith('#') && material !== null;
+    const changes = target.startsWith('#') && material !== null;
     const options: ChoiceOption[] = [];
     for (const o of el.children) {
       if (o.type !== 'element' || o.name !== 'option') continue;
@@ -2322,7 +2385,7 @@ export class HolomlView {
     box.dataset['testid'] = 'holoml-choice';
     if (entry.id) box.dataset['id'] = entry.id;
     const legend = document.createElement('legend');
-    legend.textContent = attr(el, 'label')?.replace(/\s+/g, ' ').trim() ?? '';
+    legend.textContent = collapse(attr(el, 'label') ?? '');
     legend.hidden = legend.textContent === '';
     if (legend.hidden) box.setAttribute('aria-label', entry.id ?? 'Choice');
     const list = document.createElement('div');
@@ -2348,7 +2411,7 @@ export class HolomlView {
     box.append(legend, list);
     this.corner(el).append(box);
     entry.hud = box;
-    entry.choice = { options, inputs, legend, chosen: start, target: changes ? target!.slice(1) : null, material: changes ? material : null };
+    entry.choice = { options, inputs, legend, chosen: start, target: changes ? target.slice(1) : null, material: changes ? material : null };
     return entry;
   }
 
@@ -2391,7 +2454,7 @@ export class HolomlView {
         this.ownMaterials.set(o, own);
       }
       const next = own.map((base, i) => {
-        if (base.name !== c.material || !(base instanceof MeshStandardMaterial)) return now[i]!;
+        if (base.name !== c.material || !changeable(base)) return now[i]!;
         found = true;
         let made = option.made.get(base);
         if (!made) {
@@ -2434,7 +2497,7 @@ export class HolomlView {
   private setHudText(entry: Entry, value: string): void {
     const lines = value
       .split(/\r\n|\r|\n/)
-      .map((l) => l.replace(/\s+/g, ' ').trim())
+      .map(collapse)
       .filter((l) => l !== '');
     entry.hud!.replaceChildren(
       ...lines.map((l) => {
@@ -2726,7 +2789,7 @@ export class HolomlView {
       }
       if (p.animation) t.animations.push(p.animation);
       if (p.sound) t.sounds.push(p.sound);
-      const label = p.label?.replace(/\s+/g, ' ').trim();
+      const label = collapse(p.label ?? '');
       if (!t.label && label) t.label = label;
       touched.add(t);
     }
@@ -3225,9 +3288,11 @@ export class HolomlView {
         for (const p of own) console.warn(`HoloML: holoml.add: line ${p.line - 1}, column ${p.column}: ${p.message}; <${node.name}> left out.`);
         return;
       }
+      // A sound that begins on a click is left out (build says why); anything else that is not built is past the page's limit.
+      const full = leftOutOfAdd(node) === null;
       const entry = this.build(node, into, parent, parent?.link ?? null, (parent?.depth ?? -1) + 1, true, animates);
       if (entry) added.push(entry);
-      else console.warn(`HoloML: holoml.add: <${node.name}> left out: past the page's limit of ${LIMITS.elements.toLocaleString('en')} elements.`);
+      else if (full) console.warn(`HoloML: holoml.add: <${node.name}> left out: past the page's limit of ${LIMITS.elements.toLocaleString('en')} elements.`);
     });
     if (added.some((e) => this.hasSolid(e))) this.collidersDirty = true;
     if (this.leftOutElements > 0) this.onLeftOut?.();
@@ -3318,7 +3383,11 @@ export class HolomlView {
     light.target?.removeFromParent();
     const casting = this.shadowLights.indexOf(o as DirectionalLight);
     if (casting >= 0) this.shadowLights.splice(casting, 1);
-    if (!(o instanceof AmbientLight)) this.placedLights -= 1;
+    if (o instanceof AmbientLight) {
+      // An ambient light that is gone no longer dims the light from around (it counted as none, and the scene went dark).
+      const at = this.ambients.indexOf(o);
+      if (at >= 0) this.ambients.splice(at, 1);
+    } else this.placedLights -= 1;
   }
 
   /** Something about an element changed its place or visibility: redraw, and update instances and walls. */
@@ -3368,16 +3437,16 @@ export class HolomlView {
       if (entry.object) this.markMoved(entry);
       this.requestFrame();
     }
-    else if (entry.kind === 'slider' && entry.slider) entry.slider.label.textContent = value.replace(/\s+/g, ' ').trim();
+    else if (entry.kind === 'slider' && entry.slider) entry.slider.label.textContent = collapse(value);
     else if (entry.kind === 'choice' && entry.choice) {
       const legend = entry.choice.legend;
-      legend.textContent = value.replace(/\s+/g, ' ').trim();
+      legend.textContent = collapse(value);
       legend.hidden = legend.textContent === '';
       if (legend.hidden) entry.hud?.setAttribute('aria-label', entry.id ?? 'Choice');
       else entry.hud?.removeAttribute('aria-label');
     }
     else if (entry.kind === 'label' && entry.labelLook && entry.object) {
-      const words = value.replace(/\s+/g, ' ').trim();
+      const words = collapse(value);
       entry.labelLook.words = words;
       entry.labelLook.note.textContent = words;
       drawLabel(entry.object as Sprite, words, entry.labelLook.size, entry.labelLook.color);
@@ -3435,7 +3504,7 @@ export class HolomlView {
       if (!(o instanceof Mesh)) return;
       const list = Array.isArray(o.material) ? o.material : [o.material];
       const next = list.map((m: Material) => {
-        if (m.name !== name || !(m instanceof MeshStandardMaterial)) return m;
+        if (m.name !== name || !changeable(m)) return m;
         let copy = m;
         if (m.userData['own'] !== holder) {
           copy = m.clone();
@@ -3444,8 +3513,9 @@ export class HolomlView {
           entry.held?.materials.push(copy);
         }
         if (change.color) copy.color.set(change.color);
-        if (change.metalness !== undefined) copy.metalness = change.metalness;
-        if (change.roughness !== undefined) copy.roughness = change.roughness;
+        // A material that takes no light has no metalness or roughness to change.
+        if (change.metalness !== undefined && copy instanceof MeshStandardMaterial) copy.metalness = change.metalness;
+        if (change.roughness !== undefined && copy instanceof MeshStandardMaterial) copy.roughness = change.roughness;
         if (change.opacity !== undefined) {
           copy.opacity = change.opacity;
           copy.transparent = change.opacity < 1;
@@ -3564,8 +3634,11 @@ export class HolomlView {
   }
 
   private drawFrame(time: number): void {
+    // How far the scene moves on in this frame: the time since the last one, but never more than 100 ms, and one
+    // frame's usual time where there is no last frame to measure from (SPEC.md section 10, the `frame` event).
     const dt = this.last === 0 ? 16 : Math.min(100, time - this.last);
     this.last = time;
+    this.clock += dt;
     let moving = this.controls?.step(dt) ?? false;
     this.viewMoving = moving;
     // Loading by area (milestone 20): what the viewer came near loads, and what it left is let go.
@@ -3642,13 +3715,15 @@ export class HolomlView {
    * renderer's own, or the page's panorama of its surroundings (HoloML
    * 0.2, milestone 18). In a 0.2 page that has ambient lights, it follows
    * their brightness, so a page can make evening or night (milestone 17);
-   * 0.1 pages look as they did.
+   * 0.1 pages look as they did. The ambient lights that count are those
+   * in the scene at the time: with none (none written, or all removed by
+   * a script), the light from around is at full.
    */
   private followAmbient(): void {
     const full = this.environment?.state === 'loaded' ? 1 : 0.45;
     let factor = 1;
     if (this.since('0.2') && this.ambients.length > 0) {
-      const ambient = this.ambients.reduce((sum, l) => sum + (l.parent ? l.intensity : 0), 0);
+      const ambient = this.ambients.reduce((sum, l) => sum + l.intensity, 0);
       factor = Math.min(1, ambient / 0.6);
     }
     this.scene.environmentIntensity = full * factor;
@@ -3692,9 +3767,21 @@ export class HolomlView {
   }
 }
 
+/**
+ * Why holoml.add leaves an element of its markup out, wherever it stands
+ * there, in words for the console; null for one it adds. An `animate`, and
+ * a `sound` that begins on a click: what a script adds, the script moves
+ * and plays (SPEC.md section 10).
+ */
+function leftOutOfAdd(el: ElementNode): string | null {
+  if (el.name === 'animate') return '<animate> left out: what a script adds, the script moves itself';
+  if (el.name === 'sound' && attr(el, 'begin') === 'click') return 'a <sound> that begins on a click left out: what a script adds, the script plays itself, with play()';
+  return null;
+}
+
 /** An id reference ("#door") as the id itself. */
 function idOf(ref: string | null | undefined): string {
-  return (ref ?? '').trim().replace(/^#/, '');
+  return trimSpace(ref ?? '').replace(/^#/, '');
 }
 
 /** The place the page's address names after #, if any. */
@@ -3709,7 +3796,7 @@ function addressName(): string | null {
 
 /** A place's name in the outline: its label, or its id. */
 function placeName(vp: ElementNode): string {
-  return attr(vp, 'label')?.replace(/\s+/g, ' ').trim() || attr(vp, 'id') || 'viewpoint';
+  return collapse(attr(vp, 'label') ?? '') || attr(vp, 'id') || 'viewpoint';
 }
 
 /** A HoloML page, by its address. */
@@ -3793,10 +3880,10 @@ function countElements(node: ElementNode): number {
 function nameOf(el: ElementNode): string {
   if (el.name === 'label') return text(el) || 'label';
   if (el.name === 'panel') return paragraphs(rawText(el))[0] || attr(el, 'id') || 'panel';
-  if (el.name === 'plan') return attr(el, 'label')?.replace(/\s+/g, ' ').trim() || attr(el, 'id') || 'plan';
+  if (el.name === 'plan') return collapse(attr(el, 'label') ?? '') || attr(el, 'id') || 'plan';
   if (el.name === 'viewpoint') return placeName(el);
   if (el.name === 'slider') return text(el) || attr(el, 'id') || 'slider';
-  if (el.name === 'choice') return attr(el, 'label')?.trim() || attr(el, 'id') || 'choice';
+  if (el.name === 'choice') return collapse(attr(el, 'label') ?? '') || attr(el, 'id') || 'choice';
   const id = attr(el, 'id');
   if (id) return id;
   if (el.name === 'model') return (attr(el, 'src') ?? '').split(/[?#]/)[0]!.split('/').pop() || 'model';

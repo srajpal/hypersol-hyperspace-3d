@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FIXTURES_DIR, startFixtureServer, type FixtureServer } from './fixture-server';
 import {
+  caughtUp,
   clickAt,
   clickUntil,
   focusedTab,
@@ -19,6 +20,7 @@ import {
   project,
   removeFolder,
   sceneStill,
+  sceneWait,
   shellCall,
   sleep,
   tabs,
@@ -86,7 +88,13 @@ async function linkReport(h: Harness, which: number, page: string): Promise<stri
   return `link ${which} at page point ${JSON.stringify(p)}; the viewer's link there: ${at}; view ${JSON.stringify(view)}; fill ${JSON.stringify(fill)}; page size ${JSON.stringify(size)}`;
 }
 
-/** Holds a key in the page for a while (walking needs it held). */
+/**
+ * Holds a key in the page for a while (walking needs it held): for so
+ * many milliseconds of the scene's own time (the viewer's `clock`), which
+ * its frames move on, each by at most 100 ms. A walker goes by that time,
+ * not by the wall's clock, so on a machine that draws slowly it has gone
+ * as far when the key comes up as on a fast one; only the wait is longer.
+ */
 async function holdKey(h: Harness, page: string, keyCode: string, ms: number): Promise<void> {
   const send = (type: 'keyDown' | 'keyUp') =>
     h.app.evaluate(
@@ -96,9 +104,14 @@ async function holdKey(h: Harness, page: string, keyCode: string, ms: number): P
       },
       { page, keyCode, type },
     );
+  const clock = () => holo<number>(h, 'window.__holoml.clock', page);
+  const from = await clock();
   await send('keyDown');
-  await sleep(ms);
-  await send('keyUp');
+  try {
+    await waitFor(`${ms} ms of the scene's time with ${keyCode} held (from ${from} ms)`, clock, (t) => t >= from + ms, (await sceneWait(h, ms)) * 2 + 10_000);
+  } finally {
+    await send('keyUp');
+  }
 }
 
 /** Touch input into the page, through the page's own debugger connection. */
@@ -338,8 +351,8 @@ describe('P3 walk, P5 animation, P10 drawing only while moving', () => {
     const PAGE = 'still-animated-once.holoml';
     await open(h, server.url('holoml/still-animated-once.holoml'), PAGE);
     await waitFor('finished', async () => (await holo<{ position: Vec }>(h, 'window.__holoml.object("sign")', PAGE))!.position[1], (y) => y === 2, 5000);
-    await sleep(300);
-    const before = await holo<number>(h, 'window.__holoml.frames', PAGE);
+    // Still, however long its last frames and shaders take on this machine; then it draws nothing more.
+    const before = await sceneStill(h, PAGE);
     await sleep(1000);
     expect(await holo<number>(h, 'window.__holoml.frames', PAGE)).toBe(before);
   });
@@ -493,8 +506,21 @@ describe('P9: HoloML files on the computer', () => {
   it('a web page cannot reach a local file, and an address from an earlier run asks to open it again', async () => {
     const url = (await openLocal(join(folder, 'page', 'local.holoml')))!;
     await open(h, server.url('holoml/second.holoml'), 'holoml/second.holoml');
+    // What the page tries reaches the browser, which refuses it: the try is waited for, and then whatever the
+    // browser told the shell and the page because of it, before the tab is looked at (nothing having happened
+    // after a fixed time proves nothing on a slow machine).
+    type Tried = { url: string; refused: boolean };
+    await h.app.evaluate(({ webContents }) => {
+      const guest = webContents.getAllWebContents().filter((w) => w.getType() === 'webview' && w.getURL().includes('holoml/second.holoml')).pop()!;
+      const tried: { url: string; refused: boolean }[] = [];
+      (globalThis as unknown as { __p9Tried?: typeof tried }).__p9Tried = tried;
+      // After the browser's own listener, which decides: this one only notes what was decided.
+      guest.on('will-navigate', (event, to) => tried.push({ url: to, refused: event.defaultPrevented }));
+    });
     await inPage(h, `location.href = ${JSON.stringify(url)}; true`, 'holoml/second.holoml');
-    await sleep(800);
+    const tried = await waitFor("the page's try seen by the browser", () => h.app.evaluate(() => (globalThis as unknown as { __p9Tried?: Tried[] }).__p9Tried ?? []), (t) => t.length > 0);
+    expect(tried).toEqual([{ url, refused: true }]);
+    await caughtUp(h, 'holoml/second.holoml');
     expect((await focusedTab(h)).url).toBe(server.url('holoml/second.holoml'));
     const made = url.replace(/\/\/[0-9a-f]{16}\//, '//0123456789abcdef/');
     await shellCall(h, 'showUrl', made);
