@@ -179,10 +179,13 @@ describe('G4 to G6: switching, settings, and image rectangles', () => {
       await h.shell.click(SET('set-layers-on-open'));
       await waitFor('saved', () => Promise.resolve(JSON.parse(readFileSync(join(profile, 'settings.json'), 'utf8')).layersOnOpen), (v) => v === false);
       await pressInShell(h, 'Escape');
+      // The tab's view is on, from the page it opened with; the switch
+      // decides how the next page opens, and the tab's view changes when
+      // the app has decided that.
+      expect(await layersOn(h)).toBe(true);
       await navigateTo(h, server.url(PAGE));
       await waitForPage(h, PAGE);
-      await sleep(300);
-      expect(await layersOn(h)).toBe(false); // global off
+      await waitFor('the page opened flat', () => layersOn(h), (on) => !on); // global off
       await h.shell.click(LAYERS_BUTTON); // remembered for 127.0.0.1
       await waitFor('on', () => layersOn(h), (on) => on);
       await waitFor('site choice saved', () =>
@@ -204,10 +207,12 @@ describe('G4 to G6: switching, settings, and image rectangles', () => {
       await waitFor('forgotten', () => Promise.resolve(JSON.parse(readFileSync(join(profile, 'settings.json'), 'utf8')).layersSites), (s) =>
         Object.keys(s ?? { x: 1 }).length === 0);
       await pressInShell(h, 'Escape');
+      // On until now, by the site's choice; off once the page has loaded
+      // again and the app has decided how it opens.
+      expect(await layersOn(h)).toBe(true);
       await pressInShell(h, 'R', ['control']);
+      await waitFor('the page opened flat after loading again', () => layersOn(h), (on) => !on); // back to the global switch
       await waitForPage(h, PAGE);
-      await sleep(300);
-      expect(await layersOn(h)).toBe(false); // back to the global switch
     } finally {
       await h.close();
     }

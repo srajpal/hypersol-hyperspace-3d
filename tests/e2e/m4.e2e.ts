@@ -17,6 +17,7 @@ import {
   APP_DIR,
   inPage,
   launch,
+  mainLog,
   navigateTo,
   pressInShell,
   removeFolder,
@@ -244,8 +245,18 @@ describe('F7 and F8: encrypted DNS', () => {
     try {
       await waitForPage(h, 'link-a');
       await navigateTo(h, 'http://nowhere.invalid/');
-      await waitFor('the resolver asked', () => testLog<string[]>(h, 'requests'), (r) => r.some((u) => u.startsWith(probe)));
-      await sleep(500);
+      await waitFor('the resolver asked', () => mainLog(h, 'requests'), (r) => r.some((u) => u.startsWith(probe)));
+      // The card is decided when the app's answer about the resolver
+      // reaches the shell. The resolver's own answer has left the server...
+      const asked = () => [...server.hits.entries()].filter(([k]) => k.startsWith('/dns-query')).reduce((n, [, c]) => n + c, 0);
+      await waitFor("the resolver's answer sent", async () => [asked(), server.openNow.get('/dns-query') ?? 0], ([n, open]) => n! > 0 && open === 0);
+      // ...and a second question about the resolver, put to the app from
+      // the shell only now, takes a request of its own: its answer comes
+      // back after the first one's, and says what the first said.
+      const again = await h.shell.evaluate(() =>
+        (window as unknown as { hypersol: { privacy(r: object): Promise<{ ok: boolean; value?: unknown }> } }).hypersol.privacy({ op: 'dns.check' }),
+      );
+      expect(again).toEqual({ ok: true, value: 'reachable' });
       expect(await h.shell.locator(CARD).getAttribute('data-kind')).toBe('not-found');
     } finally {
       await h.close();

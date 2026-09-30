@@ -12,6 +12,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
+  caughtUp,
   clickAt,
   clickUntil,
   focusedPage,
@@ -148,10 +149,11 @@ describe('K1 to K3: passwords', () => {
       expect(Buffer.from(row.secret).toString('latin1')).not.toContain('test-pass-1');
       expect(await offer(h)).toBeNull();
 
-      // The same password again: nothing to offer.
+      // The same password again: nothing to offer, once the app has dealt
+      // with the sign-in.
       await inPage(h, `document.getElementById('state').textContent = 'Sign in'`, page);
       await signIn(h, 'ada', 'test-pass-1', page);
-      await sleep(800);
+      await caughtUp(h, page);
       expect(await offer(h)).toBeNull();
 
       // A new password for the same account: Update.
@@ -159,6 +161,8 @@ describe('K1 to K3: passwords', () => {
       await signIn(h, 'ada', 'test-pass-2', page);
       const update = await waitFor('an offer to update', () => offer(h), (o) => o !== null);
       expect(update!.update).toBe(true);
+      // The app numbers its offers as it makes them: none was made in between.
+      expect(update!.id).toBe(first!.id + 1);
       await h.shell.click(PROMPT('pw-save'));
       await waitFor('updated', async () => logins(profile), (l) => l.length === 1 && Buffer.from(l[0]!.secret).toString('base64') !== before);
 
@@ -174,7 +178,7 @@ describe('K1 to K3: passwords', () => {
       await waitFor('an offer', () => offer(h), (o) => o?.username === 'hopper');
       await h.shell.click(PROMPT('pw-never'));
       await signIn(h, 'lovelace', 'test-pass-5', page);
-      await sleep(800);
+      await caughtUp(h, page);
       expect(await offer(h)).toBeNull();
       expect(logins(profile).map((l) => l.username)).toEqual(['ada']);
     } finally {
@@ -193,17 +197,21 @@ describe('K1 to K3: passwords', () => {
       await h.shell.click(PROMPT('pw-save'));
       await waitFor('saved', async () => logins(profile), (l) => l.length === 1);
 
-      // Back on the page later: nothing is filled on load.
+      // Back on the page later: nothing is filled on load, once the app
+      // has dealt with whatever the loaded page sent it...
       await navigateTo(h, server.url('login.html?again=1'));
       await waitForPage(h, 'again=1');
       page = await focusedPage(h);
-      await sleep(800);
-      expect(await inPage<string[]>(h, `[document.getElementById('user').value, document.getElementById('pass').value]`, page)).toEqual(['', '']);
+      const fields = () => inPage<string[]>(h, `[document.getElementById('user').value, document.getElementById('pass').value]`, page);
+      await caughtUp(h, page);
+      expect(await fields()).toEqual(['', '']);
       expect(await listShown(h, page)).toBe(false);
 
-      // A click on the field shows the account; picking it fills both fields.
+      // A click on the field shows the account (...and the fields are
+      // still empty then); picking it fills both fields.
       await clickIn(h, '#user', page);
       await waitFor('the account list', () => listShown(h, page), (s) => s);
+      expect(await fields()).toEqual(['', '']);
       await pickFirstAccount(h, page);
       await waitFor(
         'filled',
@@ -218,7 +226,8 @@ describe('K1 to K3: passwords', () => {
       await waitForPage(h, other.base);
       const elsewhere = await focusedPage(h);
       await clickIn(h, '#user', elsewhere);
-      await sleep(800);
+      // The click asks the app for this site's accounts: none, once it has answered.
+      await caughtUp(h, elsewhere);
       expect(await listShown(h, elsewhere)).toBe(false);
 
       // K3: the Library's Passwords tab.
@@ -285,11 +294,13 @@ describe('K4 and K5: private tabs and a missing keychain', () => {
       await navigateTo(h, server.url('login.html?private=1'));
       await waitForPage(h, 'private=1');
       const page = await focusedPage(h);
+      // As in K1 and K2: the click and the sign-in are dealt with by the
+      // app before the list and the offer are looked for.
       await clickIn(h, '#user', page);
-      await sleep(800);
+      await caughtUp(h, page);
       expect(await listShown(h, page)).toBe(false);
       await signIn(h, 'grace', 'test-pass-2', page);
-      await sleep(800);
+      await caughtUp(h, page);
       expect(await offer(h)).toBeNull();
       expect(logins(profile).map((l) => l.username)).toEqual(['ada']);
     } finally {

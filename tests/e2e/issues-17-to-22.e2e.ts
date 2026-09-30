@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
+  caughtUp,
   clickAt,
   focusedPage,
   focusedTab,
@@ -166,7 +167,9 @@ describe('issue #19: no password offer from a script alone', () => {
         `document.querySelector('#user').value = 'qa-user'; document.querySelector('#pass').value = 'synthetic-only'; document.querySelector('form').requestSubmit(); true`,
         page,
       );
-      await sleep(1500);
+      // Nothing is offered, once the app has dealt with whatever the
+      // page sent it for the script's sign-in.
+      await caughtUp(h, page);
       expect((await shellCall(h, 'prompts')).offer).toBeNull();
       // The person signs in: the offer comes.
       await clickAt(h, await screenPointOf(h, '#user', page));
@@ -176,7 +179,9 @@ describe('issue #19: no password offer from a script alone', () => {
       await inPage(h, 'document.querySelector("#pass").select(); true', page);
       await typeInPage(h, 'test-pass-1', page);
       await clickAt(h, await screenPointOf(h, '#go', page));
-      await waitFor('an offer', async () => (await shellCall(h, 'prompts')).offer, (o) => o !== null && o.username === 'ada');
+      const made = await waitFor('an offer', async () => (await shellCall(h, 'prompts')).offer, (o) => o !== null && o.username === 'ada');
+      // The app numbers its offers as it makes them: this is its first.
+      expect(made!.id).toBe(1);
     } finally {
       await h.close();
     }

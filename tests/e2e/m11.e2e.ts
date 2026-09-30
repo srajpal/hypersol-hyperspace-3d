@@ -338,8 +338,19 @@ describe('M6 and M7: Settings and shortcuts', () => {
       await waitForPage(h, 'link-b');
       await pressInShell(h, 'W', ['control']);
       await waitFor('closed', () => tabs(h), (t) => t.length === 1);
+      // Keys pressed in a page are dealt with in the order they are
+      // pressed: once a later shortcut has done its work (Ctrl+L puts the
+      // keyboard in the address bar), the old keys before it have been
+      // dealt with too, and did nothing.
+      const inAddress = () =>
+        h.shell.evaluate(() => {
+          const bar = document.querySelector('hs-toolbar');
+          return document.activeElement === bar && bar?.shadowRoot?.activeElement?.getAttribute('data-testid') === 'address';
+        });
+      expect(await inAddress()).toBe(false);
       await pressInPage(h, 'T', ['control', 'shift']);
-      await sleep(400);
+      await pressInPage(h, 'L', ['control']);
+      await waitFor('the later shortcut done', inAddress, (there) => there);
       expect((await tabs(h)).length).toBe(1);
       await pressInPage(h, 'R', ['control', 'alt']);
       await waitFor('reopened with the new keys', () => tabs(h), (t) => t.length === 2 && t.some((x) => x.url.includes('link-b')));
