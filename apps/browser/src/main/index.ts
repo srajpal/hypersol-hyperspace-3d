@@ -109,7 +109,15 @@ const handleFromShell = shellOnly(isShell);
 function giveUp(title: string, message: string): void {
   if (options.testMode) console.error(`${title}\n${message}`);
   else dialog.showErrorBox(title, message);
-  app.exit(1);
+  // app.exit() skips will-quit, where saved data is otherwise closed: close
+  // it here, so the history worker's thread has stopped before the process
+  // ends (ending under a running worker crashed now and then, seen in the
+  // start-up check).
+  const saved = storage;
+  storage = null;
+  const end = () => app.exit(1);
+  if (saved) void saved.closed().then(end, end);
+  else setImmediate(end);
 }
 
 /**
