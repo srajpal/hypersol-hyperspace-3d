@@ -26,6 +26,7 @@ import {
   navigateTo,
   pageCentre,
   project,
+  roomStill,
   screenPointOf,
   setContentSize,
   shellCall,
@@ -412,9 +413,9 @@ describe('C9 idle efficiency', () => {
   afterAll(async () => h?.close());
 
   it('draws no frames while idle', async () => {
-    // Idle: page loaded, pointer still, no resize, camera settled.
-    await sleep(1500);
-    const before = await shellCall(h, 'frames');
+    // Idle: page loaded, pointer still, no resize, camera settled; however
+    // long that takes on this machine, the room has stopped drawing.
+    const before = await roomStill(h);
     await sleep(2000);
     expect(await shellCall(h, 'frames')).toBe(before);
   });

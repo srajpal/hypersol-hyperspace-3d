@@ -20,6 +20,7 @@ import {
   navigateTo,
   pressInPage,
   pressInShell,
+  roomStill,
   screenPointOf,
   settled,
   shellCall,
@@ -213,8 +214,7 @@ describe('D3 snapshots and favicons', () => {
     const all = await waitFor('snapshots on both cards', () => tabs(h), (t) => t.every((x) => x.hasSnapshot));
     expect(all).toHaveLength(2);
     // Spinners have stopped: nothing is drawn while idle.
-    await sleep(800);
-    const before = await shellCall(h, 'frames');
+    const before = await roomStill(h);
     await sleep(1500);
     expect(await shellCall(h, 'frames')).toBe(before);
   });

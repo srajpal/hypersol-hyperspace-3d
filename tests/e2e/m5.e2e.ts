@@ -4,8 +4,7 @@
  * global and per-site settings, image rectangles, pages that change,
  * reduced motion, and efficiency.
  */
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
@@ -15,9 +14,10 @@ import {
   inPage,
   launch,
   navigateTo,
+  newProfile,
   pressInShell,
   project,
-  removeFolder,
+  roomStill,
   screenPointOf,
   setContentSize,
   shellCall,
@@ -31,14 +31,6 @@ import {
 } from './harness';
 
 let server: FixtureServer;
-const profiles: string[] = [];
-
-function newProfile(settings?: object): string {
-  const dir = mkdtempSync(join(tmpdir(), 'hypersol-e2e-profile-'));
-  profiles.push(dir);
-  if (settings) writeFileSync(join(dir, 'settings.json'), JSON.stringify(settings));
-  return dir;
-}
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -46,7 +38,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server?.close();
-  for (const dir of profiles) await removeFolder(dir);
 });
 
 const PAGE = 'layers.html';
@@ -281,15 +272,26 @@ describe('G8 and G9: motion and efficiency', () => {
     }
   });
 
-  it('G9 idle with the view on draws nothing, and scrolling keeps its frame rate', async () => {
-    const h = await launch(server.url(PAGE), { userDataDir: newProfile() });
-    try {
+  describe('G9: efficiency with the view on', () => {
+    // One app for both: the idle check first, then the scrolling, as in
+    // the one check these were until 2026-09-30.
+    let h: Harness;
+    beforeAll(async () => {
+      h = await launch(server.url(PAGE), { userDataDir: newProfile() });
       await waitForPage(h, PAGE);
       await waitFor('on', () => layersOn(h), (on) => on);
-      await sleep(1500);
-      const before = await shellCall(h, 'frames');
+    });
+    afterAll(async () => h?.close());
+
+    it('G9 idle with the view on draws nothing', async () => {
+      // The lift has finished and the room has stopped drawing, however
+      // long that takes on this machine.
+      const before = await roomStill(h);
       await sleep(2000);
       expect(await shellCall(h, 'frames')).toBe(before);
+    });
+
+    it('G9 scrolling with the view on keeps its frame rate', async (ctx) => {
       const timing = await inPage<{ avg: number; max: number }>(
         h,
         `new Promise((r) => { const t = []; let last = performance.now(); let n = 0;
@@ -301,13 +303,15 @@ describe('G8 and G9: motion and efficiency', () => {
       console.log(`G9: scrolling with the layers view, ${timing.avg.toFixed(1)} ms per frame on average, ${timing.max.toFixed(1)} ms at most`);
       // The budget is a promise about graphics hardware, as C9's frame rate
       // (owner, prompt 76): where Chromium draws in software it is measured
-      // and logged above, and not held. The idle check above runs everywhere.
+      // and logged above, and the check is skipped, not passed. The idle
+      // check above runs everywhere.
       const software = await softwareRenderer(h);
-      if (software) console.log(`G9: frame-time budget not checked: drawing in software (${software})`);
-      else expect(timing.avg).toBeLessThan(20);
-    } finally {
-      await h.close();
-    }
+      if (software) {
+        console.log(`G9: frame-time budget not checked: drawing in software (${software})`);
+        ctx.skip(`the frame-time budget is for graphics hardware; drawing in software (${software})`);
+      }
+      expect(timing.avg).toBeLessThan(20);
+    });
   });
 });
 

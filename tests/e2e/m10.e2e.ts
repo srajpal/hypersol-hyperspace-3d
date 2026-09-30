@@ -31,6 +31,7 @@ import {
   waitForExit,
   waitForPage,
   type Harness,
+  type ShellWindow,
   settingsTo,
 } from './harness';
 
@@ -266,14 +267,22 @@ describe('L6: economy mode', () => {
       expect((await shellCall(h, 'sceneColors'))['sun']).toBe('hidden');
       expect(await h.shell.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--hs-scanlines').trim())).toBe('0');
 
-      // A loading tab's spinner draws continuously: count the frames in a second.
+      // A loading tab's spinner draws continuously: count the frames in a
+      // second. The second is the shell's own, counted there with the
+      // frames drawn in it: timed from here, the two readings' own delays
+      // would make it longer on a slow machine, and the count too high.
       await pressInShell(h, 'T', ['control']);
       await navigateTo(h, server.url('slow?ms=6000'));
       await pressInShell(h, 'Tab', ['control']);
       await sleep(500);
-      const before = (await shellCall(h, 'economy')).frames;
-      await sleep(1000);
-      const perSecond = (await shellCall(h, 'economy')).frames - before;
+      const drawn = await h.shell.evaluate(async () => {
+        const frames = () => (window as unknown as ShellWindow).__hypersolShellTest.economy().frames;
+        const [before, start] = [frames(), performance.now()];
+        await new Promise((r) => setTimeout(r, 1000));
+        return { frames: frames() - before, seconds: (performance.now() - start) / 1000 };
+      });
+      const perSecond = drawn.frames / drawn.seconds;
+      console.log(`L6: ${drawn.frames} frames in ${drawn.seconds.toFixed(2)} s with economy on`);
       expect(perSecond).toBeGreaterThan(5);
       expect(perSecond).toBeLessThanOrEqual(32);
 
