@@ -166,12 +166,18 @@ describe('R1, R2: models over the limits are left out and marked; the rest shows
 
 describe('R3: a page of 20,000 elements', () => {
   let h: Harness;
+  /**
+   * How long the shell took to answer while the page loaded and built, what
+   * held it up, and how long one more answer took once all was shown: the
+   * first check measures them, and the second holds them to the budget.
+   */
+  let answered: { times: number[]; why: string; last: number } | null = null;
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'));
   });
   afterAll(async () => h?.close());
 
-  it('R3 shows the first part, says the rest was left out, and the browser stays responsive', async () => {
+  it('R3 shows the first part, says the rest was left out, and the browser goes on answering', async () => {
     const PAGE = 'many.holoml';
     await shellCall(h, 'showUrl', server.url('holoml/gen/many.holoml?n=20000'));
     // While the page loads and builds, the browser's own controls answer at once.
@@ -187,13 +193,6 @@ describe('R3: a page of 20,000 elements', () => {
     const why = await stalls();
     await waitForPage(h, PAGE);
     await sceneReady(h, PAGE);
-    // Within 200 ms with a graphics card. Drawn in software (GitHub's machines), the browser's
-    // page and the scene share one software GPU process, which the scene's first draw keeps
-    // busy for seconds: the times are logged, not checked, as the other budgets (owner, prompt 96).
-    const software = await softwareRenderer(h);
-    const answers = `shell answers took ${times.map((t) => t.toFixed(0)).join(', ')} ms; ${why}`;
-    if (software) console.log(`R3: ${answers}; the 200 ms budget not checked: drawing in software (${software})`);
-    else expect(Math.max(...times), answers).toBeLessThan(200);
     expect(await holo<string[]>(h, 'window.__holoml.labels()', PAGE)).toContain('First of many');
     const out = await leftOut(h, PAGE);
     expect(out).toHaveLength(1);
@@ -203,8 +202,26 @@ describe('R3: a page of 20,000 elements', () => {
     const t = performance.now();
     await shellCall(h, 'tabs');
     const last = performance.now() - t;
-    if (software) console.log(`R3: a last answer took ${last.toFixed(0)} ms; not checked: drawing in software`);
-    else expect(last).toBeLessThan(200);
+    // Every question was answered; how soon is the next check's.
+    expect(times.length).toBeGreaterThan(0);
+    answered = { times, why, last };
+  });
+
+  it('R3 the browser stays responsive: while the page loads and builds, and after, it answers within 200 ms (with a graphics card)', async (ctx) => {
+    expect(answered, 'the check before this one measured the answers').not.toBeNull();
+    const { times, why, last } = answered!;
+    const answers = `shell answers took ${times.map((t) => t.toFixed(0)).join(', ')} ms; ${why}; a last answer took ${last.toFixed(0)} ms`;
+    // Within 200 ms with a graphics card. Drawn in software (GitHub's machines), the browser's
+    // page and the scene share one software GPU process, which the scene's first draw keeps
+    // busy for seconds: there the times are measured and logged, and the check is skipped, not
+    // passed, as the other budgets are (owner, prompt 96).
+    const software = await softwareRenderer(h);
+    if (software) {
+      console.log(`R3: ${answers}; the 200 ms budget not checked: drawing in software (${software})`);
+      ctx.skip(`the 200 ms budget is for graphics hardware; drawing in software (${software})`);
+    }
+    expect(Math.max(...times), answers).toBeLessThan(200);
+    expect(last, answers).toBeLessThan(200);
   });
 });
 
