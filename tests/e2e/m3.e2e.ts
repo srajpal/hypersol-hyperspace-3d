@@ -372,17 +372,39 @@ describe('E6b quitting and closing keep the latest tabs (PR #7 review)', () => {
     }
   });
 
+  // The two checks below time the wait itself, inside the app and on its
+  // own clock: from the request to the moment the app goes on without the
+  // shell's answer. Until 2026-09-30 they timed, from here, the whole way
+  // to the process being gone (or the window count read as 0), and the
+  // shutting down after the wait took GitHub's Windows machines past the
+  // 6 s allowed (6.5 s and 7.7 s) though the wait had been the 2 s it
+  // should be.
+
   it('if the shell never answers, Quit still ends the app after the 2 s wait', async () => {
     const h = await launch(server.url('link-a.html'), { userDataDir: newProfile(), keepRunning: true });
     try {
       await waitForPage(h, 'link-a');
       await shellCall(h, 'ignorePrepareClose');
-      const start = Date.now();
-      await h.app.evaluate(({ app }) => app.quit());
-      await waitForExit(h, 8000);
-      const took = Date.now() - start;
-      expect(took).toBeGreaterThanOrEqual(1800);
-      expect(took).toBeLessThan(6000);
+      // Quit asks the window to close, which holds the quit for the shell;
+      // when the wait is over the app quits again, for good: Electron says
+      // "before-quit" both times. The answer comes back just before the
+      // app goes.
+      const waited = await h.app.evaluate(
+        ({ app }) =>
+          new Promise<number>((resolve) => {
+            const start = Date.now();
+            let asked = 0;
+            app.on('before-quit', () => {
+              if (++asked === 2) resolve(Date.now() - start);
+            });
+            app.quit();
+          }),
+      );
+      console.log(`E6b: Quit went on ${waited} ms after it was asked, without the shell's answer`);
+      expect(waited).toBeGreaterThanOrEqual(1800);
+      expect(waited).toBeLessThan(6000);
+      // And the app does end.
+      await waitForExit(h, 30_000);
     } finally {
       await h.close();
     }
@@ -393,17 +415,19 @@ describe('E6b quitting and closing keep the latest tabs (PR #7 review)', () => {
     try {
       await waitForPage(h, 'link-a');
       await shellCall(h, 'ignorePrepareClose');
-      const start = Date.now();
-      await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.close());
-      await waitFor(
-        'the window to close',
-        () => h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length),
-        (n) => n === 0,
-        8000,
+      const waited = await h.app.evaluate(
+        ({ BrowserWindow }) =>
+          new Promise<number>((resolve) => {
+            const win = BrowserWindow.getAllWindows()[0]!;
+            const start = Date.now();
+            win.once('closed', () => resolve(Date.now() - start));
+            win.close();
+          }),
       );
-      const took = Date.now() - start;
-      expect(took).toBeGreaterThanOrEqual(1800);
-      expect(took).toBeLessThan(6000);
+      console.log(`E6b: the window closed ${waited} ms after it was asked, without the shell's answer`);
+      expect(waited).toBeGreaterThanOrEqual(1800);
+      expect(waited).toBeLessThan(6000);
+      expect(await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)).toBe(0);
       expect(h.proc.exitCode).toBeNull();
     } finally {
       await h.close();
