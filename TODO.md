@@ -4332,6 +4332,21 @@ finished documents.
   text drawn in software).
 - D11 with the About dialog's new line: milestone 2's checks, 43 of 43,
   passed on Windows.
+- The automatic builds on #39 (run 36665616826): Windows part 1 failed
+  twice. Y7b waited for the header to lift, but on GitHub's Windows
+  machine the page had less room, its main section covered most of it,
+  and the layers view took it for a wrapper and lifted its paragraphs:
+  the page drew, but the check assumed a window width. Its page now has
+  a second tall section, so the body is the container at any width, and
+  the check runs at 1280 by 800 and at 1024 by 700; it passes at both,
+  and still fails without the size limit. I2 (milestone 7) counted 79
+  bytes for its 877-byte page: not near this milestone's changes, and
+  passed in every run before (this computer, Linux in Docker, and the
+  automatic builds); left unchanged and reported, as milestone 21's
+  intermittent checks were. main's automatic builds had failed
+  intermittently since milestone 21 as well (V8's fade on Linux three
+  times, and once each a time budget in E, a download in J, and a key
+  press), reported to the owner.
 - Y8, the feature check repeated over the finished documents: nothing
   missing beyond milestone 23's list. Found and fixed: SPEC.md's note
   on a page from the computer (it may load from its folder and the

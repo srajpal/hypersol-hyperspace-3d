@@ -8,7 +8,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
-import { inPage, launch, sleep, waitFor, waitForPage, type Harness } from './harness';
+import { inPage, launch, setContentSize, sleep, waitFor, waitForPage, type Harness } from './harness';
 
 let server: FixtureServer;
 
@@ -45,19 +45,23 @@ function ink(h: Harness): Promise<number> {
 }
 
 describe('Y7b: a very tall page in the layers view', () => {
-  it('Y7b keeps a section too tall to lift flat, draws it, and still lifts the rest', async () => {
+  it('Y7b keeps a section too tall to lift flat, draws it, and still lifts the rest, in a wide and a narrow window', async () => {
     const h = await launch(server.url(PAGE));
     try {
       await waitForPage(h, PAGE);
-      // The layers view is on: the header is lifted once the layers are chosen.
-      await waitFor('the header lifted', () => lifted(h), (l) => l.includes('top'), 15_000);
-      expect(await lifted(h)).not.toContain('long');
       const tall = await inPage<number>(h, `document.getElementById('long').offsetHeight`, PAGE);
       expect(tall).toBeGreaterThanOrEqual(30_000);
-      await sleep(1000);
-      const drawn = await ink(h);
-      console.log(`Y7b: the tall page's text covers ${(drawn * 100).toFixed(1)}% of the middle of the window`);
-      expect(drawn).toBeGreaterThan(0.01);
+      // GitHub's Windows machines gave the page less room than this computer does (found in the pull request's run).
+      for (const [width, height] of [[1280, 800], [1024, 700]] as const) {
+        await setContentSize(h, width, height);
+        // The layers view is on: the page's other tall section, and its header, lift once the layers are chosen again.
+        await waitFor(`the other sections lifted at ${width} by ${height}`, () => lifted(h), (l) => l.includes('side') && l.includes('top'), 15_000);
+        expect(await lifted(h)).not.toContain('long');
+        await sleep(1000);
+        const drawn = await ink(h);
+        console.log(`Y7b at ${width} by ${height}: the tall page's text covers ${(drawn * 100).toFixed(1)}% of the middle of the window`);
+        expect(drawn).toBeGreaterThan(0.01);
+      }
     } finally {
       await h.close();
     }
