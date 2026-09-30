@@ -155,11 +155,12 @@ see .github/workflows/ci.yml; macOS not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
 - Toolchain: Node 22.13 or newer; pnpm 12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 289 tests passed on 2026-09-29)
+- Unit: `pnpm test` (Vitest; [COUNT] tests in the run of 2026-09-30;
+  each test may take up to 20 seconds, vitest.config.ts)
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about sixteen minutes; 278 checks in the full run on
-  2026-09-29 in milestone 21, all passed; TODO.md has the details). On
+  against it ([TIME]; [COUNT] checks in the full run on 2026-09-30,
+  after the review's fixes; TODO.md has the details). On
   this computer vitest's report leaves out what passing checks log (the
   load times, frame rates, and memory); `pnpm test:e2e
   --reporter=verbose` shows it, as the automatic builds do. Needs
@@ -171,14 +172,17 @@ date given and grow with each milestone; TODO.md has the latest.
   in four parts side by side on each system, so a build takes as long
   as its longest part (two parts from prompt 122, Q7 a; four from
   prompt 134): HYPERSOL_E2E_PART=2 runs milestones 14 to 17's files
-  (HoloML pages, the showroom, Blockworld), 3 milestones 18 to 20's
+  (HoloML pages, the showroom, Blockworld) and the viewer's checks from
+  the review of 2026-09-30, 3 milestones 18 to 20's
   (the sofa studio, Harbour Loft, the sneaker store), 4 milestone 21's
   (the ocean tunnel), and 1 everything else (vitest.e2e.config.ts lists
-  them); without it, every check runs. A last job, "All checks", passes
-  only when every part has. A push or pull request that changes
-  documents only (the *.md files at the top and the docs folder, which
-  no check reads) skips the parts, and "All checks" passes at once
-  (owner, prompt 135).
+  them); without it, every check runs, and a part number that does not
+  exist stops the run. A check may take 60 seconds unless it says
+  otherwise, and a hook (what runs before and after a file's checks) 300.
+  A last job, "All checks", passes only when every part has. A push or
+  pull request that changes documents only (the *.md files at the top
+  and the docs folder, which no check reads) skips the parts, and "All
+  checks" passes at once (owner, prompt 135).
 - Test windows stay out of the way (owner request, 2026-09-25): they
   open off screen, never take focus, and have no taskbar button, so the
   computer can be used during a run; `pnpm screenshots` works the same
@@ -186,18 +190,36 @@ date given and grow with each milestone; TODO.md has the latest.
   example `HYPERSOL_TEST_SHOW=1 pnpm test:e2e`); then leave the machine
   alone while it runs. Check C1 confirms background windows are off
   every display and unfocused.
-- GitHub's Linux machines have no graphics card and draw in software. To
+- GitHub's Linux machines have no graphics card and draw in software
+  (the review of 2026-09-30 found that its Windows machines draw in
+  software too). To
   draw that way on any machine and find checks that pass only with a
   graphics card, set HYPERSOL_TEST_SOFTWARE=1 (for example
   `HYPERSOL_TEST_SOFTWARE=1 pnpm test:e2e`; first run 2026-09-27); the
   frame-rate budgets, the HoloML load-time budgets (S2, T5), and the
   responsiveness budgets while a heavy HoloML page loads (R3, T2) are
   then measured and logged, not checked, as there (owner, prompts 59,
-  95, and 96). Checks of scenes wait
+  95, and 96). Two of them say so in the report: C9 (milestone 1's
+  frame rate) and G9's frame-time budget (milestone 5) are reported
+  "skipped" in software, not "passed"; the others still log and pass.
+  So the budgets are checked only on a computer with a graphics card
+  (today, the owner's). Drawn in software, a HoloML scene has half as
+  many pixels each way and no smoothed edges (the viewer's own
+  behaviour since prompt 135, checked in review-134-viewer.e2e.ts).
+  Checks of scenes wait
   for what they check, not for fixed times (holdKeyUntil, framesDrawn,
   sceneStill, and sceneWait in tests/e2e/harness.ts); a check that an
   idle page draws nothing starts from sceneStill, as a page compiling
-  shaders is not yet idle (milestone 21).
+  shaders is not yet idle (milestone 21), and a check that the idle
+  room draws nothing starts from roomStill (no switch animation, every
+  loaded page's picture on its card, and a second and a half without a
+  frame). A check that something does not happen looks once caughtUp
+  returns (the app has dealt with everything the page had sent it), not
+  after a sleep, which proves nothing on a slow machine. A check that
+  clicks the permission prompt or an action of the download notice
+  waits for `[data-armed]` on it: both take no click for their first
+  half second. A wait stops at once, with AppGone, when the app's
+  process has ended.
 - Linux on this computer, the way GitHub's Linux machines run the
   checks: `pnpm test:linux` (needs Docker; first run 2026-09-28, owner,
   prompts 103 and 104). It builds tests/linux/Dockerfile (Ubuntu 24.04,
@@ -242,11 +264,17 @@ milestone; the current milestone's checks are defined in TODO.md):
   local copies, no network; first run 2026-09-27). They are part of the
   browser: run it when an example changes, before `pnpm screenshots`.
 - Filter lists: `pnpm filters:update` rebuilds the starter copy from the
-  internet (run before a release; first run 2026-09-26).
+  internet (run before a release; first run 2026-09-26). It is the only
+  place the blocker's page scripts are fetched, and it records the
+  SHA-256 of the starter copy and of the scripts in starter.json, which
+  the app checks (not run again since the review's change to it: not
+  checked yet).
 - Milestone 6 checks H1 to H7 (same command): theme switch, Settings >
   Theme with "Match the system", the room and window following the
   theme, page tilt, the layers view's outline; H5 (contrast) and H8 (no
-  hard-coded colours) are unit tests.
+  hard-coded colours; since the review of 2026-09-30 in the room's code,
+  renderer/scene, too, with preload/theme-colours.test.ts for what the
+  page preload draws) are unit tests.
 - Milestone 7 checks I1 to I9 (same command): the instrument panel on
   and off, page readouts, certificates, console, network list, browser
   gauges, the settings per part, DevTools, efficiency.
@@ -366,6 +394,39 @@ milestone; the current milestone's checks are defined in TODO.md):
   the documentation in the browser, built from the holoml repository
   beside this one. Y5 and Y9 (the published site) and Y6's screen
   reader are checked by hand.
+- The review of 2026-09-30 (prompts 134 and 135) adds four files (same
+  command), each check named for the review's finding:
+  - tests/e2e/review-134-main.e2e.ts, the main process and the page
+    preload: what a page may do without asking, WebSockets through the
+    shield, a link that leads to a download, leaving a page that asks to
+    be kept, what counts as a HoloML page (a download, a sandboxed
+    answer, the site's own policy kept), HoloML files from the computer
+    (from Downloads, leaving for the web, a dropped file), Block for a
+    page that asks to be kept, a start that fails, and a shell that
+    crashes.
+  - tests/e2e/review-134-shell.e2e.ts, the shell (R1 to R7): a HoloML
+    page that fills the window drawn flat, switching panels, error cards
+    that go, a prompt and a notice that take no click at first, the
+    address bar, eight smaller faults of the top bar, tabs, and panels,
+    the room drawing only what is needed, and access (the tab list,
+    error cards, dialogs, reduced motion, composed text, menu keys,
+    Escape).
+  - tests/e2e/review-134-viewer.e2e.ts, the HoloML viewer (V2 to V10 and
+    D12): versions it does not know, a model that cannot be decoded,
+    triangles counted once decoded, the limits on lights, a still walker
+    with gravity, the text view's keys, the private line to the browser,
+    a script beside a problem, a graphics reset, a sound with a short
+    range, hidden things, drawing in software, and the test hooks only
+    in a test run (fixture pages tests/fixtures/holoml/review-134-*, and
+    two models the fixture server generates).
+  - tests/e2e/review-134-harness.e2e.ts, the test tools themselves: the
+    slow download that holds until it is released, a wait that stops
+    when the app has gone, and caughtUp.
+  The pure parts are unit tests beside the code, new with the review:
+  main/permissions, security, holoml, ipc, leave-page, start-up,
+  tab-history, passwords/index, and storage/scrub; viewer/values,
+  versions, sound, controls, instances, and main; shared/settings; and
+  preload/theme-colours.
 - Later milestones add: HoloML 0.3 (23), privacy and data tools (24),
   free camera (25), lift to 3D (26), polish (27), and installers (28
   and 29).

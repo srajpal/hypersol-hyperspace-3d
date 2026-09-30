@@ -172,6 +172,151 @@
   section, lifted, was larger than the graphics card can draw as one
   layer. A section or picture that large now stays flat.
 
+After a review of both repositories on 2026-09-30 (the ids in brackets
+are the review's):
+
+### Security
+
+- A page that only looks at a permission, without asking, is now told
+  what a page that asks is told: refused, for everything but the
+  camera, microphone, and location. Before, such a page read "granted"
+  for notifications, MIDI devices, reading the clipboard, idle
+  detection, window placement, the installed fonts, and more. Copying
+  text after a real click still needs no permission. [M1]
+- A site that asks for a client certificate gets none. Before, the
+  first one in the system's store was handed over without asking, in
+  private tabs too. [M2]
+- The shield now checks WebSocket connections, requests that come from
+  no tab (a site's service worker's), and the page's icon, which the
+  browser fetches for the tab's card; before, all three passed unseen.
+  [M3]
+- A page that asks to be kept (a `beforeunload` handler) can be left:
+  the browser asks "Leave this page?". Before, typing an address, Back,
+  and Reload did nothing on such a page, and a page could hold its tab
+  for good. [M4]
+- A filter list update downloads the lists' text only. The scripts the
+  blocker runs inside web pages now come with the app and are checked
+  against their SHA-256; before, each daily update downloaded them from
+  a branch of another project that can change at any time. [M5]
+- A HoloML file opened from Downloads, the desktop, Documents, the home
+  folder, or the top of a drive can read only the files beside it, not
+  the folders inside. A local HoloML page can leave for a web address
+  only within five seconds of a real click or key press, and then
+  without the address's query and fragment; no HoloML page can open a
+  peer connection. [M6]
+- An answer at a `.holoml` address that the site sends as a download,
+  or sandboxes, is no longer run as a HoloML page, and a HoloML page
+  keeps the site's own content policy and frame options beside HoloML's
+  (before, they were replaced). [V1]
+- Test mode, which keeps every request's address in memory, exists only
+  in a build that is not packaged. [D11]
+- The checks' test hooks are on a HoloML page only in a test run; in a
+  normal run a page has only what the Scene inspector uses, frozen. The
+  browser's commands to the viewer and the scene's state go over a
+  private line, so a page's script can no longer give either. [D12,
+  V10]
+- HoloML's limits now hold for a model that arrives and cannot be
+  decoded (it keeps nothing of the page's totals and is not fetched
+  again at each approach), and a model's triangles are counted again
+  once it is decoded. [V3, V4]
+- A HoloML page without scripts can no longer hang its tab: a model
+  file whose parts refer to each other many levels deep, a solid or a
+  viewpoint placed beyond 1,000,000 metres, and one very long word in a
+  panel are each handled in bounded time. [V5]
+- New HoloML limits on what files become, not only on their bytes: the
+  page's decoded pictures up to 134,217,728 pixels in all, its decoded
+  sounds up to 600 seconds in all, 32 lights, and 4 lights that cast
+  shadows. [V6]
+- The copy of HoloML's checker (HoloML 0.2.2) and the viewer no longer
+  take time that grows with the square of a long run of digits in a
+  value (one of 40,000 digits took two seconds to refuse). [L1]
+
+### Fixed
+
+- Switching from one panel to another closes the first properly: a
+  password shown in the Library is hidden again, and a shortcut waiting
+  for its new keys stops waiting. [R1]
+- An error card goes when its page loads again, however the load began
+  (a failed tab that sleeps and wakes showed its page under the old
+  card). [R2]
+- A HoloML page that fills the window is drawn flat: the camera goes to
+  the centre at once, though the pointer is over the page. [R4]
+- The address bar shows the end of a long host, not its start, and
+  never a user name or password; the whole address shows when the bar
+  takes the keyboard. The lock shows only for a page that loaded over
+  https, not for a certificate error's card. [R5]
+- Enter on a completed address loads the address shown; the site panel
+  closes when its tab leaves the site; "Forget" in Settings forgets one
+  site only; find is stopped on the tab it ran on; the console stays
+  where it was scrolled to; Enter on a tab's Close button closes that
+  tab; a typed address stays in the bar while it loads. [R6]
+- The room asks for no frames for a loading card that is out of view,
+  follows the display's pixel ratio when it changes, and places pages
+  while its WebGL context is lost. [R6]
+- Access: the screen reader's list of tabs keeps the keyboard as tabs
+  change; error cards are announced; About and the HoloML examples keep
+  Tab inside; with reduced motion the camera holds still and a loading
+  card shows a still mark; text being composed is not completed in
+  place; the arrow keys, Home, and End move through menus. [R7]
+- Block for the camera or microphone reloads the pages that were given
+  them, so the capture ends whatever the page does. [M7]
+- A link that leads to a download leaves the shield's site and count as
+  they were. [M8]
+- A start that fails (a full disk, a data folder that cannot be
+  written) ends with a message; before, it left a process without a
+  window that made every later launch quit at once. A shell that
+  crashes is reloaded once. [M9, M10]
+- A page that calls alert() without end can be stopped from its second
+  dialog; a HoloML file at the top of a drive opens. [M10]
+- Deleted history and saved sign-ins are overwritten in the database
+  file, not only marked as free space. [D6]
+- A HoloML page of a version the viewer does not know, or that names
+  none, is refused with a card; before, it was drawn as 0.1. [V2]
+- A HoloML walk page with gravity goes idle when its walker stands
+  still. [V7]
+- In a HoloML page's text view the arrow keys, Page Up, Page Down, and
+  the space bar scroll the text, and the hidden scene draws nothing.
+  [V8]
+- A HoloML sound removed while its file is decoded no longer plays. [V9]
+- In HoloML pages: a script runs though another element on its line has
+  a problem; the scene is drawn again after the graphics card resets;
+  what a script hides takes no click and stops no walker; a sound from
+  a place with a range under a metre is heard within it. [V10]
+- The list of saved sign-ins under a field follows the theme (it stayed
+  dark in Daylight), and the retro sun's colours come from the theme.
+  [St3]
+- For developers: end-to-end checks that raced or measured by the
+  test's own clock were repaired without changing what they assert (the
+  slow download, the instrument panel's bytes, the wait at quitting,
+  the fade), and a wait stops at once when the app has gone.
+
+### Changed
+
+- Where Chromium draws in software (no graphics card), a HoloML scene
+  is drawn with half as many pixels each way and without smoothed
+  edges, so that it moves more smoothly; the console says so once.
+- The ocean tunnel's turtle is a hawksbill sea turtle ("Hawksbill
+  Turtle" by Bindestrek, CC BY 4.0). The flatback it replaces was
+  credited as CC BY 4.0 but licensed CC BY-NC 4.0 (non-commercial).
+  [E1]
+- Built on Electron 44.5.1, with its backported Chromium, V8, ANGLE,
+  and Dawn fixes. [H2]
+- The copy of HoloML's parser and checker is HoloML 0.2.2, the
+  specification's third edition: the same language, stricter in places.
+- Zoom set in a private tab is kept in memory for its site while a
+  private tab is open (it was lost at each new page), and never saved.
+- The permission prompt and the download notice take no click or key
+  press for their first half second, and "Open" on a downloaded program
+  shows it in its folder instead of starting it. [R3]
+- Esc in the top bar stops a page that is still loading, once nothing
+  else is open for it to close.
+- For developers: the automatic builds run the end-to-end checks in
+  four parts on each system, with an "All checks" job that the rule on
+  main requires; a change to documents only skips them; actions are
+  named by commit, and Dependabot proposes updates each week. The
+  repository gains a code of conduct, issue and pull request templates,
+  and editor and line-ending settings. [H1, H3, H8, H9]
+
 ## 0.9.0 — developer preview (2026-09-26)
 
 The first public version of HyperSol HyperSpace 3D, released as source

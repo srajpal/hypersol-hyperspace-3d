@@ -34,7 +34,8 @@ electron package. Development runs keep their data in the `userData/`
 folder of the repository, never in your normal browser profile.
 
 Checked for development on Windows 11, and on Windows and Linux (Ubuntu)
-by GitHub Actions for every push; macOS is untested. On Windows, keep
+by GitHub Actions for every pull request and every push to main; macOS
+is untested. On Windows, keep
 the clone in a short folder path (such as `C:\dev\hyperspace`): pnpm
 fails on file paths over Windows' 260-character limit.
 
@@ -45,11 +46,11 @@ fails on file paths over Windows' 260-character limit.
 | `pnpm lint` | ESLint |
 | `pnpm typecheck` | TypeScript, every package |
 | `pnpm test` | Unit tests (Vitest), next to the code as `*.test.ts` |
-| `pnpm test:e2e` | Builds the app and drives it with Playwright (a few minutes). Its windows open off screen and never take focus; set `HYPERSOL_TEST_SHOW=1` to watch. On Linux without a desktop: `xvfb-run -a pnpm test:e2e` |
+| `pnpm test:e2e` | Builds the app and drives it with Playwright ([TIME]). Its windows open off screen and never take focus; set `HYPERSOL_TEST_SHOW=1` to watch. On Linux without a desktop: `xvfb-run -a pnpm test:e2e` |
 | `pnpm test:linux` | With Docker, on any computer: all of the above on Linux, as GitHub's Linux machines run them (Ubuntu 24.04, 4 processors, 16 GB, no graphics card), in a container with a fresh copy of the repository. `pnpm test:linux tests/e2e/m1.e2e.ts` runs chosen end-to-end files |
 
-Every push and pull request runs all of these on Windows and Linux in
-GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)),
+Every pull request, and every push to main, runs all of these on
+Windows and Linux in GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)),
 the end-to-end checks in four parts side by side on each system
 (`HYPERSOL_E2E_PART=1` to `4`; see vitest.e2e.config.ts). A change to
 documents only (the `*.md` files at the top and `docs/`) skips them.

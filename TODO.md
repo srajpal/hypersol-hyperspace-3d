@@ -34,13 +34,13 @@ Plan approved 2026-09-24.
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Done (accepted, prompt 122) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Done (accepted, prompt 125; HoloML v0.2.0 released, prompt 126) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Current (the plan and build approved with the recommended answers, prompt 128) |
-| 23 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
-| 24 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
+| 23 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
+| 24 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
 | 25 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
 | 26 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
-| 27 | Polish | Custom font, sound design, theme editor, motion tuning | Later (was 29, prompt 129) |
-| 28 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Last (was 25; moved to the end, prompt 129: not ready for builds) |
-| 29 | macOS release | Signing, notarization, Mac checks | Last (was 26, prompt 129) |
+| 27 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (was 29, prompt 129) |
+| 28 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55). (review, 2026-09-30) Licence texts and credits inside the app (the GPL's text for the filter lists, the examples' credits); how security updates reach users (how often Electron is raised, and how people get it); and a check that test mode and the test hooks are absent from a packaged app | Last (was 25; moved to the end, prompt 129: not ready for builds) |
+| 29 | macOS release | Signing, notarization, Mac checks. (review, 2026-09-30) The same three as milestone 28, on macOS | Last (was 26, prompt 129) |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS and Android | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
@@ -84,6 +84,35 @@ standards became milestone 22, after the example sites and HoloML 0.2's
 tag: privacy and data tools moved from 22 to 23, the Windows and Linux
 release from 23 to 24, macOS from 24 to 25, and the later milestones
 from 25, 26, and 27 to 26, 27, and 28.
+
+On 2026-09-30 (prompts 134 and 135) a review of both repositories
+added items to milestones 23, 24, 27, 28, and 29, marked "(review,
+2026-09-30)" in the table; nothing is renumbered. "The review of
+2026-09-30", further down, has the whole account.
+
+- Milestone 23 (HoloML 0.3), the language engineer's list for its plan:
+  the look written down, so that a second renderer can match a picture
+  (how bright a light of a given intensity is, tone mapping, the
+  default surroundings, the field of view); a panorama's projection and
+  which way its middle faces; limits on what files become and on time,
+  as the specification's own requirements (today they are HyperSpace
+  3D's, in the specification's notes); a floor plan that scripts can
+  find; `holoml.add` for animations, click actions, and a panel or a
+  link at the top level; taking a sound's place away again; what a
+  reader reports for a further copy of an element a page may have only
+  once; whether text on both sides of a comment is one text; and the
+  generated RELAX NG grammar checked by a validator in the tests.
+- Milestone 24 (privacy and data tools): one gap found while writing
+  docs/privacy.md. After single history entries are deleted, the
+  history search index can still hold three-letter pieces of their
+  text until all history is cleared (SQLite's FTS5 index marks entries
+  as deleted; its own "secure-delete" option is not on). To be closed
+  with the per-site data tools, or sooner if the owner prefers.
+- Proposed, not placed in a milestone (for the owner to place): a run
+  of the frame-rate and load-time budgets on a machine with a graphics
+  card in the automatic builds. Today GitHub's machines draw in
+  software, so the budgets are only logged there, and no build anywhere
+  but the owner's computer can notice the browser getting slower.
 
 ### Where design work belongs
 
@@ -4373,6 +4402,232 @@ finished documents.
 - Y1 to Y10 pass, the documentation is published, and the owner
   accepts; then holoml is tagged v0.2.1 on the owner's go (Q6).
 
+## The review of 2026-09-30 (prompts 134 and 135)
+
+The owner asked for a thorough, senior-level review of both
+repositories and of the automatic builds (prompt 134), and then for its
+recommendations to be taken and every finding fixed (prompt 135).
+
+### What was reviewed, and how
+
+- Ten reviewers in parallel, each reading every file of one area: the
+  main process and preloads, the shell, the HoloML viewer, holoml's
+  packages, holoml's examples and site and tools, the tests, the
+  repositories' own written rules (Standards), the browser against its
+  documents and the viewer against HoloML's specification (Spec), and
+  the repositories' health. The lead read the code behind the findings
+  ranked highest and ran what could be run (the unit tests, lint, and
+  types in both repositories, `pnpm audit`, a probe of the built app, a
+  timing probe of the checker, the turtle's own licence stamp, the logs
+  of eight automatic builds, and two trial runs of milestone 21's file
+  in the Linux container).
+- Findings are ranked P1 (before anything is released), P2 (soon), P3
+  (when the file is next touched), and marked as run, read, or likely.
+  The findings' names used below (M for the main process, R for the
+  shell, V for the viewer, L for the language, E for the examples, T
+  for the tests, D and Sp for documents against code, St and Sm for
+  standards and design, H for the repositories) are the review's.
+- The review's file, REVIEW-2026-09-30.md, is kept out of the
+  repository: it named weaknesses before they were fixed, and the
+  repository is public. Where it is kept is the owner's decision.
+- Not run by the review: the full end-to-end run, anything on macOS,
+  the published site, a screen reader. Not reviewed: the geometry code
+  in the examples' tools, and packaging (there is none yet).
+
+### What was fixed, by area
+
+Each line names the check that covers it. "Unit" is a `*.test.ts`
+beside the code; the end-to-end files are tests/e2e/review-134-main,
+-shell, -viewer, and -harness (AGENTS.md, Testing).
+
+The main process and preloads:
+
+- M1. Every permission but the camera, microphone, and location is
+  refused to a page that asks and to a page that only looks; copying
+  text after a real click needs none; full screen and pointer lock stay
+  refused until the browser has its own notice (milestone 27).
+  review-134-main "M1"; unit main/permissions.
+- M2. A site that asks for a client certificate gets none. Unit
+  main/security (no end-to-end check: it would need a certificate in
+  the system's store).
+- M3. The shield is asked about WebSockets, requests that no tab made,
+  and a tab's favicon. review-134-main "M3" (a WebSocket to a listed
+  host); unit main/privacy (WebSockets and requests without a tab). No
+  check yet runs a real service worker, or a favicon on a list: both
+  are in the code and not checked.
+- M4. "Leave this page?" for a page that asks to be kept.
+  review-134-main "M4"; unit main/leave-page.
+- M5 and H4. A list update downloads the lists' text only; the page
+  scripts come with the app and are checked by SHA-256; the GPL's text
+  is beside the starter copy. Unit main/privacy; F9 (milestone 4).
+  `pnpm filters:update` has not been run since its change: not checked
+  yet.
+- M6. A HoloML file opened from a shared folder reads the files beside
+  it only; a local page leaves for the web only after a real click or
+  key press, without query and fragment; no peer connections.
+  review-134-main "M6"; unit main/holoml, main/security.
+- M7. Block reloads the pages that were given the camera or microphone,
+  and that reload is not held up by "Leave this page?". review-134-main
+  "M7"; unit main/permissions.
+- M8. A link that leads to a download leaves the shield's site and
+  count as they are. review-134-main "M8"; unit main/privacy.
+- M9 and M10. A start that fails ends with a message; a crashed shell
+  is reloaded once; page dialogs can be stopped; a HoloML file at the
+  top of a drive opens; a tab that closes while its history is put
+  back. review-134-main "M9" and "M10"; unit main/start-up, main/holoml,
+  main/tab-history. HTTP sign-in (the rest of M10) is being built
+  separately.
+- M11, in part. A dropped file's message is held to what the main
+  process can know (unit main/security; review-134-main "M11"). See
+  "not done", 6.
+- V1. An answer sent as a download, or sandboxed, is not a HoloML page;
+  a HoloML page keeps the site's own policy. review-134-main "V1"; unit
+  main/holoml.
+- D6. Deleted history and sign-ins are overwritten in the file. Unit
+  main/storage/scrub.
+- D11. Test mode only in a build that is not packaged. Unit
+  main/launch-options.
+- Sm4. "Only the shell may ask" in one helper. Unit main/ipc.
+- "Open" on a downloaded program shows it in its folder. Unit
+  main/downloads.
+
+The shell:
+
+- R1 to R7, each a group in review-134-shell: switching panels, error
+  cards that go, the prompt and the notice that take no click for half
+  a second, a filled HoloML page drawn flat, the address bar, the eight
+  smaller faults, the room's drawing, and access. Unit renderer/url
+  (how an address is shown, the site button's marker).
+- St3. The sun's colours are theme tokens, and what the page preload
+  draws takes the theme's colours. Unit H8 (now over the room's code
+  too), packages/themes tokens, preload/theme-colours.
+- Sm5. The list of setting names comes from the defaults. Unit
+  shared/settings.
+- Dead code and stale comments removed (the review's section 3).
+
+The HoloML viewer:
+
+- V2. A version the viewer does not know, or none, is refused.
+  review-134-viewer "V2"; unit viewer/versions.
+- V3 and V4. What a load holds is given back whole; triangles counted
+  once decoded. review-134-viewer "V3", "V4"; unit viewer/budget.
+- V5. Bounded work for any page (a model file's node graph, walls and
+  walking, a panel's long word, numbers). Unit viewer/budget, physics,
+  panels, values.
+- V6. Limits on decoded pictures, decoded sound, and lights.
+  review-134-viewer "V6"; unit viewer/budget, sound.
+- V7 to V10 and D12, each named in review-134-viewer: a still walker
+  with gravity, the text view's keys, a removed sound, the private line
+  between the browser and the viewer, a script beside a problem, a
+  graphics reset, hidden things, and the test hooks only in a test run.
+- Drawing in software at half resolution, without smoothed edges
+  (prompt 135, the review's recommendation A). review-134-viewer's
+  drawing check.
+
+The tests and the automatic builds:
+
+- The end-to-end checks run in four parts on each system, with an "All
+  checks" job; a change to documents only skips them; the actions are
+  named by commit (section 2 of the review).
+- Repaired without changing what they assert: #10's slow download (it
+  holds until released, and the wait is 180 s), I2 (waits for the
+  bytes, not only the count), E6b (the 2 s wait is timed inside the
+  app), V5 (a dark picture that began before the fade-in counts).
+- The harness: no app left behind by a failed launch; a wait stops when
+  the app has gone; navigateTo no longer waits on Chromium to
+  acknowledge Enter; roomStill and caughtUp; hooks have the time their
+  own waits need. review-134-harness checks the tools themselves.
+- G9 is two checks now: the idle check, which runs everywhere, and the
+  frame-time budget, which reports "skipped" in software. Milestone 5
+  so has ten checks.
+- The unit run allows 20 seconds a test.
+
+HoloML (the holoml repository, branch `review-134-fixes`; its own
+CHANGELOG.md, under 0.2.2, has the full list and its tests): the
+checker's slow numbers (L1); an address with a control character is a
+problem (L2); where a syntax error and a problem are reported is
+written into the specification, and its value grammars and the checker
+agree (L3, L5, L8); a 0.1 page is no longer held to 0.2's rules (L6);
+`serialize()` writes a tree that reads back the same (L7); the RELAX NG
+schema's patterns are written from the checker's own (L9); 44 new
+conformance samples, and a test that every code has one (L4). Its
+examples, site, and tools: the aquarium's turtle replaced, and a guard
+that stops the tools when a file's licence stamp and its credit
+disagree (E1); the site's builder refuses to empty a folder it did not
+make (E2); the site is published only after lint, types, and the tests
+pass (E3); the examples' scripts and tools (E4, E5). The specification
+is 0.2's third edition, and the packages are at 0.2.2; nothing is
+tagged since v0.2.0. The browser's copy is made from that branch
+(packages/holoml/SOURCE.json).
+
+The repositories: Electron 44.5.1 (H2, and the rule 13 record in
+ARCHITECTURE.md section 3); Dependabot, a rule for line ends, editor
+settings, `.nvmrc`, a code of conduct, and issue and pull request
+templates (H3, H8, H9); the rule on main requires "All checks" (H1);
+`.claude/` ignored by git and by lint (H7).
+
+The documents (St1, D1 to D13): ARCHITECTURE.md, docs/privacy.md,
+README.md, CHANGELOG.md, THIRD-PARTY.md, AGENTS.md's Testing section,
+HANDOFF.md, and this file, each sentence about the browser checked
+against the code.
+
+### Deliberately not done, and why
+
+1. Thinning the screenshots (H6: 715 pictures, 187 MB, growing with
+   each milestone). Keeping only the newest set changes a working
+   agreement in AGENTS.md ("save screenshots of the main screens at the
+   end of each milestone"): it needs the owner's wording first.
+2. holoml's rule about pushing (St7: its AGENTS.md says "Do not push
+   unless asked", this repository's rule 11 says push before and after
+   a milestone). A rule is changed only with the owner's wording.
+3. The README's alt text that reads "HyperSol, LLC" (St6). It
+   describes what the 2001 picture itself says; whether the naming rule
+   covers it is the owner's decision.
+4. The three merged branches still on GitHub (fix/issues-17-to-22,
+   m19-harbour-loft, m21-aquarium) and the old working copy under
+   `.claude/worktrees` with its unpushed commit (H7). Deleting work
+   needs the owner (rule 4).
+5. Requiring actions to be named by commit in each repository's
+   settings (H3). To be switched on only after both pull requests are
+   merged: until then main's workflows name actions by tag, and the
+   setting would stop them.
+6. A dragged-in `.holoml` file (M11): the main process cannot confirm
+   that a real drop happened, as the message comes from the page's
+   preload. It checks everything it can know. Routing the drop through
+   the shell would close it, and is not built.
+7. Checks still measured by the test's own clock, or that sleep and
+   then look (the test engineer's list): the fade's darkest moment
+   (fadeMax, milestones 19 and 20); L9's 50 ms budget under load; issue
+   #11's check, which needs a "scan finished" signal from the layers
+   preload; D13 and E2, which need measures inside the app; and
+   sleep-then-look in C5 and C8 (milestone 1), F10 (milestone 4), five
+   places in milestone 8, and one each in milestones 3, 9, and 10 and
+   in issue #18's check. Each needs a signal from the app that does not
+   exist yet.
+8. `@types/node` is for Node 26 while the builds run Node 22, and the
+   lint rules do not know types (so nothing warns of a promise left
+   unawaited) (H8). Both change many files at once and are left for a
+   change of their own.
+
+Also open, for the owner to place (the roadmap above has them): the
+items added to milestones 23, 24, 27, 28, and 29, and a budget run with
+a graphics card in the automatic builds.
+
+### Results
+
+Not recorded yet: the final runs come after every branch is merged.
+
+- Unit tests: [COUNT]
+- End-to-end checks, this computer: [COUNT], [TIME]
+- End-to-end checks, the Linux container (`pnpm test:linux`): [COUNT],
+  [TIME]
+- The automatic builds in four parts (pull request #39's run after
+  fce1e63, before the fixes; the lead has its record): [TIME]
+- The automatic builds with the fixes, on both pull requests: not run
+  yet (they need a push).
+- Lint and the type check: not recorded yet.
+- `pnpm test` in holoml: [COUNT]
+
 ## The roadmap: installers last (2026-09-29, prompt 129)
 
 The owner moved the installers to the end of the roadmap, as the
@@ -4412,6 +4667,10 @@ made with GitHub's API on 2026-09-29:
   milestone's acceptance, a plan for approval) still go through.
 
 To change them: each repository's Settings, Rules, Rulesets.
+
+Changed 2026-09-30 (prompt 135): the browser's second ruleset now
+requires one check, "All checks", in place of the parts by name ("The
+review of 2026-09-30", above).
 
 ## The README: a broken link, and four pictures (2026-09-28, prompt 99)
 

@@ -33,12 +33,12 @@ a made-up sample page.*
 For Windows and Linux (checked by automatic tests on both); macOS is
 planned but untested. Apache 2.0. No telemetry.
 
-**Status (2026-09-29): experimental.** Released: the
+**Status (2026-09-30): experimental.** Released: the
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
 a pre-release, as source for developers (no installers yet; releases
 stay pre-releases until 1.0). Since then, HoloML 0.1 has
 been written down in its own repository (milestone 13), and this browser
-shows HoloML pages (milestones 14 to 20, accepted; not yet in a
+shows HoloML pages (milestones 14 to 21, accepted; not yet in a
 release), with limits for heavy scenes, keyboard and screen-reader
 access, a scene inspector, and a HoloML car showroom to try from the
 start panel. Milestone 17 adds Blockworld, a small block game written in
@@ -55,6 +55,9 @@ among, turn over, and add to a cart. Milestone 21 adds water, sounds
 that come from a place, and the ocean tunnel, an aquarium to walk
 through with 30 fish swimming over and around you, and completes HoloML
 0.2. Milestone 22 documents HoloML: its specification, guides, and site.
+On 2026-09-30 both repositories were reviewed and the findings fixed,
+the security ones first ([CHANGELOG.md](CHANGELOG.md), Unreleased),
+except those [TODO.md](TODO.md) lists with the reason.
 Then HoloML 0.3, privacy and data tools, and more of the 3D room;
 installers come last. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
@@ -296,7 +299,9 @@ Planned, not yet installed: electron-builder for installers (milestones 28 and 2
 Reasons for each choice are in ARCHITECTURE.md.
 
 Known limitations: Electron ships no DRM module, so video from Netflix
-and similar services will not play. The 3D room needs WebGL 2; where
+and similar services will not play. A page cannot fill the screen or
+hold the mouse pointer yet (a video's full-screen button does nothing):
+both wait for a notice of the browser's own. The 3D room needs WebGL 2; where
 Chromium cannot start it (no graphics driver, some virtual machines),
 pages still work without the room, and a notice says so.
 
@@ -304,7 +309,8 @@ pages still work without the room, and a notice says so.
 
 A developer preview (0.9.0): no installers yet, so build and run it from
 source. Checked on Windows 11 here, and on Windows and Linux (Ubuntu) by
-GitHub Actions for every push; macOS is untested.
+GitHub Actions for every pull request and every push to main; macOS is
+untested.
 [CONTRIBUTING.md](CONTRIBUTING.md) has the full setup, including Linux.
 
 You need Node 22.13 or newer and pnpm 12.4.1. The pnpm version is pinned
@@ -333,6 +339,9 @@ the top bar, or click a card on the left to switch tabs. The main keys
   panel.
 - Ctrl+plus and minus zoom; Ctrl+F finds; Ctrl+J shows downloads; Ctrl+P
   prints.
+- Esc closes what is open (a menu, a panel, the address bar's list).
+  With nothing open for it to close, Esc in the top bar stops a page
+  that is still loading.
 - Ctrl+O opens a HoloML file from the computer (or drop one on the
   window); a `.holoml` address shows as a 3D scene across the window.
   In a scene, Tab moves through its places ("Go to"), links, and named
@@ -351,7 +360,7 @@ What the browser stores and sends is listed in
 profile in the `userData/` folder, never your normal browser data.
 
 Tests: `pnpm test` (unit), `pnpm lint`, `pnpm typecheck`, and
-`pnpm test:e2e` (builds the app and drives it for about ten minutes;
+`pnpm test:e2e` (builds the app and drives it for [TIME];
 needs openssl on PATH, which Git for Windows provides). Its windows stay
 off screen and never take focus, so you can keep working; set
 `HYPERSOL_TEST_SHOW=1` to watch instead. With Docker, `pnpm test:linux`
