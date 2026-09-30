@@ -66,6 +66,8 @@ export class Permissions {
   private nextId = 1;
   private readonly tabs = new Map<WebContents, TabGrants>();
   private readonly privateChoices = new Map<string, SiteChoices>();
+  /** Pages being reloaded to end their capture (revoke). */
+  private readonly ending = new WeakSet<WebContents>();
 
   constructor(private readonly deps: PermissionDeps) {}
 
@@ -113,7 +115,9 @@ export class Permissions {
 
   /** Watches a web page: leaving the site or closing ends its "this time" grants and prompts. */
   trackTab(contents: WebContents): void {
+    contents.on('did-stop-loading', () => this.ending.delete(contents));
     contents.on('did-navigate', (_event, url) => {
+      this.ending.delete(contents);
       const grants = this.tabs.get(contents);
       if (grants && originOf(url) !== grants.origin) this.leave(contents);
       for (const p of this.pending.values()) if (p.contents === contents && originOf(url) !== p.origin) this.end(p, false);
@@ -206,8 +210,20 @@ export class Permissions {
       if (grants.origin !== origin || contents.isDestroyed() || contents.session !== session) continue;
       if (!grants.given.delete(kind)) continue;
       this.deps.send(contents, { type: 'site-access', webContentsId: contents.id, kinds: [...grants.given] });
-      if (kind !== 'location') contents.reload();
+      if (kind !== 'location') {
+        this.ending.add(contents);
+        contents.reload();
+      }
     }
+  }
+
+  /**
+   * Is this page being reloaded to end its capture? Then a page that asks
+   * to be kept (a beforeunload handler) is not asked about: "Stay" would
+   * leave it capturing after Block (main/leave-page.ts).
+   */
+  endingCapture(contents: WebContents): boolean {
+    return this.ending.has(contents);
   }
 
   private given(contents: WebContents, origin: string, kinds: PermissionKind[]): void {

@@ -356,6 +356,8 @@ if (!app.requestSingleInstanceLock()) {
       recordVisit: (url, title) => (isPrivate || url.startsWith(`${LOCAL_SCHEME}:`) ? null : (storage?.recordVisit(url, title) ?? null)),
       updateVisitTitle: (id, title) => void storage?.updateVisitTitle(id, title),
       confirmLeave: (url) => {
+        // Block for the camera or microphone reloads the page whatever it says (main/permissions.ts).
+        if (permissions?.endingCapture(contents)) return true;
         // Test runs open no native box: the ask is recorded and answered by the check.
         if (testLog) {
           testLog.leaveAsks.push(url);

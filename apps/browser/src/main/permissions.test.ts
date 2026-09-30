@@ -174,6 +174,11 @@ describe('the camera, the microphone, and the location (milestone 9)', () => {
     const reply = await permissions.handle(fromShell(page), { op: 'site.set', tab: 1, kind: 'camera', state: 'block' });
     expect(reply).toMatchObject({ ok: true, value: { states: { camera: 'block' }, given: [] } });
     expect([page.reloads, second.reloads, third.reloads, elsewhere.reloads]).toEqual([1, 1, 0, 0]);
+    // A page that asks to be kept is not asked about while this reload is under way.
+    expect([page, second, third].map((p) => permissions.endingCapture(p as never))).toEqual([true, true, false]);
+    page.emit('did-navigate', {}, `${SITE}/page`);
+    second.emit('did-stop-loading');
+    expect([page, second].map((p) => permissions.endingCapture(p as never))).toEqual([false, false]);
     // The marker goes out for the pages that held it.
     expect(sent.filter((c) => c.type === 'site-access')).toEqual([
       { type: 'site-access', webContentsId: 1, kinds: [] },

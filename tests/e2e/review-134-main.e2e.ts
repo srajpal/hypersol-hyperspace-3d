@@ -3,8 +3,8 @@
  * process and the page preload: what a page may do without asking (M1),
  * WebSockets through the shield (M3), a link that leads to a download
  * (M8), leaving a page that asks to be kept (M4), what counts as a HoloML
- * page (V1), HoloML files from the computer (M6, M11), and a start or a
- * shell that fails (M9, M10).
+ * page (V1), HoloML files from the computer (M6, M11), Block for a page
+ * that asks to be kept (M7), and a start or a shell that fails (M9, M10).
  */
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -393,6 +393,35 @@ describe('M11: a .holoml file dropped on a page', () => {
       await drop(scene);
       await waitFor('the dropped page in the tab', () => focusedTab(h), (t) => /^hypersol-file:\/\/[0-9a-f]{16}\/dropped\.holoml$/.test(t.url));
       await sceneReady(h, 'hypersol-file');
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('M7: Block ends capture in a page that asks to be kept', () => {
+  it('reloads the page without asking "Leave this page?", so the camera is off whatever the page wants', async () => {
+    const h = await launch(server.url('media.html'), { userDataDir: newProfile() });
+    h.app.context().on('dialog', () => undefined);
+    try {
+      await waitForPage(h, 'media.html');
+      const page = await focusedPage(h);
+      const tab = (await focusedTab(h)).id;
+      // The page holds the camera, and would keep its tab if asked.
+      const live = inPage<string>(h, 'navigator.mediaDevices.getUserMedia({ video: true }).then((s) => { window.keep = s; return "live"; }, (e) => e.name)', page);
+      await waitFor('the camera prompt', async () => (await shellCall(h, 'prompts')).permission, (p) => p !== null);
+      await h.shell.click('hs-prompts [data-testid="perm-allow"]');
+      expect(await live).toBe('live');
+      await inPage(h, `addEventListener('beforeunload', (e) => { e.preventDefault(); e.returnValue = ''; }); true`, page);
+      await h.app.evaluate(() => void ((globalThis as unknown as { __hypersolTest: { leaveAnswer: string } }).__hypersolTest.leaveAnswer = 'stay'));
+      await waitFor('the in-use marker', () => shellCall(h, 'accessOf', tab), (k) => k.includes('camera'));
+      // Block, through the site panel.
+      await h.shell.click('hs-toolbar [data-testid="site-button"]');
+      await waitFor('the site panel', () => shellCall(h, 'sitePanel'), (s) => s.open && s.site !== null);
+      await h.shell.selectOption('hs-site-panel [data-testid="site-camera"]', 'block');
+      await waitFor('the page reloaded: its stream gone', () => inPage<string>(h, 'typeof window.keep', page), (t) => t === 'undefined');
+      await waitFor('the marker gone', () => shellCall(h, 'accessOf', tab), (k) => !k.includes('camera'));
+      expect(await testLog<string[]>(h, 'leaveAsks')).toEqual([]);
     } finally {
       await h.close();
     }
