@@ -5,7 +5,15 @@
 // checked against the manifest, and writes:
 //   resources/filters/starter.bin   the blocker engine built from the lists
 //                                   marked "ship" (download-only lists left out)
-//   resources/filters/starter.json  what went in: addresses, sizes, hashes, date
+//                                   and the page scripts ("resources")
+//   resources/filters/starter.json  what went in: addresses, sizes, hashes, date,
+//                                   and the SHA-256 of starter.bin itself
+// This is the only place the page scripts are fetched. The app's own
+// refresh downloads list texts only and builds with the scripts inside
+// starter.bin, after checking starter.bin against the SHA-256 recorded
+// here and the scripts against theirs (main/privacy/filters-build.ts).
+// So read the scripts' changes before committing a new starter copy: they
+// run inside every web page.
 import { createHash } from 'node:crypto';
 import { readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -60,6 +68,7 @@ writeAtomic(
     {
       built: new Date().toISOString(),
       engineBytes: bin.length,
+      engineSha256: createHash('sha256').update(bin).digest('hex'),
       lists: record,
       resources: { name: manifest.resources.name, url: resources.url, license: manifest.resources.license, bytes: resources.bytes, sha256: resources.sha256 },
     },

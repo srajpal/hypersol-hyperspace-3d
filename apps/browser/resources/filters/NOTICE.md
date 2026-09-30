@@ -3,10 +3,17 @@
 `starter.bin` is the privacy shield's blocking engine built from the
 filter lists below (the ones marked "shipped"), unchanged, by
 `pnpm filters:update` (apps/browser/scripts/filters-update.mjs).
-`starter.json` records each list's address, size, and SHA-256, and the
-date it was built. The lists are the work of their authors and keep
-their own licences; they are not covered by this repository's Apache 2.0
-licence.
+`starter.json` records each list's address, size, and SHA-256, the date
+it was built, and the SHA-256 of `starter.bin` itself. The lists are the
+work of their authors and keep their own licences; they are not covered
+by this repository's Apache 2.0 licence.
+
+`starter.bin` is used and passed on under the GNU General Public License,
+version 3, whose full text is beside this file in `GPL-3.0.txt`: uBlock
+Origin's filters and resources are under GPL-3.0, and EasyList and
+EasyPrivacy, which offer a choice of two licences, are taken under
+GPL-3.0 as well. The lists' texts, from which `starter.bin` can be built
+again with `pnpm filters:update`, are at the addresses in `starter.json`.
 
 | List | Source | Licence | Shipped |
 |---|---|---|---|
@@ -16,6 +23,11 @@ licence.
 
 All lists are fetched from Ghostery's copies at
 https://raw.githubusercontent.com/ghostery/adblocker/master/packages/adblocker/assets/.
-The full licence texts must ship alongside the app's installers
-(milestone 18). THIRD-PARTY.md at the repository root lists these and
-the app's other third-party parts.
+The uBlock Origin resources are scripts the blocker runs inside web
+pages. They are fetched only when `starter.bin` is built; the app's own
+daily refresh downloads the list texts and keeps the scripts it came
+with.
+
+`GPL-3.0.txt` and this file must ship alongside the app's installers
+(milestones 28 and 29). THIRD-PARTY.md at the repository root lists
+these and the app's other third-party parts.

@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { app, ipcMain, net, webContents, type IpcMainInvokeEvent, type Session, type WebContents } from 'electron';
@@ -16,6 +15,7 @@ import type { StorageService } from '../storage/service';
 import { readTextIfExists, writeFileAtomic } from '../storage/files';
 import { DnsControl, QUAD9 } from './dns';
 import { FilterService, type ListManifest } from './filters';
+import { verifyStarter, type StarterInfo } from './filters-build';
 import { OwnRequests } from './own-requests';
 import { hostOf, Shield, type Matcher } from './shield';
 import createBuildWorker from './filters-worker?nodeWorker';
@@ -76,9 +76,8 @@ async function downloadList(url: string): Promise<string> {
   return text;
 }
 
-/** Builds the engine in a worker thread (filters-worker.ts). */
-function buildInWorker(lists: string[], resources: string): Promise<Uint8Array> {
-  const checksum = createHash('sha256').update(resources).digest('hex');
+/** Builds the engine in a worker thread (filters-worker.ts), with the starter copy's page scripts. */
+function buildInWorker(lists: string[], starter: Uint8Array, scripts: string): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     const worker = createBuildWorker({});
     worker.once('message', (reply: { bin?: Uint8Array; error?: string }) => {
@@ -90,7 +89,7 @@ function buildInWorker(lists: string[], resources: string): Promise<Uint8Array> 
       void worker.terminate();
       reject(e);
     });
-    worker.postMessage({ lists, resources, checksum });
+    worker.postMessage({ lists, starter, scripts });
   });
 }
 
@@ -128,6 +127,8 @@ export class Privacy {
     const manifest = JSON.parse(readFileSync(join(options.filtersDir, 'lists.json'), 'utf8')) as ListManifest;
     mkdirSync(options.savedDir, { recursive: true });
     const saved = { bin: join(options.savedDir, 'engine.bin'), meta: join(options.savedDir, 'engine.json') };
+    const starterInfo = () => JSON.parse(readFileSync(join(options.filtersDir, 'starter.json'), 'utf8')) as StarterInfo;
+    const starterBin = () => new Uint8Array(readFileSync(join(options.filtersDir, 'starter.bin')));
     this.filters = new FilterService<ElectronBlocker>(
       manifest,
       {
@@ -140,13 +141,17 @@ export class Privacy {
             writeFileAtomic(saved.bin, bin);
             writeFileAtomic(saved.meta, meta);
           },
-          readStarter: () => {
-            const info = JSON.parse(readFileSync(join(options.filtersDir, 'starter.json'), 'utf8')) as { built: string };
-            return { bin: new Uint8Array(readFileSync(join(options.filtersDir, 'starter.bin'))), built: Date.parse(info.built) };
-          },
+          readStarter: () => ({ bin: starterBin(), built: Date.parse(starterInfo().built) }),
+          scriptsChecksum: () => starterInfo().resources.sha256,
         },
         download: (url) => this.own.run(url, () => downloadList(url)),
-        build: buildInWorker,
+        build: (lists) => {
+          // The page scripts come from the starter copy, checked against its record first.
+          const info = starterInfo();
+          const bin = starterBin();
+          verifyStarter(bin, info);
+          return buildInWorker(lists, bin, info.resources.sha256);
+        },
         load: (bin) => ElectronBlocker.deserialize(bin),
         now: () => Date.now(),
       },
