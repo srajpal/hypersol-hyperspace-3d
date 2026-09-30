@@ -4344,9 +4344,10 @@ finished documents.
   passed in every run before (this computer, Linux in Docker, and the
   automatic builds); left unchanged and reported, as milestone 21's
   intermittent checks were. main's automatic builds had failed
-  intermittently since milestone 21 as well (V8's fade on Linux three
-  times, and once each a time budget in E, a download in J, and a key
-  press), reported to the owner.
+  intermittently since milestone 21 as well (V5's fade on Linux three
+  times, and once each: milestone 3's quit after the shell's 2-second
+  wait, check #10's slow download in milestone 8, and a key press in the
+  top bar), reported to the owner.
 - Y8, the feature check repeated over the finished documents: nothing
   missing beyond milestone 23's list. Found and fixed: SPEC.md's note
   on a page from the computer (it may load from its folder and the
