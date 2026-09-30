@@ -230,6 +230,33 @@ are the review's):
 - The copy of HoloML's checker (HoloML 0.2.2) and the viewer no longer
   take time that grows with the square of a long run of digits in a
   value (one of 40,000 digits took two seconds to refuse). [L1]
+- A choice made in the site panel names the site it was made for, and
+  is refused once the tab has left that site, so a panel left open
+  cannot change another site's choice. [R6]
+- The checks' test hooks come to a page only when the main process,
+  which knows whether the app is packaged, starts the page's process
+  for a test run; before, the page's preload read the test switch from
+  its environment itself. [D11]
+- The Scene inspector chooses a thing and switches picking through the
+  browser's own line to the viewer; nothing on a HoloML page's window
+  acts any more. [D12]
+
+### Added
+
+- A prompt for sites, and proxies, that ask for a user name and password
+  in the browser's own dialog (HTTP sign-in). Before, such a request
+  was cancelled without a word, so a site behind one could not be used.
+  The prompt names the site from the request's own address and shows
+  the server's own words as a quotation; what you type goes to
+  Chromium's handling of the request only, and is never saved or
+  offered to the password manager. A second request in the same tab
+  waits its turn; leaving the page or closing the tab cancels it. [M10]
+- The window opens at the size and place it was last left, maximised
+  if it was, while that place is still on a connected display;
+  otherwise at 1280 by 800, centred. [D7]
+- The text view's keys, Ctrl+Shift+V, are in the shortcuts table as
+  "Text view of a HoloML page", changeable in Settings > Shortcuts, and
+  act only with a HoloML page in front. [St4]
 
 ### Fixed
 
@@ -269,7 +296,9 @@ are the review's):
 - A page that calls alert() without end can be stopped from its second
   dialog; a HoloML file at the top of a drive opens. [M10]
 - Deleted history and saved sign-ins are overwritten in the database
-  file, not only marked as free space. [D6]
+  file, not only marked as free space, and the history search index
+  drops a deleted visit's pieces at once (before, they stayed in it
+  until all history was cleared). [D6]
 - A HoloML page of a version the viewer does not know, or that names
   none, is refused with a card; before, it was drawn as 0.1. [V2]
 - A HoloML walk page with gravity goes idle when its walker stands
@@ -285,10 +314,29 @@ are the review's):
 - The list of saved sign-ins under a field follows the theme (it stayed
   dark in Daylight), and the retro sun's colours come from the theme.
   [St3]
+- In HoloML pages, what the specification's third edition settled
+  (0.2.2): setting a member of a thing that its kind does not have is no
+  error and changes nothing; a thing's `parent` is its group, through a
+  link; the vectors a thing or the viewer gives are frozen; a model
+  whose file needs a glTF extension the viewer does not read is left
+  out with the reason (compressed geometry and pictures among them);
+  `holoml.add` leaves out an `animate` and a click sound wherever they
+  are, and says so; a material that takes no light is changed by
+  `material`, an `option`, and a script like any other; the text view
+  shows every paragraph of a panel inside a link; the syntax-error card
+  shows the error's code; a 0.1 page's `hud` is not shown; values are
+  read with the checker's own patterns, and whitespace is the syntax's
+  four characters; only the ambient lights in the scene now dim the
+  surroundings and the sky. [Sp]
 - For developers: end-to-end checks that raced or measured by the
   test's own clock were repaired without changing what they assert (the
   slow download, the instrument panel's bytes, the wait at quitting,
-  the fade), and a wait stops at once when the app has gone.
+  the fade, the layers view's scan, why a favicon fetch ended, when a
+  Library search starts), and a wait stops at once when the app has
+  gone. The viewer's checks hold keys for a given amount of the scene's
+  own time, and the budgets that need a graphics card (frame rates,
+  load times, responsiveness while a heavy page loads, shadows, the
+  water's light) report "skipped" when drawn in software, not "passed".
 
 ### Changed
 
@@ -315,7 +363,8 @@ are the review's):
   main requires; a change to documents only skips them; actions are
   named by commit, and Dependabot proposes updates each week. The
   repository gains a code of conduct, issue and pull request templates,
-  and editor and line-ending settings. [H1, H3, H8, H9]
+  and editor and line-ending settings. Lint knows the types: a promise
+  nobody awaits or catches is an error. [H1, H3, H8, H9]
 
 ## 0.9.0 — developer preview (2026-09-26)
 
