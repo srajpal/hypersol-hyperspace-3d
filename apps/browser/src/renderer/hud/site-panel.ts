@@ -185,9 +185,11 @@ export class HsSitePanel extends LitElement {
 
   private async set(kind: PermissionKind, state: 'ask' | PermissionChoice): Promise<void> {
     const tab = this.tab();
-    if (!this.client || tab === null) return;
+    const origin = this.site?.origin;
+    if (!this.client || tab === null || origin === undefined) return;
     try {
-      this.site = await this.client.get({ op: 'site.set', tab, kind, state });
+      // For the site shown here: the main process refuses it if the tab has left that site.
+      this.site = await this.client.get({ op: 'site.set', tab, origin, kind, state });
       this.message = 'Saved.';
     } catch (e) {
       this.message = e instanceof Error ? e.message : String(e);

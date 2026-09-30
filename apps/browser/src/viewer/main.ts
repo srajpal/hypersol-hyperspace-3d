@@ -465,11 +465,6 @@ function start(): void {
   // Esc stops whatever is still loading (issue #23).
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && view.busy) view.stop();
-    // Ctrl+Shift+V (Cmd+Shift+V on macOS): the text view, on HoloML pages only.
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && e.key.toLowerCase() === 'v') {
-      e.preventDefault();
-      setTextView(!state.textView);
-    }
   });
   // From the browser, through the page's preload, over the private line: stop, the text view, and whether
   // its tab is behind another (milestone 21). Commands sent before the scene was built waited in the line.

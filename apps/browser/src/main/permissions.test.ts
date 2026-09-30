@@ -5,7 +5,7 @@ import type { SiteChoices } from '../shared/permissions';
 
 const all = new Map<number, unknown>();
 vi.mock('electron', () => ({ webContents: { fromId: (id: number) => all.get(id) } }));
-const { ALLOWED_WITHOUT_ASKING, Permissions } = await import('./permissions');
+const { ALLOWED_WITHOUT_ASKING, LEFT_SITE, Permissions } = await import('./permissions');
 
 type Check = (contents: unknown, permission: string, origin: string, details: { requestingUrl?: string; mediaType?: string }) => boolean;
 type Request = (contents: unknown, permission: string, callback: (granted: boolean) => void, details: { requestingUrl: string; mediaTypes?: string[] }) => void;
@@ -38,12 +38,14 @@ function setup(saved: Record<string, SiteChoices> = {}) {
     setPermissionRequestHandler: (h: Request) => void (request = h),
   };
   const sent: ShellCommand[] = [];
+  const refused: string[] = [];
   const state = { saved };
   const permissions = new Permissions({
     isPrivate: () => false,
     saved: () => state.saved,
     save: (sites) => void (state.saved = sites),
     send: (_contents, command) => void sent.push(command),
+    refused: (permission) => void refused.push(permission),
   });
   permissions.protect(session as never);
   const page = fakePage(1, session);
@@ -56,13 +58,13 @@ function setup(saved: Record<string, SiteChoices> = {}) {
   };
   const looks = (permission: string, mediaType?: string) => check(page, permission, SITE, { requestingUrl: `${SITE}/page`, ...(mediaType ? { mediaType } : {}) });
   const prompt = () => (sent.filter((c) => c.type === 'permission-prompt').at(-1) as Prompt).prompt;
-  return { permissions, session, page, sent, state, ask, looks, check, prompt };
+  return { permissions, session, page, sent, refused, state, ask, looks, check, prompt };
 }
 
 const fromShell = (page: { hostWebContents: object }) => ({ sender: page.hostWebContents }) as never;
 
 describe('what a page may do without asking (review of 2026-09-30, M1)', () => {
-  // Every name Electron 44 knows besides the three allowed and the two asked about, and one it does not know.
+  // Every name Electron 44 knows besides the one allowed and the two asked about, and one it does not know.
   const REFUSED = [
     'ar',
     'automatic-fullscreen',
@@ -73,6 +75,7 @@ describe('what a page may do without asking (review of 2026-09-30, M1)', () => {
     'deprecated-sync-clipboard-read',
     'display-capture',
     'fileSystem',
+    'fullscreen',
     'geolocation-approximate',
     'hand-tracking',
     'hid',
@@ -91,6 +94,7 @@ describe('what a page may do without asking (review of 2026-09-30, M1)', () => {
     'payment-handler',
     'periodic-background-sync',
     'persistent-storage',
+    'pointerLock',
     'screen-wake-lock',
     'sensors',
     'serial',
@@ -108,18 +112,20 @@ describe('what a page may do without asking (review of 2026-09-30, M1)', () => {
     'a-name-from-a-later-chromium',
   ];
 
-  it('a page that only looks is told "no" for every name but the short list', () => {
+  it('a page that only looks is told "no" for every name but copying text', () => {
     const { looks } = setup();
     for (const name of REFUSED) expect(looks(name), name).toBe(false);
-    expect([...ALLOWED_WITHOUT_ASKING].sort()).toEqual(['clipboard-sanitized-write', 'fullscreen', 'pointerLock']);
+    expect([...ALLOWED_WITHOUT_ASKING]).toEqual(['clipboard-sanitized-write']);
     for (const name of ALLOWED_WITHOUT_ASKING) expect(looks(name), name).toBe(true);
   });
 
-  it('a page that asks is refused the same names at once, and given the short list without a prompt', () => {
-    const { ask, sent } = setup();
+  it('a page that asks is refused the same names at once, full screen and the pointer among them, and may copy text without a prompt', () => {
+    const { ask, sent, refused } = setup();
     for (const name of REFUSED) expect(ask(name), name).toBe(false);
     for (const name of ALLOWED_WITHOUT_ASKING) expect(ask(name), name).toBe(true);
     expect(sent).toEqual([]);
+    // Test runs are told of each refusal (a page refused full screen is told nothing).
+    expect(refused).toEqual(REFUSED);
   });
 
   it('a check with no page (a worker) gets the same answers', () => {
@@ -171,7 +177,7 @@ describe('the camera, the microphone, and the location (milestone 9)', () => {
     expect(ask('media', ['video'], elsewhere)).toBe(true);
     sent.length = 0;
 
-    const reply = await permissions.handle(fromShell(page), { op: 'site.set', tab: 1, kind: 'camera', state: 'block' });
+    const reply = await permissions.handle(fromShell(page), { op: 'site.set', tab: 1, origin: SITE, kind: 'camera', state: 'block' });
     expect(reply).toMatchObject({ ok: true, value: { states: { camera: 'block' }, given: [] } });
     expect([page.reloads, second.reloads, third.reloads, elsewhere.reloads]).toEqual([1, 1, 0, 0]);
     // A page that asks to be kept is not asked about while this reload is under way.
@@ -189,13 +195,28 @@ describe('the camera, the microphone, and the location (milestone 9)', () => {
 
   it('Block for a page that holds nothing, or for the location, reloads nothing', async () => {
     const { permissions, page, ask, prompt } = setup();
-    await permissions.handle(fromShell(page), { op: 'site.set', tab: 1, kind: 'microphone', state: 'block' });
+    await permissions.handle(fromShell(page), { op: 'site.set', tab: 1, origin: SITE, kind: 'microphone', state: 'block' });
     expect(page.reloads).toBe(0);
     ask('geolocation');
     await permissions.handle(fromShell(page), { op: 'answer', id: prompt().id, answer: 'allow' });
-    await permissions.handle(fromShell(page), { op: 'site.set', tab: 1, kind: 'location', state: 'block' });
+    await permissions.handle(fromShell(page), { op: 'site.set', tab: 1, origin: SITE, kind: 'location', state: 'block' });
     expect(page.reloads).toBe(0);
     expect(ask('geolocation')).toBe(false);
+  });
+
+  it('a change from the site panel is for the site it names: a tab that has gone elsewhere is left alone (review of 2026-09-30, R6)', async () => {
+    const OTHER = 'https://other.example';
+    const { permissions, session, state } = setup();
+    // The panel showed site.example; its tab is on other.example by the time the change arrives.
+    const moved = fakePage(5, session, `${OTHER}/page`);
+    permissions.trackTab(moved as never);
+    const late = await permissions.handle(fromShell(moved), { op: 'site.set', tab: 5, origin: SITE, kind: 'camera', state: 'allow' });
+    expect(late).toEqual({ ok: false, error: LEFT_SITE });
+    expect(state.saved).toEqual({});
+    // Named for the site the tab is on, it is taken.
+    const now = await permissions.handle(fromShell(moved), { op: 'site.set', tab: 5, origin: OTHER, kind: 'camera', state: 'allow' });
+    expect(now).toMatchObject({ ok: true, value: { origin: OTHER, states: { camera: 'allow' } } });
+    expect(state.saved).toEqual({ [OTHER]: { camera: 'allow' } });
   });
 
   it('only web pages are asked about: anything else is refused', () => {

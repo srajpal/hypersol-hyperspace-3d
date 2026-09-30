@@ -14,6 +14,7 @@ import { INSPECT_CHANNEL } from '../shared/inspect';
 import { DOWNLOADS_CHANNEL } from '../shared/downloads';
 import { PERMISSIONS_CHANNEL } from '../shared/permissions';
 import { PASSWORDS_CHANNEL } from '../shared/passwords';
+import { SIGN_IN_CHANNEL } from '../shared/sign-in';
 import { TABS_CHANNEL } from '../shared/tabs';
 
 /**
@@ -56,6 +57,9 @@ const bridge: ShellBridge = {
   },
   passwords(request) {
     return ipcRenderer.invoke(PASSWORDS_CHANNEL, request);
+  },
+  signIn(request) {
+    return ipcRenderer.invoke(SIGN_IN_CHANNEL, request);
   },
   tabs(request) {
     return ipcRenderer.invoke(TABS_CHANNEL, request);

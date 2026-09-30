@@ -21,6 +21,8 @@ export interface PermissionDeps {
   save(sites: Record<string, SiteChoices>): void;
   /** Sends a command to the shell that hosts a page. */
   send(contents: WebContents, command: ShellCommand): void;
+  /** Test runs: told each permission refused to a page without asking the person, by Electron's name. */
+  refused?(permission: string): void;
 }
 
 interface Pending {
@@ -33,14 +35,22 @@ interface Pending {
 
 /**
  * What a page may do without asking (review of 2026-09-30, M1), by
- * Electron's names: put text on the clipboard, fill the screen, and hold
- * the pointer. None tells the page anything about the person or the
- * computer, ordinary pages need them (a "Copy" button, a video, a game),
- * and Chromium itself allows each only during a real click or key press.
- * Every other name, known or not, is refused unless it is asked for with
- * a prompt (the camera, the microphone, the location).
+ * Electron's name: put text on the clipboard. It tells the page nothing
+ * about the person or the computer, ordinary pages need it (a "Copy"
+ * button), and Chromium itself allows it only during a real click or key
+ * press. Every other name, known or not, is refused unless it is asked
+ * for with a prompt (the camera, the microphone, the location).
+ *
+ * Filling the screen and holding the pointer ('fullscreen' and
+ * 'pointerLock') are not here: a page in full screen can draw what looks
+ * like the browser's own top bar, and one that holds the pointer can keep
+ * it, and the browser has no notice yet that says so and how to leave.
+ * Until it has, both are refused, as they have been since milestone 9.
  */
-export const ALLOWED_WITHOUT_ASKING: ReadonlySet<string> = new Set(['clipboard-sanitized-write', 'fullscreen', 'pointerLock']);
+export const ALLOWED_WITHOUT_ASKING: ReadonlySet<string> = new Set(['clipboard-sanitized-write']);
+
+/** What the site panel is told when its tab is no longer on the site a change was for. */
+export const LEFT_SITE = 'This tab has left that site, so nothing was changed.';
 
 /** What one tab's page may use: "this time" grants and what it was given (the marker). */
 interface TabGrants {
@@ -58,7 +68,7 @@ interface TabGrants {
  * lasts until the tab leaves the site or closes. Every other permission
  * is refused, to a page that asks and to one that only looks (a page
  * that never asked reads "denied" for notifications, and nothing as
- * "granted"), except the few in ALLOWED_WITHOUT_ASKING. Only web pages
+ * "granted"), except what is in ALLOWED_WITHOUT_ASKING. Only web pages
  * (webviews) are ever asked about.
  */
 export class Permissions {
@@ -86,6 +96,7 @@ export class Permissions {
             : [];
       const origin = originOf(details.requestingUrl);
       if (kinds.length === 0 || !origin || contents.getType() !== 'webview') {
+        this.deps.refused?.(permission);
         callback(false);
         return;
       }
@@ -169,6 +180,11 @@ export class Permissions {
         const contents = this.page(r.tab, shell);
         const origin = contents ? originOf(contents.getURL()) : null;
         if (!contents || !origin) return null;
+        // The choice was made for the site the panel showed. A tab that has
+        // gone to another site since (the panel closes then, but its last
+        // request may already be on its way) is not given it (review of
+        // 2026-09-30, R6).
+        if (origin !== r.origin) throw new Error(LEFT_SITE);
         this.remember(contents, origin, [r.kind], r.state === 'ask' ? null : r.state);
         this.grantsFor(contents, origin)?.once.delete(r.kind);
         if (r.state === 'block') this.revoke(origin, r.kind, contents.session);

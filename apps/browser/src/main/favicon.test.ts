@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { FAVICON_LIMITS, FaviconLoader, checkFavicon, dataUrlBytes, imageInfo, readLimited, type Limits } from './favicon';
+import { FAVICON_LIMITS, FaviconLoader, checkFavicon, dataUrlBytes, imageInfo, readLimited, type FaviconEnd, type Limits } from './favicon';
 
 /** A PNG header claiming the given size (enough for the size check; not decodable). */
 function pngHeader(width: number, height: number): Buffer {
@@ -259,5 +259,43 @@ describe('FaviconLoader cancels what it refuses (PR #7 review)', () => {
     expect(await loader.load(['https://a.example/1.png'], new AbortController().signal)).toBeNull();
     expect(log.closed).toBe(1);
     expect(log.open).toBe(0);
+  });
+});
+
+describe('FaviconLoader says how each attempt ended (review of 2026-09-30, test-suite notes on D13)', () => {
+  const ok = (bytes: Buffer) => new Response(new Uint8Array(bytes));
+  const hangs = (_url: string, init: { signal: AbortSignal }) =>
+    new Promise<Response>((_resolve, reject) => init.signal.addEventListener('abort', () => reject(new Error('aborted'))));
+  const ends = (loader: FaviconLoader, ended: [string, FaviconEnd][]) => ended.map(([url, why]) => `${url.split('/').pop()}: ${why}`);
+
+  it('decoded, refused, failed, or timed out', async () => {
+    const ended: [string, FaviconEnd][] = [];
+    const loader = new FaviconLoader(
+      async (url) => {
+        if (url.includes('down')) throw new Error('connection refused');
+        if (url.includes('error')) return new Response('', { status: 500 });
+        return ok(url.includes('big') ? pngHeader(20000, 20000) : pngHeader(16, 16));
+      },
+      (b) => (b.length > 0 ? 'data:image/png;base64,x' : null),
+      { ...fast, maxCandidates: 4 },
+      (url, why) => ended.push([url, why]),
+    );
+    const urls = ['https://a.example/big.png', 'https://a.example/error.png', 'https://a.example/down.png', 'https://a.example/small.png'];
+    expect(await loader.load(urls, new AbortController().signal)).toBe('data:image/png;base64,x');
+    expect(ends(loader, ended)).toEqual(['big.png: refused', 'error.png: refused', 'down.png: failed', 'small.png: done']);
+    ended.length = 0;
+    const slow = new FaviconLoader(hangs, () => 'never', fast, (url, why) => ended.push([url, why]));
+    expect(await slow.load(['https://slow.example/i.png'], new AbortController().signal)).toBeNull();
+    expect(ends(slow, ended)).toEqual(['i.png: timed out']);
+  });
+
+  it('cancelled, when the page moved on before the answer came', async () => {
+    const ended: [string, FaviconEnd][] = [];
+    const loader = new FaviconLoader(hangs, () => 'never', { ...fast, timeoutMs: 5000 }, (url, why) => ended.push([url, why]));
+    const cancel = new AbortController();
+    const result = loader.load(['https://a.example/i.png'], cancel.signal);
+    cancel.abort();
+    expect(await result).toBeNull();
+    expect(ends(loader, ended)).toEqual(['i.png: cancelled']);
   });
 });

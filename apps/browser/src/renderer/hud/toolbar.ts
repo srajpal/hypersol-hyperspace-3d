@@ -2,12 +2,8 @@ import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
 import { PERMISSION_LABELS, type PermissionKind } from '../../shared/permissions';
 import { watchDismiss } from './dismiss';
 import type { Suggestion, Suggestions } from '../../shared/data';
+import { siteKey } from '../../shared/site';
 import { displayAddress } from '../url';
-
-/** An address as the address bar matches it: without the scheme or "www.", in lower case. */
-export function typedKey(text: string): string {
-  return text.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
-}
 
 export type MenuAction =
   | 'new-tab'
@@ -733,7 +729,7 @@ export class HsToolbar extends LitElement {
           ? html`<button
               data-testid="text-view"
               aria-label="Text view"
-              title="Text view: the scene as a plain page (Ctrl+Shift+V)"
+              title=${`Text view: the scene as a plain page (${this.keys['text-view'] ?? ''})`}
               aria-pressed=${this.textView ? 'true' : 'false'}
               @click=${() => this.fire('hs-text-view')}
             >
@@ -907,13 +903,13 @@ export class HsToolbar extends LitElement {
     const fresh = new Map<string, string>();
     if (found.inline) fresh.set(found.inline.key, found.inline.url);
     for (const item of found.items) {
-      const key = typedKey(item.url);
+      const key = siteKey(item.url);
       if (!fresh.has(key)) fresh.set(key, item.url);
     }
     for (const [key, url] of fresh) this.offered.set(key, url);
     // Complete the rest of the site in place, selected, so typing goes on over it.
     if (complete && found.inline && input.selectionStart === value.length) {
-      const key = typedKey(value);
+      const key = siteKey(value);
       if (found.inline.key.startsWith(key) && found.inline.key.length > key.length) {
         input.value = value + found.inline.key.slice(key.length);
         input.setSelectionRange(value.length, input.value.length);
@@ -990,7 +986,7 @@ export class HsToolbar extends LitElement {
         return;
       }
       // A completed site goes to the address it was visited at.
-      const known = input.value !== this.typed ? this.offered.get(typedKey(input.value)) : undefined;
+      const known = input.value !== this.typed ? this.offered.get(siteKey(input.value)) : undefined;
       const text = input.value.trim();
       this.closeSuggestions();
       this.offered.clear();

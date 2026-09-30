@@ -229,6 +229,16 @@ function boxGltf(params: URLSearchParams): string {
   });
 }
 
+/**
+ * HTTP sign-in (review of 2026-09-30, M10): the made-up user name and
+ * password the pages under /review-134/basic/ and /review-134/basic-long/
+ * ask for, and the realm each names. They exist for these checks only.
+ */
+export const BASIC_SIGN_IN = { username: 'review-134-reader', password: 'made-up-for-the-checks' } as const;
+export const BASIC_REALM = 'Review 134 test area';
+/** Longer than the prompt shows, and worded like a notice of the browser's own. */
+export const BASIC_LONG_REALM = 'HyperSpace 3D: your session has ended. Type the password of your computer account below to go on browsing safely.';
+
 function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
   const url = new URL(req.url ?? '/', 'http://x');
   const path = decodeURIComponent(url.pathname);
@@ -247,6 +257,24 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
       (body) => res.writeHead(200, { 'content-type': typed ? 'model/vnd.holoml' : 'text/plain', 'cache-control': 'no-store' }).end(body),
       () => res.writeHead(404).end(),
     );
+    return;
+  }
+  // Review of 2026-09-30 (M10): pages behind HTTP sign-in (Basic).
+  //   /review-134/basic/<anything>       realm BASIC_REALM
+  //   /review-134/basic-long/<anything>  realm BASIC_LONG_REALM
+  // With BASIC_SIGN_IN's user name and password: a small page. With
+  // anything else, or nothing: "401", the question, and the 401 page.
+  if (path.startsWith('/review-134/basic/') || path.startsWith('/review-134/basic-long/')) {
+    const realm = path.startsWith('/review-134/basic-long/') ? BASIC_LONG_REALM : BASIC_REALM;
+    const wanted = `Basic ${Buffer.from(`${BASIC_SIGN_IN.username}:${BASIC_SIGN_IN.password}`).toString('base64')}`;
+    const page = (title: string, words: string) => `<!doctype html>\n<html lang="en">\n<head><meta charset="UTF-8"><title>${title}</title></head>\n<body><h1 id="words">${words}</h1></body>\n</html>\n`;
+    if (req.headers.authorization === wanted) {
+      res.writeHead(200, { 'content-type': TYPES['.html']!, 'cache-control': 'no-store' }).end(page('Signed in', `Signed in as ${BASIC_SIGN_IN.username}`));
+    } else {
+      res
+        .writeHead(401, { 'content-type': TYPES['.html']!, 'cache-control': 'no-store', 'www-authenticate': `Basic realm="${realm}", charset="UTF-8"` })
+        .end(page('Sign-in needed', 'The 401 page: sign in to read this'));
+    }
     return;
   }
   // Review of 2026-09-30 (V1): a small HoloML page answered three ways.

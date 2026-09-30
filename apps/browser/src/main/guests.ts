@@ -4,7 +4,7 @@ import { contextMenuEntries, type MenuAction } from './context-menu';
 import { FaviconLoader, type FetchFn } from './favicon';
 import { decidePopup, GESTURE_EVENTS } from './popups';
 import { decidePageNavigation } from './security';
-import { matchShortcut } from './shortcuts';
+import { shortcutIn } from './shortcuts';
 import type { TestLog } from './test-hooks';
 
 export interface GuestDeps {
@@ -15,6 +15,8 @@ export interface GuestDeps {
   shortcutKeys?(): Partial<Record<ShortcutName, string>>;
   /** Settings is waiting for a new shortcut's keys: pass every key through. */
   capturingKeys?(): boolean;
+  /** This web contents shows a HoloML page now (its own shortcuts act there only, main/shortcuts.ts). */
+  holomlPage?(): boolean;
   testLog: TestLog | null;
   /** Records a finished page load in history; answers its id, or null. */
   recordVisit(url: string, title: string): Promise<number | null> | null;
@@ -34,11 +36,11 @@ export interface GuestDeps {
  */
 export function wireShortcuts(
   contents: WebContents,
-  deps: Pick<GuestDeps, 'send' | 'platform' | 'shortcutKeys' | 'capturingKeys'>,
+  deps: Pick<GuestDeps, 'send' | 'platform' | 'shortcutKeys' | 'capturingKeys' | 'holomlPage'>,
 ): void {
   contents.on('before-input-event', (event, input) => {
     if (deps.capturingKeys?.()) return;
-    const name = matchShortcut(input, deps.platform, deps.shortcutKeys?.() ?? {});
+    const name = shortcutIn(input, deps.platform, deps.shortcutKeys?.() ?? {}, deps.holomlPage?.() ?? false);
     if (!name) return;
     event.preventDefault();
     deps.send({ type: 'shortcut', name });
@@ -150,6 +152,8 @@ export function wireGuest(guest: WebContents, deps: GuestDeps): void {
       const image = nativeImage.createFromBuffer(bytes);
       return image.isEmpty() ? null : image.resize({ width: 32, height: 32, quality: 'best' }).toDataURL();
     },
+    undefined,
+    deps.testLog ? (url, why) => deps.testLog?.faviconEnds.push({ url, why }) : undefined,
   );
   guest.on('page-favicon-updated', (_event, urls) => {
     favicons.request(urls, (dataUrl) => {

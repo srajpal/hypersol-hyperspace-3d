@@ -1,5 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 import type { HistoryEntry, Suggestion, Suggestions } from '../../shared/data';
+import { siteKey } from '../../shared/site';
 import { scrubDeleted } from './scrub';
 
 /**
@@ -23,11 +24,6 @@ interface HistoryRow {
 }
 
 const toEntry = (r: HistoryRow): HistoryEntry => ({ id: r.id, url: r.url, title: r.title, visitedAt: r.visited_at });
-
-/** An address as the address bar matches it: without the scheme or "www.", in lower case. */
-export function siteKey(url: string): string {
-  return url.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
-}
 
 /** How much a site counts: its visits, weighted by how recent the last one was. */
 export function frecency(visits: number, lastVisit: number, now: number): number {
@@ -116,7 +112,7 @@ export class HistoryStore {
    * contains it.
    */
   suggest(text: string, limit: number, now = Date.now()): Suggestions {
-    const typed = siteKey(text.trim());
+    const typed = siteKey(text);
     if (typed === '') return { inline: null, items: [] };
     const rows = this.db
       .prepare(

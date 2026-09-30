@@ -1,6 +1,7 @@
 import type { App, WebContents, WebPreferences } from 'electron';
 import { PRIVATE_PARTITION, RESTORE_BLANK } from '../shared/commands';
 import { LOCAL_SCHEME } from '../shared/holoml-page';
+import { TEST_RUN_ARGUMENT } from '../shared/test-run';
 import { USER_ACTIVATION_MS } from './popups';
 
 /** Web pages may only be http, https, or the blank page. */
@@ -117,8 +118,14 @@ export interface AttachRecord {
   allowed: boolean;
 }
 
-/** Safe settings forced onto every web page, whatever the webview asked for. */
-export function lockDownWebPreferences(prefs: WebPreferences, pagePreloadPath: string, noWebGL = false): string | null {
+/**
+ * Safe settings forced onto every web page, whatever the webview asked for.
+ *
+ * @param testMode Test mode is on (main/launch-options.ts): the page's
+ *   preload is told so with an argument to its process, the only way it
+ *   learns of it (shared/test-run.ts).
+ */
+export function lockDownWebPreferences(prefs: WebPreferences, pagePreloadPath: string, noWebGL = false, testMode = false): string | null {
   const loose = prefs as WebPreferences & { preloadURL?: string };
   const requested = loose.preloadURL ?? loose.preload ?? null;
   delete loose.preloadURL;
@@ -137,6 +144,8 @@ export function lockDownWebPreferences(prefs: WebPreferences, pagePreloadPath: s
   prefs.safeDialogs = true;
   // Test mode only: pages as on a computer that cannot draw WebGL (milestone 14, P11).
   if (noWebGL) prefs.webgl = false;
+  if (testMode) prefs.additionalArguments = [TEST_RUN_ARGUMENT];
+  else delete prefs.additionalArguments;
   return requested === pagePreloadPath ? null : requested;
 }
 
@@ -150,10 +159,11 @@ export function hardenShell(
   pagePreloadPath: string,
   onAttach?: (record: AttachRecord) => void,
   noWebGL = false,
+  testMode = false,
 ): void {
   shell.on('will-attach-webview', (event, webPreferences, params) => {
     const requestedPreload =
-      lockDownWebPreferences(webPreferences, pagePreloadPath, noWebGL) ?? (params['preload'] || null);
+      lockDownWebPreferences(webPreferences, pagePreloadPath, noWebGL, testMode) ?? (params['preload'] || null);
     const src = params['src'] ?? '';
     // Web pages use the default session, or the private tabs' in-memory one.
     const partition = params['partition'] ?? '';

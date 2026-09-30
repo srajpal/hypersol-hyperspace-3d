@@ -17,10 +17,12 @@ const CONTROLS = 'button:not(:disabled), [href], input:not(:disabled), select:no
  * For a dialog's keydown: Tab on its last control goes to its first, and
  * Shift+Tab on its first to its last, so the keyboard never leaves for
  * what is behind it.
+ *
+ * @param within The dialog, when it is only a part of what the root holds.
  */
-export function keepTabInside(root: ShadowRoot, e: KeyboardEvent): void {
+export function keepTabInside(root: ShadowRoot, e: KeyboardEvent, within: ParentNode = root): void {
   if (e.key !== 'Tab') return;
-  const controls = [...root.querySelectorAll<HTMLElement>(CONTROLS)];
+  const controls = [...within.querySelectorAll<HTMLElement>(CONTROLS)];
   const first = controls[0];
   const last = controls[controls.length - 1];
   if (!first || !last) return;

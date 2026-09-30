@@ -16,12 +16,14 @@ import { FIXTURES_DIR, startFixtureServer, type FixtureServer } from './fixture-
 import {
   APP_DIR,
   OFFLINE_RULES,
+  caughtUp,
   clickUntil,
   focusedPage,
   focusedTab,
   graphicsSwitches,
   inPage,
   launch,
+  mainLog,
   navigateTo,
   pressInShell,
   removeFolder,
@@ -103,15 +105,17 @@ describe('M1: what a page may do without asking', () => {
     await h.app.evaluate(({ clipboard }) => clipboard.clear());
   });
 
-  it('a real click may still fill the screen', async () => {
+  it('full screen is refused, after a real click too: the page never gets it and the window stays as it is', async () => {
+    // Until the browser has its own full-screen notice, a page cannot fill
+    // the screen (it could draw what looks like the browser's top bar). A
+    // refused request tells the page nothing: its promise is never settled.
     const page = await focusedPage(h);
-    // The test window stays where it is, off screen: only the page's own full screen is checked.
-    await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.setFullScreenable(false));
-    const did = () => inPage<string | undefined>(h, 'window.did.full', page);
-    await clickUntil(h, await screenPointOf(h, '#full', page), 'the full screen button pressed', async () => (await did()) !== undefined);
-    expect(await did()).toBe('done');
-    expect(await inPage<boolean>(h, 'document.fullscreenElement === document.documentElement', page)).toBe(true);
-    await inPage(h, 'document.exitFullscreen().then(() => true)', page);
+    await clickUntil(h, await screenPointOf(h, '#full', page), 'the full screen button pressed', () => inPage<boolean>(h, 'window.did.fullAsked === true', page));
+    await waitFor('the request refused', () => mainLog(h, 'refusedPermissions'), (names) => names.includes('fullscreen'));
+    await caughtUp(h, page);
+    expect(await inPage<string | undefined>(h, 'window.did.full', page)).not.toBe('done');
+    expect(await inPage<boolean>(h, 'document.fullscreenElement === null', page)).toBe(true);
+    expect(await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.isFullScreen())).toBe(false);
   });
 });
 

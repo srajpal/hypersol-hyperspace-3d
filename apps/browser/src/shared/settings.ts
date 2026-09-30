@@ -44,6 +44,33 @@ export type TabSleep = (typeof TAB_SLEEP_CHOICES)[number];
 export const MIN_TILT = 0;
 export const MAX_TILT = 20;
 
+/**
+ * The window's size and place as it was last left (review of 2026-09-30,
+ * D7): its bounds while not maximised, in screen pixels, and whether it
+ * was maximised. The main process saves it as the window changes and
+ * opens the next window there (main/window-bounds.ts).
+ */
+export interface WindowBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  maximized: boolean;
+}
+/** The smallest and largest side, and the furthest place, a remembered window may have. */
+export const WINDOW_LIMITS = { minSide: 100, maxSide: 100_000, maxPlace: 1_000_000 } as const;
+
+/** Checks a remembered window from settings.json or a settings change; null for anything that is not one. */
+export function parseWindowBounds(value: unknown): WindowBounds | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return null;
+  const { x, y, width, height, maximized } = value as Record<string, unknown>;
+  const whole = (v: unknown, min: number, max: number): v is number => Number.isInteger(v) && (v as number) >= min && (v as number) <= max;
+  const { minSide, maxSide, maxPlace } = WINDOW_LIMITS;
+  if (!whole(x, -maxPlace, maxPlace) || !whole(y, -maxPlace, maxPlace)) return null;
+  if (!whole(width, minSide, maxSide) || !whole(height, minSide, maxSide) || typeof maximized !== 'boolean') return null;
+  return { x, y, width, height, maximized };
+}
+
 export interface Settings {
   searchEngine: SearchEngineId;
   onStartup: StartupMode;
@@ -81,6 +108,8 @@ export interface Settings {
   parallax: ParallaxAmount;
   pageMargin: PageMargin;
   shortcuts: Partial<Record<ShortcutName, string>>;
+  /** Where the window was last left; null until it has been opened once (main/window-bounds.ts). */
+  windowBounds: WindowBounds | null;
 }
 
 /**
@@ -117,6 +146,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   parallax: 'normal',
   pageMargin: 'normal',
   shortcuts: Object.freeze({}) as Partial<Record<ShortcutName, string>>,
+  windowBounds: null,
 });
 
 /**
@@ -216,6 +246,10 @@ export function applySettingsPatch(current: Settings, patch: unknown): { setting
       const checked = checkOverrides(value, platform);
       if ('error' in checked) return { error: checked.error };
       next.shortcuts = checked.overrides;
+    } else if (key === 'windowBounds') {
+      const bounds = parseWindowBounds(value);
+      if (value !== null && !bounds) return { error: 'windowBounds must be a window\'s place, size, and whether it is maximised, or null' };
+      next.windowBounds = bounds;
     } else if (key === 'economy') {
       if (value !== 'off' && value !== 'on' && value !== 'battery') return { error: `Unknown economy mode: ${String(value)}` };
       next.economy = value;

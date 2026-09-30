@@ -19,6 +19,8 @@ import { PAGE_PASSWORDS_CHANNEL } from '../shared/page-passwords';
 import { Passwords } from './passwords';
 import { PasswordVault, type Keychain } from './passwords/vault';
 import { Permissions } from './permissions';
+import { SIGN_IN_CHANNEL } from '../shared/sign-in';
+import { SignIns } from './sign-in';
 import { TabHistory } from './tab-history';
 import { TABS_CHANNEL } from '../shared/tabs';
 import { Downloads } from './downloads';
@@ -28,6 +30,7 @@ import { INSPECT_CHANNEL } from '../shared/inspect';
 import { Inspector } from './inspect';
 import { wireGuest, wireShortcuts } from './guests';
 import { parseLaunchOptions } from './launch-options';
+import { DEFAULT_WINDOW, openingBounds, sameBounds, type Opening } from './window-bounds';
 import { chooseProfileFolder } from './profile-folder';
 import { Privacy } from './privacy';
 import { hardenShell, isAcceptableDrop, refuseClientCertificates } from './security';
@@ -87,6 +90,7 @@ let storage: StorageService | null = null;
 let privacy: Privacy | null = null;
 let inspector: Inspector | null = null;
 let permissions: Permissions | null = null;
+let signIns: SignIns | null = null;
 let passwords: Passwords | null = null;
 let tabHistory: TabHistory | null = null;
 let holoml: HolomlPages | null = null;
@@ -161,10 +165,64 @@ function offScreenPosition(): { x: number; y: number } {
   return { x: right + 200, y: 0 };
 }
 
+/**
+ * Where the window opens (main/window-bounds.ts): as it was last left, if
+ * that is remembered and still on a connected display. A background test
+ * window sits off every display by design, so only its size is taken.
+ */
+function windowOpening(): Opening {
+  const saved = options.rememberWindow ? (storage?.settingsFile.settings.windowBounds ?? null) : null;
+  if (options.testBackground) return { width: saved?.width ?? DEFAULT_WINDOW.width, height: saved?.height ?? DEFAULT_WINDOW.height, maximized: false };
+  return openingBounds(
+    saved,
+    screen.getAllDisplays().map((d) => d.workArea),
+  );
+}
+
+/** How long the window's size and place must hold still before they are saved. */
+const WINDOW_SAVE_DELAY_MS = 500;
+
+/**
+ * Saves the window's size and place in settings.json as they change,
+ * once they have settled, and at once when the window closes (review of
+ * 2026-09-30, D7). The bounds saved are the ones it has while not
+ * maximised, with whether it is maximised beside them, so leaving the
+ * maximised state goes back to the size it had. A failed save is logged
+ * and tried again at the next change.
+ */
+function rememberWindow(win: BrowserWindow): void {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const save = () => {
+    clearTimeout(timer);
+    const saved = storage;
+    if (!saved || win.isDestroyed() || win.isFullScreen()) return;
+    const { x, y, width, height } = win.getNormalBounds();
+    const now = { x, y, width, height, maximized: win.isMaximized() };
+    if (sameBounds(saved.settingsFile.settings.windowBounds, now)) return;
+    try {
+      saved.updateSettings({ windowBounds: now }, false);
+    } catch (e) {
+      console.warn(`Couldn't save the window's size: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
+  const soon = () => {
+    clearTimeout(timer);
+    timer = setTimeout(save, WINDOW_SAVE_DELAY_MS);
+  };
+  win.on('resize', soon);
+  win.on('move', soon);
+  win.on('maximize', soon);
+  win.on('unmaximize', soon);
+  win.on('close', save);
+  win.on('closed', () => clearTimeout(timer));
+}
+
 function createWindow(): void {
+  const opening = windowOpening();
   const win = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width: opening.width,
+    height: opening.height,
+    ...(opening.x !== undefined && opening.y !== undefined ? { x: opening.x, y: opening.y } : {}),
     ...(options.testBackground ? { ...offScreenPosition(), skipTaskbar: true } : {}),
     minWidth: 900,
     minHeight: 600,
@@ -188,7 +246,7 @@ function createWindow(): void {
   const send = (command: ShellCommand) => {
     if (!win.isDestroyed()) win.webContents.send(SHELL_COMMAND_CHANNEL, command);
   };
-  hardenShell(win.webContents, PAGE_PRELOAD, (record) => testLog?.attaches.push(record), options.testNoWebGL);
+  hardenShell(win.webContents, PAGE_PRELOAD, (record) => testLog?.attaches.push(record), options.testNoWebGL, options.testMode);
   wireShortcuts(win.webContents, { send, platform: process.platform, shortcutKeys, capturingKeys: () => capturingKeys });
   if (!app.isPackaged) {
     // Developer tools for the shell in development runs only.
@@ -196,8 +254,14 @@ function createWindow(): void {
       if (input.type === 'keyDown' && input.key === 'F12') win.webContents.toggleDevTools();
     });
   }
-  // Background test windows appear without taking focus.
-  win.once('ready-to-show', () => (options.testBackground ? win.showInactive() : win.show()));
+  // Background test windows appear without taking focus. A window that
+  // was left maximised opens maximised.
+  win.once('ready-to-show', () => {
+    if (options.testBackground) win.showInactive();
+    else if (opening.maximized) win.maximize();
+    else win.show();
+  });
+  if (options.rememberWindow) rememberWindow(win);
   win.on('closed', () => {
     mainWindow = null;
     // Every tab went with the window, private ones included: clear the
@@ -325,10 +389,14 @@ if (!app.requestSingleInstanceLock()) {
     privacy?.trackTab(contents);
     inspector?.trackTab(contents);
     permissions?.trackTab(contents);
+    signIns?.trackTab(contents);
     passwords?.trackTab(contents);
     tabHistory?.track(contents);
     const guestId = contents.id;
-    contents.once('destroyed', () => holoml?.forget(guestId));
+    contents.once('destroyed', () => {
+      holoml?.forget(guestId);
+      signIns?.forget(contents);
+    });
     holoml?.track(contents);
     // Sound, for the speaker on the tab and for keeping it awake (milestone 10).
     contents.on('audio-state-changed', (event) => {
@@ -349,6 +417,7 @@ if (!app.requestSingleInstanceLock()) {
       platform: process.platform,
       shortcutKeys,
       capturingKeys: () => capturingKeys,
+      holomlPage: () => !contents.isDestroyed() && (holoml?.isDocument(contents.id, contents.getURL()) ?? false),
       get testLog() {
         return testLog;
       },
@@ -450,7 +519,9 @@ if (!app.requestSingleInstanceLock()) {
     });
     if (testLog) testLog.openLocal = (path) => pages.openFile(path);
 
-    const log0 = testLog;
+    // A copy for the closures below: testLog is a variable of the module, so
+    // inside them TypeScript cannot know it is still set.
+    const downloadsLog = testLog;
     const downloads = new Downloads({
       folder: () => downloadsFolder,
       onChange: (items) => {
@@ -458,7 +529,7 @@ if (!app.requestSingleInstanceLock()) {
           mainWindow.webContents.send(SHELL_COMMAND_CHANNEL, { type: 'downloads', items } satisfies ShellCommand);
         }
       },
-      ...(log0 ? { opened: (what: string, path: string) => log0.opened.push({ what, path }) } : {}),
+      ...(downloadsLog ? { opened: (what: string, path: string) => downloadsLog.opened.push({ what, path }) } : {}),
     });
     downloads.watch(ses);
     downloads.watch(privateSes);
@@ -531,11 +602,34 @@ if (!app.requestSingleInstanceLock()) {
       saved: () => saved.settingsFile.settings.sitePermissions,
       save: (sites) => saved.updateSettings({ sitePermissions: sites }),
       send: sendToHost,
+      ...(testLog ? { refused: (permission: string) => testLog?.refusedPermissions.push(permission) } : {}),
     });
     permissions = perms;
     perms.protect(ses);
     perms.protect(privateSes);
     handleFromShell(PERMISSIONS_CHANNEL, (event, request) => perms.handle(event, request));
+
+    // HTTP sign-in (main/sign-in.ts): a site or a proxy that asks for a user
+    // name and password is answered through a prompt in the tab's shell.
+    // With no listener Electron cancels every such request.
+    const asking = new SignIns({
+      isTab: (contents) => {
+        const host = contents.hostWebContents;
+        return host !== null && host !== undefined && isShell(host);
+      },
+      send: sendToHost,
+    });
+    signIns = asking;
+    app.on('login', (event, contents, details, authInfo, callback) => {
+      event.preventDefault();
+      asking.ask(
+        contents,
+        { url: details.url, isProxy: authInfo.isProxy, host: authInfo.host, port: authInfo.port, realm: authInfo.realm, forNavigation: details.isRequestForNavigation },
+        callback,
+      );
+    });
+    handleFromShell(SIGN_IN_CHANNEL, (event, request) => asking.handle(event, request));
+    if (testLog) testLog.signInsWaiting = () => asking.waiting;
 
     // Saved passwords (milestone 9), encrypted with the system's keychain.
     const noKeychain = options.testNoKeychain;

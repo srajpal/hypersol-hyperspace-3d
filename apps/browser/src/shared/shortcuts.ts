@@ -15,6 +15,12 @@ export interface ShortcutInfo {
   keys: string[];
   /** Different defaults on macOS. */
   mac?: string[];
+  /**
+   * Where the keys act, when not everywhere. 'holoml': only with a HoloML
+   * page in front and the keyboard not in a text field; anywhere else the
+   * keys are left alone (Ctrl+Shift+V stays "paste as plain text").
+   */
+  only?: 'holoml';
 }
 
 /** Every shortcut, in the order Settings lists them. */
@@ -44,7 +50,14 @@ export const SHORTCUTS: readonly ShortcutInfo[] = [
   { name: 'instruments', label: 'Instrument panel', keys: ['Mod+Shift+I'] },
   // Milestone 17 (owner, prompt 86, Q2 a).
   { name: 'examples', label: 'HoloML examples', keys: ['Mod+Shift+E'] },
+  // Milestone 15's key, in the table since the review of 2026-09-30 (St4).
+  { name: 'text-view', label: 'Text view of a HoloML page', keys: ['Mod+Shift+V'], only: 'holoml' },
 ];
+
+/** Whether a shortcut acts only with a HoloML page in front (its keys are left alone everywhere else). */
+export function holomlOnly(name: ShortcutName): boolean {
+  return SHORTCUTS.some((s) => s.name === name && s.only === 'holoml');
+}
 
 /** Kept for editing text everywhere; no shortcut may take them. */
 export const RESERVED = ['Mod+C', 'Mod+V', 'Mod+X', 'Mod+Z', 'Mod+Shift+Z', 'Mod+Y', 'Mod+A'];
@@ -166,7 +179,9 @@ export function checkOverrides(value: unknown, platform: string): { overrides: P
       const other = seen.get(id);
       if (other && other !== name) {
         const label = (n: ShortcutName) => SHORTCUTS.find((s) => s.name === n)!.label;
-        return { error: `${describeCombo(k, platform)} is already used by ${label(other)}` };
+        // Named: the action that had the keys, not the one they were just chosen for.
+        const holder = overrides[other] !== undefined && overrides[name] === undefined ? name : other;
+        return { error: `${describeCombo(k, platform)} is already used by ${label(holder)}` };
       }
       seen.set(id, name);
     }
