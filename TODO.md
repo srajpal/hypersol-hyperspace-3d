@@ -4458,8 +4458,10 @@ The main process and preloads:
 - M5 and H4. A list update downloads the lists' text only; the page
   scripts come with the app and are checked by SHA-256; the GPL's text
   is beside the starter copy. Unit main/privacy; F9 (milestone 4).
-  `pnpm filters:update` has not been run since its change: not checked
-  yet.
+  `pnpm filters:update` was run after its change (2026-09-30): the 13
+  lists downloaded, the starter copy built to the same bytes as on
+  2026-09-26 (the lists had not changed), the scripts' checksum
+  recorded.
 - M6. A HoloML file opened from a shared folder reads the files beside
   it only; a local page leaves for the web only after a real click or
   key press, without query and fragment; no peer connections.
