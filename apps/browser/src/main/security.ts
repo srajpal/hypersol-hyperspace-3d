@@ -74,6 +74,40 @@ export function refuseClientCertificates(app: Pick<App, 'on'>): void {
   });
 }
 
+/** What the main process knows about a "a file was dropped on this page" message. */
+export interface DropMessage {
+  /** The dropped file's path, as the page's preload gave it. */
+  path: unknown;
+  /** The sender's kind: 'webview' for a web page. */
+  senderType: string;
+  fromMainFrame: boolean;
+  /** The sender is one of the shell's own tabs. */
+  hostedByShell: boolean;
+  /** That tab is still opening an earlier dropped file. */
+  alreadyOpening: boolean;
+}
+
+/**
+ * May a dropped file's message be acted on (review of 2026-09-30, M11)?
+ * The path comes from a page's preload, which a page that broke out of
+ * its own world could imitate, and the main process cannot see the drop
+ * itself. So it holds the message to everything it can know: a web page
+ * in one of the shell's tabs, its main frame, one file at a time, and a
+ * path that names a .holoml file (that it exists and is a file is checked
+ * when it is opened, main/holoml.ts).
+ */
+export function isAcceptableDrop(d: DropMessage): boolean {
+  return (
+    typeof d.path === 'string' &&
+    d.path.length <= 4096 &&
+    /[^\\/]\.holoml$/i.test(d.path) &&
+    d.senderType === 'webview' &&
+    d.fromMainFrame &&
+    d.hostedByShell &&
+    !d.alreadyOpening
+  );
+}
+
 export interface AttachRecord {
   /** Preload the webview asked for, if any. */
   requestedPreload: string | null;

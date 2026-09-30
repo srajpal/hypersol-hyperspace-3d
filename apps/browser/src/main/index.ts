@@ -30,7 +30,7 @@ import { wireGuest, wireShortcuts } from './guests';
 import { parseLaunchOptions } from './launch-options';
 import { chooseProfileFolder } from './profile-folder';
 import { Privacy } from './privacy';
-import { hardenShell, refuseClientCertificates } from './security';
+import { hardenShell, isAcceptableDrop, refuseClientCertificates } from './security';
 import { confirmLeave } from './leave-page';
 import { shellOnly } from './ipc';
 import { HolomlPages } from './holoml';
@@ -292,6 +292,7 @@ if (!app.requestSingleInstanceLock()) {
     tabHistory?.track(contents);
     const guestId = contents.id;
     contents.once('destroyed', () => holoml?.forget(guestId));
+    holoml?.track(contents);
     // Sound, for the speaker on the tab and for keeping it awake (milestone 10).
     contents.on('audio-state-changed', (event) => {
       const host = contents.hostWebContents;
@@ -350,11 +351,25 @@ if (!app.requestSingleInstanceLock()) {
       s.setSpellCheckerEnabled(false);
     }
 
+    // Downloads go straight to the Downloads folder (milestone 8, Q2 a).
+    const downloadsFolder = options.downloadsDir ?? app.getPath('downloads');
+    // Folders that hold many unrelated files: a HoloML file opened from one
+    // reads the files beside it only (main/holoml.ts).
+    const sharedFolders = [downloadsFolder];
+    for (const name of ['desktop', 'documents', 'home'] as const) {
+      try {
+        sharedFolders.push(app.getPath(name));
+      } catch {
+        // A system without that folder has nothing to share from it.
+      }
+    }
+
     // HoloML pages (milestone 14, main/holoml.ts).
     const devServer = !app.isPackaged ? process.env['ELECTRON_RENDERER_URL'] : undefined;
     const pages = new HolomlPages({
       viewerFiles: devServer ? null : join(__dirname, '../renderer'),
       ...(devServer ? { devServer, viewerSource: join(__dirname, '../../src/viewer/main.ts') } : {}),
+      sharedFolders,
     });
     holoml = pages;
     pages.register(ses);
@@ -374,18 +389,28 @@ if (!app.requestSingleInstanceLock()) {
       },
       null,
     );
-    // A .holoml file dropped onto a page opens in that tab.
+    // A .holoml file dropped onto a page opens in that tab. The message is
+    // held to what the main process can know about it (isAcceptableDrop).
+    const dropping = new Set<number>();
     ipcMain.on(HOLOML_DROP_CHANNEL, (event, path: unknown) => {
       const guest = event.sender;
-      if (typeof path !== 'string' || guest.getType() !== 'webview') return;
-      void pages.openFile(path).then((url) => {
-        if (url && !guest.isDestroyed()) void guest.loadURL(url).catch(() => undefined);
-      });
+      const drop = {
+        path,
+        senderType: guest.getType(),
+        fromMainFrame: event.senderFrame !== null && event.senderFrame === guest.mainFrame,
+        hostedByShell: guest.hostWebContents !== null && guest.hostWebContents !== undefined && isShell(guest.hostWebContents),
+        alreadyOpening: dropping.has(guest.id),
+      };
+      if (!isAcceptableDrop(drop) || typeof path !== 'string') return;
+      dropping.add(guest.id);
+      void pages
+        .openFile(path)
+        .then((url) => (url && !guest.isDestroyed() ? guest.loadURL(url) : undefined))
+        .catch(() => undefined)
+        .finally(() => dropping.delete(guest.id));
     });
     if (testLog) testLog.openLocal = (path) => pages.openFile(path);
 
-    // Downloads go straight to the Downloads folder (milestone 8, Q2 a).
-    const downloadsFolder = options.downloadsDir ?? app.getPath('downloads');
     const log0 = testLog;
     const downloads = new Downloads({
       folder: () => downloadsFolder,

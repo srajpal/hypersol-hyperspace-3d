@@ -248,6 +248,27 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
     );
     return;
   }
+  // Review of 2026-09-30 (V1): a small HoloML page answered three ways.
+  //   /review-134/attachment.holoml   as a download (Content-Disposition: attachment)
+  //   /review-134/sandboxed.holoml    as text under the site's own "sandbox" content policy
+  //   /review-134/with-policy.holoml  as a HoloML page with a content policy and frame options of the site's own
+  if (path.startsWith('/review-134/')) {
+    const headers: Record<string, Record<string, string>> = {
+      '/review-134/attachment.holoml': { 'content-type': TYPES['.holoml']!, 'content-disposition': 'attachment; filename="review-134-scene.holoml"' },
+      '/review-134/sandboxed.holoml': { 'content-type': 'text/plain; charset=utf-8', 'content-security-policy': 'sandbox allow-scripts' },
+      '/review-134/with-policy.holoml': { 'content-type': TYPES['.holoml']!, 'content-security-policy': "connect-src 'none'", 'x-frame-options': 'DENY' },
+    };
+    const found = headers[path];
+    if (!found) {
+      res.writeHead(404).end();
+      return;
+    }
+    res.writeHead(200, { ...found, 'cache-control': 'no-store' });
+    res.end(
+      '<holoml version="0.1">\n  <head>\n    <title>Review 134 scene</title>\n  </head>\n  <scene>\n    <label id="hello" position="0 1.5 0">A small scene</label>\n  </scene>\n</holoml>\n',
+    );
+    return;
+  }
   if (path.startsWith('/holoml/gen/')) {
     const what = path.slice('/holoml/gen/'.length);
     const p = url.searchParams;

@@ -14,11 +14,20 @@
  * random name for their folder, made when the person opens a file (Ctrl+O,
  * the menu, or dropping it on the window); only that folder and the
  * folders inside it can be read, and only for this run of the browser.
+ * A file opened from a folder that holds many unrelated files (Downloads,
+ * the desktop, Documents, the home folder, a drive's root) gets the files
+ * beside it only, not the folders inside (review of 2026-09-30, M6): a
+ * page saved into Downloads must not be able to read everything there.
+ *
+ * A site's own defences stay (review of 2026-09-30, V1). An answer the
+ * site marked as a download, or sandboxed, is not a HoloML page and is
+ * left exactly as sent; a HoloML page keeps the site's own content
+ * policies, with HoloML's added as one more.
  */
-import { ipcMain, net, type Session } from 'electron';
+import { ipcMain, net, type Session, type WebContents } from 'electron';
 import { randomBytes } from 'node:crypto';
 import { readFile, realpath, stat } from 'node:fs/promises';
-import { basename, dirname, extname, join, resolve, sep } from 'node:path';
+import nodePath, { basename, dirname, extname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { HOLOML_DOCUMENT_CHANNEL, LOCAL_SCHEME, VIEWER_SCHEME } from '../shared/holoml-page';
 
@@ -38,6 +47,8 @@ export const HOLOML_CSP = [
   "base-uri 'none'",
   "form-action 'none'",
   "frame-ancestors 'self'",
+  // No peer connections: they would be a way out for what a page's script can read.
+  "webrtc 'block'",
 ].join('; ');
 
 type Headers = Record<string, string | string[]>;
@@ -49,18 +60,27 @@ export interface ResponseInfo {
   responseHeaders?: Headers;
 }
 
-function header(headers: Headers | undefined, name: string): string {
-  if (!headers) return '';
-  const key = Object.keys(headers).find((k) => k.toLowerCase() === name);
-  const value = key === undefined ? undefined : headers[key];
-  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
+/** Every value of a header, whatever the case of its name. */
+function headerValues(headers: Headers | undefined, name: string): string[] {
+  return Object.entries(headers ?? {})
+    .filter(([k]) => k.toLowerCase() === name)
+    .flatMap(([, v]) => (Array.isArray(v) ? v : [v]));
+}
+
+/** Does any of these content policies (several may share one header, between commas) have a sandbox directive? */
+function hasSandbox(policies: string[]): boolean {
+  return policies.some((value) => value.split(',').some((policy) => policy.split(';').some((directive) => /^sandbox(\s|$)/i.test(directive.trim()))));
 }
 
 /** Is this response a HoloML page for a tab's main frame? */
 export function isHolomlResponse(d: ResponseInfo): boolean {
   // 304: a page checked again against the cache keeps HoloML's headers.
   if (d.resourceType !== 'mainFrame' || ((d.statusCode < 200 || d.statusCode > 299) && d.statusCode !== 304)) return false;
-  const type = header(d.responseHeaders, 'content-type').split(';')[0]!.trim().toLowerCase();
+  // What the site sends to be saved, not shown, is a download; what it sandboxes must not
+  // run in its origin. A site that takes uploads makes them safe in exactly these two ways.
+  if (headerValues(d.responseHeaders, 'content-disposition').some((v) => /^\s*attachment(\s|;|$)/i.test(v))) return false;
+  if (hasSandbox(headerValues(d.responseHeaders, 'content-security-policy'))) return false;
+  const type = (headerValues(d.responseHeaders, 'content-type')[0] ?? '').split(';')[0]!.trim().toLowerCase();
   if (type === HOLOML_MEDIA_TYPE) return true;
   try {
     return new URL(d.url).pathname.toLowerCase().endsWith('.holoml');
@@ -69,24 +89,58 @@ export function isHolomlResponse(d: ResponseInfo): boolean {
   }
 }
 
-const REPLACED = new Set([
-  'content-type',
-  'content-disposition',
-  'content-security-policy',
-  'content-security-policy-report-only',
-  'x-content-type-options',
-  'x-frame-options',
-]);
+const REPLACED = new Set(['content-type', 'x-content-type-options']);
 
-/** A HoloML page's headers: shown as UTF-8 text, under HoloML's content policy. */
+/**
+ * A HoloML page's headers: shown as UTF-8 text, under HoloML's content
+ * policy. Everything else the site sent stays, its own content policies
+ * and frame options among them: HoloML's policy is one more, and a page
+ * must satisfy every one.
+ */
 export function holomlHeaders(headers: Headers | undefined): Record<string, string[]> {
   const out: Record<string, string[]> = {};
-  for (const [k, v] of Object.entries(headers ?? {})) if (!REPLACED.has(k.toLowerCase())) out[k] = Array.isArray(v) ? v : [v];
+  const policies: string[] = [];
+  for (const [k, v] of Object.entries(headers ?? {})) {
+    const values = Array.isArray(v) ? v : [v];
+    if (k.toLowerCase() === 'content-security-policy') policies.push(...values);
+    else if (!REPLACED.has(k.toLowerCase())) out[k] = values;
+  }
   out['Content-Type'] = ['text/plain; charset=utf-8'];
-  out['Content-Security-Policy'] = [HOLOML_CSP];
+  out['Content-Security-Policy'] = [...policies, HOLOML_CSP];
   out['X-Content-Type-Options'] = ['nosniff'];
   return out;
 }
+
+/** The parts of node:path used below: this system's rules, or (in the unit tests) Windows' or POSIX's by name. */
+export type PathRules = Pick<typeof nodePath, 'relative' | 'isAbsolute' | 'dirname' | 'sep'>;
+
+/**
+ * Is a file inside an opened folder? With `inner` false only the
+ * folder's own files count, not those of the folders inside it. Works
+ * for a folder that is a drive's or the file system's root, which
+ * comparing text with a separator added did not (review of 2026-09-30).
+ */
+export function isInsideFolder(folder: string, file: string, inner: boolean, p: PathRules = nodePath): boolean {
+  const rel = p.relative(folder, file);
+  if (rel === '') return true;
+  if (rel === '..' || rel.startsWith(`..${p.sep}`) || p.isAbsolute(rel)) return false;
+  return inner || !rel.includes(p.sep);
+}
+
+/**
+ * Is this a folder that holds many unrelated files: a drive's or the file
+ * system's root, or one of the named ones (Downloads, the desktop,
+ * Documents, the home folder)?
+ */
+export function isSharedFolder(folder: string, shared: readonly string[], p: PathRules = nodePath): boolean {
+  return p.dirname(folder) === folder || shared.some((s) => p.relative(s, folder) === '');
+}
+
+/** Said once in the console of a page opened from a shared folder. */
+export const SHARED_FOLDER_NOTE =
+  'HoloML: this page was opened from a folder that holds other files too (Downloads, the desktop, Documents, your home folder, or a drive), ' +
+  'so it can load the files beside it, but not files in the folders inside that folder. ' +
+  'To use those, put the page and its files in a folder of their own.';
 
 /** The address without its fragment, as documents are compared. */
 function withoutHash(url: string): string {
@@ -121,13 +175,24 @@ export interface HolomlOptions {
   devServer?: string;
   /** Development runs: the viewer's entry file on disk (src/viewer/main.ts), which the dev server serves by its path. */
   viewerSource?: string;
+  /** Folders that hold many unrelated files (Downloads, the desktop, Documents, the home folder): see isSharedFolder. */
+  sharedFolders?: readonly string[];
+}
+
+/** A folder opened this run. */
+interface OpenedFolder {
+  folder: string;
+  /** The folders inside it may be read too (not for a shared folder). */
+  inner: boolean;
 }
 
 export class HolomlPages {
   /** Each tab's HoloML document, by its page's id: the address it was served at. */
   private readonly documents = new Map<number, string>();
   /** Local folders opened this run, by the random name in their address. */
-  private readonly folders = new Map<string, string>();
+  private readonly folders = new Map<string, OpenedFolder>();
+  /** The shared folders as the file system names them, found at the first opened file. */
+  private shared: Promise<string[]> | null = null;
 
   constructor(private readonly options: HolomlOptions) {}
 
@@ -149,7 +214,7 @@ export class HolomlPages {
 
   /** Is this tab's document at this address a HoloML page? */
   isDocument(webContentsId: number, url: string): boolean {
-    if (url.startsWith(`${LOCAL_SCHEME}:`)) return this.localFile(url) !== null && extname(new URL(url).pathname).toLowerCase() === '.holoml';
+    if (url.startsWith(`${LOCAL_SCHEME}:`)) return this.localFile(url)?.inside === true && extname(new URL(url).pathname).toLowerCase() === '.holoml';
     return this.documents.get(webContentsId) === withoutHash(url);
   }
 
@@ -218,32 +283,46 @@ export class HolomlPages {
       return null;
     }
     const folder = dirname(real);
-    let name = [...this.folders].find(([, f]) => f === folder)?.[0];
+    let name = [...this.folders].find(([, f]) => f.folder === folder)?.[0];
     if (!name) {
+      this.shared ??= Promise.all((this.options.sharedFolders ?? []).map((f) => realpath(f).catch(() => f)));
       name = randomBytes(8).toString('hex');
-      this.folders.set(name, folder);
+      this.folders.set(name, { folder, inner: !isSharedFolder(folder, await this.shared) });
     }
     return `${LOCAL_SCHEME}://${name}/${encodeURIComponent(basename(real))}`;
   }
 
-  /** The file a local address stands for, if it is inside its opened folder. */
-  private localFile(url: string): { folder: string; path: string } | null {
+  /**
+   * Watches a tab: a page opened from a shared folder is told, once for
+   * each page, in its console, why files in the folders inside are not
+   * found.
+   */
+  track(contents: WebContents): void {
+    contents.on('did-navigate', (_event, url) => {
+      const file = url.startsWith(`${LOCAL_SCHEME}:`) ? this.localFile(url) : null;
+      if (!file || file.inner || !file.inside) return;
+      contents.executeJavaScript(`console.info(${JSON.stringify(SHARED_FOLDER_NOTE)})`).catch(() => undefined);
+    });
+  }
+
+  /** The file a local address stands for in a folder opened this run, and whether it is one the folder may serve. */
+  private localFile(url: string): (OpenedFolder & { path: string; inside: boolean }) | null {
     let parsed: URL;
     try {
       parsed = new URL(url);
     } catch {
       return null;
     }
-    const folder = this.folders.get(parsed.host);
-    if (!folder || parsed.protocol !== `${LOCAL_SCHEME}:`) return null;
+    const opened = this.folders.get(parsed.host);
+    if (!opened || parsed.protocol !== `${LOCAL_SCHEME}:`) return null;
     let rel: string;
     try {
       rel = decodeURIComponent(parsed.pathname);
     } catch {
       return null;
     }
-    const path = resolve(folder, `.${rel}`);
-    return path === folder || path.startsWith(folder + sep) ? { folder, path } : null;
+    const file = resolve(opened.folder, `.${rel}`);
+    return { ...opened, path: file, inside: isInsideFolder(opened.folder, file, opened.inner) };
   }
 
   private async serveLocal(request: Request): Promise<Response> {
@@ -257,11 +336,11 @@ export class HolomlPages {
       );
     }
     const type = LOCAL_TYPES[extname(file.path).toLowerCase()];
-    if (!type) return new Response('Not found', { status: 404, headers: common });
+    if (!type || !file.inside) return new Response('Not found', { status: 404, headers: common });
     try {
-      // A link inside the folder must not lead outside it.
+      // A link inside the folder must not lead outside it (or, in a shared folder, into a folder inside it).
       const real = await realpath(file.path);
-      if (real !== file.folder && !real.startsWith(file.folder + sep)) return new Response('Not found', { status: 404, headers: common });
+      if (!isInsideFolder(file.folder, real, file.inner)) return new Response('Not found', { status: 404, headers: common });
       const res = await net.fetch(pathToFileURL(real).href);
       const headers: Record<string, string> = { ...common, 'content-type': type };
       if (type.startsWith('text/plain')) headers['content-security-policy'] = HOLOML_CSP;

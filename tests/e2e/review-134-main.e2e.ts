@@ -4,12 +4,12 @@
  * WebSockets through the shield (M3), leaving a page that asks to be
  * kept (M4), and what counts as a HoloML page (V1).
  */
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { startFixtureServer, type FixtureServer } from './fixture-server';
-import { clickUntil, focusedPage, inPage, launch, navigateTo, pressInShell, removeFolder, screenPointOf, shellCall, waitFor, waitForPage, type Harness } from './harness';
+import { FIXTURES_DIR, startFixtureServer, type FixtureServer } from './fixture-server';
+import { clickUntil, focusedPage, focusedTab, inPage, launch, navigateTo, pressInShell, removeFolder, screenPointOf, shellCall, waitFor, waitForPage, type Harness } from './harness';
 
 let server: FixtureServer;
 const folders: string[] = [];
@@ -191,6 +191,186 @@ describe('M4: leaving a page that asks to be kept', () => {
       await pressInShell(h, 'R', ['control']);
       await waitFor('reloaded', state, (s) => s === 'Not yet touched');
       expect(await asks()).toEqual([kept, kept, kept, kept]);
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+/** Waits for a HoloML page's scene (the viewer's own facts are window.__holoml in the page). */
+const sceneReady = (h: Harness, page: string) =>
+  waitFor('the scene ready', () => inPage<boolean>(h, 'window.__holoml ? window.__holoml.ready : false', page), (r) => r === true, 20_000);
+
+describe('V1: what counts as a HoloML page', () => {
+  it('a .holoml the site sends as a download is downloaded, not run as a scene', async () => {
+    const downloads = mkdtempSync(join(tmpdir(), 'hypersol-e2e-downloads-'));
+    folders.push(downloads);
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile(), downloadsDir: downloads });
+    try {
+      await waitForPage(h, 'link-a');
+      await navigateTo(h, server.url('review-134/attachment.holoml'));
+      const list = await waitFor('the download done', () => shellCall(h, 'downloads'), (d) => d.length === 1 && d[0]!.state === 'completed');
+      expect(list[0]!.filename).toBe('review-134-scene.holoml');
+      // The tab stays on the page it had, and shows no scene.
+      expect(await addressOf(h, await focusedPage(h))).toBe(server.url('link-a.html'));
+      expect((await shellCall(h, 'holoml')).shown).toBe(false);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('a .holoml the site sandboxes is shown as the site sent it: text, under the site\'s policy, with no viewer', async () => {
+    const h = await launch(server.url('review-134/sandboxed.holoml'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'sandboxed.holoml');
+      const facts = await inPage<{ type: string; text: string; viewer: string; origin: string }>(
+        h,
+        '({ type: document.contentType, text: document.body.innerText, viewer: typeof window.__holoml, origin: self.origin })',
+        'sandboxed.holoml',
+      );
+      expect(facts.type).toBe('text/plain');
+      expect(facts.text).toContain('<holoml version="0.1">');
+      expect(facts.viewer).toBe('undefined');
+      // The site's sandbox still holds: the page has no origin of its own.
+      expect(facts.origin).toBe('null');
+      expect((await shellCall(h, 'holoml')).shown).toBe(false);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('a HoloML page keeps the site\'s own content policy beside HoloML\'s', async () => {
+    const url = server.url('review-134/with-policy.holoml');
+    const h = await launch(url, { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'with-policy.holoml');
+      await sceneReady(h, 'with-policy.holoml');
+      expect((await shellCall(h, 'holoml')).shown).toBe(true);
+      // The site said connect-src 'none'; HoloML's own policy would allow the page's own site.
+      const before = server.hits.get('/review-134/with-policy.holoml') ?? 0;
+      expect(await inPage<string>(h, `fetch(${JSON.stringify(url)}).then(() => 'fetched', () => 'refused')`, 'with-policy.holoml')).toBe('refused');
+      expect(server.hits.get('/review-134/with-policy.holoml') ?? 0).toBe(before);
+      // And HoloML's policy holds too: no pictures from other sites.
+      expect(
+        await inPage<string>(
+          h,
+          `new Promise((resolve) => { const i = new Image(); i.onload = () => resolve('loaded'); i.onerror = () => resolve('refused'); i.src = ${JSON.stringify(server.url('icon.png').replace('127.0.0.1', 'shop.test'))}; })`,
+          'with-policy.holoml',
+        ),
+      ).toBe('refused');
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('M6: a HoloML file opened from the computer', () => {
+  const openLocal = (h: Harness, path: string) =>
+    h.app.evaluate(async (_e, p) => (globalThis as unknown as { __hypersolTest: { openLocal(p: string): Promise<string | null> } }).__hypersolTest.openLocal(p), path);
+  const models = (h: Harness) => inPage<{ src: string; state: string }[]>(h, 'window.__holoml.models()', 'hypersol-file');
+
+  it('from the Downloads folder reads the files beside it, not the folders inside, and says so in its console', async () => {
+    // The run's Downloads folder: a page, its model beside it, and the same model in a folder inside.
+    const downloads = mkdtempSync(join(tmpdir(), 'hypersol-e2e-downloads-'));
+    folders.push(downloads);
+    mkdirSync(join(downloads, 'models'));
+    const car = join(FIXTURES_DIR, 'holoml', 'models', 'placeholder-car.gltf');
+    copyFileSync(car, join(downloads, 'beside.gltf'));
+    copyFileSync(car, join(downloads, 'models', 'inside.gltf'));
+    writeFileSync(
+      join(downloads, 'saved.holoml'),
+      '<holoml version="0.1">\n  <head>\n    <title>Saved page</title>\n  </head>\n  <scene>\n    <model id="beside" src="beside.gltf" />\n    <model id="inside" src="models/inside.gltf" position="4 0 0" />\n  </scene>\n</holoml>\n',
+    );
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile({ instruments: true }), downloadsDir: downloads });
+    try {
+      await waitForPage(h, 'link-a');
+      await shellCall(h, 'showUrl', (await openLocal(h, join(downloads, 'saved.holoml')))!);
+      await waitForPage(h, 'saved.holoml');
+      await sceneReady(h, 'hypersol-file');
+      const loaded = await waitFor('both models settled', () => models(h), (m) => m.every((x) => x.state !== 'loading'));
+      expect(loaded.map((m) => [m.src, m.state])).toEqual([
+        ['beside.gltf', 'loaded'],
+        ['models/inside.gltf', 'failed'],
+      ]);
+      await waitFor('the note in the page\'s console', async () => (await shellCall(h, 'instruments')).console, (lines) => lines.some((l) => l.includes('opened from a folder that holds other files too')));
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('leaves for the web only after a real click or key press, and without the address\'s query and fragment', async () => {
+    const folder = mkdtempSync(join(tmpdir(), 'hypersol-holoml-'));
+    folders.push(folder);
+    mkdirSync(join(folder, 'page'));
+    writeFileSync(join(folder, 'page', 'local.holoml'), '<holoml version="0.1">\n  <head>\n    <title>Local page</title>\n  </head>\n  <scene>\n    <label position="0 1.5 0">A local page</label>\n  </scene>\n</holoml>\n');
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      const local = (await openLocal(h, join(folder, 'page', 'local.holoml')))!;
+      await shellCall(h, 'showUrl', local);
+      await waitForPage(h, 'local.holoml');
+      await sceneReady(h, 'hypersol-file');
+      const page = await focusedPage(h);
+      const away = `${server.url('tall.html')}?file=IMG_0001.jpg#more`;
+      const fetched = () => [server.hits.get('/tall.html') ?? 0, server.hits.get('/tall.html?file=IMG_0001.jpg') ?? 0];
+
+      // A script alone: refused. The request never leaves, and the tab stays.
+      await inPage(h, `location.href = ${JSON.stringify(away)}; true`, page);
+      await inPage(h, 'new Promise((r) => setTimeout(() => r(true), 300))', page);
+      expect(await addressOf(h, page)).toBe(local);
+      expect(fetched()).toEqual([0, 0]);
+
+      // After a real click on the page: it goes, without the parts that could carry what the page read.
+      await inPage(h, `addEventListener('pointerdown', () => { window.__pressed = true; }, true); true`, page);
+      const middle = await inPage<{ x: number; y: number }>(h, '({ x: innerWidth / 2, y: innerHeight - 20 })', page);
+      await clickUntil(h, await shellCall(h, 'projectPagePoint', middle.x, middle.y), 'the click reached the page', () => inPage<boolean>(h, 'window.__pressed === true', page));
+      await inPage(h, `location.href = ${JSON.stringify(away)}; true`, page);
+      await waitFor('the page left for the web', () => focusedTab(h), (t) => t.url.startsWith(server.url('tall.html')));
+      await waitForPage(h, 'tall.html');
+      expect(await addressOf(h, page)).toBe(server.url('tall.html'));
+      expect(fetched()).toEqual([1, 0]);
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('M11: a .holoml file dropped on a page', () => {
+  it('opens in that tab when it comes from the page\'s own drop; a path of another kind does not', async () => {
+    const folder = mkdtempSync(join(tmpdir(), 'hypersol-holoml-'));
+    folders.push(folder);
+    mkdirSync(join(folder, 'page'));
+    const scene = join(folder, 'page', 'dropped.holoml');
+    writeFileSync(scene, '<holoml version="0.1">\n  <head>\n    <title>Dropped page</title>\n  </head>\n  <scene>\n    <label position="0 1.5 0">A dropped page</label>\n  </scene>\n</holoml>\n');
+    const other = join(folder, 'page', 'notes.txt');
+    writeFileSync(other, 'not a HoloML page');
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      const page = await focusedPage(h);
+      /** Drops a file on the page, as the system does: through the page's own drag events. */
+      const drop = (file: string) =>
+        h.app.evaluate(
+          async ({ webContents }, { id, file }) => {
+            const guest = webContents.fromId(id)!;
+            guest.debugger.attach('1.3');
+            try {
+              const data = { items: [], files: [file], dragOperationsMask: 1 };
+              for (const type of ['dragEnter', 'dragOver', 'drop']) await guest.debugger.sendCommand('Input.dispatchDragEvent', { type, x: 200, y: 200, data });
+            } finally {
+              guest.debugger.detach();
+            }
+          },
+          { id: page.id, file },
+        );
+      // A file of another kind: the page's preload does not pass it on, and the tab stays.
+      await drop(other);
+      await inPage(h, 'new Promise((r) => setTimeout(() => r(true), 300))', page);
+      expect(await addressOf(h, page)).toBe(server.url('link-a.html'));
+      // A .holoml file: it opens in the tab.
+      await drop(scene);
+      await waitFor('the dropped page in the tab', () => focusedTab(h), (t) => /^hypersol-file:\/\/[0-9a-f]{16}\/dropped\.holoml$/.test(t.url));
+      await sceneReady(h, 'hypersol-file');
     } finally {
       await h.close();
     }

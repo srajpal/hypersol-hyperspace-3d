@@ -5,6 +5,7 @@ import { USER_ACTIVATION_MS } from './popups';
 import {
   decidePageNavigation,
   hardenShell,
+  isAcceptableDrop,
   isAllowedPageNavigation,
   isAllowedPageUrl,
   isLocalHolomlUrl,
@@ -93,6 +94,25 @@ describe('refuseClientCertificates (review of 2026-09-30, M2)', () => {
     expect(event.preventDefault).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledWith(); // no certificate
+  });
+});
+
+describe('isAcceptableDrop (review of 2026-09-30, M11)', () => {
+  const drop = { path: 'C:\\Users\\ada\\scenes\\room.holoml', senderType: 'webview', fromMainFrame: true, hostedByShell: true, alreadyOpening: false };
+
+  it("takes a .holoml path from the main frame of one of the shell's tabs", () => {
+    expect(isAcceptableDrop(drop)).toBe(true);
+    expect(isAcceptableDrop({ ...drop, path: '/home/ada/scenes/Room.HOLOML' })).toBe(true);
+  });
+
+  it('refuses anything else it can tell apart', () => {
+    for (const path of [null, 42, '', '.holoml', 'C:\\secrets\\passwords.txt', '/home/ada/.holoml', 'C:\\Users\\ada\\.holoml', 'room.holoml.exe', `${'a'.repeat(5000)}.holoml`]) {
+      expect(isAcceptableDrop({ ...drop, path }), String(path).slice(0, 40)).toBe(false);
+    }
+    expect(isAcceptableDrop({ ...drop, senderType: 'window' })).toBe(false);
+    expect(isAcceptableDrop({ ...drop, fromMainFrame: false })).toBe(false);
+    expect(isAcceptableDrop({ ...drop, hostedByShell: false })).toBe(false);
+    expect(isAcceptableDrop({ ...drop, alreadyOpening: true })).toBe(false);
   });
 });
 
