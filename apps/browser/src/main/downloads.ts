@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { shell, type DownloadItem, type Session } from 'electron';
 import {
+  isProgramFile,
   parseDownloadRequest,
   uniqueName,
   type DownloadInfo,
@@ -110,13 +111,15 @@ export class Downloads {
           return null;
         }
         if (entry.info.state !== 'completed' && r.op === 'downloads.open') throw new Error('The download has not finished');
-        const what = r.op === 'downloads.open' ? 'open' : 'show';
+        // A program is never started from here: "Open" shows it in its folder (shared/downloads.ts).
+        const program = r.op === 'downloads.open' && isProgramFile(entry.info.path);
+        const what = r.op === 'downloads.open' && !program ? 'open' : 'show';
         if (this.options.opened) this.options.opened(what, entry.info.path);
         else if (what === 'open') {
           const problem = await shell.openPath(entry.info.path);
           if (problem) throw new Error(problem);
         } else shell.showItemInFolder(entry.info.path);
-        return null;
+        return program ? 'shown' : null;
       }
     }
   }
