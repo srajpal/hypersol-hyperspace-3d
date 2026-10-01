@@ -11,12 +11,18 @@
  *
  * HoloML 0.2 (milestone 17): the page's own scripts run after the scene is
  * built, with the scene API (api.ts), from the page's own site only.
+ *
+ * Review 134: a page of a version the viewer does not know is refused
+ * (V2); the browser's commands come in, and the scene's state goes out,
+ * over a line the page's scripts cannot reach (V10); and the hooks the
+ * browser's tests use are on the page only in a test run (D12).
  */
 import { HoloParseError, check, parse, type ElementNode, type Problem } from '@hypersol/holoml';
 import { HolomlView } from './scene';
 import { installApi } from './api';
 import { LIMITS } from './budget';
-import { attr, text } from './values';
+import { attr, ownProblems, text, trimSpace } from './values';
+import { VERSIONS, atLeast, pageVersion } from './versions';
 
 interface ViewerState {
   ready: boolean;
@@ -32,138 +38,196 @@ interface ViewerState {
 const state: ViewerState = { ready: false, error: null, problems: [], noWebGL: false, view: null, textView: false, source: [], title: '' };
 
 /**
- * Read-only facts for the browser's own tests and for the instrument
- * panel's Scene part (the main process reads them only from pages it
- * marked as HoloML, and checks what it reads: a 0.2 page's own scripts
- * run in this same page).
+ * The test run's mark (review 134, D12). The page's preload, which the
+ * page cannot touch, puts it on the viewer's own script element in the
+ * browser's test runs; it is read here, before any script of the page
+ * can run, and taken off again.
  */
-Object.defineProperty(window, '__holoml', {
-  value: {
-    get ready() {
-      return state.ready;
-    },
-    get error() {
-      return state.error;
-    },
-    get problems() {
-      return state.problems.map((p) => ({ ...p }));
-    },
-    get noWebGL() {
-      return state.noWebGL;
-    },
-    get frames() {
-      return state.view?.frames ?? 0;
-    },
-    get busy() {
-      return state.view?.busy ?? false;
-    },
-    view: () => state.view?.view ?? null,
-    models: () => JSON.parse(JSON.stringify(state.view?.models.map(({ src, state: s, materials, animation, standsInFor }) => ({ src, state: s, materials, animation, standsInFor })) ?? [])),
-    labels: () => state.view?.labels.map((l) => l.text) ?? [],
-    links: () => state.view?.links.map((l) => l.href) ?? [],
-    object: (id: string) => state.view?.objectInfo(id) ?? null,
-    point: (which: string | number) => state.view?.screenPoint(which) ?? null,
-    rect: (id: string) => state.view?.screenRect(id) ?? null,
-    linkAt: (x: number, y: number) => state.view?.linkHrefAt(x, y) ?? null,
-    lights: () => state.view?.lightsInfo() ?? [],
-    leftOut: () => state.view?.leftOut ?? [],
-    highlight: () => state.view?.highlightInfo ?? null,
-    /** HoloML 0.2 (milestone 17): sounds, whether sound may play yet, screen text, the walker, and how the scene is drawn. */
-    sounds: () => JSON.parse(JSON.stringify(state.view?.sounds.reports ?? [])),
-    get soundsActive() {
-      return state.view?.sounds.active ?? false;
-    },
-    huds: () => [...document.querySelectorAll<HTMLElement>('.holoml-hud')].map((h) => ({ id: h.dataset['id'] ?? null, text: h.innerText, hidden: h.hidden })),
-    /** The sliders (HoloML 0.2, milestone 18): label, value, range, and corner. */
-    sliders: () =>
-      [...document.querySelectorAll<HTMLElement>('.holoml-slider')].map((s) => {
-        const input = s.querySelector('input')!;
-        return {
-          id: s.dataset['id'] ?? null,
-          label: s.querySelector('span')?.textContent ?? '',
-          value: Number(input.value),
-          min: Number(input.min),
-          max: Number(input.max),
-          step: Number(input.step),
-          corner: (s.parentElement as HTMLElement | null)?.dataset['corner'] ?? null,
-        };
-      }),
-    /** The choices (milestone 18): label, corner, options, and the chosen value. */
-    choices: () => JSON.parse(JSON.stringify(state.view?.choicesInfo ?? [])),
-    /** Shadows: the lights and meshes that cast them, and why a page's were left out, if they were. */
-    shadows: () => state.view?.shadowsInfo ?? null,
-    /** HoloML 0.2's third part (milestone 19): panels, click actions, places, the sky, the floor plan, and the fade. */
-    panels: () => JSON.parse(JSON.stringify(state.view?.panelsInfo ?? [])),
-    actions: () => JSON.parse(JSON.stringify(state.view?.actionsInfo ?? [])),
-    places: () => JSON.parse(JSON.stringify(state.view?.placesInfo ?? null)),
-    sky: () => state.view?.skyInfo ?? null,
-    plan: () => JSON.parse(JSON.stringify(state.view?.planInfo ?? null)),
-    fade: () => JSON.parse(JSON.stringify(state.view?.fadeInfo ?? null)),
-    /** Loading by area (milestone 20): the groups, their models and stand-ins; every model with a stand-in; and what the page's files count now. */
-    areas: () => JSON.parse(JSON.stringify(state.view?.areasInfo ?? [])),
-    standIns: () => JSON.parse(JSON.stringify(state.view?.standInsInfo ?? [])),
-    totals: () => state.view?.totals ?? null,
-    /** Water and sounds from a place (milestone 21): the water's box, look, and moving light; how much a point has faded into it from where the viewer is; and how loud a sound from a place is in each ear now. */
-    water: () => JSON.parse(JSON.stringify(state.view?.waterInfo ?? null)),
-    waterFadeAt: (point: [number, number, number]) => state.view?.waterFadeAt(point) ?? 0,
-    soundLevels: (id: string) => state.view?.soundLevels(id) ?? null,
-    /** Whether the page's tab is behind another (milestone 21): it draws nothing then. */
-    get behind() {
-      return state.view?.isBehind ?? false;
-    },
-    /** New shaders compile without blocking the page (milestone 21): true until the scene is drawn with them. */
-    get compiling() {
-      return state.view?.shadersCompiling ?? false;
-    },
-    /** The page's panorama of the surroundings: its address, whether it arrived, and how brightly it lights the scene. */
-    environment: () => state.view?.environmentInfo ?? null,
-    walker: () => state.view?.walkerInfo ?? null,
-    stats: () => state.view?.stats ?? null,
-    get version() {
-      return state.view?.pageVersion ?? null;
-    },
-    get textView() {
-      return state.textView;
-    },
-    /** The Tab order: each outline item's kind of element and its text. */
-    outline: () => [...document.querySelectorAll('#holoml-outline li > a, #holoml-outline li > button')].map((e) => `${e.tagName.toLowerCase()}:${e.textContent}`),
-    /** The inspector's picture of the scene (issue #28). */
-    scene: () => {
-      const v = state.view;
-      const sel = v?.selectedIndex ?? -1;
-      const e = v?.entries[sel];
-      return JSON.parse(
-        JSON.stringify({
-          title: state.title,
-          // The first 2,000 go to the inspector's tree each second; the rest are counted.
-          entryCount: v?.entries.length ?? 0,
-          entries: (v?.entries ?? []).slice(0, 2_000).map((x, i) => ({
-            index: i,
-            kind: x.kind,
-            name: x.name,
-            depth: x.depth,
-            line: x.el.start.line,
-            column: x.el.start.column,
-            state: x.report?.state,
-            reason: x.report?.reason,
-          })),
-          selected: sel,
-          picking: v?.pickingNow ?? false,
-          detail: e
-            ? { ...v!.entryInfo(sel), line: e.el.start.line, column: e.el.start.column, source: state.source[e.el.start.line - 1] ?? '' }
-            : null,
-          problems: state.problems,
-          error: state.error,
-          models: (v?.models ?? []).map(({ src, state: st, reason, bytes, triangles }) => ({ src, state: st, reason, bytes, triangles })),
-          totals: { bytes: v?.budget.bytes ?? 0, triangles: v?.budget.triangles ?? 0 },
-          leftOutElements: v?.leftOutElements ?? 0,
-        }),
-      );
-    },
-    select: (index: number) => state.view?.select(index),
-    pick: (on: boolean) => state.view?.setPicking(on),
-  },
+const mark = document.querySelector('script[data-hypersol-holoml-test]');
+const testRun = mark !== null;
+mark?.removeAttribute('data-hypersol-holoml-test');
+
+/**
+ * The private line to the page's preload (review 134, V10): the browser's
+ * commands come in over it (stop, the text view, behind another tab), and
+ * the scene's state goes out (loading, the text view, drawn). The viewer
+ * asks for it as it starts, before any script of the page exists, and the
+ * page's scripts run only once it is here, so a page's script can neither
+ * take its place nor post the browser's commands itself: a message on
+ * the window is no longer a command.
+ */
+const line = new Promise<MessagePort>((resolve) => {
+  const heard = (e: MessageEvent) => {
+    const port = e.ports[0];
+    if (e.source !== window || (e.data as { hypersolHolomlLine?: unknown } | null)?.hypersolHolomlLine !== true || !port) return;
+    window.removeEventListener('message', heard);
+    resolve(port);
+  };
+  window.addEventListener('message', heard);
+  window.postMessage({ hypersolHolomlViewer: true }, '*');
 });
+
+/** Tells the browser of the scene's state, over the private line (in order, once it is there). */
+function tell(what: { busy: boolean } | { textView: boolean } | { drawn: true }): void {
+  void line.then((port) => port.postMessage(what));
+}
+
+/**
+ * The instrument panel's Scene part (issue #28): the inspector's picture
+ * of the scene, read-only facts that the main process reads only from
+ * pages it marked as HoloML, and checks field by field (a 0.2 page's own
+ * scripts run in this same page).
+ */
+function sceneFacts(): unknown {
+  const v = state.view;
+  const sel = v?.selectedIndex ?? -1;
+  const e = v?.entries[sel];
+  return JSON.parse(
+    JSON.stringify({
+      title: state.title,
+      // The first 2,000 go to the inspector's tree each second; the rest are counted.
+      entryCount: v?.entries.length ?? 0,
+      entries: (v?.entries ?? []).slice(0, 2_000).map((x, i) => ({
+        index: i,
+        kind: x.kind,
+        name: x.name,
+        depth: x.depth,
+        line: x.el.start.line,
+        column: x.el.start.column,
+        state: x.report?.state,
+        reason: x.report?.reason,
+      })),
+      selected: sel,
+      picking: v?.pickingNow ?? false,
+      detail: e
+        ? { ...v!.entryInfo(sel), line: e.el.start.line, column: e.el.start.column, source: state.source[e.el.start.line - 1] ?? '' }
+        : null,
+      problems: state.problems,
+      error: state.error,
+      models: (v?.models ?? []).map(({ src, state: st, reason, bytes, triangles }) => ({ src, state: st, reason, bytes, triangles })),
+      totals: { bytes: v?.budget.bytes ?? 0, triangles: v?.budget.triangles ?? 0 },
+      leftOutElements: v?.leftOutElements ?? 0,
+    }),
+  );
+}
+
+/**
+ * What every HoloML page has on its window, in every run (review 134,
+ * D12): only what the instrument panel's Scene part reads, `scene`,
+ * which is read-only. Nothing here acts: choosing a thing and picking
+ * come from the main process over the private line ("select:<index>",
+ * "pick-on", "pick-off" on the command channel; main/inspect sends them).
+ * The object is frozen: a page's script cannot put its own answers in
+ * their place.
+ */
+const inspector = {
+  scene: sceneFacts,
+};
+
+/**
+ * Read-only facts for the browser's own tests, and a few things they do.
+ * On the page only in a test run (HYPERSOL_TEST=1), never in a normal one.
+ */
+const testHooks = {
+  ...inspector,
+  get ready() {
+    return state.ready;
+  },
+  get error() {
+    return state.error;
+  },
+  get problems() {
+    return state.problems.map((p) => ({ ...p }));
+  },
+  get noWebGL() {
+    return state.noWebGL;
+  },
+  get frames() {
+    return state.view?.frames ?? 0;
+  },
+  /** The scene's own time, in milliseconds: what its frames have moved it on by (walking and turning are measured against it). */
+  get clock() {
+    return state.view?.clock ?? 0;
+  },
+  get busy() {
+    return state.view?.busy ?? false;
+  },
+  view: () => state.view?.view ?? null,
+  models: () => JSON.parse(JSON.stringify(state.view?.models.map(({ src, state: s, materials, animation, standsInFor }) => ({ src, state: s, materials, animation, standsInFor })) ?? [])),
+  labels: () => state.view?.labels.map((l) => l.text) ?? [],
+  links: () => state.view?.links.map((l) => l.href) ?? [],
+  object: (id: string) => state.view?.objectInfo(id) ?? null,
+  point: (which: string | number) => state.view?.screenPoint(which) ?? null,
+  rect: (id: string) => state.view?.screenRect(id) ?? null,
+  linkAt: (x: number, y: number) => state.view?.linkHrefAt(x, y) ?? null,
+  lights: () => state.view?.lightsInfo() ?? [],
+  leftOut: () => state.view?.leftOut ?? [],
+  highlight: () => state.view?.highlightInfo ?? null,
+  /** HoloML 0.2 (milestone 17): sounds, whether sound may play yet, screen text, the walker, and how the scene is drawn. */
+  sounds: () => JSON.parse(JSON.stringify(state.view?.sounds.reports ?? [])),
+  get soundsActive() {
+    return state.view?.sounds.active ?? false;
+  },
+  huds: () => [...document.querySelectorAll<HTMLElement>('.holoml-hud')].map((h) => ({ id: h.dataset['id'] ?? null, text: h.innerText, hidden: h.hidden })),
+  /** The sliders (HoloML 0.2, milestone 18): label, value, range, and corner. */
+  sliders: () =>
+    [...document.querySelectorAll<HTMLElement>('.holoml-slider')].map((s) => {
+      const input = s.querySelector('input')!;
+      return {
+        id: s.dataset['id'] ?? null,
+        label: s.querySelector('span')?.textContent ?? '',
+        value: Number(input.value),
+        min: Number(input.min),
+        max: Number(input.max),
+        step: Number(input.step),
+        corner: (s.parentElement as HTMLElement | null)?.dataset['corner'] ?? null,
+      };
+    }),
+  /** The choices (milestone 18): label, corner, options, and the chosen value. */
+  choices: () => JSON.parse(JSON.stringify(state.view?.choicesInfo ?? [])),
+  /** Shadows: the lights and meshes that cast them, and why a page's were left out, if they were. */
+  shadows: () => state.view?.shadowsInfo ?? null,
+  /** HoloML 0.2's third part (milestone 19): panels, click actions, places, the sky, the floor plan, and the fade. */
+  panels: () => JSON.parse(JSON.stringify(state.view?.panelsInfo ?? [])),
+  actions: () => JSON.parse(JSON.stringify(state.view?.actionsInfo ?? [])),
+  places: () => JSON.parse(JSON.stringify(state.view?.placesInfo ?? null)),
+  sky: () => state.view?.skyInfo ?? null,
+  plan: () => JSON.parse(JSON.stringify(state.view?.planInfo ?? null)),
+  fade: () => JSON.parse(JSON.stringify(state.view?.fadeInfo ?? null)),
+  /** Loading by area (milestone 20): the groups, their models and stand-ins; every model with a stand-in; and what the page's files count now. */
+  areas: () => JSON.parse(JSON.stringify(state.view?.areasInfo ?? [])),
+  standIns: () => JSON.parse(JSON.stringify(state.view?.standInsInfo ?? [])),
+  totals: () => state.view?.totals ?? null,
+  /** Water and sounds from a place (milestone 21): the water's box, look, and moving light; how much a point has faded into it from where the viewer is; and how loud a sound from a place is in each ear now. */
+  water: () => JSON.parse(JSON.stringify(state.view?.waterInfo ?? null)),
+  waterFadeAt: (point: [number, number, number]) => state.view?.waterFadeAt(point) ?? 0,
+  soundLevels: (id: string) => state.view?.soundLevels(id) ?? null,
+  /** Whether the page's tab is behind another (milestone 21): it draws nothing then. */
+  get behind() {
+    return state.view?.isBehind ?? false;
+  },
+  /** New shaders compile without blocking the page (milestone 21): true until the scene is drawn with them. */
+  get compiling() {
+    return state.view?.shadersCompiling ?? false;
+  },
+  /** The page's panorama of the surroundings: its address, whether it arrived, and how brightly it lights the scene. */
+  environment: () => state.view?.environmentInfo ?? null,
+  walker: () => state.view?.walkerInfo ?? null,
+  stats: () => state.view?.stats ?? null,
+  get version() {
+    return state.view?.pageVersion ?? null;
+  },
+  get textView() {
+    return state.textView;
+  },
+  /** The Tab order: each outline item's kind of element and its text. */
+  outline: () => [...document.querySelectorAll('#holoml-outline li > a, #holoml-outline li > button')].map((e) => `${e.tagName.toLowerCase()}:${e.textContent}`),
+  /** Review 134: how the scene is drawn (in software: at half its sharpness, without smoothed edges), and what is past the limits on lights. */
+  drawing: () => state.view?.drawingInfo ?? null,
+  lightLimits: () => state.view?.lightLimitsInfo ?? null,
+};
+
+Object.defineProperty(window, '__holoml', { value: Object.freeze(testRun ? testHooks : inspector) });
 
 const STYLE = `
   :root { color-scheme: dark; font-family: system-ui, "Segoe UI", sans-serif; }
@@ -227,6 +291,8 @@ const STYLE = `
   body.holoml-text-view #holoml-outline-nav { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal;
     max-width: 760px; margin: 32px auto; padding: 0 24px; color: #eef1ff; font-size: 17px; line-height: 1.6; }
   body.holoml-text-view { overflow: auto !important; }
+  /* The window itself scrolls the text, so Page Down, the arrows, and the space bar scroll it with nothing in focus (review 134, V8). */
+  html:has(> body.holoml-text-view) { overflow: visible !important; }
   body.holoml-text-view #holoml-outline-nav h1 { font-size: 26px; }
   body.holoml-text-view #holoml-outline-nav button { all: unset; cursor: default; }
   body.holoml-text-view #holoml-outline-nav a { color: #7fd8ff; }
@@ -309,8 +375,36 @@ function start(): void {
   state.title = document.title;
   heading.textContent = title && text(title) ? text(title) : 'HoloML scene';
 
+  // A version this viewer does not know is refused, not guessed at, and so is a page that names none
+  // (SPEC.md section 11; review 134, V2).
+  const version = pageVersion(doc.root);
+  if (version === null) {
+    const written = doc.root.attributes.find((a) => a.name === 'version');
+    const known = VERSIONS.join(' and ');
+    const at = written?.start ?? doc.root.start;
+    if (typeof written?.value === 'string') {
+      state.error = { code: 'unsupported-version', message: `This browser reads HoloML ${known}, not "${written.value}"`, line: at.line, column: at.column };
+      document.title = 'HoloML page of another version';
+      showCard(
+        'This HoloML page is written for another version',
+        [`The page is written in HoloML "${written.value}", which this browser does not read yet. It reads HoloML ${known}.`, 'A newer HyperSpace 3D may show it.'],
+        null,
+      );
+    } else {
+      state.error = { code: 'unsupported-version', message: 'The page does not say which version of HoloML it is written for', line: at.line, column: at.column };
+      document.title = 'HoloML page without a version';
+      showCard(
+        'This HoloML page does not say its version',
+        [`A HoloML page names the version it is written for, as in <holoml version="${VERSIONS[VERSIONS.length - 1]}">. This one names none, so it is not shown. This browser reads HoloML ${known}.`],
+        null,
+      );
+    }
+    state.ready = true;
+    return;
+  }
+
   try {
-    state.view = new HolomlView(doc.root, root, list, hudLayer);
+    state.view = new HolomlView(doc.root, root, list, hudLayer, version);
   } catch (e) {
     state.noWebGL = true;
     showCard(
@@ -343,7 +437,7 @@ function start(): void {
     // Not while the page is dark in a fade (milestone 19): the card shows the scene.
     if (!drawnToTell || view.busy || !view.viewSettled || view.fading) return;
     drawnToTell = false;
-    window.postMessage({ hypersolHolomlDrawn: true }, '*');
+    tell({ drawn: true });
   };
   view.onLeftOut = () => showLeftOut(view, notice);
   // Loading a moment (a script adding a block) is not "loading" for the top
@@ -355,35 +449,35 @@ function start(): void {
     if (busy) {
       busyTimer = window.setTimeout(() => {
         told = true;
-        window.postMessage({ hypersolHolomlBusy: true }, '*');
+        tell({ busy: true });
       }, 150);
     } else if (told) {
       told = false;
-      window.postMessage({ hypersolHolomlBusy: false }, '*');
+      tell({ busy: false });
     }
   };
   if (view.busy) view.onBusy(true);
   showLeftOut(view, notice);
-  if (view.pageVersion === '0.2') {
+  if (atLeast(view.pageVersion, '0.2')) {
     installApi(view, ready);
     runScripts(doc.root, state.problems);
   }
   // Esc stops whatever is still loading (issue #23).
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && view.busy) view.stop();
-    // Ctrl+Shift+V (Cmd+Shift+V on macOS): the text view, on HoloML pages only.
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && e.key.toLowerCase() === 'v') {
-      e.preventDefault();
-      setTextView(!state.textView);
-    }
   });
-  // From the browser, through the page's preload: stop, the text view, and whether its tab is behind another (milestone 21).
-  window.addEventListener('message', (e) => {
-    const command = (e.data as { hypersolHolomlCommand?: unknown } | null)?.hypersolHolomlCommand;
-    if (e.source !== window || typeof command !== 'string') return;
-    if (command === 'stop') view.stop();
-    else if (command === 'text-view-on' || command === 'text-view-off') setTextView(command === 'text-view-on');
-    else if (command === 'behind' || command === 'in-front') view.setBehind(command === 'behind');
+  // From the browser, through the page's preload, over the private line: stop, the text view, and whether
+  // its tab is behind another (milestone 21). Commands sent before the scene was built waited in the line.
+  void line.then((port) => {
+    port.onmessage = (e) => {
+      const command: unknown = e.data;
+      if (command === 'stop') view.stop();
+      else if (command === 'text-view-on' || command === 'text-view-off') setTextView(command === 'text-view-on');
+      else if (command === 'behind' || command === 'in-front') view.setBehind(command === 'behind');
+      // The instrument panel's Scene part: picking, and the thing chosen in its tree.
+      else if (command === 'pick-on' || command === 'pick-off') view.setPicking(command === 'pick-on');
+      else if (typeof command === 'string' && /^select:-?\d{1,7}$/.test(command)) view.select(Number(command.slice('select:'.length)));
+    };
   });
 }
 
@@ -391,7 +485,9 @@ function start(): void {
  * The page's scripts (HoloML 0.2): JavaScript modules from the page's own
  * site, in document order. A script element with a problem (no src, not
  * a .js or .mjs file, code written inside it) is not run, and no script
- * from another site is (the page's content policy refuses it too).
+ * from another site is (the page's content policy refuses it too). Only
+ * a problem of the script element itself counts: one of another element
+ * on the same line does not stop it (review 134, V10).
  */
 function runScripts(root: ElementNode, problems: Problem[]): void {
   const head = root.children.find((c): c is ElementNode => c.type === 'element' && c.name === 'head');
@@ -400,14 +496,14 @@ function runScripts(root: ElementNode, problems: Problem[]): void {
   for (const el of scripts) {
     const at = `line ${el.start.line}, column ${el.start.column}`;
     const src = attr(el, 'src');
-    const flawed = problems.some((p) => p.line === el.start.line || (el.children.length > 0 && p.code === 'text-not-allowed'));
-    if (!src || flawed || el.children.some((c) => c.type === 'text' && c.value.trim() !== '')) {
+    const flawed = ownProblems(el, problems).length > 0;
+    if (!src || flawed || el.children.some((c) => c.type === 'text' && trimSpace(c.value) !== '')) {
       console.warn(`HoloML: the script at ${at} was not run: a script is a file named in "src", with nothing written inside it.`);
       continue;
     }
     let url: URL;
     try {
-      url = new URL(src.trim(), document.baseURI);
+      url = new URL(trimSpace(src), document.baseURI);
     } catch {
       console.warn(`HoloML: the script "${src}" was not run: its address is not valid.`);
       continue;
@@ -420,12 +516,20 @@ function runScripts(root: ElementNode, problems: Problem[]): void {
       console.warn(`HoloML: the script "${src}" was not run: a script must be a .js or .mjs file.`);
       continue;
     }
-    const script = document.createElement('script');
-    script.type = 'module';
-    // Added one after another, they run in document order.
-    script.async = false;
-    script.src = url.href;
-    document.head.append(script);
+    // Fetched at once, as ever; run once the viewer has its private line (a moment later, and as a rule before
+    // the file has arrived), so that no script of the page is there to see the line handed over.
+    const early = document.createElement('link');
+    early.rel = 'modulepreload';
+    early.href = url.href;
+    document.head.append(early);
+    void line.then(() => {
+      const script = document.createElement('script');
+      script.type = 'module';
+      // Added one after another, they run in document order.
+      script.async = false;
+      script.src = url.href;
+      document.head.append(script);
+    });
   }
 }
 
@@ -449,14 +553,18 @@ function showLeftOut(view: HolomlView, notice: HTMLElement): void {
 function setTextView(on: boolean): void {
   state.textView = on;
   document.body.classList.toggle('holoml-text-view', on);
-  state.view?.requestFrame();
-  window.postMessage({ hypersolHolomlTextView: on }, '*');
+  // The scene stops while it is hidden: it takes no keys, so they scroll the text, and draws nothing (review 134, V8).
+  state.view?.setTextView(on);
+  // Back in the scene, which fills the window, the text's place is forgotten.
+  if (!on) window.scrollTo(0, 0);
+  tell({ textView: on });
 }
 
 function showSyntaxError(e: HoloParseError, source: string): void {
   const line = source.split(/\r\n|\r|\n/)[e.position.line - 1] ?? '';
   const caret = `${' '.repeat(Math.max(0, e.position.column - 1))}^`;
-  showCard('This HoloML page has a mistake', [e.detail, `Line ${e.position.line}, column ${e.position.column}:`], `${line}\n${caret}`);
+  // The error's code with its place, as a reader reports both (SPEC.md section 5, "Syntax errors").
+  showCard('This HoloML page has a mistake', [e.detail, `Line ${e.position.line}, column ${e.position.column} (${e.code}):`], `${line}\n${caret}`);
 }
 
 function showCard(heading: string, lines: string[], code: string | null): void {

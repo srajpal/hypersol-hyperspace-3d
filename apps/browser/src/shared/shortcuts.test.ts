@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { matchShortcut, type KeyInput } from '../main/shortcuts';
+import { matchShortcut, shortcutIn, type KeyInput } from '../main/shortcuts';
 import { applySettingsPatch, defaults, parseSettings } from './settings';
-import { bindings, checkOverrides, comboFromEvent, describeCombo, parseCombo, SHORTCUTS } from './shortcuts';
+import { bindings, checkOverrides, comboFromEvent, describeCombo, holomlOnly, parseCombo, SHORTCUTS } from './shortcuts';
 
 const key = (k: string, mods: Partial<KeyInput> = {}): KeyInput => ({ type: 'keyDown', key: k, control: false, meta: false, shift: false, alt: false, ...mods });
 
@@ -53,6 +53,44 @@ describe('shortcut remapping (milestone 11)', () => {
     const ok = applySettingsPatch(defaults(), { shortcuts: { find: 'Mod+K' } });
     expect('settings' in ok && ok.settings.shortcuts).toEqual({ find: 'Mod+K' });
     expect(applySettingsPatch(defaults(), { shortcuts: { find: 'Mod+V' } })).toHaveProperty('error');
+  });
+});
+
+describe('the text view of a HoloML page (review of 2026-09-30, St4)', () => {
+  const pressed = key('V', { control: true, shift: true });
+
+  it('is in the table with its old keys, so it can be changed and is checked for clashes', () => {
+    expect(bindings({}, 'win32').get('text-view')).toEqual(['Mod+Shift+V']);
+    expect(bindings({}, 'darwin').get('text-view')).toEqual(['Mod+Shift+V']);
+    expect(matchShortcut(pressed, 'win32')).toBe('text-view');
+    expect(matchShortcut(key('v', { meta: true, shift: true }), 'darwin')).toBe('text-view');
+    // Another action cannot take its keys while it has them, and it cannot take another's.
+    expect(checkOverrides({ find: 'Mod+Shift+V' }, 'win32')).toMatchObject({ error: expect.stringMatching(/already used by Text view of a HoloML page/) });
+    expect(checkOverrides({ 'text-view': 'Mod+T' }, 'win32')).toMatchObject({ error: expect.stringMatching(/already used by New tab/) });
+    // Plain paste stays reserved.
+    expect(checkOverrides({ 'text-view': 'Mod+V' }, 'win32')).toMatchObject({ error: expect.stringMatching(/kept for editing/) });
+    // Moved to other keys, the old ones are free again.
+    expect(checkOverrides({ 'text-view': 'Mod+Alt+V', find: 'Mod+Shift+V' }, 'win32')).toHaveProperty('overrides');
+  });
+
+  it('is the only shortcut for HoloML pages only', () => {
+    expect(SHORTCUTS.filter((s) => holomlOnly(s.name)).map((s) => s.name)).toEqual(['text-view']);
+  });
+
+  it('acts in a HoloML page only: anywhere else its keys are left alone', () => {
+    expect(shortcutIn(pressed, 'win32', {}, true)).toBe('text-view');
+    // In another page (or the shell) Ctrl+Shift+V stays "paste as plain text".
+    expect(shortcutIn(pressed, 'win32', {}, false)).toBeNull();
+    // Every other shortcut acts in both.
+    expect(shortcutIn(key('t', { control: true }), 'win32', {}, true)).toBe('new-tab');
+    expect(shortcutIn(key('t', { control: true }), 'win32', {}, false)).toBe('new-tab');
+  });
+
+  it('follows its own keys once changed: the old ones then do nothing', () => {
+    const own = { 'text-view': 'Mod+Alt+V' } as const;
+    expect(shortcutIn(key('v', { control: true, alt: true }), 'win32', own, true)).toBe('text-view');
+    expect(shortcutIn(key('v', { control: true, alt: true }), 'win32', own, false)).toBeNull();
+    expect(shortcutIn(pressed, 'win32', own, true)).toBeNull();
   });
 });
 

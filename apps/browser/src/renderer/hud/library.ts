@@ -15,6 +15,9 @@ type View = 'bookmarks' | 'history' | 'passwords';
  *
  * Events: hs-open-url (detail: address), hs-panel-closed.
  */
+/** How long typing in the history search box pauses before a search starts. */
+export const SEARCH_PAUSE_MS = 200;
+
 export class HsLibrary extends LitElement {
   static override properties = {
     open: { type: Boolean, reflect: true },
@@ -53,6 +56,14 @@ export class HsLibrary extends LitElement {
   private running = false;
   private again = false;
   private searchTimer: number | undefined;
+  /**
+   * Test runs only (renderer/main.ts switches it on): when the history
+   * search box was typed in and when a search started, on the shell's own
+   * clock, the last hundred. A check can then see that searches start
+   * only once typing has paused, however fast or slowly the keys came.
+   */
+  keepSearchTimes = false;
+  readonly searchTimes: { at: number; what: 'typed' | 'searched' }[] = [];
 
   constructor() {
     super();
@@ -225,6 +236,7 @@ export class HsLibrary extends LitElement {
         this.never = never;
         if (!status.available) this.note = status.message ?? '';
       } else {
+        this.noteSearch('searched');
         const found = await this.client.get({ op: 'history.search', query: this.query, limit: 500 });
         if (ticket !== this.request) return;
         this.history = found;
@@ -429,13 +441,20 @@ export class HsLibrary extends LitElement {
     return this.bookmarks.filter((b) => b.title.toLowerCase().includes(q) || b.url.toLowerCase().includes(q));
   }
 
-  /** History searches wait until typing pauses for 200 ms. */
+  /** History searches wait until typing pauses for SEARCH_PAUSE_MS. */
   private readonly onSearch = (e: Event) => {
     this.query = (e.target as HTMLInputElement).value;
     if (this.view !== 'history') return;
+    this.noteSearch('typed');
     window.clearTimeout(this.searchTimer);
-    this.searchTimer = window.setTimeout(() => void this.refresh(), 200);
+    this.searchTimer = window.setTimeout(() => void this.refresh(), SEARCH_PAUSE_MS);
   };
+
+  private noteSearch(what: 'typed' | 'searched'): void {
+    if (!this.keepSearchTimes) return;
+    this.searchTimes.push({ at: performance.now(), what });
+    if (this.searchTimes.length > 100) this.searchTimes.shift();
+  }
 
   private readonly onKey = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {

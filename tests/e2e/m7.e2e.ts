@@ -4,8 +4,7 @@
  * network list, browser gauges, the settings per part, DevTools, and
  * efficiency.
  */
-import { mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FIXTURES_DIR, startFixtureServer, startHttpsFixtureServer, type FixtureServer } from './fixture-server';
@@ -17,12 +16,13 @@ import {
   focusedPage,
   inPage,
   launch,
+  mainLog,
   navigateTo,
+  newProfile,
   pressInShell,
-  removeFolder,
+  roomStill,
   screenPointOf,
   shellCall,
-  sleep,
   waitFor,
   waitForPage,
   type Harness,
@@ -31,14 +31,6 @@ import {
 } from './harness';
 
 let server: FixtureServer;
-const profiles: string[] = [];
-
-function newProfile(settings?: object): string {
-  const dir = mkdtempSync(join(tmpdir(), 'hypersol-e2e-profile-'));
-  profiles.push(dir);
-  if (settings) writeFileSync(join(dir, 'settings.json'), JSON.stringify(settings));
-  return dir;
-}
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -46,7 +38,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server?.close();
-  for (const dir of profiles) await removeFolder(dir);
 });
 
 const PAGE = 'inspect.html';
@@ -56,8 +47,21 @@ const SET = (id: string) => `hs-settings [data-testid="${id}"]`;
 const inst = (h: Harness) => shellCall(h, 'instruments');
 const saved = (profile: string) => JSON.parse(readFileSync(join(profile, 'settings.json'), 'utf8')) as Record<string, unknown>;
 const panelWidth = async (h: Harness) => (await shellCall(h, 'layout')).panelWidth;
-const inspectOps = (h: Harness) =>
-  h.app.evaluate(() => (globalThis as unknown as { __hypersolTest: { dataOps: Record<string, number> } }).__hypersolTest.dataOps['inspect.snapshot'] ?? 0);
+/** How often the instrument panel has asked the main process for its readouts. */
+const snapshotsAsked = async (h: Harness) => (await mainLog(h, 'dataOps'))['inspect.snapshot'] ?? 0;
+/**
+ * How often the instrument panel asked the main process for its readouts
+ * in some milliseconds, counted in the main process on its own clock.
+ * Timed from here, the readings' own delays would stretch the time on a
+ * slow machine, and a count over "three seconds" would be over more.
+ */
+const askedIn = (h: Harness, ms: number) =>
+  h.app.evaluate(async (_electron, ms) => {
+    const ops = () => globalThis.__hypersolTest!.dataOps['inspect.snapshot'] ?? 0;
+    const [before, start] = [ops(), performance.now()];
+    await new Promise((r) => setTimeout(r, ms));
+    return { asked: ops() - before, seconds: (performance.now() - start) / 1000 };
+  }, ms);
 
 async function openSettings(h: Harness): Promise<void> {
   if ((await shellCall(h, 'openPanel')) !== 'settings') await pressInShell(h, ',', ['control']);
@@ -159,6 +163,9 @@ function reachProblems(h: Harness, panel: string): Promise<string[]> {
 }
 
 describe('I2, I4 to I6, I8: the readouts on a test page', () => {
+  // These share one app and run in order: I2 leaves a second tab open,
+  // I4 sets the console's level and clears it, and I5b and I5c read the
+  // four requests I5 has waited for.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url(PAGE), { userDataDir: newProfile({ layersOnOpen: false, instruments: true }) });
@@ -168,7 +175,9 @@ describe('I2, I4 to I6, I8: the readouts on a test page', () => {
 
   it('I2 page readouts match what happened, and follow the tab in front', async () => {
     const size = statSync(join(FIXTURES_DIR, PAGE)).size;
-    const s = await waitFor('readouts', () => inst(h), (x) => (x.page?.requests ?? 0) >= 4 && x.page!.loadMs >= 0 && x.net >= 4);
+    // A request is counted when it starts and its bytes when it completes,
+    // so the wait is for the bytes too, not for the count alone.
+    const s = await waitFor('readouts', () => inst(h), (x) => (x.page?.requests ?? 0) >= 4 && x.page!.loadMs >= 0 && x.net >= 4 && x.page!.bytes >= size);
     expect(s.page).toMatchObject({ url: server.url(PAGE), secure: false, requests: 4, blocked: 1, failed: 0, cert: null });
     // The page, the icon (sizes declared), a 404 with its own size, and the blocked ad.
     expect(s.page!.bytes).toBeGreaterThanOrEqual(size);
@@ -200,7 +209,10 @@ describe('I2, I4 to I6, I8: the readouts on a test page', () => {
     await waitFor('warnings and errors', rows, (n) => n === 2);
     await h.shell.click(INST('inst-clear'));
     await waitFor('cleared', rows, (n) => n === 0);
-    await sleep(1500);
+    // The panel asks for its readouts one at a time: once it has asked
+    // twice more, the first of those answers has been shown.
+    const asked = await snapshotsAsked(h);
+    await waitFor('the next readouts shown', () => snapshotsAsked(h), (n) => n >= asked + 2);
     expect(await rows()).toBe(0); // stays cleared after the next readouts
   });
 
@@ -313,19 +325,18 @@ describe('I9: efficiency and input', () => {
     const h = await launch(server.url('form.html'), { userDataDir: newProfile({ layersOnOpen: false }) });
     try {
       await waitForPage(h, 'form');
-      const before = await inspectOps(h);
-      await sleep(3000);
-      expect(await inspectOps(h)).toBe(before); // off: no asking
+      expect((await askedIn(h, 3000)).asked).toBe(0); // off: no asking, in three seconds of the app's own time
 
       await pressInShell(h, 'I', ['control', 'shift']);
       await waitFor('on', () => inst(h), (s) => s.polling);
-      await sleep(1500);
-      const ops = await inspectOps(h);
-      const frames = await shellCall(h, 'frames');
-      await sleep(3000);
-      const asked = (await inspectOps(h)) - ops;
-      expect(asked).toBeGreaterThanOrEqual(2); // about once a second
-      expect(asked).toBeLessThanOrEqual(4);
+      // The page has made room for the panel and the room has stopped drawing.
+      const frames = await roomStill(h);
+      const { asked, seconds } = await askedIn(h, 3000);
+      console.log(`I9: asked ${asked} times in ${seconds.toFixed(2)} s with the panel on`);
+      // About once a second: 2 to 4 times in three seconds (and one more
+      // for each whole second a busy machine's timer ran over).
+      expect(asked).toBeGreaterThanOrEqual(Math.floor(seconds) - 1);
+      expect(asked).toBeLessThanOrEqual(Math.floor(seconds) + 1);
       expect(await shellCall(h, 'frames')).toBe(frames); // the 3D room draws nothing while idle
 
       await clickAt(h, await screenPointOf(h, '#name', 'form'));

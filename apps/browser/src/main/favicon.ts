@@ -184,6 +184,12 @@ export async function readLimited(response: Response, maxBytes: number): Promise
 export type FetchFn = (url: string, init: { signal: AbortSignal }) => Promise<Response>;
 /** Decodes checked image bytes into a small data: URL, or null. */
 export type DecodeFn = (bytes: Buffer) => string | null;
+/**
+ * How an attempt at one favicon address ended: decoded, cancelled (the
+ * page moved on), timed out, refused (too large, wrong kind, an error
+ * status), or failed (could not be fetched or read).
+ */
+export type FaviconEnd = 'done' | 'cancelled' | 'timed out' | 'refused' | 'failed';
 
 /**
  * Loads one tab's favicon. A new request replaces (and cancels) the one
@@ -193,10 +199,16 @@ export class FaviconLoader {
   private controller: AbortController | null = null;
   private timer: ReturnType<typeof setTimeout> | undefined;
 
+  /**
+   * @param ended Told how each attempt ended (test runs record it: a
+   *   check can then see that a fetch was cancelled by the page moving
+   *   on, not ended by the timeout).
+   */
   constructor(
     private readonly fetchFn: FetchFn,
     private readonly decode: DecodeFn,
     private readonly limits: Limits = FAVICON_LIMITS,
+    private readonly ended?: (url: string, why: FaviconEnd) => void,
   ) {}
 
   /**
@@ -232,12 +244,14 @@ export class FaviconLoader {
     for (const url of urls.slice(0, this.limits.maxCandidates)) {
       if (signal.aborted) return null;
       const attempt = new AbortController();
+      let timeout: AbortSignal | null = null;
+      let why: FaviconEnd = 'refused';
       try {
         let bytes: Buffer | null = null;
         if (/^data:/i.test(url)) {
           bytes = dataUrlBytes(url, this.limits);
         } else if (/^https?:\/\//i.test(url)) {
-          const timeout = AbortSignal.timeout(this.limits.timeoutMs);
+          timeout = AbortSignal.timeout(this.limits.timeoutMs);
           const response = await this.fetchFn(url, { signal: AbortSignal.any([signal, timeout, attempt.signal]) });
           if (!response.ok) {
             await discardBody(response);
@@ -245,15 +259,23 @@ export class FaviconLoader {
           }
           bytes = await readLimited(response, this.limits.maxBytes);
         }
-        if (!bytes || signal.aborted || !checkFavicon(bytes, this.limits).ok) continue;
+        if (signal.aborted) {
+          why = 'cancelled';
+          continue;
+        }
+        if (!bytes || !checkFavicon(bytes, this.limits).ok) continue;
         const dataUrl = this.decode(bytes);
-        if (dataUrl) return dataUrl;
-      } catch {
+        if (!dataUrl) continue;
+        why = 'done';
+        return dataUrl;
+      } catch (e) {
         // Too large, too slow, cancelled, or unreadable: try the next one.
+        why = signal.aborted ? 'cancelled' : timeout?.aborted ? 'timed out' : e instanceof Error && e.message === 'too large' ? 'refused' : 'failed';
       } finally {
         // Ends this attempt's request whatever happened; after a complete
         // read it has nothing left to stop.
         attempt.abort();
+        this.ended?.(url, why);
       }
     }
     return null;

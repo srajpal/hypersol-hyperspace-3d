@@ -1,5 +1,5 @@
 {
-  "comment": "Filter lists for the privacy shield (TODO.md milestone 4, Q1 a: ads and trackers). Ghostery's copies on GitHub, one host. 'ship' marks lists whose license allows including them in the app's starter copy; the others are download-only. Read by scripts/filters-update.mjs and by the app.",
+  "comment": "Filter lists for the privacy shield (TODO.md milestone 4, Q1 a: ads and trackers). Ghostery's copies on GitHub, one host. 'ship' marks lists whose license allows including them in the app's starter copy; the others are download-only. 'resources' is the file of page scripts the blocker runs inside web pages: only scripts/filters-update.mjs fetches it, into the starter copy, with its SHA-256 recorded in starter.json; the app's own refresh downloads the list texts only and builds with the scripts it came with. Read by scripts/filters-update.mjs and by the app.",
   "base": "https://raw.githubusercontent.com/ghostery/adblocker/master/packages/adblocker/assets/",
   "lists": [
     { "path": "easylist/easylist.txt", "name": "EasyList", "license": "GPL-3.0-or-later or CC-BY-SA-3.0-or-later", "ship": true },

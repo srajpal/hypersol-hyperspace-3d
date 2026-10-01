@@ -17,9 +17,11 @@ import {
   focusedTab,
   inPage,
   launch,
+  mainLog,
   navigateTo,
   pressInPage,
   pressInShell,
+  roomStill,
   screenPointOf,
   settled,
   shellCall,
@@ -65,6 +67,8 @@ function addressHasFocus(h: Harness): Promise<boolean> {
 }
 
 describe('D1 top bar', () => {
+  // These share one app and run in order: back and forward need the page
+  // the check before them loaded.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'), { searchUrl: searchUrl() });
@@ -110,6 +114,9 @@ describe('D1 top bar', () => {
 });
 
 describe('D2 tabs', () => {
+  // These share one app and run in order, each starting from the tabs the
+  // one before left: one, two, two with a form filled in, two, one, a
+  // fresh start tab.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'), { searchUrl: searchUrl() });
@@ -119,10 +126,7 @@ describe('D2 tabs', () => {
 
   it('fetches each page once (found in milestone 3: every new tab loaded twice)', async () => {
     const count = (url: string) =>
-      h.app.evaluate(
-        (_e, url) => (globalThis as unknown as { __hypersolTest: { requests: string[] } }).__hypersolTest.requests.filter((r) => r === url).length,
-        url,
-      );
+      h.app.evaluate((_e, url) => globalThis.__hypersolTest!.requests.filter((r) => r === url).length, url);
     expect(await count(server.url('link-a.html'))).toBe(1);
   });
 
@@ -208,8 +212,7 @@ describe('D3 snapshots and favicons', () => {
     const all = await waitFor('snapshots on both cards', () => tabs(h), (t) => t.every((x) => x.hasSnapshot));
     expect(all).toHaveLength(2);
     // Spinners have stopped: nothing is drawn while idle.
-    await sleep(800);
-    const before = await shellCall(h, 'frames');
+    const before = await roomStill(h);
     await sleep(1500);
     expect(await shellCall(h, 'frames')).toBe(before);
   });
@@ -266,6 +269,9 @@ describe('D4 many tabs', () => {
 });
 
 describe('D5 new-window links', () => {
+  // These share one app and run in order: each counts the tabs the ones
+  // before opened (one, two, three), and the last needs the first page in
+  // front, as the third leaves it.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url('new-window.html'));
@@ -276,7 +282,7 @@ describe('D5 new-window links', () => {
   it('blocks a pop-up nobody clicked for', async () => {
     const blocked = await waitFor(
       'the unrequested pop-up to be blocked',
-      () => h.app.evaluate(() => (globalThis as unknown as MainLog).__hypersolTest.blockedPopups),
+      () => mainLog(h, 'blockedPopups'),
       (b) => b.some((u) => u.includes('from=auto')),
     );
     expect(blocked.some((u) => u.includes('from=auto'))).toBe(true);
@@ -390,6 +396,9 @@ describe('D7 error cards', () => {
 });
 
 describe('D8 right-click menu', () => {
+  // These share one app and run in order: the third counts the tabs (two,
+  // with the one it opens), and the last leaves the first page for the
+  // form.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'));
@@ -398,7 +407,7 @@ describe('D8 right-click menu', () => {
   afterAll(async () => h?.close());
 
   async function rightClick(selector: string, page = 'link-a'): Promise<string[]> {
-    const menus = () => h.app.evaluate(() => (globalThis as unknown as MainLog).__hypersolTest.menus.map((m) => m.labels));
+    const menus = () => h.app.evaluate(() => globalThis.__hypersolTest!.menus.map((m) => m.labels));
     const count = (await menus()).length;
     const p = await screenPointOf(h, selector, page);
     // A right-click lost on its way to the page brings no menu at all (issue #30).
@@ -409,7 +418,7 @@ describe('D8 right-click menu', () => {
 
   function choose(label: string): Promise<void> {
     return h.app.evaluate((_electron, label) => {
-      const log = (globalThis as unknown as MainLog).__hypersolTest;
+      const log = globalThis.__hypersolTest!;
       log.menus[log.menus.length - 1]!.run(label);
     }, label);
   }
@@ -481,6 +490,9 @@ describe('D9 start panel', () => {
 });
 
 describe('D10 shortcuts from inside a page', () => {
+  // These share one app and run in order: back and forward need the two
+  // pages the hook loaded, and "Ctrl+W" closes the tab "Ctrl+T" left
+  // beside the start tab.
   let h: Harness;
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'));
@@ -570,15 +582,6 @@ describe('D11 about', () => {
   });
 });
 
-/** The main-process test log (apps/browser/src/main/test-hooks.ts). */
-interface MainLog {
-  __hypersolTest: {
-    blockedPopups: string[];
-    menus: { labels: string[]; run(label: string): void }[];
-  };
-}
-
-
 describe('D13 favicon limits (GitHub issue #1)', () => {
   let h: Harness;
   beforeAll(async () => {
@@ -638,10 +641,11 @@ describe('D13 favicon limits (GitHub issue #1)', () => {
     const key = '/favicon/slow.png?ms=20001';
     await openWithIcon(key);
     await waitFor('the fetch to start', async () => server.hits.get(key) ?? 0, (n) => n > 0, 3000);
-    const start = Date.now();
     await navigateTo(h, server.url('link-b.html'));
     await waitFor('cancelled on navigation', async () => abortedFor(key), (n) => n > 0, 3000);
-    expect(Date.now() - start).toBeLessThan(3000); // well before the 5 s timeout
+    // The app's own account of it: the fetch was cancelled by the page moving on, not ended by the 5 s timeout.
+    const ends = await waitFor('the app to say how the fetch ended', () => mainLog(h, 'faviconEnds'), (e) => e.some((x) => x.url.endsWith(key)));
+    expect(ends.filter((e) => e.url.endsWith(key)).map((e) => e.why)).toEqual(['cancelled']);
   });
 
   it('fetches only the last favicon of a page that keeps changing it', async () => {

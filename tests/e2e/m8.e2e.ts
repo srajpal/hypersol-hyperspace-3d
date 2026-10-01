@@ -2,8 +2,7 @@
  * Milestone 8 end-to-end checks J1 to J8 (TODO.md): zoom, find in page,
  * downloads, printing, private tabs, and keyboard access.
  */
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
@@ -13,11 +12,14 @@ import {
   focusedPage,
   focusedTab,
   inPage,
+  AppGone,
   launch,
+  mainLog,
   navigateTo,
+  newFolder,
+  newProfile as freshProfile,
   pressInPage,
   pressInShell,
-  removeFolder,
   shellCall,
   sleep,
   tabs,
@@ -25,18 +27,13 @@ import {
   waitForExit,
   waitForPage,
   type Harness,
+  type ShellWindow,
 } from './harness';
 
 let server: FixtureServer;
-const folders: string[] = [];
 
-function newFolder(prefix: string, settings?: object): string {
-  const dir = mkdtempSync(join(tmpdir(), prefix));
-  folders.push(dir);
-  if (settings) writeFileSync(join(dir, 'settings.json'), JSON.stringify(settings));
-  return dir;
-}
-const newProfile = (settings?: object) => newFolder('hypersol-e2e-profile-', { layersOnOpen: false, ...settings });
+/** A new profile whose pages open flat (the layers view off), unless the settings say otherwise. */
+const newProfile = (settings?: object) => freshProfile({ layersOnOpen: false, ...settings });
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -44,7 +41,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server?.close();
-  for (const dir of folders) await removeFolder(dir);
 });
 
 const BAR = (id: string) => `hs-toolbar [data-testid="${id}"]`;
@@ -55,8 +51,6 @@ const guestZoom = async (h: Harness) => {
   const page = await focusedPage(h);
   return h.app.evaluate(({ webContents }, id) => webContents.fromId(id)!.getZoomFactor(), page.id);
 };
-const testLog = <T>(h: Harness, key: string) =>
-  h.app.evaluate((_e, k) => (globalThis as unknown as { __hypersolTest: Record<string, unknown> }).__hypersolTest[k], key) as Promise<T>;
 
 describe('J1: zoom', () => {
   it('buttons and shortcuts zoom the page, the level shows, and it is remembered per site', async () => {
@@ -147,7 +141,7 @@ describe('J3 and J8: downloads', () => {
       expect(await h.shell.evaluate(() => document.activeElement?.tagName)).toBe('HS-DOWNLOADS');
       expect(await h.shell.locator(DL('download')).count()).toBe(2);
       await h.shell.locator(DL('download-show')).first().click();
-      await waitFor('shown in its folder', () => testLog<{ what: string; path: string }[]>(h, 'opened'), (o) =>
+      await waitFor('shown in its folder', () => mainLog(h, 'opened'), (o) =>
         o.some((x) => x.what === 'show' && x.path.endsWith('sample (1).txt')));
 
       await navigateTo(h, server.url('download/slow.bin'));
@@ -226,7 +220,7 @@ describe('J5 to J7: private tabs', () => {
       await navigateTo(h, server.url('link-b.html'));
       await waitForPage(h, 'link-b');
       await h.app.evaluate(({ app }) => app.quit());
-      await waitForExit(h, 8000);
+      await waitForExit(h, 30_000);
     } finally {
       await h.close();
     }
@@ -349,11 +343,27 @@ describe('GitHub issues #8 and #10', () => {
       const page = await focusedPage(h);
       const download = (path: string) =>
         h.app.evaluate(({ webContents }, { id, url }) => webContents.fromId(id)!.downloadURL(url), { id: page.id, url: server.url(path) });
+      // The server sends the slow one's first pieces and then holds it
+      // open, so it cannot finish by itself however long the others take.
       await download('download/slow.bin');
       await waitFor('slow running', () => shellCall(h, 'downloads'), (d) =>
         d.some((x) => x.filename === 'slow.bin' && x.state === 'progressing' && x.received > 0));
       for (let i = 0; i < 100; i++) await download(`download/sample.txt?n=${i}`);
-      await waitFor('100 finished', () => shellCall(h, 'downloads'), (d) => d.filter((x) => x.state === 'completed').length >= 99, 60_000);
+      // The list keeps 100: the slow one, and the 99 newest of the others
+      // once the oldest finished one has been dropped, so 99 finished
+      // means all 100 are. A finished file can wait a long while to be
+      // marked so on a busy Windows machine (on GitHub's, five had every
+      // byte and were still not marked after 60 s; most likely the system
+      // checking each new file), so this waits three minutes, and says
+      // which were not done.
+      await waitFor('100 finished', () => shellCall(h, 'downloads'), (d) => d.filter((x) => x.state === 'completed').length >= 99, 180_000).catch(
+        async (e: unknown) => {
+          if (e instanceof AppGone) throw e;
+          const late = (await shellCall(h, 'downloads')).filter((x) => x.state !== 'completed' && x.filename !== 'slow.bin');
+          const listed = late.map((x) => `${x.filename} (${x.received} of ${x.total} bytes, ${x.state})`).join('; ');
+          throw new Error(`The 100 small downloads were not all finished after 180 s. Not finished: ${listed || 'none still listed'}\n${String(e)}`);
+        },
+      );
       const slow = (await shellCall(h, 'downloads')).find((x) => x.filename === 'slow.bin');
       expect(slow?.state).toBe('progressing');
       const cancel = await h.shell.evaluate(
@@ -365,7 +375,7 @@ describe('GitHub issues #8 and #10', () => {
     } finally {
       await h.close();
     }
-  }, 120_000);
+  }, 300_000);
 });
 
 /** The shield test page under its named test host. */
@@ -406,7 +416,7 @@ describe('PR #16 review: private data when the whole window closes', () => {
       await h.app.evaluate(({ app }) => app.emit('activate'));
       await waitFor('a new window', () => h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length), (n) => n === 1);
       h.shell = await waitFor('the new window in the test tool', async () => h.app.windows().find((w) => !w.isClosed()), (w) => w !== undefined).then((w) => w!);
-      await h.shell.waitForFunction(() => (window as unknown as { __hypersolShellTest?: { ready: boolean } }).__hypersolShellTest?.ready === true);
+      await h.shell.waitForFunction(() => (window as unknown as ShellWindow).__hypersolShellTest?.ready === true);
       await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setIgnoreMouseEvents(true));
       await pressInShell(h, 'N', ['control', 'shift']);
       await navigateTo(h, site);

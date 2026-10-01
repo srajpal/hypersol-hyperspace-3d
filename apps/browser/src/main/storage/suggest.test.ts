@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Store } from './database';
-import { frecency, siteKey } from './history';
+import { siteKey } from '../../shared/site';
+import { frecency } from './history';
 
 const DAY = 86_400_000;
 const now = 1000 * DAY;
@@ -58,9 +59,20 @@ describe('address bar suggestions (milestone 11)', () => {
     expect(store.recentHistory(10).map((h) => h.url)).toEqual(['https://ab.example/']);
   });
 
-  it('reads addresses the way people type them', () => {
-    expect(siteKey('HTTPS://WWW.Example.com/Path')).toBe('example.com/path');
-    expect(siteKey('http://example.com')).toBe('example.com');
+  it('keeps each address under the key the address bar looks it up by (shared/site.ts)', () => {
+    // The database writes the key in SQL as a visit is recorded; typed
+    // text is turned into one by siteKey. Each address is found by its own key.
+    const store = new Store(':memory:');
+    const visited = ['https://www.example.com/Docs/Start?q=A', 'http://www.plain.example/', 'https://shop.example:8443/cart', 'http://127.0.0.1:8123/page.html'];
+    for (const url of visited) store.recordVisit(url, 'A page', now);
+    for (const url of visited) {
+      const found = store.history.suggest(siteKey(url), 6, now);
+      expect(found.items.map((i) => i.url), url).toEqual([url]);
+      expect(found.inline, url).toEqual({ key: siteKey(url), url });
+    }
+  });
+
+  it('counts a site by its visits and how recent the last one was', () => {
     expect(frecency(4, now, now)).toBe(4);
     expect(frecency(4, now - 100 * DAY, now)).toBeCloseTo(0.4);
   });

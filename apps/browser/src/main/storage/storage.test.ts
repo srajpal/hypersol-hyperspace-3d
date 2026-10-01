@@ -186,28 +186,45 @@ describe('StorageService', () => {
     clearCookiesAndSiteData: async () => void cleared.push('cookies'),
     clearCache: async () => void cleared.push('cache'),
   };
+  /**
+   * The services a check has open. They are closed when the check ends,
+   * however it ends: closed in the check's own last line, a failed
+   * assertion left the service's history worker running and its files
+   * open under the folder about to be deleted.
+   */
+  const running = new Set<StorageService>();
+  const open = (): StorageService => {
+    const s = new StorageService(folder, cleaner);
+    running.add(s);
+    return s;
+  };
   beforeEach(() => {
     folder = mkdtempSync(join(tmpdir(), 'hypersol-storage-'));
     cleared.length = 0;
   });
-  afterEach(() => rmSync(folder, { recursive: true, force: true }));
+  afterEach(() => {
+    for (const s of running) s.close();
+    running.clear();
+    rmSync(folder, { recursive: true, force: true });
+  });
 
   it('keeps bookmarks, history, and settings across a restart', async () => {
-    const a = new StorageService(folder, cleaner);
+    const a = open();
     await a.handle({ op: 'bookmarks.add', url: 'https://a.example/', title: 'A', favicon: null });
-    a.recordVisit('https://a.example/', 'A');
+    await a.recordVisit('https://a.example/', 'A');
     await a.handle({ op: 'settings.set', patch: { searchEngine: 'bing' } });
+    // The restart: the first is closed here, as part of the check.
+    running.delete(a);
     a.close();
-    const b = new StorageService(folder, cleaner);
+    const b = open();
     expect(await b.handle({ op: 'bookmarks.list' })).toMatchObject({ ok: true, value: [{ url: 'https://a.example/' }] });
     expect(await b.handle({ op: 'history.recent', limit: 5 })).toMatchObject({ ok: true, value: [{ title: 'A' }] });
     expect(await b.handle({ op: 'settings.get' })).toEqual({ ok: true, value: { ...DEFAULT_SETTINGS, searchEngine: 'bing' } });
     expect(JSON.parse(readFileSync(join(folder, 'settings.json'), 'utf8'))).toEqual({ ...DEFAULT_SETTINGS, searchEngine: 'bing' });
-    b.close();
   });
 
   it('returns saved tabs at startup only when asked to', async () => {
-    const s = new StorageService(folder, cleaner);
+    const s = open();
     await s.handle({ op: 'session.save', tabs: ['https://a.example/', 'https://b.example/'], focused: 1 });
     expect(await s.handle({ op: 'startup' })).toEqual({ ok: true, value: null });
     await s.handle({ op: 'settings.set', patch: { onStartup: 'last-tabs' } });
@@ -215,21 +232,19 @@ describe('StorageService', () => {
       ok: true,
       value: { tabs: ['https://a.example/', 'https://b.example/'], focused: 1 },
     });
-    s.close();
   });
 
   it('sets a damaged settings file aside and uses the defaults', async () => {
     writeFileSync(join(folder, 'settings.json'), '{not json');
-    const s = new StorageService(folder, cleaner);
+    const s = open();
     expect(await s.handle({ op: 'settings.get' })).toEqual({ ok: true, value: DEFAULT_SETTINGS });
     expect(s.settingsFile.setAsideAs).not.toBeNull();
     expect(readdirSync(folder).some((f) => f.startsWith('settings.json.damaged-'))).toBe(true);
-    s.close();
   });
 
   it('keeps working when the database cannot be opened', async () => {
     mkdirSync(join(folder, 'hypersol.sqlite')); // a folder where the file should be
-    const s = new StorageService(folder, cleaner);
+    const s = open();
     expect(s.available).toBe(false);
     expect(await s.handle({ op: 'status' })).toEqual({
       ok: true,
@@ -238,11 +253,10 @@ describe('StorageService', () => {
     expect(await s.handle({ op: 'bookmarks.list' })).toEqual({ ok: false, error: "Couldn't open your saved data" });
     expect(await s.recordVisit('https://a.example/', 'A')).toBeNull();
     expect(await s.handle({ op: 'settings.get' })).toMatchObject({ ok: true });
-    s.close();
   });
 
   it('clears what was chosen, and tells listeners', async () => {
-    const s = new StorageService(folder, cleaner);
+    const s = open();
     const changes: string[] = [];
     s.onChange((w) => changes.push(w));
     await s.recordVisit('https://a.example/', 'A');
@@ -250,43 +264,65 @@ describe('StorageService', () => {
     expect(await s.handle({ op: 'history.recent', limit: 5 })).toEqual({ ok: true, value: [] });
     expect(cleared).toEqual(['cookies']);
     expect(changes).toEqual(['history', 'history']);
-    s.close();
+  });
+
+  it('a change from the main process is saved, and listeners hear of it unless it is one nothing shows (the window)', async () => {
+    const s = open();
+    const changes: string[] = [];
+    s.onChange((w) => changes.push(w));
+    s.updateSettings({ sitePermissions: { 'https://site.example': { camera: 'allow' } } });
+    expect(changes).toEqual(['settings']);
+    const left = { x: 40, y: 30, width: 1100, height: 720, maximized: false };
+    s.updateSettings({ windowBounds: left }, false);
+    expect(changes).toEqual(['settings']);
+    // Saved all the same, beside what was there, and there at the next start.
+    expect(s.settingsFile.settings).toMatchObject({ windowBounds: left, sitePermissions: { 'https://site.example': { camera: 'allow' } } });
+    expect(open().settingsFile.settings.windowBounds).toEqual(left);
+    expect(() => s.updateSettings({ windowBounds: { ...left, width: 1 } }, false)).toThrow(/windowBounds/);
   });
 
   it('refuses bad requests without throwing', async () => {
-    const s = new StorageService(folder, cleaner);
+    const s = open();
     expect(await s.handle({ op: 'nope' })).toEqual({ ok: false, error: 'Unknown request: nope' });
     expect(await s.handle({ op: 'settings.set', patch: { searchEngine: 'x' } })).toMatchObject({ ok: false });
-    s.close();
   });
 });
 
 describe('settings failures (GitHub issue #2)', () => {
   let folder: string;
   const cleaner = { clearCookiesAndSiteData: async () => undefined, clearCache: async () => undefined };
+  // As above: a service a check opens is closed when the check ends, however it ends.
+  const running = new Set<StorageService>();
+  const open = (): StorageService => {
+    const s = new StorageService(folder, cleaner);
+    running.add(s);
+    return s;
+  };
   beforeEach(() => {
     folder = mkdtempSync(join(tmpdir(), 'hypersol-settings-'));
   });
-  afterEach(() => rmSync(folder, { recursive: true, force: true }));
+  afterEach(() => {
+    for (const s of running) s.close();
+    running.clear();
+    rmSync(folder, { recursive: true, force: true });
+  });
 
   it('starts with defaults and an explanation when settings.json cannot be read', async () => {
     mkdirSync(join(folder, 'settings.json')); // a folder where the file should be
-    const s = new StorageService(folder, cleaner);
+    const s = open();
     expect(await s.handle({ op: 'settings.get' })).toEqual({ ok: true, value: DEFAULT_SETTINGS });
     const status = await s.handle({ op: 'status' });
     expect(status).toMatchObject({ ok: true, value: { available: true } });
     expect((status as { value: { settingsProblem: string } }).value.settingsProblem).toMatch(/couldn't be read \(EISDIR\)/);
-    s.close();
   });
 
   it('a failed save changes nothing and says so', async () => {
     mkdirSync(join(folder, 'settings.json'));
-    const s = new StorageService(folder, cleaner);
+    const s = open();
     const reply = await s.handle({ op: 'settings.set', patch: { searchEngine: 'bing' } });
     expect(reply).toMatchObject({ ok: false });
     expect((reply as { error: string }).error).toMatch(/Couldn't save your settings .*Nothing was changed/);
     expect(await s.handle({ op: 'settings.get' })).toEqual({ ok: true, value: DEFAULT_SETTINGS });
-    s.close();
   });
 
   it('a save under a missing folder leaves the settings in use unchanged', () => {

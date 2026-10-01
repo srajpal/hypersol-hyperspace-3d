@@ -34,13 +34,13 @@ Plan approved 2026-09-24.
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Done (accepted, prompt 122) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Done (accepted, prompt 125; HoloML v0.2.0 released, prompt 126) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Current (the plan and build approved with the recommended answers, prompt 128) |
-| 23 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
-| 24 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27) | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
+| 23 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
+| 24 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
 | 25 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
 | 26 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
-| 27 | Polish | Custom font, sound design, theme editor, motion tuning | Later (was 29, prompt 129) |
-| 28 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55) | Last (was 25; moved to the end, prompt 129: not ready for builds) |
-| 29 | macOS release | Signing, notarization, Mac checks | Last (was 26, prompt 129) |
+| 27 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (was 29, prompt 129) |
+| 28 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55). (review, 2026-09-30) Licence texts and credits inside the app (the GPL's text for the filter lists, the examples' credits); how security updates reach users (how often Electron is raised, and how people get it); and a check that test mode and the test hooks are absent from a packaged app | Last (was 25; moved to the end, prompt 129: not ready for builds) |
+| 29 | macOS release | Signing, notarization, Mac checks. (review, 2026-09-30) The same three as milestone 28, on macOS | Last (was 26, prompt 129) |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS and Android | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
@@ -84,6 +84,33 @@ standards became milestone 22, after the example sites and HoloML 0.2's
 tag: privacy and data tools moved from 22 to 23, the Windows and Linux
 release from 23 to 24, macOS from 24 to 25, and the later milestones
 from 25, 26, and 27 to 26, 27, and 28.
+
+On 2026-09-30 (prompts 134 and 135) a review of both repositories
+added items to milestones 23, 24, 27, 28, and 29, marked "(review,
+2026-09-30)" in the table; nothing is renumbered. "The review of
+2026-09-30", further down, has the whole account.
+
+- Milestone 23 (HoloML 0.3), the language engineer's list for its plan:
+  the look written down, so that a second renderer can match a picture
+  (how bright a light of a given intensity is, tone mapping, the
+  default surroundings, the field of view); a panorama's projection and
+  which way its middle faces; limits on what files become and on time,
+  as the specification's own requirements (today they are HyperSpace
+  3D's, in the specification's notes); a floor plan that scripts can
+  find; `holoml.add` for animations, click actions, and a panel or a
+  link at the top level; taking a sound's place away again; what a
+  reader reports for a further copy of an element a page may have only
+  once; whether text on both sides of a comment is one text; and the
+  generated RELAX NG grammar checked by a validator in the tests.
+- Milestone 24 (privacy and data tools): nothing new. (A gap found while
+  writing docs/privacy.md, three-letter pieces of a deleted visit left
+  in the history search index, was closed the same day: schema 5 sets
+  the index's own secure-delete; scrub.test.ts checks it.)
+- Proposed, not placed in a milestone (for the owner to place): a run
+  of the frame-rate and load-time budgets on a machine with a graphics
+  card in the automatic builds. Today GitHub's machines draw in
+  software, so the budgets are only logged there, and no build anywhere
+  but the owner's computer can notice the browser getting slower.
 
 ### Where design work belongs
 
@@ -2317,7 +2344,7 @@ questions.
 |---|---|---|
 | R1 | Oversized files | A model file over 32 MB, and a page whose models add up to more than 128 MB, are left out with a mark and a notice; the rest shows |
 | R2 | Big pictures, many triangles | A 8192 by 8192 picture, and models over 2 million triangles in all, are left out the same way |
-| R3 | Many elements | A page of 20,000 elements shows the first part and says the rest was left out; the browser stays responsive (a shell action answers within 200 ms, with a graphics card; drawn in software, measured and logged, prompt 96) |
+| R3 | Many elements | A page of 20,000 elements shows the first part and says the rest was left out; the browser stays responsive (a shell action answers within 200 ms, with a graphics card; drawn in software, measured and logged, prompt 96). Since the review of 2026-09-30, drawn in software the check reports "skipped", not "passed" |
 | R4 | Slow and stopped | A model that never finishes is given up after 30 s; Esc and the stop button stop pending loads at once |
 | R5 | Repeated visits | Ten visits back and forth between two heavy pages leave the page process's memory where it was after the first |
 | R6 | Keyboard | Tab reaches every link and named thing in page order with a visible outline; Enter follows links; focus holds when objects appear or go |
@@ -2471,11 +2498,11 @@ repository and becomes the browser's showcase.
 | # | Check | Expected result |
 |---|---|---|
 | S1 | Valid pages | Every showroom page passes HoloML's checker with no problems (holoml unit tests) |
-| S2 | Loads whole and fast | The hall is ready within 5 s from 127.0.0.1 with a graphics card (drawn in software, measured and logged instead, prompt 95); no model is left out or fails; the Scene part's totals are under the budget |
+| S2 | Loads whole and fast | The hall is ready within 5 s from 127.0.0.1 with a graphics card (drawn in software, measured and logged instead, prompt 95); no model is left out or fails; the Scene part's totals are under the budget. Since the review of 2026-09-30, drawn in software the check reports "skipped", not "passed" |
 | S3 | Walk around | Each car page starts in walk mode; walking moves around the car at eye height |
 | S4 | Links and colours | Every link reaches its page and Back returns; each colour page shows its paint (the material's colour read back) |
 | S5 | For everyone | Tab reaches every car by name; the text view lists the cars and links; with reduced motion the turntable stands still |
-| S6 | Efficient | An idle car page draws no frames; the hall draws only while the turntable turns |
+| S6 | Efficient | An idle car page draws no frames; the hall draws only while the turntable turns. Since the review of 2026-09-30, drawn in software the check reports "skipped", not "passed" |
 | S7 | Credits | The models' licence and credits are in the repository and shown on the about page |
 | S8 | Published (Q1 a) | The site opens from its public address, and the start panel link opens it (checked by hand: the tests stay on 127.0.0.1) |
 | S9 | Regression | C to R pass, the unit tests, and HoloML's tests |
@@ -2658,10 +2685,10 @@ Named T (milestone 16 used S).
 | # | Check | Expected result |
 |---|---|---|
 | T1 | The language | holoml's tests: every new element, attribute, and problem has a conformance sample; all 0.1 samples and examples still pass; a 0.2 page read as 0.1 is refused |
-| T2 | Scripts | A page's script from its own site runs and changes the scene through the API; an inline script, or one from another site, does not run, and the console says why; a script error is shown in the console and the scene stays; a script that never stops leaves the browser's controls answering within 200 ms (with a graphics card; drawn in software, measured and logged, prompt 96), and closing the tab works |
+| T2 | Scripts | A page's script from its own site runs and changes the scene through the API; an inline script, or one from another site, does not run, and the console says why; a script error is shown in the console and the scene stays; a script that never stops leaves the browser's controls answering within 200 ms (with a graphics card; drawn in software, measured and logged, prompt 96), and closing the tab works. Since the review of 2026-09-30, drawn in software the check reports "skipped", not "passed" |
 | T3 | Sound | Nothing plays before the first click or key; after it, a sound plays (checked through the page's audio state); the tab's mute silences it; a sound file over the limits is left out like a model |
 | T4 | Walls and gravity | The walker falls to the ground, stands on blocks, jumps with Space, and cannot pass through solid blocks or walk through the chest |
-| T5 | Many blocks | Blockworld's island (several thousand blocks) loads within 5 s from 127.0.0.1 and draws at 30 frames a second or more, both with a graphics card (drawn in software, as on GitHub's machines, both are measured and logged instead: the frame rate as C9, prompt 59; the load time since prompt 95) |
+| T5 | Many blocks | Blockworld's island (several thousand blocks) loads within 5 s from 127.0.0.1 and draws at 30 frames a second or more, both with a graphics card (drawn in software, as on GitHub's machines, both are measured and logged instead: the frame rate as C9, prompt 59; the load time since prompt 95). Since the review of 2026-09-30, drawn in software the check reports "skipped", not "passed" |
 | T6 | Playing | Breaking and placing by mouse and by keyboard; keys 1 to 5 change the block shown on screen; picking up a gem counts it; five gems in the chest show "You won"; night comes and a torch lights its surroundings |
 | T7 | For everyone | Blockworld can be played from the keyboard alone; the screen text is in the text view and the accessibility tree; with reduced motion the day stands still at noon |
 | T8 | The examples section | Opens from the start panel, the menu, and Ctrl+Shift+E; shows the showroom and Blockworld with their screenshots; Open goes to the example's address (a local copy in the test); usable from the keyboard; opening the panel fetches nothing (no unexpected traffic) |
@@ -2972,11 +2999,11 @@ place), textured materials, and light from the surroundings.
 | # | Check | Expected result |
 |---|---|---|
 | U8 | The language | holoml's tests: shadows, texture maps, repeat, choice and option, and environment have valid and problem samples; a 0.1 page may not use them |
-| U9 | Shadows | With a graphics card, a lit model with shadows darkens the floor under it (the page's pixels, with and without); drawn in software, per Q5 |
+| U9 | Shadows | With a graphics card, a lit model with shadows darkens the floor under it (the page's pixels, with and without); drawn in software, per Q5. Since the review of 2026-09-30, drawn in software the check reports "skipped", not "passed" |
 | U10 | Textures | A material's pictures load within the page's limits, show on the model (the page's pixels take the picture's colours), and tile as `repeat` says |
 | U11 | Choices | In their corner with their labels; mouse, keyboard, and screen readers pick an option; the material changes in place (read back) without loading a page; the script hears `change`; the text view shows the choices |
 | U12 | Environment | The page's panorama lights the scene (a shiny test sphere reflects its colours) and counts against the limits |
-| U13 | The sofa studio | Ready within 5 s from 127.0.0.1 with a graphics card (logged in software); every model and picture loaded, no problems; each fabric and leg choice changes the sofa; the price follows; "Add to cart" opens the cart page with the choices |
+| U13 | The sofa studio | Ready within 5 s from 127.0.0.1 with a graphics card (logged in software); every model and picture loaded, no problems; each fabric and leg choice changes the sofa; the price follows; "Add to cart" opens the cart page with the choices. Since the review of 2026-09-30, drawn in software the check reports "skipped", not "passed" |
 | U14 | For everyone | The whole page from the keyboard (choices, the evening switch, the cart link); screen readers name the choices; the text view; with reduced motion nothing moves by itself |
 | U15 | Efficient | An idle sofa studio draws no frames |
 | U16 | Published | The sofa studio opens from its public address in the built app (by hand, as S8 and T9) |
@@ -3200,7 +3227,7 @@ sofa studio did not have: text of more than one line (holoml issue
 | V5 | Arriving | A link to another HoloML page of the same site fades out and in (the page's brightness over time); a cut with reduced motion; other links as before |
 | V6 | The sky | The panorama shows behind the scene (the page's pixels take its colours), from the page's own site, counted against its limits |
 | V7 | The floor plan | In its corner; its marker follows the viewer as they walk and turn |
-| V8 | Harbour Loft | Ready within 5 s from 127.0.0.1 with a graphics card (logged in software); every model loaded, no problems; walls stop the walker; every door and lamp works; the terrace page and back; the booking page |
+| V8 | Harbour Loft | Ready within 5 s from 127.0.0.1 with a graphics card (logged in software); every model loaded, no problems; walls stop the walker; every door and lamp works; the terrace page and back; the booking page. Since the review of 2026-09-30, drawn in software the check reports "skipped", not "passed" |
 | V9 | For everyone | The whole tour from the keyboard; screen readers name the rooms, doors, and switches; the text view; reduced motion |
 | V10 | Efficient | An idle flat draws no frames |
 | V11 | Published | From its public address in the built app (by hand, as S8, T9, and U16) |
@@ -3459,7 +3486,7 @@ it (prompt 102): many shoes, each loaded when the viewer comes near.
 | W3 | Stand-ins | A model's stand-in shows until the model has loaded, and again once it is let go; the stand-in counts against the limits |
 | W4 | Scripts | A group's `loaded`, and the `load` event as its models come in and are let go |
 | W5 | Limits | Only loaded groups count: a page whose areas together pass the limits loads each area in turn |
-| W6 | The store | Ready within 5 s from 127.0.0.1 with a graphics card (logged in software); no problems; the near shelves loaded and the far ones as stand-ins; walking along the wall loads each shelf; walls stop the walker |
+| W6 | The store | Ready within 5 s from 127.0.0.1 with a graphics card (logged in software); no problems; the near shelves loaded and the far ones as stand-ins; walking along the wall loads each shelf; walls stop the walker. Since the review of 2026-09-30, drawn in software the check reports "skipped", not "passed" |
 | W7 | A shoe | A click on a shoe opens its page with a fade; every colourway changes the shoe in place; "Turn it over" shows the sole; a size is chosen |
 | W8 | The cart | "Add to cart" on two shoes; the cart on the screen counts them; the checkout page lists both with their sizes and the total, and its button places nothing |
 | W9 | For everyone | The whole store from the keyboard; screen readers; the text view; reduced motion |
@@ -3776,14 +3803,14 @@ milestone ends (milestone 17's plan, Q5 a).
 | # | Check | Expected result |
 |---|---|---|
 | X1 | The language | holoml's tests: water, sounds from a place, and animation speed have valid and problem samples; a 0.1 page may not use them; the spec lists nothing still to come in 0.2 |
-| X2 | Water | Through the water a far model takes more of the water's colour than a near one, and a model outside the water keeps its own (the page's pixels); the light moves over a floor in the water, and holds still with reduced motion; drawing in software it may be left out, and the console says so |
+| X2 | Water | Through the water a far model takes more of the water's colour than a near one, and a model outside the water keeps its own (the page's pixels); the light moves over a floor in the water, and holds still with reduced motion; drawing in software it may be left out, and the console says so. Since the review of 2026-09-30, drawn in software the check reports "skipped", not "passed" |
 | X3 | Sounds from a place | A sound with a position is quieter as the viewer walks away from it, and silent beyond its range; it comes from its side (the sound's report) |
 | X4 | Animation speed | A script's animation speed makes a model's animation run that much faster, and 0 holds it still |
-| X5 | The aquarium | Ready and drawn within 5 s from 127.0.0.1 with a graphics card (logged in software); every model loaded, no problems; the fish swim (their places change) and stay in the water, clear of the tunnel and the rocks; the tunnel's walls stop the walker |
+| X5 | The aquarium | Ready and drawn within 5 s from 127.0.0.1 with a graphics card (logged in software); every model loaded, no problems; the fish swim (their places change) and stay in the water, clear of the tunnel and the rocks; the tunnel's walls stop the walker. Since the review of 2026-09-30, drawn in software the check reports "skipped", not "passed" |
 | X6 | Feeding | Feed (a click, and Enter on its button) drops the food; fish come to it and eat every flake within a minute; the sound plays |
-| X7 | The fish | A click on a fish, and its button in the outline, shows its name and its lines on the panel |
+| X7 | The fish | A click on a fish, and its button in the outline, shows its name and its lines on the panel. Since 2026-09-30 the check names the hawksbill sea turtle, which took the flatback's place (the review, E1) |
 | X8 | For everyone | The whole visit from the keyboard; screen readers name the fish and the Feed button; the text view; reduced motion (everything holds still, and Feed says the fish have eaten) |
-| X9 | Efficient | At least 30 frames a second while the fish swim, with a graphics card (logged in software, as T5); no frames in a hidden tab, and none while idle with reduced motion; the page's memory does not grow over two minutes of bubbles and feeding |
+| X9 | Efficient | At least 30 frames a second while the fish swim, with a graphics card (logged in software, as T5); no frames in a hidden tab, and none while idle with reduced motion; the page's memory does not grow over two minutes of bubbles and feeding. Since the review of 2026-09-30, drawn in software the check reports "skipped", not "passed" |
 | X10 | Published | From its public address in the built app (by hand, as W11) |
 | X11 | The automatic builds | Each job finishes within its limit (Q7) |
 | X12 | Regression | The full run on Windows, `pnpm test:linux`, the unit tests, holoml's tests, and the automatic builds |
@@ -4373,6 +4400,342 @@ finished documents.
 - Y1 to Y10 pass, the documentation is published, and the owner
   accepts; then holoml is tagged v0.2.1 on the owner's go (Q6).
 
+## The review of 2026-09-30 (prompts 134 and 135)
+
+The owner asked for a thorough, senior-level review of both
+repositories and of the automatic builds (prompt 134), and then for its
+recommendations to be taken and every finding fixed (prompt 135).
+
+### What was reviewed, and how
+
+- Ten reviewers in parallel, each reading every file of one area: the
+  main process and preloads, the shell, the HoloML viewer, holoml's
+  packages, holoml's examples and site and tools, the tests, the
+  repositories' own written rules (Standards), the browser against its
+  documents and the viewer against HoloML's specification (Spec), and
+  the repositories' health. The lead read the code behind the findings
+  ranked highest and ran what could be run (the unit tests, lint, and
+  types in both repositories, `pnpm audit`, a probe of the built app, a
+  timing probe of the checker, the turtle's own licence stamp, the logs
+  of eight automatic builds, and two trial runs of milestone 21's file
+  in the Linux container).
+- Findings are ranked P1 (before anything is released), P2 (soon), P3
+  (when the file is next touched), and marked as run, read, or likely.
+  The findings' names used below (M for the main process, R for the
+  shell, V for the viewer, L for the language, E for the examples, T
+  for the tests, D and Sp for documents against code, St and Sm for
+  standards and design, H for the repositories) are the review's.
+- The review's file, REVIEW-2026-09-30.md, is kept out of the
+  repository: it named weaknesses before they were fixed, and the
+  repository is public. Where it is kept is the owner's decision.
+- Not run by the review: the full end-to-end run, anything on macOS,
+  the published site, a screen reader. Not reviewed: the geometry code
+  in the examples' tools, and packaging (there is none yet).
+
+### What was fixed, by area
+
+Each line names the check that covers it. "Unit" is a `*.test.ts`
+beside the code; the end-to-end files are tests/e2e/review-134-main,
+-shell, -viewer, -harness, and -features (AGENTS.md, Testing).
+
+The main process and preloads:
+
+- M1. Every permission but the camera, microphone, and location is
+  refused to a page that asks and to a page that only looks; copying
+  text after a real click needs none; full screen and pointer lock stay
+  refused until the browser has its own notice (milestone 27; the first
+  wave had granted both, and the second refuses them again, to a page
+  that asks and to one that looks). review-134-main "M1" (its full
+  screen check waits for the refusal itself); unit main/permissions.
+- M2. A site that asks for a client certificate gets none. Unit
+  main/security (no end-to-end check: it would need a certificate in
+  the system's store).
+- M3. The shield is asked about WebSockets, requests that no tab made,
+  and a tab's favicon. review-134-main "M3" (a WebSocket to a listed
+  host; a service worker's request to a listed host blocked, and
+  counted for the tab it serves; a listed favicon not fetched and
+  counted, an own-site one fetched); unit main/privacy. The check found
+  that a service worker's blocked request was counted for no tab, as
+  it reaches the browser with no tab and only a referrer; it is now
+  counted for every tab on the referrer's site (2026-09-30).
+- M4. "Leave this page?" for a page that asks to be kept.
+  review-134-main "M4"; unit main/leave-page.
+- M5 and H4. A list update downloads the lists' text only; the page
+  scripts come with the app and are checked by SHA-256; the GPL's text
+  is beside the starter copy. Unit main/privacy; F9 (milestone 4).
+  `pnpm filters:update` was run after its change (2026-09-30): the 13
+  lists downloaded, the starter copy built to the same bytes as on
+  2026-09-26 (the lists had not changed), the scripts' checksum
+  recorded.
+- M6. A HoloML file opened from a shared folder reads the files beside
+  it only; a local page leaves for the web only after a real click or
+  key press, without query and fragment; no peer connections.
+  review-134-main "M6"; unit main/holoml, main/security.
+- M7. Block reloads the pages that were given the camera or microphone,
+  and that reload is not held up by "Leave this page?". review-134-main
+  "M7"; unit main/permissions.
+- M8. A link that leads to a download leaves the shield's site and
+  count as they are. review-134-main "M8"; unit main/privacy.
+- M9 and M10. A start that fails ends with a message; a crashed shell
+  is reloaded once; page dialogs can be stopped; a HoloML file at the
+  top of a drive opens; a tab that closes while its history is put
+  back. review-134-main "M9" and "M10"; unit main/start-up, main/holoml,
+  main/tab-history.
+- M10, HTTP sign-in. A site or a proxy that asks for a user name and
+  password gets a prompt in the tab's shell; what is typed goes to
+  Chromium only, and is never saved or offered to the password manager;
+  the prompt names the asker from the request's address and quotes the
+  realm; one prompt a tab, a second waits its turn; leaving the page,
+  closing the tab, or a crash cancels; only a page in a tab can ask, and
+  a part of a page from another site cannot. review-134-features (four
+  checks: the dialog and a right answer, Cancel and Escape and a wrong
+  password, the prompt belonging to its tab, waiting one's turn, a long
+  realm, a picture from another site); unit shared/sign-in,
+  main/sign-in.
+- D7. The window's size, place, and maximised state are remembered in
+  settings.json and used again while the place is still on a display;
+  else 1280 by 800, centred. Test windows stay 1280 by 800 unless
+  `--test-remember-window`. review-134-features (two checks: a restart
+  opens the window as left; a damaged saved size is set aside); unit
+  main/window-bounds, shared/settings.
+- St4. Ctrl+Shift+V (the text view of a HoloML page) is in the
+  shortcuts table (`only: 'holoml'`), changeable in Settings >
+  Shortcuts, and acts only with a HoloML page in front; M7 (milestone
+  11) counts 25 shortcuts now. review-134-features (one check); unit
+  shared/shortcuts.
+- R6 (the main process's part). `site.set` names its origin, and is
+  refused once the tab has left it. Unit shared/permissions,
+  main/permissions.
+- Sm7. One `siteKey` and one `hostOf` (shared/site.ts), read the same
+  way by the main process and the shell. Unit shared/site.
+- D13, E2, and issue #11's check measure inside the app: the layers
+  preload says when its scan has settled (test runs only), the favicon
+  fetch says how it ended, and the Library records when each search
+  starts (m5, m2, m3).
+- M11, in part. A dropped file's message is held to what the main
+  process can know (unit main/security; review-134-main "M11"). See
+  "not done", 6.
+- V1. An answer sent as a download, or sandboxed, is not a HoloML page;
+  a HoloML page keeps the site's own policy. review-134-main "V1"; unit
+  main/holoml.
+- D6. Deleted history and sign-ins are overwritten in the file. Unit
+  main/storage/scrub.
+- D11. Test mode only in a build that is not packaged, and a page's
+  preload learns of a test run only from the argument the main process
+  gives its process in test mode (shared/test-run.ts), never from the
+  environment. Unit main/launch-options, main/security;
+  review-134-viewer "D12" (the hooks there only because it is a test
+  run).
+- Sm4. "Only the shell may ask" in one helper, tab snapshots through
+  it too; only the two one-way messages (close-ready, capture-keys)
+  check their sender themselves. Unit main/ipc.
+- "Open" on a downloaded program shows it in its folder. Unit
+  main/downloads.
+
+The shell:
+
+- R1 to R7, each a group in review-134-shell: switching panels, error
+  cards that go, the prompt and the notice that take no click for half
+  a second, a filled HoloML page drawn flat, the address bar, the eight
+  smaller faults, the room's drawing and its cards' click targets
+  while the context is lost, and access. Unit renderer/url
+  (how an address is shown, the site button's marker).
+- St3. The sun's colours are theme tokens, and what the page preload
+  draws takes the theme's colours. Unit H8 (now over the room's code
+  too), packages/themes tokens, preload/theme-colours.
+- Sm5. The list of setting names comes from the defaults. Unit
+  shared/settings.
+- Dead code and stale comments removed (the review's section 3).
+
+The HoloML viewer:
+
+- V2. A version the viewer does not know, or none, is refused.
+  review-134-viewer "V2"; unit viewer/versions.
+- V3 and V4. What a load holds is given back whole; triangles counted
+  once decoded. review-134-viewer "V3", "V4"; unit viewer/budget.
+- V5. Bounded work for any page (a model file's node graph, walls and
+  walking, a panel's long word, numbers). Unit viewer/budget, physics,
+  panels, values.
+- V6. Limits on decoded pictures, decoded sound, and lights.
+  review-134-viewer "V6"; unit viewer/budget, sound.
+- V7 to V10 and D12, each named in review-134-viewer: a still walker
+  with gravity, the text view's keys, a removed sound, the private line
+  between the browser and the viewer, a script beside a problem, a
+  graphics reset, hidden things, and the test hooks only in a test run.
+  D12 is finished in the second wave: the Scene inspector's choosing
+  and picking go to the page as `select:<index>`, `pick-on`, and
+  `pick-off` on the HoloML command channel (main/inspect/index.ts), and
+  `window.__holoml` in a normal run holds only `scene`. Unit
+  viewer/main.
+- Drawing in software at half resolution, without smoothed edges
+  (prompt 135, the review's recommendation A). review-134-viewer's
+  drawing check.
+- Sp1 to Sp9, the viewer and the specification's third edition (the
+  second wave, from holoml's decisions): a member a kind lacks set
+  without error, `parent` through a link, frozen vectors, a sound's
+  place not null; the frame event's dt; `holoml.add` leaving out an
+  animate and a click sound with a console line; every paragraph of a
+  panel inside a link in the text view; only the ambient lights in the
+  scene dimming the surroundings; a model that needs an unsupported
+  glTF extension left out; unlit materials changed by material, option,
+  and script; the syntax-error card's code; a 0.1 page's hud not shown;
+  values by the checker's own patterns (imported from
+  `@hypersol/holoml`) and four-character whitespace. review-134-viewer
+  (nine checks in its second group, "the viewer and the specification's
+  third edition"); unit viewer/api, budget, values.
+
+The tests and the automatic builds:
+
+- The end-to-end checks run in four parts on each system, with an "All
+  checks" job; a change to documents only skips them; the actions are
+  named by commit (section 2 of the review).
+- Repaired without changing what they assert: #10's slow download (it
+  holds until released, and the wait is 180 s), I2 (waits for the
+  bytes, not only the count), E6b (the 2 s wait is timed inside the
+  app), V5 (a dark picture that began before the fade-in counts).
+- The harness: no app left behind by a failed launch; a wait stops when
+  the app has gone; navigateTo no longer waits on Chromium to
+  acknowledge Enter; roomStill and caughtUp; hooks have the time their
+  own waits need. review-134-harness checks the tools themselves.
+- G9 is two checks now: the idle check, which runs everywhere, and the
+  frame-time budget, which reports "skipped" in software. Milestone 5
+  so has ten checks.
+- The second wave: the viewer's checks hold a key for a given amount
+  of the scene's own time (the viewer's `clock` hook, m14, m17, m18,
+  m19), not of the test's clock, which a frame drawn slowly in software
+  runs ahead of; and the budgets that need a graphics card, R3, S2, S6,
+  T2, T5, U9, U13, V8, W6, X2, X5, and X9, are measured and logged when
+  drawn in software, and the check reports "skipped", not "passed"
+  (each is split so that what does not need a graphics card still
+  runs). m21 names the hawksbill turtle. review-134-viewer has 22
+  checks, review-134-features 7.
+- The unit run allows 20 seconds a test.
+
+HoloML (the holoml repository, branch `review-134-fixes`; its own
+CHANGELOG.md, under 0.2.2, has the full list and its tests): the
+checker's slow numbers (L1); an address with a control character is a
+problem (L2); where a syntax error and a problem are reported is
+written into the specification, and its value grammars and the checker
+agree (L3, L5, L8); a 0.1 page is no longer held to 0.2's rules (L6);
+`serialize()` writes a tree that reads back the same (L7); the RELAX NG
+schema's patterns are written from the checker's own (L9); 44 new
+conformance samples, and a test that every code has one (L4). Its
+examples, site, and tools: the aquarium's turtle replaced, and a guard
+that stops the tools when a file's licence stamp and its credit
+disagree (E1); the site's builder refuses to empty a folder it did not
+make (E2); the site is published only after lint, types, and the tests
+pass (E3); the examples' scripts and tools (E4, E5). The specification
+is 0.2's third edition, and the packages are at 0.2.2; nothing is
+tagged since v0.2.0. Its pull request #21
+(https://github.com/srajpal/holoml/pull/21) is open. The browser's copy
+is made from that branch at 9e59907 (packages/holoml/SOURCE.json), and
+is to be made from holoml's main once #21 is merged.
+
+The repositories: Electron 44.5.1 (H2, and the rule 13 record in
+ARCHITECTURE.md section 3); Dependabot, a rule for line ends, editor
+settings, `.nvmrc`, a code of conduct, and issue and pull request
+templates (H3, H8, H9); the rule on main requires "All checks" (H1);
+`.claude/` ignored by git and by lint (H7); lint knows the types (H8:
+a promise nobody awaits or catches, a promise where none is expected,
+and an await on what is not one are errors; `pnpm lint` takes about
+half a minute for it); the copy of HoloML's package file takes its
+version from the copied packages (H5: `pnpm holoml:sync` writes it,
+0.2.2 now, from holoml's `review-134-fixes` at 9e59907), and the
+viewer imports the checker's value patterns from `@hypersol/holoml`.
+
+The documents (St1, D1 to D13): ARCHITECTURE.md, docs/privacy.md,
+README.md, CHANGELOG.md, THIRD-PARTY.md, AGENTS.md's Testing section,
+HANDOFF.md, and this file, each sentence about the browser checked
+against the code.
+
+### Deliberately not done, and why
+
+1. Thinning the screenshots (H6: 715 pictures, 187 MB, growing with
+   each milestone). Keeping only the newest set changes a working
+   agreement in AGENTS.md ("save screenshots of the main screens at the
+   end of each milestone"): it needs the owner's wording first.
+2. holoml's rule about pushing (St7: its AGENTS.md says "Do not push
+   unless asked", this repository's rule 11 says push before and after
+   a milestone). A rule is changed only with the owner's wording.
+3. The README's alt text that reads "HyperSol, LLC" (St6). It
+   describes what the 2001 picture itself says; whether the naming rule
+   covers it is the owner's decision.
+4. The three merged branches still on GitHub (fix/issues-17-to-22,
+   m19-harbour-loft, m21-aquarium) and the old working copy under
+   `.claude/worktrees` with its unpushed commit (H7). Deleting work
+   needs the owner (rule 4).
+5. Requiring actions to be named by commit in each repository's
+   settings (H3). To be switched on only after both pull requests are
+   merged: until then main's workflows name actions by tag, and the
+   setting would stop them.
+6. A dragged-in `.holoml` file (M11): the main process cannot confirm
+   that a real drop happened, as the message comes from the page's
+   preload. It checks everything it can know. Routing the drop through
+   the shell would close it, and is not built.
+7. Checks still measured by the test's own clock, or that sleep and
+   then look (the test engineer's list): the fade's darkest moment
+   (fadeMax, milestones 19 and 20); L9's 50 ms budget under load; and
+   sleep-then-look in C5 and C8 (milestone 1), F10 (milestone 4), five
+   places in milestone 8, and one each in milestones 3, 9, and 10 and
+   in issue #18's check. Each needs a signal from the app that does not
+   exist yet. (Issue #11's check, D13, and E2 came off this list in the
+   second wave: the layers preload says when its scan has settled, the
+   favicon fetch how it ended, and the Library when each search starts.)
+8. `@types/node` is for Node 26 while the builds run Node 22 (H8). It
+   changes many files at once and is left for a change of its own. (The
+   lint rules know the types since the third wave: a promise left
+   unawaited is an error; see "The repositories" above.)
+
+Also open, for the owner to place (the roadmap above has them): the
+items added to milestones 23, 24, 27, 28, and 29, and a budget run with
+a graphics card in the automatic builds.
+
+### Results
+
+The final runs, after every branch was merged (2026-09-30):
+
+- Unit tests: 502 passed (58 files).
+- End-to-end checks, this computer (a graphics card): 372 checks in 27
+  files, all passed, 19 min 18 s.
+- End-to-end checks, the Linux container (`pnpm test:linux`, no
+  graphics card): 372 checks, 35 min 54 s: 355 passed, 14 skipped (the
+  budgets that software drawing cannot meet, reported as skipped), 3
+  failed, each only there: L3 (milestone 10, the card's speaker; the
+  click opened a new tab), and two of the review's shell checks (the
+  error card of a failed tab asserted the instant the state changed;
+  losing the graphics context on request). The three were repaired the
+  same day, and one was a fault in the browser: GitHub's Linux machines
+  lose the room's graphics context once soon after the start and
+  restore it a second or two later, and while it was lost the cards'
+  click targets stayed where the last drawn frame had put them, so the
+  click meant for a card's speaker opened a new tab (the "+" card had
+  been there). Hit testing now brings the layout up to date itself; a
+  new check holds it, and fails without the fix on Windows too. After
+  the repairs: m10 and review-134-shell in the container, 40 of 40;
+  the same on Windows, 40 of 40.
+- The automatic builds in four parts (pull request #39's run after
+  fce1e63, before the fixes): all ten checks passed in 15 min 34 s,
+  where the two-part builds took about 33.
+- The automatic builds with the fixes, on both pull requests: holoml's
+  #21 passed on Windows and Linux. The browser's #45, first run
+  (c9c513c): Linux's four parts passed (8, 14, 9, and 8 minutes);
+  Windows' three failed on what its machines are (a 1024 by 768
+  display, so the window opens smaller than 1280 by 800 and cannot
+  shrink below its 900 by 600; drawing in software, at half resolution
+  since prompt 135): the two D7 checks compared with 1280 by 800, R6
+  shrank the window below its smallest, V8's text view was too short
+  to scroll three times there, V2's text rows were read from pixels
+  at half resolution, and one close of the app took over five minutes
+  and failed m7's file without a word. Repaired the same day: the
+  checks compare with the size a fresh window gets on the machine and
+  keep within its smallest; the text fixture has 240 lines; V2's
+  pixels are their own check, skipped in software as the other pixel
+  checks are; the harness ends an app that does not close within half
+  a minute and says so. Second run: PR_RESULT
+- Lint (with the rules that need the types, about half a minute) and
+  the type check: clean.
+- `pnpm test` in holoml: 505 passed, one file at a time (about 12 s).
+
 ## The roadmap: installers last (2026-09-29, prompt 129)
 
 The owner moved the installers to the end of the roadmap, as the
@@ -4412,6 +4775,10 @@ made with GitHub's API on 2026-09-29:
   milestone's acceptance, a plan for approval) still go through.
 
 To change them: each repository's Settings, Rules, Rulesets.
+
+Changed 2026-09-30 (prompt 135): the browser's second ruleset now
+requires one check, "All checks", in place of the parts by name ("The
+review of 2026-09-30", above).
 
 ## The README: a broken link, and four pictures (2026-09-28, prompt 99)
 

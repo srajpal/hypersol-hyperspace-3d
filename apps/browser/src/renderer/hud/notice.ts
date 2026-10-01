@@ -1,4 +1,5 @@
 import { LitElement, css, html } from 'lit';
+import { ARM_MS } from './arm';
 
 export interface NoticeAction {
   id: string;
@@ -19,22 +20,28 @@ export const NOTICE_MS = 8000;
  * finished or failed (owner feedback on milestone 8: no sign that a
  * download had finished). It goes by itself after a few seconds, stays
  * while the pointer or keyboard is on it, and is announced to screen
- * readers.
+ * readers. Its actions (Open, Show in folder, Downloads) take no click or
+ * key for its first half second (hud/arm.ts); Dismiss always does.
  *
  * Events: hs-notice-action (detail: the action's id).
  */
 export class HsNotice extends LitElement {
   static override properties = {
     notice: { state: true },
+    armed: { state: true },
   };
 
   declare notice: Notice | null;
+  /** The notice showing has been up long enough for its actions to take a click. */
+  declare armed: boolean;
   private timer: number | undefined;
+  private armTimer: number | undefined;
   private held = false;
 
   constructor() {
     super();
     this.notice = null;
+    this.armed = false;
   }
 
   static override styles = css`
@@ -97,10 +104,15 @@ export class HsNotice extends LitElement {
   show(notice: Notice): void {
     this.notice = notice;
     this.schedule();
+    window.clearTimeout(this.armTimer);
+    this.armed = false;
+    this.armTimer = window.setTimeout(() => (this.armed = true), ARM_MS);
   }
 
   hide(): void {
     window.clearTimeout(this.timer);
+    window.clearTimeout(this.armTimer);
+    this.armed = false;
     this.notice = null;
   }
 
@@ -124,6 +136,7 @@ export class HsNotice extends LitElement {
       aria-live="polite"
       data-testid="notice"
       data-kind=${n.kind}
+      ?data-armed=${this.armed}
       @pointerenter=${() => this.hold(true)}
       @pointerleave=${() => this.hold(false)}
       @focusin=${() => this.hold(true)}
@@ -131,13 +144,14 @@ export class HsNotice extends LitElement {
     >
       <span class="text" data-testid="notice-text">${n.text}</span>
       ${n.actions.map(
-        (a) => html`<button data-testid=${`notice-${a.id}`} @click=${() => this.act(a.id)}>${a.label}</button>`,
+        (a) => html`<button data-testid=${`notice-${a.id}`} ?data-armed=${this.armed} @click=${() => this.act(a.id)}>${a.label}</button>`,
       )}
       <button class="close" aria-label="Dismiss" data-testid="notice-close" @click=${() => this.hide()}>×</button>
     </div>`;
   }
 
   private act(id: string): void {
+    if (!this.armed) return;
     this.hide();
     this.dispatchEvent(new CustomEvent('hs-notice-action', { detail: id, bubbles: true, composed: true }));
   }

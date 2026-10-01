@@ -53,6 +53,19 @@ export class Parallax {
     this.isPaused = paused;
   }
 
+  /**
+   * Puts the camera back at the centre at once, paused or not: for views
+   * that must be flat and still (a page that fills the window, economy
+   * mode, movement switched off), where the pointer is usually over the
+   * page and setPointer would be ignored.
+   */
+  reset(): void {
+    this.current.x = 0;
+    this.current.y = 0;
+    this.target.x = 0;
+    this.target.y = 0;
+  }
+
   /** True when the camera still has somewhere to go. */
   get moving(): boolean {
     return (

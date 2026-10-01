@@ -143,6 +143,9 @@ export class Walker {
 export class SolidGrid implements Solids {
   private readonly cells = new Map<string, Box[]>();
   private readonly cell = 2;
+  /** Solids too large for the grid (a floor a kilometre wide), or beyond it: each is one box, asked about every time. */
+  private readonly large: Box[] = [];
+  private readonly all: Box[] = [];
   size = 0;
 
   constructor(boxes: Iterable<Box>) {
@@ -151,10 +154,18 @@ export class SolidGrid implements Solids {
 
   private add(b: Box): void {
     this.size += 1;
-    const c = this.cell;
-    for (let x = Math.floor(b.min[0] / c); x <= Math.floor(b.max[0] / c); x++) {
-      for (let y = Math.floor(b.min[1] / c); y <= Math.floor(b.max[1] / c); y++) {
-        for (let z = Math.floor(b.min[2] / c); z <= Math.floor(b.max[2] / c); z++) {
+    // A box with no inside (or a number that is not one) is never walked into.
+    if (!b.min.every((v, i) => v <= b.max[i]!)) return;
+    this.all.push(b);
+    const span = cellsOf(b.min, b.max, this.cell);
+    if (!span) {
+      this.large.push(b);
+      return;
+    }
+    const [x0, y0, z0, x1, y1, z1] = span;
+    for (let x = x0; x <= x1; x++) {
+      for (let y = y0; y <= y1; y++) {
+        for (let z = z0; z <= z1; z++) {
           const key = `${x},${y},${z}`;
           const list = this.cells.get(key);
           if (list) list.push(b);
@@ -165,11 +176,18 @@ export class SolidGrid implements Solids {
   }
 
   *near(min: Vec3, max: Vec3): Iterable<Box> {
-    const c = this.cell;
+    const span = cellsOf(min, max, this.cell);
+    if (!span) {
+      // A region too large for the grid, or beyond it: every box is the answer (larger, and only slower).
+      yield* this.all;
+      return;
+    }
+    yield* this.large;
+    const [x0, y0, z0, x1, y1, z1] = span;
     const seen = new Set<Box>();
-    for (let x = Math.floor(min[0] / c); x <= Math.floor(max[0] / c); x++) {
-      for (let y = Math.floor(min[1] / c); y <= Math.floor(max[1] / c); y++) {
-        for (let z = Math.floor(min[2] / c); z <= Math.floor(max[2] / c); z++) {
+    for (let x = x0; x <= x1; x++) {
+      for (let y = y0; y <= y1; y++) {
+        for (let z = z0; z <= z1; z++) {
           for (const b of this.cells.get(`${x},${y},${z}`) ?? []) {
             if (seen.has(b)) continue;
             seen.add(b);
@@ -179,4 +197,27 @@ export class SolidGrid implements Solids {
       }
     }
   }
+}
+
+/** The most cells one solid may fill, or one question may look in (review 134, V5): a wall 60 m long and 8 m high fills 120. */
+const MAX_CELLS = 4096;
+/** Cells are counted this far from the middle; beyond it whole numbers stop being exact, and counting would never end. */
+const MAX_CELL = 2 ** 31;
+
+/**
+ * The grid cells a region touches, as the first and last on each axis;
+ * null when it is too large for the grid, too far out, or not a region
+ * at all (a number that is not finite), so that no loop over cells can
+ * be long or endless, whatever the page's numbers.
+ */
+function cellsOf(min: Vec3, max: Vec3, cell: number): [number, number, number, number, number, number] | null {
+  const lo = min.map((v) => Math.floor(v / cell));
+  const hi = max.map((v) => Math.floor(v / cell));
+  let count = 1;
+  for (let i = 0; i < 3; i++) {
+    const [a, b] = [lo[i]!, hi[i]!];
+    if (!(Math.abs(a) <= MAX_CELL && Math.abs(b) <= MAX_CELL) || b < a) return null;
+    count *= b - a + 1;
+  }
+  return count <= MAX_CELLS ? [lo[0]!, lo[1]!, lo[2]!, hi[0]!, hi[1]!, hi[2]!] : null;
 }

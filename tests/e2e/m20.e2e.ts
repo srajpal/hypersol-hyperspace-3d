@@ -383,25 +383,22 @@ describe('W6 to W10: the sneaker store', () => {
     }
   }
 
+  /** How long the store took to be ready: timed by W6, and held to the budget by the check after it. */
+  let readyMs: number | null = null;
+
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'));
     await waitForPage(h, 'link-a.html');
   });
   afterAll(async () => h?.close());
 
-  it('W6 the store: ready within 5 s with no problems; the shelves by the entrance loaded and the rest as stand-ins; walking down the hall loads each shelf in turn; the counter, the bays, and the walls stop the walker', async () => {
-    const software = await softwareRenderer(h);
+  it('W6 the store: ready with no problems; the shelves by the entrance loaded and the rest as stand-ins; walking down the hall loads each shelf in turn; the counter, the bays, and the walls stop the walker', async () => {
     const t = Date.now();
     await shellCall(h, 'showUrl', url(STORE));
     await waitForPage(h, STORE, await sceneWait(h, 15_000));
     await ready(h, STORE, 60_000);
-    const ms = Date.now() - t;
-    // Within 5 s with a graphics card; drawn in software (GitHub's machines), logged.
-    if (software) console.log(`W6: ready in ${ms} ms; the 5-second budget not checked: drawing in software (${software})`);
-    else {
-      console.log(`W6: ready in ${ms} ms`);
-      expect(ms).toBeLessThan(5000);
-    }
+    // Within 5 seconds is the next check's.
+    readyMs = Date.now() - t;
     expect(await holo<unknown[]>(h, 'window.__holoml.problems', STORE)).toEqual([]);
     expect(await holo<unknown[]>(h, 'window.__holoml.leftOut()', STORE)).toEqual([]);
     const first = await bays();
@@ -452,6 +449,19 @@ describe('W6 to W10: the sneaker store', () => {
     expect(atWall[0], `stopped at ${atWall.join(', ')}`).toBeGreaterThan(-4.75);
     expect(atWall[0]).toBeLessThan(-4.6);
   }, 300_000);
+
+  it('W6 the store is ready within 5 s (with a graphics card)', async (ctx) => {
+    expect(readyMs, 'the check before this one timed the store').not.toBeNull();
+    // Within 5 s with a graphics card; drawn in software (GitHub's machines), the time is measured and logged,
+    // and the check is skipped, not passed.
+    const software = await softwareRenderer(h);
+    if (software) {
+      console.log(`W6: ready in ${readyMs} ms; the 5-second budget not checked: drawing in software (${software})`);
+      ctx.skip(`the 5-second budget is for graphics hardware; drawing in software (${software})`);
+    }
+    console.log(`W6: ready in ${readyMs} ms`);
+    expect(readyMs!).toBeLessThan(5000);
+  });
 
   it('W7 a shoe: a click on one opens its page through a fade; every colourway changes it in place; "Turn it over" shows its sole; a size is chosen', async () => {
     await openPage(h, STORE);

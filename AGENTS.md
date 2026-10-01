@@ -155,11 +155,17 @@ see .github/workflows/ci.yml; macOS not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
 - Toolchain: Node 22.13 or newer; pnpm 12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 289 tests passed on 2026-09-29)
-- Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean)
+- Unit: `pnpm test` (Vitest; 502 tests passed on 2026-09-30;
+  each test may take up to 20 seconds, vitest.config.ts)
+- Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean;
+  lint takes about half a minute, as three of its rules need the types:
+  a promise nobody awaits or catches is an error, since the review of
+  2026-09-30)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about sixteen minutes; 278 checks in the full run on
-  2026-09-29 in milestone 21, all passed; TODO.md has the details). On
+  against it (about nineteen minutes; 373 checks in 27 files: 372 in
+  the full run on 2026-09-30, after the review's fixes, all passed on
+  this computer, and one added after it, run in its file; TODO.md has
+  the details). On
   this computer vitest's report leaves out what passing checks log (the
   load times, frame rates, and memory); `pnpm test:e2e
   --reporter=verbose` shows it, as the automatic builds do. Needs
@@ -171,14 +177,17 @@ date given and grow with each milestone; TODO.md has the latest.
   in four parts side by side on each system, so a build takes as long
   as its longest part (two parts from prompt 122, Q7 a; four from
   prompt 134): HYPERSOL_E2E_PART=2 runs milestones 14 to 17's files
-  (HoloML pages, the showroom, Blockworld), 3 milestones 18 to 20's
+  (HoloML pages, the showroom, Blockworld) and the viewer's checks from
+  the review of 2026-09-30, 3 milestones 18 to 20's
   (the sofa studio, Harbour Loft, the sneaker store), 4 milestone 21's
   (the ocean tunnel), and 1 everything else (vitest.e2e.config.ts lists
-  them); without it, every check runs. A last job, "All checks", passes
-  only when every part has. A push or pull request that changes
-  documents only (the *.md files at the top and the docs folder, which
-  no check reads) skips the parts, and "All checks" passes at once
-  (owner, prompt 135).
+  them); without it, every check runs, and a part number that does not
+  exist stops the run. A check may take 60 seconds unless it says
+  otherwise, and a hook (what runs before and after a file's checks) 300.
+  A last job, "All checks", passes only when every part has. A push or
+  pull request that changes documents only (the *.md files at the top
+  and the docs folder, which no check reads) skips the parts, and "All
+  checks" passes at once (owner, prompt 135).
 - Test windows stay out of the way (owner request, 2026-09-25): they
   open off screen, never take focus, and have no taskbar button, so the
   computer can be used during a run; `pnpm screenshots` works the same
@@ -186,18 +195,44 @@ date given and grow with each milestone; TODO.md has the latest.
   example `HYPERSOL_TEST_SHOW=1 pnpm test:e2e`); then leave the machine
   alone while it runs. Check C1 confirms background windows are off
   every display and unfocused.
-- GitHub's Linux machines have no graphics card and draw in software. To
+- GitHub's Linux machines have no graphics card and draw in software
+  (the review of 2026-09-30 found that its Windows machines draw in
+  software too). To
   draw that way on any machine and find checks that pass only with a
   graphics card, set HYPERSOL_TEST_SOFTWARE=1 (for example
   `HYPERSOL_TEST_SOFTWARE=1 pnpm test:e2e`; first run 2026-09-27); the
   frame-rate budgets, the HoloML load-time budgets (S2, T5), and the
-  responsiveness budgets while a heavy HoloML page loads (R3, T2) are
+  responsiveness budgets while a heavy HoloML page loads (R3, T2), and
+  what only a graphics card draws (shadows, U9; the water's moving
+  light, X2) are
   then measured and logged, not checked, as there (owner, prompts 59,
-  95, and 96). Checks of scenes wait
+  95, and 96), and each such check reports "skipped" in software, not
+  "passed" (C9 and G9's frame-time budget since the review's first
+  wave; R3, S2, S6, T2, T5, U9, U13, V8, W6, X2, X5, and X9 since its
+  second: each is split so that what needs no graphics card still
+  runs and passes).
+  So the budgets are checked only on a computer with a graphics card
+  (today, the owner's). Drawn in software, a HoloML scene has half as
+  many pixels each way and no smoothed edges (the viewer's own
+  behaviour since prompt 135, checked in review-134-viewer.e2e.ts).
+  Checks of scenes wait
   for what they check, not for fixed times (holdKeyUntil, framesDrawn,
-  sceneStill, and sceneWait in tests/e2e/harness.ts); a check that an
+  sceneStill, and sceneWait in tests/e2e/harness.ts), and a key held
+  in a scene is held for an amount of the scene's own time (the
+  viewer's `clock` test hook; the `hold` or `holdKey` helpers in m14,
+  m17, m18, and m19), since a scene drawn slowly runs behind the
+  clock; a check that an
   idle page draws nothing starts from sceneStill, as a page compiling
-  shaders is not yet idle (milestone 21).
+  shaders is not yet idle (milestone 21), and a check that the idle
+  room draws nothing starts from roomStill (no switch animation, every
+  loaded page's picture on its card, and a second and a half without a
+  frame). A check that something does not happen looks once caughtUp
+  returns (the app has dealt with everything the page had sent it), not
+  after a sleep, which proves nothing on a slow machine. A check that
+  clicks the permission prompt or an action of the download notice
+  waits for `[data-armed]` on it: both take no click for their first
+  half second. A wait stops at once, with AppGone, when the app's
+  process has ended.
 - Linux on this computer, the way GitHub's Linux machines run the
   checks: `pnpm test:linux` (needs Docker; first run 2026-09-28, owner,
   prompts 103 and 104). It builds tests/linux/Dockerfile (Ubuntu 24.04,
@@ -242,11 +277,17 @@ milestone; the current milestone's checks are defined in TODO.md):
   local copies, no network; first run 2026-09-27). They are part of the
   browser: run it when an example changes, before `pnpm screenshots`.
 - Filter lists: `pnpm filters:update` rebuilds the starter copy from the
-  internet (run before a release; first run 2026-09-26).
+  internet (run before a release; first run 2026-09-26). It is the only
+  place the blocker's page scripts are fetched, and it records the
+  SHA-256 of the starter copy and of the scripts in starter.json, which
+  the app checks (not run again since the review's change to it: not
+  checked yet).
 - Milestone 6 checks H1 to H7 (same command): theme switch, Settings >
   Theme with "Match the system", the room and window following the
   theme, page tilt, the layers view's outline; H5 (contrast) and H8 (no
-  hard-coded colours) are unit tests.
+  hard-coded colours; since the review of 2026-09-30 in the room's code,
+  renderer/scene, too, with preload/theme-colours.test.ts for what the
+  page preload draws) are unit tests.
 - Milestone 7 checks I1 to I9 (same command): the instrument panel on
   and off, page readouts, certificates, console, network list, browser
   gauges, the settings per part, DevTools, efficiency.
@@ -277,7 +318,9 @@ milestone; the current milestone's checks are defined in TODO.md):
   The copy of HoloML's packages is checked by packages/holoml's test.
 - Milestone 15 checks R1 to R9 (same command, tests/e2e/m15.e2e.ts):
   HoloML limits (file and page sizes, pictures, triangles, many
-  elements), stopping and the 30-second limit, repeated visits, the
+  elements; the shell answering within 200 ms while a page of many
+  elements loads is logged in software, and skipped), stopping and the
+  30-second limit, repeated visits, the
   keyboard, the accessibility tree, reduced motion and the text view,
   and the Scene inspector. The large files are generated by the fixture
   server (tests/e2e/fixture-server.ts, /holoml/gen/). R4 waits out the
@@ -287,13 +330,17 @@ milestone; the current milestone's checks are defined in TODO.md):
   tests/fixtures/holoml/showroom (`pnpm holoml:sync`; its test checks
   the copy, and from milestone 17 every example's): the start panel link, loading within budget, walking,
   links and colours, the keyboard and text view, reduced motion,
-  efficiency, and credits. S1 is holoml's own unit test. Also a HoloML
+  efficiency, and credits (the load and frame-rate budgets are logged
+  in software, and skipped). S1 is holoml's own unit test. Also a HoloML
   page in a development run (the viewer from the dev server).
 - Milestone 17 checks T2 to T8 (same command, tests/e2e/m17.e2e.ts):
   HoloML 0.2 scripts (the scene API; inline, other-site, failing, and
-  never-ending scripts), sound (nothing before the first click or key,
-  the tab's mute, the limits), walls and gravity, and Blockworld (a copy
-  in tests/fixtures/holoml/blockworld): loading and drawing, breaking and
+  never-ending scripts; the browser answering within 200 ms beside a
+  script that never stops is logged in software, and skipped), sound
+  (nothing before the first click or key, the tab's mute, the limits),
+  walls and gravity, and Blockworld (a copy in
+  tests/fixtures/holoml/blockworld): loading and drawing (the load
+  and frame-rate budgets logged in software, and skipped), breaking and
   placing, the five gems, night and torches, the keyboard, the text view
   and the accessibility tree, reduced motion; and the HoloML examples
   section. T1 is holoml's own tests. After the milestone's report
@@ -305,11 +352,11 @@ milestone; the current milestone's checks are defined in TODO.md):
   script's change event, the keys a slider keeps, screen readers, the
   text view), and Blockworld's Speed slider. Second part: shadows (the
   floor's pixels; drawn in software they are left out, and the check
-  logs that), a material's pictures and tiling, choices (mouse,
+  logs that and is skipped), a material's pictures and tiling, choices (mouse,
   keyboard, screen readers, scripts, the text view), light from a
   panorama of the surroundings, and the sofa studio (a copy in
   tests/fixtures/holoml/sofa-studio): loading within 5 s (logged in
-  software), every fabric and wood, the price, the cart page, the
+  software, and skipped), every fabric and wood, the price, the cart page, the
   keyboard alone, and no frames while idle. U1 and U8 are holoml's own
   tests.
 - Milestone 19 checks V2 to V10 (same command, tests/e2e/m19.e2e.ts):
@@ -318,7 +365,8 @@ milestone; the current milestone's checks are defined in TODO.md):
   sound, reduced motion, scripts), places (#name, "Go to", Back),
   arriving through a fade, the sky, and the floor plan; and Harbour Loft
   (a copy in tests/fixtures/holoml/harbour-loft): ready within 5 s
-  (logged in software), walls and a shut door that stop the walker,
+  (logged in software, and skipped), walls and a shut door that stop
+  the walker,
   every door and lamp, the roof terrace and back, the booking page's
   form that sends nothing, the whole tour from the keyboard, screen
   readers, the text view, reduced motion, and no frames while idle. V1
@@ -330,7 +378,7 @@ milestone; the current milestone's checks are defined in TODO.md):
   is loaded (fixture pages areas.holoml, stand-in.holoml, and
   areas-limits.holoml); and the sneaker store (a copy in
   tests/fixtures/holoml/sneaker-store): ready within 5 s (logged in
-  software), the shelves by the entrance loaded and the rest as
+  software, and skipped), the shelves by the entrance loaded and the rest as
   stand-ins, walking down the hall loading each shelf, the counter, bays,
   and walls stopping the walker, a shoe's page through a fade, every
   colourway in place, turning a shoe over, sizes, the cart and the
@@ -342,16 +390,19 @@ milestone; the current milestone's checks are defined in TODO.md):
   water (a far model takes more of the water's colour than a near one,
   one outside the water keeps its own, and the light from the waves
   moves over a floor, holds still with reduced motion, and is left out
-  in software), sounds from a place (each ear's level as the viewer
+  in software, and skipped), sounds from a place (each ear's level as
+  the viewer
   walks away, and silence beyond the range), and a script's animation
   speed (fixture pages water.holoml, caustics.holoml,
   sound-place.holoml, and animation-speed.holoml); and the ocean tunnel
   (a copy in tests/fixtures/holoml/aquarium): ready within 5 s (logged
-  in software), the fish in the water and clear of the tunnel and the
+  in software, and skipped), the fish in the water and clear of the
+  tunnel and the
   rocks, the ledges and the rail stopping the walker, feeding (every
   flake eaten), a fish's panel from a click through the glass and from
   its button, the keyboard alone, screen readers, the text view,
-  reduced motion, the frame rate (logged in software), no frames behind
+  reduced motion, the frame rate (logged in software, and skipped),
+  no frames behind
   another tab, and the page's memory over two minutes. X1 is holoml's
   own tests; X10 (the published site) is checked by hand.
 - Milestone 22 checks Y1 to Y10 (TODO.md): HoloML's documentation. Most
@@ -366,6 +417,59 @@ milestone; the current milestone's checks are defined in TODO.md):
   the documentation in the browser, built from the holoml repository
   beside this one. Y5 and Y9 (the published site) and Y6's screen
   reader are checked by hand.
+- The review of 2026-09-30 (prompts 134 and 135) adds five files (same
+  command), each check named for the review's finding:
+  - tests/e2e/review-134-main.e2e.ts, the main process and the page
+    preload: what a page may do without asking, WebSockets, a service
+    worker's requests, and a listed favicon through the shield, a link
+    that leads to a download, leaving a page that asks to
+    be kept, what counts as a HoloML page (a download, a sandboxed
+    answer, the site's own policy kept), HoloML files from the computer
+    (from Downloads, leaving for the web, a dropped file), Block for a
+    page that asks to be kept, a start that fails, and a shell that
+    crashes.
+  - tests/e2e/review-134-shell.e2e.ts, the shell (R1 to R7): a HoloML
+    page that fills the window drawn flat, switching panels, error cards
+    that go, a prompt and a notice that take no click at first, the
+    address bar, eight smaller faults of the top bar, tabs, and panels,
+    the room drawing only what is needed and its cards hit where the
+    rail lays them out while the context is lost, and access (the tab list,
+    error cards, dialogs, reduced motion, composed text, menu keys,
+    Escape).
+  - tests/e2e/review-134-viewer.e2e.ts, the HoloML viewer (V2 to V10 and
+    D12): versions it does not know, a model that cannot be decoded,
+    triangles counted once decoded, the limits on lights, a still walker
+    with gravity, the text view's keys, the private line to the browser,
+    a script beside a problem, a graphics reset, a sound with a short
+    range, hidden things, drawing in software, and the test hooks only
+    in a test run (13 checks); and, from the review's second wave, the
+    viewer and the specification's third edition (nine checks, Sp): a
+    member a kind lacks, `parent` through a link, frozen vectors, the
+    frame event's dt, what `holoml.add` leaves out, a panel inside a
+    link in the text view, ambient lights, a model that needs an
+    unsupported glTF extension, unlit materials, the syntax-error
+    card, and a 0.1 page's hud (22 checks in all; fixture pages
+    tests/fixtures/holoml/review-134-*, two models in the fixtures
+    written by review-134-make-models.mjs, and two the fixture server
+    generates).
+  - tests/e2e/review-134-harness.e2e.ts, the test tools themselves: the
+    slow download that holds until it is released, a wait that stops
+    when the app has gone, and caughtUp.
+  - tests/e2e/review-134-features.e2e.ts, the second wave's features
+    (7 checks): HTTP sign-in (the prompt names the site and quotes its
+    realm, the right answer loads the page; Cancel, Escape, and a
+    wrong password; the prompt belongs to its tab and is cancelled by
+    leaving or closing; a second one waits its turn, a long realm is
+    cut, a picture from another site cannot ask), the window's size
+    and place remembered (a restart, and a damaged saved size), and
+    the text view's shortcut (a HoloML page only, changeable in
+    Settings > Shortcuts).
+  The pure parts are unit tests beside the code, new with the review:
+  main/permissions, security, holoml, ipc, leave-page, start-up,
+  tab-history, passwords/index, storage/scrub, sign-in, and
+  window-bounds; viewer/values, versions, sound, controls, instances,
+  and main; shared/settings, sign-in, and site; and
+  preload/theme-colours.
 - Later milestones add: HoloML 0.3 (23), privacy and data tools (24),
   free camera (25), lift to 3D (26), polish (27), and installers (28
   and 29).

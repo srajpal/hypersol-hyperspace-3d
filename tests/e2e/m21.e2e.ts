@@ -114,7 +114,7 @@ describe('X2 to X4: water, sounds from a place, and animation speed', () => {
   });
   afterAll(async () => h?.close());
 
-  it('X2 through the water a far model takes more of its colour than a near one, and one outside keeps its own; the light moves over a floor in the water, and holds still with reduced motion', async () => {
+  it('X2 through the water a far model takes more of its colour than a near one, and one outside keeps its own; water with the light of its waves has it with a graphics card, and leaves it out, saying so, without one', async () => {
     let PAGE = 'water.holoml';
     await openPage(h, PAGE);
     expect(await water(h, PAGE)).toMatchObject({ min: [-5, -0.2, -8], max: [5, 4, 8], color: '#1f6f8b', clarity: 12, caustics: false, causticsShown: false });
@@ -140,13 +140,20 @@ describe('X2 to X4: water, sounds from a place, and animation speed', () => {
     PAGE = 'caustics.holoml';
     await openPage(h, PAGE);
     const software = await softwareRenderer(h);
+    // Drawn in software (GitHub's machines), the moving light is left out, as shadows are, and the console says so.
+    if (software) expect(await water(h, PAGE)).toMatchObject({ caustics: true, causticsShown: false, causticsLeftOut: expect.stringMatching(/draws 3D in software/) });
+    else expect(await water(h, PAGE)).toMatchObject({ caustics: true, causticsShown: true, causticsLeftOut: null });
+  });
+
+  it('X2 the light of the waves moves over a floor in the water, and holds still with reduced motion (with a graphics card)', async (ctx) => {
+    const PAGE = 'caustics.holoml';
+    const software = await softwareRenderer(h);
     if (software) {
-      // Drawn in software (GitHub's machines), the moving light is left out, as shadows are, and the console says so.
-      expect(await water(h, PAGE)).toMatchObject({ caustics: true, causticsShown: false, causticsLeftOut: expect.stringMatching(/draws 3D in software/) });
+      // There is no moving light to look at there: the check is skipped, not passed.
       console.log(`X2: the water's moving light left out, drawing in software (${software}); its pixels not checked`);
-      return;
+      ctx.skip(`the water's moving light is drawn only with graphics hardware; drawing in software (${software})`);
     }
-    expect(await water(h, PAGE)).toMatchObject({ caustics: true, causticsShown: true, causticsLeftOut: null });
+    await openPage(h, PAGE);
     const c = await point(h, PAGE, 'spot');
     const line = () =>
       pixels(
@@ -353,6 +360,9 @@ describe('X5 to X9: the aquarium', () => {
   let h: Harness;
   let ocean: Ocean;
   let ids: string[];
+  /** How long the aquarium took to be drawn (X5), and the frames a second it was drawn at (X9): measured by those checks, and held to their budgets by the ones after them. */
+  let drawnMs: number | null = null;
+  let framesASecond: number | null = null;
   const TANK_PAGE = 'aquarium/index.holoml';
   /** The aquarium's checks: drawn in software (GitHub's machines) they take minutes, not seconds. Not a requirement. */
   const TANK_TIME = 600_000;
@@ -369,10 +379,20 @@ describe('X5 to X9: the aquarium', () => {
   /** Every fish's place, by its id. */
   const fishAt = async () => Object.fromEntries(await inPage<[string, Vec][]>(h, `${JSON.stringify(ids)}.map((id) => [id, holoml.find(id).position])`, TANK_PAGE)) as Record<string, Vec>;
   const focusedText = () => inPage<string>(h, 'document.activeElement?.textContent ?? ""', TANK_PAGE);
-  /** Tab through the page's outline until an item with this text has the keyboard. */
+  /**
+   * Tab through the page's outline until an item with this text has the
+   * keyboard. When it never does, the failure says which text was looked
+   * for, how many times Tab was pressed, and what had the keyboard last.
+   */
   async function tabTo(text: string): Promise<void> {
-    for (let i = 0; i < 90 && (await focusedText()) !== text; i++) await pressInPage(h, 'Tab', [], TANK_PAGE);
-    expect(await focusedText()).toBe(text);
+    let presses = 0;
+    let last = await focusedText();
+    while (last !== text && presses < 90) {
+      await pressInPage(h, 'Tab', [], TANK_PAGE);
+      presses++;
+      last = await focusedText();
+    }
+    expect(last, `Tab did not reach ${JSON.stringify(text)} in the outline: Tab was pressed ${presses} times, and the keyboard was last on ${JSON.stringify(last)}`).toBe(text);
   }
   /** Walks with a key held until the walker stops (the same place while the page drew new frames) or the time is up. */
   async function walkUntilStopped(keyCode: string, maxMs: number): Promise<Vec> {
@@ -401,8 +421,7 @@ describe('X5 to X9: the aquarium', () => {
   });
   afterAll(async () => h?.close());
 
-  it('X5 the aquarium: ready within 5 s with everything loaded and no problems; the fish swim, in the water and clear of the tunnel and the rocks; the ledges and the rail stop the walker', async () => {
-    const software = await softwareRenderer(h);
+  it('X5 the aquarium: ready with everything loaded and no problems; the fish swim, in the water and clear of the tunnel and the rocks; the ledges and the rail stop the walker', async () => {
     const t = Date.now();
     await shellCall(h, 'showUrl', url(TANK_PAGE));
     await waitForPage(h, TANK_PAGE, await sceneWait(h, 15_000));
@@ -410,12 +429,9 @@ describe('X5 to X9: the aquarium', () => {
     const ms = Date.now() - t;
     // Its shaders compile once it is ready, without holding up the page: the tank is on the screen when they have.
     await painted(h, TANK_PAGE);
-    const drawn = Date.now() - t;
-    if (software) console.log(`X5: ready in ${ms} ms, drawn in ${drawn} ms; the 5-second budget not checked: drawing in software (${software})`);
-    else {
-      console.log(`X5: ready in ${ms} ms, drawn in ${drawn} ms`);
-      expect(drawn).toBeLessThan(5000);
-    }
+    // Within 5 seconds is the next check's.
+    drawnMs = Date.now() - t;
+    console.log(`X5: ready in ${ms} ms, drawn in ${drawnMs} ms`);
     expect(await holo<unknown[]>(h, 'window.__holoml.problems', TANK_PAGE)).toEqual([]);
     expect(await holo<unknown[]>(h, 'window.__holoml.leftOut()', TANK_PAGE)).toEqual([]);
     const models = await holo<{ src: string; state: string }[]>(h, 'window.__holoml.models()', TANK_PAGE);
@@ -457,6 +473,18 @@ describe('X5 to X9: the aquarium', () => {
     expect(atRail[2]).toBeLessThan(-11.1);
   }, TANK_TIME);
 
+  it('X5 the aquarium is ready and drawn within 5 s (with a graphics card)', async (ctx) => {
+    expect(drawnMs, 'the check before this one timed the aquarium').not.toBeNull();
+    // Within 5 s with a graphics card; drawn in software (GitHub's machines), the time is measured and logged
+    // (by the check before), and this check is skipped, not passed.
+    const software = await softwareRenderer(h);
+    if (software) {
+      console.log(`X5: drawn in ${drawnMs} ms; the 5-second budget not checked: drawing in software (${software})`);
+      ctx.skip(`the 5-second budget is for graphics hardware; drawing in software (${software})`);
+    }
+    expect(drawnMs!).toBeLessThan(5000);
+  });
+
   it('X6 feeding: the Feed button (a click, and Enter on its button in the outline) drops the food with its sound; the fish come to it and eat every flake within a minute', async () => {
     await openPage(h, TANK_PAGE);
     const { FEEDER } = ocean;
@@ -472,9 +500,10 @@ describe('X5 to X9: the aquarium', () => {
     // A click on the button (the first also lets sounds play): its plop, and food falling.
     const feedAt = (await waitFor('the Feed button in view', () => holo<Point | null>(h, 'window.__holoml.point("feed")', TANK_PAGE), (p) => p !== null))!;
     await clickAt(h, await project(h, feedAt.x, feedAt.y));
-    await waitFor('food falling', () => hud('status'), (s) => s === 'Food is falling: the fish are coming.', 5000);
+    // (Waits for what the page does in its own frames are as long as its frames need: drawn in software, seconds each.)
+    await waitFor('food falling', () => hud('status'), (s) => s === 'Food is falling: the fish are coming.', await sceneWait(h, 5000));
     await stand([-0.6, 1.6, 1.5], [3.6, 3, 0]);
-    await waitFor('the plop', () => plays('plop'), (n) => n >= 1, 5000);
+    await waitFor('the plop', () => plays('plop'), (n) => n >= 1, await sceneWait(h, 5000));
     // The fish come to it, and eat every flake.
     const most = await waitFor('fish at the food', nearFood, (n) => n >= before + 3, await sceneWait(h, 20_000));
     console.log(`X6: ${before} of ${eaters.length} fish that eat were within 3 m of the feeder before; ${most} came`);
@@ -483,8 +512,8 @@ describe('X5 to X9: the aquarium', () => {
     // Enter on the button in the outline does the same.
     await tabTo('Feed the fish');
     await press(h, TANK_PAGE, 'Enter');
-    await waitFor('food falling again', () => hud('status'), (s) => s === 'Food is falling: the fish are coming.', 5000);
-    await waitFor('the plop again', () => plays('plop'), (n) => n >= 2, 5000);
+    await waitFor('food falling again', () => hud('status'), (s) => s === 'Food is falling: the fish are coming.', await sceneWait(h, 5000));
+    await waitFor('the plop again', () => plays('plop'), (n) => n >= 2, await sceneWait(h, 5000));
   }, TANK_TIME);
 
   it("X7 a click on a fish, through the glass, and its kind's button in the outline, tell about it on the board", async () => {
@@ -498,8 +527,9 @@ describe('X5 to X9: the aquarium', () => {
       await stand([0, 1.6, 1.5], [0.3, 3.6, -1.5]);
       await sleep(300);
       await clickAt(h, await centre(h, TANK_PAGE));
-      const told = await waitFor('the turtle on the board', board, (b) => b[0] === 'Flatback sea turtle', 5000);
-      expect(told[1]).toMatch(/northern Australia/);
+      // The hawksbill took the flatback's place on 2026-09-30 (the flatback's model could not be used for its licence).
+      const told = await waitFor('the turtle on the board', board, (b) => b[0] === 'Hawksbill sea turtle', await sceneWait(h, 5000));
+      expect(told[1]).toMatch(/coral reefs/);
     } finally {
       await reducedMotion(h, false);
     }
@@ -507,7 +537,7 @@ describe('X5 to X9: the aquarium', () => {
     await openPage(h, TANK_PAGE);
     await tabTo('About the great white shark');
     await press(h, TANK_PAGE, 'Enter');
-    const shark = await waitFor('the shark on the board', board, (b) => b[0] === 'Great white shark', 5000);
+    const shark = await waitFor('the shark on the board', board, (b) => b[0] === 'Great white shark', await sceneWait(h, 5000));
     expect(shark[1]).toMatch(/must keep swimming to breathe/);
     // The board's words are in the page, for screen readers and Find in page.
     expect(await inPage<string>(h, 'document.getElementById("holoml-outline").innerText', TANK_PAGE)).toContain('must keep swimming to breathe');
@@ -526,7 +556,7 @@ describe('X5 to X9: the aquarium', () => {
     await waitFor('at the feeding place', places, (p) => p.current === 'feeding');
     await tabTo('About the tuna');
     await press(h, TANK_PAGE, 'Enter');
-    await waitFor('the tuna on the board', board, (b) => b[0] === 'Tuna', 5000);
+    await waitFor('the tuna on the board', board, (b) => b[0] === 'Tuna', await sceneWait(h, 5000));
 
     // The text view reads the welcome, the board, and the buttons.
     await pressInPage(h, 'V', ['control', 'shift'], TANK_PAGE);
@@ -549,30 +579,28 @@ describe('X5 to X9: the aquarium', () => {
       expect(await fishAt()).toEqual(fishBefore);
       expect((await water()).causticsTime).toBe(lightBefore);
       await press(h, TANK_PAGE, 'F');
-      await waitFor('food down', () => hud('status'), (s) => s === 'Food is down.', 5000);
-      await waitFor('eaten', () => hud('status'), (s) => s === 'The fish have eaten.', 5000);
+      await waitFor('food down', () => hud('status'), (s) => s === 'Food is down.', await sceneWait(h, 5000));
+      await waitFor('eaten', () => hud('status'), (s) => s === 'The fish have eaten.', await sceneWait(h, 5000));
       await inPage(h, `(holoml.find('status').text = '', true)`, TANK_PAGE);
       await tabTo('Feed the fish');
       await press(h, TANK_PAGE, 'Enter');
-      await waitFor('eaten again', () => hud('status'), (s) => s === 'The fish have eaten.', 5000);
+      await waitFor('eaten again', () => hud('status'), (s) => s === 'The fish have eaten.', await sceneWait(h, 5000));
       expect(await fishAt()).toEqual(fishBefore);
     } finally {
       await reducedMotion(h, false);
     }
   }, TANK_TIME);
 
-  it("X9 efficient: at least 30 frames a second while the fish swim (with a graphics card); no frames in a hidden tab; the page's memory does not grow over two minutes of bubbles and feeding", async () => {
+  it("X9 efficient: the fish go on swimming; no frames in a hidden tab; the page's memory does not grow over two minutes of bubbles and feeding", async () => {
     await openPage(h, TANK_PAGE);
     const software = await softwareRenderer(h);
     await sleep(3000);
     const f0 = await frames();
     await sleep(2000);
-    const rate = ((await frames()) - f0) / 2;
-    if (software) console.log(`X9: ${rate.toFixed(1)} frames a second; the budget not checked: drawing in software (${software})`);
-    else {
-      console.log(`X9: ${rate.toFixed(1)} frames a second`);
-      expect(rate).toBeGreaterThanOrEqual(30);
-    }
+    // It goes on drawing, on any machine; at least 30 frames a second is the next check's.
+    framesASecond = ((await frames()) - f0) / 2;
+    console.log(`X9: ${framesASecond.toFixed(1)} frames a second`);
+    expect(framesASecond).toBeGreaterThan(0);
     // A new tab in front: the aquarium's page, now hidden, draws nothing; back to it, and it draws again.
     await pressInShell(h, 'T', ['control']);
     // Once the page is told its tab is behind, a frame it had begun may still finish (slowly, drawn in software); then
@@ -595,4 +623,16 @@ describe('X5 to X9: the aquarium', () => {
     console.log(`X9: heap ${(start.heap / MB).toFixed(1)} MB then ${(after.heap / MB).toFixed(1)} MB; buffers ${(start.buffers / MB).toFixed(1)} MB then ${(after.buffers / MB).toFixed(1)} MB`);
     expect(after.heap + after.buffers, 'the page memory after two minutes').toBeLessThan(start.heap + start.buffers + 4 * MB);
   }, TANK_TIME);
+
+  it('X9 at least 30 frames a second while the fish swim (with a graphics card)', async (ctx) => {
+    expect(framesASecond, 'the check before this one counted the frames').not.toBeNull();
+    // With a graphics card; drawn in software (GitHub's machines), the rate is measured and logged (by the
+    // check before), and this check is skipped, not passed.
+    const software = await softwareRenderer(h);
+    if (software) {
+      console.log(`X9: ${framesASecond!.toFixed(1)} frames a second; the budget not checked: drawing in software (${software})`);
+      ctx.skip(`the frame-rate budget is for graphics hardware; drawing in software (${software})`);
+    }
+    expect(framesASecond!).toBeGreaterThanOrEqual(30);
+  });
 });

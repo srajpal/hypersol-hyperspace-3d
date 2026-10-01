@@ -1,0 +1,580 @@
+/**
+ * Checks for the review of 2026-09-30 (prompts 134 and 135), the main
+ * process and the page preload: what a page may do without asking (M1),
+ * WebSockets, a service worker's requests, and favicons through the
+ * shield (M3), a link that leads to a download
+ * (M8), leaving a page that asks to be kept (M4), what counts as a HoloML
+ * page (V1), HoloML files from the computer (M6, M11), Block for a page
+ * that asks to be kept (M7), and a start or a shell that fails (M9, M10).
+ */
+import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { copyFileSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { FIXTURES_DIR, startFixtureServer, type FixtureServer } from './fixture-server';
+import {
+  APP_DIR,
+  OFFLINE_RULES,
+  caughtUp,
+  clickUntil,
+  focusedPage,
+  focusedTab,
+  graphicsSwitches,
+  inPage,
+  launch,
+  mainLog,
+  navigateTo,
+  pressInShell,
+  removeFolder,
+  screenPointOf,
+  shellCall,
+  waitFor,
+  waitForExit,
+  waitForPage,
+  type Harness,
+} from './harness';
+
+let server: FixtureServer;
+const folders: string[] = [];
+
+beforeAll(async () => {
+  server = await startFixtureServer();
+});
+
+afterAll(async () => {
+  await server?.close();
+  for (const f of folders) await removeFolder(f);
+});
+
+function newProfile(settings?: object): string {
+  const dir = mkdtempSync(join(tmpdir(), 'hypersol-e2e-profile-'));
+  folders.push(dir);
+  writeFileSync(join(dir, 'settings.json'), JSON.stringify({ layersOnOpen: false, ...settings }));
+  return dir;
+}
+
+/** One of the main process's test logs (main/test-hooks.ts). */
+const testLog = <T>(h: Harness, key: string) =>
+  h.app.evaluate((_e, k) => (globalThis as unknown as { __hypersolTest: Record<string, unknown> }).__hypersolTest[k], key) as Promise<T>;
+/** The address a page's web contents is at, as the main process has it. */
+const addressOf = (h: Harness, page: { id: number }) => h.app.evaluate(({ webContents }, id) => webContents.fromId(id)!.getURL(), page.id);
+
+describe('M1: what a page may do without asking', () => {
+  let h: Harness;
+  beforeAll(async () => {
+    h = await launch(server.url('review-134-permissions.html'), { userDataDir: newProfile() });
+    await waitForPage(h, 'review-134-permissions');
+  });
+  afterAll(async () => h?.close());
+
+  it('a page that never asked is told "denied" or "prompt", never "granted", for everything that reveals something', async () => {
+    const page = await focusedPage(h);
+    const states = await inPage<{ notification: string; query: Record<string, string> }>(h, 'states()', page);
+    expect(states.notification).toBe('denied');
+    for (const name of [
+      'notifications',
+      'midi',
+      'clipboard-read',
+      'idle-detection',
+      'window-management',
+      'local-fonts',
+      'storage-access',
+      'background-sync',
+      'accelerometer',
+      'gyroscope',
+      'magnetometer',
+      'screen-wake-lock',
+      'persistent-storage',
+      'geolocation',
+      'camera',
+      'microphone',
+    ]) {
+      expect(states.query[name], name).not.toBe('granted');
+    }
+    expect(await inPage<string>(h, 'readClipboard()', page)).toMatch(/^refused:/);
+  });
+
+  it('a real click may still copy text', async () => {
+    const page = await focusedPage(h);
+    await h.app.evaluate(({ clipboard }) => clipboard.clear());
+    const did = () => inPage<string | undefined>(h, 'window.did.copy', page);
+    await clickUntil(h, await screenPointOf(h, '#copy', page), 'the copy button pressed', async () => (await did()) !== undefined);
+    expect(await did()).toBe('done');
+    await waitFor('the text on the clipboard', () => h.app.evaluate(({ clipboard }) => clipboard.readText()), (t) => t === 'review-134 copied');
+    await h.app.evaluate(({ clipboard }) => clipboard.clear());
+  });
+
+  it('full screen is refused, after a real click too: the page never gets it and the window stays as it is', async () => {
+    // Until the browser has its own full-screen notice, a page cannot fill
+    // the screen (it could draw what looks like the browser's top bar). A
+    // refused request tells the page nothing: its promise is never settled.
+    const page = await focusedPage(h);
+    await clickUntil(h, await screenPointOf(h, '#full', page), 'the full screen button pressed', () => inPage<boolean>(h, 'window.did.fullAsked === true', page));
+    await waitFor('the request refused', () => mainLog(h, 'refusedPermissions'), (names) => names.includes('fullscreen'));
+    await caughtUp(h, page);
+    expect(await inPage<string | undefined>(h, 'window.did.full', page)).not.toBe('done');
+    expect(await inPage<boolean>(h, 'document.fullscreenElement === null', page)).toBe(true);
+    expect(await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.isFullScreen())).toBe(false);
+  });
+});
+
+describe('M3: WebSockets, a service worker\'s requests, and favicons through the shield', () => {
+  it('a WebSocket to a listed host never leaves the browser, and is counted and listed; one to the page\'s own site goes through', async () => {
+    // A named host, as in the shield's own checks; the ad host is mapped to this machine (harness.ts).
+    const page = server.url('review-134-websocket.html').replace('127.0.0.1', 'shop.test');
+    const port = new URL(server.base).port;
+    const h = await launch(page, { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'review-134-websocket');
+      await waitFor('every socket closed', () => inPage<string>(h, 'document.title', 'review-134-websocket'), (t) => t === 'WebSocket test ready');
+      // The page's own socket reached the server; the ad host's, plain ws like it, did not.
+      expect(server.hits.get('/ddm/own-socket') ?? 0).toBe(1);
+      expect(server.hits.get('/ddm/ad-socket') ?? 0).toBe(0);
+      // Both listed sockets are in the shield's count and its list, the encrypted one too.
+      await waitFor('two blocked', () => shellCall(h, 'shield'), (s) => s.count === 2);
+      const tab = (await focusedPage(h)).id;
+      const report = await h.shell.evaluate(
+        (id) => (window as unknown as { hypersol: { privacy(r: object): Promise<{ value: { count: number; items: { url: string; type: string }[] } }> } }).hypersol.privacy({ op: 'shield.report', tab: id }),
+        tab,
+      );
+      expect(report.value.items).toEqual([
+        { url: `ws://ad.doubleclick.net:${port}/ddm/ad-socket`, type: 'webSocket' },
+        { url: `wss://ad.doubleclick.net:${port}/ddm/secure-socket`, type: 'webSocket' },
+      ]);
+    } finally {
+      await h.close();
+    }
+  });
+
+  /** The tab's shield report, as the shell asks for it. */
+  const shieldReport = (h: Harness, tab: number) =>
+    h.shell.evaluate(
+      (id) => (window as unknown as { hypersol: { privacy(r: object): Promise<{ value: { count: number; items: { url: string; type: string }[] } }> } }).hypersol.privacy({ op: 'shield.report', tab: id }),
+      tab,
+    );
+
+  /**
+   * A page served by its own service worker (tests/fixtures/review-134-sw.html):
+   * the worker fetches every request of the page itself, so the requests
+   * the app sees are the worker's, which name no tab. Opens the page and
+   * gives what it found: the addresses the worker handled, how each of
+   * the page's two requests ended, and the two addresses.
+   */
+  async function throughWorker(h: Harness): Promise<{ handled: string[]; results: Record<string, string>; own: string; ad: string }> {
+    const port = new URL(server.base).port;
+    // The page registers its worker, loads again under its control, and asks for both pictures through it.
+    const facts = await waitFor(
+      'the page controlled by its worker and its requests answered',
+      () => inPage<{ title: string; result: string }>(h, '({ title: document.title, result: document.getElementById("result").textContent })', 'review-134-sw'),
+      (f) => f.title !== 'Service worker test',
+      30_000,
+    );
+    expect(facts.title, facts.result).toBe('Service worker test ready');
+    const { handled, results } = JSON.parse(facts.result) as { handled: string[]; results: Record<string, string> };
+    return { handled, results, own: server.url('icon.png?sw=own'), ad: `http://ad.doubleclick.net:${port}/ddm/ad.gif?sw=1` };
+  }
+
+  it('a service worker\'s request to a listed host never leaves the browser; the page\'s own goes through the worker', async () => {
+    const h = await launch(server.url('review-134-sw.html'), { userDataDir: newProfile() });
+    try {
+      const { handled, results, own, ad } = await throughWorker(h);
+      // The worker handled both; the page's own picture came, the ad host's did not.
+      expect(handled).toEqual(expect.arrayContaining([own, ad]));
+      expect(results['own']).toBe('answered:basic');
+      expect(results['ad']).toMatch(/^failed:/);
+      expect(server.hits.get('/icon.png?sw=own') ?? 0).toBe(1);
+      expect(server.hits.get('/ddm/ad.gif?sw=1') ?? 0).toBe(0);
+    } finally {
+      await h.close();
+    }
+  });
+
+  // The request reaches the app with no web contents id and no frame, only
+  // a referrer (the page's origin, "http://127.0.0.1:<port>/", for a
+  // cross-site request); the shield counts it for the tabs on the
+  // referrer's site (main/privacy/shield.ts, decideUntabbed). Found as a
+  // gap by this check on 2026-09-30, closed the same day.
+  it('a service worker\'s blocked request is counted for the page it serves, and is in the tab\'s list with its address', async () => {
+    const h = await launch(server.url('review-134-sw.html'), { userDataDir: newProfile() });
+    try {
+      const { ad } = await throughWorker(h);
+      await waitFor('one blocked', () => shellCall(h, 'shield'), (s) => s.count === 1, 5000);
+      const report = await shieldReport(h, (await focusedPage(h)).id);
+      expect(report.value.items).toEqual([{ url: ad, type: 'xhr' }]);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('a favicon on a listed host is never fetched, and is counted and listed; the tab keeps no icon, and one from the page\'s own site is fetched and shown', async () => {
+    const port = new URL(server.base).port;
+    const listed = `http://ad.doubleclick.net:${port}/ddm/icon.png`;
+    const h = await launch(server.url(`favicon.html?icon=${encodeURIComponent(listed)}`), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'favicon.html');
+      // The app's own account: the one attempt at the listed address could
+      // not be fetched (the shield refused it before any request was made).
+      const ends = await waitFor('the app to say how the icon ended', () => mainLog(h, 'faviconEnds'), (e) => e.some((x) => x.url === listed));
+      expect(ends.filter((e) => e.url === listed).map((e) => e.why)).toEqual(['failed']);
+      expect(server.hits.get('/ddm/icon.png') ?? 0).toBe(0);
+      await waitFor('one blocked', () => shellCall(h, 'shield'), (s) => s.count === 1);
+      const page = await focusedPage(h);
+      expect((await shieldReport(h, page.id)).value.items).toEqual([{ url: listed, type: 'image' }]);
+      expect((await focusedTab(h)).hasFavicon).toBe(false);
+
+      // An icon of the page's own site: fetched once, shown, and nothing counted.
+      const own = '/icon.png?own=1';
+      await navigateTo(h, server.url(`favicon.html?icon=${encodeURIComponent(own)}`));
+      await waitForPage(h, 'own%3D1');
+      await waitFor('the favicon shown', () => focusedTab(h), (t) => t.hasFavicon);
+      expect(server.hits.get(own) ?? 0).toBe(1);
+      expect((await mainLog(h, 'faviconEnds')).filter((e) => e.url === server.url(own.slice(1))).map((e) => e.why)).toEqual(['done']);
+      expect((await shellCall(h, 'shield')).count).toBe(0);
+      expect((await shieldReport(h, page.id)).value.items).toEqual([]);
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('M8: a link that leads to a download', () => {
+  it('leaves the showing page\'s site and count as they are', async () => {
+    const downloads = mkdtempSync(join(tmpdir(), 'hypersol-e2e-downloads-'));
+    folders.push(downloads);
+    const page = server.url('shield.html').replace('127.0.0.1', 'shop.test');
+    const h = await launch(page, { userDataDir: newProfile(), downloadsDir: downloads });
+    try {
+      await waitForPage(h, 'shield.html');
+      await waitFor('two blocked', () => shellCall(h, 'shield'), (s) => s.count === 2);
+      const tab = (await focusedPage(h)).id;
+      const report = () =>
+        h.shell.evaluate(
+          (id) => (window as unknown as { hypersol: { privacy(r: object): Promise<{ value: { site: string; count: number } }> } }).hypersol.privacy({ op: 'shield.report', tab: id }),
+          tab,
+        );
+      expect((await report()).value).toMatchObject({ site: 'shop.test', count: 2 });
+      // A file on another host: the request starts as a page load and ends as a download.
+      await inPage(h, `location.href = ${JSON.stringify(server.url('download/sample.txt'))}; true`, 'shield.html');
+      await waitFor('the download done', () => shellCall(h, 'downloads'), (d) => d.length === 1 && d[0]!.state === 'completed');
+      await waitFor('the tab at rest', () => h.app.evaluate(({ webContents }, id) => webContents.fromId(id)!.isLoading(), tab), (loading) => !loading);
+      expect((await report()).value).toMatchObject({ site: 'shop.test', count: 2 });
+      expect((await shellCall(h, 'shield')).count).toBe(2);
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('M4: leaving a page that asks to be kept', () => {
+  it('after a real click the person is asked: Leave leaves, Stay stays, by a typed address and by Reload', async () => {
+    const kept = server.url('review-134-beforeunload.html');
+    const h = await launch(kept, { userDataDir: newProfile() });
+    // The test driver hears of the page's question too and would answer it
+    // itself, after the app already has: with a listener it leaves it alone.
+    h.app.context().on('dialog', () => undefined);
+    try {
+      await waitForPage(h, 'review-134-beforeunload');
+      const page = await focusedPage(h);
+      const asks = () => testLog<string[]>(h, 'leaveAsks');
+      const state = () => inPage<string>(h, 'document.getElementById("state").textContent', page);
+      const edit = async () => clickUntil(h, await screenPointOf(h, '#edit', page), 'the page edited', async () => (await state()) === 'Edited');
+
+      // Used, then an address typed: asked once, and "Leave" (the test runs' answer) leaves.
+      await edit();
+      await navigateTo(h, server.url('link-b.html'));
+      await waitForPage(h, 'link-b');
+      expect(await asks()).toEqual([kept]);
+
+      // "Stay" keeps the page, with what was done in it, and nothing is fetched.
+      await navigateTo(h, kept);
+      await waitForPage(h, 'review-134-beforeunload');
+      await edit();
+      await h.app.evaluate(() => void ((globalThis as unknown as { __hypersolTest: { leaveAnswer: string } }).__hypersolTest.leaveAnswer = 'stay'));
+      const before = server.hits.get('/link-a.html') ?? 0;
+      await navigateTo(h, server.url('link-a.html'));
+      await waitFor('asked a second time', asks, (a) => a.length === 2);
+      expect(await addressOf(h, page)).toBe(kept);
+      expect(await state()).toBe('Edited');
+      expect(server.hits.get('/link-a.html') ?? 0).toBe(before);
+      // Reload asks too, and "Stay" keeps the page as it is.
+      await pressInShell(h, 'R', ['control']);
+      await waitFor('asked a third time', asks, (a) => a.length === 3);
+      expect(await state()).toBe('Edited');
+
+      // "Leave" on a reload: the page starts afresh.
+      await h.app.evaluate(() => void ((globalThis as unknown as { __hypersolTest: { leaveAnswer: string } }).__hypersolTest.leaveAnswer = 'leave'));
+      await pressInShell(h, 'R', ['control']);
+      await waitFor('reloaded', state, (s) => s === 'Not yet touched');
+      expect(await asks()).toEqual([kept, kept, kept, kept]);
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+/** Waits for a HoloML page's scene (the viewer's own facts are window.__holoml in the page). */
+const sceneReady = (h: Harness, page: string) =>
+  waitFor('the scene ready', () => inPage<boolean>(h, 'window.__holoml ? window.__holoml.ready : false', page), (r) => r === true, 20_000);
+
+describe('V1: what counts as a HoloML page', () => {
+  it('a .holoml the site sends as a download is downloaded, not run as a scene', async () => {
+    const downloads = mkdtempSync(join(tmpdir(), 'hypersol-e2e-downloads-'));
+    folders.push(downloads);
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile(), downloadsDir: downloads });
+    try {
+      await waitForPage(h, 'link-a');
+      await navigateTo(h, server.url('review-134/attachment.holoml'));
+      const list = await waitFor('the download done', () => shellCall(h, 'downloads'), (d) => d.length === 1 && d[0]!.state === 'completed');
+      expect(list[0]!.filename).toBe('review-134-scene.holoml');
+      // The tab stays on the page it had, and shows no scene.
+      expect(await addressOf(h, await focusedPage(h))).toBe(server.url('link-a.html'));
+      expect((await shellCall(h, 'holoml')).shown).toBe(false);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('a .holoml the site sandboxes is shown as the site sent it: text, under the site\'s policy, with no viewer', async () => {
+    const h = await launch(server.url('review-134/sandboxed.holoml'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'sandboxed.holoml');
+      const facts = await inPage<{ type: string; text: string; viewer: string; origin: string }>(
+        h,
+        '({ type: document.contentType, text: document.body.innerText, viewer: typeof window.__holoml, origin: self.origin })',
+        'sandboxed.holoml',
+      );
+      expect(facts.type).toBe('text/plain');
+      expect(facts.text).toContain('<holoml version="0.1">');
+      expect(facts.viewer).toBe('undefined');
+      // The site's sandbox still holds: the page has no origin of its own.
+      expect(facts.origin).toBe('null');
+      expect((await shellCall(h, 'holoml')).shown).toBe(false);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('a HoloML page keeps the site\'s own content policy beside HoloML\'s', async () => {
+    const url = server.url('review-134/with-policy.holoml');
+    const h = await launch(url, { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'with-policy.holoml');
+      await sceneReady(h, 'with-policy.holoml');
+      expect((await shellCall(h, 'holoml')).shown).toBe(true);
+      // The site said connect-src 'none'; HoloML's own policy would allow the page's own site.
+      const before = server.hits.get('/review-134/with-policy.holoml') ?? 0;
+      expect(await inPage<string>(h, `fetch(${JSON.stringify(url)}).then(() => 'fetched', () => 'refused')`, 'with-policy.holoml')).toBe('refused');
+      expect(server.hits.get('/review-134/with-policy.holoml') ?? 0).toBe(before);
+      // And HoloML's policy holds too: no pictures from other sites.
+      expect(
+        await inPage<string>(
+          h,
+          `new Promise((resolve) => { const i = new Image(); i.onload = () => resolve('loaded'); i.onerror = () => resolve('refused'); i.src = ${JSON.stringify(server.url('icon.png').replace('127.0.0.1', 'shop.test'))}; })`,
+          'with-policy.holoml',
+        ),
+      ).toBe('refused');
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('M6: a HoloML file opened from the computer', () => {
+  const openLocal = (h: Harness, path: string) =>
+    h.app.evaluate(async (_e, p) => (globalThis as unknown as { __hypersolTest: { openLocal(p: string): Promise<string | null> } }).__hypersolTest.openLocal(p), path);
+  const models = (h: Harness) => inPage<{ src: string; state: string }[]>(h, 'window.__holoml.models()', 'hypersol-file');
+
+  it('from the Downloads folder reads the files beside it, not the folders inside, and says so in its console', async () => {
+    // The run's Downloads folder: a page, its model beside it, and the same model in a folder inside.
+    const downloads = mkdtempSync(join(tmpdir(), 'hypersol-e2e-downloads-'));
+    folders.push(downloads);
+    mkdirSync(join(downloads, 'models'));
+    const car = join(FIXTURES_DIR, 'holoml', 'models', 'placeholder-car.gltf');
+    copyFileSync(car, join(downloads, 'beside.gltf'));
+    copyFileSync(car, join(downloads, 'models', 'inside.gltf'));
+    writeFileSync(
+      join(downloads, 'saved.holoml'),
+      '<holoml version="0.1">\n  <head>\n    <title>Saved page</title>\n  </head>\n  <scene>\n    <model id="beside" src="beside.gltf" />\n    <model id="inside" src="models/inside.gltf" position="4 0 0" />\n  </scene>\n</holoml>\n',
+    );
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile({ instruments: true }), downloadsDir: downloads });
+    try {
+      await waitForPage(h, 'link-a');
+      await shellCall(h, 'showUrl', (await openLocal(h, join(downloads, 'saved.holoml')))!);
+      await waitForPage(h, 'saved.holoml');
+      await sceneReady(h, 'hypersol-file');
+      const loaded = await waitFor('both models settled', () => models(h), (m) => m.every((x) => x.state !== 'loading'));
+      expect(loaded.map((m) => [m.src, m.state])).toEqual([
+        ['beside.gltf', 'loaded'],
+        ['models/inside.gltf', 'failed'],
+      ]);
+      await waitFor('the note in the page\'s console', async () => (await shellCall(h, 'instruments')).console, (lines) => lines.some((l) => l.includes('opened from a folder that holds other files too')));
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('leaves for the web only after a real click or key press, and without the address\'s query and fragment', async () => {
+    const folder = mkdtempSync(join(tmpdir(), 'hypersol-holoml-'));
+    folders.push(folder);
+    mkdirSync(join(folder, 'page'));
+    writeFileSync(join(folder, 'page', 'local.holoml'), '<holoml version="0.1">\n  <head>\n    <title>Local page</title>\n  </head>\n  <scene>\n    <label position="0 1.5 0">A local page</label>\n  </scene>\n</holoml>\n');
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      const local = (await openLocal(h, join(folder, 'page', 'local.holoml')))!;
+      await shellCall(h, 'showUrl', local);
+      await waitForPage(h, 'local.holoml');
+      await sceneReady(h, 'hypersol-file');
+      const page = await focusedPage(h);
+      const away = `${server.url('tall.html')}?file=IMG_0001.jpg#more`;
+      const fetched = () => [server.hits.get('/tall.html') ?? 0, server.hits.get('/tall.html?file=IMG_0001.jpg') ?? 0];
+
+      // A script alone: refused. The request never leaves, and the tab stays.
+      await inPage(h, `location.href = ${JSON.stringify(away)}; true`, page);
+      await inPage(h, 'new Promise((r) => setTimeout(() => r(true), 300))', page);
+      expect(await addressOf(h, page)).toBe(local);
+      expect(fetched()).toEqual([0, 0]);
+
+      // After a real click on the page: it goes, without the parts that could carry what the page read.
+      await inPage(h, `addEventListener('pointerdown', () => { window.__pressed = true; }, true); true`, page);
+      const middle = await inPage<{ x: number; y: number }>(h, '({ x: innerWidth / 2, y: innerHeight - 20 })', page);
+      await clickUntil(h, await shellCall(h, 'projectPagePoint', middle.x, middle.y), 'the click reached the page', () => inPage<boolean>(h, 'window.__pressed === true', page));
+      await inPage(h, `location.href = ${JSON.stringify(away)}; true`, page);
+      await waitFor('the page left for the web', () => focusedTab(h), (t) => t.url.startsWith(server.url('tall.html')));
+      await waitForPage(h, 'tall.html');
+      expect(await addressOf(h, page)).toBe(server.url('tall.html'));
+      expect(fetched()).toEqual([1, 0]);
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('M11: a .holoml file dropped on a page', () => {
+  it('opens in that tab when it comes from the page\'s own drop; a path of another kind does not', async () => {
+    const folder = mkdtempSync(join(tmpdir(), 'hypersol-holoml-'));
+    folders.push(folder);
+    mkdirSync(join(folder, 'page'));
+    const scene = join(folder, 'page', 'dropped.holoml');
+    writeFileSync(scene, '<holoml version="0.1">\n  <head>\n    <title>Dropped page</title>\n  </head>\n  <scene>\n    <label position="0 1.5 0">A dropped page</label>\n  </scene>\n</holoml>\n');
+    const other = join(folder, 'page', 'notes.txt');
+    writeFileSync(other, 'not a HoloML page');
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      const page = await focusedPage(h);
+      /** Drops a file on the page, as the system does: through the page's own drag events. */
+      const drop = (file: string) =>
+        h.app.evaluate(
+          async ({ webContents }, { id, file }) => {
+            const guest = webContents.fromId(id)!;
+            guest.debugger.attach('1.3');
+            try {
+              const data = { items: [], files: [file], dragOperationsMask: 1 };
+              for (const type of ['dragEnter', 'dragOver', 'drop']) await guest.debugger.sendCommand('Input.dispatchDragEvent', { type, x: 200, y: 200, data });
+            } finally {
+              guest.debugger.detach();
+            }
+          },
+          { id: page.id, file },
+        );
+      // A file of another kind: the page's preload does not pass it on, and the tab stays.
+      await drop(other);
+      await inPage(h, 'new Promise((r) => setTimeout(() => r(true), 300))', page);
+      expect(await addressOf(h, page)).toBe(server.url('link-a.html'));
+      // A .holoml file: it opens in the tab.
+      await drop(scene);
+      await waitFor('the dropped page in the tab', () => focusedTab(h), (t) => /^hypersol-file:\/\/[0-9a-f]{16}\/dropped\.holoml$/.test(t.url));
+      await sceneReady(h, 'hypersol-file');
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('M7: Block ends capture in a page that asks to be kept', () => {
+  it('reloads the page without asking "Leave this page?", so the camera is off whatever the page wants', async () => {
+    const h = await launch(server.url('media.html'), { userDataDir: newProfile() });
+    h.app.context().on('dialog', () => undefined);
+    try {
+      await waitForPage(h, 'media.html');
+      const page = await focusedPage(h);
+      const tab = (await focusedTab(h)).id;
+      // The page holds the camera, and would keep its tab if asked.
+      const live = inPage<string>(h, 'navigator.mediaDevices.getUserMedia({ video: true }).then((s) => { window.keep = s; return "live"; }, (e) => e.name)', page);
+      await waitFor('the camera prompt', async () => (await shellCall(h, 'prompts')).permission, (p) => p !== null);
+      await h.shell.click('hs-prompts [data-testid="perm-allow"][data-armed]');
+      expect(await live).toBe('live');
+      await inPage(h, `addEventListener('beforeunload', (e) => { e.preventDefault(); e.returnValue = ''; }); true`, page);
+      await h.app.evaluate(() => void ((globalThis as unknown as { __hypersolTest: { leaveAnswer: string } }).__hypersolTest.leaveAnswer = 'stay'));
+      await waitFor('the in-use marker', () => shellCall(h, 'accessOf', tab), (k) => k.includes('camera'));
+      // Block, through the site panel.
+      await h.shell.click('hs-toolbar [data-testid="site-button"]');
+      await waitFor('the site panel', () => shellCall(h, 'sitePanel'), (s) => s.open && s.site !== null);
+      await h.shell.selectOption('hs-site-panel [data-testid="site-camera"]', 'block');
+      await waitFor('the page reloaded: its stream gone', () => inPage<string>(h, 'typeof window.keep', page), (t) => t === 'undefined');
+      await waitFor('the marker gone', () => shellCall(h, 'accessOf', tab), (k) => !k.includes('camera'));
+      expect(await testLog<string[]>(h, 'leaveAsks')).toEqual([]);
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('M9: a start that fails', () => {
+  it('ends with a message and an error code, where it used to stay running without a window', async () => {
+    // The folder the refreshed filter lists are saved in cannot be made: a file has its name.
+    const profile = newProfile();
+    writeFileSync(join(profile, 'filters'), 'in the way');
+    const env = { ...process.env, HYPERSOL_TEST: '1', HYPERSOL_TEST_BACKGROUND: '1' } as Record<string, string>;
+    delete env['ELECTRON_RUN_AS_NODE'];
+    delete env['NODE_OPTIONS'];
+    const electronPath = createRequire(join(APP_DIR, 'package.json'))('electron') as unknown as string;
+    const app = spawn(electronPath, [APP_DIR, `--hypersol-user-data=${profile}`, OFFLINE_RULES, ...graphicsSwitches()], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+    let output = '';
+    app.stdout.on('data', (d: Buffer) => (output += d.toString()));
+    app.stderr.on('data', (d: Buffer) => (output += d.toString()));
+    const code = await new Promise<number | null | 'still running'>((resolve) => {
+      const timer = setTimeout(() => {
+        app.kill();
+        resolve('still running');
+      }, 30_000);
+      app.once('exit', (exit) => {
+        clearTimeout(timer);
+        resolve(exit);
+      });
+    });
+    expect(code, output).toBe(1);
+    expect(output).toContain("HyperSpace 3D couldn't start");
+    expect(output).toContain(`Its data folder is ${profile}.`);
+  });
+});
+
+describe('M10: a shell that crashes', () => {
+  it('is reloaded once, and a second crash within a minute ends the app with a message', async () => {
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    let output = '';
+    h.proc.stderr?.on('data', (d: Buffer) => (output += d.toString()));
+    try {
+      await waitForPage(h, 'link-a');
+      const shell = () =>
+        h.app.evaluate(({ BrowserWindow }) => {
+          const contents = BrowserWindow.getAllWindows()[0]?.webContents;
+          return contents ? { crashed: contents.isCrashed(), loading: contents.isLoading(), pid: contents.getOSProcessId() } : null;
+        });
+      const first = (await shell())!.pid;
+      await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.webContents.forcefullyCrashRenderer());
+      // Reloaded: the window has a working shell again, in a new process.
+      await waitFor('the shell reloaded', shell, (s) => s !== null && !s.crashed && !s.loading && s.pid !== 0 && s.pid !== first, 30_000);
+      await waitFor('a tab open again', () => h.app.evaluate(({ webContents }) => webContents.getAllWebContents().some((w) => w.getType() === 'webview')), (any) => any, 30_000);
+      await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.webContents.forcefullyCrashRenderer()).catch(() => undefined);
+      await waitForExit(h, 15_000);
+      expect(h.proc.exitCode).toBe(1);
+      expect(output).toContain('HyperSpace 3D has stopped');
+    } finally {
+      await h.close();
+    }
+  });
+});

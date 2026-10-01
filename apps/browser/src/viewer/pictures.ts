@@ -8,6 +8,11 @@
  *
  * Milestone 20 (loading by area): a material's picture that no model
  * uses any more is let go, and its bytes stop counting.
+ *
+ * Review 134 (V6, V10): each picture's pixels count towards the page's
+ * pixels of pictures, from its header, before it is decoded; an HDR
+ * panorama's size is read from its header before it is unpacked; and a
+ * picture that is not shown after all gives back everything it held.
  */
 import {
   DataTexture,
@@ -21,10 +26,17 @@ import {
   Texture,
 } from 'three';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
-import { LeftOut, LIMITS, pictureSize, type Budget } from './budget';
+import { hdrSize, LeftOut, LIMITS, pictureSize, Unreadable, type Budget, type Claim } from './budget';
 
 /** A colour picture (in sRGB), or data such as bumps and roughness (as they are). */
 export type PictureUse = 'color' | 'data';
+
+/** A picture's file as it arrived, with what it holds of the page's totals (its bytes and its pixels). */
+interface PictureFile {
+  data: ArrayBuffer;
+  bytes: number;
+  claim: Claim;
+}
 
 function tooLarge(width: number, height: number): LeftOut | null {
   return width > LIMITS.pictureSide || height > LIMITS.pictureSide
@@ -34,8 +46,7 @@ function tooLarge(width: number, height: number): LeftOut | null {
 
 export class Pictures {
   private readonly bitmaps = new Map<string, Promise<ImageBitmap>>();
-  private readonly files = new Map<string, Promise<{ data: ArrayBuffer; bytes: number }>>();
-  private readonly released = new Set<string>();
+  private readonly files = new Map<string, Promise<PictureFile>>();
   private readonly textures = new Map<string, Promise<Texture>>();
   /** Panoramas: the surroundings and the sky may be one file, loaded (and counted) once. */
   private readonly panoramas = new Map<string, Promise<Texture>>();
@@ -61,24 +72,27 @@ export class Pictures {
     const key = `${flip ? 'flipped ' : ''}${url.href}`;
     let picture = this.bitmaps.get(key);
     if (!picture) {
-      picture = this.checked(url).then(({ data, bytes }) =>
-        this.keepingBytes(url, bytes, () => createImageBitmap(new Blob([data]), flip ? { imageOrientation: 'flipY' } : {})),
-      );
+      picture = this.checked(url).then(({ data, claim }) => this.keeping(claim, () => createImageBitmap(new Blob([data]), flip ? { imageOrientation: 'flipY' } : {})));
       this.bitmaps.set(key, picture);
     }
     return picture;
   }
 
-  /** A picture's bytes: fetched and counted once however it is used, with its size read from its header and checked. */
-  private checked(url: URL): Promise<{ data: ArrayBuffer; bytes: number }> {
+  /**
+   * A picture's bytes: fetched and counted once however it is used, with
+   * its size read from its header and checked, and its pixels counted
+   * towards the page's, before anything is decoded.
+   */
+  private checked(url: URL): Promise<PictureFile> {
     let file = this.files.get(url.href);
     if (!file) {
       file = this.budget.file(url, this.origin).then((got) =>
-        this.keepingBytes(url, got.bytes, () => {
+        this.keeping(got.claim, () => {
           const size = pictureSize(new Uint8Array(got.data));
-          if (!size) throw new Error('not a PNG, JPEG, or WebP picture');
+          if (!size) throw new Unreadable('not a PNG, JPEG, or WebP picture');
           const over = tooLarge(size.width, size.height);
           if (over) throw over;
+          got.claim.setPixels(size.width * size.height);
           return got;
         }),
       );
@@ -89,19 +103,25 @@ export class Pictures {
 
   /**
    * Makes something of a picture's bytes; if that fails, the picture is
-   * not shown and its bytes stop counting, as a model's (once, however
-   * many ways it was used).
+   * not shown and what it held (its bytes, its pixels) stops counting, as
+   * a model's (once, however many ways it was used).
    */
-  private async keepingBytes<T>(url: URL, bytes: number, make: () => T | Promise<T>): Promise<T> {
+  private async keeping<T>(claim: Claim, make: () => T | Promise<T>): Promise<T> {
     try {
       return await make();
     } catch (e) {
-      if (!this.released.has(url.href)) {
-        this.released.add(url.href);
-        this.budget.releaseBytes(bytes);
-      }
+      claim.release();
       throw e;
     }
+  }
+
+  /**
+   * A picture the page shows itself could not be shown after all (its
+   * bytes are not a picture a browser can draw): what it held stops
+   * counting. It stays known as failed, and is not fetched again.
+   */
+  discard(url: URL): void {
+    void this.files.get(url.href)?.then(({ claim }) => claim.release(), () => undefined);
   }
 
   /**
@@ -169,13 +189,8 @@ export class Pictures {
     void bitmap?.then((b) => b.close(), () => undefined);
     const file = this.files.get(href);
     this.files.delete(href);
-    void file?.then(
-      ({ bytes }) => {
-        // A picture that failed after it arrived had its bytes released then.
-        if (!this.released.delete(href)) this.budget.releaseBytes(bytes);
-      },
-      () => this.released.delete(href),
-    );
+    // A picture that failed after it arrived gave back what it held then.
+    void file?.then(({ claim }) => claim.release(), () => undefined);
   }
 
   /** A panorama, an HDR, PNG, or JPEG picture: the surroundings, to light the scene, or the sky, to draw behind it. */
@@ -201,12 +216,18 @@ export class Pictures {
 
   private async panorama(url: URL): Promise<Texture> {
     if (/\.hdr$/i.test(url.pathname)) {
-      const { data, bytes } = await this.budget.file(url, this.origin);
-      const hdr = await this.keepingBytes(url, bytes, () => {
+      const { data, claim } = await this.budget.file(url, this.origin);
+      const hdr = await this.keeping(claim, () => {
+        // Its size from the text at its start, before it is unpacked: a huge one never is.
+        const size = hdrSize(new Uint8Array(data));
+        const large = size ? tooLarge(size.width, size.height) : null;
+        if (large) throw large;
+        if (size) claim.setPixels(size.width * size.height);
         const parsed = new HDRLoader().parse(data);
-        if (!parsed.width || !parsed.height || !parsed.data) throw new Error('not an HDR panorama');
+        if (!parsed.width || !parsed.height || !parsed.data) throw new Unreadable('not an HDR panorama');
         const over = tooLarge(parsed.width, parsed.height);
         if (over) throw over;
+        claim.setPixels(parsed.width * parsed.height);
         return { data: parsed.data, width: parsed.width, height: parsed.height, type: parsed.type };
       });
       const t = new DataTexture(hdr.data, hdr.width, hdr.height, RGBAFormat, hdr.type);

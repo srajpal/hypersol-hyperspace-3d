@@ -1,0 +1,54 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML: more lights than a page may have</title>
+  </head>
+  <!-- Review 134, V6: twenty lights that ask for shadows, then twenty more lights. Four cast shadows and
+       the other sixteen shine without; thirty-two lights are shown and the last eight are left out.
+       The scene is still drawn. -->
+  <scene background="#1c2030">
+    <viewpoint position="0 5 7" look-at="0 0.5 0" />
+    <light type="ambient" intensity="0.3" />
+    <light id="lamp" type="spot" position="-4.75 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="-4.25 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="-3.75 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="-3.25 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="-2.75 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="-2.25 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="-1.75 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="-1.25 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="-0.75 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="-0.25 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="0.25 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="0.75 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="1.25 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="1.75 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="2.25 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="2.75 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="3.25 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="3.75 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="4.25 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="spot" position="4.75 6 3" look-at="0 0 0" angle="40" intensity="0.12" shadows />
+    <light type="point" position="-4.75 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="-4.25 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="-3.75 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="-3.25 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="-2.75 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="-2.25 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="-1.75 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="-1.25 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="-0.75 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="-0.25 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="0.25 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="0.75 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="1.25 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="1.75 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="2.25 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="2.75 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="3.25 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="3.75 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="4.25 3 -3" range="20" intensity="0.05" />
+    <light type="point" position="4.75 3 -3" range="20" intensity="0.05" />
+    <model id="floor" src="blockworld/models/stone.gltf" position="0 -0.5 0" scale="8 1 6" shadows />
+    <model id="block" src="blockworld/models/stone.gltf" position="0 1.5 0" shadows />
+  </scene>
+</holoml>

@@ -1,11 +1,14 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-09-29 (milestones 1 to 21 accepted, 21 in prompt
+Last updated 2026-09-30 (milestones 1 to 21 accepted, 21 in prompt
 125, and HoloML 0.2 released as v0.2.0 in prompt 126: see "Milestone 21,
 accepted" below. 22, HoloML's documentation, is being built (prompts
-127 and 128: see "Milestone 22, in progress" below). The roadmap is in
-TODO.md).
+127 and 128: see "Milestone 22, in progress" below). A review of both
+repositories and its fixes are built and merged on the browser's
+`review-134-fixes`, not yet pushed, and open as holoml's pull request
+#21 (prompts 134 and 135: see "The review of 2026-09-30, in progress"
+below). The roadmap is in TODO.md).
 
 ## Where things stand
 
@@ -77,6 +80,114 @@ holoml's #19 merged, 2026-09-29):
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
 
+## The review of 2026-09-30, in progress (prompts 134 and 135)
+
+The owner asked for a thorough review of both repositories and the
+automatic builds (prompt 134), then for its recommendations to be taken
+and every finding fixed (prompt 135). TODO.md, "The review of
+2026-09-30", has what was reviewed, what was fixed with the check for
+each, and what was left on purpose; CHANGELOG.md, Unreleased, has it
+for readers. The review's own file, REVIEW-2026-09-30.md, is at this
+repository's root on the owner's computer and is not committed: it
+named weaknesses before they were fixed. Where it is kept is the
+owner's decision.
+
+Where the work is (nothing here is pushed yet):
+
+- Browser: branch `review-134-fixes`, made from `m22-holoml-docs`
+  (pull request #39). Merged into it, in two waves: the main process
+  and preloads (`review-134/main`), the shell (`review-134/shell`), the
+  tests and their tools (`review-134/tests`), the viewer
+  (`review-134/viewer`), the documents (`review-134/docs`); then
+  `review-134/viewer2` (the viewer doing what HoloML's specification's
+  third edition says, the Scene inspector's commands over the
+  browser's own line, and repairs to the viewer's checks: key holds by
+  the scene's clock, budgets skipped in software) and
+  `review-134/features` (a prompt for HTTP sign-in, the window's size
+  remembered, Ctrl+Shift+V in the shortcuts table, full screen and
+  pointer lock refused again, a permission change naming its site, the
+  test-run argument to page preloads, three checks measuring inside
+  the app, one record per tab in the shell); and the lead's own changes
+  (Electron 44.5.1 with its rule 13 record, Dependabot and the
+  repository's files, `.claude/` ignored, the viewer's review checks
+  in part 2 of the automatic builds, the history search index's
+  secure delete, tab snapshots through the shell-only helper, the
+  copy's version from the copied packages, `pnpm filters:update` run,
+  lint that knows the types). The documents describe all of it (this
+  branch's second documents pass, `review-134/docs2`, to be merged
+  too).
+- holoml: branch `review-134-fixes`, made from main (3ce0ab2), with
+  the language's and the examples' fixes merged: the specification's
+  third edition, the packages at 0.2.2, a change log, 44 new
+  conformance samples, the new turtle, type-aware lint, and its tests
+  run file by file. Its pull request #21 is open
+  (https://github.com/srajpal/holoml/pull/21). Nothing is tagged
+  since v0.2.0. The browser's copy of HoloML (packages/holoml,
+  SOURCE.json) is made from that branch at 9e59907, and the copy's
+  package file takes its version, 0.2.2, from the copied packages.
+- On GitHub (the lead's record, 2026-09-30): the rule on main requires
+  the one check "All checks"; Dependabot's alerts and security updates
+  are on, and code scanning is set up, in both repositories; merged
+  branches are deleted on merge from now on. Not done there: the three
+  old merged branches (left for the owner), and requiring actions by
+  commit (only after both pull requests are merged).
+
+Done since (2026-09-30): every branch is merged; the final runs are
+recorded in TODO.md's review section (Windows: 372 checks, all passed;
+the Linux container: three checks failed only there and were repaired);
+the examples' pictures of the aquarium and Blockworld are taken again
+(the progress screenshots of milestones 21 and 22 still show the old
+turtle: they are the record of their time); the issues (#40 to #44
+here, #22 and #23 in holoml) and the draft security advisories (seven
+here, two in holoml) are open; REVIEW-2026-09-30.md carries its status.
+
+How to resume:
+
+1. Once holoml's #21 is merged, make the browser's copy from holoml's
+   main (`pnpm holoml:sync main --examples main`), and from a tag once
+   the owner tags one (0.2.2, as a pre-release).
+2. After both pull requests are merged: switch on "actions by commit"
+   in each repository's settings, publish or close the draft
+   advisories as the owner decides, and take the owner's decisions
+   listed under "Deliberately not done" in TODO.md.
+
+Worth knowing:
+
+- A check that leaves a page with a `beforeunload` handler must take
+  Playwright's own dialog out of the way first
+  (`h.app.context().on('dialog', () => undefined)`); the app's "Leave
+  this page?" is recorded in the test log and answered from there
+  (leaveAsks, leaveAnswer in main/test-hooks.ts).
+- A check that clicks the permission prompt or the download notice
+  waits for `[data-armed]` (half a second after either appears).
+- The clipboard checks (D8, K2, and M1's "a real click may still copy
+  text") failed on this computer during the fixes while its clipboard
+  was out of reach; they are to be run again in the final runs.
+- The viewer's test hooks appear on a HoloML page only when the main
+  process started the page's process with `--hypersol-test-run`
+  (shared/test-run.ts), which it does in test mode alone, never in a
+  packaged app; the page preload reads nothing from the environment
+  (ARCHITECTURE.md, Scene inspector). Milestone 28 keeps a check that
+  a packaged app has neither test mode nor the hooks.
+- The Scene inspector's choosing and picking reach the viewer as
+  `select:<index>`, `pick-on`, and `pick-off` on the HoloML command
+  channel (main/inspect/index.ts); `window.__holoml` in a normal run
+  holds only `scene`.
+- A deleted history entry's pieces leave the search index at once
+  (schema 5 sets FTS5's secure-delete; storage/scrub.test.ts).
+- The viewer's checks hold a key for an amount of the scene's own time
+  (the `clock` hook; the `hold` and `sceneTime` helpers in the
+  milestone files), since a frame drawn slowly in software makes scene
+  time run behind the clock; the budgets that need a graphics card
+  report "skipped" in software (AGENTS.md, Testing).
+- A check of HTTP sign-in uses the fixture server's
+  `/review-134/basic/*` and `/review-134/basic-long/*` (a long realm);
+  the test log's `signInsWaiting()` counts the prompts showing or
+  waiting. The window-size check launches with `rememberWindow` (the
+  harness passes `--test-remember-window`).
+- `pnpm lint` takes about half a minute now that three of its rules
+  need the types (eslint.config.js).
+
 ## Milestone 22, in progress (2026-09-29, prompts 127 and 128)
 
 The plan and its checks (Y1 to Y10) are in TODO.md, "Milestone 22 —
@@ -112,13 +223,11 @@ Built (2026-09-29), on branches not yet merged:
 - holoml #20 is merged (3ce0ab2, prompt 133) and the site is published:
   Y5 and Y9 pass from its public address. The browser's copy is synced
   from holoml's main.
-- A review of both repositories (prompt 134, 2026-09-30) is in
-  REVIEW-2026-09-30.md at this repository's root, not committed, as it
-  lists weaknesses not yet fixed; the owner decides what is fixed and
-  when. From it, so far, only the automatic builds changed: the
-  end-to-end checks run in four parts on each system, with an "All
-  checks" job (committed on this branch, not pushed; the rule on main
-  still names parts 1 and 2 only).
+- The review of both repositories (prompt 134) and its fixes (prompt
+  135) have their own section, above. This branch, `m22-holoml-docs`,
+  is pushed with the automatic builds in four parts, an "All checks"
+  job, the skip for documents, and actions named by commit (fce1e63,
+  pull request #39); the fixes are on `review-134-fixes`, made from it.
 - Still to do: a screen reader by hand (Y6, the owner's),
   the owner's acceptance, and the v0.2.1 tag on
   the owner's go (as a pre-release). Both projects are marked
@@ -191,7 +300,9 @@ Worth knowing:
   soundLevels(id) reads what each ear hears, and X3 checks it.
 - Drawn in software (GitHub's Linux machines) the aquarium is slow: its
   checks may take up to 600 s each (TANK_TIME in m21.e2e.ts), and the
-  m21 file about 18 minutes on `pnpm test:linux`'s 4 processors. Its
+  m21 file about 18 minutes on `pnpm test:linux`'s 4 processors (that
+  was before scenes were drawn at half resolution in software, prompt
+  135; since then 8 min 11 s, in the run of 2026-09-30). Its
   models have triangle budgets (fish.mjs, and prepare.mjs for Poly
   Haven's): shapes.mjs thinTo makes a more detailed file lighter. A new
   fish or rock should get one.
@@ -346,12 +457,13 @@ to this repository for rules and the prompt log.
 
 - Both repositories protect main with two rulesets (prompt 130): no
   deletion or force pushes, for everyone; and a pull request merges once
-  its CI checks pass, which the owner, as admin, may bypass (so the
+  its CI checks pass (in this repository the one check "All checks",
+  since prompt 135), which the owner, as admin, may bypass (so the
   agreed direct pushes to main still work). TODO.md, "Branch
   protection", has the details.
 - Desktop first: Windows and Linux, then macOS; mobile later, as its own
   project. Mouse, keyboard, and touch.
-- Stack: Electron (the newest stable line; 44.4.5 on 2026-09-26),
+- Stack: Electron (the newest stable line; 44.5.1 since 2026-09-30),
   TypeScript, Three.js, Lit, SQLite through Node's node:sqlite,
   @ghostery/adblocker-electron, electron-vite, Vitest, Playwright. Node
   22.13 or newer, pnpm 12.4.1 pinned. Reasons in ARCHITECTURE.md
@@ -365,10 +477,12 @@ to this repository for rules and the prompt log.
   room needs WebGL 2, and without it pages still work and a notice says
   so (owner, prompt 60).
 - Automatic builds and tests: GitHub Actions on Windows and Linux for
-  every push (.github/workflows/ci.yml). The runners have no graphics
+  every pull request and every push to main (.github/workflows/ci.yml),
+  the end-to-end checks in four parts on each system; a change to
+  documents only skips them. The runners have no graphics
   card: C9's frame rate is measured but skipped there (owner, prompt
-  59); Linux runs use SwiftShader for WebGL and a throwaway GNOME
-  Keyring for the password checks.
+  59), and so is G9's frame-time budget; Linux runs use SwiftShader for
+  WebGL and a throwaway GNOME Keyring for the password checks.
 - The language is HoloML, file extension `.holoml` ("3DML" was taken;
   "HSML" was checked and advised against; `.holo` and `.hlml` are used
   by other formats). Its syntax is strict and HTML-like, and its 3D

@@ -50,7 +50,11 @@ export interface SitePermissions {
 export type PermissionRequest =
   | { op: 'answer'; id: number; answer: PromptAnswer }
   | { op: 'site'; tab: number }
-  | { op: 'site.set'; tab: number; kind: PermissionKind; state: 'ask' | PermissionChoice };
+  /**
+   * A choice made in the site panel. It names the site (origin) the panel
+   * showed, so a tab that has gone elsewhere since is not given it.
+   */
+  | { op: 'site.set'; tab: number; origin: string; kind: PermissionKind; state: 'ask' | PermissionChoice };
 
 export interface PermissionResults {
   answer: null;
@@ -157,11 +161,12 @@ export function parsePermissionRequest(raw: unknown): { request: PermissionReque
       return { request: { op: 'site', tab: r['tab'] } };
     case 'site.set':
       if (!isId(r['tab'])) return { error: 'site.set: tab must be a page id' };
+      if (!isOrigin(r['origin'])) return { error: 'site.set: origin must be a web origin' };
       if (!isPermissionKind(r['kind'])) return { error: 'site.set: unknown permission' };
       if (r['state'] !== 'ask' && r['state'] !== 'allow' && r['state'] !== 'block') {
         return { error: 'site.set: state must be ask, allow, or block' };
       }
-      return { request: { op: 'site.set', tab: r['tab'], kind: r['kind'], state: r['state'] } };
+      return { request: { op: 'site.set', tab: r['tab'], origin: r['origin'], kind: r['kind'], state: r['state'] } };
     default:
       return { error: `Unknown request: ${String(r['op'])}` };
   }

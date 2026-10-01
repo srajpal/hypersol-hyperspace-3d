@@ -4,20 +4,18 @@
  * cannot bring up a password offer, and blocking the camera stops it.
  * Issue #20 is fixed in m4 (F9) and m7 (I6).
  */
-import { mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
+  caughtUp,
   clickAt,
   focusedPage,
   focusedTab,
   inPage,
   launch,
   navigateTo,
+  newProfile,
   pressInShell,
-  removeFolder,
   screenPointOf,
   shellCall,
   sleep,
@@ -29,7 +27,6 @@ import {
 } from './harness';
 
 let server: FixtureServer;
-const folders: string[] = [];
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -37,15 +34,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server?.close();
-  for (const f of folders) await removeFolder(f);
 });
-
-function newProfile(settings?: object): string {
-  const dir = mkdtempSync(join(tmpdir(), 'hypersol-e2e-profile-'));
-  folders.push(dir);
-  if (settings) writeFileSync(join(dir, 'settings.json'), JSON.stringify(settings));
-  return dir;
-}
 
 const PROMPT = (id: string) => `hs-prompts [data-testid="${id}"]`;
 const BAR = (id: string) => `hs-toolbar [data-testid="${id}"]`;
@@ -63,7 +52,7 @@ async function openTab(h: Harness, file: string): Promise<number> {
 /** Answers the camera or microphone prompt with Allow. */
 async function allow(h: Harness): Promise<void> {
   await waitFor('prompt', async () => (await shellCall(h, 'prompts')).permission, (p) => p !== null);
-  await h.shell.click(PROMPT('perm-allow'));
+  await h.shell.click(`${PROMPT('perm-allow')}[data-armed]`);
 }
 
 describe('issue #17: unsent drafts keep a tab awake', () => {
@@ -166,7 +155,9 @@ describe('issue #19: no password offer from a script alone', () => {
         `document.querySelector('#user').value = 'qa-user'; document.querySelector('#pass').value = 'synthetic-only'; document.querySelector('form').requestSubmit(); true`,
         page,
       );
-      await sleep(1500);
+      // Nothing is offered, once the app has dealt with whatever the
+      // page sent it for the script's sign-in.
+      await caughtUp(h, page);
       expect((await shellCall(h, 'prompts')).offer).toBeNull();
       // The person signs in: the offer comes.
       await clickAt(h, await screenPointOf(h, '#user', page));
@@ -176,7 +167,9 @@ describe('issue #19: no password offer from a script alone', () => {
       await inPage(h, 'document.querySelector("#pass").select(); true', page);
       await typeInPage(h, 'test-pass-1', page);
       await clickAt(h, await screenPointOf(h, '#go', page));
-      await waitFor('an offer', async () => (await shellCall(h, 'prompts')).offer, (o) => o !== null && o.username === 'ada');
+      const made = await waitFor('an offer', async () => (await shellCall(h, 'prompts')).offer, (o) => o !== null && o.username === 'ada');
+      // The app numbers its offers as it makes them: this is its first.
+      expect(made!.id).toBe(1);
     } finally {
       await h.close();
     }
@@ -208,10 +201,10 @@ describe('issue #22: blocking the camera stops it', () => {
       await h.shell.click(BAR('site-button'));
       await waitFor('site panel', () => shellCall(h, 'sitePanel'), (s) => s.open && s.site !== null);
       await h.shell.selectOption(SITE('site-camera'), 'block');
-      const state = (page: { id: number }) => inPage<string>(h, 'window.keep.getVideoTracks()[0].readyState', page);
-      await waitFor('first tab stopped', () => state(one), (s) => s === 'ended');
-      await waitFor('clones stopped', () => inPage<string>(h, '[window.trackCopy.readyState, window.streamCopy.getVideoTracks()[0].readyState].join()', one), (s) => s === 'ended,ended');
-      await waitFor('second tab stopped', () => state(two), (s) => s === 'ended');
+      // Each page that held the camera is reloaded (review of 2026-09-30, M7):
+      // its stream and the clones end with the old page, whatever its scripts do.
+      await waitFor('first tab reloaded: its stream and clones gone', () => inPage<string>(h, '[typeof window.keep, typeof window.trackCopy, typeof window.streamCopy].join()', one), (s) => s === 'undefined,undefined,undefined');
+      await waitFor('second tab reloaded: its stream gone', () => inPage<string>(h, 'typeof window.keep', two), (s) => s === 'undefined');
       await waitFor('marker gone', () => shellCall(h, 'accessOf', tabOne), (k) => !k.includes('camera'));
       expect(await h.shell.locator(SITE('site-given-camera')).count()).toBe(0);
       expect(await start(one)).toBe('NotAllowedError');
@@ -253,7 +246,8 @@ describe('issue #22: blocking the camera stops it', () => {
         await waitFor('site panel', () => shellCall(h, 'sitePanel'), (s) => s.open && s.site !== null);
         await h.shell.selectOption(SITE('site-camera'), 'block');
         const state = (page: { id: number }) => inPage<string>(h, 'window.keep.getVideoTracks()[0].readyState', page);
-        await waitFor('the blocking tab stopped', () => state(blocking), (s) => s === 'ended');
+        // The blocking tab's page is reloaded, which ends its capture (review of 2026-09-30, M7).
+        await waitFor('the blocking tab reloaded: its stream gone', () => inPage<string>(h, 'typeof window.keep', blocking), (s) => s === 'undefined');
         await sleep(500);
         expect(await state(other)).toBe('live');
       } finally {

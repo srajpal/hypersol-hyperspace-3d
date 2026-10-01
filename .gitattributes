@@ -1,3 +1,7 @@
+# Text files are kept with Unix line ends on every system, so a file
+# never changes only because of where it was edited.
+* text=auto eol=lf
+
 # HoloML test pages are read byte for byte (their error positions are checked).
 *.holoml -text
 # The example sites (showroom, Blockworld, and later ones) are

@@ -1,0 +1,23 @@
+# The same basics in every editor: Unix line ends, UTF-8, two spaces.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+# Markdown ends a line with two spaces for a line break.
+[*.md]
+trim_trailing_whitespace = false
+
+# HoloML test pages and the copied example sites are kept byte for byte.
+[{*.holoml,tests/fixtures/holoml/**}]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset

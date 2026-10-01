@@ -2,6 +2,9 @@ import { webContents as allContents, type IpcMainInvokeEvent, type NavigationEnt
 import { KEPT_HISTORIES, parseTabsRequest } from '../shared/tabs';
 import { isAllowedPageUrl } from './security';
 
+/** How long a restore waits for the new page's first, blank load to finish. */
+export const RESTORE_WAIT_MS = 3000;
+
 interface Kept {
   entries: NavigationEntry[];
   index: number;
@@ -18,7 +21,7 @@ export class TabHistory {
   private readonly open = new Map<number, Kept>();
   private readonly closed = new Map<number, Kept>();
 
-  constructor(private readonly deps: { isShell(contents: WebContents): boolean; isPrivate(contents: WebContents): boolean }) {}
+  constructor(private readonly deps: { isPrivate(contents: WebContents): boolean }) {}
 
   track(contents: WebContents): void {
     const id = contents.id;
@@ -50,9 +53,8 @@ export class TabHistory {
     for (const [id, kept] of this.closed) if (kept.private) this.closed.delete(id);
   }
 
-  /** A request from the shell. Never throws. */
+  /** A request from the shell (registered with handleFromShell, main/ipc.ts). Never throws. */
   async handle(event: IpcMainInvokeEvent, raw: unknown): Promise<{ ok: true; value: unknown } | { ok: false; error: string }> {
-    if (!this.deps.isShell(event.sender)) return { ok: false, error: 'Not allowed' };
     const parsed = parseTabsRequest(raw);
     if ('error' in parsed) return { ok: false, error: parsed.error };
     const { tab, from } = parsed.request;
@@ -63,22 +65,36 @@ export class TabHistory {
     const kept = this.closed.get(from) ?? this.open.get(from);
     // A private tab's history never goes into a normal tab, nor the other way.
     if (!kept || kept.private !== this.deps.isPrivate(target)) return { ok: true, value: false };
-    this.closed.delete(from);
+    const wasClosed = this.closed.delete(from);
     // The new page starts blank; let that first load finish, or it lands on
     // top of the restored history.
     if (target.isLoading()) {
       await new Promise<void>((resolve) => {
-        const timer = setTimeout(resolve, 3000);
-        target.once('did-stop-loading', () => {
+        const done = () => {
           clearTimeout(timer);
+          target.removeListener('did-stop-loading', done);
+          target.removeListener('destroyed', done);
           resolve();
-        });
+        };
+        const timer = setTimeout(done, RESTORE_WAIT_MS);
+        target.once('did-stop-loading', done);
+        target.once('destroyed', done);
       });
     }
-    // Not awaited: its promise waits for the page to finish loading, which
-    // a web page may never do (or not for long), and the tab follows the
-    // load through its own events. A failed load shows the tab's error card.
-    target.navigationHistory.restore({ entries: kept.entries, index: kept.index }).catch(() => undefined);
+    // The tab can close during the wait (review of 2026-09-30, M10): its
+    // page is gone, and the history is kept for another try.
+    if (target.isDestroyed()) {
+      if (wasClosed) this.closed.set(from, kept);
+      return { ok: false, error: 'No such page' };
+    }
+    try {
+      // Not awaited: its promise waits for the page to finish loading, which
+      // a web page may never do (or not for long), and the tab follows the
+      // load through its own events. A failed load shows the tab's error card.
+      target.navigationHistory.restore({ entries: kept.entries, index: kept.index }).catch(() => undefined);
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
     return { ok: true, value: true };
   }
 }

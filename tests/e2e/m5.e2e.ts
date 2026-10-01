@@ -4,8 +4,7 @@
  * global and per-site settings, image rectangles, pages that change,
  * reduced motion, and efficiency.
  */
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
@@ -15,9 +14,10 @@ import {
   inPage,
   launch,
   navigateTo,
+  newProfile,
   pressInShell,
   project,
-  removeFolder,
+  roomStill,
   screenPointOf,
   setContentSize,
   shellCall,
@@ -31,14 +31,6 @@ import {
 } from './harness';
 
 let server: FixtureServer;
-const profiles: string[] = [];
-
-function newProfile(settings?: object): string {
-  const dir = mkdtempSync(join(tmpdir(), 'hypersol-e2e-profile-'));
-  profiles.push(dir);
-  if (settings) writeFileSync(join(dir, 'settings.json'), JSON.stringify(settings));
-  return dir;
-}
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -46,7 +38,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server?.close();
-  for (const dir of profiles) await removeFolder(dir);
 });
 
 const PAGE = 'layers.html';
@@ -72,6 +63,8 @@ async function openSettings(h: Harness): Promise<void> {
 }
 
 describe('G1 to G3, G7: the layers view on a page', () => {
+  // These share one app and run in order: G1 leaves the view off, G2
+  // switches it on and scrolls to the form, and G3 and G7 need it on.
   let h: Harness;
   let flat: Record<string, number[]>;
   beforeAll(async () => {
@@ -179,10 +172,13 @@ describe('G4 to G6: switching, settings, and image rectangles', () => {
       await h.shell.click(SET('set-layers-on-open'));
       await waitFor('saved', () => Promise.resolve(JSON.parse(readFileSync(join(profile, 'settings.json'), 'utf8')).layersOnOpen), (v) => v === false);
       await pressInShell(h, 'Escape');
+      // The tab's view is on, from the page it opened with; the switch
+      // decides how the next page opens, and the tab's view changes when
+      // the app has decided that.
+      expect(await layersOn(h)).toBe(true);
       await navigateTo(h, server.url(PAGE));
       await waitForPage(h, PAGE);
-      await sleep(300);
-      expect(await layersOn(h)).toBe(false); // global off
+      await waitFor('the page opened flat', () => layersOn(h), (on) => !on); // global off
       await h.shell.click(LAYERS_BUTTON); // remembered for 127.0.0.1
       await waitFor('on', () => layersOn(h), (on) => on);
       await waitFor('site choice saved', () =>
@@ -204,10 +200,12 @@ describe('G4 to G6: switching, settings, and image rectangles', () => {
       await waitFor('forgotten', () => Promise.resolve(JSON.parse(readFileSync(join(profile, 'settings.json'), 'utf8')).layersSites), (s) =>
         Object.keys(s ?? { x: 1 }).length === 0);
       await pressInShell(h, 'Escape');
+      // On until now, by the site's choice; off once the page has loaded
+      // again and the app has decided how it opens.
+      expect(await layersOn(h)).toBe(true);
       await pressInShell(h, 'R', ['control']);
+      await waitFor('the page opened flat after loading again', () => layersOn(h), (on) => !on); // back to the global switch
       await waitForPage(h, PAGE);
-      await sleep(300);
-      expect(await layersOn(h)).toBe(false); // back to the global switch
     } finally {
       await h.close();
     }
@@ -274,15 +272,26 @@ describe('G8 and G9: motion and efficiency', () => {
     }
   });
 
-  it('G9 idle with the view on draws nothing, and scrolling keeps its frame rate', async () => {
-    const h = await launch(server.url(PAGE), { userDataDir: newProfile() });
-    try {
+  describe('G9: efficiency with the view on', () => {
+    // One app for both: the idle check first, then the scrolling, as in
+    // the one check these were until 2026-09-30.
+    let h: Harness;
+    beforeAll(async () => {
+      h = await launch(server.url(PAGE), { userDataDir: newProfile() });
       await waitForPage(h, PAGE);
       await waitFor('on', () => layersOn(h), (on) => on);
-      await sleep(1500);
-      const before = await shellCall(h, 'frames');
+    });
+    afterAll(async () => h?.close());
+
+    it('G9 idle with the view on draws nothing', async () => {
+      // The lift has finished and the room has stopped drawing, however
+      // long that takes on this machine.
+      const before = await roomStill(h);
       await sleep(2000);
       expect(await shellCall(h, 'frames')).toBe(before);
+    });
+
+    it('G9 scrolling with the view on keeps its frame rate', async (ctx) => {
       const timing = await inPage<{ avg: number; max: number }>(
         h,
         `new Promise((r) => { const t = []; let last = performance.now(); let n = 0;
@@ -294,13 +303,15 @@ describe('G8 and G9: motion and efficiency', () => {
       console.log(`G9: scrolling with the layers view, ${timing.avg.toFixed(1)} ms per frame on average, ${timing.max.toFixed(1)} ms at most`);
       // The budget is a promise about graphics hardware, as C9's frame rate
       // (owner, prompt 76): where Chromium draws in software it is measured
-      // and logged above, and not held. The idle check above runs everywhere.
+      // and logged above, and the check is skipped, not passed. The idle
+      // check above runs everywhere.
       const software = await softwareRenderer(h);
-      if (software) console.log(`G9: frame-time budget not checked: drawing in software (${software})`);
-      else expect(timing.avg).toBeLessThan(20);
-    } finally {
-      await h.close();
-    }
+      if (software) {
+        console.log(`G9: frame-time budget not checked: drawing in software (${software})`);
+        ctx.skip(`the frame-time budget is for graphics hardware; drawing in software (${software})`);
+      }
+      expect(timing.avg).toBeLessThan(20);
+    });
   });
 });
 
@@ -370,11 +381,15 @@ describe('GitHub issues #9, #11, #14: the layers view and changing pages', () =>
       await waitForPage(h, 'large.html');
       await waitFor('built', () => inPage<string>(h, 'document.title', 'large.html'), (t) => t === 'Large page ready');
       expect(await layersOn(h)).toBe(true);
-      await sleep(1500); // the first scan settles
+      // The layers preload says, in test runs, each time it has settled after a change: its
+      // scan of the page done and its choice of layers made (preload/layers.ts).
+      const page = await focusedPage(h);
+      const settledCount = () => h.app.evaluate((_e, id) => globalThis.__hypersolTest!.layersSettled[id] ?? 0, page.id);
+      let settled = await waitFor('the first scan and choice of layers', settledCount, (n) => n >= 1);
       await inPage(h, 'window.longTasks = []', 'large.html');
       for (let i = 0; i < 6; i++) {
         await inPage(h, 'window.addRow()', 'large.html');
-        await sleep(600);
+        settled = await waitFor(`the layers settled after row ${i + 1}`, settledCount, (n) => n > settled);
       }
       const tasks = await inPage<number[]>(h, 'window.longTasks', 'large.html');
       console.log(`#11: long tasks while the page changed: ${JSON.stringify(tasks.map((t) => Math.round(t)))}`);

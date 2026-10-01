@@ -1,10 +1,10 @@
 import { clipboard, Menu, nativeImage, type MenuItemConstructorOptions, type WebContents } from 'electron';
 import type { ShellCommand, ShortcutName } from '../shared/commands';
 import { contextMenuEntries, type MenuAction } from './context-menu';
-import { FaviconLoader } from './favicon';
+import { FaviconLoader, type FetchFn } from './favicon';
 import { decidePopup, GESTURE_EVENTS } from './popups';
-import { isAllowedPageNavigation } from './security';
-import { matchShortcut } from './shortcuts';
+import { decidePageNavigation } from './security';
+import { shortcutIn } from './shortcuts';
 import type { TestLog } from './test-hooks';
 
 export interface GuestDeps {
@@ -15,10 +15,19 @@ export interface GuestDeps {
   shortcutKeys?(): Partial<Record<ShortcutName, string>>;
   /** Settings is waiting for a new shortcut's keys: pass every key through. */
   capturingKeys?(): boolean;
+  /** This web contents shows a HoloML page now (its own shortcuts act there only, main/shortcuts.ts). */
+  holomlPage?(): boolean;
   testLog: TestLog | null;
   /** Records a finished page load in history; answers its id, or null. */
   recordVisit(url: string, title: string): Promise<number | null> | null;
   updateVisitTitle(id: number, title: string): void;
+  /**
+   * The page asks to be kept (a beforeunload handler) while its tab is
+   * about to go elsewhere: ask the person; true to leave (main/leave-page.ts).
+   */
+  confirmLeave(url: string): boolean;
+  /** Fetches the page's favicon: shown to the privacy shield first, like the page's own requests (main/privacy). */
+  fetchFavicon: FetchFn;
 }
 
 /**
@@ -27,11 +36,11 @@ export interface GuestDeps {
  */
 export function wireShortcuts(
   contents: WebContents,
-  deps: Pick<GuestDeps, 'send' | 'platform' | 'shortcutKeys' | 'capturingKeys'>,
+  deps: Pick<GuestDeps, 'send' | 'platform' | 'shortcutKeys' | 'capturingKeys' | 'holomlPage'>,
 ): void {
   contents.on('before-input-event', (event, input) => {
     if (deps.capturingKeys?.()) return;
-    const name = matchShortcut(input, deps.platform, deps.shortcutKeys?.() ?? {});
+    const name = shortcutIn(input, deps.platform, deps.shortcutKeys?.() ?? {}, deps.holomlPage?.() ?? false);
     if (!name) return;
     event.preventDefault();
     deps.send({ type: 'shortcut', name });
@@ -53,8 +62,20 @@ export function wireGuest(guest: WebContents, deps: GuestDeps): void {
     lastGesture = null;
   });
 
+  const sinceGesture = () => (lastGesture === null ? null : Date.now() - lastGesture);
+
   guest.on('will-navigate', (event, url) => {
-    if (!isAllowedPageNavigation(guest.getURL(), url)) event.preventDefault();
+    const verdict = decidePageNavigation(guest.getURL(), url, sinceGesture());
+    if (verdict === 'allow') return;
+    event.preventDefault();
+    // A local HoloML page leaving for the web goes without the parts of the
+    // address that could carry what it read from its folder (main/security.ts).
+    if (verdict !== 'refuse') void guest.loadURL(verdict.load).catch(() => undefined);
+  });
+
+  guest.on('will-prevent-unload', (event) => {
+    // Electron keeps the page unless told otherwise; preventDefault lets the tab leave.
+    if (deps.confirmLeave(guest.getURL())) event.preventDefault();
   });
 
   // History: one entry per page the tab navigates to. did-navigate comes
@@ -80,10 +101,11 @@ export function wireGuest(guest: WebContents, deps: GuestDeps): void {
   });
 
   guest.setWindowOpenHandler(({ url, disposition }) => {
-    if (url === '' || !isAllowedPageNavigation(guest.getURL(), url)) return { action: 'deny' };
-    const decision = decidePopup(disposition, lastGesture === null ? null : Date.now() - lastGesture);
+    const verdict = url === '' ? 'refuse' : decidePageNavigation(guest.getURL(), url, sinceGesture());
+    if (verdict === 'refuse') return { action: 'deny' };
+    const decision = decidePopup(disposition, sinceGesture());
     if (decision.allow) {
-      deps.send({ type: 'open-tab', url, background: decision.background, openerWebContentsId: guest.id });
+      deps.send({ type: 'open-tab', url: verdict === 'allow' ? url : verdict.load, background: decision.background, openerWebContentsId: guest.id });
     } else {
       deps.testLog?.blockedPopups.push(url);
     }
@@ -125,11 +147,13 @@ export function wireGuest(guest: WebContents, deps: GuestDeps): void {
   // Favicons are untrusted input: bounded, one fetch at a time, cancelled
   // when the page moves on (main/favicon.ts, GitHub issue #1).
   const favicons = new FaviconLoader(
-    (url, init) => guest.session.fetch(url, init),
+    deps.fetchFavicon,
     (bytes) => {
       const image = nativeImage.createFromBuffer(bytes);
       return image.isEmpty() ? null : image.resize({ width: 32, height: 32, quality: 'best' }).toDataURL();
     },
+    undefined,
+    deps.testLog ? (url, why) => deps.testLog?.faviconEnds.push({ url, why }) : undefined,
   );
   guest.on('page-favicon-updated', (_event, urls) => {
     favicons.request(urls, (dataUrl) => {
@@ -148,7 +172,8 @@ function runMenuAction(guest: WebContents, action: MenuAction, linkURL: string, 
       deps.send({ type: 'open-tab', url: linkURL, background: true, openerWebContentsId: guest.id });
       break;
     case 'copy-link':
-      clipboard.writeText(linkURL);
+      // Electron's typing gives a promise; the call itself is synchronous.
+      void clipboard.writeText(linkURL);
       break;
     case 'cut':
       guest.cut();

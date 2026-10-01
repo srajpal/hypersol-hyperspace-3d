@@ -212,7 +212,7 @@ it('captures the main screens', async () => {
     const asked = inPage<string>(h, 'both()', page);
     await waitFor('prompt', async () => (await shellCall(h, 'prompts')).permission, (x) => x !== null);
     await capture(h, '26-permission-prompt');
-    await h.shell.click('hs-prompts [data-testid="perm-allow"]');
+    await h.shell.click('hs-prompts [data-testid="perm-allow"][data-armed]');
     await asked;
     await h.shell.click('hs-toolbar [data-testid="site-button"]');
     await capture(h, '27-site-panel');

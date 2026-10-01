@@ -16,6 +16,11 @@ export const HOLOML_STATE_CHANNEL = 'hypersol-holoml-state';
  * From the shell to a HoloML page: 'stop', 'text-view-on', or 'text-view-off'
  * (milestone 15); 'behind' and 'in-front', as its tab goes behind another and
  * comes to the front again (milestone 21: a page behind draws no frames).
+ * From the main process (main/inspect), for the instrument panel's Scene
+ * part: 'select:<index>' chooses a thing, 'pick-on' and 'pick-off' switch
+ * picking (review of 2026-09-30, D12: before, both were executeJavaScript
+ * calls on the page's window). The page's preload passes each on to the
+ * viewer over their private line; nothing on the page's window acts.
  */
 export const HOLOML_COMMAND_CHANNEL = 'hypersol:holoml-command';
 

@@ -10,16 +10,18 @@ import {
   parseSceneReadout,
   type SceneReadout,
 } from '../../shared/inspect';
+import { HOLOML_COMMAND_CHANNEL } from '../../shared/holoml-page';
 import { declaredBytes, PageMonitor } from './monitor';
 
 /** Chromium's own certificate verdict, passed through unchanged (setCertificateVerifyProc). */
 const USE_CHROMIUM_RESULT = -3;
 
+/** Chromium's code for a load that was given up: stopped, replaced, or turned into a download. */
+const ERR_ABORTED = -3;
+
 const LEVELS: readonly ConsoleLevel[] = ['debug', 'info', 'warning', 'error'];
 
 export interface InspectorOptions {
-  /** Is this the app's own shell (the only one allowed to ask)? */
-  isShell(contents: WebContents): boolean;
   /** Is this page a HoloML page, marked by the main process (milestone 15)? Only those are asked for a scene. */
   isHolomlPage?(contents: WebContents): boolean;
 }
@@ -92,6 +94,12 @@ export class Inspector {
     const id = contents.id;
     this.tabs.add(id);
     if (this.privateSession !== null && contents.session === this.privateSession) this.privateTabs.add(id);
+    contents.on('did-navigate', (_event, url) => this.monitor.pageCommitted(id, url, Date.now()));
+    // A page that failed to load: the tab shows its error card, so the readouts are that page's
+    // (its certificate, say). A load given up or turned into a download is not a failure.
+    contents.on('did-fail-load', (_event, code, _description, url, isMainFrame) => {
+      if (isMainFrame && code !== ERR_ABORTED) this.monitor.pageCommitted(id, url, Date.now());
+    });
     contents.on('did-stop-loading', () => this.monitor.pageFinished(id, Date.now()));
     contents.on('console-message', (event) => {
       const level = LEVELS.includes(event.level) ? event.level : 'info';
@@ -105,9 +113,8 @@ export class Inspector {
     });
   }
 
-  /** Answers one request from the shell. Never throws. */
+  /** Answers one request from the shell (registered with handleFromShell, main/ipc.ts). Never throws. */
   async handle(event: IpcMainInvokeEvent, raw: unknown): Promise<InspectReply<InspectOp>> {
-    if (!this.options.isShell(event.sender)) return { ok: false, error: 'Not allowed' };
     const parsed = parseInspectRequest(raw);
     if ('error' in parsed) return { ok: false, error: parsed.error };
     try {
@@ -125,19 +132,21 @@ export class Inspector {
    * The instrument panel's Scene part (milestone 15, GitHub issue #28):
    * the HoloML viewer's facts, read only from pages the main process
    * marked as HoloML, and checked field by field (parseSceneReadout).
+   * Choosing a thing and picking go to the page's preload as commands,
+   * which hands them to the viewer over its private line: nothing on the
+   * page's window acts for the inspector, so a page's script has nothing
+   * there to call or to replace (review 134, D12).
    */
   private async scene(shell: WebContents, r: Extract<InspectRequest, { op: 'inspect.scene' | 'inspect.scene-select' | 'inspect.scene-pick' }>): Promise<SceneReadout | null> {
     const contents = webContents.fromId(r.tab);
     if (!contents || !this.tabs.has(r.tab) || contents.hostWebContents !== shell) throw new Error('Not one of your tabs');
     if (!this.options.isHolomlPage?.(contents)) return null;
-    const call =
-      r.op === 'inspect.scene'
-        ? 'window.__holoml ? window.__holoml.scene() : null'
-        : r.op === 'inspect.scene-select'
-          ? `window.__holoml && window.__holoml.select(${r.index}), null`
-          : `window.__holoml && window.__holoml.pick(${r.on}), null`;
-    const raw: unknown = await contents.executeJavaScript(call, false).catch(() => null);
-    return r.op === 'inspect.scene' ? parseSceneReadout(raw) : null;
+    if (r.op !== 'inspect.scene') {
+      contents.send(HOLOML_COMMAND_CHANNEL, r.op === 'inspect.scene-select' ? `select:${r.index}` : r.on ? 'pick-on' : 'pick-off');
+      return null;
+    }
+    const raw: unknown = await contents.executeJavaScript('window.__holoml ? window.__holoml.scene() : null', false).catch(() => null);
+    return parseSceneReadout(raw);
   }
 
   private run(shell: WebContents, r: InspectRequest): unknown {

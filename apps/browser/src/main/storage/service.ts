@@ -1,9 +1,9 @@
 import { join } from 'node:path';
 import { parseDataRequest, type DataOp, type DataReply, type DataRequest } from '../../shared/data';
-import { applySettingsPatch, type Settings } from '../../shared/settings';
+import { applySettingsPatch, type Settings, type SettingsPatch } from '../../shared/settings';
 import { Store } from './database';
 import { inProcess, WorkerHistory, type HistoryBackend } from './history-backend';
-import { siteKey } from './history';
+import { siteKey } from '../../shared/site';
 import { SessionFile, SettingsFile } from './settings-file';
 
 export type DataChange = 'bookmarks' | 'history' | 'settings' | 'passwords';
@@ -73,12 +73,18 @@ export class StorageService {
     return this.store;
   }
 
-  /** Changes settings from the main process (site permissions); throws with the reason if refused. */
-  updateSettings(patch: Partial<Settings>): Settings {
+  /**
+   * Changes settings from the main process (site permissions, the
+   * window's size and place); throws with the reason if refused.
+   *
+   * @param tell Whether listeners hear of the change. The shell shows
+   *   nothing of the window's size and place, so it is not told of those.
+   */
+  updateSettings(patch: SettingsPatch, tell = true): Settings {
     const result = applySettingsPatch(this.settingsFile.settings, patch);
     if ('error' in result) throw new Error(result.error);
     this.settingsFile.save(result.settings);
-    this.emit('settings');
+    if (tell) this.emit('settings');
     return result.settings;
   }
 
@@ -131,8 +137,17 @@ export class StorageService {
   }
 
   close(): void {
-    this.history?.close();
+    void this.history?.close();
     this.store?.close();
+  }
+
+  /** Closes saved data, and answers once the history worker's thread has stopped (for ending the app outside a normal quit). */
+  async closed(): Promise<void> {
+    try {
+      await this.history?.close();
+    } finally {
+      this.store?.close();
+    }
   }
 
   private needStore(): Store {

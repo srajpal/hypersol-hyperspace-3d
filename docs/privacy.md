@@ -5,15 +5,23 @@ usage counts. This page lists everything it keeps on your computer and
 everything it sends over the network. It is updated whenever that
 changes (AGENTS.md rule 9).
 
-Status: as of milestone 8 (2026-09-26): ad and tracker blocking and
-encrypted DNS are on by default. The layers view (milestone 5) and the
-instrument panel (milestone 7) send nothing anywhere.
+Status: as of 2026-09-30 (after the review of that date): ad and
+tracker blocking and encrypted DNS are on by default. The layers view
+and the instrument panel send nothing anywhere.
 
 ## Blocked by default
 
-The privacy shield blocks ad and tracker requests on every page, using
-open filter lists and Ghostery's open-source blocking engine
-(`@ghostery/adblocker`, MPL-2.0). It also hides page elements the lists
+The privacy shield blocks requests to the ad and tracker addresses on
+its lists, on every page, using open filter lists and Ghostery's
+open-source blocking engine (`@ghostery/adblocker`, MPL-2.0). It checks
+what a page loads (scripts, pictures, frames, and the rest), the
+WebSocket connections a page opens (lasting two-way connections to a
+server, which trackers use too), and the page's icon, which the browser
+fetches for the tab's card. Requests that reach the browser without a
+tab, as a site's background script (a service worker) can make them,
+are checked too; one that is blocked is counted for every tab showing a
+page of that site, as the script serves them all. The browser's own requests (list updates and the DNS
+check below) are not checked. It also hides page elements the lists
 name as ads (element hiding). A page whose address is itself on a list
 shows "The shield blocked this page", with "Open anyway" (that address,
 once, in that tab). The shield at the bottom right counts what was
@@ -21,7 +29,7 @@ blocked on the page in front; click it to see the list and to pause the
 shield on that site.
 
 The lists (ads and trackers; no cookie-banner or annoyance lists),
-downloaded from Ghostery's copies on GitHub, all under
+from Ghostery's copies on GitHub, all under
 `https://raw.githubusercontent.com/ghostery/adblocker/master/packages/adblocker/assets/`:
 
 | List | Path | Licence | In the app's starter copy |
@@ -33,14 +41,27 @@ downloaded from Ghostery's copies on GitHub, all under
 | uBlock Origin badware risks | `ublock-origin/badware.txt` | GPL-3.0 | Yes |
 | uBlock Origin quick fixes, resource abuse, unbreak | `ublock-origin/quick-fixes.txt`, `resource-abuse.txt`, `unbreak.txt` | GPL-3.0 | Yes |
 | Peter Lowe's ad and tracking server list | `peter-lowe/serverlist.txt` | None stated | No: downloaded only |
-| uBlock Origin resources | `ublock-origin/resources.json` | GPL-3.0 | Yes |
+| uBlock Origin resources (scripts, not a list: see below) | `ublock-origin/resources.json` | GPL-3.0 | Yes; never downloaded by the app |
 
 The app includes a starter copy (`apps/browser/resources/filters/`,
 rebuilt before each release with `pnpm filters:update`, which records
-each list's address, size, and SHA-256 in `starter.json`), so pages are
-protected from the first one, before anything is downloaded. Peter
-Lowe's list states no licence, so it is not included in the app; it is
-only downloaded by a refresh.
+each list's address, size, and SHA-256, and the SHA-256 of the starter
+copy itself, in `starter.json`; a SHA-256 is a checksum, a short
+fingerprint of a file's exact contents), so pages are protected from
+the first one, before anything is downloaded. Peter Lowe's list states
+no licence, so it is not included in the app; it is only downloaded by
+an update. The starter copy is passed on under the GNU General Public
+License, version 3, whose text is beside it (`GPL-3.0.txt`).
+
+An update downloads the lists' text only: rules about addresses and
+page elements. The blocker also has scripts that it runs inside web
+pages (uBlock Origin's resources, the table's last row). Those come
+with the app, inside the starter copy, and change only with a new
+version of the app: before an update is built with them, the starter
+copy and the scripts in it are checked against the SHA-256 sums
+recorded when it was made, and a saved update built with any other
+scripts is not used. (Until 2026-09-30 an update downloaded the scripts
+too.)
 
 Known limit: some list entries replace a tracker's script with a
 harmless stand-in. The stand-in did not load in Electron in our checks,
@@ -59,13 +80,15 @@ An install from before the product was renamed (2026-09-26) keeps using
 its folder named `HyperSol WebSurfer 3D`, with everything in it.
 
 (Development and test runs use a separate throwaway folder, never this
-one.)
+one. The test mode that the automatic checks use, in which the browser
+keeps every request's address in memory, exists only when the browser
+is run from source: a packaged app ignores its switch.)
 
 | What | File | When it is written | How to delete it |
 |---|---|---|---|
-| Bookmarks | `hypersol.sqlite` | When you press the star or Ctrl+D | Remove them in the Library, or press the star again |
+| Bookmarks: each page's address, title, and small icon | `hypersol.sqlite` | When you press the star or Ctrl+D | Remove them in the Library, or press the star again |
 | History: each page's address, title, and time of visit | `hypersol.sqlite` | When a tab arrives at a page; the same page again in the same tab (a reload) adds nothing | Delete entries in the Library, "Clear all history", or Settings > Clear browsing data |
-| Settings: search engine, what opens at startup, encrypted DNS mode, daily list updates on or off, sites where the shield is paused, whether pages open in the layers view, and the sites where you switched the layers view, the theme, the page tilt, the instrument panel's switches, and the zoom level of sites you zoomed | `settings.json` | When you change a setting, pause the shield on a site, or switch the layers view on a page | Delete the file; the defaults return. Settings > "Forget site choices" clears the layers view choices |
+| Settings: search engine, what opens at startup, encrypted DNS mode, daily list updates on or off, sites where the shield is paused, whether pages open in the layers view, and the sites where you switched the layers view, the theme, the page tilt, the instrument panel's switches and its console's level, the zoom level of sites you zoomed, the size of the tab cards, whether tabs show as cards or as a list, economy mode, and when tabs go to sleep; and the window's size and place on the screen, and whether it was maximised, so it opens as you left it | `settings.json` | When you change a setting, pause the shield on a site, or switch the layers view on a page; the window's size half a second after you stop moving or resizing it, and when it closes | Delete the file; the defaults return. Settings > "Forget site choices" clears the layers view choices |
 | Filter lists from the last update, and when they were downloaded | `filters/engine.bin`, `filters/engine.json` | After a list update | Delete the folder; the starter copy included in the app is used |
 | Open tabs: their addresses and which one is in front | `session.json` | While you browse, shortly after tabs change | Reopened only when Settings > On startup is "Reopen your tabs from last time"; delete the file to forget them |
 | Saved passwords: the site, the user name, and the password encrypted with your system's keychain (Windows' data protection, the macOS Keychain, or the Linux secret service); when each was saved and last used; sites where you chose "Never" | `hypersol.sqlite` | Only when you choose Save or Update after signing in, or Never | The Library's Passwords tab, or Settings > Clear browsing data > Saved passwords |
@@ -85,10 +108,20 @@ the shield) are kept in memory only: they apply to that site in every
 private tab while one is open, never to normal tabs, never reach
 `settings.json`, and are forgotten when the last private tab closes.
 So are the certificates recorded for the instrument panel from private
-tabs. Zooming in a private tab is not saved at all (the next page opens
-at the site's usual zoom). Files downloaded in a private tab are still saved to the
-Downloads folder, and bookmarks you add in one are kept, as in other
-browsers. The shield and encrypted DNS work the same in private tabs.
+tabs, and the zoom you set in a private tab: it is kept in memory for
+that site, for private tabs, while one is open, and never saved. Files
+downloaded in a private tab are still saved to the Downloads folder,
+and bookmarks you add in one are kept, as in other browsers. The shield
+and encrypted DNS work the same in private tabs.
+
+When you delete history (one entry, every visit to an address, or
+"Clear all history") or a saved sign-in, its text is overwritten with
+zeros in `hypersol.sqlite`, not only marked as free space, and the
+changes waiting beside the file (its `-wal` file) are written into it
+and emptied; the index that history search uses removes the entry's
+pieces at once as well. Older copies of the file that your operating
+system or drive keeps (backups, snapshots) are out of the browser's
+reach.
 
 If `settings.json` is damaged, it is renamed to
 `settings.json.damaged-<date and time>` and kept for inspection, and the
@@ -106,31 +139,59 @@ Kept in memory only, never on disk:
   forgotten with the page or tab;
 - the certificates Chromium checked, by site: up to 500, kept until the
   app closes (those from private tabs apart, until the last private tab
-  closes).
+  closes);
+- the picture of each open tab's page on its card, and the page's icon,
+  forgotten with the tab (private tabs' too).
 
 The instrument panel reads what the browser already sees; it makes no
 requests of its own, and it leaves certificate checking to Chromium
 unchanged. If the saved filter lists are
 damaged or were built by another version, the starter copy is used.
 
-Kept in memory only: the tabs you closed this session (so you can
-reopen them) and the back and forward history of pages you closed or
-that went to sleep, all gone when the app closes, and never for private
-tabs; an offer to save a password until you answer it;
-"Allow this time" until the tab leaves the site; and choices made in
-private tabs, until the last private tab closes. Nothing is saved or
-filled in private tabs.
+Kept in memory only: the tabs you closed this session, so you can
+reopen them (never private tabs); the back and forward history of pages
+you closed or that went to sleep, gone when the app closes (a private
+tab's is kept too, so that a sleeping private tab can wake with it, and
+is forgotten when the last private tab closes); an offer to save a
+password until you answer it; "Allow this time" until the tab leaves
+the site; and choices made in private tabs (site permissions, the
+layers view, the shield's pause, zoom), until the last private tab
+closes. No password is saved or filled in private tabs.
 
 Passwords are never filled by themselves: a saved one goes into a page
 only when you click a sign-in field and pick the account, and only on
 the exact site it was saved for. Without a working system keychain,
 nothing is saved, and the offer says why.
 
+Some sites, and some proxies, ask for a user name and password in the
+browser's own dialog rather than on a page (HTTP sign-in). The browser
+then shows a prompt under the top bar of that tab. What you type goes to
+Chromium's own handling of that site's request and nowhere else: the
+browser's own code keeps none of it, and it is never saved or offered
+to the password manager; Chromium remembers it for the session, as any
+browser does. Private tabs are treated the same. The prompt names the site from the request's own
+address, never from what the server says, and shows the server's own
+name for the sign-in (its "realm") as a quotation, cut to 80
+characters; it says so when the connection is not over https, since the
+password could then be read on the way. Only a page in one of your tabs
+can bring up the prompt, and a part of a page from another site (a
+picture, a script's request) cannot. Cancel shows the site's own page
+instead.
+
 HoloML files opened from the computer (Ctrl+O, the menu, or dropping a
-file on the window): the page may read its own folder, and the folders
-inside it, for as long as the app runs; the permission is kept in memory
-only. These pages are not added to history, and a tab reopened after a
-restart asks you to open the file again.
+file on the window): the page may read the files of the kinds a HoloML
+page uses (pages, models, pictures, sounds, scripts) in its own folder
+and the folders inside it, for as long as the app runs; the permission
+is kept in memory only. If the folder is one that holds many unrelated
+files (Downloads, the desktop, Documents, your home folder, or the top
+of a drive), the page may read the files beside it only, not the
+folders inside, and its console says so. Such a page may go to another
+file in its folder. It may leave for a web address only within five
+seconds of your click or key press on it, and then without the part of
+the address after a "?" or a "#", so that its script cannot send away
+in them what it read; the rest of the address goes as the page wrote
+it. These pages are not added to history and are not reopened after a
+restart: open the file again.
 
 To keep a tab awake while it has unsent text or uses the camera or
 microphone, the page's own process notes that it does (never the text
@@ -142,10 +203,26 @@ themselves are, in the Downloads folder), and anything about how you
 use the browser itself.
 
 Site permissions: a site can use your camera, microphone, or location
-only after you allow it; everything else a site can ask for (for
-example notifications) is refused. Your location comes from your
-operating system's location service; the browser adds no location
-service of its own.
+only after you allow it. Everything else a site can ask for is refused
+(notifications, MIDI devices, reading the clipboard, knowing when you
+are idle, placing windows, your installed fonts, and the rest), and a
+page that only looks, without asking, is told the same: not granted.
+Full screen and holding the mouse pointer are refused too, until the
+browser has its own notice for them. One thing needs no permission:
+putting text on the clipboard when you click a page's "Copy" button. A
+site that asks for a client certificate (a certificate on your computer
+that says who you are) gets none, in private tabs too. Choosing Block
+for the camera or microphone reloads the site's pages that were given
+them, which ends what they were capturing whatever the page does. A
+choice made in the site panel names the site the panel was opened for:
+if the tab has moved to another site meanwhile, nothing is changed, and
+the panel says so. Your
+location comes from your operating system's location service; the
+browser adds no location service of its own.
+
+A page with unsaved work can ask to be kept when you leave it (a
+half-written message, a form). The browser then asks "Leave this
+page?"; nothing about it is stored.
 
 ## Sent over the network
 
@@ -153,9 +230,10 @@ Only these. Everything except the list updates is started by you, and
 the list updates can be turned off:
 
 - The pages you open, including the images, scripts, and the favicon each
-  page names (fetched through that page's own session, as a browser tab
-  does; at most 256 KB, given up after 5 seconds, and cancelled when you
-  leave the page).
+  page names (shown to the shield first, like the page's other requests,
+  then fetched through that page's own session, as a browser tab does;
+  at most 256 KB, given up after 5 seconds, and cancelled when you leave
+  the page).
 - HoloML pages (`.holoml` addresses) and the 3D models, sounds,
   scripts, and pictures (a material's and the panorama of the
   surroundings, milestone 18; the sky and a floor plan, milestone 19)
@@ -165,10 +243,14 @@ the list updates can be turned off:
   The browser's HoloML viewer itself comes from the app, not the
   network. Every model, sound, and picture file counts against the
   page's limits as it arrives (milestones 15, 17, 18, and 19); a file that
-  crosses one is not fetched further. A HoloML
+  crosses one is not fetched further. An answer that a site marks as a
+  download, or sandboxes, is not shown as a HoloML page, and a HoloML
+  page keeps the site's own content policy beside HoloML's. A HoloML
   0.2 page's scripts (milestone 17) run in the page's own sandboxed
-  process like a web page's, and can reach only its own site; their
-  scene API gives them the scene, where you look in it, and your
+  process like a web page's. They can fetch only from the page's own
+  site and cannot open peer-to-peer connections; like any page's
+  script, they can take the tab to another address, as a link does.
+  Their scene API gives them the scene, where you look in it, and your
   clicks and keys on the page, nothing else. Its sounds play only after your first click or key on the page,
   and the tab's mute applies. The instrument panel's Scene part reads
   the scene from the page in memory only, and keeps nothing.
@@ -196,8 +278,11 @@ the list updates can be turned off:
   chosen in Settings (DuckDuckGo by default).
 - DNS lookups for the sites you open go encrypted (DNS over HTTPS) to
   Quad9, `https://dns.quad9.net/dns-query`, a non-profit with a
-  no-logging policy. Quad9 sees the names of the sites you visit; your
-  network does not. Settings > Encrypted DNS: Secure (the default: Quad9
+  no-logging policy. Quad9 sees the names of the sites you look up. In
+  Secure mode your network cannot read or change these lookups, but it
+  still sees which addresses you connect to and, for most sites, the
+  site's name as each connection is made: encrypted DNS keeps the
+  lookups private, not the visits. Settings > Encrypted DNS: Secure (the default: Quad9
   only) or Automatic (Quad9 where possible, otherwise your network's
   DNS).
 - If a site cannot be found while in Secure mode, the app asks Quad9 one
@@ -206,8 +291,9 @@ the list updates can be turned off:
   network" and offers "Use this network's DNS for now", which uses
   Automatic until you close the app.
 - Filter list updates, when Settings > "Update the filter lists every
-  day" is on (the default): once a day, the addresses in the table
-  above, through the same encrypted DNS; a failed update keeps the lists
+  day" is on (the default): once a day, the lists in the table above
+  (not the scripts in its last row, which are never downloaded by the
+  app), through the same encrypted DNS; a failed update keeps the lists
   in use and is tried again an hour later. "Update now" in Settings
   fetches them at once. Turn the switch off and nothing is downloaded
   unless you press "Update now".

@@ -15,7 +15,8 @@
  * change can affect the choice.
  */
 import { ipcRenderer, webFrame } from 'electron';
-import { LAYERS_CHANNEL, MAX_PAGE_IMAGES, PAGE_IMAGES_CHANNEL, parseLayersState, type PageImage } from '../shared/layers';
+import { LAYERS_CHANNEL, LAYERS_SETTLED_CHANNEL, MAX_PAGE_IMAGES, PAGE_IMAGES_CHANNEL, parseLayersState, type PageImage } from '../shared/layers';
+import { isTestRun } from '../shared/test-run';
 import { isHolomlDocument } from './holoml';
 import { LAYERS, findSectionContainer, largest, liftTransform, liftable, sameExceptLift, vanishingPoint, type Box } from './layers-plan';
 
@@ -36,7 +37,7 @@ const MAX_MEDIA_CANDIDATES = 2000;
 
 const CSS = `
 [${ATTR}] { transform: var(--hs-lift) !important; transform-origin: 0 0 !important; will-change: transform; }
-[${ATTR}='section'] { box-shadow: 0 18px 40px rgb(0 0 0 / 30%), 0 0 0 1px var(--hs-layer-accent, #39e6ff) !important; }
+[${ATTR}='section'] { box-shadow: 0 18px 40px rgb(0 0 0 / 30%), 0 0 0 1px var(--hs-layer-accent, currentColor) !important; }
 [${ATTR}='image'] { box-shadow: 0 14px 30px rgb(0 0 0 / 38%) !important; }
 html[${ANIMATING}] [${ATTR}] { transition: transform ${ANIMATION_MS}ms ease !important; }
 @media print {
@@ -61,6 +62,8 @@ let on = false;
 let parallax = { x: 0, y: 0 };
 let cssAdded = false;
 let repickTimer: number | undefined;
+/** A choice of layers is due (scheduleRepick), and has not run yet. */
+let repickDue = false;
 let reportTimer: number | undefined;
 let frame = 0;
 let offTimer: number | undefined;
@@ -82,6 +85,14 @@ let scanned = false;
 /** The pinned set changed in an incremental scan: the layers are chosen again once it ends (PR #16 review). */
 let pinnedChanged = false;
 const afterScan: (() => void)[] = [];
+
+/** Test runs only: tells the main process the layers view has settled (shared/layers.ts). */
+const testRun = isTestRun(process.argv);
+function settledNow(): void {
+  if (!testRun) return;
+  if (scanning || queue.length > 0 || scanAll || repickDue) return;
+  ipcRenderer.send(LAYERS_SETTLED_CHANNEL);
+}
 
 function isPinned(el: Element): boolean {
   const position = getComputedStyle(el).position;
@@ -127,6 +138,7 @@ function runScan(): void {
     if (pinnedChanged && wasScanned && on) scheduleRepick();
     pinnedChanged = false;
     for (const done of afterScan.splice(0)) done();
+    settledNow();
   };
   step();
 }
@@ -294,21 +306,27 @@ function clear(): void {
 /** Chooses the layers again (the page changed) and lifts them, without animating. */
 function repick(): void {
   window.clearTimeout(repickTimer);
-  if (!on) return;
+  repickDue = false;
+  if (!on) {
+    settledNow();
+    return;
+  }
   if (animating) {
     scheduleRepick();
     return;
   }
   whenScanned(() => {
-    if (!on) return;
-    const next = pick();
-    for (const el of layers.keys()) if (!next.has(el)) release(el);
-    layers.clear();
-    for (const [el, layer] of next) {
-      layers.set(el, layer);
-      el.setAttribute(ATTR, layer.kind);
+    if (on) {
+      const next = pick();
+      for (const el of layers.keys()) if (!next.has(el)) release(el);
+      layers.clear();
+      for (const [el, layer] of next) {
+        layers.set(el, layer);
+        el.setAttribute(ATTR, layer.kind);
+      }
+      apply(true);
     }
-    apply(true);
+    settledNow();
   });
 }
 
@@ -326,16 +344,18 @@ function setOn(next: boolean, animate: boolean): void {
     on = true;
     if (layers.size === 0) {
       whenScanned(() => {
-        if (!on || layers.size > 0) return;
-        for (const [el, layer] of pick()) {
-          layers.set(el, layer);
-          el.setAttribute(ATTR, layer.kind);
+        if (on && layers.size === 0) {
+          for (const [el, layer] of pick()) {
+            layers.set(el, layer);
+            el.setAttribute(ATTR, layer.kind);
+          }
+          if (animate) {
+            apply(false);
+            void root.offsetWidth; // start from flat, so the lift animates
+          }
+          apply(true);
         }
-        if (animate) {
-          apply(false);
-          void root.offsetWidth; // start from flat, so the lift animates
-        }
-        apply(true);
+        settledNow();
       });
     } else {
       apply(true);
@@ -391,6 +411,7 @@ function report(): void {
 
 function scheduleRepick(): void {
   window.clearTimeout(repickTimer);
+  repickDue = true;
   repickTimer = window.setTimeout(repick, REPICK_MS);
 }
 
@@ -443,8 +464,10 @@ function onMutations(records: MutationRecord[]): void {
       if (nearLayer) choose = true;
     }
   }
-  if (queue.length > 0 || scanAll) runScan();
+  // The choice is put down before the scan runs, so a scan that ends at
+  // once does not count the page as settled with a choice still to come.
   if (choose && on) scheduleRepick();
+  if (queue.length > 0 || scanAll) runScan();
   if (reportAgain) scheduleReport();
 }
 
@@ -480,8 +503,9 @@ if (window === window.top && !isHolomlDocument) {
     if (!state) return;
     const moved = state.parallax.x !== parallax.x || state.parallax.y !== parallax.y;
     parallax = state.parallax;
-    // The theme's accent outlines the lifted sections.
-    document.documentElement?.style.setProperty('--hs-layer-accent', `${state.accent}99`);
+    // The theme's accent outlines the lifted sections (without one, the page's own text colour does).
+    if (state.accent) document.documentElement?.style.setProperty('--hs-layer-accent', `${state.accent}99`);
+    else document.documentElement?.style.removeProperty('--hs-layer-accent');
     const run = () => {
       if (state.on !== on) setOn(state.on, state.animate);
       else if (on && moved) apply(true);

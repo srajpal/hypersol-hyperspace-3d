@@ -103,16 +103,36 @@ async function key(h: Harness, page: string, keyCode: string, type: 'keyDown' | 
   );
 }
 
+/** The scene's own time, in milliseconds: what its frames have moved it on by, each by at most 100 ms (the viewer's `clock`). */
+const clock = (h: Harness, page: string) => holo<number>(h, 'window.__holoml.clock', page);
+
+/**
+ * Waits until the scene's own time has gone on by so many milliseconds
+ * from a moment: a walker goes by that time, not by the wall's clock, so
+ * on a machine that draws slowly it has gone as far by then as on a fast
+ * one, and only the wait is longer.
+ */
+async function sceneTime(h: Harness, page: string, from: number, ms: number, what: string): Promise<void> {
+  await waitFor(`${ms} ms of the scene's time ${what} (from ${from} ms)`, () => clock(h, page), (t) => t >= from + ms, (await sceneWait(h, ms)) * 2 + 10_000);
+}
+
+/** Holds a key down in the page for so many milliseconds of the scene's own time. */
 async function hold(h: Harness, page: string, keyCode: string, ms: number): Promise<void> {
+  const from = await clock(h, page);
   await key(h, page, keyCode, 'keyDown');
-  await sleep(ms);
-  await key(h, page, keyCode, 'keyUp');
+  try {
+    await sceneTime(h, page, from, ms, `with ${keyCode} held`);
+  } finally {
+    await key(h, page, keyCode, 'keyUp');
+  }
 }
 
 const walker = (h: Harness, page: string) => holo<{ feet: Vec; onGround: boolean; gravity: boolean } | null>(h, 'window.__holoml.walker()', page);
 
 describe('T2: scripts', () => {
   let h: Harness;
+  /** How long the shell took to answer while a page's script never stopped, and what held it up: measured by that check, and held to the budget by the one after it. */
+  let answered: { times: number[]; why: string } | null = null;
   beforeAll(async () => {
     h = await launch(url('script-basic.holoml'));
     await watchConsole(h);
@@ -189,14 +209,24 @@ describe('T2: scripts', () => {
       await sleep(100);
     }
     const why = await stalls();
-    // Within 200 ms with a graphics card; drawn in software (GitHub's machines), logged, not
-    // checked, as the other budgets (owner, prompt 96: the software GPU process is shared).
-    const software = await softwareRenderer(h);
-    const answers = `${times.map((t) => t.toFixed(0)).join(', ')} ms; ${why}`;
-    if (software) console.log(`T2: answers took ${answers}; the 200 ms budget not checked: drawing in software (${software})`);
-    else expect(Math.max(...times), answers).toBeLessThan(200);
+    // Every question was answered; how soon is the next check's.
+    expect(times).toHaveLength(10);
+    answered = { times, why };
     await closeFocusedTab(h);
     await waitFor('the tab closed', async () => (await tabs(h)).length, (n) => n === before);
+  });
+
+  it('T2 while that script never stops, the browser answers within 200 ms (with a graphics card)', async (ctx) => {
+    expect(answered, 'the check before this one measured the answers').not.toBeNull();
+    const answers = `${answered!.times.map((t) => t.toFixed(0)).join(', ')} ms; ${answered!.why}`;
+    // Within 200 ms with a graphics card; drawn in software (GitHub's machines), measured and logged, and
+    // the check is skipped, not passed, as the other budgets are (owner, prompt 96: the software GPU process is shared).
+    const software = await softwareRenderer(h);
+    if (software) {
+      console.log(`T2: answers took ${answers}; the 200 ms budget not checked: drawing in software (${software})`);
+      ctx.skip(`the 200 ms budget is for graphics hardware; drawing in software (${software})`);
+    }
+    expect(Math.max(...answered!.times), answers).toBeLessThan(200);
   });
 });
 
@@ -260,14 +290,20 @@ describe('T4: walls and gravity', () => {
     expect(w.feet[0]).toBeGreaterThan(1.5);
     // Turn to the step (-x), walk to it, and jump onto it.
     await inPage(h, 'holoml.viewer.lookAt([-6, 2.6, 0.5]), true', PAGE);
+    // W held for 1.6 s of the scene's time, then Space, and W for 0.9 s more (as hold does, a slow machine only waits longer).
+    const from = await clock(h, PAGE);
     await key(h, PAGE, 'W', 'keyDown');
-    await sleep(1600);
-    w = (await walker(h, PAGE))!;
-    expect(w.feet[1]).toBeCloseTo(1, 2); // still on the floor: the step stops it
-    await key(h, PAGE, 'Space', 'keyDown');
-    await key(h, PAGE, 'Space', 'keyUp');
-    await sleep(900);
-    await key(h, PAGE, 'W', 'keyUp');
+    try {
+      await sceneTime(h, PAGE, from, 1600, 'walking to the step');
+      w = (await walker(h, PAGE))!;
+      expect(w.feet[1]).toBeCloseTo(1, 2); // still on the floor: the step stops it
+      const jumped = await clock(h, PAGE);
+      await key(h, PAGE, 'Space', 'keyDown');
+      await key(h, PAGE, 'Space', 'keyUp');
+      await sceneTime(h, PAGE, jumped, 900, 'jumping onto the step');
+    } finally {
+      await key(h, PAGE, 'W', 'keyUp');
+    }
     w = (await waitFor('on the step', () => walker(h, PAGE), (x) => x?.onGround === true))!;
     expect(w.feet[1]).toBeCloseTo(2, 2);
     expect(w.feet[0]).toBeLessThan(-1);
@@ -286,6 +322,8 @@ describe('T5 to T7: Blockworld', () => {
   const bw = <T>(expression: string, page = PAGE) => inPage<T>(h, `window.blockworld.${expression}`, page);
   const hud = async (id: string, page = PAGE) => (await holo<{ id: string; text: string }[]>(h, 'window.__holoml.huds()', page)).find((x) => x.id === id)?.text ?? '';
   let loadMs = 0;
+  /** The frames a second the island was drawn at: measured by the first check, and held to the budget by the second. */
+  let fps: number | null = null;
   beforeAll(async () => {
     h = await launch(server.url('link-a.html'));
     await waitForPage(h, 'link-a.html');
@@ -297,12 +335,7 @@ describe('T5 to T7: Blockworld', () => {
   });
   afterAll(async () => h?.close());
 
-  it('T5 the island of blocks loads within 5 s and draws smoothly, with few draw calls', async () => {
-    const software = await softwareRenderer(h);
-    // Within 5 s with a graphics card. Drawn in software (GitHub's machines), the time is
-    // logged, not checked, as the frame rate below is (owner, prompts 59 and 95).
-    if (software) console.log(`T5: loaded in ${loadMs} ms; the 5-second budget not checked: drawing in software (${software})`);
-    else expect(loadMs).toBeLessThan(5000);
+  it('T5 the island of blocks loads and goes on drawing, with few draw calls', async () => {
     const blocks = await bw<number>('blocks');
     expect(blocks).toBeGreaterThan(1000);
     const stats = await holo<{ calls: number; pools: { src: string; count: number }[] }>(h, 'window.__holoml.stats()', PAGE);
@@ -310,9 +343,23 @@ describe('T5 to T7: Blockworld', () => {
     expect(stats.pools.reduce((n, p) => n + p.count, 0)).toBeGreaterThan(1000);
     const f0 = await holo<number>(h, 'window.__holoml.frames', PAGE);
     await sleep(2000);
-    const fps = ((await holo<number>(h, 'window.__holoml.frames', PAGE)) - f0) / 2;
-    // With a graphics card, 30 frames a second or more; drawn in software (GitHub's machines), only that it draws, as C9.
-    expect(fps).toBeGreaterThan(software ? 0 : 30);
+    fps = ((await holo<number>(h, 'window.__holoml.frames', PAGE)) - f0) / 2;
+    // It goes on drawing (its clock and its water move), on any machine; how smoothly is the next check's.
+    expect(fps).toBeGreaterThan(0);
+  });
+
+  it('T5 the island loads within 5 s and draws smoothly, at more than 30 frames a second (with a graphics card)', async (ctx) => {
+    expect(fps, 'the check before this one counted the frames').not.toBeNull();
+    // Within 5 s and more than 30 frames a second with a graphics card. Drawn in software (GitHub's machines),
+    // both are measured and logged, and the check is skipped, not passed (owner, prompts 59 and 95).
+    const software = await softwareRenderer(h);
+    if (software) {
+      console.log(`T5: loaded in ${loadMs} ms, ${fps!.toFixed(1)} frames a second; the budgets not checked: drawing in software (${software})`);
+      ctx.skip(`the 5-second and frame-rate budgets are for graphics hardware; drawing in software (${software})`);
+    }
+    console.log(`T5: loaded in ${loadMs} ms, ${fps!.toFixed(1)} frames a second`);
+    expect(loadMs).toBeLessThan(5000);
+    expect(fps!).toBeGreaterThan(30);
   });
 
   it('T6 breaking and placing by mouse and by keyboard; keys 1 to 5 choose the block', async () => {

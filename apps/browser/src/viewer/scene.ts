@@ -34,6 +34,22 @@
  *
  * Milestone 21 (HoloML 0.2, fifth part): water (water.ts), sounds that
  * come from a place (sound.ts), and a model's animation speed for scripts.
+ *
+ * Review 134: the page's version is read once and asked about through one
+ * helper (versions.ts); every file the page names is loaded through one
+ * guarded step, and a load that fails gives back all it held; a model's
+ * triangles are counted once it is decoded; lights have limits; a still
+ * walker draws nothing; the text view stops the scene; what a script
+ * hides cannot be clicked or walked into; and where Chromium draws in
+ * software the scene is drawn at half its sharpness, to keep it moving.
+ *
+ * As HoloML 0.2's third edition says (2026-09-30): only the ambient
+ * lights in the scene now dim the light from around; a material that
+ * takes no light is changed in what it has; a 0.1 page's screen text is
+ * not shown; holoml.add leaves out an animate and a sound that begins on
+ * a click, and says so; a model that needs a glTF extension the viewer
+ * does not read is left out; and every paragraph of a panel inside a
+ * link is in the outline.
  */
 import {
   AmbientLight,
@@ -52,6 +68,7 @@ import {
   MathUtils,
   Matrix4,
   Mesh,
+  MeshBasicMaterial,
   MeshStandardMaterial,
   Object3D,
   PCFShadowMap,
@@ -61,7 +78,6 @@ import {
   Raycaster,
   RepeatWrapping,
   Scene,
-  SkinnedMesh,
   SpotLight,
   Sprite,
   SpriteMaterial,
@@ -80,15 +96,16 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneModel } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { check, CLICKABLE, HoloParseError, parse, type ElementNode, type HoloNode } from '@hypersol/holoml';
-import { Budget, LeftOut, LIMITS } from './budget';
+import { Budget, LeftOut, LIMITS, Unreadable, Unsupported, type Claim, type LoadedFiles } from './budget';
 import { keptByControl, orbitControls, TURN_SPEED, walkControls, WALK_SPEED, type ViewControls } from './controls';
-import { InstancePool, countTriangles, worldBox, type Template } from './instances';
+import { InstancePool, canInstance, centreOf, countTriangles, isShown, worldBox, type Template } from './instances';
 import { SolidGrid, Walker, type Box } from './physics';
 import { disposePanel, drawPanel, type PanelLook } from './panels';
 import { Pictures, type PictureUse } from './pictures';
 import { SoundBank, type SoundHandle, type SoundReport } from './sound';
 import { Water } from './water';
-import { area, attr, color, contrastText, duration, has, num, paragraphs, rawText, repeat, resolveAddress, scale, text, tiling, vec3, type Vec3 } from './values';
+import { area, attr, collapse, color, contrastText, duration, has, num, paragraphs, rawText, repeat, resolveAddress, scale, text, tiling, trimSpace, vec3, type Vec3 } from './values';
+import { atLeast, type Version } from './versions';
 
 const DEG = Math.PI / 180;
 const LINK_HIGHLIGHT = 0x5ce1ff;
@@ -103,6 +120,11 @@ const PLACE_FADE_MS = 180;
 const LET_GO = 1.5;
 /** Why a model that loads by area is not loaded (the inspector shows it). */
 const FAR = 'it loads when the viewer comes near';
+/** Where Chromium draws in software, the scene is drawn with half as many pixels each way (owner, prompt 135). */
+const SOFTWARE_SHARPNESS = 0.5;
+
+/** How a file the page names ended, when it is not shown: refused (another site), left out (a limit, a stop), or failed. */
+type NotShown = 'refused' | 'left-out' | 'failed';
 
 interface Link {
   href: string;
@@ -210,6 +232,8 @@ interface StandIn {
   href: string | null;
   template?: Template;
   triangles?: number;
+  /** The lights inside its own copy that count towards the page's limit. */
+  lights?: number;
 }
 
 /** What a model holds while it is loaded or loading, released when it is let go (milestone 20). */
@@ -222,6 +246,8 @@ interface Held {
   materials: Material[];
   /** Its animation's mixer. */
   mixer: AnimationMixer | null;
+  /** The lights inside its own copy (its file's) that count towards the page's limit. */
+  lights: number;
 }
 
 /**
@@ -231,8 +257,9 @@ interface Held {
  */
 export interface MaterialReport {
   color: string;
-  metalness: number;
-  roughness: number;
+  /** Null for a material that takes no light: it has no metalness and no roughness. */
+  metalness: number | null;
+  roughness: number | null;
   opacity: number;
   map: string | null;
   repeat: [number, number] | null;
@@ -250,6 +277,19 @@ interface Look {
   repeat: [number, number] | null;
 }
 
+/**
+ * A material whose look a page can change: one that takes light, or one
+ * that takes none (glTF's KHR_materials_unlit). The second is changed like
+ * any other in what it has, its colour, its opacity, and its colour
+ * picture with its tiling; it has no metalness, roughness, or bumps, so
+ * those change nothing in it (SPEC.md section 7, `material`).
+ */
+type Changeable = MeshStandardMaterial | MeshBasicMaterial;
+
+function changeable(m: Material): m is Changeable {
+  return m instanceof MeshStandardMaterial || m instanceof MeshBasicMaterial;
+}
+
 /** A material's pictures, which `repeat` tiles (the model's own as well as the page's). */
 const PICTURE_SLOTS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap', 'bumpMap'] as const;
 
@@ -265,7 +305,7 @@ interface ChoiceOption {
   value: string;
   label: string;
   look: Promise<Look> | null;
-  made: Map<Material, MeshStandardMaterial>;
+  made: Map<Material, Changeable>;
 }
 
 /** A choice (HoloML 0.2, milestone 18): its options, its radio buttons, and what it changes. */
@@ -345,8 +385,12 @@ export type SceneEvent =
 interface LoadedTemplate {
   template: Template;
   animations: AnimationClip[];
-  /** The first model to use a file has its triangles counted by the load itself. */
-  claimed: boolean;
+  /**
+   * What the file holds of the page's totals while it is loaded: its
+   * bytes, its pictures' pixels, and one copy's triangles until the first
+   * model to use it takes them.
+   */
+  claim: Claim;
 }
 
 export class HolomlView {
@@ -354,6 +398,14 @@ export class HolomlView {
   readonly scene = new Scene();
   readonly camera = new PerspectiveCamera(50, 1, 0.05, 2000);
   frames = 0;
+  /**
+   * The scene's own time, in milliseconds: how far its frames have moved
+   * it on, each by its `dt` (at most 100, so it runs slower than the
+   * clock on a slow machine, and stands still while nothing is drawn).
+   * Walking, turning, and a script's frames go by it; the browser's tests
+   * measure speeds against it.
+   */
+  clock = 0;
   readonly models: ModelReport[] = [];
   readonly labels: { text: string; sprite: Sprite }[] = [];
   readonly links: Link[] = [];
@@ -381,6 +433,8 @@ export class HolomlView {
   /** Elements in the scene now (the page's limit counts these). */
   private elementCount = 2; // holoml and scene
   private readonly templates = new Map<string, Promise<LoadedTemplate>>();
+  /** Model files that arrived and could not be read, and why: not fetched again on this page (review 134, V3). */
+  private readonly unreadable = new Map<string, Error>();
   /** Instance pools, by model file (and whether its models have shadows). */
   private readonly pools = new Map<string, InstancePool>();
   private collidersDirty = true;
@@ -388,6 +442,11 @@ export class HolomlView {
   private selected = -1;
   private picking = false;
   private lights = 0;
+  /** Lights that shine from a place or a direction now, the page's and its models' own: the page's limit counts these (review 134, V6). */
+  private placedLights = 0;
+  /** Lights past that limit, not shown; and lights past the limit on shadows, which shine without them. */
+  private lightsLeftOut = 0;
+  private shadowsLeftOff = 0;
   private readonly reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   private readonly outline: HTMLElement;
   private readonly hudLayer: HTMLElement;
@@ -400,9 +459,14 @@ export class HolomlView {
     change: new Set<(e: SceneEvent) => void>(),
     load: new Set<(e: SceneEvent) => void>(),
   };
-  private readonly version: string;
+  private readonly version: Version;
   private sceneId: string | null = null;
-  /** The page's own ambient lights (HoloML 0.2: the soft light from around follows them). */
+  /**
+   * The ambient lights in the scene now, the page's and those its scripts
+   * added (HoloML 0.2: the soft light from around follows them). One that
+   * is removed is taken out, so that a scene whose ambient lights have all
+   * been removed is at full again, not dark (SPEC.md section 7, `light`).
+   */
   private readonly ambients: AmbientLight[] = [];
   onReady: (() => void) | null = null;
   /** Loading began or ended (the shell's stop button and loading strip). */
@@ -430,6 +494,7 @@ export class HolomlView {
   private readonly ownMaterials = new WeakMap<Mesh, Material[]>();
   /** The page's panorama of the surroundings, and whether it lights the scene yet. */
   private environment: EnvironmentState | null = null;
+  private environmentUrl: URL | null = null;
   /** The page's sky (HoloML 0.2 `sky`, milestone 19) and its address; its background colour shows while there is none. */
   private sky: EnvironmentState | null = null;
   private skyUrl: string | null = null;
@@ -474,25 +539,36 @@ export class HolomlView {
   private compiling = false;
   /** A frame is being drawn: what the page's scripts move during it asks for no new frame while the tab is behind. */
   private inFrame = false;
+  /** The text view is on: the scene is hidden, takes no keys and no pointer, and draws nothing (review 134, V8). */
+  private textView = false;
 
-  constructor(root: ElementNode, container: HTMLElement, outline: HTMLElement, hudLayer: HTMLElement) {
+  /** `version`: the page's, one the viewer knows (main.ts refuses a page of any other before it comes here). */
+  constructor(root: ElementNode, container: HTMLElement, outline: HTMLElement, hudLayer: HTMLElement, version: Version) {
     this.outline = outline;
     this.hudLayer = hudLayer;
-    this.version = attr(root, 'version') === '0.2' ? '0.2' : '0.1';
+    this.version = version;
     // Lines are hit only where they are, not a metre around them.
     this.raycaster.params.Line.threshold = 0.02;
+    // Whether Chromium draws in software is asked first: smoothed edges are chosen when the renderer is made.
+    // There the scene is drawn at half its sharpness and without smoothed edges (owner, prompt 135: the ocean
+    // tunnel went from one frame a second to three on a machine without a graphics card); the console says so once.
+    this.software = softwareDrawing();
     // Throws where Chromium cannot start WebGL 2; main.ts says so on the page.
-    this.renderer = new WebGLRenderer({ antialias: true });
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer = new WebGLRenderer({ antialias: this.software === null });
+    this.renderer.setPixelRatio(this.pixelRatio());
     this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.outputColorSpace = SRGBColorSpace;
     container.append(this.renderer.domElement);
     this.renderer.domElement.dataset['testid'] = 'holoml-canvas';
-    this.software = softwareRenderer(this.renderer);
+    if (this.software !== null) {
+      console.warn('HoloML: this computer draws 3D in software, without a graphics card: the scene is drawn at half its sharpness and without smoothed edges, so that it moves more smoothly.');
+    }
+    // The graphics card was reset (a driver update, a computer waking up): what was drawn into pictures there is made again.
+    this.renderer.domElement.addEventListener('webglcontextrestored', () => this.restored());
     // Shadows (HoloML 0.2): soft shadow maps where there is a graphics card.
     // Drawn in software they would take most of every frame, so a page's
     // shadows are left out there, and the console says so (owner, prompt 98, Q5 a).
-    this.shadowsOn = this.version === '0.2' && this.software === null;
+    this.shadowsOn = this.since('0.2') && this.software === null;
     if (this.shadowsOn) {
       this.renderer.shadowMap.enabled = true;
       this.renderer.shadowMap.type = PCFShadowMap;
@@ -505,22 +581,20 @@ export class HolomlView {
     this.background = new Color(background ?? '#0b0f1e');
     this.scene.background = this.background;
     this.textColor = contrastText(background ?? '#0b0f1e');
-    this.sceneId = scene && this.version === '0.2' ? (attr(scene, 'id') ?? null) : null;
+    this.sceneId = scene && this.since('0.2') ? (attr(scene, 'id') ?? null) : null;
     // Soft reflections, so metal and paint look like themselves.
-    const pmrem = new PMREMGenerator(this.renderer);
-    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    this.roomLight();
     this.scene.environmentIntensity = 0.45;
-    pmrem.dispose();
     // HoloML 0.2: the page's own surroundings light the scene once they arrive, and its sky shows behind it (milestone 19).
-    const surroundings = scene && this.version === '0.2' ? attr(scene, 'environment') : null;
-    const sky = scene && this.version === '0.2' ? attr(scene, 'sky') : null;
+    const surroundings = scene && this.since('0.2') ? attr(scene, 'environment') : null;
+    const sky = scene && this.since('0.2') ? attr(scene, 'sky') : null;
     if (sky) this.skyUrl = resolveAddress(sky, this.base)?.href ?? null;
     if (surroundings) this.loadEnvironment(surroundings);
     if (sky) this.loadSky(sky);
     // The models a choice changes get their own copies (not instances), so each is found before building.
-    if (scene && this.version === '0.2') {
+    if (scene && this.since('0.2')) {
       for (const c of scene.children) {
-        const target = c.type === 'element' && c.name === 'choice' && attr(c, 'material') ? attr(c, 'target')?.trim() : null;
+        const target = c.type === 'element' && c.name === 'choice' && attr(c, 'material') ? trimSpace(attr(c, 'target') ?? '') : null;
         if (target?.startsWith('#')) this.choiceTargets.add(target.slice(1));
       }
     }
@@ -540,31 +614,33 @@ export class HolomlView {
     this.scene.add(this.highlight);
     // HoloML 0.2 (milestone 19): several viewpoints are places, each named by the address (#name) and listed in the outline.
     this.viewpoints = scene ? scene.children.filter((c): c is ElementNode => c.type === 'element' && c.name === 'viewpoint') : [];
-    this.placesListed = this.version === '0.2' && this.viewpoints.length > 1;
+    this.placesListed = this.since('0.2') && this.viewpoints.length > 1;
     const animates: ElementNode[] = [];
     if (scene) {
       for (const c of scene.children) {
         if (c.type !== 'element') continue;
         if (c.name === 'plan') {
           // At most one (the checker reports a second, which is left out).
-          if (this.count(c) && this.version === '0.2' && !this.planState) this.plan(c);
+          if (this.count(c) && this.since('0.2') && !this.planState) this.plan(c);
           continue;
         }
         if (c.name === 'water') {
           // At most one (the checker reports a second, which is left out).
-          if (this.count(c) && this.version === '0.2' && !this.water) this.makeWater(c);
+          if (this.count(c) && this.since('0.2') && !this.water) this.makeWater(c);
           continue;
         }
         if (c.name === 'hud') {
-          if (this.count(c)) this.hud(c, false);
+          // Screen text is HoloML 0.2's: in a 0.1 page it is not shown, as a slider in one is not (the checker has
+          // said that it is not a 0.1 element; SPEC.md section 9, "Reading and checking").
+          if (this.count(c) && this.since('0.2')) this.hud(c, false);
           continue;
         }
         if (c.name === 'slider') {
-          if (this.count(c) && this.version === '0.2') this.slider(c);
+          if (this.count(c) && this.since('0.2')) this.slider(c);
           continue;
         }
         if (c.name === 'choice') {
-          if (this.count(c) && this.version === '0.2') this.choice(c);
+          if (this.count(c) && this.since('0.2')) this.choice(c);
           continue;
         }
         this.build(c, this.scene, null, null, 0, false, animates);
@@ -594,7 +670,7 @@ export class HolomlView {
       window.addEventListener('hashchange', () => this.goTo(this.placeNamed(addressName()) ?? this.viewpoints[0]!));
     }
     // Arriving from another HoloML page of the same site: the scene fades in once drawn (a cut with reduced motion).
-    if (this.version === '0.2' && !this.reducedMotion.matches && arrivedFromHolomlPage()) {
+    if (this.since('0.2') && !this.reducedMotion.matches && arrivedFromHolomlPage()) {
       this.arriving = true;
       void this.setFade(1, 0);
       window.setTimeout(() => this.arrive(), ARRIVAL_WAIT_MS);
@@ -606,6 +682,7 @@ export class HolomlView {
     this.wirePointer();
     this.wireKeys();
     this.sounds.onChange = () => this.requestFrame();
+    this.sounds.onLeftOut = () => this.onLeftOut?.();
     window.addEventListener('resize', () => this.resize());
     // Reduced motion: animations show their end at once (issue #25).
     this.reducedMotion.addEventListener('change', () => {
@@ -627,8 +704,67 @@ export class HolomlView {
     this.budget.stop();
   }
 
-  get stillMoving(): boolean {
-    return !this.reducedMotion.matches;
+  /** Whether the page's version has what a version added: every later version keeps it (review 134, V2). */
+  private since(version: Version): boolean {
+    return atLeast(this.version, version);
+  }
+
+  /** The renderer's own soft light from around, drawn into a picture on the graphics card. */
+  private roomLight(): void {
+    const pmrem = new PMREMGenerator(this.renderer);
+    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmrem.dispose();
+  }
+
+  /**
+   * The graphics card's context came back after being lost. Three.js
+   * sends the models, materials, and pictures again by itself; what was
+   * drawn into pictures on the card (the soft light from around) is
+   * gone, so it is made again, and the scene is drawn (review 134, V10).
+   */
+  private restored(): void {
+    this.scene.environment?.dispose();
+    this.roomLight();
+    if (this.environment?.state === 'loaded' && this.environmentUrl) {
+      const url = this.environmentUrl;
+      void this.pictures.environment(url).then((panorama) => this.lightFrom(panorama, url), () => undefined);
+    }
+    this.compiling = false;
+    this.shadersWanted = true;
+    this.waterDirty = true;
+    this.shadowBox = null;
+    for (const pool of this.pools.values()) pool.dirty = true;
+    this.last = 0;
+    this.requestFrame();
+  }
+
+  /** How many of the screen's pixels the scene is drawn with: all of them, or half each way where Chromium draws in software. */
+  private pixelRatio(): number {
+    return window.devicePixelRatio * (this.software === null ? 1 : SOFTWARE_SHARPNESS);
+  }
+
+  /** How the scene is drawn (for the tests and the inspector): in software or not, and how sharply. */
+  get drawingInfo(): { software: string | null; antialias: boolean; pixelRatio: number; devicePixelRatio: number } {
+    return { software: this.software, antialias: this.software === null, pixelRatio: this.renderer.getPixelRatio(), devicePixelRatio: window.devicePixelRatio };
+  }
+
+  /** What is past the page's limits on lights (review 134, V6): lights left out, and lights that shine without the shadows they asked for. */
+  get lightLimitsInfo(): { lights: number; leftOut: number; shadowLights: number; withoutShadows: number } {
+    return { lights: this.placedLights, leftOut: this.lightsLeftOut, shadowLights: this.shadowLights.length, withoutShadows: this.shadowsLeftOff };
+  }
+
+  /**
+   * The text view came on or went (main.ts). While it is on the scene is
+   * hidden: it takes no keys and no pointer, so the arrow keys, Page Up,
+   * Page Down, and the space bar scroll the text, and it draws nothing
+   * until it is shown again (review 134, V8).
+   */
+  setTextView(on: boolean): void {
+    if (this.textView === on) return;
+    this.textView = on;
+    if (this.controls) this.controls.paused = on;
+    this.last = 0;
+    if (!on) this.requestFrame();
   }
 
   get motionReduced(): boolean {
@@ -688,9 +824,7 @@ export class HolomlView {
   screenPoint(which: string | number): { x: number; y: number } | null {
     const o = typeof which === 'number' ? this.links[which]?.object : this.entryById.get(which)?.object;
     if (!o) return null;
-    const box = this.boxOf(o);
-    const c = box.isEmpty() ? o.getWorldPosition(new Vector3()) : box.getCenter(new Vector3());
-    c.project(this.camera);
+    const c = centreOf(this.boxOf(o), o).project(this.camera);
     if (c.z > 1 || Math.abs(c.x) > 1 || Math.abs(c.y) > 1) return null;
     const rect = this.renderer.domElement.getBoundingClientRect();
     return { x: rect.left + ((c.x + 1) / 2) * rect.width, y: rect.top + ((1 - c.y) / 2) * rect.height };
@@ -728,11 +862,11 @@ export class HolomlView {
     return out;
   }
 
-  /** How the scene is drawn: draw calls and triangles in the last frame, and the instance pools. */
-  get stats(): { calls: number; triangles: number; pools: { src: string; count: number }[]; solids: number } {
+  /** How the scene is drawn: draw calls and triangles in the last frame, the instance pools, and the pictures held on the graphics card. */
+  get stats(): { calls: number; triangles: number; pools: { src: string; count: number }[]; solids: number; textures: number } {
     const info = this.renderer.info.render;
     const pools = [...this.pools.values()].map((p) => ({ src: p.src, count: p.count }));
-    return { calls: info.calls, triangles: info.triangles, pools, solids: this.grid?.size ?? 0 };
+    return { calls: info.calls, triangles: info.triangles, pools, solids: this.grid?.size ?? 0, textures: this.renderer.info.memory.textures };
   }
 
   get busy(): boolean {
@@ -838,6 +972,12 @@ export class HolomlView {
     const out = this.models.filter((m) => m.state === 'left-out' || m.state === 'refused' || m.state === 'failed').map((m) => ({ what: m.src, why: m.reason ?? m.state }));
     for (const s of this.sounds.reports) if (s.state !== 'loaded' && s.state !== 'loading') out.push({ what: s.src, why: s.reason ?? s.state });
     out.push(...this.pictureProblems);
+    if (this.lightsLeftOut > 0) {
+      out.push({ what: this.lightsLeftOut === 1 ? 'one light' : `${this.lightsLeftOut} lights`, why: `past the page's limit of ${LIMITS.lights} lights` });
+    }
+    if (this.shadowsLeftOff > 0) {
+      out.push({ what: this.shadowsLeftOff === 1 ? "one light's shadows" : `the shadows of ${this.shadowsLeftOff} lights`, why: `at most ${LIMITS.shadowLights} lights cast shadows on a page` });
+    }
     if (this.leftOutElements > 0) {
       out.push({ what: `${this.leftOutElements.toLocaleString('en')} elements`, why: `past the page's limit of ${LIMITS.elements.toLocaleString('en')}` });
     }
@@ -863,6 +1003,13 @@ export class HolomlView {
    */
   private build(node: HoloNode, parent: Object3D, parentEntry: Entry | null, link: string | null, depth: number, fromScript: boolean, animates: ElementNode[]): Entry | null {
     if (node.type !== 'element') return null;
+    // What a script adds, the script moves and plays: an animate, and a sound that begins on a click, are left
+    // out wherever they are in its markup, and the console says so (SPEC.md section 10, `holoml.add`).
+    const notAdded = fromScript ? leftOutOfAdd(node) : null;
+    if (notAdded) {
+      console.warn(`HoloML: holoml.add: line ${node.start.line - 1}, column ${node.start.column}: ${notAdded}.`);
+      return null;
+    }
     // The page's limit on elements: later ones are left out (issue #23).
     if (!this.count(node)) return null;
     const id = attr(node, 'id') ?? null;
@@ -882,9 +1029,9 @@ export class HolomlView {
         const g = this.place(new Object3D(), node);
         parent.add(g);
         this.setObject(entry, g);
-        if (this.version === '0.2' && has(node, 'solid')) entry.solid = true;
-        if (this.version === '0.2' && has(node, 'shadows')) entry.shadows = true;
-        if (this.version === '0.2' && attr(node, 'load') === 'near') {
+        if (this.since('0.2') && has(node, 'solid')) entry.solid = true;
+        if (this.since('0.2') && has(node, 'shadows')) entry.shadows = true;
+        if (this.since('0.2') && attr(node, 'load') === 'near') {
           // Loading by area (milestone 20): its models wait for the viewer to come near.
           const near = num(node, 'near', 10, 0);
           entry.area = { entry, near: near > 0 ? near : 10, in: false, told: false };
@@ -897,8 +1044,8 @@ export class HolomlView {
       }
       case 'model':
         if (listed) entry.item = this.addItem(entry, 'Model');
-        if (this.version === '0.2' && has(node, 'solid')) entry.solid = true;
-        if (this.version === '0.2' && has(node, 'shadows')) entry.shadows = true;
+        if (this.since('0.2') && has(node, 'solid')) entry.solid = true;
+        if (this.since('0.2') && has(node, 'shadows')) entry.shadows = true;
         this.setObject(entry, this.model(node, parent, entry));
         this.track(entry.object!, link);
         break;
@@ -916,7 +1063,7 @@ export class HolomlView {
         this.track(entry.object!, link);
         break;
       case 'panel':
-        if (this.version !== '0.2') break;
+        if (!this.since('0.2')) break;
         this.setObject(entry, this.panel(node, parent, entry));
         if (listed) entry.item = this.addItem(entry, 'Panel');
         this.panelWords(entry);
@@ -940,7 +1087,7 @@ export class HolomlView {
         animates.push(node);
         break;
       case 'sound':
-        if (this.version === '0.2') {
+        if (this.since('0.2')) {
           this.sound(node, entry, parent);
           // Plays when its trigger is clicked (milestone 19).
           if (attr(node, 'begin') === 'click') this.pendingActions.push({ trigger: idOf(attr(node, 'trigger')), sound: entry, label: attr(node, 'label') ?? null });
@@ -967,54 +1114,126 @@ export class HolomlView {
     if (link) o.userData['link'] = link;
   }
 
+  /** A file's address, if it is on the page's own site: models, sounds, and pictures load from nowhere else (owner, prompt 65, Q2 a; the page's content policy enforces the same). */
+  private ownSite(src: string): URL | null {
+    const url = resolveAddress(src, this.base);
+    return url && url.origin === this.origin ? url : null;
+  }
+
+  /**
+   * The steps every file the page names goes through (a model, a
+   * stand-in, a material's picture, the surroundings, the sky, a floor
+   * plan, a sound), written once (review 134, V3): its address must be on
+   * the page's own site, or it is refused; it counts as loading until
+   * `load` is done, so the page is ready, and the loading strip stops,
+   * only then; and when `load` fails, `out` is told how (left out for a
+   * limit or a stop, failed for anything else) and in what words.
+   *
+   * What a load holds of the page's totals is in its claim (budget.ts),
+   * and every loader used here gives its claim back whole when it fails
+   * (Budget.load and Budget.file, a model's decoding, Pictures), so a load
+   * that ends in `out` holds nothing. Resolves with what `load` made, or
+   * null when it was refused, left out, or failed.
+   */
+  private async guarded<T>(src: string, refusal: string, load: (url: URL) => Promise<T>, out: (state: NotShown, reason: string, overTotal: boolean) => void): Promise<T | null> {
+    const url = this.ownSite(src);
+    if (!url) {
+      out('refused', refusal, false);
+      return null;
+    }
+    this.pending += 1;
+    if (this.pending === 1) this.onBusy?.(true);
+    try {
+      return await load(url);
+    } catch (e) {
+      if (e instanceof LeftOut) out('left-out', e.reason, e.overTotal);
+      else out('failed', `could not be loaded (${e instanceof Error ? e.message : String(e)})`, false);
+      return null;
+    } finally {
+      this.settle();
+    }
+  }
+
   /** A model file, fetched within the limits and decoded once for every model that uses it. */
   private loadTemplate(url: URL): Promise<LoadedTemplate> {
     const known = this.templates.get(url.href);
     if (known) return known;
-    let blobs = new Map<string, string>();
-    const loading = this.budget
-      .load(url, this.origin)
-      .then(async (files) => {
-        blobs = files.blobs;
-        // The loader reads the counted files only, never the network.
-        const manager = new LoadingManager();
-        manager.setURLModifier((u) => blobs.get(new URL(u, url).href) ?? (u.startsWith('data:') || u.startsWith('blob:') ? u : 'blob:uncounted'));
-        const gltf = await new GLTFLoader(manager).parseAsync(files.main, url.href.slice(0, url.href.lastIndexOf('/') + 1));
-        // After decoding, the pictures' real sizes too (a backstop for unknown formats).
-        let tooBig: string | null = null;
-        let skinned = false;
-        gltf.scene.traverse((o) => {
-          if (o instanceof SkinnedMesh) skinned = true;
-          const m = (o as Mesh).material;
-          for (const mat of Array.isArray(m) ? m : m ? [m] : []) {
-            for (const value of Object.values(mat)) {
-              const img = value instanceof Texture ? (value.image as { width?: number; height?: number } | null) : null;
-              if (img && ((img.width ?? 0) > LIMITS.pictureSide || (img.height ?? 0) > LIMITS.pictureSide)) {
-                tooBig = `a picture of ${img.width} by ${img.height} pixels is larger than ${LIMITS.pictureSide} by ${LIMITS.pictureSide}`;
-              }
-            }
-          }
-        });
-        if (tooBig) {
-          this.budget.releaseTriangles(files.triangles);
-          throw new LeftOut(tooBig);
-        }
-        gltf.scene.updateMatrixWorld(true);
-        const template: Template = {
-          scene: gltf.scene,
-          box: new Box3().setFromObject(gltf.scene),
-          triangles: files.triangles || countTriangles(gltf.scene),
-          bytes: files.bytes,
-          pictures: files.pictures,
-          instanceable: !skinned && gltf.animations.length === 0,
-        };
-        return { template, animations: gltf.animations, claimed: false };
-      })
-      .finally(() => {
-        for (const b of blobs.values()) URL.revokeObjectURL(b);
-      });
+    // A file that arrived and could not be read would read no better now: it is not fetched again (review 134, V3).
+    const unreadable = this.unreadable.get(url.href);
+    const loading = unreadable
+      ? Promise.reject<LoadedTemplate>(unreadable)
+      : this.budget.load(url, this.origin).then(
+          (files) => this.decode(url, files),
+          (e: unknown) => {
+            // Nor is one that needs what the viewer does not have (a glTF extension it does not read).
+            if (e instanceof Unreadable || e instanceof Unsupported) this.unreadable.set(url.href, e);
+            throw e;
+          },
+        );
     this.templates.set(url.href, loading);
     return loading;
+  }
+
+  /**
+   * Decodes a model file that has arrived, and counts it again as it
+   * really is: its pictures' sizes (a backstop for kinds whose header is
+   * not read) and their pixels, and its triangles as they will be drawn,
+   * which is what the page is charged (what the file said of itself was
+   * an estimate; review 134, V4). A file that cannot be decoded, or is
+   * refused once it is, holds nothing: its claim is given back, and the
+   * pictures decoded for it are closed.
+   */
+  private async decode(url: URL, files: LoadedFiles): Promise<LoadedTemplate> {
+    let scene: Object3D | null = null;
+    try {
+      // The loader reads the counted files only, never the network.
+      const manager = new LoadingManager();
+      manager.setURLModifier((u) => files.blobs.get(new URL(u, url).href) ?? (u.startsWith('data:') || u.startsWith('blob:') ? u : 'blob:uncounted'));
+      const gltf = await new GLTFLoader(manager).parseAsync(files.main, url.href.slice(0, url.href.lastIndexOf('/') + 1)).catch((e: unknown) => {
+        throw new Unreadable(e instanceof Error ? e.message : String(e));
+      });
+      scene = (gltf.scene as Object3D | undefined) ?? null;
+      if (!scene) throw new Unreadable('it has no scene');
+      let tooBig: string | null = null;
+      let pixels = 0;
+      const seen = new Set<unknown>();
+      scene.traverse((o) => {
+        const m = (o as Mesh).material;
+        for (const mat of Array.isArray(m) ? m : m ? [m] : []) {
+          for (const value of Object.values(mat)) {
+            const img = value instanceof Texture ? (value.image as { width?: number; height?: number } | null) : null;
+            if (!img || seen.has(img)) continue;
+            seen.add(img);
+            pixels += (img.width ?? 0) * (img.height ?? 0);
+            if ((img.width ?? 0) > LIMITS.pictureSide || (img.height ?? 0) > LIMITS.pictureSide) {
+              tooBig = `a picture of ${img.width} by ${img.height} pixels is larger than ${LIMITS.pictureSide} by ${LIMITS.pictureSide}`;
+            }
+          }
+        }
+      });
+      if (tooBig) throw new LeftOut(tooBig);
+      files.claim.setPixels(pixels);
+      scene.updateMatrixWorld(true);
+      const triangles = countTriangles(scene);
+      files.claim.setTriangles(triangles);
+      const template: Template = {
+        scene,
+        box: new Box3().setFromObject(scene),
+        triangles,
+        bytes: files.bytes,
+        pictures: files.pictures,
+        instanceable: canInstance(scene, gltf.animations.length > 0),
+      };
+      return { template, animations: gltf.animations, claim: files.claim };
+    } catch (e) {
+      if (scene) releaseFile(scene);
+      files.claim.release();
+      // It would end the same way again, unless it only lacked room within the page's totals.
+      if (e instanceof Unreadable || (e instanceof LeftOut && !e.overTotal)) this.unreadable.set(url.href, e);
+      throw e;
+    } finally {
+      for (const b of files.blobs.values()) URL.revokeObjectURL(b);
+    }
   }
 
   private model(el: ElementNode, parent: Object3D, entry: Entry): Object3D {
@@ -1026,21 +1245,11 @@ export class HolomlView {
     this.models.push(report);
     entry.report = report;
     // HoloML 0.2 (milestone 20): a lighter model stands in until this one has loaded.
-    const standIn = this.version === '0.2' ? attr(el, 'stand-in') : null;
+    const standIn = this.since('0.2') ? attr(el, 'stand-in') : null;
     if (standIn) this.standIn(entry, holder, standIn);
-    const url = resolveAddress(src, this.base);
-    // Models come from the page's own site only (owner, prompt 65, Q2 a);
-    // the page's content policy enforces the same.
-    if (!url || url.origin !== this.origin) {
-      report.state = 'refused';
-      report.reason = "models load only from the page's own site";
-      console.warn(`HoloML: the model "${src}" was not loaded: models load only from the page's own site.`);
-      holder.add(missingMarker());
-      this.onLeftOut?.();
-      return holder;
-    }
-    // Loading by area (milestone 20): in a group the viewer is not near, it waits for the viewer.
-    if (this.wanted(entry)) this.loadModel(entry);
+    // Loading by area (milestone 20): in a group the viewer is not near, it waits for the viewer
+    // (one from another site is refused at once, wherever it is).
+    if (!this.ownSite(src) || this.wanted(entry)) this.loadModel(entry);
     else {
       report.state = 'waiting';
       report.reason = FAR;
@@ -1058,35 +1267,30 @@ export class HolomlView {
     const el = entry.el;
     const holder = entry.object!;
     const report = entry.report!;
-    const url = resolveAddress(attr(el, 'src') ?? '', this.base)!;
     const byArea = this.byArea(entry);
     const load = (entry.loads = (entry.loads ?? 0) + 1);
     const current = () => !entry.removed && entry.loads === load;
     report.state = 'loading';
     delete report.reason;
-    // The page's limit on model files (issue #23; a file used many times counts once, and one let go not at all).
-    if (!this.templates.has(url.href) && this.templates.size >= LIMITS.modelFiles) {
-      const reason = `more than ${LIMITS.modelFiles} model files on the page`;
-      if (byArea) this.waitForRoom(entry, reason);
-      else this.leaveOut(holder, report, entry, reason);
-      return;
-    }
-    const changes = el.children.filter((c): c is ElementNode => c.type === 'element' && c.name === 'material');
-    const clipName = attr(el, 'animation');
-    this.pending += 1;
-    if (this.pending === 1) this.onBusy?.(true);
-    // The materials' pictures (HoloML 0.2) load beside the model; a picture that fails is reported, and the rest shows.
-    const looks = Promise.all(changes.map((c) => this.lookOf(c)));
-    const held: Held = { href: url.href, looks, materials: [], mixer: null };
-    entry.held = held;
-    this.useTemplate(url.href);
-    Promise.all([this.loadTemplate(url), looks])
-      .then(async ([loaded, given]) => {
+    void this.guarded(
+      report.src,
+      "models load only from the page's own site",
+      async (url) => {
+        // The page's limit on model files (issue #23; a file used many times counts once, and one let go not at all).
+        if (!this.templates.has(url.href) && this.templates.size >= LIMITS.modelFiles) throw new LeftOut(`more than ${LIMITS.modelFiles} model files on the page`, true);
+        const changes = el.children.filter((c): c is ElementNode => c.type === 'element' && c.name === 'material');
+        const clipName = attr(el, 'animation');
+        // The materials' pictures (HoloML 0.2) load beside the model; a picture that fails is reported, and the rest shows.
+        const looks = Promise.all(changes.map((c) => this.lookOf(c)));
+        const held: Held = { href: url.href, looks, materials: [], mixer: null, lights: 0 };
+        entry.held = held;
+        this.useTemplate(url.href);
+        const [loaded, given] = await Promise.all([this.loadTemplate(url), looks]);
         if (!current()) return;
         const t = loaded.template;
-        // Each model drawn counts its triangles; the first was counted by the load.
-        if (loaded.claimed) this.budget.useTriangles(t.triangles);
-        loaded.claimed = true;
+        // Each model drawn counts its triangles. The load held one copy's until the first model took them.
+        loaded.claim.setTriangles(0);
+        this.budget.useTriangles(t.triangles);
         entry.template = t;
         entry.triangles = t.triangles;
         report.bytes = t.bytes;
@@ -1101,6 +1305,7 @@ export class HolomlView {
           this.materialsOf(t.scene, report);
         } else {
           const copy = cloneModel(t.scene);
+          held.lights = this.fileLights(copy);
           if (shadows) castShadows(copy);
           holder.add(copy);
           holder.userData['copy'] = copy;
@@ -1116,18 +1321,55 @@ export class HolomlView {
         if (shadows) this.shadowBox = null;
         if (this.isSolid(entry)) this.collidersDirty = true;
         this.applyMotion();
-      })
-      .catch((e: unknown) => {
+      },
+      (state, reason, overTotal) => {
         if (!current()) return;
+        if (state === 'refused') {
+          report.state = 'refused';
+          report.reason = reason;
+          console.warn(`HoloML: the model "${report.src}" was not loaded: ${reason}.`);
+          holder.add(missingMarker());
+          this.onLeftOut?.();
+        }
         // A model that loads by area and would pass the page's totals waits for room (milestone 20).
-        if (byArea && e instanceof LeftOut && e.overTotal) this.waitForRoom(entry, e.reason);
-        else if (e instanceof LeftOut) this.leaveOut(holder, report, entry, e.reason);
-        else this.leaveOut(holder, report, entry, `could not be loaded (${e instanceof Error ? e.message : String(e)})`, 'failed');
-      })
-      .finally(() => {
-        this.settle();
-        if (byArea) this.tellAreas();
-      });
+        else if (byArea && overTotal) this.waitForRoom(entry, reason);
+        else this.leaveOut(holder, report, entry, reason, state);
+      },
+    ).then(() => {
+      if (byArea) this.tellAreas();
+    });
+  }
+
+  /**
+   * The lights inside a model's own copy (its file's own) count towards
+   * the page's limit on lights like the page's: those past it are taken
+   * out of the copy (review 134, V6). Returns how many it keeps.
+   */
+  private fileLights(copy: Object3D): number {
+    const lights: Object3D[] = [];
+    copy.traverse((o) => {
+      if ((o as Object3D & { isLight?: boolean }).isLight === true && !(o instanceof AmbientLight)) lights.push(o);
+    });
+    let kept = 0;
+    for (const light of lights) {
+      if (this.placedLights < LIMITS.lights) {
+        this.placedLights += 1;
+        kept += 1;
+      } else {
+        light.removeFromParent();
+        this.lightLeftOut();
+      }
+    }
+    return kept;
+  }
+
+  /** A light past the page's limit is not shown: counted for the notice, and the console says so once. */
+  private lightLeftOut(): void {
+    this.lightsLeftOut += 1;
+    if (this.lightsLeftOut === 1) {
+      console.warn(`HoloML: a page shows at most ${LIMITS.lights} lights that shine from a place or a direction; the lights after them were left out.`);
+    }
+    this.onLeftOut?.();
   }
 
   /**
@@ -1143,25 +1385,18 @@ export class HolomlView {
     const s: StandIn = { holder: new Object3D(), report, href: null };
     holder.add(s.holder);
     entry.standIn = s;
-    const url = resolveAddress(src, this.base);
-    if (!url || url.origin !== this.origin) {
-      this.standInLeftOut(s, "models load only from the page's own site", 'refused');
-      return;
-    }
-    if (!this.templates.has(url.href) && this.templates.size >= LIMITS.modelFiles) {
-      this.standInLeftOut(s, `more than ${LIMITS.modelFiles} model files on the page`);
-      return;
-    }
-    this.pending += 1;
-    if (this.pending === 1) this.onBusy?.(true);
-    s.href = url.href;
-    this.useTemplate(url.href);
-    this.loadTemplate(url)
-      .then((loaded) => {
+    void this.guarded(
+      src,
+      "models load only from the page's own site",
+      async (url) => {
+        if (!this.templates.has(url.href) && this.templates.size >= LIMITS.modelFiles) throw new LeftOut(`more than ${LIMITS.modelFiles} model files on the page`);
+        s.href = url.href;
+        this.useTemplate(url.href);
+        const loaded = await this.loadTemplate(url);
         if (entry.removed) return;
         const t = loaded.template;
-        if (loaded.claimed) this.budget.useTriangles(t.triangles);
-        loaded.claimed = true;
+        loaded.claim.setTriangles(0);
+        this.budget.useTriangles(t.triangles);
         s.template = t;
         s.triangles = t.triangles;
         report.bytes = t.bytes;
@@ -1172,6 +1407,7 @@ export class HolomlView {
         if (t.instanceable) this.poolFor(t, url.href, shadows).add(s.holder);
         else {
           const copy = cloneModel(t.scene);
+          s.lights = this.fileLights(copy);
           if (shadows) castShadows(copy);
           s.holder.add(copy);
         }
@@ -1179,20 +1415,23 @@ export class HolomlView {
         report.state = 'loaded';
         if (s.holder.visible && shadows) this.shadowBox = null;
         if (s.holder.visible && this.isSolid(entry)) this.collidersDirty = true;
-      })
-      .catch((e: unknown) => {
-        if (entry.removed) return;
-        if (e instanceof LeftOut) this.standInLeftOut(s, e.reason);
-        else this.standInLeftOut(s, `could not be loaded (${e instanceof Error ? e.message : String(e)})`, 'failed');
-      })
-      .finally(() => this.settle());
+      },
+      (state, reason) => {
+        if (!entry.removed) this.standInLeftOut(s, reason, state);
+      },
+    );
   }
 
   /** A stand-in not shown: reported (the model itself still loads). */
-  private standInLeftOut(s: StandIn, reason: string, state: 'left-out' | 'failed' | 'refused' = 'left-out'): void {
+  private standInLeftOut(s: StandIn, reason: string, state: NotShown = 'left-out'): void {
     s.report.state = state;
     s.report.reason = reason;
     console.warn(`HoloML: the stand-in "${s.report.src}" was ${state === 'failed' ? 'not loaded' : 'left out'}: ${reason}.`);
+    // What it had taken so far no longer counts.
+    if (s.triangles) this.budget.releaseTriangles(s.triangles);
+    s.triangles = undefined;
+    this.placedLights -= s.lights ?? 0;
+    s.lights = 0;
     if (s.href) this.releaseTemplate(s.href, false);
     s.href = null;
     this.onLeftOut?.();
@@ -1216,6 +1455,7 @@ export class HolomlView {
     if (!s) return;
     (s.holder.userData['pool'] as InstancePool | undefined)?.remove(s.holder);
     if (s.triangles) this.budget.releaseTriangles(s.triangles);
+    this.placedLights -= s.lights ?? 0;
     if (s.href) this.releaseTemplate(s.href, false);
     const i = this.models.indexOf(s.report);
     if (i >= 0) this.models.splice(i, 1);
@@ -1337,6 +1577,7 @@ export class HolomlView {
     const held = entry.held;
     entry.held = undefined;
     if (!held) return;
+    this.placedLights -= held.lights;
     for (const m of held.materials) this.disposeMade(m);
     if (held.mixer) {
       held.mixer.stopAllAction();
@@ -1370,9 +1611,10 @@ export class HolomlView {
 
   /**
    * A model (or stand-in) no longer uses a file. With `drop`, a file no
-   * model uses any more is let go: its bytes and triangles stop counting,
-   * and its meshes, materials, and pictures are released (a file that
-   * failed is forgotten, so it is tried again next time).
+   * model uses any more is let go: what it holds of the page's totals
+   * stops counting, and its meshes, materials, and pictures are released.
+   * A file that failed held nothing; it is forgotten, so it is tried again
+   * next time, unless it arrived and could not be read (see `unreadable`).
    */
   private releaseTemplate(href: string, drop: boolean): void {
     const left = (this.templateUsers.get(href) ?? 1) - 1;
@@ -1387,9 +1629,8 @@ export class HolomlView {
     void loading?.then(
       (loaded) => {
         const t = loaded.template;
-        // The load counted one copy's triangles for the first model; none took them.
-        if (!loaded.claimed) this.budget.releaseTriangles(t.triangles);
-        this.budget.releaseBytes(t.bytes);
+        // Its bytes, its pictures' pixels, and one copy's triangles if no model took them.
+        loaded.claim.release();
         for (const key of [href, `shadows ${href}`]) {
           const pool = this.pools.get(key);
           if (pool?.template !== t) continue;
@@ -1465,9 +1706,9 @@ export class HolomlView {
     };
   }
 
-  /** What the page's files count now (for the tests): bytes, triangles, and model files. */
-  get totals(): { bytes: number; triangles: number; modelFiles: number } {
-    return { bytes: this.budget.bytes, triangles: this.budget.triangles, modelFiles: this.templates.size };
+  /** What the page's files count now (for the tests): bytes, triangles, model files, and (review 134, V6) the pixels of pictures and the seconds of sound. */
+  get totals(): { bytes: number; triangles: number; modelFiles: number; pixels: number; seconds: number } {
+    return { bytes: this.budget.bytes, triangles: this.budget.triangles, modelFiles: this.templates.size, pixels: this.budget.pixels, seconds: this.budget.seconds };
   }
 
   /** One thing finished loading (or failing): the scene is ready when nothing is left. */
@@ -1525,7 +1766,7 @@ export class HolomlView {
    * its file and stays in the Tab order, as it is tried again when the
    * viewer next comes near (milestone 20). Its stand-in stays.
    */
-  private leaveOut(holder: Object3D, report: ModelReport, entry: Entry, reason: string, state: 'left-out' | 'failed' = 'left-out'): void {
+  private leaveOut(holder: Object3D, report: ModelReport, entry: Entry, reason: string, state: NotShown = 'left-out'): void {
     report.state = state;
     report.reason = reason;
     console.warn(state === 'failed' ? `HoloML: the model "${report.src}" ${reason}.` : `HoloML: the model "${report.src}" was left out: ${reason}.`);
@@ -1538,13 +1779,13 @@ export class HolomlView {
 
   /** <material> children: change the named materials, only what is given (with their looks, pictures included); the materials made. */
   private changeMaterials(changes: ElementNode[], looks: Look[], model: Object3D, report: ModelReport): Material[] {
-    const done = new Map<Material, MeshStandardMaterial>();
+    const done = new Map<Material, Changeable>();
     model.traverse((o) => {
       if (!(o instanceof Mesh)) return;
       const list = Array.isArray(o.material) ? o.material : [o.material];
       const next = list.map((m: Material) => {
         const i = changes.findIndex((c) => attr(c, 'name') === m.name);
-        if (i < 0 || !(m instanceof MeshStandardMaterial)) return m;
+        if (i < 0 || !changeable(m)) return m;
         let copy = done.get(m);
         if (!copy) {
           copy = m.clone();
@@ -1575,7 +1816,7 @@ export class HolomlView {
       return Number.isNaN(v) ? null : v;
     };
     const look: Look = { color: color(el, 'color'), metalness: unit('metalness'), roughness: unit('roughness'), opacity: unit('opacity'), repeat: null };
-    if (this.version !== '0.2') return look;
+    if (!this.since('0.2')) return look;
     look.repeat = tiling(el);
     const slots: [string, 'map' | 'normalMap' | 'roughnessMap', PictureUse][] = [
       ['map', 'map', 'color'],
@@ -1593,22 +1834,13 @@ export class HolomlView {
   }
 
   /** One of the page's pictures, counted as loading until it arrives; null (and reported) when it cannot be shown. */
-  private async picture(src: string, use: PictureUse, repeat: [number, number]): Promise<Texture | null> {
-    const url = resolveAddress(src, this.base);
-    if (!url || url.origin !== this.origin) {
-      this.pictureLeftOut(src, "pictures load only from the page's own site");
-      return null;
-    }
-    this.pending += 1;
-    if (this.pending === 1) this.onBusy?.(true);
-    try {
-      return await this.pictures.texture(url, use, repeat);
-    } catch (e) {
-      this.pictureLeftOut(src, e instanceof LeftOut ? e.reason : `could not be loaded (${e instanceof Error ? e.message : String(e)})`);
-      return null;
-    } finally {
-      this.settle();
-    }
+  private picture(src: string, use: PictureUse, repeat: [number, number]): Promise<Texture | null> {
+    return this.guarded(
+      src,
+      "pictures load only from the page's own site",
+      (url) => this.pictures.texture(url, use, repeat),
+      (_state, reason) => this.pictureLeftOut(src, reason),
+    );
   }
 
   /** A picture not shown: reported once, however many materials name it. */
@@ -1619,18 +1851,24 @@ export class HolomlView {
     this.onLeftOut?.();
   }
 
-  /** Gives a material a look: only what the look gives changes; `repeat` tiles the material's own pictures too. */
-  private applyLook(m: MeshStandardMaterial, look: Look): void {
+  /**
+   * Gives a material a look: only what the look gives changes; `repeat`
+   * tiles the material's own pictures too. A material that takes no light
+   * takes the look's colour, opacity, colour picture, and tiling; metalness,
+   * roughness, and the pictures of bumps and roughness are nothing to it.
+   */
+  private applyLook(m: Changeable, look: Look): void {
+    const lit = m instanceof MeshStandardMaterial;
     if (look.color) m.color.set(look.color);
-    if (look.metalness !== null) m.metalness = look.metalness;
-    if (look.roughness !== null) m.roughness = look.roughness;
+    if (lit && look.metalness !== null) m.metalness = look.metalness;
+    if (lit && look.roughness !== null) m.roughness = look.roughness;
     if (look.opacity !== null) {
       m.opacity = look.opacity;
       m.transparent = look.opacity < 1;
     }
-    const slots = m as unknown as Record<(typeof PICTURE_SLOTS)[number], Texture | null>;
+    const slots = m as unknown as Record<(typeof PICTURE_SLOTS)[number], Texture | null | undefined>;
     const given = new Set<Texture>();
-    for (const slot of ['map', 'normalMap', 'roughnessMap'] as const) {
+    for (const slot of lit ? (['map', 'normalMap', 'roughnessMap'] as const) : (['map'] as const)) {
       const t = look[slot];
       if (t) {
         slots[slot] = t;
@@ -1664,11 +1902,12 @@ export class HolomlView {
     model.traverse((o) => {
       if (!(o instanceof Mesh)) return;
       for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
-        if (m instanceof MeshStandardMaterial && m.name) {
+        if (changeable(m) && m.name) {
+          const lit = m instanceof MeshStandardMaterial;
           report.materials[m.name] = {
             color: `#${m.color.getHexString()}`,
-            metalness: m.metalness,
-            roughness: m.roughness,
+            metalness: lit ? m.metalness : null,
+            roughness: lit ? m.roughness : null,
             opacity: m.opacity,
             map: m.map ? ((m.map.userData['src'] as string | undefined) ?? 'own') : null,
             repeat: m.map ? [m.map.repeat.x, m.map.repeat.y] : null,
@@ -1682,6 +1921,11 @@ export class HolomlView {
     const type = attr(el, 'type');
     const c = color(el, 'color') ?? '#ffffff';
     const intensity = num(el, 'intensity', 1, 0);
+    // The page's limit on lights that shine from a place or a direction (review 134, V6): later ones are left out.
+    if ((type === 'directional' || type === 'point' || type === 'spot') && this.placedLights >= LIMITS.lights) {
+      this.lightLeftOut();
+      return null;
+    }
     let light: Object3D & { intensity: number };
     // Directional, point, and spot lights are drawn twice as bright as written (milestone 14's look).
     let factor = 2;
@@ -1708,9 +1952,10 @@ export class HolomlView {
       parent.add(s.target);
       light = s;
     } else return null;
+    if (type !== 'ambient') this.placedLights += 1;
     light.userData['factor'] = factor;
     light.userData['kind'] = type;
-    if (this.version === '0.2' && has(el, 'shadows') && type !== 'ambient') this.castFrom(light as DirectionalLight | PointLight | SpotLight);
+    if (this.since('0.2') && has(el, 'shadows') && type !== 'ambient') this.castFrom(light as DirectionalLight | PointLight | SpotLight);
     parent.add(light);
     return light;
   }
@@ -1718,7 +1963,10 @@ export class HolomlView {
   /**
    * A light marked `shadows` (HoloML 0.2): soft shadows from the models
    * marked `shadows`, where there is a graphics card; drawn in software,
-   * left out, and the console says so once.
+   * left out, and the console says so once. Each such light draws the
+   * scene once more, into a picture that every material then reads, and a
+   * graphics card has room for only so many: past the page's limit a light
+   * shines without shadows, and the console says so once (review 134, V6).
    */
   private castFrom(light: DirectionalLight | PointLight | SpotLight): void {
     if (!this.shadowsOn) {
@@ -1726,6 +1974,12 @@ export class HolomlView {
         this.shadowsLeftOut = `this computer draws 3D in software${this.software ? ` (${this.software})` : ''}`;
         console.warn("HoloML: the page's shadows were left out: this computer draws 3D in software, without a graphics card.");
       }
+      return;
+    }
+    if (this.shadowLights.length >= LIMITS.shadowLights) {
+      this.shadowsLeftOff += 1;
+      if (this.shadowsLeftOff === 1) console.warn(`HoloML: at most ${LIMITS.shadowLights} lights cast shadows on a page; the lights after them shine without shadows.`);
+      this.onLeftOut?.();
       return;
     }
     light.castShadow = true;
@@ -1799,34 +2053,32 @@ export class HolomlView {
   private loadEnvironment(src: string): void {
     const state: EnvironmentState = { src, state: 'loading' };
     this.environment = state;
-    const url = resolveAddress(src, this.base);
-    if (!url || url.origin !== this.origin) {
-      state.state = 'refused';
-      state.reason = "the surroundings load only from the page's own site";
-      this.pictureLeftOut(src, state.reason);
-      return;
-    }
-    this.pending += 1;
-    if (this.pending === 1) this.onBusy?.(true);
-    this.pictures
-      .environment(url)
-      .then((panorama) => {
-        const pmrem = new PMREMGenerator(this.renderer);
-        const lit = pmrem.fromEquirectangular(panorama).texture;
-        pmrem.dispose();
-        // The same file as the sky: kept, for the sky draws it.
-        if (url.href !== this.skyUrl) panorama.dispose();
-        this.scene.environment?.dispose();
-        this.scene.environment = lit;
+    void this.guarded(
+      src,
+      "the surroundings load only from the page's own site",
+      async (url) => {
+        this.lightFrom(await this.pictures.environment(url), url);
+        this.environmentUrl = url;
         state.state = 'loaded';
         this.followAmbient();
-      })
-      .catch((e: unknown) => {
-        state.state = e instanceof LeftOut ? 'left-out' : 'failed';
-        state.reason = e instanceof LeftOut ? e.reason : `could not be loaded (${e instanceof Error ? e.message : String(e)})`;
-        this.pictureLeftOut(src, state.reason);
-      })
-      .finally(() => this.settle());
+      },
+      (how, reason) => {
+        state.state = how;
+        state.reason = reason;
+        this.pictureLeftOut(src, reason);
+      },
+    );
+  }
+
+  /** Lights the scene from the page's panorama, drawn into a picture on the graphics card (again, when the card was reset). */
+  private lightFrom(panorama: Texture, url: URL): void {
+    const pmrem = new PMREMGenerator(this.renderer);
+    const lit = pmrem.fromEquirectangular(panorama).texture;
+    pmrem.dispose();
+    // The same file as the sky: kept, for the sky draws it.
+    if (url.href !== this.skyUrl) panorama.dispose();
+    this.scene.environment?.dispose();
+    this.scene.environment = lit;
   }
 
   /**
@@ -1838,28 +2090,20 @@ export class HolomlView {
   private loadSky(src: string): void {
     const state: EnvironmentState = { src, state: 'loading' };
     this.sky = state;
-    const url = resolveAddress(src, this.base);
-    if (!url || url.origin !== this.origin) {
-      state.state = 'refused';
-      state.reason = "the sky loads only from the page's own site";
-      this.pictureLeftOut(src, state.reason);
-      return;
-    }
-    this.pending += 1;
-    if (this.pending === 1) this.onBusy?.(true);
-    this.pictures
-      .environment(url)
-      .then((panorama) => {
-        this.scene.background = panorama;
+    void this.guarded(
+      src,
+      "the sky loads only from the page's own site",
+      async (url) => {
+        this.scene.background = await this.pictures.environment(url);
         state.state = 'loaded';
         this.followAmbient();
-      })
-      .catch((e: unknown) => {
-        state.state = e instanceof LeftOut ? 'left-out' : 'failed';
-        state.reason = e instanceof LeftOut ? e.reason : `could not be loaded (${e instanceof Error ? e.message : String(e)})`;
-        this.pictureLeftOut(src, state.reason);
-      })
-      .finally(() => this.settle());
+      },
+      (how, reason) => {
+        state.state = how;
+        state.reason = reason;
+        this.pictureLeftOut(src, reason);
+      },
+    );
   }
 
   /**
@@ -1901,15 +2145,25 @@ export class HolomlView {
         return p;
       });
     look.note.replaceChildren(...paras(look.paragraphs));
-    // The first paragraph names its button; the rest follow it.
-    if (entry.item) {
+    // The first paragraph names its button; the rest follow it. A panel inside a link has no button of its own:
+    // its first paragraph is in the link's words, and the rest follow the link, in its item, so that screen
+    // readers and the text view have every paragraph of it too.
+    const item = entry.item ?? this.linkItem(entry);
+    if (item) {
       if (!look.words) {
         look.words = document.createElement('div');
         look.words.className = 'holoml-panel-words';
-        entry.item.after(look.words);
+        if (entry.item) entry.item.after(look.words);
+        else item.parentElement?.append(look.words);
       }
       look.words.replaceChildren(...paras(look.paragraphs.slice(1)));
     }
+  }
+
+  /** The outline's link that an element is inside, if it is inside one that is listed there. */
+  private linkItem(entry: Entry): HTMLElement | null {
+    for (let e = entry.parent; e; e = e.parent) if (e.kind === 'a' && e.item) return e.item;
+    return null;
   }
 
   /**
@@ -1932,7 +2186,7 @@ export class HolomlView {
     box.dataset['testid'] = 'holoml-plan';
     box.style.width = `${num(el, 'width', 200, Number.MIN_VALUE)}px`;
     const img = document.createElement('img');
-    img.alt = attr(el, 'label')?.replace(/\s+/g, ' ').trim() || 'Floor plan';
+    img.alt = collapse(attr(el, 'label') ?? '') || 'Floor plan';
     const marker = document.createElement('div');
     marker.className = 'holoml-plan-marker';
     marker.setAttribute('aria-hidden', 'true');
@@ -1944,30 +2198,26 @@ export class HolomlView {
     entry.hud = box;
     const plan: PlanState = { src, state: 'loading', box, img, marker, area: area(el), at: null, angle: 0 };
     this.planState = plan;
-    const url = resolveAddress(src, this.base);
-    if (!url || url.origin !== this.origin) {
-      plan.state = 'refused';
-      plan.reason = "pictures load only from the page's own site";
-      this.pictureLeftOut(src, plan.reason);
-      return;
-    }
-    this.pending += 1;
-    if (this.pending === 1) this.onBusy?.(true);
-    this.pictures
-      .address(url)
-      .then(async (address) => {
-        img.src = address;
-        await img.decode();
+    void this.guarded(
+      src,
+      "pictures load only from the page's own site",
+      async (url) => {
+        img.src = await this.pictures.address(url);
+        // Not a picture a browser can draw after all: it holds nothing of the page's totals.
+        await img.decode().catch((e: unknown) => {
+          this.pictures.discard(url);
+          throw e;
+        });
         plan.state = 'loaded';
         box.hidden = false;
         this.updatePlan();
-      })
-      .catch((e: unknown) => {
-        plan.state = e instanceof LeftOut ? 'left-out' : 'failed';
-        plan.reason = e instanceof LeftOut ? e.reason : `could not be loaded (${e instanceof Error ? e.message : String(e)})`;
-        this.pictureLeftOut(src, plan.reason);
-      })
-      .finally(() => this.settle());
+      },
+      (how, reason) => {
+        plan.state = how;
+        plan.reason = reason;
+        this.pictureLeftOut(src, reason);
+      },
+    );
   }
 
   /** The floor plan's marker: where the viewer is on it, and which way they face (hidden outside its area). */
@@ -2118,9 +2368,9 @@ export class HolomlView {
     this.choices.push(entry);
     // Its options count against the page's limit on elements too.
     this.elementCount += countElements(el);
-    const target = attr(el, 'target')?.trim();
+    const target = trimSpace(attr(el, 'target') ?? '');
     const material = attr(el, 'material') ?? null;
-    const changes = target?.startsWith('#') && material !== null;
+    const changes = target.startsWith('#') && material !== null;
     const options: ChoiceOption[] = [];
     for (const o of el.children) {
       if (o.type !== 'element' || o.name !== 'option') continue;
@@ -2135,7 +2385,7 @@ export class HolomlView {
     box.dataset['testid'] = 'holoml-choice';
     if (entry.id) box.dataset['id'] = entry.id;
     const legend = document.createElement('legend');
-    legend.textContent = attr(el, 'label')?.replace(/\s+/g, ' ').trim() ?? '';
+    legend.textContent = collapse(attr(el, 'label') ?? '');
     legend.hidden = legend.textContent === '';
     if (legend.hidden) box.setAttribute('aria-label', entry.id ?? 'Choice');
     const list = document.createElement('div');
@@ -2161,7 +2411,7 @@ export class HolomlView {
     box.append(legend, list);
     this.corner(el).append(box);
     entry.hud = box;
-    entry.choice = { options, inputs, legend, chosen: start, target: changes ? target!.slice(1) : null, material: changes ? material : null };
+    entry.choice = { options, inputs, legend, chosen: start, target: changes ? target.slice(1) : null, material: changes ? material : null };
     return entry;
   }
 
@@ -2204,7 +2454,7 @@ export class HolomlView {
         this.ownMaterials.set(o, own);
       }
       const next = own.map((base, i) => {
-        if (base.name !== c.material || !(base instanceof MeshStandardMaterial)) return now[i]!;
+        if (base.name !== c.material || !changeable(base)) return now[i]!;
         found = true;
         let made = option.made.get(base);
         if (!made) {
@@ -2247,7 +2497,7 @@ export class HolomlView {
   private setHudText(entry: Entry, value: string): void {
     const lines = value
       .split(/\r\n|\r|\n/)
-      .map((l) => l.replace(/\s+/g, ' ').trim())
+      .map(collapse)
       .filter((l) => l !== '');
     entry.hud!.replaceChildren(
       ...lines.map((l) => {
@@ -2270,28 +2520,22 @@ export class HolomlView {
     entry.sound = handle;
     // A sound from a place (milestone 21): it sits in its parent, so it moves with a group.
     if (has(el, 'position')) this.placeSound(entry, parent, vec3(el, 'position', [0, 0, 0]), num(el, 'range', 20, Number.MIN_VALUE));
-    const url = resolveAddress(src, this.base);
-    if (!url || url.origin !== this.origin) {
-      handle.fail('refused', "sounds load only from the page's own site");
-      console.warn(`HoloML: the sound "${src}" was not loaded: sounds load only from the page's own site.`);
-      this.onLeftOut?.();
-      return;
-    }
-    this.pending += 1;
-    if (this.pending === 1) this.onBusy?.(true);
-    this.budget
-      .file(url, this.origin)
-      .then(({ data, bytes }) => {
+    void this.guarded(
+      src,
+      "sounds load only from the page's own site",
+      async (url) => {
+        const { data, bytes, claim } = await this.budget.file(url, this.origin);
         report.bytes = bytes;
-        if (!entry.removed) handle.arrive(data);
-      })
-      .catch((e: unknown) => {
-        const reason = e instanceof LeftOut ? e.reason : `could not be loaded (${e instanceof Error ? e.message : String(e)})`;
-        handle.fail(e instanceof LeftOut ? 'left-out' : 'failed', reason);
+        // The sound holds its file's share of the page's totals from here on, and gives it back when it is
+        // removed or cannot be played (at once, if it was removed while its file was on the way).
+        handle.arrive(data, claim);
+      },
+      (how, reason) => {
+        handle.fail(how, reason);
         console.warn(`HoloML: the sound "${src}" was not loaded: ${reason}.`);
         this.onLeftOut?.();
-      })
-      .finally(() => this.settle());
+      },
+    );
   }
 
   /** Puts a sound at a place in its parent (milestone 21): a marker it is heard from, as the viewer moves and as its group moves. */
@@ -2399,7 +2643,7 @@ export class HolomlView {
       if (n.type !== 'element') return;
       if (n.name === 'label') words.push(text(n));
       // A panel's first paragraph (HoloML 0.2).
-      if (n.name === 'panel' && this.version === '0.2') words.push(paragraphs(rawText(n))[0] ?? '');
+      if (n.name === 'panel' && this.since('0.2')) words.push(paragraphs(rawText(n))[0] ?? '');
       n.children.forEach(collect);
     };
     collect(el);
@@ -2485,7 +2729,7 @@ export class HolomlView {
     const attribute = attr(el, 'attribute') as Animated | null | undefined;
     const ms = duration(el, 'duration');
     if (ms === null || !attribute) return;
-    const v02 = this.version === '0.2';
+    const v02 = this.since('0.2');
     const entry = this.entryById.get(id) ?? null;
     const isScene = v02 && id !== '' && id === this.sceneId;
     let object: Object3D | null = entry?.object ?? null;
@@ -2545,7 +2789,7 @@ export class HolomlView {
       }
       if (p.animation) t.animations.push(p.animation);
       if (p.sound) t.sounds.push(p.sound);
-      const label = p.label?.replace(/\s+/g, ' ').trim();
+      const label = collapse(p.label ?? '');
       if (!t.label && label) t.label = label;
       touched.add(t);
     }
@@ -2704,7 +2948,7 @@ export class HolomlView {
 
   /** Whether following a link fades: to another HoloML page of the same site, from a 0.2 page, without reduced motion. */
   private fadesTo(href: string): boolean {
-    if (this.version !== '0.2' || this.reducedMotion.matches) return false;
+    if (!this.since('0.2') || this.reducedMotion.matches) return false;
     try {
       const to = new URL(href);
       return to.origin === location.origin && isHolomlPage(to) && !sameDocument(to, new URL(location.href));
@@ -2744,7 +2988,7 @@ export class HolomlView {
     // On the canvas itself: the controls capture the pointer while dragging,
     // and a click on a link must still reach the canvas's own listeners.
     const canvas = this.renderer.domElement;
-    const v02 = this.version === '0.2';
+    const v02 = this.since('0.2');
     if (v02 && viewpoint && has(viewpoint, 'crosshair')) this.crosshair.hidden = false;
     if (mode === 'walk' && v02) {
       // HoloML 0.2: walls, gravity if the page asks for it, and its speeds (milestone 18).
@@ -2771,7 +3015,8 @@ export class HolomlView {
     const boxes: Box[] = [];
     const b = new Box3();
     for (const e of this.entries) {
-      if (e.kind !== 'model' || e.removed || !this.isSolid(e) || !this.modelBox(e, b)) continue;
+      // What a script has hidden (`visible = false`) stops no one, as it cannot be clicked (review 134, V10).
+      if (e.kind !== 'model' || e.removed || !e.object || !isShown(e.object) || !this.isSolid(e) || !this.modelBox(e, b)) continue;
       boxes.push({ min: [b.min.x, b.min.y, b.min.z], max: [b.max.x, b.max.y, b.max.z] });
     }
     this.grid = new SolidGrid(boxes);
@@ -2809,7 +3054,13 @@ export class HolomlView {
     return new Vector2(((x - rect.left) / rect.width) * 2 - 1, 1 - ((y - rect.top) / rect.height) * 2);
   }
 
-  /** The things under a point of the view, nearest first, as their own objects (an instance as its holder). */
+  /**
+   * The things under a point of the view, nearest first, as their own
+   * objects (an instance as its holder). What is not shown is not there:
+   * a thing a script has hidden (`visible = false`), or that is inside a
+   * hidden group, takes no click, hover, link, or trigger, whether it is
+   * drawn as an instance or as its own copy (review 134, V10).
+   */
   private hits(ndc: Vector2): { hit: Intersection; object: Object3D }[] {
     this.raycaster.setFromCamera(ndc, this.camera);
     const out: { hit: Intersection; object: Object3D }[] = [];
@@ -2817,20 +3068,19 @@ export class HolomlView {
       if (hit.object === this.highlight) continue;
       const pool = hit.object.userData['pool'] as InstancePool | undefined;
       const object = hit.object instanceof InstancedMesh && pool && hit.instanceId !== undefined ? pool.slots[hit.instanceId] : hit.object;
-      if (object) out.push({ hit, object });
+      if (object && isShown(object)) out.push({ hit, object });
     }
     return out;
   }
 
+  /** The link under a point of the page: only if the first thing hit there is in one (a link behind something else is not under the pointer). */
   private linkAt(x: number, y: number): Link | null {
-    for (const { hit, object } of this.hits(this.ndc(x, y))) {
-      let o: Object3D | null = object;
-      while (o && o.userData['link'] === undefined) o = o.parent;
-      const href = o?.userData['link'] as string | undefined;
-      if (href) return this.links.find((l) => l.href === href && isInside(object, l.object)) ?? null;
-      if (hit.object !== this.highlight) return null; // the first thing hit is not a link
-    }
-    return null;
+    const first = this.hits(this.ndc(x, y))[0];
+    if (!first) return null;
+    let o: Object3D | null = first.object;
+    while (o && o.userData['link'] === undefined) o = o.parent;
+    const href = o?.userData['link'] as string | undefined;
+    return href ? (this.links.find((l) => l.href === href && isInside(first.object, l.object)) ?? null) : null;
   }
 
   /** What is at a point of the view: the innermost element with a place, where, and which way the face looks. */
@@ -2999,7 +3249,7 @@ export class HolomlView {
     return e && !e.removed ? e : null;
   }
 
-  get pageVersion(): string {
+  get pageVersion(): Version {
     return this.version;
   }
 
@@ -3009,7 +3259,7 @@ export class HolomlView {
    * problem is left out, and the console says why.
    */
   addMarkup(markup: string, parent: Entry | null): Entry[] {
-    const wrapped = `<holoml version="0.2"><scene>\n${markup}\n</scene></holoml>`;
+    const wrapped = `<holoml version="${this.version}"><scene>\n${markup}\n</scene></holoml>`;
     let doc;
     try {
       doc = parse(wrapped);
@@ -3038,9 +3288,11 @@ export class HolomlView {
         for (const p of own) console.warn(`HoloML: holoml.add: line ${p.line - 1}, column ${p.column}: ${p.message}; <${node.name}> left out.`);
         return;
       }
+      // A sound that begins on a click is left out (build says why); anything else that is not built is past the page's limit.
+      const full = leftOutOfAdd(node) === null;
       const entry = this.build(node, into, parent, parent?.link ?? null, (parent?.depth ?? -1) + 1, true, animates);
       if (entry) added.push(entry);
-      else console.warn(`HoloML: holoml.add: <${node.name}> left out: past the page's limit of ${LIMITS.elements.toLocaleString('en')} elements.`);
+      else if (full) console.warn(`HoloML: holoml.add: <${node.name}> left out: past the page's limit of ${LIMITS.elements.toLocaleString('en')} elements.`);
     });
     if (added.some((e) => this.hasSolid(e))) this.collidersDirty = true;
     if (this.leftOutElements > 0) this.onLeftOut?.();
@@ -3082,6 +3334,7 @@ export class HolomlView {
           e.panelLook?.words?.remove();
           disposePanel(o);
         }
+        if (e.kind === 'light') this.removeLight(o);
       }
       // A trigger's button goes with it (in its own item, or after a panel's).
       const trigger = this.triggers.get(e);
@@ -3117,6 +3370,24 @@ export class HolomlView {
     // A group that loads by area may have all its models in now.
     if (this.areas.length > 0) this.tellAreas();
     this.requestFrame();
+  }
+
+  /**
+   * A light removed from the scene: the picture its shadows were drawn
+   * into is released on the graphics card, the point it aimed at goes with
+   * it, and it no longer counts towards the page's lights (review 134, V10).
+   */
+  private removeLight(o: Object3D): void {
+    const light = o as Object3D & { dispose?: () => void; target?: Object3D };
+    light.dispose?.();
+    light.target?.removeFromParent();
+    const casting = this.shadowLights.indexOf(o as DirectionalLight);
+    if (casting >= 0) this.shadowLights.splice(casting, 1);
+    if (o instanceof AmbientLight) {
+      // An ambient light that is gone no longer dims the light from around (it counted as none, and the scene went dark).
+      const at = this.ambients.indexOf(o);
+      if (at >= 0) this.ambients.splice(at, 1);
+    } else this.placedLights -= 1;
   }
 
   /** Something about an element changed its place or visibility: redraw, and update instances and walls. */
@@ -3166,16 +3437,16 @@ export class HolomlView {
       if (entry.object) this.markMoved(entry);
       this.requestFrame();
     }
-    else if (entry.kind === 'slider' && entry.slider) entry.slider.label.textContent = value.replace(/\s+/g, ' ').trim();
+    else if (entry.kind === 'slider' && entry.slider) entry.slider.label.textContent = collapse(value);
     else if (entry.kind === 'choice' && entry.choice) {
       const legend = entry.choice.legend;
-      legend.textContent = value.replace(/\s+/g, ' ').trim();
+      legend.textContent = collapse(value);
       legend.hidden = legend.textContent === '';
       if (legend.hidden) entry.hud?.setAttribute('aria-label', entry.id ?? 'Choice');
       else entry.hud?.removeAttribute('aria-label');
     }
     else if (entry.kind === 'label' && entry.labelLook && entry.object) {
-      const words = value.replace(/\s+/g, ' ').trim();
+      const words = collapse(value);
       entry.labelLook.words = words;
       entry.labelLook.note.textContent = words;
       drawLabel(entry.object as Sprite, words, entry.labelLook.size, entry.labelLook.color);
@@ -3188,14 +3459,14 @@ export class HolomlView {
   }
 
   colorOf(entry: Entry): string | undefined {
-    if (entry.kind === 'light') return `#${(entry.object as Object3D & { color: Color }).color.getHexString()}`;
+    if (entry.kind === 'light') return entry.object ? `#${(entry.object as Object3D & { color: Color }).color.getHexString()}` : undefined;
     if (entry.kind === 'label') return entry.labelLook?.color;
     if (entry.kind === 'hud') return entry.hud?.style.color ? `#${new Color(entry.hud.style.color).getHexString()}` : this.textColor;
     return undefined;
   }
 
   setColor(entry: Entry, value: string): void {
-    if (entry.kind === 'light') (entry.object as Object3D & { color: Color }).color.set(value);
+    if (entry.kind === 'light') (entry.object as (Object3D & { color: Color }) | null)?.color.set(value);
     else if (entry.kind === 'label' && entry.labelLook && entry.object) {
       entry.labelLook.color = value;
       drawLabel(entry.object as Sprite, entry.labelLook.words, entry.labelLook.size, value);
@@ -3233,12 +3504,18 @@ export class HolomlView {
       if (!(o instanceof Mesh)) return;
       const list = Array.isArray(o.material) ? o.material : [o.material];
       const next = list.map((m: Material) => {
-        if (m.name !== name || !(m instanceof MeshStandardMaterial)) return m;
-        const copy = m.userData['own'] === holder ? m : m.clone();
-        copy.userData['own'] = holder;
+        if (m.name !== name || !changeable(m)) return m;
+        let copy = m;
+        if (m.userData['own'] !== holder) {
+          copy = m.clone();
+          copy.userData['own'] = holder;
+          // Released with the model, when it is removed or let go (review 134, V10).
+          entry.held?.materials.push(copy);
+        }
         if (change.color) copy.color.set(change.color);
-        if (change.metalness !== undefined) copy.metalness = change.metalness;
-        if (change.roughness !== undefined) copy.roughness = change.roughness;
+        // A material that takes no light has no metalness or roughness to change.
+        if (change.metalness !== undefined && copy instanceof MeshStandardMaterial) copy.metalness = change.metalness;
+        if (change.roughness !== undefined && copy instanceof MeshStandardMaterial) copy.roughness = change.roughness;
         if (change.opacity !== undefined) {
           copy.opacity = change.opacity;
           copy.transparent = change.opacity < 1;
@@ -3306,6 +3583,8 @@ export class HolomlView {
   private resize(): void {
     const w = window.innerWidth;
     const h = window.innerHeight;
+    // The window may be on another screen now, or the page zoomed: the sharpness follows.
+    this.renderer.setPixelRatio(this.pixelRatio());
     this.renderer.setSize(w, h);
     this.camera.aspect = w / Math.max(1, h);
     this.camera.updateProjectionMatrix();
@@ -3335,7 +3614,8 @@ export class HolomlView {
   }
 
   requestFrame(): void {
-    if (this.frameRequested) return;
+    // Hidden behind the text view, the scene draws nothing: it is drawn again when it is shown.
+    if (this.frameRequested || this.textView) return;
     // Behind another tab, what moves in a frame (a script's frame handler moving things) asks for no more.
     if (this.behind && this.inFrame) return;
     this.frameRequested = true;
@@ -3344,6 +3624,7 @@ export class HolomlView {
 
   private frame(time: number): void {
     this.frameRequested = false;
+    if (this.textView) return;
     this.inFrame = true;
     try {
       this.drawFrame(time);
@@ -3353,8 +3634,11 @@ export class HolomlView {
   }
 
   private drawFrame(time: number): void {
+    // How far the scene moves on in this frame: the time since the last one, but never more than 100 ms, and one
+    // frame's usual time where there is no last frame to measure from (SPEC.md section 10, the `frame` event).
     const dt = this.last === 0 ? 16 : Math.min(100, time - this.last);
     this.last = time;
+    this.clock += dt;
     let moving = this.controls?.step(dt) ?? false;
     this.viewMoving = moving;
     // Loading by area (milestone 20): what the viewer came near loads, and what it left is let go.
@@ -3431,13 +3715,15 @@ export class HolomlView {
    * renderer's own, or the page's panorama of its surroundings (HoloML
    * 0.2, milestone 18). In a 0.2 page that has ambient lights, it follows
    * their brightness, so a page can make evening or night (milestone 17);
-   * 0.1 pages look as they did.
+   * 0.1 pages look as they did. The ambient lights that count are those
+   * in the scene at the time: with none (none written, or all removed by
+   * a script), the light from around is at full.
    */
   private followAmbient(): void {
     const full = this.environment?.state === 'loaded' ? 1 : 0.45;
     let factor = 1;
-    if (this.version === '0.2' && this.ambients.length > 0) {
-      const ambient = this.ambients.reduce((sum, l) => sum + (l.parent ? l.intensity : 0), 0);
+    if (this.since('0.2') && this.ambients.length > 0) {
+      const ambient = this.ambients.reduce((sum, l) => sum + l.intensity, 0);
       factor = Math.min(1, ambient / 0.6);
     }
     this.scene.environmentIntensity = full * factor;
@@ -3481,9 +3767,21 @@ export class HolomlView {
   }
 }
 
+/**
+ * Why holoml.add leaves an element of its markup out, wherever it stands
+ * there, in words for the console; null for one it adds. An `animate`, and
+ * a `sound` that begins on a click: what a script adds, the script moves
+ * and plays (SPEC.md section 10).
+ */
+function leftOutOfAdd(el: ElementNode): string | null {
+  if (el.name === 'animate') return '<animate> left out: what a script adds, the script moves itself';
+  if (el.name === 'sound' && attr(el, 'begin') === 'click') return 'a <sound> that begins on a click left out: what a script adds, the script plays itself, with play()';
+  return null;
+}
+
 /** An id reference ("#door") as the id itself. */
 function idOf(ref: string | null | undefined): string {
-  return (ref ?? '').trim().replace(/^#/, '');
+  return trimSpace(ref ?? '').replace(/^#/, '');
 }
 
 /** The place the page's address names after #, if any. */
@@ -3498,7 +3796,7 @@ function addressName(): string | null {
 
 /** A place's name in the outline: its label, or its id. */
 function placeName(vp: ElementNode): string {
-  return attr(vp, 'label')?.replace(/\s+/g, ' ').trim() || attr(vp, 'id') || 'viewpoint';
+  return collapse(attr(vp, 'label') ?? '') || attr(vp, 'id') || 'viewpoint';
 }
 
 /** A HoloML page, by its address. */
@@ -3582,10 +3880,10 @@ function countElements(node: ElementNode): number {
 function nameOf(el: ElementNode): string {
   if (el.name === 'label') return text(el) || 'label';
   if (el.name === 'panel') return paragraphs(rawText(el))[0] || attr(el, 'id') || 'panel';
-  if (el.name === 'plan') return attr(el, 'label')?.replace(/\s+/g, ' ').trim() || attr(el, 'id') || 'plan';
+  if (el.name === 'plan') return collapse(attr(el, 'label') ?? '') || attr(el, 'id') || 'plan';
   if (el.name === 'viewpoint') return placeName(el);
   if (el.name === 'slider') return text(el) || attr(el, 'id') || 'slider';
-  if (el.name === 'choice') return attr(el, 'label')?.trim() || attr(el, 'id') || 'choice';
+  if (el.name === 'choice') return collapse(attr(el, 'label') ?? '') || attr(el, 'id') || 'choice';
   const id = attr(el, 'id');
   if (id) return id;
   if (el.name === 'model') return (attr(el, 'src') ?? '').split(/[?#]/)[0]!.split('/').pop() || 'model';
@@ -3647,12 +3945,16 @@ function castShadows(model: Object3D): void {
 
 /**
  * The WebGL renderer's name when Chromium draws in software (no graphics
- * card, as on GitHub's test machines), else null.
+ * card, as on GitHub's test machines), else null. Asked of a context made
+ * for the question and let go at once, before the scene's own renderer
+ * is made: whether edges are smoothed is chosen when a renderer is made.
  */
-function softwareRenderer(renderer: WebGLRenderer): string | null {
-  const gl = renderer.getContext();
+function softwareDrawing(): string | null {
+  const gl = document.createElement('canvas').getContext('webgl2');
+  if (!gl) return null;
   const info = gl.getExtension('WEBGL_debug_renderer_info');
   const name = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : '';
+  gl.getExtension('WEBGL_lose_context')?.loseContext();
   return /swiftshader|llvmpipe|softpipe|basic render|warp/i.test(name) ? name : null;
 }
 

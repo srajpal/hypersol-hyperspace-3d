@@ -7,21 +7,25 @@ used only for building and testing (TypeScript, Vite, Vitest, Playwright,
 ESLint, and the like) are not part of the app and are listed in the
 package files.
 
-Checked 2026-09-26 against the installed packages (their package.json
-licence fields).
+Checked 2026-09-30: the Runtime table against the installed packages
+(each one's package.json version and licence field) and pnpm-lock.yaml,
+and the test fixtures against each example's own models/CREDITS.md. The
+filter lists' licences are as recorded on 2026-09-26 (their sources were
+not read again), and the pictures in `docs/` were not gone through
+again.
 
 ## Runtime
 
 | Project | Version | Licence | Used for |
 |---|---|---|---|
-| [Electron](https://www.electronjs.org/) | 44.4.5 | MIT; it includes Chromium, Node.js, and V8 under their own licences (BSD-3-Clause and others), listed in Electron's `LICENSES.chromium.html` | The browser engine and the app shell |
-| [Three.js](https://threejs.org/) | 0.186.0 | MIT | The 3D room |
-| [Lit](https://lit.dev/) (lit, lit-html, lit-element, @lit/reactive-element, @lit-labs/ssr-dom-shim) | 3.3.3 | BSD-3-Clause | The top bar, panels, and other controls |
-| [Ghostery adblocker](https://github.com/ghostery/adblocker) (@ghostery/adblocker, -electron, -electron-preload, -content, -extended-selectors, @ghostery/url-parser) | 2.18.2 | MPL-2.0 | Ad and tracker blocking, element hiding |
-| @remusao/guess-url-type, small, smaz, smaz-compress, smaz-decompress, trie (used by the adblocker) | 2.1 to 2.2 | MPL-2.0 | Parts of the adblocker |
+| [Electron](https://www.electronjs.org/) | 44.5.1 | MIT; it includes Chromium, Node.js, and V8 under their own licences (BSD-3-Clause and others), listed in Electron's `LICENSES.chromium.html` | The browser engine and the app shell |
+| [Three.js](https://threejs.org/) | 0.186.0 | MIT | The 3D room, and the HoloML viewer (with the loaders and controls from its examples) |
+| [Lit](https://lit.dev/) (lit and lit-html 3.3.3, lit-element 4.2.2, @lit/reactive-element 2.1.2, @lit-labs/ssr-dom-shim 1.6.0) | 3.3.3 | BSD-3-Clause | The top bar, panels, and other controls |
+| [Ghostery adblocker](https://github.com/ghostery/adblocker) (@ghostery/adblocker, -electron, -electron-preload, -content, and -extended-selectors, all 2.18.2; @ghostery/url-parser 1.3.1) | 2.18.2 | MPL-2.0 | Ad and tracker blocking, element hiding |
+| @remusao/guess-url-type, small, and trie (2.1.0); smaz, smaz-compress, and smaz-decompress (2.2.0); all used by the adblocker | 2.1.0 to 2.2.0 | MPL-2.0 | Parts of the adblocker |
 | [tldts](https://github.com/remusao/tldts) (tldts-experimental, tldts-core) | 7.4.15 | MIT | Site names for the adblocker |
 | @types/trusted-types | 2.0.7 | MIT | Type definitions used by Lit |
-| [HoloML](https://github.com/srajpal/holoml) parser and checker (packages/holoml, copied from the repository; the tag or branch and commit are in its SOURCE.json) | 0.2 | Apache-2.0, The HoloML Authors | Reading and checking HoloML pages |
+| [HoloML](https://github.com/srajpal/holoml) parser and checker, and its scene API in Web IDL (packages/holoml, copied from the repository; the tag or branch and commit are in its SOURCE.json) | 0.2 (its third edition; HoloML's own packages are at 0.2.2) | Apache-2.0, The HoloML Authors | Reading and checking HoloML pages |
 
 The Mozilla Public License 2.0 applies file by file: the adblocker's
 files stay under MPL-2.0 and their source is available from the link
@@ -72,22 +76,71 @@ HoloML's examples (tests/fixtures/holoml, copied by `pnpm holoml:sync`):
   bays, bench, counter, plants, turntable, and chime (made by its
   script) are Apache-2.0, The HoloML Authors.
 - The ocean tunnel, an aquarium (tests/fixtures/holoml/aquarium). Its
-  fish are under the Creative Commons Attribution 4.0 International
-  licence (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/):
-  the great white shark and the grey snapper by the Babylon.js authors
-  (https://github.com/BabylonJS/Assets); the flatback sea turtle by
-  DigitalLife3D, the gilt-head bream by BlueMesh, the Atlantic mackerel
-  by Amy Scott-Murray, the tuna by GoldenZtuff, the clownfish by
-  zixisun02, and the copperband butterflyfish by Dsanchez13, from
-  Sketchfab as copied by Objaverse
-  (https://huggingface.co/datasets/allenai/objaverse); and the
-  barramundi by Microsoft, from the Khronos glTF Sample Assets (CC0
-  1.0). Each is credited, with its address and the changes made to it
-  (its materials converted, turned, sized, and centred, its pictures
-  made smaller, where its file had no swim, given one made here, with a
-  skeleton where it had none, and the shark, the turtle, and the
-  mackerel made lighter), in its models/CREDITS.md and on its about
-  page. Its boulder, log, shell, and sand are from Poly Haven
+  fish, as its models/CREDITS.md lists them:
+  - Great white shark: "shark.glb" by the Babylon.js authors,
+    https://github.com/BabylonJS/Assets/blob/master/meshes/shark.glb,
+    CC BY 4.0.
+  - Hawksbill sea turtle: "Hawksbill Turtle" by Bindestrek,
+    https://sketchfab.com/3d-models/bd6c9327fd52469782f055a182659bd2,
+    CC BY 4.0.
+  - Gilt-head bream: "Bream Fish ( Dorade Royale)" by BlueMesh,
+    https://sketchfab.com/3d-models/a3d0e1a597794a9bb74739a13cfc8b77,
+    CC BY 4.0.
+  - Atlantic mackerel: "Mackerel" by Amy Scott-Murray,
+    https://sketchfab.com/3d-models/4e73d0ba00744cd7af781ff44637b0a7,
+    CC BY 4.0.
+  - Barramundi: "Barramundi Fish" by Microsoft,
+    https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/BarramundiFish,
+    CC0 1.0.
+  - Grey snapper: "greySnapper_vertColor.glb (from the underwater scene
+    demo)" by the Babylon.js authors,
+    https://github.com/BabylonJS/Assets/tree/master/meshes/Demos/UnderWaterScene/fish,
+    CC BY 4.0.
+  - Tuna: "Tuna Fish" by GoldenZtuff,
+    https://sketchfab.com/3d-models/c5fad940863f47f784d792ca95e16b42,
+    CC BY 4.0.
+  - Clownfish: "Clownfish" by zixisun02,
+    https://sketchfab.com/3d-models/47ba2679d91a4f14b3fc0bf8e3805af5,
+    CC BY 4.0.
+  - Copperband butterflyfish: "Copperband Butterflyfish" by Dsanchez13,
+    https://sketchfab.com/3d-models/f96d04dc6ccb4fe4861622ea24fae361,
+    CC BY 4.0.
+
+  CC BY 4.0 is the Creative Commons Attribution 4.0 International
+  licence (https://creativecommons.org/licenses/by/4.0/); CC0 1.0 is at
+  https://creativecommons.org/publicdomain/zero/1.0/. Each fish was
+  changed for the tank by the example's tools, as its CREDITS.md says:
+  its materials made drawable by three.js, turned, sized, and centred,
+  its pictures made smaller, where its file had no swim, given a
+  skeleton and one (made for the example), and the great white shark and
+  the mackerel made lighter (fewer triangles). The fish are credited on
+  the example's about page too.
+
+  The turtle was replaced on 2026-09-30. Until then it was a flatback
+  sea turtle by DigitalLife3D, credited here and in HoloML as CC BY 4.0.
+  That was wrong: the file's own licence stamp says CC BY-NC 4.0, which
+  does not allow commercial use (found by the review of 2026-09-30). The
+  hawksbill turtle takes its place, and HoloML's tools now stop when a
+  file's stamp disagrees with its credit. Pictures taken before the
+  change still show the old turtle until they are taken again: the
+  ocean tunnel's picture in the HoloML examples section
+  (apps/browser/src/renderer/examples/aquarium.jpg) and the progress
+  screenshots of the ocean tunnel in which the turtle can be seen (61
+  and 63 in docs/screenshots/m21 and m22).
+
+  What each licence rests on, from the example's CREDITS.md: the
+  Sketchfab models (the turtle, bream, mackerel, tuna, clownfish, and
+  butterflyfish) come from Objaverse, the Allen Institute for AI's copy
+  of Sketchfab's free models
+  (https://huggingface.co/datasets/allenai/objaverse), and each file
+  carries Sketchfab's own stamp of its author and licence. The shark's
+  and the snapper's files carry no stamp: their licence rests on the
+  Babylon.js asset library's own statement (its README says the work is
+  under CC BY 4.0 unless an asset's folder says otherwise, its LICENSE
+  file is that licence's text, and neither file's folder says otherwise;
+  read 2026-09-30, at commit ddad48e).
+
+  Its boulder, log, shell, and sand are from Poly Haven
   (https://polyhaven.com, CC0 1.0; credited, with each artist, in its
   models/CREDITS.md), the boulder, the log, and the shell made lighter.
   Its pages, script, tank, tunnel, gallery, plants, bubbles, food, air
@@ -109,6 +162,17 @@ licences:
 | uBlock Origin filters and resources ([uAssets](https://github.com/uBlockOrigin/uAssets)) | GPL-3.0 |
 | Peter Lowe's ad and tracking server list ([pgl.yoyo.org](https://pgl.yoyo.org/adservers/)) | None stated; not shipped, only downloaded by a list refresh |
 
+The starter engine (apps/browser/resources/filters/starter.bin) is used
+and passed on under the GNU General Public License, version 3: uBlock
+Origin's filters and resources are under it, and EasyList and
+EasyPrivacy, which offer a choice of two licences, are taken under it
+as well. The licence's full text is in the repository, beside the
+engine:
+[apps/browser/resources/filters/GPL-3.0.txt](apps/browser/resources/filters/GPL-3.0.txt).
+uBlock Origin's resources are scripts the blocker runs inside web
+pages; they are fetched only when the starter engine is built, never by
+the app's own list refresh.
+
 Details, sources, and checksums: [apps/browser/resources/filters/NOTICE.md](apps/browser/resources/filters/NOTICE.md).
 
 ## Fonts, images, and other material
@@ -125,4 +189,8 @@ sofa, furniture, fabrics, and light and Harbour Loft's furniture,
 textures, and harbour are Poly Haven's (CC0), the sneaker store's
 shoe is Shopify's "Materials Variants Shoe" (CC BY 4.0, as above), and
 the ocean tunnel's fish are those credited above (CC BY 4.0, and the
-barramundi CC0), among Poly Haven's rocks, log, and sand (CC0).
+barramundi CC0), among Poly Haven's rocks, log, and sand (CC0). The
+ocean tunnel's picture was taken before its turtle was replaced (see
+above), so the turtle in it is still the flatback by DigitalLife3D,
+whose licence is CC BY-NC 4.0 (non-commercial); the picture is to be
+taken again with `pnpm screenshots:examples`.

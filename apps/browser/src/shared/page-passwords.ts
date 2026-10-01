@@ -18,10 +18,44 @@ export type PagePasswordRequest =
   | { op: 'accounts' }
   | { op: 'fill'; username: string };
 
+/**
+ * The theme's colours for the list of saved sign-ins. The list is the
+ * browser's own, drawn inside the page by its preload, so its colours are
+ * the theme in use, which the main process knows and sends with the
+ * names (review of 2026-09-30, St3: the list had a copy of the dark
+ * theme's colours, and stayed dark in the light theme).
+ */
+export interface SignInListColors {
+  text: string;
+  textMuted: string;
+  surface: string;
+  accent: string;
+}
+
+/** The answer to 'accounts': the names to offer, and the colours to show them in. */
+export interface AccountsReply {
+  names: string[];
+  colors: SignInListColors;
+}
+
+const isColor = (v: unknown): v is string => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
+
+/** Checks an answer to 'accounts' (the page side does not trust its input either). Null: nothing to show. */
+export function parseAccountsReply(raw: unknown): AccountsReply | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const r = raw as Record<string, unknown>;
+  const c = r['colors'] as Record<string, unknown> | null | undefined;
+  if (!Array.isArray(r['names']) || typeof c !== 'object' || c === null) return null;
+  if (!isColor(c['text']) || !isColor(c['textMuted']) || !isColor(c['surface']) || !isColor(c['accent'])) return null;
+  const names = r['names'].filter((n): n is string => typeof n === 'string' && n.length <= MAX_USERNAME);
+  if (names.length === 0) return null;
+  return { names, colors: { text: c['text'], textMuted: c['textMuted'], surface: c['surface'], accent: c['accent'] } };
+}
+
 export interface PagePasswordResults {
   submitted: null;
-  /** Saved user names for this page's origin (no passwords). */
-  accounts: string[];
+  /** Saved user names for this page's origin (no passwords) with the list's colours; null when there are none. */
+  accounts: AccountsReply | null;
   /** The password, only right after a real click or key press in the page. */
   fill: string | null;
 }

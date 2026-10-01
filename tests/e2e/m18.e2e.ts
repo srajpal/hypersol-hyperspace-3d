@@ -64,27 +64,46 @@ function key(h: Harness, page: string, keyCode: string, type: 'keyDown' | 'keyUp
   );
 }
 
-/** Holds a key down in the page for a while (walking and turning need keys held). */
+/**
+ * Where the viewer is and which way it looks, with the scene's own time
+ * at that moment: the milliseconds its frames have moved it on by, each by
+ * at most 100 (the viewer's `clock`). The viewer walks and turns by that
+ * time, not by the wall's clock, which runs ahead of it on a machine that
+ * draws slowly.
+ */
+const moment = (h: Harness, page: string) => inPage<{ p: Vec; d: Vec; t: number }>(h, '({ p: holoml.viewer.position, d: holoml.viewer.direction, t: window.__holoml.clock })', page);
+
+/** How long to wait for so much of the scene's time to pass: longer where it is drawn in software. */
+const sceneTimeWait = async (h: Harness, ms: number) => (await sceneWait(h, ms)) * 2 + 10_000;
+
+/**
+ * Holds a key down in the page for a while (walking and turning need
+ * keys held): for so many milliseconds of the scene's own time, so that a
+ * slow machine changes nothing but the wait.
+ */
 async function hold(h: Harness, page: string, keyCode: string, ms: number): Promise<void> {
+  const from = (await moment(h, page)).t;
   await key(h, page, keyCode, 'keyDown');
-  await sleep(ms);
-  await key(h, page, keyCode, 'keyUp');
+  try {
+    await waitFor(`${ms} ms of the scene's time with ${keyCode} held (from ${from} ms)`, () => moment(h, page), (m) => m.t >= from + ms, await sceneTimeWait(h, ms));
+  } finally {
+    await key(h, page, keyCode, 'keyUp');
+  }
 }
 
 /**
  * How fast the viewer goes while a key is held: metres a second across
  * the floor, and degrees a second of turning, measured between two
- * moments well inside the hold (the page's own clock), so the time a key
- * takes to arrive does not count.
+ * moments well inside the hold, half a second apart, by the scene's own
+ * time: the first a quarter of a second after the key went down, so the
+ * time a key takes to arrive does not count.
  */
 async function rates(h: Harness, page: string, keyCode: string): Promise<{ walk: number; turn: number }> {
-  const sample = () => inPage<{ p: Vec; d: Vec; t: number }>(h, '({ p: holoml.viewer.position, d: holoml.viewer.direction, t: performance.now() })', page);
+  const start = await moment(h, page);
   await key(h, page, keyCode, 'keyDown');
   try {
-    await sleep(250);
-    const a = await sample();
-    await sleep(500);
-    const b = await sample();
+    const a = await waitFor(`a quarter of a second of the scene's time with ${keyCode} held`, () => moment(h, page), (m) => m.t >= start.t + 250, await sceneTimeWait(h, 250));
+    const b = await waitFor(`half a second more of the scene's time with ${keyCode} held`, () => moment(h, page), (m) => m.t >= a.t + 500, await sceneTimeWait(h, 500));
     const s = (b.t - a.t) / 1000;
     return { walk: across(a.p, b.p) / s, turn: turned(a.d, b.d) / s };
   } finally {
@@ -389,19 +408,26 @@ describe('U9 to U12: shadows, pictures, choices, and the surroundings', () => {
   });
   afterAll(async () => h?.close());
 
-  it('U9 a light marked shadows darkens the floor under a model marked shadows; drawn in software, they are left out and said so', async () => {
+  it('U9 a light marked shadows casts them from the models marked shadows; drawn in software, they are left out and said so', async () => {
     const PAGE = 'shadows.holoml';
     await openPage(h, PAGE);
     const software = await softwareRenderer(h);
     const shadows = await holo<{ lights: number; models: number; leftOut: string | null }>(h, 'window.__holoml.shadows()', PAGE);
+    // Drawn in software (GitHub's machines), a page's shadows are left out, and the console says so (owner, prompt 98, Q5 a).
+    if (software) expect(shadows).toEqual({ lights: 0, models: 0, leftOut: expect.stringMatching(/draws 3D in software/) });
+    // With a graphics card: the floor and the left block have shadows; the right block does not.
+    else expect(shadows).toEqual({ lights: 1, models: 2, leftOut: null });
+  });
+
+  it('U9 the floor is darker under the model marked shadows than under the one without (with a graphics card)', async (ctx) => {
+    const PAGE = 'shadows.holoml';
+    const software = await softwareRenderer(h);
     if (software) {
-      // Drawn in software (GitHub's machines), a page's shadows are left out, and the console says so (owner, prompt 98, Q5 a).
-      expect(shadows).toEqual({ lights: 0, models: 0, leftOut: expect.stringMatching(/draws 3D in software/) });
+      // There are no shadows to look at there: the check is skipped, not passed.
       console.log(`U9: shadows left out, drawing in software (${software}); the floor's pixels not checked`);
-      return;
+      ctx.skip(`shadows are drawn only with graphics hardware; drawing in software (${software})`);
     }
-    // The floor and the left block have shadows; the right block does not.
-    expect(shadows).toEqual({ lights: 1, models: 2, leftOut: null });
+    await openPage(h, PAGE);
     const under = [await point(h, PAGE, 'under-casting'), await point(h, PAGE, 'under-plain')];
     await drawn(h, PAGE);
     const [shaded, lit] = await pixels(h, PAGE, under);
@@ -552,6 +578,8 @@ describe('U13 to U15: the sofa studio', () => {
   const PAGE = 'sofa-studio/index.holoml';
   const STUDIO = 'sofa-studio/index';
   let loadMs = 0;
+  /** The studio's shadows as it was first drawn: read by the first check, and held to what a graphics card draws by the one after it. */
+  let shadowsAtFirst: { lights: number; models: number } | null = null;
   const sofa = async () => (await models(h, STUDIO)).find((m) => m.src === 'models/sofa.gltf')!.materials;
   const price = () => hudText(h, STUDIO, 'price');
   beforeAll(async () => {
@@ -565,19 +593,15 @@ describe('U13 to U15: the sofa studio', () => {
   });
   afterAll(async () => h?.close());
 
-  it('U13 ready within 5 s with everything loaded; each fabric and wood changes the sofa, the price follows, and the cart page lists the choices', async () => {
-    const software = await softwareRenderer(h);
-    // Within 5 s with a graphics card; drawn in software (GitHub's machines), logged (owner, prompts 59, 95, and 98 Q5 a).
-    if (software) console.log(`U13: ready in ${loadMs} ms; the 5-second budget not checked: drawing in software (${software})`);
-    else expect(loadMs).toBeLessThan(5000);
+  it('U13 ready with everything loaded; each fabric and wood changes the sofa, the price follows, and the cart page lists the choices', async () => {
     expect(await holo<unknown[]>(h, 'window.__holoml.problems', STUDIO)).toEqual([]);
     expect(await leftOut(h, STUDIO)).toEqual([]);
     const all = await models(h, STUDIO);
     expect(all.length).toBe(8);
     expect(all.every((m) => m.state === 'loaded')).toBe(true);
     expect(await holo<{ state: string }>(h, 'window.__holoml.environment()', STUDIO)).toMatchObject({ state: 'loaded' });
-    const shadows = await holo<{ lights: number; models: number }>(h, 'window.__holoml.shadows()', STUDIO);
-    if (!software) expect(shadows).toMatchObject({ lights: 2, models: 8 });
+    // What casts shadows, and how soon the studio was ready, are the next check's: both are for a graphics card.
+    shadowsAtFirst = await holo<{ lights: number; models: number }>(h, 'window.__holoml.shadows()', STUDIO);
 
     // The sofa as it comes: its own fabric and walnut frame.
     expect((await sofa())['Fabric']!.map).toBe('own');
@@ -616,6 +640,20 @@ describe('U13 to U15: the sofa studio', () => {
     expect((await choices(h, STUDIO)).map((c) => c.value)).toEqual(['velvet', 'ebony', 'day']);
     await waitFor('velvet again', sofa, (m) => m['Fabric']!.map === url('sofa-studio/textures/velvet-color.jpg'));
     expect(await price()).toBe('Linden two-seat sofa\nRed velvet · Ebony\n$1,650');
+  });
+
+  it('U13 the studio is ready within 5 s, and its two lights cast shadows from its eight models (with a graphics card)', async (ctx) => {
+    expect(shadowsAtFirst, 'the check before this one read the shadows').not.toBeNull();
+    // Within 5 s with a graphics card, where shadows are drawn; in software (GitHub's machines) the time is
+    // measured and logged, shadows are left out, and the check is skipped, not passed (owner, prompts 59, 95, and 98 Q5 a).
+    const software = await softwareRenderer(h);
+    if (software) {
+      console.log(`U13: ready in ${loadMs} ms; the 5-second budget and the shadows not checked: drawing in software (${software})`);
+      ctx.skip(`the 5-second budget and shadows are for graphics hardware; drawing in software (${software})`);
+    }
+    console.log(`U13: ready in ${loadMs} ms`);
+    expect(loadMs).toBeLessThan(5000);
+    expect(shadowsAtFirst).toMatchObject({ lights: 2, models: 8 });
   });
 
   it('U14 the whole page from the keyboard; screen readers name the choices; the text view shows them', async () => {

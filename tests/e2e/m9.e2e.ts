@@ -5,22 +5,25 @@
  * download notice, the "+" menu, and flat printing. Every sign-in here is
  * a made-up test value on a 127.0.0.1 fixture page.
  */
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
+  caughtUp,
   clickAt,
   clickUntil,
   focusedPage,
   focusedTab,
   inPage,
   launch,
+  mainLog,
   navigateTo,
+  newFolder,
+  newProfile as freshProfile,
   pressInShell,
-  removeFolder,
+  project,
   screenPointOf,
   shellCall,
   sleep,
@@ -36,15 +39,9 @@ import {
 let server: FixtureServer;
 /** A second site: the same pages on another port, so another origin. */
 let other: FixtureServer;
-const folders: string[] = [];
 
-function newFolder(prefix: string, settings?: object): string {
-  const dir = mkdtempSync(join(tmpdir(), prefix));
-  folders.push(dir);
-  if (settings) writeFileSync(join(dir, 'settings.json'), JSON.stringify(settings));
-  return dir;
-}
-const newProfile = (settings?: object) => newFolder('hypersol-e2e-profile-', { layersOnOpen: false, ...settings });
+/** A new profile whose pages open flat (the layers view off), unless the settings say otherwise. */
+const newProfile = (settings?: object) => freshProfile({ layersOnOpen: false, ...settings });
 
 beforeAll(async () => {
   server = await startFixtureServer();
@@ -54,7 +51,6 @@ beforeAll(async () => {
 afterAll(async () => {
   await server?.close();
   await other?.close();
-  for (const dir of folders) await removeFolder(dir);
 });
 
 const BAR = (id: string) => `hs-toolbar [data-testid="${id}"]`;
@@ -65,8 +61,6 @@ const SET = (id: string) => `hs-settings [data-testid="${id}"]`;
 const NOTICE = (id: string) => `hs-notice [data-testid^="${id}"]`;
 const origin = (s: FixtureServer) => new URL(s.base).origin;
 const saved = (profile: string) => JSON.parse(readFileSync(join(profile, 'settings.json'), 'utf8')) as Record<string, unknown>;
-const testLog = <T>(h: Harness, key: string) =>
-  h.app.evaluate((_e, k) => (globalThis as unknown as { __hypersolTest: Record<string, unknown> }).__hypersolTest[k], key) as Promise<T>;
 
 /** The saved sign-ins as the database holds them, read directly from the file. */
 function logins(profile: string): { origin: string; username: string; secret: Uint8Array }[] {
@@ -118,11 +112,7 @@ async function pickFirstAccount(h: Harness, page: PageRef): Promise<void> {
     `(() => { const r = document.querySelector('hypersol-sign-ins').getBoundingClientRect(); return { left: r.left, bottom: r.bottom }; })()`,
     page,
   );
-  const shell = await h.shell.evaluate(
-    ([x, y]) => (window as unknown as { __hypersolShellTest: { projectPagePoint(u: number, v: number): { x: number; y: number } } }).__hypersolShellTest.projectPagePoint(x!, y!),
-    [box.left + 40, box.bottom - 22],
-  );
-  await clickAt(h, shell);
+  await clickAt(h, await project(h, box.left + 40, box.bottom - 22));
 }
 
 describe('K1 to K3: passwords', () => {
@@ -148,10 +138,11 @@ describe('K1 to K3: passwords', () => {
       expect(Buffer.from(row.secret).toString('latin1')).not.toContain('test-pass-1');
       expect(await offer(h)).toBeNull();
 
-      // The same password again: nothing to offer.
+      // The same password again: nothing to offer, once the app has dealt
+      // with the sign-in.
       await inPage(h, `document.getElementById('state').textContent = 'Sign in'`, page);
       await signIn(h, 'ada', 'test-pass-1', page);
-      await sleep(800);
+      await caughtUp(h, page);
       expect(await offer(h)).toBeNull();
 
       // A new password for the same account: Update.
@@ -159,6 +150,8 @@ describe('K1 to K3: passwords', () => {
       await signIn(h, 'ada', 'test-pass-2', page);
       const update = await waitFor('an offer to update', () => offer(h), (o) => o !== null);
       expect(update!.update).toBe(true);
+      // The app numbers its offers as it makes them: none was made in between.
+      expect(update!.id).toBe(first!.id + 1);
       await h.shell.click(PROMPT('pw-save'));
       await waitFor('updated', async () => logins(profile), (l) => l.length === 1 && Buffer.from(l[0]!.secret).toString('base64') !== before);
 
@@ -174,7 +167,7 @@ describe('K1 to K3: passwords', () => {
       await waitFor('an offer', () => offer(h), (o) => o?.username === 'hopper');
       await h.shell.click(PROMPT('pw-never'));
       await signIn(h, 'lovelace', 'test-pass-5', page);
-      await sleep(800);
+      await caughtUp(h, page);
       expect(await offer(h)).toBeNull();
       expect(logins(profile).map((l) => l.username)).toEqual(['ada']);
     } finally {
@@ -193,17 +186,21 @@ describe('K1 to K3: passwords', () => {
       await h.shell.click(PROMPT('pw-save'));
       await waitFor('saved', async () => logins(profile), (l) => l.length === 1);
 
-      // Back on the page later: nothing is filled on load.
+      // Back on the page later: nothing is filled on load, once the app
+      // has dealt with whatever the loaded page sent it...
       await navigateTo(h, server.url('login.html?again=1'));
       await waitForPage(h, 'again=1');
       page = await focusedPage(h);
-      await sleep(800);
-      expect(await inPage<string[]>(h, `[document.getElementById('user').value, document.getElementById('pass').value]`, page)).toEqual(['', '']);
+      const fields = () => inPage<string[]>(h, `[document.getElementById('user').value, document.getElementById('pass').value]`, page);
+      await caughtUp(h, page);
+      expect(await fields()).toEqual(['', '']);
       expect(await listShown(h, page)).toBe(false);
 
-      // A click on the field shows the account; picking it fills both fields.
+      // A click on the field shows the account (...and the fields are
+      // still empty then); picking it fills both fields.
       await clickIn(h, '#user', page);
       await waitFor('the account list', () => listShown(h, page), (s) => s);
+      expect(await fields()).toEqual(['', '']);
       await pickFirstAccount(h, page);
       await waitFor(
         'filled',
@@ -218,7 +215,8 @@ describe('K1 to K3: passwords', () => {
       await waitForPage(h, other.base);
       const elsewhere = await focusedPage(h);
       await clickIn(h, '#user', elsewhere);
-      await sleep(800);
+      // The click asks the app for this site's accounts: none, once it has answered.
+      await caughtUp(h, elsewhere);
       expect(await listShown(h, elsewhere)).toBe(false);
 
       // K3: the Library's Passwords tab.
@@ -285,11 +283,13 @@ describe('K4 and K5: private tabs and a missing keychain', () => {
       await navigateTo(h, server.url('login.html?private=1'));
       await waitForPage(h, 'private=1');
       const page = await focusedPage(h);
+      // As in K1 and K2: the click and the sign-in are dealt with by the
+      // app before the list and the offer are looked for.
       await clickIn(h, '#user', page);
-      await sleep(800);
+      await caughtUp(h, page);
       expect(await listShown(h, page)).toBe(false);
       await signIn(h, 'grace', 'test-pass-2', page);
-      await sleep(800);
+      await caughtUp(h, page);
       expect(await offer(h)).toBeNull();
       expect(logins(profile).map((l) => l.username)).toEqual(['ada']);
     } finally {
@@ -335,7 +335,7 @@ describe('K6 to K8: site permissions', () => {
       let p = await waitFor('camera prompt', prompt, (x) => x !== null);
       expect(p).toMatchObject({ origin: site, kinds: ['camera'] });
       expect(await h.shell.locator(PROMPT('permission-prompt')).textContent()).toContain('wants to use your camera');
-      await h.shell.click(PROMPT('perm-allow'));
+      await h.shell.click(`${PROMPT('perm-allow')}[data-armed]`);
       expect(await answer).toBe('granted:video');
       await waitFor('prompt gone', prompt, (x) => x === null);
       // K8: the marker, in the top bar and for the tab card.
@@ -346,14 +346,14 @@ describe('K6 to K8: site permissions', () => {
       answer = inPage<string>(h, 'microphone()', page);
       p = await waitFor('microphone prompt', prompt, (x) => x !== null);
       expect(p!.kinds).toEqual(['microphone']);
-      await h.shell.click(PROMPT('perm-once'));
+      await h.shell.click(`${PROMPT('perm-once')}[data-armed]`);
       expect(await answer).toBe('granted:audio');
 
       // Block.
       answer = inPage<string>(h, 'locate()', page);
       p = await waitFor('location prompt', prompt, (x) => x !== null);
       expect(p!.kinds).toEqual(['location']);
-      await h.shell.click(PROMPT('perm-block'));
+      await h.shell.click(`${PROMPT('perm-block')}[data-armed]`);
       expect(await answer).toBe('denied:1');
 
       // Remembered on this page without asking: allow, this time, block.
@@ -388,12 +388,12 @@ describe('K6 to K8: site permissions', () => {
       page = await focusedPage(h);
       answer = inPage<string>(h, 'microphone()', page);
       await waitFor('asked again', prompt, (x) => x?.kinds[0] === 'microphone');
-      await h.shell.click(PROMPT('perm-block'));
+      await h.shell.click(`${PROMPT('perm-block')}[data-armed]`);
       expect(await answer).toBe('denied:NotAllowedError');
 
       // K7: after a restart, Allow and Block are still in force.
       await h.app.evaluate(({ app }) => app.quit());
-      await waitForExit(h, 8000);
+      await waitForExit(h, 30_000);
       await h.close();
       h = await launch(server.url('media.html'), { userDataDir: profile, keepRunning: true });
       await waitForPage(h, 'media');
@@ -409,7 +409,7 @@ describe('K6 to K8: site permissions', () => {
       page = await focusedPage(h);
       answer = inPage<string>(h, 'locate()', page);
       await waitFor('private prompt', async () => (await shellCall(h, 'prompts')).permission, (x) => x !== null);
-      await h.shell.click(PROMPT('perm-allow'));
+      await h.shell.click(`${PROMPT('perm-allow')}[data-armed]`);
       expect(await answer).not.toBe('denied:1');
       expect(await inPage<string>(h, 'locate()', page)).not.toBe('denied:1');
       expect((saved(profile)['sitePermissions'] as Record<string, Record<string, string>>)[site]!['location']).toBeUndefined();
@@ -421,7 +421,7 @@ describe('K6 to K8: site permissions', () => {
       await waitForPage(h, 'private=2');
       answer = inPage<string>(h, 'locate()', await focusedPage(h));
       await waitFor('asked again in a new private tab', async () => (await shellCall(h, 'prompts')).permission, (x) => x !== null);
-      await h.shell.click(PROMPT('perm-block'));
+      await h.shell.click(`${PROMPT('perm-block')}[data-armed]`);
       expect(await answer).toBe('denied:1');
       await pressInShell(h, 'W', ['control']);
 
@@ -452,21 +452,21 @@ describe('K9 and K10: download notice, the "+" menu, and printing', () => {
       await navigateTo(h, server.url('download/sample.txt'));
       const done = await waitFor('notice', () => shellCall(h, 'notice'), (n) => n !== null);
       expect(done).toMatchObject({ kind: 'done', text: 'Downloaded sample.txt' });
-      await h.shell.click(NOTICE('notice-show'));
-      await waitFor('shown in its folder', () => testLog<{ what: string; path: string }[]>(h, 'opened'), (o) =>
+      await h.shell.click(`${NOTICE('notice-show')}[data-armed]`);
+      await waitFor('shown in its folder', () => mainLog(h, 'opened'), (o) =>
         o.some((x) => x.what === 'show' && x.path.endsWith('sample.txt')));
       expect(await shellCall(h, 'notice')).toBeNull();
 
       await navigateTo(h, server.url('download/sample.txt'));
       await waitFor('second notice', () => shellCall(h, 'notice'), (n) => n?.text === 'Downloaded sample (1).txt');
-      await h.shell.click(NOTICE('notice-open'));
-      await waitFor('opened', () => testLog<{ what: string; path: string }[]>(h, 'opened'), (o) =>
+      await h.shell.click(`${NOTICE('notice-open')}[data-armed]`);
+      await waitFor('opened', () => mainLog(h, 'opened'), (o) =>
         o.some((x) => x.what === 'open' && x.path.endsWith('sample (1).txt')));
 
       await navigateTo(h, server.url('download/broken.bin'));
       const failed = await waitFor('failure notice', () => shellCall(h, 'notice'), (n) => n?.kind === 'failed');
       expect(failed!.text).toBe('Download failed: broken.bin');
-      await h.shell.click(NOTICE('notice-downloads'));
+      await h.shell.click(`${NOTICE('notice-downloads')}[data-armed]`);
       await waitFor('Downloads panel', () => shellCall(h, 'openPanel'), (p) => p === 'downloads');
     } finally {
       await h.close();

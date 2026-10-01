@@ -456,10 +456,21 @@ export class HsInstruments extends LitElement {
     }
   `;
 
+  /** The console list as last drawn, and whether it was scrolled to its end then. */
+  private consoleList: Element | null = null;
+  private consoleAtEnd = true;
+
+  protected override willUpdate(): void {
+    const log = this.consoleList;
+    this.consoleAtEnd = !log || !log.isConnected || log.scrollHeight - log.scrollTop - log.clientHeight < 4;
+  }
+
   override updated(): void {
-    // Keep the newest console lines in view.
+    // Keep the newest console lines in view, unless the person has
+    // scrolled up to read earlier ones.
     const log = this.renderRoot.querySelector('.console');
-    if (log) log.scrollTop = log.scrollHeight;
+    if (log && (this.consoleAtEnd || log !== this.consoleList)) log.scrollTop = log.scrollHeight;
+    this.consoleList = log;
   }
 
   override render() {

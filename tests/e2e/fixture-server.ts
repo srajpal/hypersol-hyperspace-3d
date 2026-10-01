@@ -80,7 +80,7 @@ export interface FixtureServer {
   openNow: Map<string, number>;
   /** Body bytes written, by path and query (streaming favicon routes). */
   sent: Map<string, number>;
-  /** Lets requests held at a gate (…?gate=NAME) through, now and from then on. */
+  /** Lets requests held at a gate (…?gate=NAME; the slow download's is "slow.bin") through, now and from then on. */
   release(gate: string): void;
 }
 
@@ -153,7 +153,8 @@ function page(title: string, body: string): string {
  *   /dns-portal                a captive portal's web page where the resolver should be
  *   /ddm/...                   an "ad landing" page, served for the ad host mapped to this machine
  *   /download/sample.txt       a small file sent as an attachment (a download)
- *   /download/slow.bin         2 MB sent slowly as an attachment (to cancel)
+ *   /download/slow.bin         a 2 MB attachment that stays unfinished (to cancel): the first 64 KB are sent,
+ *                              the rest only when the check calls release('slow.bin') (or, with gate=NAME, release(NAME))
  *   /download/broken.bin       an attachment whose connection breaks part way (a failed download)
  *   /holoml/by-type            holoml/still.holoml, known only by its media type (no .holoml in the address)
  *   /holoml/as-text.holoml     holoml/second.holoml sent as text/plain, known only by its address
@@ -228,6 +229,16 @@ function boxGltf(params: URLSearchParams): string {
   });
 }
 
+/**
+ * HTTP sign-in (review of 2026-09-30, M10): the made-up user name and
+ * password the pages under /review-134/basic/ and /review-134/basic-long/
+ * ask for, and the realm each names. They exist for these checks only.
+ */
+export const BASIC_SIGN_IN = { username: 'review-134-reader', password: 'made-up-for-the-checks' } as const;
+export const BASIC_REALM = 'Review 134 test area';
+/** Longer than the prompt shows, and worded like a notice of the browser's own. */
+export const BASIC_LONG_REALM = 'HyperSpace 3D: your session has ended. Type the password of your computer account below to go on browsing safely.';
+
 function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
   const url = new URL(req.url ?? '/', 'http://x');
   const path = decodeURIComponent(url.pathname);
@@ -245,6 +256,45 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
     readFile(join(FIXTURES_DIR, 'holoml', typed ? 'still.holoml' : 'second.holoml')).then(
       (body) => res.writeHead(200, { 'content-type': typed ? 'model/vnd.holoml' : 'text/plain', 'cache-control': 'no-store' }).end(body),
       () => res.writeHead(404).end(),
+    );
+    return;
+  }
+  // Review of 2026-09-30 (M10): pages behind HTTP sign-in (Basic).
+  //   /review-134/basic/<anything>       realm BASIC_REALM
+  //   /review-134/basic-long/<anything>  realm BASIC_LONG_REALM
+  // With BASIC_SIGN_IN's user name and password: a small page. With
+  // anything else, or nothing: "401", the question, and the 401 page.
+  if (path.startsWith('/review-134/basic/') || path.startsWith('/review-134/basic-long/')) {
+    const realm = path.startsWith('/review-134/basic-long/') ? BASIC_LONG_REALM : BASIC_REALM;
+    const wanted = `Basic ${Buffer.from(`${BASIC_SIGN_IN.username}:${BASIC_SIGN_IN.password}`).toString('base64')}`;
+    const page = (title: string, words: string) => `<!doctype html>\n<html lang="en">\n<head><meta charset="UTF-8"><title>${title}</title></head>\n<body><h1 id="words">${words}</h1></body>\n</html>\n`;
+    if (req.headers.authorization === wanted) {
+      res.writeHead(200, { 'content-type': TYPES['.html']!, 'cache-control': 'no-store' }).end(page('Signed in', `Signed in as ${BASIC_SIGN_IN.username}`));
+    } else {
+      res
+        .writeHead(401, { 'content-type': TYPES['.html']!, 'cache-control': 'no-store', 'www-authenticate': `Basic realm="${realm}", charset="UTF-8"` })
+        .end(page('Sign-in needed', 'The 401 page: sign in to read this'));
+    }
+    return;
+  }
+  // Review of 2026-09-30 (V1): a small HoloML page answered three ways.
+  //   /review-134/attachment.holoml   as a download (Content-Disposition: attachment)
+  //   /review-134/sandboxed.holoml    as text under the site's own "sandbox" content policy
+  //   /review-134/with-policy.holoml  as a HoloML page with a content policy and frame options of the site's own
+  if (path.startsWith('/review-134/')) {
+    const headers: Record<string, Record<string, string>> = {
+      '/review-134/attachment.holoml': { 'content-type': TYPES['.holoml']!, 'content-disposition': 'attachment; filename="review-134-scene.holoml"' },
+      '/review-134/sandboxed.holoml': { 'content-type': 'text/plain; charset=utf-8', 'content-security-policy': 'sandbox allow-scripts' },
+      '/review-134/with-policy.holoml': { 'content-type': TYPES['.holoml']!, 'content-security-policy': "connect-src 'none'", 'x-frame-options': 'DENY' },
+    };
+    const found = headers[path];
+    if (!found) {
+      res.writeHead(404).end();
+      return;
+    }
+    res.writeHead(200, { ...found, 'cache-control': 'no-store' });
+    res.end(
+      '<holoml version="0.1">\n  <head>\n    <title>Review 134 scene</title>\n  </head>\n  <scene>\n    <label id="hello" position="0 1.5 0">A small scene</label>\n  </scene>\n</holoml>\n',
     );
     return;
   }
@@ -348,6 +398,67 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
       );
       return;
     }
+    // ---- Review 134, the HoloML viewer's checks (tests/e2e/review-134-viewer.e2e.ts) ----
+    //   /holoml/gen/corrupt.glb?mb=N        a .glb of N MB (default 1) that says it holds one triangle and cannot be
+    //                                       decoded: its mesh names a part of the file that is not there
+    //   /holoml/gen/instanced.gltf?tris=T&copies=C
+    //                                       a glTF of one mesh of T triangles that the file itself draws C times
+    //                                       (EXT_mesh_gpu_instancing), over a buffer of zeros
+    if (what === 'corrupt.glb') {
+      const text = JSON.stringify({
+        asset: { version: '2.0' },
+        scene: 0,
+        scenes: [{ nodes: [0] }],
+        nodes: [{ mesh: 0 }],
+        meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }],
+        accessors: [{ bufferView: 7, componentType: 5126, count: 3, type: 'VEC3' }],
+      });
+      const json = Buffer.from(text.padEnd(Math.ceil(text.length / 4) * 4, ' '));
+      const bin = Buffer.alloc(Math.round(Math.min(32, Math.max(0.001, Number(p.get('mb') ?? '1') || 1)) * 1024 * 1024));
+      const head = Buffer.alloc(20);
+      head.writeUInt32LE(0x46546c67, 0);
+      head.writeUInt32LE(2, 4);
+      head.writeUInt32LE(28 + json.length + bin.length, 8);
+      head.writeUInt32LE(json.length, 12);
+      head.writeUInt32LE(0x4e4f534a, 16);
+      const binHead = Buffer.alloc(8);
+      binHead.writeUInt32LE(bin.length, 0);
+      binHead.writeUInt32LE(0x004e4942, 4);
+      res.writeHead(200, { 'content-type': 'model/gltf-binary', 'cache-control': 'no-store' });
+      res.end(Buffer.concat([head, json, binHead, bin]));
+      return;
+    }
+    if (what === 'instanced.gltf') {
+      const tris = Math.max(1, Math.min(1_000_000, Number(p.get('tris') ?? '1') || 1));
+      const copies = Math.max(1, Math.min(100_000, Number(p.get('copies') ?? '1') || 1));
+      // Three corners, the corners' order (6 bytes a triangle, to a multiple of four), then each copy's place.
+      const places = 36 + Math.ceil((tris * 6) / 4) * 4;
+      const byteLength = places + copies * 12;
+      res.writeHead(200, { 'content-type': TYPES['.gltf']!, 'cache-control': 'no-store' });
+      res.end(
+        JSON.stringify({
+          asset: { version: '2.0' },
+          extensionsUsed: ['EXT_mesh_gpu_instancing'],
+          scene: 0,
+          scenes: [{ nodes: [0] }],
+          nodes: [{ mesh: 0, extensions: { EXT_mesh_gpu_instancing: { attributes: { TRANSLATION: 2 } } } }],
+          meshes: [{ primitives: [{ attributes: { POSITION: 0 }, indices: 1 }] }],
+          accessors: [
+            { bufferView: 0, componentType: 5126, count: 3, type: 'VEC3', min: [0, 0, 0], max: [0, 0, 0] },
+            { bufferView: 1, componentType: 5123, count: tris * 3, type: 'SCALAR' },
+            { bufferView: 2, componentType: 5126, count: copies, type: 'VEC3' },
+          ],
+          bufferViews: [
+            { buffer: 0, byteOffset: 0, byteLength: 36 },
+            { buffer: 0, byteOffset: 36, byteLength: tris * 6 },
+            { buffer: 0, byteOffset: places, byteLength: copies * 12 },
+          ],
+          buffers: [{ uri: `zeros.bin?bytes=${byteLength}`, byteLength }],
+        }),
+      );
+      return;
+    }
+    // ---- End of review 134's viewer routes ----
     res.writeHead(404).end();
     return;
   }
@@ -448,18 +559,21 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
       'content-length': String(total),
       'cache-control': 'no-store',
     });
-    let sent = 0;
-    const piece = Buffer.alloc(16 * 1024);
-    const timer = setInterval(() => {
-      if (res.destroyed || sent >= total) {
-        clearInterval(timer);
-        if (!res.destroyed) res.end();
-        return;
-      }
-      sent += piece.length;
-      res.write(piece);
-    }, 100);
-    res.on('close', () => clearInterval(timer));
+    // The first pieces, then nothing until the check lets the rest go or
+    // the client gives up. Sent against the clock (16 KB every 100 ms,
+    // until 2026-09-30) the file finished by itself after 12.8 s, and a
+    // check that needed it still running lost the race on a slow machine
+    // (issue #10's check, on GitHub's Windows machines).
+    const first = 64 * 1024;
+    res.write(Buffer.alloc(first));
+    const name = url.searchParams.get('gate') ?? 'slow.bin';
+    const gate = c.gates.get(name) ?? { open: false, waiting: [] };
+    c.gates.set(name, gate);
+    const rest = () => {
+      if (!res.destroyed) res.end(Buffer.alloc(total - first));
+    };
+    if (gate.open) rest();
+    else gate.waiting.push(rest);
     return;
   }
   if (path === '/download/broken.bin') {

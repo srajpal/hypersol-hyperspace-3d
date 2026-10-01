@@ -56,6 +56,19 @@ describe('theme tokens', () => {
     expect(themeById('nope')).toBe(nebula);
   });
 
+  it("has the sun's colours as tokens in every theme (review of 2026-09-30, St3)", () => {
+    for (const theme of builtInThemes) {
+      const vars = toCssVariables(theme);
+      for (const token of ['sunTop', 'sunMiddle', 'sunBottom'] as const) {
+        expect(theme.colors[token], `${theme.id}.${token}`).toMatch(/^#[0-9a-f]{6}$/);
+      }
+      expect(vars['--hs-sun-top']).toBe(theme.colors.sunTop);
+      expect(vars['--hs-sun-bottom']).toBe(theme.colors.sunBottom);
+    }
+    // Nebula's sun keeps the colours it was drawn with before they were tokens.
+    expect([nebula.colors.sunTop, nebula.colors.sunMiddle, nebula.colors.sunBottom]).toEqual(['#ffe36b', '#ff8a4c', '#ff2f92']);
+  });
+
   it('computes WCAG contrast', () => {
     expect(contrastRatio('#000000', '#ffffff')).toBeCloseTo(21, 5);
     expect(contrastRatio('#777777', '#777777')).toBe(1);

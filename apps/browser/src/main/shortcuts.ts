@@ -1,5 +1,5 @@
 import type { ShortcutName } from '../shared/commands';
-import { bindings, matchCombo } from '../shared/shortcuts';
+import { bindings, holomlOnly, matchCombo } from '../shared/shortcuts';
 
 /** The fields of Electron's before-input-event input that shortcuts need. */
 export interface KeyInput {
@@ -28,4 +28,24 @@ export function matchShortcut(
     bindings(overrides, platform),
     platform,
   );
+}
+
+/**
+ * The shortcut a key press in a web contents stands for, or null to leave
+ * the keys to it. As matchShortcut, but a shortcut for HoloML pages only
+ * (the text view) is one only in a HoloML page: in any other page its
+ * keys go to the page (Ctrl+Shift+V pastes as plain text), and in the
+ * shell they go to the shell, which knows whether a text field has the
+ * keyboard (renderer/app.ts).
+ *
+ * @param holomlPage The key was pressed in a HoloML page.
+ */
+export function shortcutIn(
+  input: KeyInput,
+  platform: string,
+  overrides: Readonly<Partial<Record<ShortcutName, string>>>,
+  holomlPage: boolean,
+): ShortcutName | null {
+  const name = matchShortcut(input, platform, overrides);
+  return name !== null && holomlOnly(name) && !holomlPage ? null : name;
 }

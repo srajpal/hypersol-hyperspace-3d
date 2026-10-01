@@ -65,6 +65,7 @@ export class SettingsFile {
       pausedSites: [...this.current.pausedSites],
       layersSites: { ...this.current.layersSites },
       zoomSites: { ...this.current.zoomSites },
+      windowBounds: this.current.windowBounds ? { ...this.current.windowBounds } : null,
     };
   }
 

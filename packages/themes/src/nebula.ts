@@ -21,6 +21,9 @@ export const nebula: Theme = {
     textMuted: '#aca3da',
     floorGrid: '#b43cff',
     desk: '#140d33',
+    sunTop: '#ffe36b',
+    sunMiddle: '#ff8a4c',
+    sunBottom: '#ff2f92',
   },
   glowStrength: 0.7,
   lighting: {

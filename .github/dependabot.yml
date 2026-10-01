@@ -1,0 +1,23 @@
+# Dependabot: a weekly look at the packages and at the actions the
+# workflows use (review, prompts 134 and 135). Minor and patch updates
+# come grouped in one pull request each; a major version comes on its
+# own. Electron is also watched by hand (AGENTS.md, rule 13).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns: ['*']

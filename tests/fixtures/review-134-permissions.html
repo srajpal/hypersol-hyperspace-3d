@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Permissions without asking</title>
+    <style>
+      body { margin: 0; padding: 40px; font-family: sans-serif; font-size: 22px; background: #fff; }
+      button { font: inherit; padding: 12px 20px; margin-right: 16px; }
+    </style>
+  </head>
+  <body>
+    <!-- Review of 2026-09-30, finding M1: what a page that never asked is
+         told about its permissions, and what it may do after a real click
+         without a prompt: copy text. Full screen is refused, a click or not
+         (so is holding the pointer, which needs a window with the keyboard
+         to try, and test windows never have it). -->
+    <h1>What this page may do without asking</h1>
+    <button id="copy">Copy</button>
+    <button id="full">Full screen</button>
+    <script>
+      const NAMES = [
+        'notifications',
+        'midi',
+        'clipboard-read',
+        'clipboard-write',
+        'idle-detection',
+        'window-management',
+        'local-fonts',
+        'storage-access',
+        'background-sync',
+        'accelerometer',
+        'gyroscope',
+        'magnetometer',
+        'screen-wake-lock',
+        'persistent-storage',
+        'geolocation',
+        'camera',
+        'microphone',
+      ];
+      // Each name's state as navigator.permissions.query tells it ("unsupported" where Chromium has no such name).
+      window.states = async () => {
+        const out = { notification: Notification.permission, query: {} };
+        for (const name of NAMES) {
+          try {
+            out.query[name] = (await navigator.permissions.query({ name })).state;
+          } catch {
+            out.query[name] = 'unsupported';
+          }
+        }
+        return out;
+      };
+      window.did = {};
+      const note = (name, promise) =>
+        Promise.resolve(promise).then(
+          () => (window.did[name] = 'done'),
+          (e) => (window.did[name] = 'refused:' + e.name),
+        );
+      document.getElementById('copy').onclick = () => note('copy', navigator.clipboard.writeText('review-134 copied'));
+      // A refused request for full screen is never settled, so the click itself is noted too.
+      document.getElementById('full').onclick = () => {
+        window.did.fullAsked = true;
+        note('full', document.documentElement.requestFullscreen());
+      };
+      // Reading the clipboard is never allowed, a click or not.
+      window.readClipboard = () => navigator.clipboard.readText().then((t) => 'read:' + t, (e) => 'refused:' + e.name);
+    </script>
+  </body>
+</html>

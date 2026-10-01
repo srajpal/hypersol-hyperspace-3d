@@ -1,5 +1,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import type { HistoryEntry, Suggestion, Suggestions } from '../../shared/data';
+import { siteKey } from '../../shared/site';
+import { scrubDeleted } from './scrub';
 
 /**
  * History queries on one connection to hypersol.sqlite (milestone 10,
@@ -22,11 +24,6 @@ interface HistoryRow {
 }
 
 const toEntry = (r: HistoryRow): HistoryEntry => ({ id: r.id, url: r.url, title: r.title, visitedAt: r.visited_at });
-
-/** An address as the address bar matches it: without the scheme or "www.", in lower case. */
-export function siteKey(url: string): string {
-  return url.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
-}
 
 /** How much a site counts: its visits, weighted by how recent the last one was. */
 export function frecency(visits: number, lastVisit: number, now: number): number {
@@ -98,11 +95,13 @@ export class HistoryStore {
 
   delete(id: number): void {
     this.db.prepare('DELETE FROM history WHERE id = ?').run(id);
+    scrubDeleted(this.db);
   }
 
   /** Forgets every visit to an address (removing it from the address bar's suggestions). */
   forgetUrl(url: string): void {
     this.db.prepare('DELETE FROM history WHERE url = ?').run(url);
+    scrubDeleted(this.db);
   }
 
   /**
@@ -113,7 +112,7 @@ export class HistoryStore {
    * contains it.
    */
   suggest(text: string, limit: number, now = Date.now()): Suggestions {
-    const typed = siteKey(text.trim());
+    const typed = siteKey(text);
     if (typed === '') return { inline: null, items: [] };
     const rows = this.db
       .prepare(
@@ -171,6 +170,8 @@ export class HistoryStore {
       this.db.exec('ROLLBACK');
       throw e;
     }
+    // "Clear all history" means gone from the file too, not only from the lists (storage/scrub.ts).
+    scrubDeleted(this.db);
   }
 }
 
@@ -216,6 +217,18 @@ export const HISTORY_INDEX_MIGRATION = `
  * address without "https://", "http://", or "www.", in lower case, which
  * an index serves for "starts with" matches.
  */
+/**
+ * Schema 5 (review of 2026-09-30, D6): the full-text index removes a
+ * deleted entry's pieces at once. Without this FTS5 only marks them as
+ * deleted and keeps the three-letter pieces of the address and title
+ * until the index is next rebuilt or emptied, past SQLite's
+ * secure_delete, which covers the tables. The setting is kept in the
+ * index itself, so it is asked for once.
+ */
+export const HISTORY_INDEX_SECURE_DELETE = `
+  INSERT INTO history_fts (history_fts, rank) VALUES ('secure-delete', 1);
+`;
+
 export const HISTORY_SITES_MIGRATION = `
   ALTER TABLE history_latest ADD COLUMN visits INTEGER NOT NULL DEFAULT 1;
   ALTER TABLE history_latest ADD COLUMN key TEXT NOT NULL DEFAULT '';

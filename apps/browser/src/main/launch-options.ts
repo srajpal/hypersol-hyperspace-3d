@@ -8,7 +8,11 @@ export interface LaunchOptions {
   tiltDeg: number;
   /** Profile folder for this run, if given on the command line. */
   userDataDir?: string;
-  /** Set by the end-to-end tests: records logs and exposes test hooks. */
+  /**
+   * Set by the end-to-end tests: records logs and exposes test hooks. Never
+   * in a packaged build: there, HYPERSOL_TEST and every test-only switch
+   * below are ignored (review of 2026-09-30, D11).
+   */
   testMode: boolean;
   /** Test mode only: search address with %s, in place of DuckDuckGo. */
   searchUrl?: string;
@@ -40,6 +44,13 @@ export interface LaunchOptions {
   testNoWebGL: boolean;
   /** Test mode only (--test-sleep-minute-ms=N): a "minute" for sleeping tabs, so the checks need not wait (milestone 10). */
   testSleepMinuteMs?: number;
+  /**
+   * Whether the window's size and place are remembered and used again
+   * (main/window-bounds.ts). Always, except in test mode: test windows
+   * are 1280 by 800 whatever was saved, unless --test-remember-window
+   * asks for the real behaviour (the check of it does).
+   */
+  rememberWindow: boolean;
 }
 
 function switchValue(argv: readonly string[], name: string): string | undefined {
@@ -69,17 +80,24 @@ function localAddress(value: string | undefined): string | undefined {
  *   --dns-probe=<address>           DNS reachability check, test mode only (127.0.0.1)
  *   --test-no-keychain              passwords act as if the keychain were missing, test mode only
  *   --test-no-webgl                 the shell without WebGL (no 3D room), test mode only
+ *   --test-remember-window          the window's size is remembered as in a normal run, test mode only
  * and HYPERSOL_TEST=1 for test mode, HYPERSOL_TEST_BACKGROUND=1 for
  * test windows that stay out of the way.
+ *
+ * @param packaged Whether this is a packaged build (app.isPackaged). Test
+ *   mode keeps every request's address in memory, private tabs' too, uses
+ *   stand-in cameras, and puts test hooks in the shell, so a packaged
+ *   build has no test mode, whatever its environment says.
  */
 export function parseLaunchOptions(
   argv: readonly string[],
   env: Readonly<Record<string, string | undefined>>,
+  packaged: boolean,
 ): LaunchOptions {
   const url = switchValue(argv, 'start-url');
   const tilt = switchValue(argv, 'tilt');
   const userDataDir = switchValue(argv, 'hypersol-user-data');
-  const testMode = env['HYPERSOL_TEST'] === '1';
+  const testMode = !packaged && env['HYPERSOL_TEST'] === '1';
   const search = switchValue(argv, 'search-url');
   const filtersBase = testMode ? localAddress(switchValue(argv, 'filters-base')) : undefined;
   const dnsProbeUrl = testMode ? localAddress(switchValue(argv, 'dns-probe')) : undefined;
@@ -108,5 +126,6 @@ export function parseLaunchOptions(
     testNoKeychain: testMode && argv.includes('--test-no-keychain'),
     testNoWebGL: testMode && argv.includes('--test-no-webgl'),
     ...(sleepMinute !== undefined ? { testSleepMinuteMs: sleepMinute } : {}),
+    rememberWindow: !testMode || argv.includes('--test-remember-window'),
   };
 }

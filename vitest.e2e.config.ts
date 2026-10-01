@@ -11,8 +11,9 @@ import { configDefaults, defineConfig } from 'vitest/config';
  */
 const files = (...milestones: string[]) => milestones.map((m) => `tests/e2e/${m}.e2e.ts`);
 const PARTS: Record<string, string[]> = {
-  // HoloML pages in the viewer, its limits, the showroom, and Blockworld.
-  '2': files('m14', 'm15', 'm16', 'm17'),
+  // HoloML pages in the viewer, its limits, the showroom, and Blockworld,
+  // and the viewer's checks from the review of 2026-09-30.
+  '2': files('m14', 'm15', 'm16', 'm17', 'review-134-viewer'),
   // The sofa studio, Harbour Loft, and the sneaker store.
   '3': files('m18', 'm19', 'm20'),
   // The ocean tunnel: the slowest file drawn in software.
@@ -31,7 +32,11 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, ...(part === '1' ? Object.values(PARTS).flat() : [])],
     environment: 'node',
     testTimeout: 60_000,
-    hookTimeout: 90_000,
+    // Longer than the waits inside the longest hook, so a wait that fails
+    // there says what it waited for before the hook's own limit cuts it
+    // off: launching (up to 100 s), a first page (30 s), a HoloML site
+    // drawn in software (105 s), and its models (60 s), in m18 and m19.
+    hookTimeout: 300_000,
     fileParallelism: false,
     sequence: { concurrent: false },
   },

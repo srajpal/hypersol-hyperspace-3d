@@ -192,10 +192,10 @@ importers:
         version: 2.18.2
       '@ghostery/adblocker-electron':
         specifier: 2.18.2
-        version: 2.18.2(electron@44.4.5)
+        version: 2.18.2(electron@44.5.1)
       '@ghostery/adblocker-electron-preload':
         specifier: 2.18.2
-        version: 2.18.2(electron@44.4.5)
+        version: 2.18.2(electron@44.5.1)
       '@hypersol/holoml':
         specifier: workspace:*
         version: link:../../packages/holoml
@@ -209,8 +209,8 @@ importers:
         specifier: ^0.186.0
         version: 0.186.0
       electron:
-        specifier: ^44.4.5
-        version: 44.4.5
+        specifier: ^44.5.1
+        version: 44.5.1
       electron-vite:
         specifier: ^5.0.0
         version: 5.0.0(vite@7.3.6(@types/node@26.6.2)(lightningcss@1.33.0))
@@ -1201,8 +1201,8 @@ packages:
       '@swc/core':
         optional: true
 
-  electron@44.4.5:
-    resolution: {integrity: sha512-SjgoaeYsSWZfJzubgQU7juvuXMTvn6/e1gAHdGFA/yuMbpF+I+skYqIJ6DdXBXHeWbkbpNpmwZCTpiivtlWZSw==}
+  electron@44.5.1:
+    resolution: {integrity: sha512-lx7AYoFIiyvEvgvpyWO9kOC60xtNPpiPZAth6Fmg9NutzpCAMLwpUlaBY2EXfZyIgUdzEmLMj9KvK0Vrokl1yQ==}
     engines: {node: '>= 22.12.0'}
     hasBin: true
 
@@ -2147,16 +2147,16 @@ snapshots:
     dependencies:
       '@ghostery/adblocker-extended-selectors': 2.18.2
 
-  '@ghostery/adblocker-electron-preload@2.18.2(electron@44.4.5)':
+  '@ghostery/adblocker-electron-preload@2.18.2(electron@44.5.1)':
     dependencies:
       '@ghostery/adblocker-content': 2.18.2
-      electron: 44.4.5
+      electron: 44.5.1
 
-  '@ghostery/adblocker-electron@2.18.2(electron@44.4.5)':
+  '@ghostery/adblocker-electron@2.18.2(electron@44.5.1)':
     dependencies:
       '@ghostery/adblocker': 2.18.2
-      '@ghostery/adblocker-electron-preload': 2.18.2(electron@44.4.5)
-      electron: 44.4.5
+      '@ghostery/adblocker-electron-preload': 2.18.2(electron@44.5.1)
+      electron: 44.5.1
       tldts-experimental: 7.4.15
 
   '@ghostery/adblocker-extended-selectors@2.18.2': {}
@@ -2583,7 +2583,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  electron@44.4.5:
+  electron@44.5.1:
     dependencies:
       '@electron-internal/extract-zip': 1.0.5
       '@electron/get': 5.1.0

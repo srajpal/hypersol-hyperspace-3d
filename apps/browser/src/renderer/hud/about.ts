@@ -1,6 +1,12 @@
-import { LitElement, css, html, nothing } from 'lit';
+import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
+import { focusedElement, keepTabInside, returnFocus } from './dialog-focus';
 
-/** The About panel: name, version, engine versions, licence. Escape closes it. */
+/**
+ * The About panel: name, version, engine versions, licence. Escape closes
+ * it; Tab stays inside it, and closing puts the focus back where it was.
+ *
+ * Events: hs-about-closed (detail: whether the focus went back to where it was).
+ */
 export class HsAbout extends LitElement {
   static override properties = {
     open: { type: Boolean, reflect: true },
@@ -13,6 +19,8 @@ export class HsAbout extends LitElement {
   declare appVersion: string;
   declare electron: string;
   declare chrome: string;
+  /** What had the keyboard when the panel opened. */
+  private focusBefore: Element | null = null;
 
   constructor() {
     super();
@@ -69,6 +77,10 @@ export class HsAbout extends LitElement {
     }
   `;
 
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    if (changed.has('open') && this.open) this.focusBefore = focusedElement();
+  }
+
   override updated(): void {
     if (this.open) (this.renderRoot.querySelector('button') as HTMLButtonElement | null)?.focus();
   }
@@ -90,11 +102,14 @@ export class HsAbout extends LitElement {
 
   close(): void {
     this.open = false;
-    this.dispatchEvent(new CustomEvent('hs-about-closed', { bubbles: true, composed: true }));
+    const returned = returnFocus(this.focusBefore);
+    this.focusBefore = null;
+    this.dispatchEvent(new CustomEvent('hs-about-closed', { detail: returned, bubbles: true, composed: true }));
   }
 
   private readonly onKey = (e: KeyboardEvent) => {
     if (e.key === 'Escape') this.close();
+    else keepTabInside(this.renderRoot as ShadowRoot, e);
   };
 }
 

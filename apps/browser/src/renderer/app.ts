@@ -2,12 +2,13 @@ import type { PageStatus } from '@hypersol/scene-core';
 import { daylight, nebula, themeById, type Theme } from '@hypersol/themes';
 import type { ShellBridge, ShellCommand, ShortcutName } from '../shared/commands';
 import { DEFAULT_SETTINGS, defaults, SEARCH_ENGINES, searchUrlFor, type Settings } from '../shared/settings';
-import { bindings, describeCombo } from '../shared/shortcuts';
+import { bindings, describeCombo, holomlOnly, matchCombo } from '../shared/shortcuts';
 import { DataClient, PasswordsClient, PermissionsClient, PrivacyClient } from './data';
-import type { HsPrompts } from './hud/prompts';
+import type { HsPrompts, SignInAnswer } from './hud/prompts';
+import type { SignInPrompt } from '../shared/sign-in';
 import type { HsSitePanel } from './hud/site-panel';
 import type { HsNotice } from './hud/notice';
-import type { PermissionKind, PermissionPrompt, PromptAnswer } from '../shared/permissions';
+import { originOf, type PermissionKind, type PermissionPrompt, type PromptAnswer } from '../shared/permissions';
 import type { OfferAnswer, PasswordOffer } from '../shared/passwords';
 import type { HsTabStrip } from './hud/tab-strip';
 import { STRIP_HEIGHT } from './hud/tab-strip';
@@ -34,7 +35,8 @@ import { Room } from './scene/room';
 import type { StartData } from './scene/start-panel';
 import { TabView } from './scene/tab-view';
 import { TabStore, type Tab, type TabState } from './state/tabs';
-import { resolveInput } from './url';
+import { hostOf } from '../shared/site';
+import { resolveInput, siteMarker } from './url';
 
 export interface AppOptions {
   startUrl: string;
@@ -77,17 +79,50 @@ const SESSION_SAVE_DELAY_MS = 400;
 const isWeb = (url: string) => /^https?:\/\//i.test(url);
 
 /** Same page apart from the #fragment (an in-page jump keeps the favicon). */
-function hostOf(url: string): string {
-  try {
-    return new URL(url).hostname.toLowerCase();
-  } catch {
-    return '';
-  }
-}
-
 function isSamePage(a: string, b: string): boolean {
   return a.split('#')[0] === b.split('#')[0];
 }
+
+/**
+ * What the shell keeps about a tab besides its view: one record per tab,
+ * made with the view and dropped with it (review of 2026-09-30: nine
+ * maps by tab id, each cleaned by hand when a tab closed).
+ */
+interface TabRecord {
+  /** The timer for the card's next picture. */
+  snapshotTimer: number | undefined;
+  /** Requests the shield blocked on the tab's page. */
+  shieldCount: number;
+  /** Whether the tab's page is in the layers view. */
+  layersOn: boolean;
+  /** Permission prompts waiting for the tab, oldest first (milestone 9). */
+  permissionQueue: PermissionPrompt[];
+  /** An offer to save a password. */
+  offer: PasswordOffer | null;
+  /** The sign-in prompt of the tab's page (the main process sends a tab one at a time). */
+  signIn: SignInPrompt | null;
+  /** What the tab's page was given (camera, microphone, location): the in-use marker. */
+  access: PermissionKind[];
+  /** When the tab was last in front (milestone 10); null until it has left the front. */
+  lastSeen: number | null;
+  /**
+   * An address typed or chosen for the tab, until its page arrives or
+   * fails: the address the page was on, and the one asked for.
+   */
+  typedLoad: { from: string; to: string } | null;
+}
+
+const newTabRecord = (): TabRecord => ({
+  snapshotTimer: undefined,
+  shieldCount: 0,
+  layersOn: false,
+  permissionQueue: [],
+  offer: null,
+  signIn: null,
+  access: [],
+  lastSeen: null,
+  typedLoad: null,
+});
 
 /**
  * The shell's controller: keeps the tab list, the pages, the room, the
@@ -111,33 +146,25 @@ export class App {
   testIgnorePrepareClose = false;
   private settings: Settings = defaults();
   private readonly views = new Map<number, TabView>();
+  /** Each open tab's record (TabRecord), by tab id. */
+  private readonly records = new Map<number, TabRecord>();
   private shownFocus = -1;
-  private readonly snapshotTimers = new Map<number, number>();
-  /** Requests the shield blocked on each tab's page, by tab id. */
-  private readonly shieldCounts = new Map<number, number>();
-  /** Whether each tab's page is in the layers view, by tab id. */
-  private readonly layersOn = new Map<number, boolean>();
   /**
    * Layers choices made in private tabs, by site: in memory only, shared by
    * the private tabs while any is open, forgotten with the last one
    * (GitHub issue #8).
    */
   private readonly privateLayersSites = new Map<string, boolean>();
+  /** Zoom set in private tabs, by site: kept the same way, never saved. */
+  private readonly privateZoomSites = new Map<string, number>();
   private hadPrivate = false;
   /** Test runs: print requests, counted instead of opening the dialog. */
   testPrints = 0;
   private downloadItems: DownloadInfo[] = [];
   /** The notice each download last got (milestone 9), so each outcome is told once. */
   private readonly downloadNotices = new Map<number, 'done' | 'failed'>();
-  /** Permission prompts waiting for each tab, oldest first (milestone 9). */
-  private readonly permissionQueue = new Map<number, PermissionPrompt[]>();
-  /** An offer to save a password, per tab. */
-  private readonly offers = new Map<number, PasswordOffer>();
-  /** What each tab's page was given (camera, microphone, location): the in-use marker. */
-  private readonly access = new Map<number, PermissionKind[]>();
-  /** Milestone 10: recently closed tabs, when each tab was last in front, and the power source. */
+  /** Milestone 10: recently closed tabs, and the power source. */
   private readonly closedTabs = new ClosedTabs();
-  private readonly lastSeen = new Map<number, number>();
   private onBattery = false;
   private economyActive = false;
   /** The room's parallax as the pages see it (-1 to 1, y down). */
@@ -151,6 +178,8 @@ export class App {
   private starUrl = '';
   private openPanelName: PanelName | null = null;
   private focusBeforePanel: Element | null = null;
+  /** One panel is closing because another is opening: the focus stays for the new one. */
+  private switchingPanels = false;
 
   constructor(private readonly options: AppOptions) {
     this.theme = options.theme;
@@ -193,15 +222,23 @@ export class App {
       });
     };
     options.themeButton.addEventListener('hs-theme-toggle', () => void this.toggleTheme());
-    // Ctrl+Shift+V: the text view, only with a HoloML page in front and
-    // not while typing (elsewhere it stays "paste as plain text").
+    // A shortcut for HoloML pages only (the text view, Ctrl+Shift+V unless
+    // changed in Settings > Shortcuts), pressed while the shell has the
+    // keyboard. Pressed in the page it arrives as a command, like every
+    // shortcut; pressed here the main process leaves the keys to the
+    // shell (main/shortcuts.ts), which knows what it cannot: whether a
+    // text field has the keyboard, where they keep their usual meaning
+    // ("paste as plain text").
     document.addEventListener('keydown', (e) => {
-      const view = this.focusedView;
-      if (!view?.isHoloml || !(e.ctrlKey || e.metaKey) || !e.shiftKey || e.altKey || e.key.toLowerCase() !== 'v') return;
+      if (e.defaultPrevented || !this.focusedView?.isHoloml) return;
+      const platform = options.bridge.platform;
+      const pressed = { ctrl: e.ctrlKey, alt: e.altKey, shift: e.shiftKey, meta: e.metaKey, key: e.key };
+      const name = matchCombo(pressed, bindings(this.settings.shortcuts, platform), platform);
+      if (name === null || !holomlOnly(name)) return;
       const typing = e.composedPath().some((n) => n instanceof HTMLInputElement || n instanceof HTMLTextAreaElement);
       if (typing) return;
       e.preventDefault();
-      view.setTextView(!view.textView);
+      this.onShortcut(name);
     });
     // A .holoml file dropped on the window outside the page opens in the tab in front.
     document.addEventListener('dragover', (e) => {
@@ -232,7 +269,7 @@ export class App {
       this.parallax = { x: offset.x, y: -offset.y };
       this.instruments.drift(this.parallax);
       const id = this.store.focusedId;
-      if (this.layersOn.get(id)) this.views.get(id)?.sendLayers(this.layersState(id, false));
+      if (this.tab(id).layersOn) this.views.get(id)?.sendLayers(this.layersState(id, false));
     };
     document.addEventListener('keydown', (e) => e.key === 'Enter' && (this.enterDown = true), true);
     document.addEventListener('keyup', (e) => e.key === 'Enter' && (this.enterDown = false), true);
@@ -263,6 +300,11 @@ export class App {
     return this.views.get(this.store.focusedId);
   }
 
+  /** A tab's record; for a tab that is not open (gone, or never was), a fresh one that nothing keeps. */
+  private tab(tabId: number): TabRecord {
+    return this.records.get(tabId) ?? newTabRecord();
+  }
+
   get openPanel(): PanelName | null {
     return this.openPanelName;
   }
@@ -272,7 +314,7 @@ export class App {
   /** The state to send a tab's page. */
   layersState(tabId: number, animate: boolean): LayersState;
   layersState(tabId: number, animate?: boolean): boolean | LayersState {
-    const on = this.layersOn.get(tabId) ?? false;
+    const on = this.tab(tabId).layersOn;
     if (animate === undefined) return on;
     return { on, animate, parallax: this.parallax, accent: this.theme.colors.accent };
   }
@@ -306,9 +348,31 @@ export class App {
     const id = this.store.focusedId;
     const view = this.views.get(id);
     if (!view) return;
-    this.store.update(id, { url, state: 'loading', title: url });
+    this.startLoad(id, view, url);
+    this.focusPage(view);
+  }
+
+  /**
+   * Puts the keyboard in a tab's page. While a sign-in prompt for the tab
+   * in front is up, the prompt keeps it: a page that has just asked for a
+   * password must not get what is typed next.
+   */
+  focusPage(view: TabView | undefined = this.focusedView): void {
+    if (view !== undefined && view === this.focusedView && this.options.prompts.signIn) this.options.prompts.focusSignIn();
+    else view?.focusContent();
+  }
+
+  /**
+   * Shows an address in a tab and starts loading it. The tab shows the
+   * address asked for from now until its page arrives or fails.
+   */
+  private startLoad(tabId: number, view: TabView, url: string): void {
+    const from = view.status.url;
+    // The same address again has no other address to flash back to.
+    this.tab(tabId).typedLoad = from === url ? null : { from, to: url };
+    // Another page: the favicon of the one being left goes.
+    this.store.update(tabId, { url, state: 'loading', title: url, ...(isSamePage(from, url) ? {} : { favicon: undefined }) });
     view.load(url);
-    view.focusContent();
   }
 
   /** Loads typed text in a tab: an address, or a search. */
@@ -316,8 +380,7 @@ export class App {
     const result = resolveInput(text, this.searchUrl);
     const view = this.views.get(tabId);
     if (!result || !view) return;
-    this.store.update(tabId, { url: result.url, state: 'loading', title: result.url });
-    view.load(result.url);
+    this.startLoad(tabId, view, result.url);
     if (tabId === this.store.focusedId) this.focusPageAfterEnter(view);
   }
 
@@ -330,13 +393,13 @@ export class App {
    */
   private focusPageAfterEnter(view: TabView): void {
     if (!this.enterDown) {
-      view.focusContent();
+      this.focusPage(view);
       return;
     }
     const go = () => {
       window.clearTimeout(timer);
       document.removeEventListener('keyup', onUp, true);
-      if (this.focusedView === view) view.focusContent();
+      if (this.focusedView === view) this.focusPage(view);
     };
     const onUp = (e: KeyboardEvent) => {
       if (e.key === 'Enter') go();
@@ -361,15 +424,12 @@ export class App {
       if (!open.has(id)) {
         this.room.removeView(id);
         this.views.delete(id);
-        window.clearTimeout(this.snapshotTimers.get(id));
-        this.snapshotTimers.delete(id);
-        this.shieldCounts.delete(id);
-        this.layersOn.delete(id);
-        this.permissionQueue.delete(id);
-        this.offers.delete(id);
-        this.access.delete(id);
-        this.lastSeen.delete(id);
-        if (!store.tabs.some((t) => t.private)) this.privateLayersSites.clear();
+        window.clearTimeout(this.records.get(id)?.snapshotTimer);
+        this.records.delete(id);
+        if (!store.tabs.some((t) => t.private)) {
+          this.privateLayersSites.clear();
+          this.privateZoomSites.clear();
+        }
       }
     }
 
@@ -390,7 +450,8 @@ export class App {
     this.updatePrompts();
     if (store.focusedId !== this.shownFocus) {
       const previous = this.shownFocus;
-      if (this.views.has(previous)) this.lastSeen.set(previous, Date.now());
+      const left = this.records.get(previous);
+      if (left) left.lastSeen = Date.now();
       // Opening a sleeping tab wakes it (milestone 10).
       const next = this.views.get(store.focusedId);
       if (next?.isAsleep) {
@@ -404,7 +465,7 @@ export class App {
       if (!this.openPanelName) {
         const view = this.focusedView;
         if (view?.isStart) this.options.toolbar.focusAddress();
-        else view?.focusContent();
+        else this.focusPage(view);
       }
     }
     this.renderTabList();
@@ -423,7 +484,7 @@ export class App {
         ...(t.favicon ? { favicon: t.favicon } : {}),
         focused: t.id === store.focusedId,
         private: t.private,
-        access: (this.access.get(t.id)?.length ?? 0) > 0,
+        access: this.tab(t.id).access.length > 0,
         audible: t.audible,
         muted: t.muted,
         asleep: t.asleep,
@@ -460,7 +521,7 @@ export class App {
     tabSearch.addEventListener('hs-tab-pick', (e) => this.store.focus((e as CustomEvent<number>).detail));
     tabSearch.addEventListener('hs-tab-close', (e) => this.store.close((e as CustomEvent<number>).detail));
     tabSearch.addEventListener('hs-tab-search-closed', () => {
-      if (!this.openPanelName) this.focusedView?.focusContent();
+      if (!this.openPanelName) this.focusPage();
     });
     const minute = this.options.sleepMinuteMs ?? 60_000;
     window.setInterval(() => this.sleepUnused(), Math.min(30_000, Math.max(100, minute / 2)));
@@ -535,6 +596,9 @@ export class App {
     for (const tab of this.store.tabs) {
       const view = this.views.get(tab.id);
       if (!view) continue;
+      const record = this.tab(tab.id);
+      // A tab never out of view counts from now.
+      record.lastSeen ??= now;
       const page = view.webContentsId;
       const candidate = {
         focused: tab.id === this.store.focusedId,
@@ -544,9 +608,8 @@ export class App {
         downloading: page !== null && this.downloadItems.some((d) => !d.finished && d.webContentsId === page),
         typed: view.typed,
         capturing: view.capturing,
-        lastSeen: this.lastSeen.get(tab.id) ?? now,
+        lastSeen: record.lastSeen,
       };
-      if (!this.lastSeen.has(tab.id)) this.lastSeen.set(tab.id, now);
       if (!shouldSleep(candidate, now, minutes, this.options.sleepMinuteMs)) continue;
       if (view.sleep()) {
         this.store.update(tab.id, { asleep: true, audible: false });
@@ -600,6 +663,7 @@ export class App {
       tab.restoreFrom,
     );
     this.views.set(id, view);
+    this.records.set(id, newTabRecord());
     this.room.addView(view);
   }
 
@@ -608,6 +672,16 @@ export class App {
     const view = this.views.get(tabId);
     if (!tab || !view) return;
     const state: TabState = view.isStart ? 'start' : status.state;
+    // An address just typed stays in the bar while it loads: until the new
+    // page arrives or fails, the page's "loading" still names the page it
+    // is leaving, which flashed the old address back (review of 2026-09-30, R6).
+    const record = this.tab(tabId);
+    const typed = record.typedLoad;
+    if (typed && status.state === 'loading' && status.url === typed.from) {
+      status = { state: 'loading', url: typed.to };
+    } else if (typed) {
+      record.typedLoad = null;
+    }
     // A different page starts without the previous page's favicon.
     const newPage = Boolean(status.url) && status.url !== tab.url && !isSamePage(status.url, tab.url);
     this.store.update(tabId, {
@@ -616,14 +690,22 @@ export class App {
       ...(status.url ? { url: status.url } : {}),
       ...(status.title ? { title: status.title } : status.url && tab.title === tab.url ? { title: status.url } : {}),
     });
+    if (tabId !== this.store.focusedId) return;
+    // The page may have loaded the address the tab already shows: nothing
+    // in the tab changed, but the site button's marker did.
+    this.updateToolbar();
+    // The site panel's choices are for the site it names: it closes when
+    // the tab leaves that site, so a change never lands on another one.
+    const panel = this.options.sitePanel;
+    const left = state === 'failed' || state === 'crashed' || originOf(view.committedUrl) !== panel.site?.origin;
+    if (panel.open && panel.site && left) panel.close();
   }
 
   private scheduleSnapshot(tabId: number): void {
-    window.clearTimeout(this.snapshotTimers.get(tabId));
-    this.snapshotTimers.set(
-      tabId,
-      window.setTimeout(() => this.captureSnapshot(tabId), SNAPSHOT_DELAY_MS),
-    );
+    const record = this.records.get(tabId);
+    if (!record) return;
+    window.clearTimeout(record.snapshotTimer);
+    record.snapshotTimer = window.setTimeout(() => this.captureSnapshot(tabId), SNAPSHOT_DELAY_MS);
   }
 
   private captureSnapshot(tabId: number): void {
@@ -734,9 +816,12 @@ export class App {
       return;
     }
     if (this.openPanelName) {
-      const other = this.openPanelName;
-      this.openPanelName = null; // switching panels: keep the focus to return to
-      this.panel(other).open = false;
+      // Switching panels: the open one closes itself, so what closing does
+      // is done (a shown password is hidden again, a shortcut waiting for
+      // its keys stops waiting); the focus to return to is kept.
+      this.switchingPanels = true;
+      this.panel(this.openPanelName).close();
+      this.switchingPanels = false;
     } else {
       this.focusBeforePanel = document.activeElement;
     }
@@ -753,11 +838,12 @@ export class App {
   /** Focus goes back where it was before the panel opened. */
   private onPanelClosed(): void {
     this.openPanelName = null;
+    if (this.switchingPanels) return;
     const before = this.focusBeforePanel;
     this.focusBeforePanel = null;
     if (before === this.options.toolbar) this.options.toolbar.focusAddress();
     else if (before instanceof HTMLElement && before.isConnected && before !== document.body) before.focus();
-    else this.focusedView?.focusContent();
+    else this.focusPage();
   }
 
   /** The HoloML examples (milestone 17), over everything; again to close. */
@@ -792,6 +878,42 @@ export class App {
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.openPanelName) this.panel(this.openPanelName).close();
     });
+    // With nothing open for it to close, Escape in the shell stops a loading
+    // page, as the Stop button's hint says. What is open is noted before
+    // anything handles the key, since closing is what handling it does.
+    let free = false;
+    document.addEventListener('keydown', (e) => e.key === 'Escape' && (free = !this.escapeTaken), true);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && free && !e.defaultPrevented && (this.options.toolbar.loading || this.options.prompts.signIn)) this.stop();
+    });
+  }
+
+  /**
+   * Stop (the button, or Escape with nothing else to close). While a
+   * sign-in prompt for the page in front is up, Stop is the prompt's
+   * Cancel: the request goes on without a password, and the page that
+   * arrives is the site's own "401" page. A prompt too new to take an
+   * answer stays (hud/arm.ts). Otherwise whatever is still loading stops.
+   */
+  private stop(): void {
+    if (this.options.prompts.signIn) this.options.prompts.cancelSignIn();
+    else this.focusedView?.stop();
+  }
+
+  /** Something is open that Escape closes. */
+  private get escapeTaken(): boolean {
+    const o = this.options;
+    return (
+      this.openPanelName !== null ||
+      o.toolbar.escapeTaken ||
+      o.sitePanel.open ||
+      o.shield.open ||
+      o.findBar.open ||
+      o.tabSearch.open ||
+      o.about.open ||
+      o.examples.open ||
+      o.instruments.maximized !== ''
+    );
   }
 
   // ---- Top bar and commands ----------------------------------------------
@@ -806,7 +928,7 @@ export class App {
     t.canReload = tab.state !== 'start';
     // A HoloML page still loading its models counts as loading: Stop stops them (milestone 15).
     t.loading = tab.state === 'loading' || (this.focusedView?.sceneBusy ?? false);
-    t.layers = this.layersOn.get(tab.id) ?? false;
+    t.layers = this.tab(tab.id).layersOn;
     t.private = tab.private;
     // A HoloML page is a 3D scene: no page zoom or layers view (milestone 14).
     const scene = this.focusedView?.isHoloml ?? false;
@@ -815,27 +937,38 @@ export class App {
     t.canLayers = isWeb(tab.url) && tab.state !== 'start' && tab.state !== 'failed' && !scene;
     t.holoml = scene;
     t.textView = this.focusedView?.textView ?? false;
-    t.site = !isWeb(tab.url) || tab.state === 'start' ? 'none' : /^https:/i.test(tab.url) ? 'secure' : 'insecure';
-    t.access = this.access.get(tab.id) ?? [];
+    // The lock is for a page that really loaded over https, not for an
+    // address still on its way in or one that failed (a certificate error).
+    t.site = siteMarker(tab.state, tab.url, this.focusedView?.committedUrl ?? '');
+    t.access = this.tab(tab.id).access;
     t.muted = tab.muted;
     t.canReopen = this.closedTabs.size > 0;
   }
 
   // ---- Permission prompts, password offers, notices (milestone 9) ----------
 
-  /** Shows the focused tab's first permission prompt and its password offer. */
+  /** Shows the focused tab's first permission prompt, its password offer, and its sign-in prompt. */
   private updatePrompts(): void {
-    const id = this.store.focusedId;
-    this.options.prompts.permission = this.permissionQueue.get(id)?.[0] ?? null;
-    this.options.prompts.offer = this.offers.get(id) ?? null;
+    const record = this.tab(this.store.focusedId);
+    this.options.prompts.permission = record.permissionQueue[0] ?? null;
+    this.options.prompts.offer = record.offer;
+    this.options.prompts.signIn = record.signIn;
+  }
+
+  /** A sign-in prompt is over (answered here, or ended by the main process): it leaves its tab. */
+  private dropSignIn(id: number): void {
+    for (const record of this.records.values()) if (record.signIn?.id === id) record.signIn = null;
+    this.updatePrompts();
   }
 
   private dropPrompt(id: number): void {
-    for (const [tabId, queue] of this.permissionQueue) {
-      const rest = queue.filter((p) => p.id !== id);
-      if (rest.length > 0) this.permissionQueue.set(tabId, rest);
-      else this.permissionQueue.delete(tabId);
-    }
+    for (const record of this.records.values()) record.permissionQueue = record.permissionQueue.filter((p) => p.id !== id);
+    this.updatePrompts();
+  }
+
+  /** A password offer is over (answered, or dismissed): it leaves its tab. */
+  private dropOffer(id: number): void {
+    for (const record of this.records.values()) if (record.offer?.id === id) record.offer = null;
     this.updatePrompts();
   }
 
@@ -845,20 +978,32 @@ export class App {
       const { id, answer } = (e as CustomEvent<{ id: number; answer: PromptAnswer }>).detail;
       this.dropPrompt(id);
       void this.permissions.get({ op: 'answer', id, answer }).catch((err: unknown) => console.warn(String(err)));
-      this.focusedView?.focusContent();
+      this.focusPage();
+    });
+    // What was typed goes to the main process and on to Chromium; nothing of it is kept here.
+    prompts.addEventListener('hs-sign-in-answer', (e) => {
+      const { id, typed } = (e as CustomEvent<SignInAnswer>).detail;
+      this.dropSignIn(id);
+      const request = typed ? ({ op: 'answer', id, ...typed } as const) : ({ op: 'cancel', id } as const);
+      void this.options.bridge.signIn(request).then(
+        (reply) => {
+          if (!reply.ok) console.warn(reply.error);
+        },
+        (err: unknown) => console.warn(String(err)),
+      );
+      // Enter in the prompt signs in: the page takes the keyboard once the key is up.
+      const view = this.focusedView;
+      if (view) this.focusPageAfterEnter(view);
     });
     prompts.addEventListener('hs-password-answer', (e) => {
       const { id, answer } = (e as CustomEvent<{ id: number; answer: OfferAnswer }>).detail;
-      for (const [tabId, offer] of this.offers) if (offer.id === id) this.offers.delete(tabId);
-      this.updatePrompts();
+      this.dropOffer(id);
       void this.passwords.get({ op: 'answer', offer: id, answer }).catch((err: unknown) => console.warn(String(err)));
     });
     prompts.addEventListener('hs-offer-dismissed', (e) => {
-      const id = (e as CustomEvent<number>).detail;
-      for (const [tabId, offer] of this.offers) if (offer.id === id) this.offers.delete(tabId);
-      this.updatePrompts();
+      this.dropOffer((e as CustomEvent<number>).detail);
     });
-    sitePanel.addEventListener('hs-site-closed', () => this.focusedView?.focusContent());
+    sitePanel.addEventListener('hs-site-closed', () => this.focusPage());
     notice.addEventListener('hs-notice-action', (e) => {
       const [action, id] = (e as CustomEvent<string>).detail.split(':');
       if (action === 'downloads') this.togglePanel('downloads');
@@ -900,7 +1045,7 @@ export class App {
 
   /** Test hook: what a tab's page was given (the marker). */
   accessOf(tabId: number): PermissionKind[] {
-    return this.access.get(tabId) ?? [];
+    return this.tab(tabId).access;
   }
 
   // ---- Theme and tilt (milestone 6) ------------------------------------------
@@ -914,7 +1059,7 @@ export class App {
       applyThemeCss(document.documentElement, theme);
       this.room.setTheme(theme);
       const id = this.store.focusedId;
-      if (this.layersOn.get(id)) this.views.get(id)?.sendLayers(this.layersState(id, false));
+      if (this.tab(id).layersOn) this.views.get(id)?.sendLayers(this.layersState(id, false));
     }
     this.options.toolbar.searchName = SEARCH_ENGINES[this.settings.searchEngine].name;
     // The menus' key hints follow the person's own shortcuts (milestone 11).
@@ -961,12 +1106,18 @@ export class App {
 
   // ---- Zoom, find, print (milestone 8) --------------------------------------
 
-  /** A page opens at its site's saved zoom (private tabs too; their changes are not saved). */
+  /**
+   * A page opens at its site's saved zoom. A private tab's own changes are
+   * not saved: they are kept in memory, per site, while any private tab is
+   * open, as its layers choices are.
+   */
   private applyZoomOnOpen(tabId: number): void {
     const view = this.views.get(tabId);
     const url = view?.status.url ?? '';
     if (!view || !isWeb(url) || view.isHoloml) return;
-    view.setZoom(this.settings.zoomSites[hostOf(url)] ?? 1);
+    const site = hostOf(url);
+    const privateZoom = this.store.get(tabId)?.private ? this.privateZoomSites.get(site) : undefined;
+    view.setZoom(privateZoom ?? this.settings.zoomSites[site] ?? 1);
     if (tabId === this.store.focusedId) this.updateToolbar();
   }
 
@@ -978,8 +1129,11 @@ export class App {
     const factor = direction === 0 ? 1 : stepZoom(view.zoom, direction);
     view.setZoom(factor);
     this.options.toolbar.zoom = factor;
-    if (tab.private) return;
     const site = hostOf(tab.url);
+    if (tab.private) {
+      this.privateZoomSites.set(site, factor);
+      return;
+    }
     const sites = { ...this.settings.zoomSites };
     if (factor === 1) delete sites[site];
     else sites[site] = factor;
@@ -997,8 +1151,10 @@ export class App {
       this.focusedView?.find(text, forward, next);
     });
     bar.addEventListener('hs-find-closed', () => {
-      this.focusedView?.stopFind();
-      this.focusedView?.focusContent();
+      // The tab find was running on: when the bar closes for a tab switch,
+      // that is still the tab shown, not the one the switch goes to.
+      this.views.get(this.shownFocus)?.stopFind();
+      this.focusPage();
     });
   }
 
@@ -1024,7 +1180,7 @@ export class App {
     const site = hostOf(url);
     const privateChoice = this.store.get(tabId)?.private ? this.privateLayersSites.get(site) : undefined;
     const on = privateChoice ?? this.settings.layersSites[site] ?? this.settings.layersOnOpen;
-    this.layersOn.set(tabId, on);
+    this.tab(tabId).layersOn = on;
     view.sendLayers(this.layersState(tabId, false));
     if (tabId === this.store.focusedId) this.updateToolbar();
   }
@@ -1034,8 +1190,9 @@ export class App {
     const tab = this.store.focusedTab;
     const view = this.focusedView;
     if (!tab || !view || view.isStart || !isWeb(tab.url)) return;
-    const on = !(this.layersOn.get(tab.id) ?? false);
-    this.layersOn.set(tab.id, on);
+    const record = this.tab(tab.id);
+    const on = !record.layersOn;
+    record.layersOn = on;
     view.sendLayers(this.layersState(tab.id, true));
     this.updateToolbar();
     const site = hostOf(tab.url);
@@ -1059,7 +1216,7 @@ export class App {
     const tab = this.store.focusedTab;
     const shield = this.options.shield;
     shield.disabled = !tab || !isWeb(tab.url) || this.focusedView?.isStart !== false;
-    shield.count = tab ? (this.shieldCounts.get(tab.id) ?? 0) : 0;
+    shield.count = tab ? this.tab(tab.id).shieldCount : 0;
     if (focusChanged && shield.open) void shield.refresh();
   }
 
@@ -1085,7 +1242,7 @@ export class App {
     t.addEventListener('hs-zoom', (e) => void this.zoom((e as CustomEvent<1 | -1 | 0>).detail));
     t.addEventListener('hs-instruments', () => void this.saveSettings({ instruments: !this.settings.instruments }));
     t.addEventListener('hs-layers', () => void this.toggleLayers());
-    t.addEventListener('hs-stop', () => this.focusedView?.stop());
+    t.addEventListener('hs-stop', () => this.stop());
     t.addEventListener('hs-text-view', () => {
       const view = this.focusedView;
       view?.setTextView(!view.textView);
@@ -1138,7 +1295,7 @@ export class App {
       case 'shield': {
         const tabId = this.tabForWebContents(command.webContentsId);
         if (tabId === undefined) break;
-        this.shieldCounts.set(tabId, command.count);
+        this.tab(tabId).shieldCount = command.count;
         if (tabId === this.store.focusedId) {
           this.options.shield.count = command.count;
           if (this.options.shield.open) void this.options.shield.refresh();
@@ -1153,12 +1310,26 @@ export class App {
       case 'permission-prompt': {
         const tabId = this.tabForWebContents(command.prompt.webContentsId);
         if (tabId === undefined) break;
-        this.permissionQueue.set(tabId, [...(this.permissionQueue.get(tabId) ?? []), command.prompt]);
+        this.tab(tabId).permissionQueue.push(command.prompt);
         this.updatePrompts();
         break;
       }
       case 'permission-ended':
         this.dropPrompt(command.id);
+        break;
+      case 'sign-in-prompt': {
+        const tabId = this.tabForWebContents(command.prompt.webContentsId);
+        if (tabId === undefined) {
+          // No tab to ask in: the request is cancelled, not left waiting.
+          void this.options.bridge.signIn({ op: 'cancel', id: command.prompt.id }).catch(() => undefined);
+          break;
+        }
+        this.tab(tabId).signIn = command.prompt;
+        this.updatePrompts();
+        break;
+      }
+      case 'sign-in-ended':
+        this.dropSignIn(command.id);
         break;
       case 'audio': {
         const tabId = this.tabForWebContents(command.webContentsId);
@@ -1172,8 +1343,7 @@ export class App {
       case 'site-access': {
         const tabId = this.tabForWebContents(command.webContentsId);
         if (tabId === undefined) break;
-        if (command.kinds.length > 0) this.access.set(tabId, command.kinds);
-        else this.access.delete(tabId);
+        this.tab(tabId).access = command.kinds;
         this.updateCards();
         this.updateToolbar();
         if (this.options.sitePanel.open) void this.options.sitePanel.refresh();
@@ -1182,7 +1352,7 @@ export class App {
       case 'password-offer': {
         const tabId = this.tabForWebContents(command.offer.webContentsId);
         if (tabId === undefined) break;
-        this.offers.set(tabId, command.offer);
+        this.tab(tabId).offer = command.offer;
         this.updatePrompts();
         break;
       }
@@ -1209,6 +1379,8 @@ export class App {
             })
             .catch(() => undefined);
           if (this.options.sitePanel.open) void this.options.sitePanel.refresh();
+          // Settings shows what is saved now, not what was when it opened.
+          if (this.openPanelName === 'settings') void this.options.settingsPanel.load();
           break;
         }
         // Visits and title changes come in bursts; answer once per burst.
@@ -1295,6 +1467,12 @@ export class App {
       case 'examples':
         this.showExamples();
         break;
+      case 'text-view': {
+        // For a HoloML page only: the main process and the listener above send it for nothing else.
+        const view = this.focusedView;
+        if (view?.isHoloml) view.setTextView(!view.textView);
+        break;
+      }
     }
   }
 
@@ -1308,19 +1486,35 @@ export class App {
 
   /**
    * An off-screen list of tabs for keyboard and screen-reader users,
-   * mirroring the 3D cards.
+   * mirroring the 3D cards. Each tab keeps its button as the list
+   * changes (a title, a tab opened or closed), so the keyboard stays on
+   * the button it is on; rebuilt each time, the list dropped the focus
+   * whenever any page changed its title.
    */
   private renderTabList(): void {
     const list = this.options.tabList;
+    const had = new Map<number, HTMLButtonElement>();
+    for (const b of list.querySelectorAll<HTMLButtonElement>('button[data-tab-id]')) had.set(Number(b.dataset['tabId']), b);
     const buttons = this.store.tabs.map((tab) => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.setAttribute('role', 'tab');
-      b.setAttribute('aria-selected', tab.id === this.store.focusedId ? 'true' : 'false');
-      b.textContent = tab.title || 'Untitled';
-      b.addEventListener('click', () => this.store.focus(tab.id));
+      let b = had.get(tab.id);
+      had.delete(tab.id);
+      if (!b) {
+        b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('role', 'tab');
+        b.dataset['tabId'] = String(tab.id);
+        b.addEventListener('click', () => this.store.focus(tab.id));
+      }
+      const selected = tab.id === this.store.focusedId ? 'true' : 'false';
+      if (b.getAttribute('aria-selected') !== selected) b.setAttribute('aria-selected', selected);
+      const title = tab.title || 'Untitled';
+      if (b.textContent !== title) b.textContent = title;
       return b;
     });
-    list.replaceChildren(...buttons);
+    for (const closed of had.values()) closed.remove();
+    // Only a button out of place is moved: moving one takes the keyboard off it.
+    buttons.forEach((b, i) => {
+      if (list.children[i] !== b) list.insertBefore(b, list.children[i] ?? null);
+    });
   }
 }

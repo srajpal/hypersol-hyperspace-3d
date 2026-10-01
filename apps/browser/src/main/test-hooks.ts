@@ -1,8 +1,12 @@
+import { ipcMain } from 'electron';
+import { LAYERS_SETTLED_CHANNEL } from '../shared/layers';
+import type { FaviconEnd } from './favicon';
 import type { AttachRecord } from './security';
 
 /**
  * Logs the end-to-end tests read through Playwright's main-process
- * evaluate. Installed only when HYPERSOL_TEST=1.
+ * evaluate. Installed only when HYPERSOL_TEST=1, and never in a packaged
+ * build (main/launch-options.ts).
  */
 export interface TestLog {
   attaches: AttachRecord[];
@@ -21,6 +25,25 @@ export interface TestLog {
   historyWorker?: () => boolean;
   /** Opens a HoloML file from the computer as Ctrl+O would, without the file chooser (milestone 14). */
   openLocal?: (path: string) => Promise<string | null>;
+  /**
+   * "Leave this page?" (main/leave-page.ts): test runs open no native box.
+   * Each ask is recorded by the page's address, and answered with
+   * leaveAnswer, which a check may set to 'stay'.
+   */
+  leaveAsks: string[];
+  leaveAnswer: 'leave' | 'stay';
+  /** How each attempt at a favicon address ended (main/favicon.ts). */
+  faviconEnds: { url: string; why: FaviconEnd }[];
+  /** How often each page's layers view has settled after a change, by web contents id (preload/layers.ts). */
+  layersSettled: Record<number, number>;
+  /** How many sign-in prompts are showing or waiting, in all tabs (main/sign-in.ts). */
+  signInsWaiting?: () => number;
+  /**
+   * Permissions refused to a page that asked, without a prompt, by
+   * Electron's names (main/permissions.ts). A refused request for full
+   * screen tells the page nothing, so a check can only see it here.
+   */
+  refusedPermissions: string[];
 }
 
 declare global {
@@ -28,9 +51,14 @@ declare global {
 }
 
 export function installTestHooks(): TestLog {
-  const log: TestLog = { attaches: [], requests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [] };
+  const log: TestLog = { attaches: [], requests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave', refusedPermissions: [], layersSettled: {}, faviconEnds: [] };
   globalThis.__hypersolTest = log;
   // log.requests is filled by the privacy shield's request listener
   // (main/privacy/index.ts): Electron allows one listener per session.
+  // The layers preload's word that a page has settled, counted per page.
+  ipcMain.on(LAYERS_SETTLED_CHANNEL, (event) => {
+    if (event.sender.getType() !== 'webview') return;
+    log.layersSettled[event.sender.id] = (log.layersSettled[event.sender.id] ?? 0) + 1;
+  });
   return log;
 }
