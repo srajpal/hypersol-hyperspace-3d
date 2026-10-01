@@ -1563,3 +1563,9 @@ holoml #21 has a failure too, check that
 ```text
 3 failures on #45
 ```
+
+## 141 — 2026-10-01 · Claude Fable 5.1, high effort
+
+```text
+holoml #24 has some failures
+```
