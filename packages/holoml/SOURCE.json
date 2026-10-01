@@ -9,8 +9,8 @@
     "src/holoml.webidl": "bf886d86dfaee0ffa45763445a8ae79c2997fa04c50dc262a95dedfd32fa4580"
   },
   "examples": {
-    "ref": "fix-aquarium-fish-30",
-    "commit": "36208518190c480d8e5c6842b4e565b114cb41c0",
+    "ref": "main",
+    "commit": "267e66e1bcf0f0e6d1b7625bc8a43e6db213cb3c",
     "files": {
       "showroom/README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
       "showroom/about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",
