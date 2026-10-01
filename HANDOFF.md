@@ -147,6 +147,12 @@ dc2ad98), and the copy of HoloML is made from that tag (`pnpm
 holoml:sync v0.2.2 --examples v0.2.2`; only the copied files' "at"
 lines and SOURCE.json changed).
 
+The bug issues opened after the review (#50, #51, holoml #30) are fixed
+on the branches `fix-issues-50-51` and holoml's `fix-aquarium-fish-30`
+(TODO.md, "Bug issues after the review"). Until holoml's is merged, the
+aquarium's copy here is from that branch; once it is, copy it again
+from main (`pnpm holoml:sync v0.2.2 --examples main`).
+
 How to resume:
 
 1. A GitHub release for v0.2.2 (a pre-release, like 0.2's) is the

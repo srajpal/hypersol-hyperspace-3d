@@ -162,10 +162,10 @@ date given and grow with each milestone; TODO.md has the latest.
   a promise nobody awaits or catches is an error, since the review of
   2026-09-30)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about nineteen minutes; 373 checks in 27 files: 372 in
+  against it (about nineteen minutes; 374 checks in 27 files: 372 in
   the full run on 2026-09-30, after the review's fixes, all passed on
-  this computer, and one added after it, run in its file; TODO.md has
-  the details). On
+  this computer, and two added after it, each run in its file; TODO.md
+  has the details). On
   this computer vitest's report leaves out what passing checks log (the
   load times, frame rates, and memory); `pnpm test:e2e
   --reporter=verbose` shows it, as the automatic builds do. Needs

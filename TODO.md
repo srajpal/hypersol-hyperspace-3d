@@ -4745,6 +4745,30 @@ The final runs, after every branch was merged (2026-09-30):
   the type check: clean.
 - `pnpm test` in holoml: 505 passed, one file at a time (about 12 s).
 
+## Bug issues after the review (2026-10-01)
+
+Three issues the owner opened after the review, fixed easiest first:
+
+- #51, the copy of HoloML's test: it read the holoml repository at
+  SOURCE.json's name (`main`), so a copy made from a branch failed as
+  soon as that branch moved on. It reads the recorded commit now, and a
+  recorded tag must still name it. Checked with the copy made from
+  main at 2cce09c (failed before, passes now), the copy from v0.2.2,
+  and a tag that names another commit (fails).
+- holoml #30, the ocean tunnel's fish: a push out of a rock could take
+  a fish down through the sand, as a rock's ball reaches below it; 4 of
+  300 seeded minutes broke a limit. Fixed in holoml (keepClear in
+  ocean.js) with a fixed path that broke before and a grid of points;
+  the copy here is from that branch, and X2 to X9 passed, 11 of 11.
+- #50, E2 on GitHub's Windows machines: saved data that changed while
+  someone typed in the history search (the visit just made, or its
+  title) refreshed the Library at once, and so started a search of the
+  half-typed words 16 ms after a key. While the search box waits for its
+  pause, the Library leaves the refresh to the pause's search now. A new
+  check changes the page's title in the middle of typing: before the
+  fix it failed here (a search 89 ms after a key), and with it, m3's 22
+  checks passed three times in a row.
+
 ## The roadmap: installers last (2026-09-29, prompt 129)
 
 The owner moved the installers to the end of the roadmap, as the
