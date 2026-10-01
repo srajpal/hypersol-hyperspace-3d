@@ -4737,7 +4737,10 @@ The final runs, after every branch was merged (2026-09-30):
   and each smooth scroll is waited for) and E2 (a search begun before
   the typing counted as its own). Fourth run: every check passed on
   both systems; #45 merged 2026-10-01 (after #39 and holoml's #21,
-  2026-09-30). The copy of HoloML is from holoml's main (2cce09c).
+  2026-09-30). The copy of HoloML was from holoml's main (2cce09c);
+  since 2026-10-01 it is from the tag v0.2.2 (dc2ad98, the same files:
+  holoml had changed only its workflows since), and the copy's test
+  passed (5 checks).
 - Lint (with the rules that need the types, about half a minute) and
   the type check: clean.
 - `pnpm test` in holoml: 505 passed, one file at a time (about 12 s).

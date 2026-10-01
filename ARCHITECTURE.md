@@ -615,9 +615,9 @@ After the review of 2026-09-30 (prompts 134 and 135): the specification
 is 0.2's third edition and holoml's packages are at 0.2.2, with a change
 log. The language is the same; the checker is stricter in places and no
 longer slow on a long run of digits, and the aquarium's turtle is
-replaced (THIRD-PARTY.md). Neither v0.2.1 nor v0.2.2 is tagged yet; the
-newest tag is v0.2.0. HyperSpace 3D's copy (packages/holoml/SOURCE.json)
-names the branch and commit it was made from.
+replaced (THIRD-PARTY.md). It is tagged v0.2.2 (2026-10-01, at holoml's
+dc2ad98; there is no v0.2.1), and HyperSpace 3D's copy is made from that
+tag (packages/holoml/SOURCE.json names the tag and its commit).
 
 ## 7. Data flow
 

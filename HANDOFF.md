@@ -142,13 +142,15 @@ here, #22 and #23 in holoml) and the draft security advisories (seven
 here, two in holoml) are open; REVIEW-2026-09-30.md carries its status.
 
 All three pull requests are merged (#39 and holoml's #21 on
-2026-09-30, #45 on 2026-10-01), and the copy of HoloML is from holoml's
-main (2cce09c).
+2026-09-30, #45 on 2026-10-01). holoml is tagged v0.2.2 (2026-10-01,
+dc2ad98), and the copy of HoloML is made from that tag (`pnpm
+holoml:sync v0.2.2 --examples v0.2.2`; only the copied files' "at"
+lines and SOURCE.json changed).
 
 How to resume:
 
-1. Make the copy from a tag once the owner tags one (0.2.2, as a
-   pre-release): `pnpm holoml:sync v0.2.2 --examples v0.2.2`.
+1. A GitHub release for v0.2.2 (a pre-release, like 0.2's) is the
+   owner's to make; the tag is pushed.
 2. Publish or close the draft advisories as the owner decides, and
    take the owner's decisions listed under "Deliberately not done" in
    TODO.md.
