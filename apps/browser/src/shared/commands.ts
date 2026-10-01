@@ -67,7 +67,8 @@ export type ShortcutName =
 export type ShellCommand =
   | { type: 'shortcut'; name: ShortcutName }
   | { type: 'open-tab'; url: string; background: boolean; openerWebContentsId?: number }
-  | { type: 'favicon'; webContentsId: number; dataUrl: string }
+  /** A page's favicon, for the page at `page` (the tab may have left it meanwhile). */
+  | { type: 'favicon'; webContentsId: number; page: string; dataUrl: string }
   | { type: 'data-changed'; what: 'bookmarks' | 'history' | 'settings' | 'passwords' }
   /** A page asks for the camera, microphone, or location: show the prompt for its tab (milestone 9). */
   | { type: 'permission-prompt'; prompt: PermissionPrompt }
