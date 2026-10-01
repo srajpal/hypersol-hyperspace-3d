@@ -1581,3 +1581,9 @@ Do I merge anything?
 ```text
 Browser #47 and #49 have failures
 ```
+
+## 144 — 2026-10-01 · Claude Fable 5.1, high effort
+
+```text
+#48 failed again
+```
