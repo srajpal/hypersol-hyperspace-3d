@@ -217,6 +217,9 @@ export class HsLibrary extends LitElement {
     if (!this.client) return;
     const ticket = ++this.request;
     this.loading = true;
+    // A search is noted as it starts, before the first answer is waited for: a key typed
+    // meanwhile must not read as the search coming too soon after it (pull request #48).
+    if (this.view === 'history') this.noteSearch('searched');
     try {
       const status = await this.client.get({ op: 'status' });
       if (!status.available) throw new Error(status.message ?? "Couldn't open your saved data");
@@ -236,7 +239,6 @@ export class HsLibrary extends LitElement {
         this.never = never;
         if (!status.available) this.note = status.message ?? '';
       } else {
-        this.noteSearch('searched');
         const found = await this.client.get({ op: 'history.search', query: this.query, limit: 500 });
         if (ticket !== this.request) return;
         this.history = found;
