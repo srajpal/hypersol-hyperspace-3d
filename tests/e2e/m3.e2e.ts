@@ -120,8 +120,20 @@ describe('E1 to E3: bookmarks, history, and the Library', () => {
     await openLibrary(h, 'history');
     await waitFor('a visit listed', () => libTitles(h), (t) => t.length > 0);
     const searches = async () => (await mainLog(h, 'dataOps'))['history.search'] ?? 0;
-    const before = await searches();
-    const timesBefore = (await shellCall(h, 'librarySearchTimes')).times.length;
+    // The counts to start from, read while no search is on its way: the shell's notes, then the main
+    // process's count, then the notes again, unchanged. A search begun meanwhile (the refresh after
+    // the visit was saved, on GitHub's Windows machines in pull request #52) would be noted before
+    // one count and reach the main process after the other.
+    const { before, timesBefore } = await waitFor(
+      'the Library idle',
+      async () => {
+        const first = await shellCall(h, 'librarySearchTimes');
+        const before = await searches();
+        const then = await shellCall(h, 'librarySearchTimes');
+        return { before, timesBefore: first.times.length, idle: !first.busy && !then.busy && then.times.length === first.times.length };
+      },
+      (r) => r.idle,
+    );
     await h.shell.locator(LIB('lib-search')).pressSequentially('link b', { delay: 30 });
     // Six keys: a search starts only once typing has paused for 200 ms, on
     // the shell's own clock (hud/library.ts, SEARCH_PAUSE_MS), and once after
@@ -147,8 +159,20 @@ describe('E1 to E3: bookmarks, history, and the Library', () => {
     }
     expect(times.at(-1)?.what).toBe('searched');
     expect(times.filter((t, i) => t.what === 'searched' && i > times.findLastIndex((x) => x.what === 'typed'))).toHaveLength(1);
-    // Each search the shell started reached the main process, and no other did.
-    expect((await searches()) - before).toBe(searched.length);
+    // Each search the shell started since the counts were read reached the main process, and no other
+    // did: the ones noted after the first key, and any noted before it (a refresh as typing began).
+    // Counted as at the start, while no search is on its way.
+    const end = await waitFor(
+      'the Library idle again',
+      async () => {
+        const first = await shellCall(h, 'librarySearchTimes');
+        const count = await searches();
+        const then = await shellCall(h, 'librarySearchTimes');
+        return { count, times: then.times, idle: !first.busy && !then.busy && then.times.length === first.times.length };
+      },
+      (r) => r.idle,
+    );
+    expect(end.count - before).toBe(end.times.slice(timesBefore).filter((t) => t.what === 'searched').length);
     await h.shell.fill(LIB('lib-search'), '');
     await h.shell.keyboard.press('Escape');
   });

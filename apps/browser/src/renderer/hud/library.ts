@@ -69,6 +69,11 @@ export class HsLibrary extends LitElement {
   keepSearchTimes = false;
   readonly searchTimes: { at: number; what: SearchMoment }[] = [];
 
+  /** A refresh is running (for test runs: a search noted may not have reached the main process yet). */
+  get busy(): boolean {
+    return this.running;
+  }
+
   constructor() {
     super();
     this.open = false;
