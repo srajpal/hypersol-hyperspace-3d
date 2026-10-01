@@ -4731,7 +4731,13 @@ The final runs, after every branch was merged (2026-09-30):
   keep within its smallest; the text fixture has 240 lines; V2's
   pixels are their own check, skipped in software as the other pixel
   checks are; the harness ends an app that does not close within half
-  a minute and says so. Second run: PR_RESULT
+  a minute and says so. Second run: one failure, V8's space bar on
+  Windows (a button had the keyboard); third run: V8 again (the space
+  bar scrolls on the character it gives, which the check now sends,
+  and each smooth scroll is waited for) and E2 (a search begun before
+  the typing counted as its own). Fourth run: every check passed on
+  both systems; #45 merged 2026-10-01 (after #39 and holoml's #21,
+  2026-09-30). The copy of HoloML is from holoml's main (2cce09c).
 - Lint (with the rules that need the types, about half a minute) and
   the type check: clean.
 - `pnpm test` in holoml: 505 passed, one file at a time (about 12 s).
