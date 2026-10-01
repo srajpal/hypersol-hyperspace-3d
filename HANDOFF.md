@@ -147,11 +147,10 @@ dc2ad98), and the copy of HoloML is made from that tag (`pnpm
 holoml:sync v0.2.2 --examples v0.2.2`; only the copied files' "at"
 lines and SOURCE.json changed).
 
-The bug issues opened after the review (#50, #51, holoml #30) are fixed
-on the branches `fix-issues-50-51` and holoml's `fix-aquarium-fish-30`
-(TODO.md, "Bug issues after the review"). Until holoml's is merged, the
-aquarium's copy here is from that branch; once it is, copy it again
-from main (`pnpm holoml:sync v0.2.2 --examples main`).
+The bug issues opened after the review (#50, #51, holoml #30) are fixed:
+holoml's in its #31 (merged 2026-10-01), the browser's on the branch
+`fix-issues-50-51`, pull request #52 (TODO.md, "Bug issues after the
+review"). The example sites' copy is from holoml's main (267e66e).
 
 How to resume:
 

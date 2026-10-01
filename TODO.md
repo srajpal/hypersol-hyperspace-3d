@@ -4768,6 +4768,26 @@ Three issues the owner opened after the review, fixed easiest first:
   check changes the page's title in the middle of typing: before the
   fix it failed here (a search 89 ms after a key), and with it, m3's 22
   checks passed three times in a row.
+- Holoml's #31 merged; the copy here is from holoml's main (267e66e,
+  the same files).
+- Pull request #52's first automatic build: part 1 failed on both
+  systems, the rest passed. Windows: E2's count of searches read the
+  main process's count and the shell's notes while a search was on its
+  way (the refresh after the visit was saved, landing just before the
+  typing), so one search was counted in one and not the other; both are
+  now read while the Library is idle, at the start and at the end, and
+  every search noted since is counted (the new check failed after it, as
+  the box still held the first one's words). D13: a favicon of the page
+  before (link-a's) landed on the next page: the shell drops a tab's
+  favicon as soon as an address is typed, before the main process hears
+  of the navigation and cancels the fetch, and one that ended in between
+  was shown. A favicon now names the page it is for, and the shell takes
+  it only for the page the tab shows. Linux: D8's right-click never
+  brought a menu, three times at the same point; its cause is not known.
+  The point is now aimed once the room is still (the tab opened behind
+  brings the rail), and if every click is lost the failure says what the
+  shell has there. m2, m3, and review-134-main: 83 of 83 here, and 83
+  of 83 drawn in software.
 
 ## The roadmap: installers last (2026-09-29, prompt 129)
 

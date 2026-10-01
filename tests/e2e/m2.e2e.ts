@@ -22,6 +22,7 @@ import {
   pressInPage,
   pressInShell,
   roomStill,
+  describeMissedClick,
   screenPointOf,
   settled,
   shellCall,
@@ -409,9 +410,13 @@ describe('D8 right-click menu', () => {
   async function rightClick(selector: string, page = 'link-a'): Promise<string[]> {
     const menus = () => h.app.evaluate(() => globalThis.__hypersolTest!.menus.map((m) => m.labels));
     const count = (await menus()).length;
+    // Aimed once the room is still: a tab opened behind brings the rail, and the page moves.
+    await settled(h);
     const p = await screenPointOf(h, selector, page);
-    // A right-click lost on its way to the page brings no menu at all (issue #30).
-    await clickUntil(h, p, 'a right-click menu', async () => (await menus()).length > count, { button: 'right' });
+    const opened = async () => (await menus()).length > count;
+    // A right-click lost on its way to the page brings no menu at all (issue #30); if every one is,
+    // the failure says what the shell has at the point (Linux, pull request #52).
+    await clickUntil(h, p, 'a right-click menu', opened, { button: 'right' }, () => describeMissedClick(h, p, opened));
     const all = await menus();
     return all[all.length - 1]!;
   }
