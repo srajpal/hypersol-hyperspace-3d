@@ -1575,3 +1575,9 @@ holoml #24 has some failures
 ```text
 Do I merge anything?
 ```
+
+## 143 — 2026-10-01 · Claude Fable 5.1, high effort
+
+```text
+Browser #47 and #49 have failures
+```
