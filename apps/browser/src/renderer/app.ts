@@ -1289,7 +1289,9 @@ export class App {
       }
       case 'favicon': {
         const tabId = this.tabForWebContents(command.webContentsId);
-        if (tabId !== undefined) this.store.update(tabId, { favicon: command.dataUrl });
+        const tab = tabId === undefined ? undefined : this.store.get(tabId);
+        // Only for the page the tab shows: one it has left keeps no favicon of the page before.
+        if (tabId !== undefined && tab && isSamePage(command.page, tab.url)) this.store.update(tabId, { favicon: command.dataUrl });
         break;
       }
       case 'shield': {

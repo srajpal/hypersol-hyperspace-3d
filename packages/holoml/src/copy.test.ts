@@ -31,11 +31,13 @@ describe('the copy of HoloML (owner, prompt 65, Q4 a)', () => {
 
   const holoml = join(here, '..', '..', '..', 'holoml');
   // Only where the holoml repository sits beside this one (not in GitHub Actions).
+  // The files are read at the commit recorded, not at the name: a branch such as main moves on after the copy (#51).
   it.skipIf(!existsSync(join(holoml, '.git')))(`matches the holoml repository at ${source.tag}`, () => {
-    const commit = execFileSync('git', ['-C', holoml, 'rev-list', '-n', '1', source.tag, '--'], { encoding: 'utf8' }).trim();
-    expect(commit).toBe(source.commit);
+    // A tag does not move, so one that names another commit is a mistake; a branch may have.
+    const tagged = execFileSync('git', ['-C', holoml, 'tag', '--list', source.tag], { encoding: 'utf8' }).trim();
+    if (tagged) expect(execFileSync('git', ['-C', holoml, 'rev-list', '-n', '1', source.tag, '--'], { encoding: 'utf8' }).trim()).toBe(source.commit);
     for (const { from, to } of copies) {
-      const original = execFileSync('git', ['-C', holoml, 'show', `${source.tag}:${from}`], { encoding: 'utf8' });
+      const original = execFileSync('git', ['-C', holoml, 'show', `${source.commit}:${from}`], { encoding: 'utf8' });
       const expected = (transform as (t: string, f: string, g: string) => string)(original, from, source.tag);
       expect(readFileSync(join(here, to), 'utf8').replace(/\r\n/g, '\n'), to).toBe(expected);
     }

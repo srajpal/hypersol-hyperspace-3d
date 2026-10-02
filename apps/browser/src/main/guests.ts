@@ -156,8 +156,12 @@ export function wireGuest(guest: WebContents, deps: GuestDeps): void {
     deps.testLog ? (url, why) => deps.testLog?.faviconEnds.push({ url, why }) : undefined,
   );
   guest.on('page-favicon-updated', (_event, urls) => {
+    // The page it is for goes with it: the shell drops the old page's favicon from the tab as
+    // soon as an address is typed, before this process hears of the navigation and cancels
+    // the fetch, so one that ends in between must not land on the next page (pull request #52).
+    const page = guest.getURL();
     favicons.request(urls, (dataUrl) => {
-      if (!guest.isDestroyed()) deps.send({ type: 'favicon', webContentsId: guest.id, dataUrl });
+      if (!guest.isDestroyed()) deps.send({ type: 'favicon', webContentsId: guest.id, page, dataUrl });
     });
   });
   guest.on('did-start-navigation', (details) => {
