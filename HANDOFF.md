@@ -59,11 +59,13 @@ state; this is a summary.
   125; merged in holoml, #19, and the browser, #38; published at
   https://srajpal.github.io/holoml/aquarium/; HoloML 0.2 released as
   v0.2.0, https://github.com/srajpal/holoml/releases/tag/v0.2.0)); 22 documentation for HoloML to recognised standards (prompt
-  115; being built, prompt 128); 23 HoloML 0.3, the features its check
-  found missing (prompt 128, Q4 a); 24 privacy and data tools
+  115; being built, prompt 128); 23 HoloML for VS Code, an extension
+  kept in holoml and installed by hand (prompt 146; plan approved with
+  the recommended answers, 2026-10-02); 24 HoloML 0.3, the features
+  its check found missing (prompt 128, Q4 a); 25 privacy and data tools
   (HTTPS-only, per-site storage, bookmark import and export: #24, #26,
-  #27); then free camera (25), lift to 3D (26), and polish (27);
-  installers as 1.0 come last (28 for Windows and Linux, 29 for macOS;
+  #27); then free camera (26), lift to 3D (27), and polish (28);
+  installers as 1.0 come last (29 for Windows and Linux, 30 for macOS;
   moved to the end in prompt 129, as the browser is not ready for
   builds), with mobile later (owner, prompt 67).
 - The logo direction is chosen (concept 4d in
@@ -171,7 +173,7 @@ Worth knowing:
   process started the page's process with `--hypersol-test-run`
   (shared/test-run.ts), which it does in test mode alone, never in a
   packaged app; the page preload reads nothing from the environment
-  (ARCHITECTURE.md, Scene inspector). Milestone 28 keeps a check that
+  (ARCHITECTURE.md, Scene inspector). Milestone 29 keeps a check that
   a packaged app has neither test mode nor the hooks.
 - The Scene inspector's choosing and picking reach the viewer as
   `select:<index>`, `pick-on`, and `pick-off` on the HoloML command
@@ -203,7 +205,8 @@ https://srajpal.github.io/holoml/ built with `marked` (a new development
 package in holoml, approved as Q3 a), the media type's registration
 template without registering it, the clarifications in 0.2's text (then
 v0.2.1 on the owner's go), and everything in the holoml repository. The
-features found missing go to milestone 23, "HoloML 0.3" (Q4 a).
+features found missing go to milestone 23, "HoloML 0.3" (Q4 a; 24
+since 2026-10-02).
 
 Built (2026-09-29), on branches not yet merged:
 
@@ -500,12 +503,12 @@ to this repository for rules and the prompt log.
 
 ## Open items (need an owner decision when their milestone comes)
 
-- With the installers (milestone 28): Windows signing (Microsoft's
+- With the installers (milestone 29): Windows signing (Microsoft's
   Artifact Signing recommended, or SignPath Foundation), updates
   (automatic from GitHub Releases recommended), Linux formats (AppImage
   and .deb recommended), the Windows installer type (per user
   recommended).
-- With the macOS release (milestone 29): the Apple Developer Program for
+- With the macOS release (milestone 30): the Apple Developer Program for
   signing and notarization.
 - Product gaps noted in the 2026-09-24 review and not yet scheduled:
   bookmark import and onboarding, a touch equivalent for closing tabs.
@@ -532,5 +535,5 @@ to this repository for rules and the prompt log.
 
 - HoloML's packages are not published to npm; the browser keeps a copy
   (packages/holoml, pnpm holoml:sync).
-- No installers, signing, or updates (milestones 28 and 29).
+- No installers, signing, or updates (milestones 29 and 30).
 - No installers attached to releases: v0.9.0 is source only.

@@ -470,9 +470,9 @@ milestone; the current milestone's checks are defined in TODO.md):
   window-bounds; viewer/values, versions, sound, controls, instances,
   and main; shared/settings, sign-in, and site; and
   preload/theme-colours.
-- Later milestones add: HoloML 0.3 (23), privacy and data tools (24),
-  free camera (25), lift to 3D (26), polish (27), and installers (28
-  and 29).
+- Later milestones add: HoloML for VS Code (23), HoloML 0.3 (24),
+  privacy and data tools (25), free camera (26), lift to 3D (27),
+  polish (28), and installers (29 and 30).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

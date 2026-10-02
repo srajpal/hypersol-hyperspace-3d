@@ -34,13 +34,14 @@ Plan approved 2026-09-24.
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Done (accepted, prompt 122) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Done (accepted, prompt 125; HoloML v0.2.0 released, prompt 126) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Current (the plan and build approved with the recommended answers, prompt 128) |
-| 23 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
-| 24 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
-| 25 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
-| 26 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
-| 27 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (was 29, prompt 129) |
-| 28 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55). (review, 2026-09-30) Licence texts and credits inside the app (the GPL's text for the filter lists, the examples' credits); how security updates reach users (how often Electron is raised, and how people get it); and a check that test mode and the test hooks are absent from a packaged app | Last (was 25; moved to the end, prompt 129: not ready for builds) |
-| 29 | macOS release | Signing, notarization, Mac checks. (review, 2026-09-30) The same three as milestone 28, on macOS | Last (was 26, prompt 129) |
+| 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Current (plan approved with the recommended answers, 2026-10-02; build not yet approved) |
+| 24 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
+| 25 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
+| 26 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
+| 27 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
+| 28 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (was 29, prompt 129) |
+| 29 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55). (review, 2026-09-30) Licence texts and credits inside the app (the GPL's text for the filter lists, the examples' credits); how security updates reach users (how often Electron is raised, and how people get it); and a check that test mode and the test hooks are absent from a packaged app | Last (was 25; moved to the end, prompt 129: not ready for builds) |
+| 30 | macOS release | Signing, notarization, Mac checks. (review, 2026-09-30) The same three as milestone 28, on macOS | Last (was 26, prompt 129) |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS and Android | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
@@ -90,7 +91,15 @@ added items to milestones 23, 24, 27, 28, and 29, marked "(review,
 2026-09-30)" in the table; nothing is renumbered. "The review of
 2026-09-30", further down, has the whole account.
 
-- Milestone 23 (HoloML 0.3), the language engineer's list for its plan:
+On 2026-10-02 (prompt 146, and the owner's answers after it) HoloML
+for VS Code became milestone 23, after the documentation: HoloML 0.3
+moved from 23 to 24, privacy and data tools from 24 to 25, free
+camera from 25 to 26, lift to 3D from 26 to 27, polish from 27 to
+28, and the installers from 28 and 29 to 29 and 30. Dated entries
+below keep the numbers they were written with.
+
+- Milestone 24 (HoloML 0.3; 23 when this was written), the language
+  engineer's list for its plan:
   the look written down, so that a second renderer can match a picture
   (how bright a light of a given intensity is, tone mapping, the
   default surroundings, the field of view); a panorama's projection and
@@ -102,7 +111,8 @@ added items to milestones 23, 24, 27, 28, and 29, marked "(review,
   reader reports for a further copy of an element a page may have only
   once; whether text on both sides of a comment is one text; and the
   generated RELAX NG grammar checked by a validator in the tests.
-- Milestone 24 (privacy and data tools): nothing new. (A gap found while
+- Milestone 25 (privacy and data tools; 24 when this was written):
+  nothing new. (A gap found while
   writing docs/privacy.md, three-letter pieces of a deleted visit left
   in the history search index, was closed the same day: schema 5 sets
   the index's own secure-delete; scrub.test.ts checks it.)
@@ -4399,6 +4409,248 @@ finished documents.
 
 - Y1 to Y10 pass, the documentation is published, and the owner
   accepts; then holoml is tagged v0.2.1 on the owner's go (Q6).
+
+## Milestone 23 — HoloML for VS Code
+
+Status: Plan approved (2026-10-02): the owner chose the recommended
+answers to Q1 to Q4; the build is not yet approved. The owner asked for a VS Code
+extension for HoloML, kept in the holoml repository (the owner chose
+holoml when asked after prompt 146), with no live preview (that needs
+the browser for now) and no publishing (installed by hand). The owner
+approved the new development tools it needs with the request (listed
+below). The features come from what well-regarded extensions for
+markup languages offer (researched 2026-10-02; sources at the end of
+this section).
+
+Goal: writing a HoloML page in VS Code feels like writing HTML there.
+The editor colours the syntax, underlines mistakes as you type with the
+checker's own words, suggests the elements and attributes allowed where
+the cursor is, explains them on hover, and keeps the start and end tags
+in step. The checks are the same as HyperSpace 3D's, because they use
+holoml's own parser and checker.
+
+### How it would work (proposed)
+
+- **Where it lives.** A new package in the holoml repository,
+  `packages/vscode`, beside `packages/parser` and `packages/schema`,
+  which it uses directly through pnpm's workspace, so there is no copy
+  to keep in step. A change to the language and the matching change to
+  the extension land in one pull request, and the extension's tests run
+  on every pull request, with holoml's.
+- **A language server.** The work is done in a language server: a
+  separate process that speaks the Language Server Protocol (LSP), the
+  standard way editors ask a language's tools for errors, suggestions,
+  and the like. The extension itself only starts it. The extensions for
+  XML, YAML, Vue, Svelte, Astro, Prisma, GraphQL, and TOML all work this
+  way: the editor stays responsive, and the same server works in other
+  editors (Neovim, Zed, Helix, Sublime Text) without being written
+  again (Q2).
+- **A language service under the server.** Every feature is a plain
+  function from text to an answer (the errors, the suggestions at a
+  place, the hover text), the way VS Code's own HTML support is built.
+  The server is a thin layer over them, and Vitest tests them directly,
+  as holoml's other code is tested.
+- **Two ways of reading a page.** The checks use holoml's strict
+  parser and checker, so the editor and the browser never disagree.
+  The parser stops at the first mistake and records only where things
+  start. Suggestions, hover, folding, and the outline must work in a
+  page that is half typed, so they use a forgiving scanner of the
+  extension's own. It finds tags, attributes, and where each ends, as
+  VS Code's HTML support does. holoml's parser stays as it is, and so
+  does the copy the browser uses (Q3).
+- **Hover text from holoml's documents.** The descriptions of
+  elements, attributes, and error codes come from the reference pages
+  and SPEC.md, gathered into the extension when it is built. Nothing
+  is read from the internet or from the documents at run time.
+- **What it never does.** No telemetry, no network requests, and no
+  files fetched from the links in a page (a link to a model only opens
+  that file when it is on the computer). A test checks that the built
+  extension contains nothing that reaches the network. It runs no code
+  from the files it opens, so it is marked safe in untrusted
+  workspaces.
+- **Installing.** `pnpm --filter holoml-vscode package` makes a .vsix
+  file, the file VS Code installs an extension from. To install it, use
+  "Install from VSIX…" in the Extensions view, or run
+  `code --install-extension` with the file. It does not need the VS Code
+  Marketplace or an account. It asks for VS Code 1.96 or newer, so
+  editors built on VS Code take it as well (on the owner's computer,
+  `code` on the PATH is Cursor, which is built on VS Code 1.96). The
+  extension has its own version number, starting at 0.1.0, and says
+  which HoloML versions it knows (0.1 and 0.2 today).
+- **The name.** "HoloML" in the Extensions view, and `holoml-vscode` as
+  the package name. A .vsix needs a publisher field: it is set to
+  `holoml` and not registered anywhere until publishing is approved.
+
+### Features
+
+First, in this milestone, ranked by what the research found most
+useful against its cost:
+
+1. **Syntax colours** (a TextMate grammar, the pattern file VS Code
+   colours text with): tags, attribute names and values, comments, and
+   character references, in the same colours as HTML in every theme.
+2. **Editing basics** (language configuration): comment toggling
+   (`<!-- -->`), quotes and brackets closed as you type, a selection
+   wrapped in quotes, and indentation after a start tag.
+3. **Mistakes underlined as you type**: the parser's syntax error and
+   every problem the checker finds, in the Problems panel, with the
+   checker's code and wording, and the whole word or tag underlined.
+4. **Suggestions**: only the elements allowed inside the current one,
+   each element's attributes, an attribute's choices (such as a light's
+   kinds), and only what the page's `version` has.
+5. **Help on hover**: what an element or attribute is and its values,
+   from the reference pages, with the version it came in; and what an
+   error code means.
+6. **Snippets**: a new page, a model, a light, a place to stand, a
+   link, and a label.
+7. **Tags kept in step**: the end tag written when a start tag is
+   finished, and the matching tag renamed while you type over one
+   (linked editing).
+8. **The outline and folding**: the page's elements in the Outline view
+   and in breadcrumbs, and folding by element and by comment.
+9. **Colours**: a swatch beside every colour value, and VS Code's colour
+   picker writing `#rrggbb`.
+10. **Names**: go to the element a `#name` reference points to, and find
+    every reference to a name. A duplicate name is underlined (the
+    checker's own problem).
+11. **Links to files**: Ctrl+click on a model, picture, sound, script,
+    or surroundings file opens it when it is on the computer.
+
+Later (not in this milestone; listed for a future plan):
+
+- Fixes offered on a mistake ("did you mean `<model>`?", add a missing
+  required attribute, add `version`).
+- Renaming a name and every reference to it at once.
+- Formatting a page (keeping comments and spacing needs care).
+- A forgiving mode in holoml's parser, so that several syntax errors
+  show at once.
+- Instructions for using the server in other editors.
+- Publishing to the VS Code Marketplace and Open VSX (each needs an
+  account, so the owner's approval under rules 3 and 4).
+- A live preview, once the browser can provide one.
+
+Left out on purpose: colours by meaning (semantic tokens) add little in
+a tag language that the grammar already colours. JavaScript inside
+`<script>` needs nothing, as HoloML's scripts are always separate files.
+
+### Software to install (approved with the request, prompt 146)
+
+All of it goes in holoml's `packages/vscode`, either for development
+or bundled into the extension; nothing is installed on the computer
+itself:
+
+- `vscode-languageserver`, `vscode-languageserver-textdocument`, and
+  `vscode-languageclient` (Microsoft's LSP libraries; bundled into the
+  extension).
+- `@types/vscode`, pinned to 1.96 to match the oldest VS Code the
+  extension asks for.
+- `@vscode/vsce`, which makes the .vsix file (nothing is published with
+  it).
+- `esbuild` (already in holoml through Vitest; now listed directly).
+  It bundles the extension and its server into two files, so the .vsix
+  carries no `node_modules`.
+- `@vscode/test-cli` and `@vscode/test-electron`, which run tests
+  inside a real VS Code window, and `mocha` with its types, which they
+  use.
+- `vscode-tmgrammar-test`, which checks the syntax colours against
+  sample files (otherwise a wrong grammar fails silently).
+
+### Questions (answered with the recommendations, 2026-10-02)
+
+- Q1, where it goes in the roadmap.
+  - a (recommended): milestone 23, right after the documentation, so
+    HoloML 0.3 and the later milestones move one number on. Whoever
+    writes 0.3's example pages has the extension, and 0.3's new
+    elements reach it through the checker's table with no extra work.
+    About a dozen mentions of milestones 23 to 29 in the two
+    repositories' documents change number.
+  - b: after HoloML 0.3, as 24, so that it starts with 0.3's language.
+  - c: beside the numbered milestones, with no number, built between
+    them.
+- Q2, how the work is done.
+  - a (recommended): a language server from the start. It is the usual
+    way, the editor stays responsive, and it serves other editors later.
+  - b: everything inside the extension. That is a little simpler now,
+    but it works in VS Code only, and moving to a server later rewrites
+    the plumbing.
+- Q3, half-typed pages.
+  - a (recommended): a forgiving scanner in the extension for
+    suggestions, hover, folding, and the outline, with holoml's parser
+    unchanged. Nothing the browser uses changes.
+  - b: add to holoml's parser where each element and attribute ends,
+    used by the extension and copied into the browser with
+    `pnpm holoml:sync`. The scanner is still needed for suggestions in
+    a page that does not parse.
+- Q4, tests in a real VS Code. On this computer they use the VS Code
+  that is installed (1.139). GitHub's machines have none, so
+  `@vscode/test-electron` would download VS Code from Microsoft's
+  update server, a new network request (rule 3).
+  - a (recommended): allow that download in holoml's automatic builds
+    only, a fixed version, checked against Microsoft's checksum. Tests
+    that run on only one computer stop being run.
+  - b: run the VS Code tests on this computer only. The automatic
+    builds run the unit tests and the grammar tests, which need no
+    VS Code.
+
+### Tasks
+
+- [ ] 1. The package: holoml's `packages/vscode` and the extension's
+      manifest (the language, `.holoml` files, the grammar, the
+      snippets, VS Code 1.96 or newer, safe in untrusted workspaces, no
+      telemetry); esbuild's bundle of the extension and the server; and
+      a `package` script that makes the .vsix (its contents listed and
+      checked).
+- [ ] 2. The syntax colours and the editing basics (features 1 and 2),
+      with grammar tests against sample files.
+- [ ] 3. The language service and server (Q2), and mistakes underlined
+      (feature 3) from holoml's parser and checker.
+- [ ] 4. The forgiving scanner (Q3), then suggestions, hover, and the
+      snippets (features 4 to 6). The hover text is gathered from the
+      reference pages and SPEC.md when the extension is built.
+- [ ] 5. Tags kept in step, the outline, and folding (features 7 and 8).
+- [ ] 6. Colours, names, and links to files (features 9 to 11).
+- [ ] 7. Tests: unit tests of every feature (Vitest), tests in a real
+      VS Code (Q4), the grammar tests, and a test that the built
+      extension contains nothing that reaches the network. holoml's
+      automatic builds run them.
+- [ ] 8. Checks Z1 to Z10 on Windows, with the extension installed by
+      hand from its .vsix in VS Code and in Cursor.
+- [ ] 9. Documents: in holoml, a how-to guide in its docs ("Write HoloML
+      in VS Code": installing, the features, and what it does not do),
+      the README, AGENTS.md's testing list, and the CHANGELOG; in this
+      repository, ARCHITECTURE.md (the parts), TODO.md, and HANDOFF.md;
+      and screenshots of the extension at work for holoml's README.
+
+### Checks (named Z; milestone 22 used Y)
+
+| # | Check | Expected result |
+|---|---|---|
+| Z1 | Installs | `package` makes a .vsix with only the bundle, the grammar, the snippets, the licence, and the README. It installs by hand in VS Code and in Cursor, and opening a `.holoml` file turns it on (nothing loads before) |
+| Z2 | Colours | Every sample in the grammar tests gets the expected colours; the HoloML example sites (the showroom, Blockworld, the sofa studio, Harbour Loft, the sneaker store, the aquarium) colour with no unmarked text |
+| Z3 | Editing basics | Comment toggling, closing quotes, and indentation after a start tag work |
+| Z4 | Mistakes | Every conformance file that should fail shows the same codes in the Problems panel as holoml's checker gives. Every file that should pass, and every example site, shows none. A mistake typed and then fixed appears and goes away while typing |
+| Z5 | Suggestions | Inside each element, exactly the elements the checker's table allows; each element's attributes and each attribute's choices; nothing from 0.2 in a 0.1 page. They work in a page with a mistake in it |
+| Z6 | Hover | Every element and attribute in the checker's table has hover text, with its version; every error and problem code has its meaning |
+| Z7 | Tags kept in step | Typing `>` writes the end tag; typing over a start tag's name renames its end tag, and the reverse |
+| Z8 | Outline, folding, colours, names, links | The outline lists the page's elements; elements and comments fold; colour values show swatches and the picker writes `#rrggbb`; go to definition and find references work for names; Ctrl+click opens a model's file |
+| Z9 | Nothing leaves the computer | The built extension contains no network code (the test), and a session of editing the example sites makes no network request |
+| Z10 | Regression | holoml's tests, lint, and type check; the extension's tests in a real VS Code; holoml's automatic builds; and this repository's unit tests, although nothing in the browser changes |
+
+### Done when
+
+- Z1 to Z10 pass, the extension installs by hand from its .vsix, the
+  documents are updated, and the owner accepts.
+
+### Sources (researched 2026-10-02)
+
+- VS Code's guides to language extensions (code.visualstudio.com/api):
+  the overview, the language server guide, programmatic language
+  features, language configuration, the syntax highlight guide,
+  bundling, testing, and workspace trust.
+- Extensions examined: Red Hat's XML and YAML, VS Code's HTML language
+  service, Vue - Official (Volar), Svelte, Astro, Prisma, GraphQL, Even
+  Better TOML (Taplo), and Microsoft's lsp-sample; also
+  vscode-tmgrammar-test.
 
 ## The review of 2026-09-30 (prompts 134 and 135)
 

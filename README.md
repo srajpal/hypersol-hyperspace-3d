@@ -203,11 +203,12 @@ starts with a small prototype and the same habits of direction and checking.
 ## What comes next
 
 Milestone 22, documentation for HoloML to recognised standards (being
-built). 23, HoloML 0.3: the features its check found missing, such as
-names for models and the language of text. 24, privacy and data tools:
+built). 23, HoloML for VS Code: an extension that helps people
+write HoloML pages, installed by hand. 24, HoloML 0.3: the features its check found missing, such as
+names for models and the language of text. 25, privacy and data tools:
 HTTPS-only browsing, per-site storage, and bookmark import and export.
-25, free camera movement around the room. 26, pictures and 3D models
-lifted out of ordinary pages. 27, polish. Last, 28 and 29, installers as
+26, free camera movement around the room. 27, pictures and 3D models
+lifted out of ordinary pages. 28, polish. Last, 29 and 30, installers as
 1.0 for Windows and Linux, then macOS. Later: mobile, and VR. The full
 roadmap is in [TODO.md](TODO.md).
 
@@ -298,7 +299,7 @@ Three.js (with its glTF loader, for HoloML pages), Lit, SQLite through
 Node's built-in node:sqlite, and Ghostery's open-source ad-blocking
 engine with open filter lists; Vite and electron-vite to build; Vitest
 and Playwright to test.
-Planned, not yet installed: electron-builder for installers (milestones 28 and 29).
+Planned, not yet installed: electron-builder for installers (milestones 29 and 30).
 Reasons for each choice are in ARCHITECTURE.md.
 
 Known limitations: Electron ships no DRM module, so video from Netflix

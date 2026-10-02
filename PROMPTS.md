@@ -1593,3 +1593,18 @@ Browser #47 and #49 have failures
 ```text
 Everything passed and merged
 ```
+
+## 146 — 2026-10-02 · Claude Opus 5.5, high effort
+
+Before this prompt the owner asked, while the log was paused, whether
+a VS Code extension for HoloML was worth making inside the holoml
+repository or separately. The agent recommended a package inside
+holoml, beside the parser and schema, and offered to draft a plan.
+
+```text
+Yes, draft the plan to build a VS Code extension that will live in this
+repo and put it in TODO.md. No live preview, it will need the browser
+for now. No publishing yet, install manually. Go ahead with the new
+tools. Reference other VS Code extensions to figure out the best
+features for now.
+```
