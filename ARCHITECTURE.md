@@ -149,6 +149,12 @@ taken as a security release, whether or not the word appears. No check
 was recorded at the start of milestones 2, 5, and 6 (milestone 1's is
 recorded as not done); they cannot be made up afterwards.
 
+Rule 13 check, 2026-10-03 (start of milestone 23, HoloML for VS Code):
+44.5.1 (2026-09-30) is still the newest stable release on npm; the
+newest release of any kind is 45.0.0-alpha.14 (2026-10-01), not a
+stable line. Nothing to upgrade. The milestone changes nothing in the
+browser.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |
@@ -254,6 +260,7 @@ recorded as not done); they cannot be made up afterwards.
 | Tests | Vitest (unit), Playwright (Electron end-to-end); ESLint with typescript-eslint's recommended rules and, since the review of 2026-09-30 (H8), three rules that need the types (eslint.config.js, typed through the project's tsconfig files): a promise nobody awaits or catches, a promise where none is expected, and an await on what is not one are errors, since such a promise would fail in silence, across processes; the type-aware run takes about half a minute; `pnpm test:linux` runs them in a Docker container that copies GitHub's Linux machines (tests/linux/, prompts 103 and 104). The automatic builds (.github/workflows/ci.yml) run on Windows and Linux for every pull request and every push to main, the end-to-end checks in four parts side by side on each system, with a last job, "All checks", that passes only when every part has; a change to documents only (the `*.md` files at the top and the docs folder, which no check reads) skips the parts. Section 11 has the details | Standard, cross-platform. The container finds Linux problems on this computer; the automatic builds on GitHub stay the check a pull request is merged on, and the rule on main names "All checks" alone, so it needs no change when the parts do. |
 | Repos | hypersol-hyperspace-3d (browser; renamed from hypersol-websurfer-3d on 2026-09-26), holoml (language) | Each useful on its own. HoloML's packages are not published to npm: the browser keeps a copy of the parser and checker (packages/holoml), made from the holoml repository by `pnpm holoml:sync` and checked file by file against the hashes in its SOURCE.json. |
 | License | Apache 2.0 both; spec text also CC BY 4.0 | Per brief. |
+| Editor support | A VS Code extension in holoml's packages/vscode (milestone 23): a language server over the parser and checker, with a forgiving reader of its own for pages being typed; VS Code 1.96 or newer; installed by hand from a .vsix; no preview, no telemetry, no network | The parser, checker, and the extension change together in one pull request; a language server serves other editors too; the browser's parser and checker are unchanged (Q1 to Q4 a, 2026-10-02). |
 
 ## 5. Parts (browser repository)
 
@@ -543,6 +550,17 @@ holoml/
     schema/                    @holoml/schema: the element and attribute
                                rules as data (rules.ts), and check(), which
                                lists every problem with its place
+    vscode/                    the VS Code extension (milestone 23): a
+                               language server (server.ts) over a
+                               language service (src/service/: a
+                               forgiving reader, mistakes from the parser
+                               and checker, suggestions, hover, the
+                               outline, folding, tags, colours, names,
+                               links), the client that starts it
+                               (extension.ts), a TextMate grammar,
+                               snippets; esbuild bundles it, vsce makes
+                               the .vsix; installed by hand, not
+                               published; no network
   conformance/                 valid/, syntax-errors/, problems/: each
                                .holoml with the .expected.json any reader
                                must give (pnpm conformance:update writes

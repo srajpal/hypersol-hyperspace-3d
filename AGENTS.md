@@ -470,9 +470,16 @@ milestone; the current milestone's checks are defined in TODO.md):
   window-bounds; viewer/values, versions, sound, controls, instances,
   and main; shared/settings, sign-in, and site; and
   preload/theme-colours.
-- Later milestones add: HoloML for VS Code (23), HoloML 0.3 (24),
-  privacy and data tools (25), free camera (26), lift to 3D (27),
-  polish (28), and installers (29 and 30).
+- Milestone 23 checks Z1 to Z10 (TODO.md): HoloML for VS Code, in the
+  holoml repository's packages/vscode. Its unit tests run with holoml's
+  `pnpm test` (the grammar, every conformance sample and example site,
+  suggestions, hover, the built extension with the network refused, and
+  the .vsix's contents); its tests inside VS Code with `pnpm --filter
+  holoml-vscode test:vscode` there (holoml's AGENTS.md has the details).
+  Nothing in this repository changes with it.
+- Later milestones add: HoloML 0.3 (24), privacy and data tools (25),
+  free camera (26), lift to 3D (27), polish (28), and installers (29
+  and 30).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

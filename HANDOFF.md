@@ -1,14 +1,10 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-09-30 (milestones 1 to 21 accepted, 21 in prompt
-125, and HoloML 0.2 released as v0.2.0 in prompt 126: see "Milestone 21,
-accepted" below. 22, HoloML's documentation, is being built (prompts
-127 and 128: see "Milestone 22, in progress" below). A review of both
-repositories and its fixes are built and merged on the browser's
-`review-134-fixes`, not yet pushed, and open as holoml's pull request
-#21 (prompts 134 and 135: see "The review of 2026-09-30, in progress"
-below). The roadmap is in TODO.md).
+Last updated 2026-10-03 (milestones 1 to 21 accepted; 22, HoloML's
+documentation, being finished; 23, HoloML for VS Code, built in holoml
+on the branch `vscode-extension` and being checked: see "Milestone 23,
+HoloML for VS Code, in progress" below. The roadmap is in TODO.md).
 
 ## Where things stand
 
@@ -81,6 +77,33 @@ holoml's #19 merged, 2026-09-29):
 - Browser: https://github.com/srajpal/hypersol-hyperspace-3d (renamed
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
+
+## Milestone 23, HoloML for VS Code, in progress (2026-10-03, prompt 146)
+
+A VS Code extension for HoloML, in the holoml repository's
+packages/vscode, planned 2026-10-02 (the recommended answers to Q1 to
+Q4) and built 2026-10-03 on holoml's branch `vscode-extension` (not yet
+pushed or merged). TODO.md, milestone 23, has the plan, the decisions
+made while building, and the results so far.
+
+- What it is: a language server (server.ts) over a language service
+  (src/service/), started by a small client (extension.ts); a TextMate
+  grammar, language settings, and snippets; esbuild bundles it and vsce
+  makes the .vsix (`pnpm --filter holoml-vscode package`). Installed by
+  hand; not published; no preview; no network.
+- Mistakes come from holoml's own parser and checker; everything that
+  must work while a page is half typed (suggestions, hover, the outline,
+  folding, tags) uses the extension's forgiving reader
+  (src/service/outline.ts). The hover's words are gathered from SPEC.md
+  when the extension is built (dist/docs.json).
+- Tests: its unit tests run with holoml's `pnpm test`; its tests inside
+  VS Code with `pnpm --filter holoml-vscode test:vscode`, in the
+  installed VS Code (not yet run there: VS Code was waiting to finish an
+  update and would not start a second copy; restart it first). holoml's
+  CI runs them in a downloaded VS Code 1.96.0 on Windows and Linux.
+- Next: run the VS Code tests in VS Code, push holoml's branch and open
+  its pull request, watch its CI, then the check by hand (Z1 in Cursor,
+  Z3's editing, Z9's session) and the owner's acceptance.
 
 ## The review of 2026-09-30, in progress (prompts 134 and 135)
 

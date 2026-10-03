@@ -34,7 +34,7 @@ Plan approved 2026-09-24.
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Done (accepted, prompt 122) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Done (accepted, prompt 125; HoloML v0.2.0 released, prompt 126) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Current (the plan and build approved with the recommended answers, prompt 128) |
-| 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Current (plan approved with the recommended answers, 2026-10-02; build not yet approved) |
+| 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Current (plan approved with the recommended answers, 2026-10-02; build approved 2026-10-03; built, checks running) |
 | 24 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
 | 25 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
 | 26 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
@@ -4412,8 +4412,10 @@ finished documents.
 
 ## Milestone 23 — HoloML for VS Code
 
-Status: Plan approved (2026-10-02): the owner chose the recommended
-answers to Q1 to Q4; the build is not yet approved. The owner asked for a VS Code
+Status: Built (2026-10-03) in holoml on the branch vscode-extension, not
+yet merged; checks running (Results so far, below). Plan approved
+(2026-10-02): the owner chose the recommended answers to Q1 to Q4; build
+approved 2026-10-03. Rule 13 check done (ARCHITECTURE.md section 3). The owner asked for a VS Code
 extension for HoloML, kept in the holoml repository (the owner chose
 holoml when asked after prompt 146), with no live preview (that needs
 the browser for now) and no publishing (installed by hand). The owner
@@ -4555,6 +4557,20 @@ itself:
 - `vscode-tmgrammar-test`, which checks the syntax colours against
   sample files (otherwise a wrong grammar fails silently).
 
+As installed (2026-10-03): vscode-languageclient and
+vscode-languageserver 10.1.2, vscode-languageserver-textdocument 1.0.15,
+@types/vscode 1.96.0, @vscode/vsce 4.0.0, esbuild 0.28.2, @vscode/test-cli
+0.0.15, @vscode/test-electron 3.1.0, @types/mocha 10.0.10, and
+vscode-tmgrammar-test 0.1.3. Two differences from the list: `mocha`
+itself is not added, as @vscode/test-cli brings its own; and
+vscode-textmate 7.0.4 and vscode-oniguruma 1.7.0, which come with
+vscode-tmgrammar-test, are listed directly too, at the same versions,
+because the test that colours every example page uses them (Z2). The
+install script of @vscode/vsce-sign (which comes with @vscode/vsce and
+signs extensions for the Marketplace) is refused in
+pnpm-workspace.yaml: it may download its program, and nothing is
+published.
+
 ### Questions (answered with the recommendations, 2026-10-02)
 
 - Q1, where it goes in the roadmap.
@@ -4594,22 +4610,22 @@ itself:
 
 ### Tasks
 
-- [ ] 1. The package: holoml's `packages/vscode` and the extension's
+- [x] 1. The package: holoml's `packages/vscode` and the extension's
       manifest (the language, `.holoml` files, the grammar, the
       snippets, VS Code 1.96 or newer, safe in untrusted workspaces, no
       telemetry); esbuild's bundle of the extension and the server; and
       a `package` script that makes the .vsix (its contents listed and
       checked).
-- [ ] 2. The syntax colours and the editing basics (features 1 and 2),
+- [x] 2. The syntax colours and the editing basics (features 1 and 2),
       with grammar tests against sample files.
-- [ ] 3. The language service and server (Q2), and mistakes underlined
+- [x] 3. The language service and server (Q2), and mistakes underlined
       (feature 3) from holoml's parser and checker.
-- [ ] 4. The forgiving scanner (Q3), then suggestions, hover, and the
+- [x] 4. The forgiving scanner (Q3), then suggestions, hover, and the
       snippets (features 4 to 6). The hover text is gathered from the
       reference pages and SPEC.md when the extension is built.
-- [ ] 5. Tags kept in step, the outline, and folding (features 7 and 8).
-- [ ] 6. Colours, names, and links to files (features 9 to 11).
-- [ ] 7. Tests: unit tests of every feature (Vitest), tests in a real
+- [x] 5. Tags kept in step, the outline, and folding (features 7 and 8).
+- [x] 6. Colours, names, and links to files (features 9 to 11).
+- [x] 7. Tests: unit tests of every feature (Vitest), tests in a real
       VS Code (Q4), the grammar tests, and a test that the built
       extension contains nothing that reaches the network. holoml's
       automatic builds run them.
@@ -4635,6 +4651,70 @@ itself:
 | Z8 | Outline, folding, colours, names, links | The outline lists the page's elements; elements and comments fold; colour values show swatches and the picker writes `#rrggbb`; go to definition and find references work for names; Ctrl+click opens a model's file |
 | Z9 | Nothing leaves the computer | The built extension contains no network code (the test), and a session of editing the example sites makes no network request |
 | Z10 | Regression | holoml's tests, lint, and type check; the extension's tests in a real VS Code; holoml's automatic builds; and this repository's unit tests, although nothing in the browser changes |
+
+### Decisions made while building
+
+- A model is suggested closed, `<model src="" />`: it may hold a
+  material, but only to change one, so `/>` is what is usually wanted.
+  Every other element that may hold others gets its end tag.
+- After `>` or `</` the extension waits 100 ms before asking the server
+  for the end tag, as VS Code's HTML support does, so that the change
+  reaches the server first (the first run in an editor wrote no end
+  tag).
+- Hover text links to the published site: an element to its section of
+  the specification and to its reference page; a mistake's code to the
+  list of codes. A link in the specification to a file of the
+  repository goes to the file on GitHub. Opening a link is the editor's,
+  on a click; the extension fetches nothing.
+- The licences of the packages bundled into the extension (MIT, ISC, and
+  minimatch's Blue Oak) are gathered by build.mjs into
+  THIRD-PARTY-NOTICES.txt, which the .vsix carries with LICENSE and
+  NOTICE.
+- `@holoml/schema` exports `COLOR_PATTERN` (one line added), so that the
+  swatches use the checker's own pattern. Nothing else in the parser or
+  the checker changes, and the browser's copy needs no sync.
+- For HoloML files the extension turns on VS Code's linked editing
+  (feature 7's renaming) and suggestions inside quotes (feature 4's
+  values), as settings defaults a person can change.
+- The tests inside VS Code open a visible VS Code window: unlike the
+  browser's test windows, VS Code has no way to start off screen.
+- holoml's test of its automatic builds (site/workflows.test.ts) lists
+  CI's steps; it now lists the extension's three, as task 7 changes
+  what CI runs.
+
+### Results so far (Windows 11, 2026-10-03)
+
+- holoml: `pnpm test` 834 passed in 29 files (507 before; the extension
+  adds 325, the guide's example and the workflow test the rest); `pnpm
+  lint` and `pnpm typecheck` clean; `pnpm site:build` made 30 pages and
+  checked their links.
+- Z1: `pnpm --filter holoml-vscode package` made holoml-vscode.vsix (13
+  files, 234 KB); its list of files is checked by a test. Installed with
+  `code --install-extension` into a throwaway profile of VS Code 1.139.1:
+  listed as holoml.holoml-vscode@0.1.0. In Cursor from the .vsix: not
+  checked yet (see Z4 to Z8).
+- Z2: the grammar's tests pass (vscode-tmgrammar-test, two files); every
+  example page and valid conformance sample (55 pages) is coloured with
+  every part of every tag scoped and nothing marked a mistake.
+- Z4 to Z8 as unit tests: pass (every conformance sample and example
+  site, every element's suggestions in 0.1 and 0.2, hover for every
+  element, attribute, and code, and the rest).
+- Z3 to Z8 inside an editor (test/vscode/extension.test.ts, ten checks):
+  run once in Cursor 0.50.5 (built on VS Code 1.96.2), as the installed
+  VS Code would not start a second copy while it waited to finish an
+  update: 8 passed. The end tag after `>` was not written (fixed with
+  the wait above) and VS Code has no command for asking linked editing
+  (the check now types a letter into a start tag instead); both not
+  checked yet. Cursor contacted its own servers when it started, as it
+  does, so it is not used for test runs again. In VS Code 1.139.1: not
+  checked yet.
+- Z9: the bundles hold no network code (the test), and the language
+  server, run with every way out to the network replaced by one that
+  records and fails, answered for all 28 example pages with no attempt.
+  A session of editing by hand: not checked yet.
+- Z10: holoml's tests, lint, and type check pass; holoml's automatic
+  builds: not run yet (they need a push); this repository's unit tests:
+  502 passed in 58 files.
 
 ### Done when
 
