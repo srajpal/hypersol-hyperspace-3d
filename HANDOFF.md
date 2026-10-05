@@ -149,6 +149,11 @@ dc2ad98), and the copy of HoloML is made from that tag (`pnpm
 holoml:sync v0.2.2 --examples v0.2.2`; only the copied files' "at"
 lines and SOURCE.json changed).
 
+The bug issues opened after the review (#50, #51, holoml #30) are fixed:
+holoml's in its #31 (merged 2026-10-01), the browser's on the branch
+`fix-issues-50-51`, pull request #52 (TODO.md, "Bug issues after the
+review"). The example sites' copy is from holoml's main (267e66e).
+
 How to resume:
 
 1. A GitHub release for v0.2.2 (a pre-release, like 0.2's) is the

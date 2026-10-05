@@ -120,8 +120,20 @@ describe('E1 to E3: bookmarks, history, and the Library', () => {
     await openLibrary(h, 'history');
     await waitFor('a visit listed', () => libTitles(h), (t) => t.length > 0);
     const searches = async () => (await mainLog(h, 'dataOps'))['history.search'] ?? 0;
-    const before = await searches();
-    const timesBefore = (await shellCall(h, 'librarySearchTimes')).times.length;
+    // The counts to start from, read while no search is on its way: the shell's notes, then the main
+    // process's count, then the notes again, unchanged. A search begun meanwhile (the refresh after
+    // the visit was saved, on GitHub's Windows machines in pull request #52) would be noted before
+    // one count and reach the main process after the other.
+    const { before, timesBefore } = await waitFor(
+      'the Library idle',
+      async () => {
+        const first = await shellCall(h, 'librarySearchTimes');
+        const before = await searches();
+        const then = await shellCall(h, 'librarySearchTimes');
+        return { before, timesBefore: first.times.length, idle: !first.busy && !then.busy && then.times.length === first.times.length };
+      },
+      (r) => r.idle,
+    );
     await h.shell.locator(LIB('lib-search')).pressSequentially('link b', { delay: 30 });
     // Six keys: a search starts only once typing has paused for 200 ms, on
     // the shell's own clock (hud/library.ts, SEARCH_PAUSE_MS), and once after
@@ -147,8 +159,63 @@ describe('E1 to E3: bookmarks, history, and the Library', () => {
     }
     expect(times.at(-1)?.what).toBe('searched');
     expect(times.filter((t, i) => t.what === 'searched' && i > times.findLastIndex((x) => x.what === 'typed'))).toHaveLength(1);
-    // Each search the shell started reached the main process, and no other did.
-    expect((await searches()) - before).toBe(searched.length);
+    // Each search the shell started since the counts were read reached the main process, and no other
+    // did: the ones noted after the first key, and any noted before it (a refresh as typing began).
+    // Counted as at the start, while no search is on its way.
+    const end = await waitFor(
+      'the Library idle again',
+      async () => {
+        const first = await shellCall(h, 'librarySearchTimes');
+        const count = await searches();
+        const then = await shellCall(h, 'librarySearchTimes');
+        return { count, times: then.times, idle: !first.busy && !then.busy && then.times.length === first.times.length };
+      },
+      (r) => r.idle,
+    );
+    expect(end.count - before).toBe(end.times.slice(timesBefore).filter((t) => t.what === 'searched').length);
+    await h.shell.fill(LIB('lib-search'), '');
+    await h.shell.keyboard.press('Escape');
+  });
+
+  it('E2 saved data that changes while typing waits for the pause too (GitHub issue #50)', async () => {
+    await openLibrary(h, 'history');
+    await waitFor('a visit listed', () => libTitles(h), (t) => t.length > 0);
+    const timesBefore = (await shellCall(h, 'librarySearchTimes')).times.length;
+    const librarySearchTimes = () => shellCall(h, 'librarySearchTimes');
+    type Moment = Awaited<ReturnType<typeof librarySearchTimes>>['times'][number];
+    // From the first key typed, as above: a search of the empty box may end after the count was read.
+    const fromTyping = (all: Moment[]) => {
+      const sliced = all.slice(timesBefore);
+      return sliced.slice(Math.max(0, sliced.findIndex((t) => t.what === 'typed')));
+    };
+    /** Each search that started sooner than the pause after the key before it, and how soon. */
+    const tooSoon = (times: Moment[], pauseMs: number) =>
+      times.flatMap((t, i) => {
+        const lastKey = times.slice(0, i).filter((x) => x.what === 'typed').at(-1);
+        return t.what === 'searched' && lastKey && t.at - lastKey.at < pauseMs ? [`search ${i}, ${(t.at - lastKey.at).toFixed(1)} ms after a key`] : [];
+      });
+    const box = h.shell.locator(LIB('lib-search'));
+    await box.pressSequentially('link b', { delay: 30 });
+    // The page's title changes, so its visit is saved again, and the app refreshes the open Library
+    // 100 ms later (renderer/app.ts). On GitHub's Windows machines that once started a search 16 ms
+    // after a key. Typing goes on (a space, then its removal) until that refresh has come: waiting
+    // for the pause, or (as before the fix) searching at once.
+    await inPage(h, "document.title = 'Link B, renamed'", 'link-b');
+    await waitFor(
+      'the refresh to come while typing',
+      async () => {
+        await h.shell.keyboard.press(' ', { delay: 15 });
+        await h.shell.keyboard.press('Backspace', { delay: 15 });
+        return librarySearchTimes();
+      },
+      (r) => fromTyping(r.times).some((x) => x.what === 'waited') || tooSoon(fromTyping(r.times), r.pauseMs).length > 0,
+    );
+    const { pauseMs, times: all } = await waitFor('the search after the last key', librarySearchTimes, (r) => r.times.at(-1)?.what === 'searched');
+    const times = fromTyping(all);
+    expect(tooSoon(times, pauseMs)).toEqual([]);
+    expect(times.some((t) => t.what === 'waited')).toBe(true);
+    expect(times.filter((t, i) => t.what === 'searched' && i > times.findLastIndex((x) => x.what === 'typed'))).toHaveLength(1);
+    await waitFor('the new title found', () => libTitles(h), (t) => t.join() === 'Link B, renamed');
     await h.shell.fill(LIB('lib-search'), '');
     await h.shell.keyboard.press('Escape');
   });
