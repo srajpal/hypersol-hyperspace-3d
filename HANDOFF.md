@@ -84,7 +84,8 @@ holoml's #19 merged, 2026-09-29):
 
 The browser on the owner's Android tablet, its code to be in
 apps/android. Electron does not run on Android, so the plan (TODO.md,
-milestone 24, not yet approved) is a Kotlin shell with Android's own
+milestone 24; approved with the recommended answers and the build
+tools in prompt 155, the build not yet approved) is a Kotlin shell with Android's own
 WebView: the desktop's room and top bar drawn by one WebView, each page
 in another tilted in front of it with Android's view transforms, and
 HoloML pages with the desktop's viewer, touch controls added to it.

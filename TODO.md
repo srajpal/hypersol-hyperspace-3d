@@ -35,7 +35,7 @@ Plan approved 2026-09-24.
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Done (accepted, prompt 125; HoloML v0.2.0 released, prompt 126) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Current (the plan and build approved with the recommended answers, prompt 128) |
 | 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Done (accepted, prompt 153) |
-| 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Plan drafted (2026-10-05, prompts 153 and 154), not approved; the quick look done (prompt 153) |
+| 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Current (plan approved with the recommended answers and the build tools, prompt 155; build not yet approved) |
 | 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
 | 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
 | 27 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
@@ -4762,9 +4762,11 @@ published.
   Better TOML (Taplo), and Microsoft's lsp-sample; also
   vscode-tmgrammar-test.
 
-## Milestone 24 — HyperSpace 3D for Android (plan drafted 2026-10-05)
+## Milestone 24 — HyperSpace 3D for Android
 
-Status: Plan drafted, not approved (prompts 152 to 154). The owner asked
+Status: Plan approved (2026-10-05, prompt 155): the owner chose the
+recommended answers to Q1 to Q5 and approved the new build tools; the
+build is not yet approved. Asked for in prompts 152 to 154. The owner asked
 for the browser on the Android tablet connected to this computer, to
 test how far it reaches; the code goes in this repository as
 apps/android (prompt 154). HyperSpace 3D is built with Electron, which
@@ -4849,7 +4851,7 @@ Later (each with its own plan): bookmarks and history, the blocker and
 its shield, private tabs, downloads, passwords and site permissions,
 the layers view, the instrument panel, phones, and the Play Store.
 
-### Software to install (for the owner's approval)
+### Software to install (approved with the plan, prompt 155)
 
 Already on this computer: Android Studio, the Android SDK (platforms up
 to Android 16, build-tools 36, platform-tools with adb), and JDK 21
@@ -4864,10 +4866,10 @@ New, for the app's build:
 - JUnit for the app's unit tests, and AndroidX Test for the checks run
   on the tablet.
 
-These are new places that builds fetch from (rule 3), so they need the
-owner's approval with this plan.
+These are new places that builds fetch from (rule 3); the owner
+approved them with the plan (prompt 155).
 
-### Questions
+### Questions (answered with the recommendations, prompt 155)
 
 - Q1, the engine.
   - a (recommended): Android's own WebView. It is the Chromium engine,

@@ -1720,3 +1720,19 @@ Android code: apps/android here.
 Roadmap: next, as 24.
 Course note: yes, a short section.
 ```
+
+## 155 — 2026-10-05 · Claude Opus 5.5, high effort
+
+Approves the plan for milestone 24, HyperSpace 3D for Android, with the
+recommended answers: Q1 a, Android's own WebView; Q2 a, tablets first,
+portrait and landscape; Q3 a, the first version's six points; Q4 a,
+touch controls in the HoloML viewer itself; Q5 a, GitHub Actions builds
+the app and runs its unit tests, with the checks on a device by hand.
+Also approves the new build tools: Gradle through its wrapper, the
+Android Gradle Plugin, Kotlin, the AndroidX libraries, JUnit, and
+AndroidX Test, fetched from Gradle's servers, Google's Maven
+repository, and Maven Central.
+
+```text
+Use the recommendations and approve the tools, push the plan.
+```
