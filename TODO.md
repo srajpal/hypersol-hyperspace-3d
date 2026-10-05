@@ -4918,9 +4918,10 @@ approved them with the plan (prompt 155).
       the device; none were written, so it is not used: the device
       checks are by hand.)
 - [ ] 8. Checks AN1 to AN9 on the owner's tablet.
-- [ ] 9. Documents: README, ARCHITECTURE (the Android parts and decisions),
+- [x] 9. Documents: README, ARCHITECTURE (the Android parts and decisions),
       AGENTS.md (building and testing the app), HANDOFF, TODO, and the
-      screenshots, from the tablet.
+      screenshots, from the tablet (docs/screenshots/m24, on
+      docs/progress.md; the README's four pictures stay the desktop's).
 
 ### Decisions made while building
 

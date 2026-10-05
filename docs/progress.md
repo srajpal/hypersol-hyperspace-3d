@@ -285,3 +285,23 @@ written for you, the outline, colour swatches, and going to a
 `#name`. Installed by hand from a file; no preview and no network. It
 changes nothing in the browser, whose screens stay as milestone 22
 left them; pictures of the extension at work are still to be made.
+
+**Milestone 24: HyperSpace 3D for Android** (built 2026-10-05).
+The browser on an Android tablet: the desktop's own 3D room, top bar,
+and start panel, with each tab's live page on the tilted panel, where
+taps land where they appear. Tabs open, close with a swipe on their
+card, and reopen, and the tablet's tilt moves the room. HoloML pages
+walk by touch, with a pad on the screen, a jump button, and a long
+press for a right-click; a lighter drawing keeps the ocean tunnel at
+33 frames a second on the owner's tablet. Pictures from that tablet.
+
+<p>
+<img src="screenshots/m24/67-android-room.png" width="240" alt="HyperSpace 3D on an Android tablet: the room in the Nebula theme, the top bar, and a new tab's start panel tilted in 3D over a purple floor grid">
+<img src="screenshots/m24/68-android-page.png" width="240" alt="A web page on the tilted panel in the room on the tablet: Page A, its heading, text, and a link">
+<img src="screenshots/m24/69-android-harbour-loft.png" width="240" alt="Harbour Loft on the tablet: a loft's living room with tall windows onto a harbour, a floor plan in the corner, the walk pad, and two tab cards on the left">
+</p>
+<p>
+<img src="screenshots/m24/70-android-ocean-tunnel.png" width="240" alt="The ocean tunnel on the tablet, walked into with the pad: the glass arch overhead, fish beyond it">
+<img src="screenshots/m24/71-android-blockworld.png" width="240" alt="Blockworld on the tablet: grass blocks and trees at dusk, the walk pad and the Jump button at the bottom right">
+</p>
+
