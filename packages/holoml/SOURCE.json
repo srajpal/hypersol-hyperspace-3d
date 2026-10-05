@@ -9,8 +9,8 @@
     "src/holoml.webidl": "bf886d86dfaee0ffa45763445a8ae79c2997fa04c50dc262a95dedfd32fa4580"
   },
   "examples": {
-    "ref": "v0.2.2",
-    "commit": "dc2ad982cf3ad13d91c512620829ddf2bc1f8915",
+    "ref": "main",
+    "commit": "267e66e1bcf0f0e6d1b7625bc8a43e6db213cb3c",
     "files": {
       "showroom/README.md": "476a445eaeee42d8dc7c2dcfcf215d73de85ed3f6b992d9ab7c263b10b4ff6c2",
       "showroom/about.holoml": "bbde59615a3c4deea5078a7033a979c2253fc5c422ba1d3470f65c5e3e3bb6e4",
@@ -246,9 +246,9 @@
       "sneaker-store/shoe.js": "4758ba88adfe343d49bb4055af3a7d5054fa36fe8e08ce1d76b3729668616d3e",
       "sneaker-store/sounds/add.wav": "5d2fdea36ddf2711ef91a0f94cb6efa8c2c954516a35fad7cae16d85596171b8",
       "sneaker-store/store.js": "1289915391e96158de908206936b22aa76827cc30c51b1fd9fcd0f189de46849",
-      "aquarium/README.md": "6527c3b8218c045935e374779db4cb8de60bbd2c3fd00b5aa53430631e44c620",
+      "aquarium/README.md": "258ef94b6bf756a07cb36ff4b4e7fbdc26ca841d5c2d73ae7e62c2a118cd24cb",
       "aquarium/about.holoml": "09d4cc86cbfdf513ba45efec88a2761a6a0f85cbb923e0581eb2cd279719882b",
-      "aquarium/aquarium.js": "df1d162ce8e75811470151a83285c3281c724840c3b2728d9fa134ada16b97f9",
+      "aquarium/aquarium.js": "0d092f3fd96ac47126810473501b6d1ff63d31ea72c0284d07fba61e848cc4e1",
       "aquarium/index.holoml": "bd03b74b621cc8e5ed20839deb826a7f5b737debefeda1a3ba9da1b5ec5b734b",
       "aquarium/index.html": "50a7add60d406eb457753b7d1d5e9367592282d24f253d6078bbb4603767e207",
       "aquarium/models/CREDITS.md": "0f7c70fe9ad13761bd373b7bc1c6db6a8c13f3a7d379f385b49e540ac4d7a575",
@@ -277,7 +277,7 @@
       "aquarium/models/tunnel.glb": "23e6c0bdf3f55e6264cad612e2be679e0ae623ebdb701cc774e293ed10976a65",
       "aquarium/models/turtle.glb": "7d096c9ff0668ffad08991db38c94b5907dd1f634b5f86639fde866f610952fd",
       "aquarium/models/wall.glb": "8ff9e2d6d9ba0107f4b9d192c7c26164b14bad4e64324d2113d739f20e09b425",
-      "aquarium/ocean.js": "e8cbed5b09c28cd1ea4b0cd94fb7ecaf0b2d3159a121ba762b01d3791fd510c8",
+      "aquarium/ocean.js": "40c848a95f2adcfbc3044e1bcd065611feec2ca1a7c217c8fe30b04930828df0",
       "aquarium/sounds/blip.wav": "59169a1d17672d273be23a368a34768a8655d6eb3132c88ff2b4554088fada53",
       "aquarium/sounds/bubbles.wav": "3e74573f1977818e2dc93d715b87f3b9dfd160c79096a96d08f88bba5c306a43",
       "aquarium/sounds/plop.wav": "05c33874a08d68be24bebc62e43571d7e46fed09cc2ded06058ab1d4fdc609c3",

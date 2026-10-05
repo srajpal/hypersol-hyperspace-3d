@@ -6,6 +6,8 @@ import { panelStyles } from './panel-styles';
 import { siteName } from './prompts';
 
 type View = 'bookmarks' | 'history' | 'passwords';
+/** What a test run notes about the history search box (HsLibrary.searchTimes). */
+type SearchMoment = 'typed' | 'searched' | 'waited';
 
 /**
  * The Library panel: bookmarks, history, and saved passwords (milestone
@@ -60,10 +62,17 @@ export class HsLibrary extends LitElement {
    * Test runs only (renderer/main.ts switches it on): when the history
    * search box was typed in and when a search started, on the shell's own
    * clock, the last hundred. A check can then see that searches start
-   * only once typing has paused, however fast or slowly the keys came.
+   * only once typing has paused, however fast or slowly the keys came;
+   * "waited" is a refresh asked for meanwhile (saved data changed) and
+   * left to the pause's search.
    */
   keepSearchTimes = false;
-  readonly searchTimes: { at: number; what: 'typed' | 'searched' }[] = [];
+  readonly searchTimes: { at: number; what: SearchMoment }[] = [];
+
+  /** A refresh is running (for test runs: a search noted may not have reached the main process yet). */
+  get busy(): boolean {
+    return this.running;
+  }
 
   constructor() {
     super();
@@ -194,10 +203,16 @@ export class HsLibrary extends LitElement {
    * Reloads the current view (also called when saved data changes).
    * Requests made while one is running are merged into a single follow-up,
    * and a reply that a newer request has overtaken is dropped (GitHub
-   * issue #4).
+   * issue #4). While the history search box waits for typing to pause,
+   * nothing else searches: saved data that changes meanwhile (a visit, a
+   * page's title) is found by the search the pause starts (issue #50).
    */
   async refresh(): Promise<void> {
     if (!this.open || !this.client) return;
+    if (this.typing()) {
+      this.noteSearch('waited');
+      return;
+    }
     if (this.running) {
       this.again = true;
       return;
@@ -207,7 +222,7 @@ export class HsLibrary extends LitElement {
       do {
         this.again = false;
         await this.load();
-      } while (this.again && this.open);
+      } while (this.again && this.open && !this.typing());
     } finally {
       this.running = false;
     }
@@ -449,10 +464,18 @@ export class HsLibrary extends LitElement {
     if (this.view !== 'history') return;
     this.noteSearch('typed');
     window.clearTimeout(this.searchTimer);
-    this.searchTimer = window.setTimeout(() => void this.refresh(), SEARCH_PAUSE_MS);
+    this.searchTimer = window.setTimeout(() => {
+      this.searchTimer = undefined;
+      void this.refresh();
+    }, SEARCH_PAUSE_MS);
   };
 
-  private noteSearch(what: 'typed' | 'searched'): void {
+  /** The history search box was typed in, and its pause has not come yet: the pause's search is due. */
+  private typing(): boolean {
+    return this.view === 'history' && this.searchTimer !== undefined;
+  }
+
+  private noteSearch(what: SearchMoment): void {
     if (!this.keepSearchTimes) return;
     this.searchTimes.push({ at: performance.now(), what });
     if (this.searchTimes.length > 100) this.searchTimes.shift();

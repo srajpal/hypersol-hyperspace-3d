@@ -135,7 +135,10 @@ function testHooks() {
     tabDisplay: () => ({ ...room.tabLayout, railVisible: room.railVisible, strip: document.querySelector('hs-tab-strip')!.open }),
     view: () => room.view,
     showSetting: (id: string) => document.querySelector('hs-settings')!.reveal(id),
-    librarySearchTimes: () => ({ pauseMs: SEARCH_PAUSE_MS, times: document.querySelector('hs-library')!.searchTimes }),
+    librarySearchTimes: () => {
+      const library = document.querySelector('hs-library')!;
+      return { pauseMs: SEARCH_PAUSE_MS, times: library.searchTimes, busy: library.busy };
+    },
     focusedTabId: () => store.focusedId,
     cardPoint: (key: number | 'plus', part: CardPart) => room.cardPoint(key, part),
     rail: () => room.rail,
