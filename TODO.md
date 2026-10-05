@@ -4412,8 +4412,9 @@ finished documents.
 
 ## Milestone 23 — HoloML for VS Code
 
-Status: Built (2026-10-03) in holoml on the branch vscode-extension, not
-yet merged; checks running (Results so far, below). Plan approved
+Status: Built (2026-10-03) in holoml on the branch vscode-extension,
+pushed with its pull request on 2026-10-05; checks running (Results so
+far, below). Plan approved
 (2026-10-02): the owner chose the recommended answers to Q1 to Q4; build
 approved 2026-10-03. Rule 13 check done (ARCHITECTURE.md section 3). The owner asked for a VS Code
 extension for HoloML, kept in the holoml repository (the owner chose
@@ -4661,6 +4662,14 @@ published.
   for the end tag, as VS Code's HTML support does, so that the change
   reaches the server first (the first run in an editor wrote no end
   tag).
+- The end tag is written as text, and the cursor put back where the
+  server's `$0` marks it: VS Code 1.139 leaves the cursor after a
+  snippet that holds nothing but `$0`, even one inserted directly (found
+  in VS Code, 2026-10-05).
+- Each run of the tests inside VS Code starts a fresh profile whose
+  settings turn off what in VS Code itself reaches the network (its AI
+  features, telemetry, experiments, and update checks): the first run's
+  log showed VS Code's own chat asking for GitHub.
 - Hover text links to the published site: an element to its section of
   the specification and to its reference page; a mistake's code to the
   list of codes. A link in the specification to a file of the
@@ -4700,14 +4709,15 @@ published.
   site, every element's suggestions in 0.1 and 0.2, hover for every
   element, attribute, and code, and the rest).
 - Z3 to Z8 inside an editor (test/vscode/extension.test.ts, ten checks):
-  run once in Cursor 0.50.5 (built on VS Code 1.96.2), as the installed
-  VS Code would not start a second copy while it waited to finish an
-  update: 8 passed. The end tag after `>` was not written (fixed with
-  the wait above) and VS Code has no command for asking linked editing
-  (the check now types a letter into a start tag instead); both not
-  checked yet. Cursor contacted its own servers when it started, as it
-  does, so it is not used for test runs again. In VS Code 1.139.1: not
-  checked yet.
+  first run once in Cursor 0.50.5 (built on VS Code 1.96.2) on
+  2026-10-03, as the installed VS Code would not start a second copy
+  while it waited to finish an update: 8 passed; the end tag after `>`
+  was not written, and VS Code has no command for asking linked editing
+  (the check now types a letter into a start tag). Cursor contacted its
+  own servers when it started, so it is not used for test runs again.
+  In VS Code 1.139.1, after the owner restarted it (2026-10-05): 9
+  passed, and the cursor was left after the new end tag; fixed (see the
+  decisions), then all 10 passed.
 - Z9: the bundles hold no network code (the test), and the language
   server, run with every way out to the network replaced by one that
   records and fails, answered for all 28 example pages with no attempt.

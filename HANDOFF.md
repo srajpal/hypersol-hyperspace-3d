@@ -96,14 +96,14 @@ made while building, and the results so far.
   folding, tags) uses the extension's forgiving reader
   (src/service/outline.ts). The hover's words are gathered from SPEC.md
   when the extension is built (dist/docs.json).
-- Tests: its unit tests run with holoml's `pnpm test`; its tests inside
-  VS Code with `pnpm --filter holoml-vscode test:vscode`, in the
-  installed VS Code (not yet run there: VS Code was waiting to finish an
-  update and would not start a second copy; restart it first). holoml's
-  CI runs them in a downloaded VS Code 1.96.0 on Windows and Linux.
-- Next: run the VS Code tests in VS Code, push holoml's branch and open
-  its pull request, watch its CI, then the check by hand (Z1 in Cursor,
-  Z3's editing, Z9's session) and the owner's acceptance.
+- Tests: its unit tests run with holoml's `pnpm test` (834 pass); its
+  ten tests inside VS Code with `pnpm --filter holoml-vscode
+  test:vscode`, in the installed VS Code (all pass in 1.139.1,
+  2026-10-05). holoml's CI runs them in a downloaded VS Code 1.96.0 on
+  Windows and Linux.
+- Next: holoml's pull request and its CI (pushed 2026-10-05), then the
+  checks by hand (Z1 in Cursor, Z3's indentation, Z9's session) and the
+  owner's acceptance.
 
 ## The review of 2026-09-30, in progress (prompts 134 and 135)
 
