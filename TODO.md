@@ -35,7 +35,7 @@ Plan approved 2026-09-24.
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Done (accepted, prompt 125; HoloML v0.2.0 released, prompt 126) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Current (the plan and build approved with the recommended answers, prompt 128) |
 | 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Done (accepted, prompt 153) |
-| 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Later (plan being drafted, prompts 153 and 154) |
+| 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Plan drafted (2026-10-05, prompts 153 and 154), not approved; the quick look done (prompt 153) |
 | 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
 | 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
 | 27 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
@@ -4761,6 +4761,177 @@ published.
   service, Vue - Official (Volar), Svelte, Astro, Prisma, GraphQL, Even
   Better TOML (Taplo), and Microsoft's lsp-sample; also
   vscode-tmgrammar-test.
+
+## Milestone 24 — HyperSpace 3D for Android (plan drafted 2026-10-05)
+
+Status: Plan drafted, not approved (prompts 152 to 154). The owner asked
+for the browser on the Android tablet connected to this computer, to
+test how far it reaches; the code goes in this repository as
+apps/android (prompt 154). HyperSpace 3D is built with Electron, which
+runs on Windows, macOS, and Linux only, so Android needs a shell of its
+own; most of what is drawn (the 3D room, the top bar, the HoloML viewer)
+is web code that can come along.
+
+Goal: on an Android tablet, HyperSpace 3D opens to its 3D room, shows a
+live web page on a tilted panel that touch works on, keeps tabs as
+cards, and shows HoloML pages that can be walked through with touch.
+
+### The quick look (2026-10-05, prompt 153)
+
+Before planning, HyperSpace 3D's HoloML viewer (built from main) and
+the example sites were served from this computer on 127.0.0.1 and
+opened in Chrome on the tablet over USB (`adb reverse`); a small HTML
+page held each HoloML page's text and answered the viewer as the
+browser's page preload does. Nothing was installed and nothing reached
+the internet. The tablet: a K70 PRO, Android 16, a Mali-G57 graphics
+chip, 2.9 GB of memory, 800 by 1280 pixels (711 by 1018 CSS pixels in
+Chrome, portrait); Chrome 154.
+
+- Harbour Loft, the ocean tunnel, and Blockworld loaded and drew as on
+  the desktop. The other three sites were not tried.
+- Touch: dragging turns the view, and tapping the page's own buttons
+  (Harbour Loft's Day and Evening) works. Walking does not: it needs
+  the arrow keys or W, A, S, D, and the tablet has neither. Blockworld's
+  placing a block needs a right-click, and its help text names keys
+  only.
+- Frame rate, from Chrome's own frame callbacks over its debugging
+  connection (USB): the ocean tunnel about 19 a second (the slowest
+  frame 67 ms), Blockworld about 12 (the slowest 223 ms). Their checks
+  ask for 30 a second with a graphics card, and measured about 145 (X9)
+  and 143 (T5) on the owner's computer. A tablet like this one needs a
+  lighter way of drawing: fewer pixels, fewer effects.
+
+### How it would work (proposed)
+
+- **An Android app in Kotlin** (apps/android), the shell's part on
+  Android: tabs, the address bar's work, history, and settings, as the
+  Electron main process and shell do on the desktop.
+- **Pages in Android's own WebView** (Q1): the Chromium engine that
+  Android keeps up to date through the Play Store, the same engine as
+  the desktop's Electron. Each tab is a WebView.
+- **The room behind, the page in front.** The 3D room and the top bar
+  are the desktop's own web code, drawn by a WebView that fills the
+  screen. A page's WebView sits on top of it, tilted in 3D with
+  Android's own view transforms (rotation, perspective, scale), which
+  keep touch landing where it appears, as CSS 3D does on the desktop.
+  The two talk over a message channel, as the shell and main process
+  do.
+- **HoloML pages** as on the desktop: the page's text, the viewer
+  script added by the app (as the page preload adds it), and the
+  private line to the browser. The viewer comes from the desktop's
+  build, packed into the app.
+- **Touch in the HoloML viewer** (Q4): a stick on the screen to walk,
+  drag to look, tap to click, and a long press for what a right-click
+  does; shown when the device has touch and no keyboard. On the desktop
+  too, for touch screens.
+- **A lighter way of drawing** on devices like the tablet: the
+  viewer's own drawing in software (half the pixels each way, no
+  smoothed edges) offered as a setting, and the room's economy mode on
+  by default on Android.
+- **Installed by hand** over USB (`adb install`), signed with Android's
+  debug key: no Play Store, no account.
+- **Nothing new on the network.** The app asks for nothing beyond what
+  pages ask for; no telemetry. The ad and tracker blocker, encrypted
+  DNS, passwords, and site permissions come later (Q3).
+
+### First version (Q3)
+
+1. The room, with the desktop's themes and parallax from the tablet's
+   tilt in place of the mouse.
+2. One live page on a tilted panel: tap, type with the on-screen
+   keyboard, scroll, links, pinch to zoom the page.
+3. Tabs as cards: new, switch, close (a swipe), reopen.
+4. The top bar: back, forward, reload, the address and search box.
+5. HoloML pages, with touch to walk and look, and the examples section.
+6. Rotation between portrait and landscape.
+
+Later (each with its own plan): bookmarks and history, the blocker and
+its shield, private tabs, downloads, passwords and site permissions,
+the layers view, the instrument panel, phones, and the Play Store.
+
+### Software to install (for the owner's approval)
+
+Already on this computer: Android Studio, the Android SDK (platforms up
+to Android 16, build-tools 36, platform-tools with adb), and JDK 21
+(with Android Studio).
+
+New, for the app's build:
+- Gradle, Android's build tool, through its wrapper (it downloads the
+  pinned version from services.gradle.org on first use).
+- The Android Gradle Plugin and Kotlin, and the AndroidX libraries the
+  app uses (core, activity, webkit), from Google's Maven repository and
+  Maven Central.
+- JUnit for the app's unit tests, and AndroidX Test for the checks run
+  on the tablet.
+
+These are new places that builds fetch from (rule 3), so they need the
+owner's approval with this plan.
+
+### Questions
+
+- Q1, the engine.
+  - a (recommended): Android's own WebView. It is the Chromium engine,
+    like the desktop's; Android keeps it up to date; the app stays
+    small; pages behave as in Chrome, where the quick look ran.
+  - b: GeckoView, Firefox's engine. It has tracking protection and
+    browser extensions built in, but it is a second engine to test
+    against, the HoloML viewer has never run on it, and the engine
+    comes inside the app, making it many times larger.
+- Q2, the first version's devices.
+  - a (recommended): tablets, portrait and landscape, as the owner's
+    tablet; phones later.
+  - b: tablets and phones together.
+- Q3, the first version's scope.
+  - a (recommended): the six points above; the rest later.
+  - b: also bookmarks, history, and the blocker in the first version
+    (about twice the work).
+- Q4, touch controls for HoloML.
+  - a (recommended): in the viewer itself, so the desktop gains them
+    for touch screens too.
+  - b: on Android only.
+- Q5, automatic builds.
+  - a (recommended): GitHub Actions builds the app and runs its unit
+    tests on Linux with each push; the checks on a device run by hand
+    on the tablet.
+  - b: build on this computer only.
+
+### Tasks
+
+1. The app (apps/android): the Gradle project with the wrapper, the
+   activity, the room's WebView, and the build of the room, the top
+   bar, and the viewer into the app.
+2. A page on a tilted panel over the room, with touch and the keyboard,
+   and the message channel between the page, the room, and the app.
+3. Tabs as cards, and the top bar's work.
+4. HoloML pages in a tab, with the viewer and its private line.
+5. Touch controls in the viewer (Q4), and the lighter drawing setting.
+6. Rotation, the tablet's tilt as parallax, and economy mode.
+7. Tests: unit tests (JUnit) of the app's logic, the viewer's touch
+   controls in the desktop's tests, checks on the tablet (AndroidX
+   Test, by hand), and the automatic build (Q5).
+8. Checks AN1 to AN9 on the owner's tablet.
+9. Documents: README, ARCHITECTURE (the Android parts and decisions),
+   AGENTS.md (building and testing the app), HANDOFF, TODO, and the
+   screenshots, from the tablet.
+
+### Checks (named AN, for Android)
+
+| # | Check | Expected result |
+|---|---|---|
+| AN1 | Installs and opens | `adb install` puts the app on the tablet; it opens to the room in under 5 seconds |
+| AN2 | A page on the panel | A web page shows on the tilted panel; taps, typing, scrolling, and links land where they appear, in portrait and landscape |
+| AN3 | Tabs | New, switch, close, and reopen; the cards show their pages |
+| AN4 | The top bar | Back, forward, reload, an address, and a search |
+| AN5 | HoloML pages | Each example site loads and draws; with touch alone, walk, look, open Harbour Loft's doors, and place a block in Blockworld |
+| AN6 | Drawing | The ocean tunnel at 30 frames a second or more with the lighter drawing on the tablet |
+| AN7 | Nothing new on the network | The app makes no request but those its pages make (checked with the tablet's network log) |
+| AN8 | Rotation and tilt | Turning the tablet keeps the page and the tabs; tilting moves the room's parallax |
+| AN9 | Regression | The desktop's unit tests and end-to-end checks (the viewer's touch controls change shared code), and the automatic builds |
+
+### Done when
+
+- AN1 to AN9 pass on the owner's tablet, the documents are updated, and
+  the owner accepts.
 
 ## The review of 2026-09-30 (prompts 134 and 135)
 

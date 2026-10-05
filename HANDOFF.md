@@ -80,7 +80,23 @@ holoml's #19 merged, 2026-09-29):
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
 
-## Milestone 23, HoloML for VS Code, in progress (2026-10-03, prompt 146)
+## Milestone 24, HyperSpace 3D for Android, planned (2026-10-05, prompts 152 to 154)
+
+The browser on the owner's Android tablet, its code to be in
+apps/android. Electron does not run on Android, so the plan (TODO.md,
+milestone 24, not yet approved) is a Kotlin shell with Android's own
+WebView: the desktop's room and top bar drawn by one WebView, each page
+in another tilted in front of it with Android's view transforms, and
+HoloML pages with the desktop's viewer, touch controls added to it.
+
+A quick look ran first (prompt 153): the viewer and the example sites
+served from this computer on 127.0.0.1, opened in Chrome on the tablet
+over USB. They drew; dragging looks around, but walking needs keys the
+tablet lacks; the ocean tunnel ran at about 19 frames a second and
+Blockworld at about 12. The tools for it are in the session's scratch
+folder, not the repository.
+
+## Milestone 23, HoloML for VS Code, accepted (2026-10-03, prompt 146)
 
 A VS Code extension for HoloML, in the holoml repository's
 packages/vscode, planned 2026-10-02 (the recommended answers to Q1 to
