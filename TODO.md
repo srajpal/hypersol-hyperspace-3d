@@ -5002,8 +5002,17 @@ reverse`); the published example sites were opened once it was online.
   on the tablet).
 - AN9: the desktop's unit tests (512, with the touch controls' and the
   room page's), lint, and the type check pass; the app's 15 JUnit
-  tests pass. The desktop's end-to-end run and the automatic builds:
-  running.
+  tests pass. The desktop's end-to-end run (2026-10-05, about 18
+  minutes): 370 of 375 passed. The 5 that failed all read the system
+  clipboard and found it empty (D8's copy a link, copy text, and paste;
+  K2's copied password; M1's real click that copies), twice, the second
+  time in a run of their three files alone. The clipboard was not
+  usable from this session at all then: PowerShell's Set-Clipboard and
+  Get-Clipboard failed too, and no program held it open, so the
+  session's sandbox is the likely cause, not the change (no code here
+  touches the clipboard). To confirm: those three files run from the
+  owner's own terminal, or the automatic builds. The automatic builds:
+  not run yet (they need a push).
 
 ### Checks (named AN, for Android)
 
