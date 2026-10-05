@@ -275,3 +275,13 @@ stays flat and draws.
 ![The HoloML 0.2 specification in the browser, in the layers view: its title, status, and abstract](screenshots/m22/65-holoml-spec.png)
 
 ![A how-to guide: hanging a door on a hinge, with its HoloML coloured](screenshots/m22/66-holoml-guide.png)
+
+**Milestone 23: HoloML for VS Code** (accepted 2026-10-05).
+An extension for VS Code and the editors built on it, in the holoml
+repository: syntax colours, mistakes underlined as you type with the
+checker's own words, suggestions of only what is allowed where the
+cursor is, help on hover from the specification, snippets, end tags
+written for you, the outline, colour swatches, and going to a
+`#name`. Installed by hand from a file; no preview and no network. It
+changes nothing in the browser, whose screens stay as milestone 22
+left them; pictures of the extension at work are still to be made.

@@ -1594,6 +1594,42 @@ Browser #47 and #49 have failures
 Everything passed and merged
 ```
 
+## 145a — 2026-10-01 · Claude Fable 5.1, high effort
+
+Prompts 145a to 145d were filled in on 2026-10-05 (prompt 154): logging
+was paused here, at the owner's request, until prompt 146. The prompt
+after this one, a question about an error from `pnpm holoml:sync`, was
+logged as 146 at the time and removed at the owner's request (145b), so
+it stays out.
+
+```text
+You can stop saving to prompts now. I will tell you when to restart.
+```
+
+## 145b — 2026-10-01 · Claude Fable 5.1, high effort
+
+"Prompt 146" here is the removed question about `pnpm holoml:sync`;
+today's 146 is a later prompt.
+
+```text
+Go ahead, run all three and commit. But first remove prompt 146 from PROMPTS.md.
+```
+
+## 145c — 2026-10-01 · Claude Fable 5.1, high effort
+
+```text
+Push the commits and then take a look at the bug issues on the two
+repositories and create a plan to fix them from easiest to hardest,
+with commits in between, and pushes when you are done or find a good
+stopping point.
+```
+
+## 145d — 2026-10-01 · Claude Fable 5.1, high effort
+
+```text
+holoml #31 merged, re-sync the aquarium from main. But #52 on the browser repo has errors.
+```
+
 ## 146 — 2026-10-02 · Claude Opus 5.5, high effort
 
 Before this prompt the owner asked, while the log was paused, whether
@@ -1607,4 +1643,80 @@ repo and put it in TODO.md. No live preview, it will need the browser
 for now. No publishing yet, install manually. Go ahead with the new
 tools. Reference other VS Code extensions to figure out the best
 features for now.
+```
+
+## 147 — 2026-10-02 · Claude Opus 5.5, high effort
+
+Approves the plan for HoloML for VS Code with the recommended answers:
+Q1 a, milestone 23, with HoloML 0.3 and the later milestones moving one
+number on; Q2 a, a language server; Q3 a, a forgiving reader in the
+extension, holoml's parser unchanged; Q4 a, VS Code downloaded for the
+tests in holoml's automatic builds only.
+
+```text
+Use recommendations for questions and commit and push.
+```
+
+## 148 — 2026-10-03 · Claude Opus 5.5, high effort
+
+```text
+Build approved, go ahead.
+```
+
+## 149 — 2026-10-05 · Claude Opus 5.5, high effort
+
+```text
+VS Code restarted, push both and open the PR.
+```
+
+## 150 — 2026-10-05 · Claude Opus 5.5, high effort
+
+```text
+holoml PR #32 has a failure.
+```
+
+## 151 — 2026-10-05 · Claude Opus 5.5, high effort
+
+```text
+Everything passed and merged.
+```
+
+## 152 — 2026-10-05 · Claude Opus 5.5, high effort
+
+```text
+Push the branch, I did the 3 checks by hand. Next, build the browser
+for Android and put it on the connected tablet to test.
+```
+
+## 153 — 2026-10-05 · Claude Opus 5.5, high effort
+
+"Both" answers the agent's offer after prompt 152: a quick look at the
+HoloML viewer and example sites in the tablet's own browser, and a plan
+for an Android milestone (the browser is built with Electron, which
+does not run on Android).
+
+```text
+Accept 23, do both. Also, we are building this as an example for an AI
+course, so people can see what is possible with good prompts. I think
+we are in a good place for that, as I have placed all the prompts in
+PROMPTS.md. Now I want to do some things to test out the capabilities
+of the browser, so I thought an Android build would fit that. Should we
+continue to put the prompts in the md file? Should we include this in
+the repository? Answer first and ask questions if needed.
+```
+
+## 154 — 2026-10-05 · Claude Opus 5.5, high effort
+
+Answers the agent's four questions after prompt 153: log every prompt
+again, before the work, and fill in the prompts missing since 145; the
+Android version's code in this repository as apps/android, beside
+apps/browser; the Android milestone next, as 24, with HoloML 0.3 and
+the later milestones moving one number on; and a short section in the
+README saying the project is an example for an AI course.
+
+```text
+Prompt log: every prompt, fill the gap.
+Android code: apps/android here.
+Roadmap: next, as 24.
+Course note: yes, a short section.
 ```

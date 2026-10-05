@@ -34,15 +34,16 @@ Plan approved 2026-09-24.
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Done (accepted, prompt 122) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Done (accepted, prompt 125; HoloML v0.2.0 released, prompt 126) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Current (the plan and build approved with the recommended answers, prompt 128) |
-| 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Current (plan approved with the recommended answers, 2026-10-02; build approved 2026-10-03; merged in holoml, pull request #32, 2026-10-05; checks done, the owner's acceptance remains) |
-| 24 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
-| 25 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
-| 26 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
-| 27 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
-| 28 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (was 29, prompt 129) |
-| 29 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55). (review, 2026-09-30) Licence texts and credits inside the app (the GPL's text for the filter lists, the examples' credits); how security updates reach users (how often Electron is raised, and how people get it); and a check that test mode and the test hooks are absent from a packaged app | Last (was 25; moved to the end, prompt 129: not ready for builds) |
-| 30 | macOS release | Signing, notarization, Mac checks. (review, 2026-09-30) The same three as milestone 28, on macOS | Last (was 26, prompt 129) |
-| — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS and Android | Later |
+| 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Done (accepted, prompt 153) |
+| 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Later (plan being drafted, prompts 153 and 154) |
+| 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
+| 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
+| 27 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
+| 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
+| 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (was 29, prompt 129) |
+| 30 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55). (review, 2026-09-30) Licence texts and credits inside the app (the GPL's text for the filter lists, the examples' credits); how security updates reach users (how often Electron is raised, and how people get it); and a check that test mode and the test hooks are absent from a packaged app | Last (was 25; moved to the end, prompt 129: not ready for builds) |
+| 31 | macOS release | Signing, notarization, Mac checks. (review, 2026-09-30) The same three as milestone 28, on macOS | Last (was 26, prompt 129) |
+| — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS, and Android phones (Android tablets are milestone 24) | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
 the owner chose to release it as source for developers first (milestone
@@ -98,7 +99,13 @@ camera from 25 to 26, lift to 3D from 26 to 27, polish from 27 to
 28, and the installers from 28 and 29 to 29 and 30. Dated entries
 below keep the numbers they were written with.
 
-- Milestone 24 (HoloML 0.3; 23 when this was written), the language
+On 2026-10-05 (prompts 152 to 154) the browser for Android became
+milestone 24, after HoloML for VS Code: HoloML 0.3 moved from 24 to
+25, privacy and data tools from 25 to 26, free camera from 26 to 27,
+lift to 3D from 27 to 28, polish from 28 to 29, and the installers
+from 29 and 30 to 30 and 31.
+
+- Milestone 25 (HoloML 0.3; 23 when this was written), the language
   engineer's list for its plan:
   the look written down, so that a second renderer can match a picture
   (how bright a light of a given intensity is, tone mapping, the
@@ -111,7 +118,7 @@ below keep the numbers they were written with.
   reader reports for a further copy of an element a page may have only
   once; whether text on both sides of a comment is one text; and the
   generated RELAX NG grammar checked by a validator in the tests.
-- Milestone 25 (privacy and data tools; 24 when this was written):
+- Milestone 26 (privacy and data tools; 24 when this was written):
   nothing new. (A gap found while
   writing docs/privacy.md, three-letter pieces of a deleted visit left
   in the history search index, was closed the same day: schema 5 sets
@@ -4412,9 +4419,12 @@ finished documents.
 
 ## Milestone 23 — HoloML for VS Code
 
-Status: Built (2026-10-03) and merged into holoml's main (pull request
-#32, 2026-10-05, a64f1a2); Z1 to Z10 done, the checks by hand by the
-owner (Results so far, below); the owner's acceptance remains. Plan approved
+Status: Done, accepted by the owner on 2026-10-05 (prompt 153). Built
+(2026-10-03) and merged into holoml's main (pull request #32,
+2026-10-05, a64f1a2); Z1 to Z10 done, the checks by hand by the owner.
+Not done: task 9's screenshots of the extension at work for holoml's
+README (the extension changes nothing in the browser, whose screens
+stay as milestone 22 left them). Plan approved
 (2026-10-02): the owner chose the recommended answers to Q1 to Q4; build
 approved 2026-10-03. Rule 13 check done (ARCHITECTURE.md section 3). The owner asked for a VS Code
 extension for HoloML, kept in the holoml repository (the owner chose
@@ -4691,7 +4701,7 @@ published.
   CI's steps; it now lists the extension's three, as task 7 changes
   what CI runs.
 
-### Results so far (Windows 11, 2026-10-03)
+### Results (Windows 11, 2026-10-03 to 2026-10-05)
 
 - holoml: `pnpm test` 834 passed in 29 files (507 before; the extension
   adds 325, the guide's example and the workflow test the rest); `pnpm

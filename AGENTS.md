@@ -477,9 +477,9 @@ milestone; the current milestone's checks are defined in TODO.md):
   the .vsix's contents); its tests inside VS Code with `pnpm --filter
   holoml-vscode test:vscode` there (holoml's AGENTS.md has the details).
   Nothing in this repository changes with it.
-- Later milestones add: HoloML 0.3 (24), privacy and data tools (25),
-  free camera (26), lift to 3D (27), polish (28), and installers (29
-  and 30).
+- Later milestones add: the browser for Android (24), HoloML 0.3 (25),
+  privacy and data tools (26), free camera (27), lift to 3D (28),
+  polish (29), and installers (30 and 31).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

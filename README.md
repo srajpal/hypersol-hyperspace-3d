@@ -200,21 +200,41 @@ This is a sustained personal project informed by Sunny's software
 engineering experience, not a promised beginner-course outcome. Buildwright
 starts with a small prototype and the same habits of direction and checking.
 
+### Reading it as a course example
+
+The project is a worked example for an AI course: every change in this
+repository and in [holoml](https://github.com/srajpal/holoml) was made
+by AI coding agents directed by prompts. To follow it:
+
+- Read [PROMPTS.md](PROMPTS.md) in order. It has every prompt the owner
+  gave, lightly edited, with its date and the model that took it.
+- Beside each prompt, read what it produced: the commits made after it
+  (`git log`), and, for each milestone, its plan, decisions, and check
+  results in [TODO.md](TODO.md).
+- Start with the first prompts, where the brief, the architecture, and
+  the plan come before any code. Then follow one milestone from
+  question to acceptance; milestone 23 (prompts 146 to 153) is a short
+  one: a question, a plan from researched options, approval, the build,
+  a fault found by testing in a real editor, a security alert from
+  GitHub's scanner fixed, and acceptance.
+- [AGENTS.md](AGENTS.md) holds the rules the agents worked under.
+
 ## What comes next
 
 Milestone 22, documentation for HoloML to recognised standards (being
-built). 23, HoloML for VS Code: an extension that helps people
-write HoloML pages, installed by hand. 24, HoloML 0.3: the features its check found missing, such as
-names for models and the language of text. 25, privacy and data tools:
-HTTPS-only browsing, per-site storage, and bookmark import and export.
-26, free camera movement around the room. 27, pictures and 3D models
-lifted out of ordinary pages. 28, polish. Last, 29 and 30, installers as
-1.0 for Windows and Linux, then macOS. Later: mobile, and VR. The full
+finished). 24, HyperSpace 3D on an Android tablet, to see how far the
+browser reaches. 25, HoloML 0.3: the features its check found missing,
+such as names for models and the language of text. 26, privacy and
+data tools: HTTPS-only browsing, per-site storage, and bookmark import
+and export. 27, free camera movement around the room. 28, pictures and
+3D models lifted out of ordinary pages. 29, polish. Last, 30 and 31,
+installers as 1.0 for Windows and Linux, then macOS. Later: phones, and
+VR. The full
 roadmap is in [TODO.md](TODO.md).
 
 ## Progress
 
-Twenty-one milestones are done and accepted.
+Twenty-two milestones are done and accepted: 1 to 21, and 23.
 Milestones 1 to 11 built the browser: a live page on a tilted panel in
 the 3D room, tabs as cards, bookmarks and history, ad and tracker
 blocking with encrypted DNS, the layers view, two themes, an instrument
@@ -236,6 +256,9 @@ click, places, a sky, and a floor plan. Milestone 20 adds loading by
 area and the sneaker store. Milestone 21 adds water, sounds from a
 place, and the ocean tunnel, an aquarium, and completes HoloML 0.2.
 Milestone 22 documents HoloML, with its specification, guides, and site.
+Milestone 23 adds HoloML for VS Code, an extension in the holoml
+repository: syntax colours, mistakes as you type, suggestions, and
+help on hover.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
@@ -299,7 +322,7 @@ Three.js (with its glTF loader, for HoloML pages), Lit, SQLite through
 Node's built-in node:sqlite, and Ghostery's open-source ad-blocking
 engine with open filter lists; Vite and electron-vite to build; Vitest
 and Playwright to test.
-Planned, not yet installed: electron-builder for installers (milestones 29 and 30).
+Planned, not yet installed: electron-builder for installers (milestones 30 and 31).
 Reasons for each choice are in ARCHITECTURE.md.
 
 Known limitations: Electron ships no DRM module, so video from Netflix
