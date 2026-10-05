@@ -2,8 +2,8 @@
 
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-10-03 (milestones 1 to 21 accepted; 22, HoloML's
-documentation, being finished; 23, HoloML for VS Code, built in holoml
-on the branch `vscode-extension` and being checked: see "Milestone 23,
+documentation, being finished; 23, HoloML for VS Code, merged in holoml
+(pull request #32) with checks by hand left: see "Milestone 23,
 HoloML for VS Code, in progress" below. The roadmap is in TODO.md).
 
 ## Where things stand
@@ -82,8 +82,8 @@ holoml's #19 merged, 2026-09-29):
 
 A VS Code extension for HoloML, in the holoml repository's
 packages/vscode, planned 2026-10-02 (the recommended answers to Q1 to
-Q4) and built 2026-10-03 on holoml's branch `vscode-extension` (not yet
-pushed or merged). TODO.md, milestone 23, has the plan, the decisions
+Q4), built 2026-10-03, and merged into holoml's main on 2026-10-05
+(pull request #32). TODO.md, milestone 23, has the plan, the decisions
 made while building, and the results so far.
 
 - What it is: a language server (server.ts) over a language service
@@ -101,9 +101,8 @@ made while building, and the results so far.
   test:vscode`, in the installed VS Code (all pass in 1.139.1,
   2026-10-05). holoml's CI runs them in a downloaded VS Code 1.96.0 on
   Windows and Linux.
-- Next: holoml's pull request and its CI (pushed 2026-10-05), then the
-  checks by hand (Z1 in Cursor, Z3's indentation, Z9's session) and the
-  owner's acceptance.
+- Next: the checks by hand (Z1 in Cursor, Z3's indentation, Z9's
+  session), then the owner's acceptance.
 
 ## The review of 2026-09-30, in progress (prompts 134 and 135)
 
