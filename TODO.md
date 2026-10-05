@@ -34,7 +34,7 @@ Plan approved 2026-09-24.
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Done (accepted, prompt 122) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Done (accepted, prompt 125; HoloML v0.2.0 released, prompt 126) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Current (the plan and build approved with the recommended answers, prompt 128) |
-| 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Current (plan approved with the recommended answers, 2026-10-02; build approved 2026-10-03; merged in holoml, pull request #32, 2026-10-05; checks by hand remain) |
+| 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Current (plan approved with the recommended answers, 2026-10-02; build approved 2026-10-03; merged in holoml, pull request #32, 2026-10-05; checks done, the owner's acceptance remains) |
 | 24 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
 | 25 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
 | 26 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
@@ -4413,8 +4413,8 @@ finished documents.
 ## Milestone 23 — HoloML for VS Code
 
 Status: Built (2026-10-03) and merged into holoml's main (pull request
-#32, 2026-10-05, a64f1a2); the checks by hand remain (Results so far,
-below), then the owner's acceptance. Plan approved
+#32, 2026-10-05, a64f1a2); Z1 to Z10 done, the checks by hand by the
+owner (Results so far, below); the owner's acceptance remains. Plan approved
 (2026-10-02): the owner chose the recommended answers to Q1 to Q4; build
 approved 2026-10-03. Rule 13 check done (ARCHITECTURE.md section 3). The owner asked for a VS Code
 extension for HoloML, kept in the holoml repository (the owner chose
@@ -4630,7 +4630,7 @@ published.
       VS Code (Q4), the grammar tests, and a test that the built
       extension contains nothing that reaches the network. holoml's
       automatic builds run them.
-- [ ] 8. Checks Z1 to Z10 on Windows, with the extension installed by
+- [x] 8. Checks Z1 to Z10 on Windows, with the extension installed by
       hand from its .vsix in VS Code and in Cursor.
 - [ ] 9. Documents: in holoml, a how-to guide in its docs ("Write HoloML
       in VS Code": installing, the features, and what it does not do),
@@ -4732,9 +4732,9 @@ published.
   name in an address's text (now it checks every address asked about is
   a file). Merged 2026-10-05; the Pages workflow published the guide.
   This repository's unit tests: 502 passed in 58 files.
-- Still to check by hand: Z1 in Cursor (installing the .vsix), Z3's
-  indentation as you type, and Z9's session of editing (no request from
-  the extension).
+- By hand, done by the owner on 2026-10-05: Z1 in Cursor (installing
+  the .vsix made from holoml's main), Z3's indentation as you type, and
+  Z9's session of editing (no request from the extension).
 
 ### Done when
 

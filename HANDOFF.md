@@ -101,8 +101,8 @@ made while building, and the results so far.
   test:vscode`, in the installed VS Code (all pass in 1.139.1,
   2026-10-05). holoml's CI runs them in a downloaded VS Code 1.96.0 on
   Windows and Linux.
-- Next: the checks by hand (Z1 in Cursor, Z3's indentation, Z9's
-  session), then the owner's acceptance.
+- The checks by hand (Z1 in Cursor, Z3's indentation, Z9's session)
+  were done by the owner on 2026-10-05. Next: the owner's acceptance.
 
 ## The review of 2026-09-30, in progress (prompts 134 and 135)
 
