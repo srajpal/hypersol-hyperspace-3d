@@ -35,7 +35,7 @@ Plan approved 2026-09-24.
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Done (accepted, prompt 125; HoloML v0.2.0 released, prompt 126) |
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Current (the plan and build approved with the recommended answers, prompt 128) |
 | 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Done (accepted, prompt 153) |
-| 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Current (plan approved with the recommended answers and the build tools, prompt 155; build not yet approved) |
+| 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Current (plan approved with the recommended answers and the build tools, prompt 155; build approved, prompt 156; built, checks running) |
 | 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
 | 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
 | 27 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
@@ -4764,9 +4764,11 @@ published.
 
 ## Milestone 24 — HyperSpace 3D for Android
 
-Status: Plan approved (2026-10-05, prompt 155): the owner chose the
-recommended answers to Q1 to Q5 and approved the new build tools; the
-build is not yet approved. Asked for in prompts 152 to 154. The owner asked
+Status: Built (2026-10-05) on the branch m24-android; checks running
+(Results so far, below). Plan approved (2026-10-05, prompt 155): the
+owner chose the recommended answers to Q1 to Q5 and approved the new
+build tools; build approved (prompt 156). Rule 13 check done
+(ARCHITECTURE.md section 3). Asked for in prompts 152 to 154. The owner asked
 for the browser on the Android tablet connected to this computer, to
 test how far it reaches; the code goes in this repository as
 apps/android (prompt 154). HyperSpace 3D is built with Electron, which
@@ -4865,6 +4867,8 @@ New, for the app's build:
   Maven Central.
 - JUnit for the app's unit tests, and AndroidX Test for the checks run
   on the tablet.
+  (As built: JUnit 4.13.2 only; no checks on the device were written
+  with AndroidX Test, so it is not added.)
 
 These are new places that builds fetch from (rule 3); the owner
 approved them with the plan (prompt 155).
@@ -4899,22 +4903,107 @@ approved them with the plan (prompt 155).
 
 ### Tasks
 
-1. The app (apps/android): the Gradle project with the wrapper, the
-   activity, the room's WebView, and the build of the room, the top
-   bar, and the viewer into the app.
-2. A page on a tilted panel over the room, with touch and the keyboard,
-   and the message channel between the page, the room, and the app.
-3. Tabs as cards, and the top bar's work.
-4. HoloML pages in a tab, with the viewer and its private line.
-5. Touch controls in the viewer (Q4), and the lighter drawing setting.
-6. Rotation, the tablet's tilt as parallax, and economy mode.
-7. Tests: unit tests (JUnit) of the app's logic, the viewer's touch
-   controls in the desktop's tests, checks on the tablet (AndroidX
-   Test, by hand), and the automatic build (Q5).
-8. Checks AN1 to AN9 on the owner's tablet.
-9. Documents: README, ARCHITECTURE (the Android parts and decisions),
-   AGENTS.md (building and testing the app), HANDOFF, TODO, and the
-   screenshots, from the tablet.
+- [x] 1. The app (apps/android): the Gradle project with the wrapper, the
+      activity, the room's WebView, and the build of the room, the top
+      bar, and the viewer into the app.
+- [x] 2. A page on a tilted panel over the room, with touch and the keyboard,
+      and the message channel between the page, the room, and the app.
+- [x] 3. Tabs as cards, and the top bar's work.
+- [x] 4. HoloML pages in a tab, with the viewer and its private line.
+- [x] 5. Touch controls in the viewer (Q4), and the lighter drawing setting.
+- [x] 6. Rotation, the tablet's tilt as parallax, and economy mode.
+- [x] 7. Tests: unit tests (JUnit) of the app's logic, the viewer's touch
+      controls in the desktop's tests, checks on the tablet by hand, and
+      the automatic build (Q5). (AndroidX Test was planned for checks on
+      the device; none were written, so it is not used: the device
+      checks are by hand.)
+- [ ] 8. Checks AN1 to AN9 on the owner's tablet.
+- [ ] 9. Documents: README, ARCHITECTURE (the Android parts and decisions),
+      AGENTS.md (building and testing the app), HANDOFF, TODO, and the
+      screenshots, from the tablet.
+
+### Decisions made while building
+
+- The room's code is shared, not copied: the room now places any page
+  view with an element, a size, and a way to be shown (room.ts,
+  RoomView; the desktop's tab view is one), reports each frame it draws
+  (`onDrawn`), and says which card is under a point (`cardHit`); the
+  top bar can leave out parts the browser does not have yet (`omit`).
+  The desktop's behaviour is unchanged.
+- The page goes onto the room's outline exactly: Android's view
+  transforms cannot make every perspective, so the page's WebView is
+  drawn through a 3 by 3 map from its rectangle to the four corners
+  (an animation matrix), and each touch is mapped back by its inverse
+  before the page gets it. Pinches and scrolls go through the same map.
+- While a menu, the address bar's list, or the examples dialog is open
+  over the page, the page's WebView hides and its last picture shows
+  in its place in the room; a native view cannot be put under part of
+  the room's page.
+- The lighter drawing keeps smoothed edges: on the owner's tablet (a
+  Mali-G57) a scene drawn without them showed nothing, in Chrome too,
+  with no error. It is half the sharpness, and no shadows or moving
+  light on water.
+- A long press is a right-click once the finger has been held still
+  for half a second, while it is still down: Android cancelled a touch
+  held that long before it lifted, so waiting for the lift lost it.
+- A swipe on a card needs the room's canvas to take touches itself
+  (`touch-action: none`); otherwise the WebView took the swipe as a pan
+  and cancelled it.
+- The app is one window (`singleTask`): an address opened from another
+  app opens in a new tab, not a second copy of the browser. It opens
+  http pages too, marked "Not secure", as the desktop does.
+- The room's page asks for nothing outside the app: a request the
+  app's files do not answer (the WebView's favicon) is answered empty
+  in the app, not sent.
+- Not on Android in this first version: a HoloML page's text view and
+  the other commands over the viewer's private line (Android has no
+  isolated world, so the page's own scripts could reach that line);
+  downloads (nothing is saved); and site permissions (camera,
+  microphone, and the rest are refused). Pop-ups open in a new tab only
+  when a tap asked for them.
+- The app's id is io.github.srajpal.hyperspace3d, under the owner's
+  GitHub name, as HyperSol has no domain; Android 10 is the oldest it
+  runs on (the animation matrix).
+
+### Results so far (the owner's tablet, 2026-10-05)
+
+The tablet: a K70 PRO, Android 16, a Mali-G57, 2.9 GB of memory, 800
+by 1280 pixels. Its Wi-Fi needed a hotel's sign-in for much of the
+session, so most pages were served from this computer over USB (`adb
+reverse`); the published example sites were opened once it was online.
+
+- AN1: installs with `adb install`; from a cold start to the room
+  showing its first tab took 3.8, 4.1, and 6.1 seconds in three runs
+  (timed over USB, which adds a little): two of three within 5 seconds.
+- AN2: the click-grid page on the tilted panel: all nine buttons, at
+  the corners, the edges, and the middle, took their taps (portrait).
+  Typing in the top bar and the start panel works, with the on-screen
+  keyboard (the room lays itself out above it). Scrolling, pinching,
+  and landscape: not checked yet.
+- AN3: a new tab from the "+" card and the top bar; a swipe to the
+  left on a card closes its tab; "Reopen closed tab" brings it back;
+  the cards show their pages' pictures (a HoloML page's card shows
+  none: its 3D is not in the picture). Switching by tapping a card: not
+  checked yet.
+- AN4: a link, then Back, works; Forward, Reload, and a search: not
+  checked yet.
+- AN5: Harbour Loft, the ocean tunnel, and Blockworld load and draw,
+  from the published site and from local copies. The walk pad walks
+  (into the tunnel), dragging looks around, Blockworld shows its Jump
+  button, a tap breaks a block, and a long press places one. Harbour
+  Loft's doors and the other three sites: not checked yet.
+- AN6: the ocean tunnel at 33 frames a second with the lighter drawing
+  (about 19 without, in the quick look). Passes.
+- AN7: the room's page loads only from the app's own address
+  (appassets.androidplatform.net); a HoloML page is fetched as its tab
+  asks for it. The tablet's own network log: not checked yet.
+- AN8: the tilt moves the room's parallax (the panel leans as the
+  tablet tilts). Turning the tablet: not checked yet (it needs a hand
+  on the tablet).
+- AN9: the desktop's unit tests (512, with the touch controls' and the
+  room page's), lint, and the type check pass; the app's 15 JUnit
+  tests pass. The desktop's end-to-end run and the automatic builds:
+  running.
 
 ### Checks (named AN, for Android)
 

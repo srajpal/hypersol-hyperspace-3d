@@ -16,7 +16,7 @@
     "test:e2e": "pnpm build && vitest run --config vitest.e2e.config.ts",
     "test:linux": "node tests/linux/run.mjs",
     "lint": "eslint .",
-    "typecheck": "tsc -p packages/scene-core --noEmit && tsc -p packages/themes --noEmit && tsc -p packages/holoml --noEmit && tsc -p apps/browser --noEmit && tsc -p tests --noEmit",
+    "typecheck": "tsc -p packages/scene-core --noEmit && tsc -p packages/themes --noEmit && tsc -p packages/holoml --noEmit && tsc -p apps/browser --noEmit && tsc -p apps/android --noEmit && tsc -p tests --noEmit",
     "screenshots": "pnpm build && vitest run --config vitest.shots.config.ts",
     "screenshots:readme": "pnpm build && vitest run --config vitest.readme.config.ts",
     "screenshots:examples": "pnpm build && vitest run --config vitest.examples.config.ts",

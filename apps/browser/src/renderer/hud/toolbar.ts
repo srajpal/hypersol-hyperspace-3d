@@ -88,6 +88,7 @@ export class HsToolbar extends LitElement {
     muted: { type: Boolean },
     canReopen: { type: Boolean },
     keys: { attribute: false },
+    omit: { attribute: false },
     menuOpen: { state: true },
     plusOpen: { state: true },
     suggestions: { state: true },
@@ -129,6 +130,12 @@ export class HsToolbar extends LitElement {
   declare canReopen: boolean;
   /** Each shortcut's keys as they read on this platform (milestone 11: they follow remapping). */
   declare keys: Partial<Record<string, string>>;
+  /**
+   * Parts left out where the browser does not have them yet (milestone 24,
+   * Android): "new-tab-more", "zoom", "instruments", "layers", "star", and
+   * any menu entry by its action. Nothing is left out by default.
+   */
+  declare omit: readonly string[];
   declare menuOpen: boolean;
   declare plusOpen: boolean;
   /** Address bar completion (milestone 11): the list under the bar, and the row picked with the arrows. */
@@ -160,6 +167,7 @@ export class HsToolbar extends LitElement {
   constructor() {
     super();
     this.url = '';
+    this.omit = [];
     this.canGoBack = false;
     this.canGoForward = false;
     this.canReload = false;
@@ -612,6 +620,11 @@ export class HsToolbar extends LitElement {
     return [...this.renderRoot.querySelectorAll<HTMLButtonElement>('[role="menu"] [role="menuitem"]:not(:disabled)')];
   }
 
+  /** Whether a part shows (see `omit`). */
+  private shows(part: string): boolean {
+    return !this.omit.includes(part);
+  }
+
   override render() {
     return html`
       <div class="bar">
@@ -622,12 +635,13 @@ export class HsToolbar extends LitElement {
           @click=${() => this.fire('hs-new-tab')}
           @contextmenu=${(e: MouseEvent) => {
             e.preventDefault();
-            this.plusOpen = true;
+            if (this.shows('new-tab-more')) this.plusOpen = true;
           }}
         >
           ${icon.plus}
         </button>
-        <button
+        ${this.shows('new-tab-more')
+          ? html`<button
           class="plus-more"
           data-testid="new-tab-more"
           aria-label="New tab options"
@@ -637,7 +651,8 @@ export class HsToolbar extends LitElement {
           @click=${() => (this.plusOpen = !this.plusOpen)}
         >
           ${icon.chevron}
-        </button>
+        </button>`
+          : nothing}
         ${this.plusOpen
           ? html`<div role="menu" class="plus-menu" aria-label="New tab" data-testid="new-tab-menu" @keydown=${this.onMenuKey}>
               <button role="menuitem" data-testid="plus-new-tab" @click=${() => this.menu('new-tab')}>
@@ -698,13 +713,16 @@ export class HsToolbar extends LitElement {
           />
           ${this.suggestionList()}
         </div>
-        <div class="zoom" role="group" aria-label="Zoom">
+        ${this.shows('zoom')
+          ? html`<div class="zoom" role="group" aria-label="Zoom">
           <button data-testid="zoom-out" aria-label="Zoom out" title=${`Zoom out (${this.keys['zoom-out'] ?? ''})`} ?disabled=${!this.canZoom} @click=${() => this.fire('hs-zoom', -1)}>−</button>
           <button class="level" data-testid="zoom-level" aria-label=${`Zoom ${Math.round(this.zoom * 100)}%, reset to 100%`} title=${`Reset zoom (${this.keys['zoom-reset'] ?? ''})`}
             ?disabled=${!this.canZoom} @click=${() => this.fire('hs-zoom', 0)}>${Math.round(this.zoom * 100)}%</button>
           <button data-testid="zoom-in" aria-label="Zoom in" title=${`Zoom in (${this.keys['zoom-in'] ?? ''})`} ?disabled=${!this.canZoom} @click=${() => this.fire('hs-zoom', 1)}>+</button>
-        </div>
-        <button
+        </div>`
+          : nothing}
+        ${this.shows('instruments')
+          ? html`<button
           class="instruments-button"
           data-testid="instruments"
           aria-label="Instrument panel"
@@ -713,8 +731,10 @@ export class HsToolbar extends LitElement {
           @click=${() => this.fire('hs-instruments')}
         >
           ${icon.gauge}
-        </button>
-        <button
+        </button>`
+          : nothing}
+        ${this.shows('layers')
+          ? html`<button
           class="layers-button"
           data-testid="layers"
           aria-label="Layers view"
@@ -724,7 +744,8 @@ export class HsToolbar extends LitElement {
           @click=${() => this.fire('hs-layers')}
         >
           ${icon.layers}
-        </button>
+        </button>`
+          : nothing}
         ${this.holoml
           ? html`<button
               data-testid="text-view"
@@ -736,7 +757,8 @@ export class HsToolbar extends LitElement {
               ${icon.text}
             </button>`
           : nothing}
-        <button
+        ${this.shows('star')
+          ? html`<button
           class="star"
           data-testid="star"
           aria-label=${this.bookmarked ? 'Remove bookmark' : 'Bookmark this page'}
@@ -746,7 +768,8 @@ export class HsToolbar extends LitElement {
           @click=${() => this.fire('hs-bookmark')}
         >
           ${icon.star}
-        </button>
+        </button>`
+          : nothing}
         <button
           class="menu-button"
           ?data-busy=${this.downloading}
@@ -761,48 +784,76 @@ export class HsToolbar extends LitElement {
         </button>
         ${this.menuOpen
           ? html`<div role="menu" aria-label="Menu" @keydown=${this.onMenuKey}>
-              <button role="menuitem" data-testid="menu-new-tab" @click=${() => this.menu('new-tab')}>
+              ${this.shows('new-tab')
+                ? html`<button role="menuitem" data-testid="menu-new-tab" @click=${() => this.menu('new-tab')}>
                 New tab <kbd>${this.keys['new-tab'] ?? ''}</kbd>
-              </button>
-              <button role="menuitem" data-testid="menu-private-tab" @click=${() => this.menu('private-tab')}>
+              </button>`
+                : nothing}
+              ${this.shows('private-tab')
+                ? html`<button role="menuitem" data-testid="menu-private-tab" @click=${() => this.menu('private-tab')}>
                 New private tab <kbd>${this.keys['private-tab'] ?? ''}</kbd>
-              </button>
-              <button role="menuitem" data-testid="menu-open-file" @click=${() => this.menu('open-file')}>
+              </button>`
+                : nothing}
+              ${this.shows('open-file')
+                ? html`<button role="menuitem" data-testid="menu-open-file" @click=${() => this.menu('open-file')}>
                 Open a HoloML file…
-              </button>
-              <button role="menuitem" data-testid="menu-close-tab" @click=${() => this.menu('close-tab')}>
+              </button>`
+                : nothing}
+              ${this.shows('close-tab')
+                ? html`<button role="menuitem" data-testid="menu-close-tab" @click=${() => this.menu('close-tab')}>
                 Close tab <kbd>${this.keys['close-tab'] ?? ''}</kbd>
-              </button>
-              <button role="menuitem" data-testid="menu-reopen-tab" ?disabled=${!this.canReopen} @click=${() => this.menu('reopen-tab')}>
+              </button>`
+                : nothing}
+              ${this.shows('reopen-tab')
+                ? html`<button role="menuitem" data-testid="menu-reopen-tab" ?disabled=${!this.canReopen} @click=${() => this.menu('reopen-tab')}>
                 Reopen closed tab <kbd>${this.keys['reopen-tab'] ?? ''}</kbd>
-              </button>
-              <button role="menuitem" data-testid="menu-search-tabs" @click=${() => this.menu('search-tabs')}>
+              </button>`
+                : nothing}
+              ${this.shows('search-tabs')
+                ? html`<button role="menuitem" data-testid="menu-search-tabs" @click=${() => this.menu('search-tabs')}>
                 Search tabs <kbd>${this.keys['search-tabs'] ?? ''}</kbd>
-              </button>
-              <button role="menuitem" data-testid="menu-mute-tab" @click=${() => this.menu('mute-tab')}>
+              </button>`
+                : nothing}
+              ${this.shows('mute-tab')
+                ? html`<button role="menuitem" data-testid="menu-mute-tab" @click=${() => this.menu('mute-tab')}>
                 ${this.muted ? 'Unmute tab' : 'Mute tab'}
-              </button>
-              <button role="menuitem" data-testid="menu-downloads" @click=${() => this.menu('downloads')}>
+              </button>`
+                : nothing}
+              ${this.shows('downloads')
+                ? html`<button role="menuitem" data-testid="menu-downloads" @click=${() => this.menu('downloads')}>
                 Downloads <kbd>${this.keys['downloads'] ?? ''}</kbd>
-              </button>
-              <button role="menuitem" data-testid="menu-print" @click=${() => this.menu('print')}>
+              </button>`
+                : nothing}
+              ${this.shows('print')
+                ? html`<button role="menuitem" data-testid="menu-print" @click=${() => this.menu('print')}>
                 Print <kbd>${this.keys['print'] ?? ''}</kbd>
-              </button>
-              <button role="menuitem" data-testid="menu-library" @click=${() => this.menu('library')}>
+              </button>`
+                : nothing}
+              ${this.shows('library')
+                ? html`<button role="menuitem" data-testid="menu-library" @click=${() => this.menu('library')}>
                 Library <kbd>${this.keys['library'] ?? ''}</kbd>
-              </button>
-              <button role="menuitem" data-testid="menu-settings" @click=${() => this.menu('settings')}>
+              </button>`
+                : nothing}
+              ${this.shows('settings')
+                ? html`<button role="menuitem" data-testid="menu-settings" @click=${() => this.menu('settings')}>
                 Settings <kbd>${this.keys['settings'] ?? ''}</kbd>
-              </button>
-              <button role="menuitem" data-testid="menu-shortcuts" @click=${() => this.menu('shortcuts')}>
+              </button>`
+                : nothing}
+              ${this.shows('shortcuts')
+                ? html`<button role="menuitem" data-testid="menu-shortcuts" @click=${() => this.menu('shortcuts')}>
                 Keyboard shortcuts
-              </button>
-              <button role="menuitem" data-testid="menu-examples" @click=${() => this.menu('examples')}>
+              </button>`
+                : nothing}
+              ${this.shows('examples')
+                ? html`<button role="menuitem" data-testid="menu-examples" @click=${() => this.menu('examples')}>
                 HoloML examples <kbd>${this.keys['examples'] ?? ''}</kbd>
-              </button>
-              <button role="menuitem" data-testid="menu-about" @click=${() => this.menu('about')}>
+              </button>`
+                : nothing}
+              ${this.shows('about')
+                ? html`<button role="menuitem" data-testid="menu-about" @click=${() => this.menu('about')}>
                 About HyperSpace 3D
-              </button>
+              </button>`
+                : nothing}
             </div>`
           : nothing}
         <div class="strip" data-testid="progress" data-state=${this.strip} aria-hidden="true"><span></span></div>

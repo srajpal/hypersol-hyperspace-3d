@@ -1,0 +1,47 @@
+/* The room's page on Android (milestone 24): what differs from the desktop's shell. */
+
+/* A tab's place in the room: the page's picture under the app's page, or a start tab's panel. */
+.hs-stand-in {
+  pointer-events: auto;
+  overflow: hidden;
+  background: #ffffff;
+  outline: 1px solid var(--hs-accent);
+}
+
+.hs-stand-in-picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top left;
+}
+
+.hs-stand-in-picture[hidden] {
+  display: none;
+}
+
+/* Bookmarks and history come to Android in a later milestone: their sections stay out of the start panel until then. */
+.hs-stand-in [data-testid='start-bookmarks'],
+.hs-stand-in [data-testid='start-recent'] {
+  display: none;
+}
+
+.hs-start-lighter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  font-size: 15px;
+  color: var(--hs-text-muted, var(--hs-text));
+}
+
+.hs-start-lighter input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--hs-accent);
+}
+
+/* The room takes touches itself: a swipe on a card closes it, so the WebView must not take a swipe as a pan and cancel it. */
+#room canvas {
+  touch-action: none;
+}

@@ -6,6 +6,7 @@ import { LAYERS_CHANNEL, PAGE_IMAGES_CHANNEL, parseImageReport, type LayersState
 import { PAGE_STATE_CHANNEL, parsePageState } from '../../shared/page-state';
 import { HOLOML_COMMAND_CHANNEL, HOLOML_SHOWN_CHANNEL, HOLOML_STATE_CHANNEL } from '../../shared/holoml-page';
 import { StartPanel, type StartData } from './start-panel';
+import type { RoomView } from './room';
 
 /** Chromium's code for a load that was cancelled by a newer one. */
 const ERR_ABORTED = -3;
@@ -46,7 +47,7 @@ export interface TabViewEvents {
  * created once and never moved in the page: moving a webview reloads it.
  * The room places the element in 3D.
  */
-export class TabView implements PagePanel {
+export class TabView implements PagePanel, RoomView {
   readonly kind = 'live';
   readonly element: HTMLDivElement;
   private webview: WebviewTag | null = null;

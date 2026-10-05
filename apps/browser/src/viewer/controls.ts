@@ -7,6 +7,7 @@
 import { PerspectiveCamera, Spherical, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { Solids, Walker } from './physics';
+import { createTouchPad, touchScreen } from './touch';
 
 export interface ViewControls {
   /** Moves on by dt milliseconds; true while still moving (keys held). */
@@ -145,6 +146,10 @@ export interface WalkPhysics {
  *
  * With physics (HoloML 0.2), solid things stop the walker; with gravity
  * it falls and stands on them, and Space jumps if the page allows it.
+ *
+ * On a device whose main pointer is a finger (milestone 24), a pad on the
+ * screen walks too, and a button jumps where the page allows it
+ * (touch.ts).
  */
 export function walkControls(
   camera: PerspectiveCamera,
@@ -169,6 +174,9 @@ export function walkControls(
   let airborne = physics?.walker.gravity ?? false;
   /** Where the eyes were and which way they looked when the scene was last told of a change. */
   const told = { eye: new Vector3(NaN, NaN, NaN), yaw: NaN, pitch: NaN };
+  /** The touch pad's walk (milestone 24): x to the right and y forward, each -1 to 1. */
+  const stick = { x: 0, y: 0 };
+  const stickOn = () => stick.x !== 0 || stick.y !== 0;
 
   /**
    * Points the camera, and tells the scene only when the eyes or the way
@@ -278,6 +286,26 @@ export function walkControls(
     aim();
   }
 
+  const jumps = physics !== undefined && physics.walker.gravity && physics.walker.canJump;
+  const pad = touchScreen()
+    ? createTouchPad(
+        element.parentElement ?? document.body,
+        (s) => {
+          stick.x = s.x;
+          stick.y = s.y;
+          if (stickOn()) changed();
+        },
+        jumps
+          ? () => {
+              if (!paused && physics.walker.jump()) {
+                airborne = true;
+                changed();
+              }
+            }
+          : undefined,
+      )
+    : null;
+
   element.addEventListener('pointerdown', onDown);
   element.addEventListener('pointermove', onMove);
   element.addEventListener('pointerup', onUp);
@@ -310,17 +338,24 @@ export function walkControls(
         onBlur();
         pointers.clear();
         pinch = null;
+        stick.x = stick.y = 0;
       }
+      if (pad) pad.element.hidden = on;
     },
     step(dt) {
       // With gravity, every frame checks the ground: a block under the feet may be gone.
-      if (held.size === 0 && !airborne && !physics?.walker.gravity) return false;
+      if (held.size === 0 && !stickOn() && !airborne && !physics?.walker.gravity) return false;
       const turn = (((turnSpeed * Math.PI) / 180) * dt) / 1000;
       yaw += (held.has('turn-left') ? turn : 0) - (held.has('turn-right') ? turn : 0);
       pitch = Math.max(-1.4, Math.min(1.4, pitch + (held.has('look-up') ? turn : 0) - (held.has('look-down') ? turn : 0)));
       const d = (walkSpeed * (running ? RUN : 1) * dt) / 1000;
-      move((held.has('f') ? d : 0) - (held.has('b') ? d : 0), (held.has('r') ? d : 0) - (held.has('l') ? d : 0), dt / 1000);
-      return held.size > 0 || airborne;
+      const pace = (walkSpeed * dt) / 1000;
+      move(
+        (held.has('f') ? d : 0) - (held.has('b') ? d : 0) + stick.y * pace,
+        (held.has('r') ? d : 0) - (held.has('l') ? d : 0) + stick.x * pace,
+        dt / 1000,
+      );
+      return held.size > 0 || stickOn() || airborne;
     },
     moveTo(eyeAt) {
       if (physics) {
@@ -344,6 +379,7 @@ export function walkControls(
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
+      pad?.dispose();
     },
   };
 }

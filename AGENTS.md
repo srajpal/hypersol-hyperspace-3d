@@ -143,8 +143,10 @@ Do not change earlier entries except to correct an error.
 ## Testing
 
 Where tests live:
-- Unit tests next to the code they test: `*.test.ts` in each package and
-  in apps/browser/src.
+- Unit tests next to the code they test: `*.test.ts` in each package, in
+  apps/browser/src, and in apps/android/src (the Android room page's);
+  the Android app's Kotlin unit tests (JUnit) in
+  apps/android/app/src/test.
 - End-to-end tests in tests/e2e (Playwright driving the Electron app).
 - Test fixture pages in tests/fixtures, served from 127.0.0.1.
 - HoloML conformance fixtures in the holoml repo under conformance/.
@@ -157,6 +159,16 @@ date given and grow with each milestone; TODO.md has the latest.
 - Install: `pnpm install --frozen-lockfile`
 - Unit: `pnpm test` (Vitest; 502 tests passed on 2026-09-30;
   each test may take up to 20 seconds, vitest.config.ts)
+- HyperSpace 3D for Android (milestone 24; first run 2026-10-05): after
+  `pnpm build` and `pnpm --filter @hypersol/android build:web`, in
+  apps/android `./gradlew testDebugUnitTest assembleDebug` (JDK 21 and
+  the Android SDK; JAVA_HOME and ANDROID_HOME set, or the SDK's place in
+  local.properties, which is not committed), then `adb install -r
+  app/build/outputs/apk/debug/app-debug.apk` on a device plugged in over
+  USB. The automatic builds run the same on Linux (the "Android" job,
+  part of "All checks"); the checks on a device are run by hand. A test
+  run on the device uses pages served from this computer over USB
+  (`adb reverse`), never the owner's own accounts or data in the app.
 - Lint and type check: `pnpm lint` and `pnpm typecheck` (both clean;
   lint takes about half a minute, as three of its rules need the types:
   a promise nobody awaits or catches is an error, since the review of
@@ -477,9 +489,17 @@ milestone; the current milestone's checks are defined in TODO.md):
   the .vsix's contents); its tests inside VS Code with `pnpm --filter
   holoml-vscode test:vscode` there (holoml's AGENTS.md has the details).
   Nothing in this repository changes with it.
-- Later milestones add: the browser for Android (24), HoloML 0.3 (25),
-  privacy and data tools (26), free camera (27), lift to 3D (28),
-  polish (29), and installers (30 and 31).
+- Milestone 24 checks AN1 to AN9 (TODO.md): HyperSpace 3D for Android,
+  on the owner's tablet, by hand (the app opens to the room; a page on
+  the tilted panel where taps land; tabs; the top bar; HoloML pages
+  with touch alone; the frame rate with the lighter drawing; nothing on
+  the network but the pages; rotation and tilt; and the desktop's
+  regression, as the room, the top bar, and the viewer are shared). The
+  shared parts' unit tests run with `pnpm test` (viewer/touch.test.ts,
+  apps/android/src/bridge.test.ts), and the app's with Gradle.
+- Later milestones add: HoloML 0.3 (25), privacy and data tools (26),
+  free camera (27), lift to 3D (28), polish (29), and installers (30
+  and 31).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

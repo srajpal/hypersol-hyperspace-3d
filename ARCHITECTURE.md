@@ -155,6 +155,12 @@ newest release of any kind is 45.0.0-alpha.14 (2026-10-01), not a
 stable line. Nothing to upgrade. The milestone changes nothing in the
 browser.
 
+Rule 13 check, 2026-10-05 (start of milestone 24, HyperSpace 3D for
+Android): 44.5.1 (2026-09-30) is still the newest stable release on
+npm; 45.0.0-alpha.14 (2026-10-01) is not a stable line. Nothing to
+upgrade. The Android app does not use Electron: its pages are in
+Android's own WebView, which Android keeps up to date.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |
@@ -260,6 +266,7 @@ browser.
 | Tests | Vitest (unit), Playwright (Electron end-to-end); ESLint with typescript-eslint's recommended rules and, since the review of 2026-09-30 (H8), three rules that need the types (eslint.config.js, typed through the project's tsconfig files): a promise nobody awaits or catches, a promise where none is expected, and an await on what is not one are errors, since such a promise would fail in silence, across processes; the type-aware run takes about half a minute; `pnpm test:linux` runs them in a Docker container that copies GitHub's Linux machines (tests/linux/, prompts 103 and 104). The automatic builds (.github/workflows/ci.yml) run on Windows and Linux for every pull request and every push to main, the end-to-end checks in four parts side by side on each system, with a last job, "All checks", that passes only when every part has; a change to documents only (the `*.md` files at the top and the docs folder, which no check reads) skips the parts. Section 11 has the details | Standard, cross-platform. The container finds Linux problems on this computer; the automatic builds on GitHub stay the check a pull request is merged on, and the rule on main names "All checks" alone, so it needs no change when the parts do. |
 | Repos | hypersol-hyperspace-3d (browser; renamed from hypersol-websurfer-3d on 2026-09-26), holoml (language) | Each useful on its own. HoloML's packages are not published to npm: the browser keeps a copy of the parser and checker (packages/holoml), made from the holoml repository by `pnpm holoml:sync` and checked file by file against the hashes in its SOURCE.json. |
 | License | Apache 2.0 both; spec text also CC BY 4.0 | Per brief. |
+| Android (milestone 24) | A Kotlin app in apps/android on Android's own WebView (Q1 a): the desktop's room and top bar drawn by one WebView that fills the window, each tab's page in another WebView over it, drawn onto the outline the room computes (room.ts, screenQuad) through a view's animation matrix, with touches mapped back through the inverse; HoloML pages as on the desktop, with the viewer's touch controls (a walk pad, a jump button, a long press for a right-click) and its lighter drawing on by default; tablets first (Q2 a); installed by hand over USB, signed with Android's debug key | The room, top bar, start panel, viewer, and themes are the desktop's own code, so the two stay one browser; Android has no isolated world for a page's preload and no way to put a native view inside a page, so the app holds the pages and the room tells it where they go. Not yet on Android: bookmarks, history, the blocker, private tabs, downloads, passwords, permissions, the layers view, the instrument panel, and a HoloML page's text view (Q3 a). |
 | Editor support | A VS Code extension in holoml's packages/vscode (milestone 23): a language server over the parser and checker, with a forgiving reader of its own for pages being typed; VS Code 1.96 or newer; installed by hand from a .vsix; no preview, no telemetry, no network | The parser, checker, and the extension change together in one pull request; a language server serves other editors too; the browser's parser and checker are unchanged (Q1 to Q4 a, 2026-10-02). |
 
 ## 5. Parts (browser repository)
@@ -469,6 +476,26 @@ hypersol-hyperspace-3d/
                                licence the starter copy is passed on under)
       scripts/filters-update.mjs
                                rebuilds the starter copy (pnpm filters:update)
+    android/                   HyperSpace 3D for Android (milestone 24)
+      index.html, src/         the room's page: the desktop's own room
+                               (scene/room.ts), top bar, start panel, and
+                               HoloML examples, built with Vite into the
+                               app's assets; stand-in.ts places a tab in
+                               the room; bridge.ts, the messages with the
+                               app (checked, unit tested)
+      copy-viewer.mjs          the desktop's built HoloML viewer, copied
+                               into the app's assets
+      app/                     the Kotlin app (Gradle, Android Gradle
+                               Plugin 9.1, Android 10 and later):
+                               MainActivity.kt (the window's two layers,
+                               the tabs, the room's messages),
+                               PageLayer.kt (each tab's page in a WebView,
+                               drawn onto the outline the room gives,
+                               touches mapped back), Homography.kt (that
+                               map), PageClient.kt (HoloML pages, the
+                               viewer's files), TabList.kt, TiltSensor.kt
+                               (the tablet's tilt as parallax), Json.kt;
+                               JUnit tests in app/src/test
   packages/
     scene-core/                @hypersol/scene-core: room layout math,
                                PagePanel interface, camera rig. No Electron
