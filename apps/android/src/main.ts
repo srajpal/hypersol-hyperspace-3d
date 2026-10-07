@@ -54,8 +54,10 @@ const room = new Room(document.getElementById('room')!, theme, {
     onCardClick: (key) => post(key === 'plus' ? { type: 'new-tab' } : { type: 'focus', id: key }),
     onCardClose: (key) => post({ type: 'close', id: key }),
   },
+  economyFullResolution: true,
 });
-// The tablet draws the room lighter: fewer pixels, at most 30 frames a second, no glow.
+// The tablet draws the room lighter: at most 30 frames a second, no glow; at
+// the display's own resolution, as half of it blurred the cards (prompt 160).
 room.setEconomy(true);
 dark.addEventListener('change', () => {
   theme = themeNow();

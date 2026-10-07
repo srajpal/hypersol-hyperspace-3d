@@ -85,6 +85,12 @@ export interface RoomOptions {
   tiltDeg: number;
   fovDeg?: number;
   callbacks: RoomCallbacks;
+  /**
+   * Economy mode keeps the display's resolution (the Android app, milestone
+   * 24: its tablet has about one device pixel to a CSS pixel, so half of it
+   * blurred the cards). The desktop leaves this off.
+   */
+  economyFullResolution?: boolean;
 }
 
 interface Pose {
@@ -440,9 +446,10 @@ export class Room {
     return this.economy;
   }
 
-  /** The room's resolution: the display's, or half of it in economy mode. */
+  /** The room's resolution: the display's, or half of it in economy mode (unless economyFullResolution). */
   private applyPixelRatio(): void {
-    this.webgl?.setPixelRatio(this.economy ? Math.max(0.5, window.devicePixelRatio * 0.5) : window.devicePixelRatio);
+    const half = this.economy && this.options.economyFullResolution !== true;
+    this.webgl?.setPixelRatio(half ? Math.max(0.5, window.devicePixelRatio * 0.5) : window.devicePixelRatio);
   }
 
   /**

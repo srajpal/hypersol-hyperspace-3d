@@ -345,14 +345,14 @@ class MainActivity : Activity() {
     private fun snapshot(tab: Tab) {
         val view = tab.webView ?: return
         if (view.width <= 1 || view.height <= 1) return
-        val width = 320
+        val width = 400
         val height = (width * view.height / view.width).coerceAtLeast(1)
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         canvas.scale(width.toFloat() / view.width, height.toFloat() / view.height)
         view.draw(canvas)
         val out = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 75, out)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out)
         bitmap.recycle()
         val data = "data:image/jpeg;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
         tell(mapOf("type" to "snapshot", "id" to tab.id, "dataUrl" to data))

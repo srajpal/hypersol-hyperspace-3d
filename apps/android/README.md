@@ -24,7 +24,9 @@ on the tilted panel. Android 10 or later; made for tablets first.
   shadows or moving light on water) is on by default, and the start
   panel has its switch.
 - The tablet's tilt moves the room's parallax (`TiltSensor.kt`); the
-  room draws in economy mode.
+  room draws in economy mode (at most 30 frames a second, no glow), but
+  at the display's own resolution: half of it, as on the desktop,
+  blurred the tab cards on the tablet (prompt 160).
 
 Not yet on Android (later milestones): bookmarks and history, the ad
 and tracker blocker, private tabs, downloads, passwords and site
