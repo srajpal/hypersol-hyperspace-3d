@@ -1793,3 +1793,20 @@ Publish the draft security advisories.
 hypersol-hyperspace-3d/pull/53 merged.
 Let me know what else.
 ```
+
+## 161 — 2026-10-07 · Claude Opus 5.5, high effort
+
+Answers the agent's questions after prompt 160: St7, yes, holoml takes
+this repository's rule on pushing (push before and after each
+milestone); Node 24 as recommended (the automatic builds and `engines`
+on Node 24, `@types/node` 24, and Node 26 as a second build until it
+becomes the long-term version); the new wording for the screenshots
+working agreement approved (the previous set leaves the tree, its links
+pointing at the last commit that has it; 3D scenes as JPEG).
+
+```text
+St7 yes, Node 24 as recommended, wording approved.
+Accept milestone 24.
+Also "Bump vscode-textmate from 7.0.4 to 9.3.2" #34 has a conflict;
+please address it.
+```
