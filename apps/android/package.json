@@ -1,0 +1,20 @@
+{
+  "name": "@hypersol/android",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HyperSpace 3D for Android: the room's page, built into the Android app's assets.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build:web": "vite build && node copy-viewer.mjs"
+  },
+  "dependencies": {
+    "@hypersol/scene-core": "workspace:*",
+    "@hypersol/themes": "workspace:*",
+    "lit": "^3.3.3",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "vite": "^7.3.6"
+  }
+}

@@ -1696,13 +1696,7 @@ for an Android milestone (the browser is built with Electron, which
 does not run on Android).
 
 ```text
-Accept 23, do both. Also, we are building this as an example for an AI
-course, so people can see what is possible with good prompts. I think
-we are in a good place for that, as I have placed all the prompts in
-PROMPTS.md. Now I want to do some things to test out the capabilities
-of the browser, so I thought an Android build would fit that. Should we
-continue to put the prompts in the md file? Should we include this in
-the repository? Answer first and ask questions if needed.
+Accept 23, do both.
 ```
 
 ## 154 — 2026-10-05 · Claude Opus 5.5, high effort
@@ -1735,4 +1729,25 @@ repository, and Maven Central.
 
 ```text
 Use the recommendations and approve the tools, push the plan.
+```
+
+## 156 — 2026-10-05 · Claude Opus 5.5, high effort
+
+```text
+Build approved, go ahead.
+```
+
+## 157 — 2026-10-05 · Claude Opus 5.5, high effort
+
+Sent while the agent was testing the app on the tablet, which had no
+internet until its Wi-Fi network's sign-in was done.
+
+```text
+Wi-Fi connected.
+```
+
+## 158 — 2026-10-05 · Claude Opus 5.5, high effort
+
+```text
+Push and continue the next step, I will manually test later.
 ```

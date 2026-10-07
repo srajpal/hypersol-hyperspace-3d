@@ -9,3 +9,8 @@
 # packages/holoml/src/copy.test.ts), so no line-ending conversion for
 # anything under the HoloML fixtures.
 tests/fixtures/holoml/** -text
+
+# The Android app's Gradle wrapper (milestone 24): Windows batch files
+# keep Windows line ends, and the wrapper's jar is binary.
+*.bat text eol=crlf
+*.jar binary

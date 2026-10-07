@@ -223,7 +223,7 @@ by AI coding agents directed by prompts. To follow it:
 
 Milestone 22, documentation for HoloML to recognised standards (being
 finished). 24, HyperSpace 3D on an Android tablet, to see how far the
-browser reaches. 25, HoloML 0.3: the features its check found missing,
+browser reaches (being built: [apps/android](apps/android/README.md)). 25, HoloML 0.3: the features its check found missing,
 such as names for models and the language of text. 26, privacy and
 data tools: HTTPS-only browsing, per-site storage, and bookmark import
 and export. 27, free camera movement around the room. 28, pictures and
@@ -321,7 +321,9 @@ In use now: Electron 44 (the current supported stable line), TypeScript,
 Three.js (with its glTF loader, for HoloML pages), Lit, SQLite through
 Node's built-in node:sqlite, and Ghostery's open-source ad-blocking
 engine with open filter lists; Vite and electron-vite to build; Vitest
-and Playwright to test.
+and Playwright to test. On Android (milestone 24, being built): Kotlin,
+Android's own WebView, and Gradle with the Android Gradle Plugin; JUnit
+to test.
 Planned, not yet installed: electron-builder for installers (milestones 30 and 31).
 Reasons for each choice are in ARCHITECTURE.md.
 
@@ -333,6 +335,9 @@ Chromium cannot start it (no graphics driver, some virtual machines),
 pages still work without the room, and a notice says so.
 
 ## Building and running
+
+The Android app, for a tablet (milestone 24, being built), has its own
+steps in [apps/android/README.md](apps/android/README.md).
 
 A developer preview (0.9.0): no installers yet, so build and run it from
 source. Checked on Windows 11 here, and on Windows and Linux (Ubuntu) by

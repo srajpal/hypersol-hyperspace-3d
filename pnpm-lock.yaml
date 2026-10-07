@@ -185,6 +185,25 @@ importers:
         specifier: ^5.0.2
         version: 5.0.2(@types/node@26.6.3)(vite@8.3.0(@types/node@26.6.3)(esbuild@0.28.2))
 
+  apps/android:
+    dependencies:
+      '@hypersol/scene-core':
+        specifier: workspace:*
+        version: link:../../packages/scene-core
+      '@hypersol/themes':
+        specifier: workspace:*
+        version: link:../../packages/themes
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
+      three:
+        specifier: ^0.186.1
+        version: 0.186.1
+    devDependencies:
+      vite:
+        specifier: ^7.3.6
+        version: 7.3.6(@types/node@26.6.3)(lightningcss@1.33.0)
+
   apps/browser:
     devDependencies:
       '@ghostery/adblocker':

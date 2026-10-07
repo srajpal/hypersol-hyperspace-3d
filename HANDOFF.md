@@ -1,10 +1,10 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-03 (milestones 1 to 21 accepted; 22, HoloML's
-documentation, being finished; 23, HoloML for VS Code, merged in holoml
-(pull request #32) with checks by hand left: see "Milestone 23,
-HoloML for VS Code, in progress" below. The roadmap is in TODO.md).
+Last updated 2026-10-05 (milestones 1 to 21 and 23 accepted; 22,
+HoloML's documentation, being finished; 24, HyperSpace 3D for Android,
+built and being checked: see "Milestone 24, HyperSpace 3D for Android,
+in progress" below. The roadmap is in TODO.md).
 
 ## Where things stand
 
@@ -80,22 +80,41 @@ holoml's #19 merged, 2026-09-29):
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
 
-## Milestone 24, HyperSpace 3D for Android, planned (2026-10-05, prompts 152 to 154)
+## Milestone 24, HyperSpace 3D for Android, in progress (2026-10-05, prompts 152 to 157)
 
-The browser on the owner's Android tablet, its code to be in
-apps/android. Electron does not run on Android, so the plan (TODO.md,
-milestone 24; approved with the recommended answers and the build
-tools in prompt 155, the build not yet approved) is a Kotlin shell with Android's own
-WebView: the desktop's room and top bar drawn by one WebView, each page
-in another tilted in front of it with Android's view transforms, and
-HoloML pages with the desktop's viewer, touch controls added to it.
+The browser on the owner's Android tablet, in apps/android: a Kotlin
+app on Android's own WebView. Plan approved with the recommended
+answers and the build tools (prompt 155); built 2026-10-05 on the
+branch `m24-android` (not yet pushed). TODO.md, milestone 24, has the
+plan, the decisions made while building, and the results so far.
 
-A quick look ran first (prompt 153): the viewer and the example sites
-served from this computer on 127.0.0.1, opened in Chrome on the tablet
-over USB. They drew; dragging looks around, but walking needs keys the
-tablet lacks; the ocean tunnel ran at about 19 frames a second and
-Blockworld at about 12. The tools for it are in the session's scratch
-folder, not the repository.
+- How it works: the desktop's own room, top bar, start panel, and
+  examples run in one WebView (apps/android/src, built with Vite into
+  the app's assets); each tab's page is a WebView over it, drawn onto
+  the outline the room computes (PageLayer.kt, Homography.kt), with
+  touches mapped back. HoloML pages use the desktop's built viewer,
+  which now has touch controls (viewer/touch.ts: a walk pad, a jump
+  button, a long press for a right-click) and a lighter drawing that
+  the app asks for (half the sharpness, no shadows or moving light on
+  water; edges stay smoothed, as this tablet drew nothing without
+  them).
+- Shared code changed: room.ts takes any page view (RoomView), reports
+  each frame (onDrawn), and says which card is under a point (cardHit);
+  the top bar can leave out parts (omit). The desktop behaves as before
+  (its end-to-end run is the check).
+- Building: `pnpm build`, `pnpm --filter @hypersol/android build:web`,
+  then in apps/android `./gradlew testDebugUnitTest assembleDebug` and
+  `adb install -r app/build/outputs/apk/debug/app-debug.apk`
+  (apps/android/README.md). CI builds it on Linux ("Android" job).
+- On the tablet so far: pages on the tilted panel take taps where they
+  appear, tabs open, close with a swipe, and reopen, HoloML sites draw
+  and walk by touch, and the ocean tunnel runs at 33 frames a second.
+  Still to check (by hand): scrolling, pinching, landscape, switching by
+  a card, Forward, Reload, a search, Harbour Loft's doors, the other
+  three sites, the tablet's network log, and turning the tablet.
+- The tablet's Wi-Fi is a hotel's that needs a sign-in; for testing,
+  pages were served from this computer over USB (`adb reverse`) by a
+  small server in the session's scratch folder, not the repository.
 
 ## Milestone 23, HoloML for VS Code, accepted (2026-10-03, prompt 146)
 

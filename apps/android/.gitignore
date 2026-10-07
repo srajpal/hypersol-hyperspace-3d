@@ -1,0 +1,8 @@
+# Gradle's own folders, and where the Android SDK is on this computer
+.gradle/
+.kotlin/
+local.properties
+captures/
+# The app's build, and the room's page and viewer built into it (pnpm build:web)
+app/build/
+build/

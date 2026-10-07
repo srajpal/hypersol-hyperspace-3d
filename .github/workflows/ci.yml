@@ -8,7 +8,8 @@
 # as its longest part (two parts from milestone 21, owner, prompt 122,
 # Q7 a; four from prompt 134): parts 2 to 4 are the HoloML files listed
 # in vitest.e2e.config.ts, part 1 everything else, with lint, types, and
-# the unit tests.
+# the unit tests. HyperSpace 3D for Android (milestone 24, Q5 a) is built
+# on Linux, with its unit tests; its checks on a device are run by hand.
 name: CI
 
 on:
@@ -124,6 +125,42 @@ jobs:
           HYPERSOL_E2E_PART: ${{ matrix.part }}
         run: pnpm test:e2e
 
+  # HyperSpace 3D for Android (milestone 24): the room's page and the
+  # viewer built from the desktop's code, then the app's unit tests and its
+  # debug build, with the Android SDK that GitHub's Linux machines carry.
+  android:
+    name: Android
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: The room's page and the viewer
+        run: |
+          pnpm build
+          pnpm --filter @hypersol/android build:web
+
+      - name: Unit tests and the debug build
+        working-directory: apps/android
+        run: ./gradlew --no-daemon testDebugUnitTest assembleDebug
+
   # One check that stands for every part, whatever their number: passes
   # only when all of them passed, or when only documents changed and
   # they were skipped. A rule that requires checks before merging can
@@ -131,7 +168,7 @@ jobs:
   all:
     name: All checks
     if: always()
-    needs: [changes, test]
+    needs: [changes, test, android]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -140,7 +177,12 @@ jobs:
           CHANGES: ${{ needs.changes.result }}
           CODE: ${{ needs.changes.outputs.code }}
           TEST: ${{ needs.test.result }}
+          ANDROID: ${{ needs.android.result }}
         run: |
-          echo "What changed: $CHANGES (code: $CODE); the parts: $TEST"
+          echo "What changed: $CHANGES (code: $CODE); the parts: $TEST; Android: $ANDROID"
           test "$CHANGES" = "success"
-          if [ "$CODE" = "false" ]; then test "$TEST" = "skipped"; else test "$TEST" = "success"; fi
+          if [ "$CODE" = "false" ]; then
+            test "$TEST" = "skipped" && test "$ANDROID" = "skipped"
+          else
+            test "$TEST" = "success" && test "$ANDROID" = "success"
+          fi

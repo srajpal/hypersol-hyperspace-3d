@@ -2,7 +2,7 @@ import tseslint from 'typescript-eslint';
 
 export default [
   {
-    ignores: ['**/out/**', '**/node_modules/**', 'userData/**', 'coverage/**', 'tests/fixtures/**', '.claude/**'],
+    ignores: ['**/out/**', '**/node_modules/**', 'userData/**', 'coverage/**', 'tests/fixtures/**', '.claude/**', 'apps/android/app/build/**', 'apps/android/.gradle/**'],
   },
   ...tseslint.configs.recommended,
   // Rules that need the types (review of 2026-09-30, H8): a promise that

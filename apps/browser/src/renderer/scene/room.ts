@@ -38,7 +38,20 @@ import {
 } from '@hypersol/scene-core';
 import type { Theme } from '@hypersol/themes';
 import { CARD_HEIGHT, CARD_WIDTH, TabCard, type CardModel, type CardPart } from './tab-card';
-import type { TabView } from './tab-view';
+
+/**
+ * A page the room places (milestone 24): the desktop's tab view (a
+ * Chromium view placed with CSS 3D), or, on Android, a stand-in whose
+ * place on screen the app follows with the page's own native view.
+ */
+export interface RoomView {
+  readonly tabId: number;
+  readonly element: HTMLElement;
+  setSize(width: number, height: number): void;
+  /** In front, or hidden behind another tab. */
+  setInFront(on: boolean): void;
+  dispose(): void;
+}
 
 /** Height kept free at the top for the HUD. */
 export const HUD_HEIGHT = 64;
@@ -90,7 +103,7 @@ interface Tween {
 }
 
 interface ViewEntry {
-  view: TabView;
+  view: RoomView;
   object: CSS3DObject;
 }
 
@@ -109,6 +122,8 @@ export class Room {
   readonly parallax = new Parallax();
   /** Called on each frame the camera's parallax moves, with the offset as -1 to 1 on each axis (y up). */
   onCameraMove: ((offset: { x: number; y: number }) => void) | null = null;
+  /** Called after each frame is drawn (milestone 24: the Android app follows the page's outline). */
+  onDrawn: (() => void) | null = null;
   /** Null where Chromium cannot start WebGL 2: the page and the top bar still work, the room is not drawn (milestone 12, owner prompt 60). */
   private readonly webgl: WebGLRenderer | null;
   /** The room's canvas, or a stand-in without WebGL, so the pointer wiring stays the same. */
@@ -283,7 +298,7 @@ export class Room {
   // ---- Tabs ---------------------------------------------------------------
 
   /** Adds a tab's view to the room, hidden until focused. */
-  addView(view: TabView): void {
+  addView(view: RoomView): void {
     const object = new CSS3DObject(view.element);
     view.setSize(this.currentLayout.panelWidth, this.currentLayout.panelHeight);
     this.applyPose(object, this.centrePose());
@@ -670,7 +685,7 @@ export class Room {
     object.scale.setScalar(pose.scale);
   }
 
-  private setShown(view: TabView, shown: boolean): void {
+  private setShown(view: RoomView, shown: boolean): void {
     // Hidden, not removed: a webview that leaves the page reloads. Hidden
     // this way, Chromium still counts the page as seen, so the tab view also
     // tells it (a HoloML page then draws nothing, milestone 21).
@@ -731,6 +746,7 @@ export class Room {
     if (!this.contextLost) this.webgl?.render(this.scene, this.camera);
     this.css.render(this.cssScene, this.camera);
     this.frames += 1;
+    this.onDrawn?.();
     if (moving || this.tweens.length > 0 || spinning) this.requestRender();
     else this.lastFrameTime = 0;
   }
@@ -863,6 +879,12 @@ export class Room {
   }
 
   // ---- Pointer ------------------------------------------------------------
+
+  /** The card and its part at a point on screen, by its key (milestone 24: a swipe on a card closes its tab on Android). */
+  cardHit(x: number, y: number): { key: number | 'plus'; part: CardPart } | null {
+    const hit = this.cardAt(x, y);
+    return hit ? { key: hit.card.key, part: hit.part } : null;
+  }
 
   private cardAt(x: number, y: number): { card: TabCard; part: CardPart } | null {
     if (!this.webgl) return null; // cards that are not drawn take no clicks

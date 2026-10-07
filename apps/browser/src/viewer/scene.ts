@@ -92,6 +92,7 @@ import {
   type Intersection,
   type Material,
 } from 'three';
+import { touchScreen } from './touch';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneModel } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -122,6 +123,16 @@ const LET_GO = 1.5;
 const FAR = 'it loads when the viewer comes near';
 /** Where Chromium draws in software, the scene is drawn with half as many pixels each way (owner, prompt 135). */
 const SOFTWARE_SHARPNESS = 0.5;
+/** A press of a finger this long, without moving, does what a right-click does (milestone 24). */
+const LONG_PRESS_MS = 500;
+/**
+ * Set on the page's root element by the browser, before the viewer runs,
+ * to ask for the lighter drawing (milestone 24: HyperSpace 3D for Android
+ * on a tablet): at half the sharpness, without shadows or the water's
+ * moving light. Edges stay smoothed: on the owner's tablet (a Mali-G57)
+ * a scene drawn without them showed nothing at all, with no error.
+ */
+const LIGHTER = 'data-hypersol-lighter';
 
 /** How a file the page names ended, when it is not shown: refused (another site), left out (a limit, a stop), or failed. */
 type NotShown = 'refused' | 'left-out' | 'failed';
@@ -482,6 +493,10 @@ export class HolomlView {
   private readonly pictureProblems: { what: string; why: string }[] = [];
   /** The WebGL renderer's name when Chromium draws in software (no graphics card), else null. */
   private readonly software: string | null;
+  /** The browser asked for the lighter drawing (milestone 24). */
+  private readonly lighter: boolean;
+  /** Drawn in software, or lighter: half the sharpness, and no shadows or moving light on water. */
+  private readonly reduced: boolean;
   /** Shadows: drawn (a 0.2 page, a graphics card), and whether and why a page's were left out. */
   private readonly shadowsOn: boolean;
   private shadowsLeftOut: string | null = null;
@@ -553,7 +568,11 @@ export class HolomlView {
     // There the scene is drawn at half its sharpness and without smoothed edges (owner, prompt 135: the ocean
     // tunnel went from one frame a second to three on a machine without a graphics card); the console says so once.
     this.software = softwareDrawing();
+    // The browser's ask for the lighter drawing is read before any script of the page has run (milestone 24).
+    this.lighter = document.documentElement.hasAttribute(LIGHTER);
+    this.reduced = this.software !== null || this.lighter;
     // Throws where Chromium cannot start WebGL 2; main.ts says so on the page.
+    // Smoothed edges are left out only in software: the lighter drawing keeps them (see LIGHTER).
     this.renderer = new WebGLRenderer({ antialias: this.software === null });
     this.renderer.setPixelRatio(this.pixelRatio());
     this.renderer.toneMapping = ACESFilmicToneMapping;
@@ -562,13 +581,15 @@ export class HolomlView {
     this.renderer.domElement.dataset['testid'] = 'holoml-canvas';
     if (this.software !== null) {
       console.warn('HoloML: this computer draws 3D in software, without a graphics card: the scene is drawn at half its sharpness and without smoothed edges, so that it moves more smoothly.');
+    } else if (this.lighter) {
+      console.warn('HoloML: the scene is drawn lighter on this device: at half its sharpness, without shadows or moving light on water, so that it moves more smoothly.');
     }
     // The graphics card was reset (a driver update, a computer waking up): what was drawn into pictures there is made again.
     this.renderer.domElement.addEventListener('webglcontextrestored', () => this.restored());
     // Shadows (HoloML 0.2): soft shadow maps where there is a graphics card.
     // Drawn in software they would take most of every frame, so a page's
     // shadows are left out there, and the console says so (owner, prompt 98, Q5 a).
-    this.shadowsOn = this.since('0.2') && this.software === null;
+    this.shadowsOn = this.since('0.2') && !this.reduced;
     if (this.shadowsOn) {
       this.renderer.shadowMap.enabled = true;
       this.renderer.shadowMap.type = PCFShadowMap;
@@ -740,12 +761,12 @@ export class HolomlView {
 
   /** How many of the screen's pixels the scene is drawn with: all of them, or half each way where Chromium draws in software. */
   private pixelRatio(): number {
-    return window.devicePixelRatio * (this.software === null ? 1 : SOFTWARE_SHARPNESS);
+    return window.devicePixelRatio * (this.reduced ? SOFTWARE_SHARPNESS : 1);
   }
 
   /** How the scene is drawn (for the tests and the inspector): in software or not, and how sharply. */
-  get drawingInfo(): { software: string | null; antialias: boolean; pixelRatio: number; devicePixelRatio: number } {
-    return { software: this.software, antialias: this.software === null, pixelRatio: this.renderer.getPixelRatio(), devicePixelRatio: window.devicePixelRatio };
+  get drawingInfo(): { software: string | null; lighter: boolean; antialias: boolean; pixelRatio: number; devicePixelRatio: number } {
+    return { software: this.software, lighter: this.lighter, antialias: this.software === null, pixelRatio: this.renderer.getPixelRatio(), devicePixelRatio: window.devicePixelRatio };
   }
 
   /** What is past the page's limits on lights (review 134, V6): lights left out, and lights that shine without the shadows they asked for. */
@@ -1970,7 +1991,10 @@ export class HolomlView {
    */
   private castFrom(light: DirectionalLight | PointLight | SpotLight): void {
     if (!this.shadowsOn) {
-      if (!this.shadowsLeftOut) {
+      if (!this.shadowsLeftOut && this.software === null && this.lighter) {
+        this.shadowsLeftOut = 'the scene is drawn lighter on this device';
+        console.warn("HoloML: the page's shadows were left out: the scene is drawn lighter on this device.");
+      } else if (!this.shadowsLeftOut) {
         this.shadowsLeftOut = `this computer draws 3D in software${this.software ? ` (${this.software})` : ''}`;
         console.warn("HoloML: the page's shadows were left out: this computer draws 3D in software, without a graphics card.");
       }
@@ -2598,6 +2622,9 @@ export class HolomlView {
     if (caustics && this.software !== null) {
       this.causticsLeftOut = `this computer draws 3D in software (${this.software})`;
       console.warn("HoloML: the water's moving light was left out: this computer draws 3D in software, without a graphics card.");
+    } else if (caustics && this.lighter) {
+      this.causticsLeftOut = 'the scene is drawn lighter on this device';
+      console.warn("HoloML: the water's moving light was left out: the scene is drawn lighter on this device.");
     }
     this.water = new Water(
       {
@@ -2607,7 +2634,7 @@ export class HolomlView {
         clarity: num(el, 'clarity', 15, Number.MIN_VALUE),
         caustics,
       },
-      this.software === null,
+      !this.reduced,
     );
     this.waterDirty = true;
     this.shadersWanted = true;
@@ -3176,15 +3203,46 @@ export class HolomlView {
   private wirePointer(): void {
     const canvas = this.renderer.domElement;
     let down: { x: number; y: number } | null = null;
+    /**
+     * A finger held still is a right-click (milestone 24): it reaches the
+     * page's scripts as one once it has been held long enough, while it is
+     * still down, since Android may cancel a touch held that long before
+     * it lifts; and the touch then follows no link.
+     */
+    let press: number | undefined;
+    let pressed = false;
+    const stopPress = () => window.clearTimeout(press);
     canvas.addEventListener('pointermove', (e) => {
       if (e.buttons === 0) this.setHovered(this.linkAt(e.clientX, e.clientY) ?? this.triggerAt(e.clientX, e.clientY));
+      if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) stopPress();
     });
     canvas.addEventListener('pointerdown', (e) => {
       down = { x: e.clientX, y: e.clientY };
+      pressed = false;
+      stopPress();
+      if (e.pointerType !== 'touch') return;
+      const { clientX: x, clientY: y } = e;
+      press = window.setTimeout(() => {
+        pressed = true;
+        if (this.listeners.click.size === 0) return;
+        this.scene.updateMatrixWorld();
+        for (const pool of this.pools.values()) pool.sync();
+        const hit = this.hitAt(this.ndc(x, y)) ?? { entry: null, point: null, normal: null };
+        this.emit({ type: 'click', hit, button: 'right' });
+      }, LONG_PRESS_MS);
+    });
+    canvas.addEventListener('pointercancel', () => {
+      stopPress();
+      down = null;
     });
     canvas.addEventListener('pointerup', (e) => {
+      stopPress();
       const start = down;
       down = null;
+      if (pressed) {
+        pressed = false;
+        return;
+      }
       // A drag moves the view; only a click (or tap) follows a link.
       if (!start || Math.hypot(e.clientX - start.x, e.clientY - start.y) > 6) return;
       // The inspector's pick: a click selects instead of following a link (issue #28).
@@ -3209,7 +3267,8 @@ export class HolomlView {
     canvas.addEventListener('auxclick', (e) => e.preventDefault());
     // While a script listens for clicks, a right-click is the page's, not the browser's menu.
     canvas.addEventListener('contextmenu', (e) => {
-      if (this.listeners.click.size > 0) e.preventDefault();
+      // A long press on a touch screen is a right-click for the page, not the system's menu (milestone 24).
+      if (this.listeners.click.size > 0 || touchScreen()) e.preventDefault();
     });
   }
 
