@@ -262,7 +262,7 @@ Android's own WebView, which Android keeps up to date.
 | Access in the shell | The screen reader's list of tabs keeps its buttons, and the keyboard on them, as tabs change; an error card is an alert named by its heading; About and the HoloML examples keep Tab inside and put the keyboard back where it was when they close (hud/dialog-focus.ts); the arrow keys, Home, and End move through the top bar's menus; text being composed with an input method (the way languages such as Japanese and Chinese are typed, several key presses to a character) is not completed in place, and its Enter loads nothing; Escape in the shell stops a loading page once nothing else is open for it to close. Switching panels runs the open panel's own close, so a password shown in the Library is hidden again and a shortcut waiting for its new keys stops waiting | Review of 2026-09-30 (the shell's findings R1 and R7). Not checked with a screen reader or a real input method: both are on the roadmap (TODO.md, milestone 29). |
 | UI widgets (address bar, menus) | Lit web components | Tiny, standards-based, no framework lock-in; themed with CSS variables. |
 | Build | electron-vite (Vite) now; electron-builder planned for the installers (milestones 30 and 31; not yet installed) | Fast dev reload; installers for Windows, macOS, Linux. |
-| Toolchain | Node 22.13 or newer; pnpm 12.4.1 pinned in package.json (`packageManager`, with the pnpm version recorded in the lockfile); installs use `--frozen-lockfile` | Reproducible installs (GitHub issue #5). |
+| Toolchain | Node 24 (`.nvmrc`; the automatic builds, with a second build on Node 26 for lint, types, and unit tests); `engines` still accepts 22.13 or newer until this computer has Node 24; `@types/node` 24; pnpm 12.4.1 pinned in package.json (`packageManager`, with the pnpm version recorded in the lockfile); installs use `--frozen-lockfile` | Reproducible installs (GitHub issue #5). Node 24 from prompt 161: it is the Node inside Electron 44 (24.21), so the tools and tests run on the Node the app runs on, and `@types/node` promises nothing the main process lacks; Node 26 is checked beside it until it becomes the long-term version (late October 2026). Node 25 is skipped: Vitest does not support it. |
 | Tests | Vitest (unit), Playwright (Electron end-to-end); ESLint with typescript-eslint's recommended rules and, since the review of 2026-09-30 (H8), three rules that need the types (eslint.config.js, typed through the project's tsconfig files): a promise nobody awaits or catches, a promise where none is expected, and an await on what is not one are errors, since such a promise would fail in silence, across processes; the type-aware run takes about half a minute; `pnpm test:linux` runs them in a Docker container that copies GitHub's Linux machines (tests/linux/, prompts 103 and 104). The automatic builds (.github/workflows/ci.yml) run on Windows and Linux for every pull request and every push to main, the end-to-end checks in four parts side by side on each system, with a last job, "All checks", that passes only when every part has; a change to documents only (the `*.md` files at the top and the docs folder, which no check reads) skips the parts. Section 11 has the details | Standard, cross-platform. The container finds Linux problems on this computer; the automatic builds on GitHub stay the check a pull request is merged on, and the rule on main names "All checks" alone, so it needs no change when the parts do. |
 | Repos | hypersol-hyperspace-3d (browser; renamed from hypersol-websurfer-3d on 2026-09-26), holoml (language) | Each useful on its own. HoloML's packages are not published to npm: the browser keeps a copy of the parser and checker (packages/holoml), made from the holoml repository by `pnpm holoml:sync` and checked file by file against the hashes in its SOURCE.json. |
 | License | Apache 2.0 both; spec text also CC BY 4.0 | Per brief. |
@@ -291,7 +291,7 @@ hypersol-hyperspace-3d/
                                the packages and the actions), the issue
                                and pull request templates
   .editorconfig, .gitattributes, .nvmrc
-                               editor settings, Unix line ends, Node 22
+                               editor settings, Unix line ends, Node 24
   apps/
     browser/                   the Electron app
       electron.vite.config.ts
@@ -911,7 +911,7 @@ HoloML pages in milestone 14.)
 Checked on Windows 11, 2026-09-24 and since; on Windows and Linux in the
 automatic builds since 2026-09-26; on Linux in a container on this
 computer (`pnpm test:linux`) since 2026-09-28. macOS not checked yet.
-- Toolchain: Node 22.13 or newer; pnpm 12.4.1 (pinned)
+- Toolchain: Node 24 (22.13 or newer still installs); pnpm 12.4.1 (pinned)
 - Install: `pnpm install --frozen-lockfile`
 - Develop: `pnpm dev` (starts the Electron app with live reload, using a
   throwaway profile in the ignored `userData/dev` folder)

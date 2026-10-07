@@ -35,7 +35,7 @@ text view.
 
 ## Building and installing
 
-You need what the desktop build needs (Node 22.13 or newer, pnpm 12),
+You need what the desktop build needs (Node 24, pnpm 12),
 and JDK 21 and the Android SDK (Android Studio brings both). From the
 repository's root:
 

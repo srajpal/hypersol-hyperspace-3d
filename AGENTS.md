@@ -155,7 +155,10 @@ How to run (from the repo root; first recorded 2026-09-24 on Windows 11
 after they ran; on Windows and Linux in GitHub Actions since 2026-09-26,
 see .github/workflows/ci.yml; macOS not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
-- Toolchain: Node 22.13 or newer; pnpm 12.4.1, pinned in package.json.
+- Toolchain: Node 24 (the Node inside Electron 44; the automatic
+  builds run it, and Node 26 for lint, types, and unit tests; 22.13 or
+  newer still installs until `engines` is raised, owner, prompt 161);
+  pnpm 12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
 - Unit: `pnpm test` (Vitest; 502 tests passed on 2026-09-30;
   each test may take up to 20 seconds, vitest.config.ts)
@@ -248,7 +251,7 @@ date given and grow with each milestone; TODO.md has the latest.
 - Linux on this computer, the way GitHub's Linux machines run the
   checks: `pnpm test:linux` (needs Docker; first run 2026-09-28, owner,
   prompts 103 and 104). It builds tests/linux/Dockerfile (Ubuntu 24.04,
-  Node 22, a virtual display, a throwaway keyring), sends in a fresh
+  Node 24, a virtual display, a throwaway keyring), sends in a fresh
   copy of the repository (the committed files with changes to tracked
   files), and runs the CI job's steps in a container of GitHub's size (4
   processors, 16 GB) with no graphics card; `pnpm test:linux <vitest

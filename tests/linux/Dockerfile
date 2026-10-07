@@ -1,5 +1,5 @@
 # A Linux machine like GitHub's (ubuntu-latest, Ubuntu 24.04) for
-# `pnpm test:linux` (owner, prompts 103 and 104): Node 22, pnpm, a virtual
+# `pnpm test:linux` (owner, prompts 103 and 104): Node 24, pnpm, a virtual
 # display, a keyring for the password checks, openssl for the certificate
 # check, and the libraries Electron needs. There is no graphics card in
 # a container, so Chromium draws in software, as on GitHub's machines.
@@ -18,9 +18,9 @@ RUN apt-get update \
     fonts-dejavu-core fonts-liberation \
   && rm -rf /var/lib/apt/lists/*
 
-# Node from nodejs.org (GitHub's setup-node gives the newest 22), and pnpm
+# Node from nodejs.org (GitHub's setup-node gives the newest 24), and pnpm
 # at the version package.json pins.
-ARG NODE_VERSION=22.16.0
+ARG NODE_VERSION=24.21.0
 RUN curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
     | tar -xJ -C /usr/local --strip-components=1 \
   && npm install -g pnpm@12.4.1
