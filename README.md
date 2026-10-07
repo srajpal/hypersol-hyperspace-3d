@@ -221,9 +221,7 @@ by AI coding agents directed by prompts. To follow it:
 
 ## What comes next
 
-Milestone 22, documentation for HoloML to recognised standards (being
-finished). 24, HyperSpace 3D on an Android tablet, to see how far the
-browser reaches (being built: [apps/android](apps/android/README.md)). 25, HoloML 0.3: the features its check found missing,
+Milestone 25, HoloML 0.3: the features milestone 22's check found missing,
 such as names for models and the language of text. 26, privacy and
 data tools: HTTPS-only browsing, per-site storage, and bookmark import
 and export. 27, free camera movement around the room. 28, pictures and

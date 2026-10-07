@@ -1,11 +1,9 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-07 (milestones 1 to 23 accepted; 24, HyperSpace
-3D for Android, merged and checked by the owner, its blurred tab cards
-fixed, waiting for acceptance: see "Milestone 24, HyperSpace 3D for
-Android" below; the review's last items, TODO.md "The review's last
-items". The roadmap is in TODO.md).
+Last updated 2026-10-07 (milestones 1 to 24 accepted; next, milestone
+25, HoloML 0.3, its plan to be drafted; the review's last items in
+TODO.md, "The review's last items". The roadmap is in TODO.md).
 
 ## Where things stand
 
@@ -59,8 +57,8 @@ state; this is a summary.
   115; accepted 2026-10-07, prompt 160); 23 HoloML for VS Code, an extension
   kept in holoml and installed by hand (prompt 146; plan approved with
   the recommended answers, 2026-10-02; accepted 2026-10-05, prompt
-  153); 24 HyperSpace 3D for Android (prompts 152 to 160; merged, being
-  accepted); 25 HoloML 0.3, the features its check found missing
+  153); 24 HyperSpace 3D for Android (prompts 152 to 161; accepted
+  2026-10-07); 25 HoloML 0.3, the features its check found missing
   (prompt 128, Q4 a); 26 privacy and data tools
   (HTTPS-only, per-site storage, bookmark import and export: #24, #26,
   #27); then free camera (27), lift to 3D (28), and polish (29);
@@ -84,10 +82,10 @@ holoml's #19 merged, 2026-09-29):
 ## Milestone 24, HyperSpace 3D for Android (2026-10-05 to 2026-10-07, prompts 152 to 160)
 
 Merged into main (pull request #53). The owner checked everything on the
-tablet (prompt 160); the one fault, blurred tab cards, is fixed on the
-branch after-m24 (the room in economy mode at the display's own
-resolution on Android). Waiting for the owner's look and acceptance.
-What follows is from the build (2026-10-05).
+tablet (prompt 160); the one fault, blurred tab cards, is fixed (the
+room in economy mode at the display's own resolution on Android).
+Accepted 2026-10-07 (prompt 161). What follows is from the build
+(2026-10-05).
 
 The browser on the owner's Android tablet, in apps/android: a Kotlin
 app on Android's own WebView. Plan approved with the recommended
@@ -116,9 +114,10 @@ plan, the decisions made while building, and the results so far.
 - On the tablet so far: pages on the tilted panel take taps where they
   appear, tabs open, close with a swipe, and reopen, HoloML sites draw
   and walk by touch, and the ocean tunnel runs at 33 frames a second.
-  Still to check (by hand): scrolling, pinching, landscape, switching by
-  a card, Forward, Reload, a search, Harbour Loft's doors, the other
-  three sites, the tablet's network log, and turning the tablet.
+  The rest (scrolling, pinching, landscape, switching by a card,
+  Forward, Reload, a search, Harbour Loft's doors, the other three
+  sites, the network log, turning the tablet) the owner checked by hand
+  (prompt 160).
 - The tablet's Wi-Fi is a hotel's that needs a sign-in; for testing,
   pages were served from this computer over USB (`adb reverse`) by a
   small server in the session's scratch folder, not the repository.

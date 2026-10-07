@@ -291,7 +291,7 @@ written for you, the outline, colour swatches, and going to a
 changes nothing in the browser, whose screens stay as milestone 22
 left them; pictures of the extension at work are still to be made.
 
-**Milestone 24: HyperSpace 3D for Android** (built 2026-10-05).
+**Milestone 24: HyperSpace 3D for Android** (accepted 2026-10-07).
 The browser on an Android tablet: the desktop's own 3D room, top bar,
 and start panel, with each tab's live page on the tilted panel, where
 taps land where they appear. Tabs open, close with a swipe on their
@@ -308,5 +308,6 @@ press for a right-click; a lighter drawing keeps the ocean tunnel at
 <p>
 <img src="screenshots/m24/70-android-ocean-tunnel.png" width="240" alt="The ocean tunnel on the tablet, walked into with the pad: the glass arch overhead, fish beyond it">
 <img src="screenshots/m24/71-android-blockworld.png" width="240" alt="Blockworld on the tablet: grass blocks and trees at dusk, the walk pad and the Jump button at the bottom right">
+<img src="screenshots/m24/72-android-tab-cards.png" width="240" alt="Two tab cards on the left of the room on the tablet, drawn sharp: HoloML's documentation, with its text readable, and a new tab, beside a new tab's start panel">
 </p>
 
