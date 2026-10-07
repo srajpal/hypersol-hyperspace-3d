@@ -123,10 +123,14 @@ Do not change earlier entries except to correct an error.
 - Unfamiliar terms get a one-line explanation the first time they appear
   in a document.
 - At the end of each milestone, save screenshots of the main screens to
-  docs/screenshots/<milestone>/ with `MILESTONE=mN pnpm screenshots`, and
-  add them to docs/progress.md; the README keeps a short progress
-  paragraph that links there. (Added 2026-09-25, prompt 21; the progress
-  page split out 2026-09-26, prompt 47.)
+  docs/screenshots/<milestone>/ with `MILESTONE=mN pnpm screenshots` (3D
+  scenes as JPEG), and add them to docs/progress.md. Then take the
+  previous set out of the tree and point its links in docs/progress.md
+  at the last commit that has it, so the tree keeps only the newest
+  desktop set. The README keeps a short progress paragraph that links
+  there. (Added 2026-09-25, prompt 21; the progress page split out
+  2026-09-26, prompt 47; only the newest set kept from prompt 161, the
+  review of 2026-09-30, H6.)
 - The README always opens with four screenshots of the newest version
   or milestone, good-looking ones that show the variety of what the
   browser does: refresh docs/screenshots/readme*.png with `pnpm
