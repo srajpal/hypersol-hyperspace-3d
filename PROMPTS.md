@@ -1564,6 +1564,15 @@ holoml #21 has a failure too, check that
 3 failures on #45
 ```
 
+## 140 — 2026-09-30 · Claude Fable 5.1, high effort
+
+Restored 2026-10-07 (prompt 160): logged at the time on the branch
+review-134-fixes, which was never merged.
+
+```text
+Everything passed and both branches merged
+```
+
 ## 141 — 2026-10-01 · Claude Fable 5.1, high effort
 
 ```text
