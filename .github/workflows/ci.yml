@@ -80,7 +80,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - name: Install
@@ -141,7 +141,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
@@ -161,6 +161,36 @@ jobs:
         working-directory: apps/android
         run: ./gradlew --no-daemon testDebugUnitTest assembleDebug
 
+  # Node 26, the next long-term version, beside the builds' Node 24 (owner,
+  # prompt 161): lint, types, and unit tests, until 26 takes 24's place.
+  node26:
+    name: Node 26
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Types
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
   # One check that stands for every part, whatever their number: passes
   # only when all of them passed, or when only documents changed and
   # they were skipped. A rule that requires checks before merging can
@@ -168,7 +198,7 @@ jobs:
   all:
     name: All checks
     if: always()
-    needs: [changes, test, android]
+    needs: [changes, test, android, node26]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -178,11 +208,12 @@ jobs:
           CODE: ${{ needs.changes.outputs.code }}
           TEST: ${{ needs.test.result }}
           ANDROID: ${{ needs.android.result }}
+          NODE26: ${{ needs.node26.result }}
         run: |
-          echo "What changed: $CHANGES (code: $CODE); the parts: $TEST; Android: $ANDROID"
+          echo "What changed: $CHANGES (code: $CODE); the parts: $TEST; Android: $ANDROID; Node 26: $NODE26"
           test "$CHANGES" = "success"
           if [ "$CODE" = "false" ]; then
-            test "$TEST" = "skipped" && test "$ANDROID" = "skipped"
+            test "$TEST" = "skipped" && test "$ANDROID" = "skipped" && test "$NODE26" = "skipped"
           else
-            test "$TEST" = "success" && test "$ANDROID" = "success"
+            test "$TEST" = "success" && test "$ANDROID" = "success" && test "$NODE26" = "success"
           fi

@@ -1564,6 +1564,15 @@ holoml #21 has a failure too, check that
 3 failures on #45
 ```
 
+## 140 — 2026-09-30 · Claude Fable 5.1, high effort
+
+Restored 2026-10-07 (prompt 160): logged at the time on the branch
+review-134-fixes, which was never merged.
+
+```text
+Everything passed and both branches merged
+```
+
 ## 141 — 2026-10-01 · Claude Fable 5.1, high effort
 
 ```text
@@ -1750,4 +1759,54 @@ Wi-Fi connected.
 
 ```text
 Push and continue the next step, I will manually test later.
+```
+
+## 159 — 2026-10-07 · Claude Opus 5.5, high effort
+
+```text
+Give me a list of items I have to review before we start the next step.
+```
+
+## 160 — 2026-10-07 · Claude Opus 5.5, high effort
+
+Answers the list of items to review from prompt 159. "Milestone 25"
+in the first line means milestone 24, the Android app (the owner's
+slip). H6 is keeping only the newest milestone's screenshots in the
+tree, with scene screenshots as JPEG; H7 the merged branches and the
+stale working copy; St6 the README's alt text naming "HyperSol, LLC";
+St7 holoml's rule "Do not push unless asked"; "node" the `@types/node`
+version.
+
+```text
+Milestone 24: tablet items tested; the only issue I found was that the
+tabs seem very blurry. I also tested the clipboard both ways and had no
+issues.
+Milestone 22: checked the docs, very good.
+Delete REVIEW-2026-09-30.md.
+H6: go ahead.
+H7: delete the old branches, but double check before doing it.
+St6: accepted.
+St7: reiterate it to me.
+Node: keep up with latest, but check breaking changes and let me know
+if it is extreme.
+Publish the draft security advisories.
+hypersol-hyperspace-3d/pull/53 merged.
+Let me know what else.
+```
+
+## 161 — 2026-10-07 · Claude Opus 5.5, high effort
+
+Answers the agent's questions after prompt 160: St7, yes, holoml takes
+this repository's rule on pushing (push before and after each
+milestone); Node 24 as recommended (the automatic builds and `engines`
+on Node 24, `@types/node` 24, and Node 26 as a second build until it
+becomes the long-term version); the new wording for the screenshots
+working agreement approved (the previous set leaves the tree, its links
+pointing at the last commit that has it; 3D scenes as JPEG).
+
+```text
+St7 yes, Node 24 as recommended, wording approved.
+Accept milestone 24.
+Also "Bump vscode-textmate from 7.0.4 to 9.3.2" #34 has a conflict;
+please address it.
 ```

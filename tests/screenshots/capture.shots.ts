@@ -39,13 +39,18 @@ const STAR = 'hs-toolbar [data-testid="star"]';
 const milestone = process.env['MILESTONE'];
 const outDir = fileURLToPath(new URL(`../../docs/screenshots/${milestone ?? 'unknown'}/`, import.meta.url));
 
-async function capture(h: Harness, name: string): Promise<void> {
+/**
+ * Saves the window as <name>.png, or as <name>.jpg for a 3D scene, which
+ * JPEG keeps at a third of the size or less (the review of 2026-09-30, H6,
+ * approved in prompt 160).
+ */
+async function capture(h: Harness, name: string, scene = false): Promise<void> {
   await sleep(600); // let snapshots, favicons, and animations finish
-  const png = await h.app.evaluate(async ({ BrowserWindow }) => {
+  const data = await h.app.evaluate(async ({ BrowserWindow }, jpeg) => {
     const image = await BrowserWindow.getAllWindows()[0]!.webContents.capturePage();
-    return image.toPNG().toString('base64');
-  });
-  writeFileSync(join(outDir, `${name}.png`), Buffer.from(png, 'base64'));
+    return (jpeg ? image.toJPEG(90) : image.toPNG()).toString('base64');
+  }, scene);
+  writeFileSync(join(outDir, `${name}.${scene ? 'jpg' : 'png'}`), Buffer.from(data, 'base64'));
 }
 
 it('captures the main screens', async () => {
@@ -304,7 +309,7 @@ it('captures the main screens', async () => {
   try {
     await waitForPage(holo, 'still.holoml');
     await ready('still.holoml');
-    await capture(holo, '41-holoml-scene');
+    await capture(holo, '41-holoml-scene', true);
     await shellCall(holo, 'showUrl', server.url('holoml/mistake.holoml'));
     await waitForPage(holo, 'mistake.holoml');
     await ready('mistake.holoml');
@@ -354,11 +359,11 @@ it('captures the main screens', async () => {
     await waitForPage(show, 'index.holoml');
     await shown('index.holoml');
     await sleep(2500);
-    await capture(show, '47-showroom-hall');
+    await capture(show, '47-showroom-hall', true);
     await shellCall(show, 'showUrl', showroom('tallberg-glacier.holoml'));
     await waitForPage(show, 'tallberg-glacier.holoml');
     await shown('tallberg-glacier.holoml');
-    await capture(show, '48-showroom-car');
+    await capture(show, '48-showroom-car', true);
   } finally {
     await show.close();
   }
@@ -391,7 +396,7 @@ it('captures the main screens', async () => {
     await inPage(game, 'holoml.viewer.position = [12.5, 12.7, 12.5], holoml.viewer.lookAt([0, 2, 0]), true', BW);
     await waitFor('the welcome gone', () => inPage<boolean>(game, "holoml.find('message').text === ''", BW), (v) => v, 15_000);
     await sleep(1500);
-    await capture(game, '51-blockworld');
+    await capture(game, '51-blockworld', true);
     // At night, with three torches placed on the slope, seen from a lower
     // pillar at the same corner.
     const NIGHT = `${BW}?hour=21.5`;
@@ -418,7 +423,7 @@ it('captures the main screens', async () => {
     await sleep(300);
     await inPage(game, 'holoml.viewer.position = [12.5, 7.7, 12.5], holoml.viewer.lookAt([2, 3, 2]), true', 'hour=21.5');
     await sleep(2400);
-    await capture(game, '52-blockworld-night');
+    await capture(game, '52-blockworld-night', true);
   } finally {
     await game.close();
   }
@@ -433,12 +438,12 @@ it('captures the main screens', async () => {
     await waitFor('the studio', () => inPage<boolean>(shop, 'window.__holoml?.ready === true', SOFA), (r) => r, 30_000);
     await pick('fabric', 'velvet');
     await sleep(1500);
-    await capture(shop, '53-sofa-studio');
+    await capture(shop, '53-sofa-studio', true);
     await pick('fabric', 'leather');
     await pick('wood', 'ebony');
     await pick('time', 'evening');
     await sleep(1500);
-    await capture(shop, '54-sofa-studio-evening');
+    await capture(shop, '54-sofa-studio-evening', true);
   } finally {
     await shop.close();
   }
@@ -456,30 +461,30 @@ it('captures the main screens', async () => {
     await open(LOFT);
     await inPage(loft, 'holoml.viewer.position = [1.3, 1.65, -0.6], holoml.viewer.lookAt([-3, 1, 3]), true', LOFT);
     await sleep(2000);
-    await capture(loft, '55-harbour-loft');
+    await capture(loft, '55-harbour-loft', true);
     await inPage(loft, `document.querySelector('[data-id="time"] input[value="evening"]').click(), true`, LOFT);
     for (const lamp of ['Bedside lamp, left', 'Bedside lamp, right']) {
       await inPage(loft, `[...document.querySelectorAll('#holoml-outline button')].find((b) => b.textContent === ${JSON.stringify(lamp)}).click(), true`, LOFT);
     }
     await inPage(loft, 'holoml.viewer.position = [5.5, 1.6, 1.7], holoml.viewer.lookAt([3.6, 0.8, -0.6]), true', LOFT);
     await sleep(2000);
-    await capture(loft, '56-harbour-loft-evening');
+    await capture(loft, '56-harbour-loft-evening', true);
     await inPage(loft, `document.querySelector('[data-id="time"] input[value="day"]').click(), true`, LOFT);
     await open(TERRACE);
     await sleep(2000);
-    await capture(loft, '57-harbour-loft-terrace');
+    await capture(loft, '57-harbour-loft-terrace', true);
     // Milestone 20: the sneaker store's hall from beside its first bay, a shoe's page, and the checkout page with two pairs in the cart.
     const STORE = 'sneaker-store/index.holoml';
     const SHOE = 'sneaker-store/shoe.holoml?colour=sunset';
     await open(STORE);
     await inPage(loft, 'holoml.viewer.position = [-0.8, 1.55, -1.8], holoml.viewer.lookAt([-4.6, 1.4, -7]), true', STORE);
     await sleep(2000);
-    await capture(loft, '58-sneaker-store');
+    await capture(loft, '58-sneaker-store', true);
     await inPage(loft, "(sessionStorage.setItem('sneaker-store-cart', JSON.stringify([{ colour: 'beach', size: '41' }, { colour: 'sunset', size: '44' }])), true)", STORE);
     await open(SHOE);
     // After its turn on the turntable.
     await sleep(10_000);
-    await capture(loft, '59-sneaker-store-shoe');
+    await capture(loft, '59-sneaker-store-shoe', true);
     await shellCall(loft, 'showUrl', server.url('holoml/sneaker-store/checkout.html'));
     await waitForPage(loft, 'sneaker-store/checkout.html');
     await sleep(1500);
@@ -492,12 +497,12 @@ it('captures the main screens', async () => {
     await inPage(loft, `(${AQUARIUM_FISH})(), true`, TANK);
     await inPage(loft, 'holoml.viewer.position = [0.4, 1.3, 3.5], holoml.viewer.lookAt([-1.5, 3.2, -4]), true', TANK);
     await sleep(2000);
-    await capture(loft, '61-aquarium');
+    await capture(loft, '61-aquarium', true);
     await inPage(loft, "(holoml.find('shark-1').position = [-3.8, 2.6, 0.2], holoml.find('shark-1').rotation = [0, 180, 0], true)", TANK);
     await inPage(loft, `[...document.querySelectorAll('#holoml-outline button')].find((b) => b.textContent === 'About the great white shark').click(), true`, TANK);
     await inPage(loft, 'holoml.viewer.position = [0.6, 1.6, 2.9], holoml.viewer.lookAt([-1.74, 1.45, 1.5]), true', TANK);
     await sleep(2000);
-    await capture(loft, '62-aquarium-shark');
+    await capture(loft, '62-aquarium-shark', true);
     await reducedMotion(loft, false);
     const FED = `${TANK}?fed`;
     await open(FED);
@@ -505,7 +510,7 @@ it('captures the main screens', async () => {
     await inPage(loft, 'holoml.viewer.position = [-0.3, 1.5, -0.3], holoml.viewer.lookAt([3.6, 4.4, -0.2]), true', FED);
     await inPage(loft, `[...document.querySelectorAll('#holoml-outline button')].find((b) => b.textContent === 'Feed the fish').click(), true`, FED);
     await sleep(3400);
-    await capture(loft, '63-aquarium-feeding');
+    await capture(loft, '63-aquarium-feeding', true);
     // Milestone 22: HoloML's documentation in the browser, from the holoml repository beside this one (its pages
     // only, built into an ignored folder of the fixtures and removed afterwards): the home page's example sites, the
     // specification, and a how-to guide.

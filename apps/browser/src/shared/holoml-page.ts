@@ -9,9 +9,9 @@ export const HOLOML_DOCUMENT_CHANNEL = 'hypersol:holoml-document';
 /** A .holoml file dropped onto a page: open it in that tab (its path on disk). */
 export const HOLOML_DROP_CHANNEL = 'hypersol:holoml-drop';
 /** From a page's preload to the shell (sendToHost): this tab shows a HoloML page (its address). */
-export const HOLOML_SHOWN_CHANNEL = 'hypersol-holoml-shown';
+export const HOLOML_SHOWN_CHANNEL = 'hypersol:holoml-shown';
 /** From a page's preload to the shell: the scene's state ({ busy?, textView? }), milestone 15. */
-export const HOLOML_STATE_CHANNEL = 'hypersol-holoml-state';
+export const HOLOML_STATE_CHANNEL = 'hypersol:holoml-state';
 /**
  * From the shell to a HoloML page: 'stop', 'text-view-on', or 'text-view-off'
  * (milestone 15); 'behind' and 'in-front', as its tab goes behind another and

@@ -1,10 +1,9 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-05 (milestones 1 to 21 and 23 accepted; 22,
-HoloML's documentation, being finished; 24, HyperSpace 3D for Android,
-built and being checked: see "Milestone 24, HyperSpace 3D for Android,
-in progress" below. The roadmap is in TODO.md).
+Last updated 2026-10-07 (milestones 1 to 24 accepted; next, milestone
+25, HoloML 0.3, its plan to be drafted; the review's last items in
+TODO.md, "The review's last items". The roadmap is in TODO.md).
 
 ## Where things stand
 
@@ -55,11 +54,11 @@ state; this is a summary.
   125; merged in holoml, #19, and the browser, #38; published at
   https://srajpal.github.io/holoml/aquarium/; HoloML 0.2 released as
   v0.2.0, https://github.com/srajpal/holoml/releases/tag/v0.2.0)); 22 documentation for HoloML to recognised standards (prompt
-  115; being built, prompt 128); 23 HoloML for VS Code, an extension
+  115; accepted 2026-10-07, prompt 160); 23 HoloML for VS Code, an extension
   kept in holoml and installed by hand (prompt 146; plan approved with
   the recommended answers, 2026-10-02; accepted 2026-10-05, prompt
-  153); 24 HyperSpace 3D for Android (prompts 152 to 154; plan being
-  drafted); 25 HoloML 0.3, the features its check found missing
+  153); 24 HyperSpace 3D for Android (prompts 152 to 161; accepted
+  2026-10-07); 25 HoloML 0.3, the features its check found missing
   (prompt 128, Q4 a); 26 privacy and data tools
   (HTTPS-only, per-site storage, bookmark import and export: #24, #26,
   #27); then free camera (27), lift to 3D (28), and polish (29);
@@ -80,7 +79,13 @@ holoml's #19 merged, 2026-09-29):
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
 
-## Milestone 24, HyperSpace 3D for Android, in progress (2026-10-05, prompts 152 to 157)
+## Milestone 24, HyperSpace 3D for Android (2026-10-05 to 2026-10-07, prompts 152 to 160)
+
+Merged into main (pull request #53). The owner checked everything on the
+tablet (prompt 160); the one fault, blurred tab cards, is fixed (the
+room in economy mode at the display's own resolution on Android).
+Accepted 2026-10-07 (prompt 161). What follows is from the build
+(2026-10-05).
 
 The browser on the owner's Android tablet, in apps/android: a Kotlin
 app on Android's own WebView. Plan approved with the recommended
@@ -109,9 +114,10 @@ plan, the decisions made while building, and the results so far.
 - On the tablet so far: pages on the tilted panel take taps where they
   appear, tabs open, close with a swipe, and reopen, HoloML sites draw
   and walk by touch, and the ocean tunnel runs at 33 frames a second.
-  Still to check (by hand): scrolling, pinching, landscape, switching by
-  a card, Forward, Reload, a search, Harbour Loft's doors, the other
-  three sites, the tablet's network log, and turning the tablet.
+  The rest (scrolling, pinching, landscape, switching by a card,
+  Forward, Reload, a search, Harbour Loft's doors, the other three
+  sites, the network log, turning the tablet) the owner checked by hand
+  (prompt 160).
 - The tablet's Wi-Fi is a hotel's that needs a sign-in; for testing,
   pages were served from this computer over USB (`adb reverse`) by a
   small server in the session's scratch folder, not the repository.
@@ -538,7 +544,7 @@ to this repository for rules and the prompt log.
 - Stack: Electron (the newest stable line; 44.5.1 since 2026-09-30),
   TypeScript, Three.js, Lit, SQLite through Node's node:sqlite,
   @ghostery/adblocker-electron, electron-vite, Vitest, Playwright. Node
-  22.13 or newer, pnpm 12.4.1 pinned. Reasons in ARCHITECTURE.md
+  24 (22.13 or newer still installs), pnpm 12.4.1 pinned. Reasons in ARCHITECTURE.md
   section 4.
 - The focused page is a live Chromium view (an Electron `<webview>`)
   placed with CSS 3D transforms; background tabs show snapshots.

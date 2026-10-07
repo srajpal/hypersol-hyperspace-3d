@@ -33,9 +33,9 @@ Plan approved 2026-09-24.
 | 19 | Harbour Loft | An apartment tour: walls that stop you, doors and lights to click, paragraphs of text | Done (accepted, prompt 122) |
 | 20 | Sneaker store | A shoe store, in place of Coral Bay, a resort (prompts 101 and 102): a wall of sneakers to pick up, turn, and see up close, in their colourways and sizes, with a cart and a checkout page (no real payment); loading by area for many models | Done (accepted, prompt 122) |
 | 21 | Aquarium | 5 to 10 real-looking fish that swim around, and feeding them | Done (accepted, prompt 125; HoloML v0.2.0 released, prompt 126) |
-| 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Current (the plan and build approved with the recommended answers, prompt 128) |
+| 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Done (accepted 2026-10-07, prompt 160) |
 | 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Done (accepted, prompt 153) |
-| 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Current (plan approved with the recommended answers and the build tools, prompt 155; build approved, prompt 156; built, checks running) |
+| 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Done (accepted 2026-10-07, prompt 161) |
 | 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
 | 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
 | 27 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
@@ -4073,7 +4073,7 @@ milestone ends (milestone 17's plan, Q5 a).
 
 ## Milestone 22 — HoloML documentation
 
-Status: Built; checks running (2026-09-29). Planned (prompt 127): the owner asked for this
+Status: Done, accepted 2026-10-07 (prompt 160: "checked the docs, very good"). Built; checks ran from 2026-09-29. Planned (prompt 127): the owner asked for this
 plan, and for HoloML's features to be checked while the documents are
 made, with a plan for anything missing; that check was done for the
 draft (below). The owner answered Q1 to Q7 with the recommendations and
@@ -4764,8 +4764,10 @@ published.
 
 ## Milestone 24 — HyperSpace 3D for Android
 
-Status: Built (2026-10-05) on the branch m24-android; checks running
-(Results so far, below). Plan approved (2026-10-05, prompt 155): the
+Status: Built (2026-10-05) and merged into main (pull request #53,
+2026-10-07); the owner's checks on the tablet passed except blurred tab
+cards, fixed the same day (Results, below). Accepted 2026-10-07
+(prompt 161). Plan approved (2026-10-05, prompt 155): the
 owner chose the recommended answers to Q1 to Q5 and approved the new
 build tools; build approved (prompt 156). Rule 13 check done
 (ARCHITECTURE.md section 3). Asked for in prompts 152 to 154. The owner asked
@@ -4917,7 +4919,7 @@ approved them with the plan (prompt 155).
       the automatic build (Q5). (AndroidX Test was planned for checks on
       the device; none were written, so it is not used: the device
       checks are by hand.)
-- [ ] 8. Checks AN1 to AN9 on the owner's tablet.
+- [x] 8. Checks AN1 to AN9 on the owner's tablet.
 - [x] 9. Documents: README, ARCHITECTURE (the Android parts and decisions),
       AGENTS.md (building and testing the app), HANDOFF, TODO, and the
       screenshots, from the tablet (docs/screenshots/m24, on
@@ -5015,6 +5017,25 @@ reverse`); the published example sites were opened once it was online.
   owner's own terminal, or the automatic builds. The automatic builds:
   not run yet (they need a push).
 
+The owner's checks on the tablet (2026-10-07, prompt 160): every item
+above marked "not checked yet" was tested by hand and passed, and the
+clipboard both ways, on the desktop too (so D8, K2, and M1's failures
+were this session's, as thought). One fault: the tab cards looked very
+blurred. Cause: the app turns on the room's economy mode, which draws
+the room at half the display's pixel ratio; the tablet's is about 1.1,
+so the room was drawn at about 0.56 and stretched. The room now takes
+`economyFullResolution` (room.ts), which the Android app sets: economy
+mode there keeps its 30 frames a second and no glow, at the display's
+own resolution; the desktop's economy mode is unchanged (milestone
+10's check L6 holds it below the display's). The cards' pictures are taken at
+400 pixels wide and JPEG quality 80, as on the desktop (they were 320
+and 75). Checked on the tablet: the cards' text and edges are sharp,
+side by side with the earlier screenshot at the same zoom. The
+ocean tunnel's frame rate with the sharper room (AN6) is not measured
+again yet. The automatic builds on pull request #53 passed, the
+Android job included. After the fix: type check, lint, the 512 unit
+tests, and the app's 15 JUnit tests pass (2026-10-07).
+
 ### Checks (named AN, for Android)
 
 | # | Check | Expected result |
@@ -5033,6 +5054,45 @@ reverse`); the published example sites were opened once it was online.
 
 - AN1 to AN9 pass on the owner's tablet, the documents are updated, and
   the owner accepts.
+
+## The review's last items (2026-10-07, prompt 160)
+
+What the review of 2026-09-30 left for the owner, decided in prompt 160.
+
+- H6, the repository's weight: done. The older screenshot sets (m1 to
+  m21, about 160 MB) are taken out of the tree; docs/progress.md shows
+  them from the repository at commit 64de0da, so nothing is lost and
+  no history is rewritten (a clone still fetches the old pictures in
+  the history; what stops is the growth of the tree). Kept: m22, the
+  newest desktop set, m24, the tablet's, and the README's four. From
+  now on `pnpm screenshots` saves 3D scenes as JPEG (quality 90),
+  screens of the browser's own interface as PNG. The working agreement
+  in AGENTS.md says so, in the wording the owner approved (prompt 161).
+- H7, old branches: checked one by one. Every local branch is merged
+  into main but three, each holding one prompt-log commit: prompt 112
+  (in main already), prompt 159 (taken into this branch), and prompt
+  140, which was missing from main's log and is restored. On GitHub,
+  only m23-vscode is left, merged. Deleting the branches and the stale
+  working copy (.claude/worktrees/sweet-volhard-d6177a) is left to the
+  owner: the agent's tools refused to delete them.
+- St6: the README's alt text no longer names "HyperSol, LLC" (it
+  describes the 2001 picture's copyright line), and the two messages
+  from a HoloML page's preload are named `hypersol:holoml-shown` and
+  `hypersol:holoml-state`, as the other channels are.
+- St7: holoml's rule 11 takes this repository's rule on pushing
+  (owner, prompt 161).
+- The security advisories: the seven here and the two in holoml are
+  published (2026-10-07); the seven here first said their fix was "on
+  the branch review-134-fixes (pull request to follow)", corrected to
+  pull request #45 (commit c4b9e82) before publishing.
+- `@types/node` and Node: researched (Node 24, 25, and 26's breaking
+  changes against both repositories: none of the removed APIs is used;
+  Vitest skips Node 25). Owner, prompt 161: the builds, the Linux
+  container, and .nvmrc on Node 24, the Node inside Electron 44;
+  `@types/node` 24; a Node 26 build beside them (lint, types, unit
+  tests) until 26 becomes the long-term version; in both repositories.
+  `engines` stays at 22.13 until this computer has Node 24.
+- REVIEW-2026-09-30.md deleted, as the owner asked (to the Recycle Bin).
 
 ## The review of 2026-09-30 (prompts 134 and 135)
 

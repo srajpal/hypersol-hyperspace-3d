@@ -101,7 +101,7 @@ viewer over a loading bar, and is shown below as it was. It was a
 concept of its time; there is no claim here that it shipped as a
 product.
 
-![The early HyperSpace 3D concept screen: a blue 3D cube and a loading bar, "Copyright 2001-2003 HyperSol, LLC"](docs/history/hyperspace-3d-concept-2001-2003.jpg)
+![The early HyperSpace 3D concept screen: a blue 3D cube, a loading bar, and the 2001 to 2003 HyperSol copyright line](docs/history/hyperspace-3d-concept-2001-2003.jpg)
 
 That was 2001. The hardware, the graphics APIs, and the open web
 platform were not ready. Twenty-five years later they are.
@@ -221,9 +221,7 @@ by AI coding agents directed by prompts. To follow it:
 
 ## What comes next
 
-Milestone 22, documentation for HoloML to recognised standards (being
-finished). 24, HyperSpace 3D on an Android tablet, to see how far the
-browser reaches (being built: [apps/android](apps/android/README.md)). 25, HoloML 0.3: the features its check found missing,
+Milestone 25, HoloML 0.3: the features milestone 22's check found missing,
 such as names for models and the language of text. 26, privacy and
 data tools: HTTPS-only browsing, per-site storage, and bookmark import
 and export. 27, free camera movement around the room. 28, pictures and
@@ -345,7 +343,7 @@ GitHub Actions for every pull request and every push to main; macOS is
 untested.
 [CONTRIBUTING.md](CONTRIBUTING.md) has the full setup, including Linux.
 
-You need Node 22.13 or newer and pnpm 12.4.1. The pnpm version is pinned
+You need Node 24 (22.13 or newer still works for now) and pnpm 12.4.1. The pnpm version is pinned
 in package.json (`packageManager`), so pnpm, or `corepack enable`, uses
 that exact version. Install with the lockfile as it is:
 

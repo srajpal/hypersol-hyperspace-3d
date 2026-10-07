@@ -171,6 +171,13 @@
   52,000 pixels tall) drew nothing below its top bar, as its long main
   section, lifted, was larger than the graphics card can draw as one
   layer. A section or picture that large now stays flat.
+- HyperSpace 3D for Android (milestone 24), in apps/android: the room,
+  the top bar, tabs as cards, live pages on the tilted panel that take
+  taps, typing, scrolling, and pinches, and HoloML pages with touch
+  controls (a walk pad, a jump button, a long press for a right-click)
+  and a lighter drawing, on Android's own WebView; installed by hand.
+  The tab cards are drawn at the display's own resolution (they were
+  blurred at first, prompt 160).
 
 After a review of both repositories on 2026-09-30 (the ids in brackets
 are the review's):

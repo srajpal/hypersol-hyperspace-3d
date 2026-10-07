@@ -9,7 +9,7 @@ build and run it from source.
 
 You need:
 
-- Node.js 22.13 or newer.
+- Node.js 24 (`.nvmrc`; 22.13 or newer still works for now).
 - pnpm 12.4.1. The version is pinned in package.json (`packageManager`);
   run `corepack enable` once and pnpm uses that exact version.
 - Git.
