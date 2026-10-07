@@ -101,7 +101,7 @@ viewer over a loading bar, and is shown below as it was. It was a
 concept of its time; there is no claim here that it shipped as a
 product.
 
-![The early HyperSpace 3D concept screen: a blue 3D cube and a loading bar, "Copyright 2001-2003 HyperSol, LLC"](docs/history/hyperspace-3d-concept-2001-2003.jpg)
+![The early HyperSpace 3D concept screen: a blue 3D cube, a loading bar, and the 2001 to 2003 HyperSol copyright line](docs/history/hyperspace-3d-concept-2001-2003.jpg)
 
 That was 2001. The hardware, the graphics APIs, and the open web
 platform were not ready. Twenty-five years later they are.
