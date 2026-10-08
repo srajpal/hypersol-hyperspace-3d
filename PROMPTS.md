@@ -1988,3 +1988,12 @@ Use the recommendations, approve the plan.
 ```text
 Build approved, go ahead.
 ```
+
+## 180 — 2026-10-08 · Claude Opus 5.5, high effort
+
+Asked during milestone 26's build, while the full end-to-end run was
+going.
+
+```text
+How is it going?
+```
