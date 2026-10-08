@@ -5107,7 +5107,12 @@ odejs` is a folder of the
   standalone installer's Node 22.16, where nvm puts its link, so `nvm
   use` cannot switch. Until the owner removes that installation, the
   agent puts nvm's 24.21.0 first on the path for its runs. `engines`
-  stays at 22.13 until then.
+  stays at 22.13 until then. (Prompt 164: the owner removed it and
+  switched nvm to 24.21.0, which is now the Node on this computer;
+  `engines` asks for 24 or newer in both repositories. Removing it also
+  took `%APPDATA%
+pm`, where pnpm is, off the user PATH; the owner puts
+  it back.)
 - Branches: gone in both repositories, here and on GitHub (the owner,
   prompt 162). The old working copy's folder
   (.claude/worktrees/sweet-volhard-d6177a, 505 MB, no longer a git

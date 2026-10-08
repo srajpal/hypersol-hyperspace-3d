@@ -545,7 +545,7 @@ to this repository for rules and the prompt log.
 - Stack: Electron (the newest stable line; 44.7.0 since 2026-10-07),
   TypeScript, Three.js, Lit, SQLite through Node's node:sqlite,
   @ghostery/adblocker-electron, electron-vite, Vitest, Playwright. Node
-  24 (22.13 or newer still installs), pnpm 12.4.1 pinned. Reasons in ARCHITECTURE.md
+  24 or newer, pnpm 12.4.1 pinned. Reasons in ARCHITECTURE.md
   section 4.
 - The focused page is a live Chromium view (an Electron `<webview>`)
   placed with CSS 3D transforms; background tabs show snapshots.
