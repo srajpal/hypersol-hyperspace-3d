@@ -615,18 +615,21 @@ export class TabView implements PagePanel, RoomView {
       this.shimmer.removeAttribute('data-visible');
       const card = describeLoadError(e.errorCode, e.errorDescription);
       // An https:// page that HTTPS-only loaded in place of an http:// one (milestone 26): asked before any card is
-      // shown, so the card is the right one. A name that cannot be found is not found either way.
-      if (e.validatedURL.startsWith('https:') && !isLookupFailure(e.errorCode)) {
+      // shown, so the card is the right one. A name that cannot be found is not found either way, and the card
+      // names the address that was asked for.
+      if (e.validatedURL.startsWith('https:')) {
         const seq = this.loadSeq;
         void this.events
           .httpsOnlyFailure(e.validatedURL)
           .catch(() => null)
           .then((http) => {
             if (seq !== this.loadSeq || !this.failed) return;
-            if (http) this.showHttpsOnly(http, false);
+            if (http && !isLookupFailure(e.errorCode)) this.showHttpsOnly(http, false);
             else {
-              this.showError(card, e.validatedURL);
-              this.emit({ state: 'failed', url: e.validatedURL, title: this.currentStatus.title, message: card.title });
+              const url = http ?? e.validatedURL;
+              this.showError(card, url);
+              this.emit({ state: 'failed', url, title: this.currentStatus.title, message: card.title });
+              if (isLookupFailure(e.errorCode)) void this.checkDns(url);
             }
             navState();
           });

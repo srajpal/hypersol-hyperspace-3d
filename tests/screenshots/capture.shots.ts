@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { it } from 'vitest';
-import { FIXTURES_DIR, startFixtureServer } from '../e2e/fixture-server';
+import { FIXTURES_DIR, HTTPS_ONLY_HOSTS, startDualFixtureServer, startFixtureServer } from '../e2e/fixture-server';
 import {
   clickAt,
   clickCard,
@@ -589,3 +589,49 @@ async function reducedMotion(h: Harness, on: boolean): Promise<void> {
     }
   }, on);
 }
+
+/** Milestone 26: HTTPS-only's card, the Library's Sites tab, and a bookmark file's preview. */
+it("captures milestone 26's screens", async () => {
+  if (!milestone || !/^m\d+$/.test(milestone)) throw new Error('Set MILESTONE, for example MILESTONE=m26 pnpm screenshots');
+  const [server, dual] = await Promise.all([startFixtureServer(), startDualFixtureServer()]);
+  const files = mkdtempSync(join(tmpdir(), 'hypersol-shots-bookmarks-'));
+  const h = await launch(server.url('link-a.html'), { trustedCertificate: dual.fingerprint });
+  try {
+    await waitForPage(h, 'link-a');
+    // A site without HTTPS: the card, before anything goes over plain HTTP.
+    await navigateTo(h, dual.url('http', HTTPS_ONLY_HOSTS.plain, '/link-a.html'));
+    await waitFor('the HTTPS-only card', () => h.shell.locator('[data-testid="page-panel"][aria-hidden="false"] .hs-error-card').getAttribute('data-kind'), (k) => k === 'https-only');
+    await settled(h);
+    await capture(h, '76-https-only-card');
+
+    // Sites with cookies, then the Sites tab.
+    for (const page of [server.url('cookie.html?set=1'), server.url('cookie.html?set=1').replace('127.0.0.1', 'shop.test'), dual.url('https', HTTPS_ONLY_HOSTS.secure, '/cookie.html?set=1')]) {
+      await navigateTo(h, page);
+      await waitForPage(h, page);
+    }
+    await pressInShell(h, 'O', ['control', 'shift']);
+    await h.shell.click('hs-library [data-testid="lib-tab-sites"]');
+    await waitFor('the sites', () => h.shell.locator('hs-library [data-testid="sites-item"]').count(), (n) => n >= 3);
+    await capture(h, '77-library-sites');
+
+    // A bookmark file from another browser, read and shown before anything is added.
+    const file = join(files, 'bookmarks.html');
+    writeFileSync(
+      file,
+      `<!DOCTYPE NETSCAPE-Bookmark-file-1><DL><p><DT><H3>Bookmarks bar</H3><DL><p>
+        <DT><A HREF="https://www.w3.org/TR/html/">HTML Standard</A><DT><A HREF="https://developer.mozilla.org/">MDN Web Docs</A>
+        <DT><H3>Trips</H3><DL><p><DT><A HREF="https://www.japan.travel/">東京 · Japan travel</A></DL><p>
+        <DT><A HREF="javascript:void(0)">A bookmarklet</A></DL><p>
+        <DT><A HREF="https://github.com/srajpal/hypersol-hyperspace-3d">HyperSpace 3D on GitHub</A></DL>`,
+    );
+    await h.app.evaluate((_e, p) => void (globalThis.__hypersolTest!.nextFile = p), file);
+    await h.shell.click('hs-library [data-testid="lib-tab-bookmarks"]');
+    await h.shell.click('hs-library [data-testid="lib-import"]');
+    await waitFor('the preview', () => h.shell.locator('hs-library [data-testid="lib-import-add"]').count(), (n) => n === 1);
+    await capture(h, '78-bookmark-import-preview');
+  } finally {
+    await h.close();
+    await Promise.all([server.close(), dual.close()]);
+    rmSync(files, { recursive: true, force: true });
+  }
+}, 300_000);

@@ -5579,6 +5579,12 @@ lists are; the script would be one new fetch, from publicsuffix.org.
   fingerprint in test runs only (--test-trusted-cert).
 - The dialogs for bookmark files are the system's; test runs show none,
   and a check names the file in the test log (nextFile).
+- Found by the full run: a typed http:// address whose name cannot be
+  looked up showed the "not found" card with the https:// address it
+  was upgraded to (D7). The card, the tab, and the address bar now name
+  the address that was asked for, and Retry asks for it again.
+- Checks changed because what they check changed: E10 walks the
+  Library's tabs with Shift+Tab, and meets the new Sites tab first.
 
 ## After milestone 25 (2026-10-08, prompt 172)
 
