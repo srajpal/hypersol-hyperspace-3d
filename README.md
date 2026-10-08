@@ -58,7 +58,7 @@ that come from a place, and the ocean tunnel, an aquarium to walk
 through with 30 fish swimming over and around you, and completes HoloML
 0.2. Milestone 22 documents HoloML: its specification, guides, and site.
 Milestone 23 adds HoloML for VS Code, and milestone 24 HyperSpace 3D for
-Android, on a tablet. Milestone 25, being built, adds HoloML 0.3: names
+Android, on a tablet. Milestone 25 adds HoloML 0.3: names
 for models, the language and direction of text, lighter models far
 away, and compressed models.
 On 2026-09-30 both repositories were reviewed and the findings fixed,
@@ -174,7 +174,7 @@ An archived copy of the 2001 site is available through the
   waves moving over what is in it; sounds that come from a place,
   quieter with distance and from their side; and a model's animation
   speed for scripts, shown by the ocean tunnel, an aquarium.
-- HoloML 0.3 pages (milestone 25, being built): names for models and
+- HoloML 0.3 pages (milestone 25): names for models and
   groups that screen readers say, text in any language and direction
   (Arabic and Hebrew right to left; Words in a room shows them), a
   lighter model for far away (the ocean tunnel's fish), compressed
@@ -233,7 +233,7 @@ by AI coding agents directed by prompts. To follow it:
 
 ## What comes next
 
-Milestone 25, HoloML 0.3, is being built (above). 26, privacy and
+Next, 26, privacy and
 data tools: HTTPS-only browsing, per-site storage, and bookmark import
 and export. 27, free camera movement around the room. 28, pictures and
 3D models lifted out of ordinary pages. 29, polish, the last
@@ -243,7 +243,7 @@ roadmap is in [TODO.md](TODO.md).
 
 ## Progress
 
-Twenty-four milestones are done and accepted: 1 to 24.
+Twenty-five milestones are done and accepted: 1 to 25.
 Milestones 1 to 11 built the browser: a live page on a tilted panel in
 the 3D room, tabs as cards, bookmarks and history, ad and tracker
 blocking with encrypted DNS, the layers view, two themes, an instrument
@@ -269,7 +269,8 @@ Milestone 23 adds HoloML for VS Code, an extension in the holoml
 repository: syntax colours, mistakes as you type, suggestions, and
 help on hover. Milestone 24 adds HyperSpace 3D for Android, for a
 tablet: the room, tabs, live pages, and HoloML pages by touch.
-Milestone 25, HoloML 0.3, is being built.
+Milestone 25 adds HoloML 0.3: names, languages, and far and
+compressed models.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 

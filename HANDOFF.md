@@ -1,10 +1,10 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-07 (milestones 1 to 24 accepted; milestone 25,
-HoloML 0.3, plan approved on the branch m25-holoml-0.3 (prompt 168),
-build approved (prompt 169), built and being checked (TODO.md,
-"Milestone 25", and below); the review's last items in
+Last updated 2026-10-08 (milestones 1 to 25 accepted, milestone 25,
+HoloML 0.3, on 2026-10-08, prompt 174; what followed it in TODO.md,
+"After milestone 25"; the next is 26, privacy and data tools, not yet
+planned; the review's last items in
 TODO.md, "The review's last items". The roadmap is in TODO.md).
 
 ## Where things stand
@@ -62,7 +62,7 @@ state; this is a summary.
   the recommended answers, 2026-10-02; accepted 2026-10-05, prompt
   153); 24 HyperSpace 3D for Android (prompts 152 to 161; accepted
   2026-10-07); 25 HoloML 0.3, the features its check found missing
-  (prompt 128, Q4 a); 26 privacy and data tools
+  (prompt 128, Q4 a; accepted 2026-10-08, prompt 174); 26 privacy and data tools
   (HTTPS-only, per-site storage, bookmark import and export: #24, #26,
   #27); then free camera (27), lift to 3D (28), and polish (29), the
   last planned. The installers (30 and 31) were dropped in prompt 172:
@@ -85,9 +85,10 @@ holoml's #19 merged, 2026-09-29):
 
 ## Milestone 25, HoloML 0.3 (2026-10-07, prompts 167 to 170)
 
-Built on two branches, not yet pushed: m25-holoml-0.3 here and
-holoml-0.3 in holoml (the browser's copy of HoloML and its examples is
-synced from it: `pnpm holoml:sync holoml-0.3 --examples holoml-0.3`).
+Accepted 2026-10-08 (prompt 174). Built on two branches, m25-holoml-0.3
+here and holoml-0.3 in holoml, merged as #59 and holoml #39 (the
+browser's copy of HoloML and its examples is synced from holoml's
+main: `pnpm holoml:sync`).
 TODO.md, milestone 25, has the plan, the decisions made while building,
 and the results so far.
 
@@ -112,10 +113,10 @@ and the results so far.
   (m25; m22's set out of the tree) and the README's four, and the
   Android build. Both pull requests merged (holoml #39, the browser
   #59), the automatic builds passed, and the clipboard checks passed
-  when run again (prompt 172). Still to do: the checks on the tablet
-  (the app on it was older than milestone 25; the new build is
-  installed), and the owner's acceptance; then HoloML 0.3 tagged v0.3.0
-  on the owner's go.
+  when run again (prompt 172). The checks on the tablet
+  passed (prompt 174), and the owner accepted the milestone. Still to
+  do: HoloML 0.3 tagged v0.3.0 on the owner's go, and the published
+  sites checked by hand.
 - After it (prompt 172, branch m25-follow-up): peer connections blocked
   for real (viewer/guard.ts), local KTX2 pictures served, the
   large-scene items, D8's lost right-click, the installers dropped

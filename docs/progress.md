@@ -313,7 +313,7 @@ press for a right-click; a lighter drawing keeps the ocean tunnel at
 <img src="screenshots/m24/72-android-tab-cards.png" width="240" alt="Two tab cards on the left of the room on the tablet, drawn sharp: HoloML's documentation, with its text readable, and a new tab, beside a new tab's start panel">
 </p>
 
-**Milestone 25: HoloML 0.3** (built 2026-10-07; being checked).
+**Milestone 25: HoloML 0.3** (accepted 2026-10-08).
 Names for models and groups that screen readers say and the text view
 and the Scene inspector show; text in its own language and direction,
 so Arabic and Hebrew run right to left in the scene and are read in

@@ -36,7 +36,7 @@ Plan approved 2026-09-24.
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Done (accepted 2026-10-07, prompt 160) |
 | 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Done (accepted, prompt 153) |
 | 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Done (accepted 2026-10-07, prompt 161) |
-| 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Current (plan approved with the recommended answers and the tools, prompt 168; build approved, prompt 169) |
+| 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Done (accepted 2026-10-08, prompt 174) |
 | 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
 | 27 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
 | 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
@@ -5074,9 +5074,10 @@ Status: Plan approved (2026-10-07, prompt 168): the owner chose the
 recommended answers to Q1 to Q8 and approved the new tools. Build
 approved (prompt 169). Rule 13 check done (ARCHITECTURE.md section 3: 44.7.0 is still the
 newest stable release). Built 2026-10-07 on the branches m25-holoml-0.3
-(this repository) and holoml-0.3 (holoml), not yet pushed; the results
-so far are below; the screenshots, the Linux run, the Android build,
-and the checks by hand are still to do. Asked for in prompts 127 and 128 (Q4 a): the
+(this repository) and holoml-0.3 (holoml); merged in holoml (#39) and
+here (#59), with what followed (#60, "After milestone 25", below). The
+owner's checks on the tablet passed (prompt 174). Accepted 2026-10-08
+(prompt 174). Asked for in prompts 127 and 128 (Q4 a): the
 features milestone 22's check found missing, with the review's
 additions (2026-09-30) and the language engineer's list (the roadmap's
 notes above).
@@ -5256,10 +5257,10 @@ and Hebrew, to show `lang` and `dir`.
       holoml:sync`).
 - [x] 5. The RELAX NG validator (Q5), after its approval (Jing, prompt
       170).
-- [ ] 6. Checks HL1 to HL10: unit tests beside the code, holoml's tests,
+- [x] 6. Checks HL1 to HL10: unit tests beside the code, holoml's tests,
       and tests/e2e/m25.e2e.ts; run on Windows, with `pnpm test:linux`,
       and in the automatic builds.
-- [ ] 7. Documents: both READMEs, SPEC, ARCHITECTURE, THIRD-PARTY.md (the
+- [x] 7. Documents: both READMEs, SPEC, ARCHITECTURE, THIRD-PARTY.md (the
       decoders), docs/privacy.md (nothing new on the network), AGENTS.md's
       testing list, both CHANGELOGs, HANDOFF, and TODO; the screenshots
       (`MILESTONE=m25 pnpm screenshots`, the previous set out of the
