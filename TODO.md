@@ -5607,7 +5607,15 @@ lists are; the script would be one new fetch, from publicsuffix.org.
   README's four pictures, looked at.
 - The full end-to-end run again, after the last fixes: 403 of 403
   passed (29 files), on Windows.
-- Not checked yet: the automatic builds.
+- The automatic builds of pull request #63 (prompts 182 and 183):
+  CodeQL flagged the bookmark reader's single pass of tag removal
+  (js/incomplete-multi-character-sanitization); a title is text
+  wherever it goes, but the pass is now repeated until nothing changes.
+  Then Windows part 2 failed T6 once: Blockworld's torch did not appear
+  within 15 seconds of 5 and Q. It had not failed in the fifty failed
+  builds before, passes here drawn in software (twice), and this
+  milestone touches nothing of HoloML pages; run again, as a flaky
+  check, and noted to be watched.
 
 ## After milestone 25 (2026-10-08, prompt 172)
 
