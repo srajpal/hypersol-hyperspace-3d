@@ -33,11 +33,14 @@ describe('HTTPS-only: page loads', () => {
     expect(h.failedUpgrade(1, 'https://example.com/a?q=1')).toBeNull();
   });
 
-  it('a redirect back to HTTP on the same site is refused, not upgraded again; to another site it is upgraded', () => {
+  it('a redirect back to the address asked for over HTTP is refused, not upgraded again; to another address it is upgraded', () => {
     const h = make();
     h.decide(1, 'http://loop.example/', false);
     h.redirecting(1, 'http://loop.example/');
     expect(h.decide(1, 'http://loop.example/', false)).toEqual({ refuse: 'http://loop.example/' });
+    h.decide(4, 'http://same.example/a', false);
+    h.redirecting(4, 'http://same.example/b');
+    expect(h.decide(4, 'http://same.example/b', false)).toEqual({ redirectURL: 'https://same.example/b' });
     h.decide(2, 'http://a.example/', false);
     h.redirecting(2, 'http://b.example/');
     expect(h.decide(2, 'http://b.example/', false)).toEqual({ redirectURL: 'https://b.example/' });
@@ -58,6 +61,12 @@ describe('HTTPS-only: page loads', () => {
     h.removeSession('once.example', false);
     expect(h.decide(1, 'http://once.example/', false)).toEqual({ redirectURL: 'https://once.example/' });
     expect(make(false).decide(1, 'http://example.com/', false)).toBeNull();
+  });
+
+  it("in a test run, the test server's plain-HTTP names are left alone, as local addresses are", () => {
+    const h = new HttpsOnly({ enabled: () => true, lasting: () => [], plainHosts: ['shop.test'] });
+    expect(h.decide(1, 'http://shop.test:8080/shield.html', false)).toBeNull();
+    expect(h.decide(1, 'http://other.test/', false)).toEqual({ redirectURL: 'https://other.test/' });
   });
 
   it("private tabs keep their own exceptions, which go when the last private tab closes, and use no lasting ones", () => {

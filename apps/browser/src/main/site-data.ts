@@ -66,13 +66,13 @@ export class SiteData {
     private readonly tabs: () => WebContents[],
   ) {}
 
-  private hostsOfTabs(): { host: string; contents: WebContents }[] {
+  private hostsOfTabs(): { host: string; origin: string; contents: WebContents }[] {
     return this.tabs()
       .filter((c) => !c.isDestroyed() && c.session === this.ses)
       .flatMap((contents) => {
         try {
           const url = new URL(contents.getURL());
-          return url.protocol === 'http:' || url.protocol === 'https:' ? [{ host: url.hostname, contents }] : [];
+          return url.protocol === 'http:' || url.protocol === 'https:' ? [{ host: url.hostname, origin: url.origin, contents }] : [];
         } catch {
           return [];
         }
@@ -86,10 +86,11 @@ export class SiteData {
 
   /**
    * Clears one site: its cookies (those set for it, not for a site above
-   * it), its site storage, and its cached files, over http and https;
-   * then reloads its open tabs, so that a page does not write back what
-   * it still holds in memory. Bookmarks, history, and saved passwords are
-   * not touched.
+   * it), its site storage, and its cached files, over http and https
+   * (on their usual ports, and on any other an open tab of it uses: site
+   * storage is kept by origin, port and all); then reloads its open tabs,
+   * so that a page does not write back what it still holds in memory.
+   * Bookmarks, history, and saved passwords are not touched.
    */
   async clear(host: string): Promise<void> {
     const cookies = (await this.ses.cookies.get({ domain: host })).filter((c) => cookieSite(c) === host);
@@ -97,9 +98,10 @@ export class SiteData {
       const url = `${c.secure ? 'https' : 'http'}://${host}${c.path ?? '/'}`;
       await this.ses.cookies.remove(url, c.name);
     }
-    const origins = [`https://${host}`, `http://${host}`];
+    const tabs = this.hostsOfTabs().filter((t) => t.host === host);
+    const origins = [...new Set([`https://${host}`, `http://${host}`, ...tabs.map((t) => t.origin)])];
     for (const origin of origins) await this.ses.clearStorageData({ origin, storages: [...SITE_STORAGE] });
     await this.ses.clearData({ dataTypes: ['cache', 'fileSystems', 'indexedDB', 'localStorage', 'serviceWorkers', 'webSQL', 'backgroundFetch'], origins });
-    for (const t of this.hostsOfTabs()) if (t.host === host) t.contents.reload();
+    for (const t of tabs) t.contents.reload();
   }
 }

@@ -77,7 +77,7 @@ const withoutFragment = (url: string): string => url.split('#')[0]!;
 export type HttpsDecision =
   /** Load it over HTTPS instead. */
   | { redirectURL: string }
-  /** The site sent the upgraded page back to HTTP: stop, and show the card for this address. */
+  /** The site sent the upgraded page back to the very address asked for over HTTP: stop, and show the card for it. */
   | { refuse: string }
   /** Load it as asked. */
   | null;
@@ -89,6 +89,12 @@ export interface HttpsOnlyOptions {
   enabled(): boolean;
   /** The lasting exceptions, from settings.json. */
   lasting(): readonly string[];
+  /**
+   * Test mode only: host names the test server answers over plain HTTP
+   * only, treated as local addresses are (never upgraded), so that the
+   * earlier milestones' checks on them are checks of what they check.
+   */
+  plainHosts?: readonly string[];
 }
 
 /**
@@ -121,10 +127,12 @@ export class HttpsOnly {
     const https = httpsFor(url);
     if (https === null || !this.options.enabled()) return null;
     const host = hostOfUrl(url);
-    if (this.exception(host, isPrivate) !== null) return null;
+    if (this.exception(host, isPrivate) !== null || this.options.plainHosts?.includes(host)) return null;
     const last = this.upgrades.get(tab);
-    // The HTTPS page redirected back to HTTP on the same site: upgrading again would go round for ever.
-    if (redirected && last && hostOfUrl(last.http) === host) return { refuse: url };
+    // The HTTPS page redirected back to the address asked for over HTTP: upgrading it again would go round for ever.
+    // A redirect to another http:// address is upgraded too; a chain of them ends at Chromium's limit on redirects,
+    // a failure of the last upgrade, which gets the card.
+    if (redirected && last && withoutFragment(last.http) === withoutFragment(url)) return { refuse: url };
     this.upgrades.set(tab, { http: url, https: withoutFragment(https) });
     return { redirectURL: https };
   }

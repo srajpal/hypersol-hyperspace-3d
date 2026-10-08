@@ -64,6 +64,8 @@ export interface PrivacyOptions {
   isShell(contents: WebContents): boolean;
   /** The shell's last private tab closed: forget everything private (main/index.ts). */
   onPrivateEnded?: () => Promise<void>;
+  /** Test mode only: test host names answered over plain HTTP only, never upgraded (main/launch-options.ts). */
+  testPlainHosts?: readonly string[];
 }
 
 /** Downloads one list through Chromium's network stack, so encrypted DNS applies. */
@@ -193,6 +195,7 @@ export class Privacy {
     this.https = new HttpsOnly({
       enabled: () => this.storage.settingsFile.settings.httpsOnly,
       lasting: () => this.storage.settingsFile.settings.httpsOnlySites,
+      ...(options.testPlainHosts ? { plainHosts: options.testPlainHosts } : {}),
     });
     this.shield = new Shield(
       () => matcher,

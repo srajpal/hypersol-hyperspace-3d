@@ -718,7 +718,10 @@ if (!app.requestSingleInstanceLock()) {
     // or is skipped.
     const log = testLog;
     // The instrument panel's readouts (milestone 7): in memory only.
-    const inspect = new Inspector(ses, { isHolomlPage: (c) => pages.isDocument(c.id, c.getURL()) });
+    const inspect = new Inspector(ses, {
+      isHolomlPage: (c) => pages.isDocument(c.id, c.getURL()),
+      ...(options.testTrustedCertificate ? { testTrustedCertificate: options.testTrustedCertificate } : {}),
+    });
     inspector = inspect;
     inspect.setPrivateSession(privateSes);
     inspect.start();
@@ -746,6 +749,7 @@ if (!app.requestSingleInstanceLock()) {
         : {}),
       isShell,
       onPrivateEnded: forgetPrivateData,
+      ...(options.testPlainHosts ? { testPlainHosts: options.testPlainHosts } : {}),
     });
     privacy.start();
     privacy.protect(privateSes);

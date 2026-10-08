@@ -24,8 +24,11 @@ const electronPath = createRequire(join(APP_DIR, 'package.json'))('electron') as
  * well-known ad and tracker hosts, so a request the shield let through
  * would reach the local test server.
  */
+/** The test names that map to the plain-HTTP test server (OFFLINE_RULES), never upgraded to HTTPS in a test run. */
+export const PLAIN_HTTP_TEST_HOSTS = ['shop.test', 'refreshed-tracker.test', 'ad.doubleclick.net', 'www.google-analytics.com'];
+
 export const OFFLINE_RULES =
-  '--host-resolver-rules=MAP shop.test 127.0.0.1, MAP refreshed-tracker.test 127.0.0.1, MAP ad.doubleclick.net 127.0.0.1, MAP www.google-analytics.com 127.0.0.1, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost';
+  '--host-resolver-rules=MAP shop.test 127.0.0.1, MAP refreshed-tracker.test 127.0.0.1, MAP secure.test 127.0.0.1, MAP *.secure.test 127.0.0.1, MAP plain.test 127.0.0.1, MAP loop.test 127.0.0.1, MAP ad.doubleclick.net 127.0.0.1, MAP www.google-analytics.com 127.0.0.1, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost';
 
 export interface Point {
   x: number;
@@ -67,6 +70,8 @@ export interface LaunchOptions {
   noKeychain?: boolean;
   /** How long a "minute" is for sleeping tabs (test mode switch, milestone 10). */
   sleepMinuteMs?: number;
+  /** The one certificate the run trusts, by its fingerprint: the HTTPS-only fixture's (test mode switch, milestone 26). */
+  trustedCertificate?: string;
   /** Start Chromium with WebGL switched off, as on a computer that cannot draw the room (milestone 12). */
   noWebGL?: boolean;
   /**
@@ -182,6 +187,9 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
   const userDataDir = opts.userDataDir ?? (await mkdtemp(join(tmpdir(), 'hypersol-e2e-')));
   const args = [APP_DIR, `--start-url=${startUrl}`, `--hypersol-user-data=${userDataDir}`];
   args.push(OFFLINE_RULES);
+  // The test server answers these names over plain HTTP only: HTTPS-only (milestone 26) leaves them alone, as it
+  // does local addresses, so that the checks that use them check what they are about.
+  args.push(`--test-plain-http=${PLAIN_HTTP_TEST_HOSTS.join(',')}`);
   if (opts.tilt !== undefined) args.push(`--tilt=${opts.tilt}`);
   if (opts.searchUrl !== undefined) args.push(`--search-url=${opts.searchUrl}`);
   if (opts.filtersBase !== undefined) args.push(`--filters-base=${opts.filtersBase}`);
@@ -192,6 +200,7 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
   if (opts.noKeychain) args.push('--test-no-keychain');
   if (opts.rememberWindow) args.push('--test-remember-window');
   if (opts.sleepMinuteMs !== undefined) args.push(`--test-sleep-minute-ms=${opts.sleepMinuteMs}`);
+  if (opts.trustedCertificate !== undefined) args.push(`--test-trusted-cert=${opts.trustedCertificate}`);
   args.push(...graphicsSwitches({ noWebGL: opts.noWebGL }));
   // Without a desktop session, Chromium would pick its fixed-key password
   // store, which the app counts as no keychain; the password checks need

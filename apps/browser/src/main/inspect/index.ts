@@ -24,6 +24,8 @@ const LEVELS: readonly ConsoleLevel[] = ['debug', 'info', 'warning', 'error'];
 export interface InspectorOptions {
   /** Is this page a HoloML page, marked by the main process (milestone 15)? Only those are asked for a scene. */
   isHolomlPage?(contents: WebContents): boolean;
+  /** Test mode only (main/launch-options.ts): one certificate trusted by its fingerprint, the HTTPS fixture's (milestone 26). */
+  testTrustedCertificate?: string;
 }
 
 /**
@@ -70,7 +72,8 @@ export class Inspector {
       if (d.webContentsId === undefined || !this.tabs.has(d.webContentsId)) return;
       this.monitor.failed(d.webContentsId, d.id, d.error, d.timestamp);
     });
-    // Records each certificate Chromium checks; the verdict stays Chromium's.
+    // Records each certificate Chromium checks; the verdict stays Chromium's (in a test run, the fixture's own
+    // certificate, named by its fingerprint, is trusted too).
     ses.setCertificateVerifyProc((request, callback) => {
       const c = request.certificate;
       this.monitor.certificate({
@@ -80,7 +83,8 @@ export class Inspector {
         validExpiry: c.validExpiry,
         verification: request.verificationResult,
       }, isPrivate());
-      callback(USE_CHROMIUM_RESULT);
+      const trusted = this.options.testTrustedCertificate;
+      callback(trusted !== undefined && c.fingerprint === trusted ? 0 : USE_CHROMIUM_RESULT);
     });
   }
 
