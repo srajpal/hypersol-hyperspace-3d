@@ -1862,3 +1862,23 @@ a, go ahead
 ```text
 #57 and #56 merged; start milestone 25.
 ```
+
+## 168 — 2026-10-07 · Claude Opus 5.5, high effort
+
+Approves the plan for milestone 25, HoloML 0.3, with the recommended
+answers: Q1 a, `far` and `far-from` on `model`; Q2 a, a page's
+description in its tab's tooltip, the top of the text view, and the
+Scene inspector; Q3 a, `lang` and `dir` on the page and on every element
+that holds or shows text, inherited as in HTML; Q4 a, Draco, meshopt,
+and KTX2 models, with three.js's decoders shipped in the browser; Q5 a,
+a RELAX NG validator for holoml's tests, researched and proposed before
+it is added; Q6 a, the existing example sites take up what fits them,
+and a new short page, "Words in a room"; Q7 a, the specification states
+the least every renderer must manage; Q8 b, the large-scene items
+later. Also approves the new tools: `@gltf-transform/cli` and
+`draco3dgltf` as development packages of holoml's example tools, and
+KTX2 test models from Khronos's glTF Sample Assets, fetched once.
+
+```text
+Use the recommendations, approve the plan and tools.
+```
