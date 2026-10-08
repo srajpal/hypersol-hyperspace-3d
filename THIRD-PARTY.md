@@ -126,12 +126,12 @@ HoloML's examples (tests/fixtures/holoml, copied by `pnpm holoml:sync`):
   That was wrong: the file's own licence stamp says CC BY-NC 4.0, which
   does not allow commercial use (found by the review of 2026-09-30). The
   hawksbill turtle takes its place, and HoloML's tools now stop when a
-  file's stamp disagrees with its credit. Pictures taken before the
-  change still show the old turtle until they are taken again: the
-  ocean tunnel's picture in the HoloML examples section
-  (apps/browser/src/renderer/examples/aquarium.jpg) and the progress
-  screenshots of the ocean tunnel in which the turtle can be seen (61
-  and 63 in docs/screenshots/m21 and m22).
+  file's stamp disagrees with its credit. The ocean tunnel's picture in
+  the HoloML examples section
+  (apps/browser/src/renderer/examples/aquarium.jpg) was taken again on
+  2026-10-08 (prompt 172) and shows the hawksbill; the progress
+  screenshots of milestones 21 and 22 (61 and 63), no longer in the
+  tree but in its history, still show the old turtle.
 
   What each licence rests on, from the example's CREDITS.md: the
   Sketchfab models (the turtle, bream, mackerel, tuna, clownfish, and
@@ -204,7 +204,6 @@ textures, and harbour are Poly Haven's (CC0), the sneaker store's
 shoe is Shopify's "Materials Variants Shoe" (CC BY 4.0, as above), and
 the ocean tunnel's fish are those credited above (CC BY 4.0, and the
 barramundi CC0), among Poly Haven's rocks, log, and sand (CC0). The
-ocean tunnel's picture was taken before its turtle was replaced (see
-above), so the turtle in it is still the flatback by DigitalLife3D,
-whose licence is CC BY-NC 4.0 (non-commercial); the picture is to be
-taken again with `pnpm screenshots:examples`.
+picture was taken again on 2026-10-08 (prompt 172), with the hawksbill
+turtle (CC BY 4.0) in place of the flatback, whose licence is
+non-commercial (see above).
