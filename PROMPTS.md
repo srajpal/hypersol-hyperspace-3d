@@ -1833,3 +1833,9 @@ the screenshots of the VS Code extension at work later.
 ```text
 1 yes, 2 yes, 3 yes, 4 later
 ```
+
+## 164 — 2026-10-07 · Claude Opus 5.5, high effort
+
+```text
+Node uninstalled and switched to 24, verify.
+```
