@@ -96,13 +96,14 @@ export class Unsupported extends LeftOut {
 
 /**
  * The glTF extensions the viewer reads: those Three.js's loader reads by
- * itself. The ones for compressed geometry and compressed pictures
- * (KHR_draco_mesh_compression, EXT_meshopt_compression,
- * KHR_meshopt_compression, KHR_texture_basisu) need decoders the viewer
- * does not carry. A model whose file says it needs an extension that is
- * not here (its `extensionsRequired`) is left out, and the page says
- * why; one its file only uses is drawn without it (SPEC.md section 9,
- * "Loading", whose note lists the same names).
+ * itself, and (milestone 25) those for compressed geometry and compressed
+ * pictures, with the decoders the viewer carries (decoders.ts:
+ * KHR_draco_mesh_compression, EXT_meshopt_compression,
+ * KHR_meshopt_compression, KHR_texture_basisu). A model whose file says
+ * it needs an extension that is not here (its `extensionsRequired`) is
+ * left out, and the page says why; one its file only uses is drawn
+ * without it (SPEC.md section 9, "Loading", whose note lists the same
+ * names).
  */
 export const GLTF_EXTENSIONS: ReadonlySet<string> = new Set([
   'KHR_lights_punctual',
@@ -123,6 +124,11 @@ export const GLTF_EXTENSIONS: ReadonlySet<string> = new Set([
   'EXT_mesh_gpu_instancing',
   'EXT_texture_avif',
   'EXT_texture_webp',
+  // Milestone 25: with the viewer's decoders (decoders.ts).
+  'KHR_draco_mesh_compression',
+  'EXT_meshopt_compression',
+  'KHR_meshopt_compression',
+  'KHR_texture_basisu',
 ]);
 
 const MB = (n: number) => `${Math.round(n / (1024 * 1024))} MB`;
@@ -586,6 +592,9 @@ export function headerSize(b: Uint8Array): { width: number; height: number } | n
   const be32 = (at: number) => ((b[at]! << 24) | (b[at + 1]! << 16) | (b[at + 2]! << 8) | b[at + 3]!) >>> 0;
   const tag = (at: number, word: string) => b.length >= at + word.length && [...word].every((c, i) => b[at + i] === c.charCodeAt(0));
   if (b.length >= 10 && (tag(0, 'GIF87a') || tag(0, 'GIF89a'))) return { width: le16(6), height: le16(8) };
+  // KTX2 (milestone 25, KHR_texture_basisu): its identifier, then the format, the type size, the width, and the height.
+  const KTX2 = [0xab, 0x4b, 0x54, 0x58, 0x20, 0x32, 0x30, 0xbb, 0x0d, 0x0a, 0x1a, 0x0a];
+  if (b.length >= 28 && KTX2.every((v, i) => b[i] === v)) return { width: le32(20) >>> 0, height: Math.max(1, le32(24) >>> 0) };
   // A BMP's height is written below zero when its rows run from the top.
   if (b.length >= 26 && tag(0, 'BM')) return { width: Math.abs(le32(18)), height: Math.abs(le32(22)) };
   if (b.length >= 12 && tag(4, 'ftyp')) {

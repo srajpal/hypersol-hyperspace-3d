@@ -36,12 +36,17 @@ export const HOLOML_MEDIA_TYPE = 'model/vnd.holoml';
 /**
  * The content policy of every HoloML page: only the viewer's script, and
  * data from the page's own site (data: and blob: are the viewer's own).
+ * Milestone 25 (compressed models): WebAssembly, the decoders' workers
+ * (made from blob: addresses), and the decoders' files from the viewer's
+ * address. A page's own scripts could start workers and compile
+ * WebAssembly too: that is no more than they can do in the page already.
  */
 export const HOLOML_CSP = [
   "default-src 'none'",
-  // The viewer, and (HoloML 0.2) the page's own scripts from its own site.
-  `script-src ${VIEWER_SCHEME}: 'self'`,
-  "connect-src 'self' data: blob:",
+  // The viewer, and (HoloML 0.2) the page's own scripts from its own site; WebAssembly for the decoders.
+  `script-src ${VIEWER_SCHEME}: 'self' 'wasm-unsafe-eval'`,
+  "worker-src blob:",
+  `connect-src 'self' data: blob: ${VIEWER_SCHEME}:`,
   "img-src 'self' data: blob:",
   "style-src 'unsafe-inline'",
   "base-uri 'none'",
@@ -255,14 +260,15 @@ export class HolomlPages {
       const path = pathname === '/assets/viewer.js' ? `/@fs/${viewerSource.replace(/\\/g, '/').replace(/^\/+/, '')}` : pathname;
       const res = await net.fetch(new URL(path + search, devServer).href);
       const type = res.headers.get('content-type') ?? '';
-      if (!/javascript/.test(type)) return new Response('Not found', { status: 404 });
-      return new Response(res.body, { status: res.status, headers });
+      // Scripts, and (milestone 25) the decoders' WebAssembly.
+      if (!/javascript|wasm/.test(type) && !/\.wasm(?:\?|$)/.test(path)) return new Response('Not found', { status: 404 });
+      return new Response(res.body, { status: res.status, headers: /wasm/.test(type) || /\.wasm(?:\?|$)/.test(path) ? { ...headers, 'content-type': 'application/wasm' } : headers });
     }
-    // Only the viewer's scripts: other files of the browser are not served.
-    if (!/^\/assets\/[\w.-]+\.js$/.test(pathname)) return new Response('Not found', { status: 404 });
+    // Only the viewer's scripts and (milestone 25) its decoders' WebAssembly: other files of the browser are not served.
+    if (!/^\/assets\/[\w.-]+\.(?:js|wasm)$/.test(pathname)) return new Response('Not found', { status: 404 });
     try {
       const body = await readFile(join(this.options.viewerFiles, pathname));
-      return new Response(body, { headers });
+      return new Response(body, { headers: pathname.endsWith('.wasm') ? { ...headers, 'content-type': 'application/wasm' } : headers });
     } catch {
       return new Response('Not found', { status: 404 });
     }
