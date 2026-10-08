@@ -47,6 +47,8 @@ describe('every setting is saved and read back (review of 2026-09-30, Sm5)', () 
     dnsMode: 'automatic',
     filterRefresh: false,
     pausedSites: ['paused.example'],
+    httpsOnly: false,
+    httpsOnlySites: ['plain.example'],
     layersOnOpen: false,
     layersSites: { 'layers.example': true },
     theme: 'daylight',

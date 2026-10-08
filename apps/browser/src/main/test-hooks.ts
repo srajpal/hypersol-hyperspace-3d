@@ -51,6 +51,12 @@ export interface TestLog {
    * click once it has ended (prompt 172, D8).
    */
   captures: string[];
+  /**
+   * The file the next file dialog would give (milestone 26, bookmark
+   * files): a test run shows no dialog. Used once; null is a dialog
+   * closed without a choice, and nothing set is the same.
+   */
+  nextFile?: string | null;
 }
 
 declare global {

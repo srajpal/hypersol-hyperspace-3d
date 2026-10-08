@@ -86,6 +86,13 @@ let mainWindow: BrowserWindow | null = null;
  */
 let quitting = false;
 let testLog: TestLog | null = null;
+
+/** Test runs: the file a check named for the next file dialog, used once (milestone 26). */
+function takeTestFile(): string | null {
+  const file = testLog?.nextFile ?? null;
+  if (testLog) testLog.nextFile = undefined;
+  return file;
+}
 let storage: StorageService | null = null;
 let privacy: Privacy | null = null;
 let inspector: Inspector | null = null;
@@ -568,6 +575,26 @@ if (!app.requestSingleInstanceLock()) {
         clearCache: () => ses.clearCache(),
       },
       {
+        // Bookmark files (milestone 26): the system's dialogs. A test run opens none: its checks name the file
+        // in the test log (nextFile, used once; null for a dialog closed without a choice).
+        files: {
+          open: async () => {
+            const chosen = testLog ? takeTestFile() : await dialog.showOpenDialog(mainWindow!, {
+              title: 'Import bookmarks',
+              properties: ['openFile'],
+              filters: [{ name: 'Bookmark files', extensions: ['html', 'htm'] }, { name: 'All files', extensions: ['*'] }],
+            }).then((r) => (r.canceled ? null : (r.filePaths[0] ?? null)));
+            return chosen;
+          },
+          save: async (defaultName) => {
+            const chosen = testLog ? takeTestFile() : await dialog.showSaveDialog(mainWindow!, {
+              title: 'Export bookmarks',
+              defaultPath: join(app.getPath('documents'), defaultName),
+              filters: [{ name: 'Bookmark files', extensions: ['html'] }],
+            }).then((r) => (r.canceled ? null : (r.filePath ?? null)));
+            return chosen;
+          },
+        },
         // History searches and writes run in a worker thread, so a long
         // history never holds up the main process (milestone 10, GitHub
         // issue #4); the main thread takes over if the worker fails.

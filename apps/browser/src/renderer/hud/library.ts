@@ -1,11 +1,12 @@
 import { LitElement, css, html, nothing } from 'lit';
-import type { Bookmark, HistoryEntry } from '../../shared/data';
+import type { Bookmark, HistoryEntry, ImportPreview } from '../../shared/data';
 import type { SavedLogin } from '../../shared/passwords';
-import { groupByDay, type DataClient, type PasswordsClient } from '../data';
+import type { SiteEntry } from '../../shared/privacy';
+import { groupByDay, type DataClient, type PasswordsClient, type PrivacyClient } from '../data';
 import { panelStyles } from './panel-styles';
 import { siteName } from './prompts';
 
-type View = 'bookmarks' | 'history' | 'passwords';
+type View = 'bookmarks' | 'history' | 'passwords' | 'sites';
 /** What a test run notes about the history search box (HsLibrary.searchTimes). */
 type SearchMoment = 'typed' | 'searched' | 'waited';
 
@@ -34,6 +35,9 @@ export class HsLibrary extends LitElement {
     never: { state: true },
     revealed: { state: true },
     note: { state: true },
+    importing: { state: true },
+    sites: { state: true },
+    clearing: { state: true },
   };
 
   declare open: boolean;
@@ -49,9 +53,15 @@ export class HsLibrary extends LitElement {
   declare never: string[];
   /** Passwords shown with Show, by saved sign-in id; forgotten when the panel closes. */
   declare revealed: Record<number, string>;
-  /** A passing message on the Passwords tab (copied; why passwords can't be saved). */
+  /** A passing message on the Passwords tab (copied; why passwords can't be saved), or the Bookmarks tab (imported, exported). */
   declare note: string;
+  /** A bookmark file read and waiting for Add or Cancel (milestone 26); nothing is added before Add. */
+  declare importing: ImportPreview | null;
+  /** Per-site storage (milestone 26, issue #26): the sites that keep data, and the one whose Clear waits for its confirmation. */
+  declare sites: SiteEntry[];
+  declare clearing: string | null;
   client: DataClient | null = null;
+  privacy: PrivacyClient | null = null;
   passwords: PasswordsClient | null = null;
   private request = 0;
   /** A refresh is running; another was asked for meanwhile. */
@@ -88,6 +98,9 @@ export class HsLibrary extends LitElement {
     this.never = [];
     this.revealed = {};
     this.note = '';
+    this.importing = null;
+    this.sites = [];
+    this.clearing = null;
   }
 
   static override styles = [
@@ -178,6 +191,18 @@ export class HsLibrary extends LitElement {
         padding: 3px 8px;
         font-size: 12px;
       }
+      .tools {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .preview h3 {
+        margin: 10px 0 4px;
+      }
+      .preview .why {
+        font-size: 12px;
+        color: var(--hs-text-muted);
+      }
     `,
   ];
 
@@ -196,6 +221,8 @@ export class HsLibrary extends LitElement {
     this.confirming = false;
     this.revealed = {};
     this.note = '';
+    this.importing = null;
+    this.clearing = null;
     this.dispatchEvent(new CustomEvent('hs-panel-closed', { bubbles: true, composed: true }));
   }
 
@@ -242,6 +269,11 @@ export class HsLibrary extends LitElement {
         const all = await this.client.get({ op: 'bookmarks.list' });
         if (ticket !== this.request) return;
         this.bookmarks = all;
+      } else if (this.view === 'sites') {
+        if (!this.privacy) throw new Error('Site data is not available');
+        const sites = await this.privacy.get({ op: 'sites.list' });
+        if (ticket !== this.request) return;
+        this.sites = sites;
       } else if (this.view === 'passwords') {
         if (!this.passwords) throw new Error('Passwords are not available');
         const [status, logins, never] = await Promise.all([
@@ -278,6 +310,7 @@ export class HsLibrary extends LitElement {
         </header>
         <div role="tablist" aria-label="Library views">
           ${this.tab('bookmarks', 'Bookmarks')} ${this.tab('history', 'History')} ${this.tab('passwords', 'Passwords')}
+          ${this.tab('sites', 'Sites')}
         </div>
         <input
           type="search"
@@ -287,6 +320,7 @@ export class HsLibrary extends LitElement {
           .value=${this.query}
           @input=${this.onSearch}
         />
+        ${this.view === 'bookmarks' && !this.importing ? this.bookmarkTools() : nothing}
         <div class="list" data-testid="lib-list">${this.body()}</div>
         ${this.view === 'history' && !this.error ? this.footer() : nothing}
       </section>
@@ -304,6 +338,8 @@ export class HsLibrary extends LitElement {
         this.view = view;
         this.confirming = false;
         this.note = '';
+        this.importing = null;
+        this.clearing = null;
         void this.refresh();
       }}
     >
@@ -315,9 +351,11 @@ export class HsLibrary extends LitElement {
     if (this.error) return html`<p class="error" data-testid="lib-error" role="alert">${this.error}</p>`;
     if (this.loading && this.items().length === 0) return html`<p class="muted">Loading…</p>`;
     if (this.view === 'bookmarks') {
+      if (this.importing) return this.importPreview(this.importing);
       const shown = this.filteredBookmarks();
-      if (shown.length === 0) return this.empty('Pages you bookmark will show up here. Use the star or Ctrl+D.');
-      return html`<ul>
+      const note = this.note ? html`<p class="muted" role="status" data-testid="lib-note">${this.note}</p>` : nothing;
+      if (shown.length === 0) return html`${note}${this.empty('Pages you bookmark will show up here. Use the star or Ctrl+D, or import them from another browser.')}`;
+      return html`${note}<ul>
         ${shown.map(
           (b) => html`<li>
             ${this.item(b.url, b.title, b.favicon)}
@@ -334,6 +372,7 @@ export class HsLibrary extends LitElement {
       </ul>`;
     }
     if (this.view === 'passwords') return this.passwordsBody();
+    if (this.view === 'sites') return this.sitesBody();
     if (this.history.length === 0) return this.empty('Pages you visit will show up here.');
     return groupByDay(this.history).map(
       (g) => html`<h3>${g.label}</h3>
@@ -354,6 +393,91 @@ export class HsLibrary extends LitElement {
         </ul>`,
     );
   }
+
+  /** Import and export (milestone 26, issue #27): the system's dialogs choose the file. */
+  private bookmarkTools() {
+    return html`<div class="tools">
+      <button class="small" data-testid="lib-import" @click=${this.importFile}>Import bookmarks…</button>
+      <button class="small" data-testid="lib-export" @click=${this.exportFile}>Export bookmarks…</button>
+    </div>`;
+  }
+
+  /** What a bookmark file would add, and what it skips and why; nothing is added before Add. */
+  private importPreview(p: ImportPreview) {
+    const SHOWN = 200;
+    const cancel = html`<button data-testid="lib-import-cancel" @click=${this.cancelImport}>${p.error ? 'Close' : 'Cancel'}</button>`;
+    if (p.error) {
+      return html`<section class="preview" aria-label="Import bookmarks" data-testid="lib-import-preview">
+        <h3>${p.file}</h3>
+        <p class="error" role="alert" data-testid="lib-import-error">${p.error}</p>
+        ${cancel}
+      </section>`;
+    }
+    const n = p.found.length;
+    return html`<section class="preview" aria-label="Import bookmarks" data-testid="lib-import-preview">
+      <h3>From ${p.file}</h3>
+      <p role="status" data-testid="lib-import-summary">
+        ${n === 1 ? '1 bookmark to add' : `${n.toLocaleString()} bookmarks to add`}${p.skippedCount > 0 ? `, ${p.skippedCount.toLocaleString()} skipped` : ''}.
+        Nothing is added until you choose Add.
+      </p>
+      <div class="tools">
+        <button data-testid="lib-import-add" ?disabled=${n === 0} @click=${this.addImport}>${n === 1 ? 'Add 1 bookmark' : `Add ${n.toLocaleString()} bookmarks`}</button>
+        ${cancel}
+      </div>
+      ${n > 0
+        ? html`<h3>To add</h3>
+            <ul data-testid="lib-import-found">
+              ${p.found.slice(0, SHOWN).map(
+                (b) => html`<li><span class="login"><span class="title">${b.title}</span><span class="url">${b.folder ? `${b.folder} · ` : ''}${b.url}</span></span></li>`,
+              )}
+            </ul>
+            ${n > SHOWN ? html`<p class="muted">And ${(n - SHOWN).toLocaleString()} more.</p>` : nothing}`
+        : nothing}
+      ${p.skippedCount > 0
+        ? html`<h3>Skipped</h3>
+            <ul data-testid="lib-import-skipped">
+              ${p.skipped.slice(0, SHOWN).map(
+                (b) => html`<li><span class="login"><span class="title">${b.title}</span><span class="why">${b.why}${b.url ? ` · ${b.url}` : ''}</span></span></li>`,
+              )}
+            </ul>
+            ${p.skippedCount > SHOWN ? html`<p class="muted">And ${(p.skippedCount - SHOWN).toLocaleString()} more.</p>` : nothing}`
+        : nothing}
+    </section>`;
+  }
+
+  private readonly importFile = async () => {
+    this.note = '';
+    try {
+      const preview = await this.client!.get({ op: 'bookmarks.import-read' });
+      if (preview) this.importing = preview;
+    } catch (e) {
+      this.error = e instanceof Error ? e.message : String(e);
+    }
+  };
+
+  private readonly addImport = async () => {
+    const p = this.importing;
+    if (!p) return;
+    this.importing = null;
+    await this.act(async () => {
+      const added = await this.client!.get({ op: 'bookmarks.import-add', token: p.token });
+      this.note = `Added ${added === 1 ? '1 bookmark' : `${added.toLocaleString()} bookmarks`} from ${p.file}.`;
+    });
+  };
+
+  private readonly cancelImport = () => {
+    this.importing = null;
+  };
+
+  private readonly exportFile = async () => {
+    this.note = '';
+    try {
+      const done = await this.client!.get({ op: 'bookmarks.export' });
+      if (done) this.note = `Exported ${done.count === 1 ? '1 bookmark' : `${done.count.toLocaleString()} bookmarks`} to ${done.file}.`;
+    } catch (e) {
+      this.error = e instanceof Error ? e.message : String(e);
+    }
+  };
 
   private item(url: string, title: string, favicon: string | null, time?: number) {
     const when = time ? new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
@@ -448,8 +572,72 @@ export class HsLibrary extends LitElement {
     }
   }
 
+  /**
+   * Per-site storage (milestone 26, issue #26): each site's cookies, as
+   * Electron reports them, and Clear for one site. What is not reported
+   * per site is said, not guessed (owner, prompt 178, Q5 a).
+   */
+  private sitesBody() {
+    const q = this.query.trim().toLowerCase();
+    const shown = q ? this.sites.filter((s) => s.host.includes(q)) : this.sites;
+    const about = html`<p class="muted" data-testid="sites-about">
+      Sites that keep data on this computer, by the cookies set for them and the tabs open on them. A site's other
+      storage (local storage, IndexedDB, service workers, cache storage, file systems) and its cached files are not
+      reported per site, so their size is not shown; Clear removes them too. Private tabs are not listed: their data
+      goes when the last private tab closes.
+    </p>`;
+    const note = this.note ? html`<p class="muted" role="status" data-testid="lib-note">${this.note}</p>` : nothing;
+    if (shown.length === 0) return html`${about}${note}${this.empty('Sites that keep cookies show up here.')}`;
+    return html`${about}${note}
+      <ul data-testid="sites-list">
+        ${shown.map((s) => this.siteRow(s))}
+      </ul>`;
+  }
+
+  private siteRow(s: SiteEntry) {
+    const kb = (n: number) => (n < 1024 ? `${n} bytes` : `${(n / 1024).toFixed(1)} KB`);
+    const cookies = s.cookies === 0 ? 'No cookies' : `${s.cookies === 1 ? '1 cookie' : `${s.cookies} cookies`}, ${kb(s.cookieBytes)}`;
+    const open = s.openTabs > 0 ? ` · open in ${s.openTabs === 1 ? '1 tab' : `${s.openTabs} tabs`}` : '';
+    if (this.clearing === s.host) {
+      return html`<li data-testid="sites-item">
+        <div class="confirm login" role="alertdialog" aria-label=${`Clear ${s.host}`}>
+          <p>
+            Clear ${s.host}'s cookies, site storage, and cached files? You will be signed out of it${s.openTabs > 0 ? ', and its open tabs reload' : ''}.
+            Bookmarks, history, and saved passwords stay.${s.parents.length > 0 ? ` Cookies set for ${s.parents.join(' and ')}, which it also receives, stay too.` : ''}
+          </p>
+          <button class="danger" data-testid="sites-clear-confirm" @click=${() => this.clearSite(s.host)}>Clear</button>
+          <button data-testid="sites-clear-cancel" @click=${() => (this.clearing = null)}>Cancel</button>
+        </div>
+      </li>`;
+    }
+    return html`<li data-testid="sites-item">
+      <span class="login">
+        <span class="title" data-testid="sites-host">${s.host}</span>
+        <span class="url" data-testid="sites-detail">${cookies}${open}${s.parents.length > 0 ? ` · also receives ${s.parents.join(' and ')}'s cookies` : ''}</span>
+      </span>
+      <button class="small" data-testid="sites-clear" aria-label=${`Clear ${s.host}'s data`} @click=${() => (this.clearing = s.host)}>Clear</button>
+    </li>`;
+  }
+
+  private async clearSite(host: string): Promise<void> {
+    this.clearing = null;
+    await this.act(async () => {
+      await this.privacy!.get({ op: 'sites.clear', host });
+      this.note = `Cleared ${host}.`;
+    });
+  }
+
+  /** Opens the Sites tab on one site (from the site panel). */
+  showSite(host: string): void {
+    this.view = 'sites';
+    this.query = host;
+    this.note = '';
+    this.clearing = null;
+    this.show('sites');
+  }
+
   private items(): unknown[] {
-    return this.view === 'bookmarks' ? this.bookmarks : this.view === 'passwords' ? this.logins : this.history;
+    return this.view === 'bookmarks' ? this.bookmarks : this.view === 'passwords' ? this.logins : this.view === 'sites' ? this.sites : this.history;
   }
 
   private filteredBookmarks(): Bookmark[] {
@@ -485,6 +673,8 @@ export class HsLibrary extends LitElement {
     if (e.key === 'Escape') {
       e.stopPropagation();
       if (this.confirming) this.confirming = false;
+      else if (this.importing) this.importing = null;
+      else if (this.clearing) this.clearing = null;
       else this.close();
     }
   };

@@ -18,6 +18,8 @@ import { FilterService, type ListManifest } from './filters';
 import { verifyStarter, type StarterInfo } from './filters-build';
 import { OwnRequests } from './own-requests';
 import { hostOf } from '../../shared/site';
+import { HttpsOnly } from './https-only';
+import { SiteData } from '../site-data';
 import { Shield, type Matcher } from './shield';
 import createBuildWorker from './filters-worker?nodeWorker';
 
@@ -106,6 +108,10 @@ export class Privacy {
   readonly filters: FilterService<ElectronBlocker>;
   readonly dns: DnsControl;
   readonly shield: Shield;
+  /** HTTPS-only browsing (milestone 26, issue #24). */
+  readonly https: HttpsOnly;
+  /** Per-site storage (milestone 26, issue #26): the normal profile's sites. */
+  readonly sites: SiteData;
   private readonly tabs = new Set<number>();
   private paused = new Set<string>();
   /**
@@ -178,6 +184,16 @@ export class Privacy {
       // blocked outright rather than redirected.
       return { blocked: match || redirect !== undefined };
     };
+    this.sites = new SiteData(ses, () =>
+      [...this.tabs].filter((id) => !this.privateTabs.has(id)).flatMap((id) => {
+        const contents = webContents.fromId(id);
+        return contents ? [contents] : [];
+      }),
+    );
+    this.https = new HttpsOnly({
+      enabled: () => this.storage.settingsFile.settings.httpsOnly,
+      lasting: () => this.storage.settingsFile.settings.httpsOnlySites,
+    });
     this.shield = new Shield(
       () => matcher,
       (site, tab) => this.isPausedFor(tab, site),
@@ -233,8 +249,28 @@ export class Privacy {
         callback({});
         return;
       }
+      // HTTPS-only first (milestone 26): a page asked for over HTTP is loaded over HTTPS, and the shield then
+      // decides on that address, as on any other.
+      if (details.resourceType === 'mainFrame') {
+        const https = this.https.decide(tab, details.url, this.privateTabs.has(tab));
+        if (https && 'redirectURL' in https) {
+          callback({ redirectURL: https.redirectURL });
+          return;
+        }
+        if (https && 'refuse' in https) {
+          // Electron drops a cancelled page load without a failure event: the tab is told, as for a blocked page.
+          callback({ cancel: true });
+          this.sendToHost(tab, { type: 'https-only-refused', webContentsId: tab, url: https.refuse });
+          return;
+        }
+      }
       this.options.onTabRequest?.(tab, details);
       callback(this.shield.decide({ url: details.url, resourceType: details.resourceType, tab }));
+    });
+    // HTTPS-only knows a page load's redirects, so that one back to HTTP is not upgraded again for ever.
+    ses.webRequest.onBeforeRedirect({ urls: ['<all_urls>'] }, (details) => {
+      const tab = details.webContentsId;
+      if (tab !== undefined && details.resourceType === 'mainFrame' && this.tabs.has(tab)) this.https.redirecting(tab, details.redirectURL);
     });
     // Filter lists can add a content security policy to pages (for example to stop pop-unders).
     ses.webRequest.onHeadersReceived({ urls: ['<all_urls>'] }, (details, done) => {
@@ -269,6 +305,7 @@ export class Privacy {
   /** The last private tab closed: its paused sites are forgotten. */
   forgetPrivate(): void {
     this.privatePaused.clear();
+    this.https.forgetPrivate();
   }
 
   /**
@@ -295,7 +332,10 @@ export class Privacy {
     const id = contents.id;
     this.tabs.add(id);
     if (this.privateSession !== null && contents.session === this.privateSession) this.privateTabs.add(id);
-    contents.on('did-navigate', (_event, url) => this.shield.committed(id, url));
+    contents.on('did-navigate', (_event, url) => {
+      this.shield.committed(id, url);
+      this.https.committed(id);
+    });
     // A page that failed to load: the tab shows its error card, so the record is that page's.
     // A load given up or turned into a download (-3, aborted) is not a failure.
     contents.on('did-fail-load', (_event, code, _description, url, isMainFrame) => {
@@ -306,6 +346,7 @@ export class Privacy {
       this.tabs.delete(id);
       this.privateTabs.delete(id);
       this.shield.forget(id);
+      this.https.forget(id);
       clearTimeout(this.countTimers.get(id));
       this.countTimers.delete(id);
       this.pendingCounts.delete(id);
@@ -360,7 +401,80 @@ export class Privacy {
       case 'private.ended':
         await this.options.onPrivateEnded?.();
         return null;
+      case 'https-only.failure':
+        this.ownTab(shell, r.tab);
+        return this.https.failedUpgrade(r.tab, r.url);
+      case 'https-only.continue':
+        this.ownTab(shell, r.tab);
+        if (!r.url.toLowerCase().startsWith('http:')) throw new Error('Only a plain HTTP address needs an exception');
+        this.https.allowForSession(new URL(r.url).hostname, this.privateTabs.has(r.tab));
+        // Settings lists the exceptions made this run too.
+        if (!this.privateTabs.has(r.tab)) this.storage.notify('settings');
+        return null;
+      case 'https-only.site':
+        return this.httpsSite(shell, r.tab);
+      case 'https-only.set':
+        return this.setHttpsException(shell, r.tab, r.host, r.exception);
+      case 'https-only.sessions':
+        return this.https.sessionHosts();
+      case 'sites.list':
+        return this.sites.list();
+      case 'sites.clear':
+        await this.sites.clear(r.host);
+        return null;
     }
+  }
+
+  /** HTTPS-only for the site of a tab's page, for its site panel. */
+  private httpsSite(shell: WebContents, tab: number): unknown {
+    this.ownTab(shell, tab);
+    const isPrivate = this.privateTabs.has(tab);
+    let url: URL | null = null;
+    try {
+      url = new URL(webContents.fromId(tab)!.getURL());
+    } catch {
+      url = null;
+    }
+    const web = url !== null && (url.protocol === 'http:' || url.protocol === 'https:');
+    const host = web ? url!.hostname : '';
+    return {
+      host,
+      http: web && url!.protocol === 'http:',
+      on: this.storage.settingsFile.settings.httpsOnly,
+      exception: host ? this.https.exception(host, isPrivate) : null,
+      private: isPrivate,
+    };
+  }
+
+  /**
+   * Sets a site's exception on purpose: until the browser closes, kept
+   * (normal tabs only: a private tab keeps nothing), or none. A kept one
+   * is written to settings.json; one until the browser closes is held
+   * here.
+   */
+  private async setHttpsException(shell: WebContents, tab: number | null, host: string, exception: 'none' | 'session' | 'lasting'): Promise<null> {
+    if (tab !== null) this.ownTab(shell, tab);
+    const isPrivate = tab !== null && this.privateTabs.has(tab);
+    if (isPrivate) {
+      if (exception === 'lasting') throw new Error('A private tab keeps nothing once it closes');
+      if (exception === 'session') this.https.allowForSession(host, true);
+      else this.https.removeSession(host, true);
+      return null;
+    }
+    const kept = new Set(this.storage.settingsFile.settings.httpsOnlySites);
+    const wasKept = kept.has(host);
+    if (exception === 'lasting') kept.add(host);
+    else kept.delete(host);
+    if (exception === 'session') this.https.allowForSession(host, false);
+    else this.https.removeSession(host, false);
+    if (kept.has(host) !== wasKept) {
+      const reply = await this.storage.handle({ op: 'settings.set', patch: { httpsOnlySites: [...kept] } });
+      if (!reply.ok) throw new Error(reply.error);
+    } else if (exception !== 'lasting') {
+      // Only the exception for this run changed: Settings shows those too, so it is told.
+      this.storage.notify('settings');
+    }
+    return null;
   }
 
   /** The page asking for element hiding, if it is a tab and not paused; else null. */

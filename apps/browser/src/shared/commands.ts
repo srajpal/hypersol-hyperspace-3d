@@ -90,6 +90,8 @@ export type ShellCommand =
   | { type: 'shield'; webContentsId: number; count: number }
   /** The shield blocked a whole page in a tab (the tab shows the blocked card). */
   | { type: 'page-blocked'; webContentsId: number; url: string }
+  /** HTTPS-only (milestone 26): the site sent its upgraded page back to plain HTTP; the tab shows the card for that address. */
+  | { type: 'https-only-refused'; webContentsId: number; url: string }
   /** The downloads list changed (milestone 8). */
   | { type: 'downloads'; items: DownloadInfo[] }
   /** The filter lists changed (refreshed, or a refresh started or failed). */

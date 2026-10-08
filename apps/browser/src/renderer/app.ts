@@ -189,7 +189,9 @@ export class App {
     this.passwords = new PasswordsClient(options.bridge);
     options.library.client = this.data;
     options.library.passwords = this.passwords;
+    options.library.privacy = this.privacy;
     options.sitePanel.client = this.permissions;
+    options.sitePanel.privacy = this.privacy;
     options.sitePanel.tab = () => (this.focusedView?.isStart === false ? this.focusedView.webContentsId : null);
     options.settingsPanel.client = this.data;
     options.settingsPanel.platform = options.bridge.platform;
@@ -642,6 +644,15 @@ export class App {
       useNetworkDns: async () => {
         await this.privacy.get({ op: 'dns.use-network' });
       },
+      httpsOnlyFailure: async (url) => {
+        const page = this.views.get(id)?.webContentsId;
+        return page === null || page === undefined ? null : this.privacy.get({ op: 'https-only.failure', tab: page, url });
+      },
+      continueHttp: async (url) => {
+        const page = this.views.get(id)?.webContentsId;
+        if (page === null || page === undefined) throw new Error('The page is not ready');
+        await this.privacy.get({ op: 'https-only.continue', tab: page, url });
+      },
       onPageReady: () => {
         this.applyLayersOnOpen(id);
         this.applyZoomOnOpen(id);
@@ -1008,6 +1019,16 @@ export class App {
       this.dropOffer((e as CustomEvent<number>).detail);
     });
     sitePanel.addEventListener('hs-site-closed', () => this.focusPage());
+    // The site panel's "Site data" (milestone 26): the Library's Sites tab, on that site.
+    sitePanel.addEventListener('hs-open-site-data', (e) => {
+      const host = (e as CustomEvent<string>).detail;
+      sitePanel.close();
+      const library = this.options.library;
+      library.view = 'sites';
+      library.query = host;
+      if (this.openPanelName === 'library') library.showSite(host);
+      else this.togglePanel('library');
+    });
     notice.addEventListener('hs-notice-action', (e) => {
       const [action, id] = (e as CustomEvent<string>).detail.split(':');
       if (action === 'downloads') this.togglePanel('downloads');
@@ -1311,6 +1332,11 @@ export class App {
       case 'page-blocked': {
         const tabId = this.tabForWebContents(command.webContentsId);
         if (tabId !== undefined) this.views.get(tabId)?.showBlocked(command.url);
+        break;
+      }
+      case 'https-only-refused': {
+        const tabId = this.tabForWebContents(command.webContentsId);
+        if (tabId !== undefined) this.views.get(tabId)?.showHttpsOnly(command.url);
         break;
       }
       case 'permission-prompt': {
