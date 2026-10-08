@@ -343,7 +343,7 @@ GitHub Actions for every pull request and every push to main; macOS is
 untested.
 [CONTRIBUTING.md](CONTRIBUTING.md) has the full setup, including Linux.
 
-You need Node 24 (22.13 or newer still works for now) and pnpm 12.4.1. The pnpm version is pinned
+You need Node 24 or newer and pnpm 12.4.1. The pnpm version is pinned
 in package.json (`packageManager`), so pnpm, or `corepack enable`, uses
 that exact version. Install with the lockfile as it is:
 

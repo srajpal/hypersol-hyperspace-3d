@@ -1810,3 +1810,49 @@ Accept milestone 24.
 Also "Bump vscode-textmate from 7.0.4 to 9.3.2" #34 has a conflict;
 please address it.
 ```
+
+## 162 — 2026-10-07 · Claude Opus 5.5, high effort
+
+```text
+Let's try to clear all old stuff before moving on.
+Node is updated on local, verify.
+Branches deleted, verify.
+Measure the ocean tunnel's frame rates.
+Update Electron.
+Check if there are any other unresolved issues.
+```
+
+## 163 — 2026-10-07 · Claude Opus 5.5, high effort
+
+Answers the agent's four questions after prompt 162: 1, yes, dismiss
+the code-scanning alerts (18 in this repository's test code as used in
+tests; holoml's 2 as false positives); 2, yes, close issue #44 once
+#55 is merged; 3, yes, a GitHub release for holoml's v0.2.2 tag; 4,
+the screenshots of the VS Code extension at work later.
+
+```text
+1 yes, 2 yes, 3 yes, 4 later
+```
+
+## 164 — 2026-10-07 · Claude Opus 5.5, high effort
+
+```text
+Node uninstalled and switched to 24, verify.
+```
+
+## 165 — 2026-10-07 · Claude Opus 5.5, high effort
+
+```text
+Some CIs on hypersol-hyperspace-3d have failed; please check and fix.
+```
+
+## 166 — 2026-10-07 · Claude Opus 5.5, high effort
+
+Answers the agent's question after prompt 165, about CodeQL failing on
+main once the Android app's Kotlin was merged: a, the agent switches
+GitHub's default code scanning off and adds a CodeQL workflow of the
+repository's own that also builds and scans the Kotlin.
+
+```text
+a, go ahead
+```

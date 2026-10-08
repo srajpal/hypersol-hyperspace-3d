@@ -53,7 +53,8 @@ state; this is a summary.
   aquarium, where HoloML 0.2 is completed (accepted 2026-09-29, prompt
   125; merged in holoml, #19, and the browser, #38; published at
   https://srajpal.github.io/holoml/aquarium/; HoloML 0.2 released as
-  v0.2.0, https://github.com/srajpal/holoml/releases/tag/v0.2.0)); 22 documentation for HoloML to recognised standards (prompt
+  v0.2.0, https://github.com/srajpal/holoml/releases/tag/v0.2.0, and
+  its third edition as v0.2.2, 2026-10-07)); 22 documentation for HoloML to recognised standards (prompt
   115; accepted 2026-10-07, prompt 160); 23 HoloML for VS Code, an extension
   kept in holoml and installed by hand (prompt 146; plan approved with
   the recommended answers, 2026-10-02; accepted 2026-10-05, prompt
@@ -195,7 +196,9 @@ Where the work is (nothing here is pushed yet):
   package file takes its version, 0.2.2, from the copied packages.
 - On GitHub (the lead's record, 2026-09-30): the rule on main requires
   the one check "All checks"; Dependabot's alerts and security updates
-  are on, and code scanning is set up, in both repositories; merged
+  are on, and code scanning is set up, in both repositories (here, since
+  prompt 166, by the repository's own CodeQL workflow, which also builds
+  and scans the Android app's Kotlin); merged
   branches are deleted on merge from now on. Not done there: the three
   old merged branches (left for the owner), and requiring actions by
   commit (only after both pull requests are merged).
@@ -541,10 +544,10 @@ to this repository for rules and the prompt log.
   protection", has the details.
 - Desktop first: Windows and Linux, then macOS; mobile later, as its own
   project. Mouse, keyboard, and touch.
-- Stack: Electron (the newest stable line; 44.5.1 since 2026-09-30),
+- Stack: Electron (the newest stable line; 44.7.0 since 2026-10-07),
   TypeScript, Three.js, Lit, SQLite through Node's node:sqlite,
   @ghostery/adblocker-electron, electron-vite, Vitest, Playwright. Node
-  24 (22.13 or newer still installs), pnpm 12.4.1 pinned. Reasons in ARCHITECTURE.md
+  24 or newer, pnpm 12.4.1 pinned. Reasons in ARCHITECTURE.md
   section 4.
 - The focused page is a live Chromium view (an Electron `<webview>`)
   placed with CSS 3D transforms; background tabs show snapshots.

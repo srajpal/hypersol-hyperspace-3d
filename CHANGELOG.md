@@ -178,6 +178,9 @@
   and a lighter drawing, on Android's own WebView; installed by hand.
   The tab cards are drawn at the display's own resolution (they were
   blurred at first, prompt 160).
+- Built on Electron 44.7.0, with its backported Chromium, V8, ANGLE,
+  Dawn, Skia, and WebRTC fixes, and 44.6.0's fix for find in page
+  hanging on a page with a frame (rule 13; prompt 162).
 
 After a review of both repositories on 2026-09-30 (the ids in brackets
 are the review's):

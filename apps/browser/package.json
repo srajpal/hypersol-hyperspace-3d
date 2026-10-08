@@ -20,7 +20,7 @@
     "@hypersol/scene-core": "workspace:*",
     "@hypersol/themes": "workspace:*",
     "@types/three": "^0.186.0",
-    "electron": "^44.5.1",
+    "electron": "^44.7.0",
     "electron-vite": "^5.0.0",
     "lit": "^3.3.3",
     "three": "^0.186.1",

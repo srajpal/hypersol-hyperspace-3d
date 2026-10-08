@@ -217,16 +217,20 @@ describe('M10: HTTP sign-in', () => {
     try {
       await waitForPage(h, 'link-a');
       const page = await focusedPage(h);
-      // Two requests of the page's own site, behind two different sign-ins.
-      await inPage(
-        h,
-        `window.got = {};
-         for (const [name, path] of [['first', '/review-134/basic/data.json'], ['second', '/review-134/basic-long/data.json']]) {
-           fetch(path).then((r) => { window.got[name] = r.status; }, (e) => { window.got[name] = String(e); });
-         }
-         true`,
-        page,
-      );
+      // Two requests of the page's own site, behind two different sign-ins. The second is sent
+      // once the first is held: sent together, either could be asked first (on GitHub's Windows
+      // machines the second sometimes was, prompt 165), and this check is about the one after.
+      const send = (name: string, path: string) =>
+        inPage(
+          h,
+          `window.got = window.got || {};
+           fetch(${JSON.stringify(path)}).then((r) => { window.got[${JSON.stringify(name)}] = r.status; }, (e) => { window.got[${JSON.stringify(name)}] = String(e); });
+           true`,
+          page,
+        );
+      await send('first', '/review-134/basic/data.json');
+      await waitFor('the first request held', () => waiting(h), (n) => n === 1);
+      await send('second', '/review-134/basic-long/data.json');
       await waitFor('both requests held', () => waiting(h), (n) => n === 2);
       const first = await asked(h);
       expect(first.realm).toBe(BASIC_REALM);

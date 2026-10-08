@@ -160,9 +160,9 @@ after they ran; on Windows and Linux in GitHub Actions since 2026-09-26,
 see .github/workflows/ci.yml; macOS not checked yet). Counts are as of the
 date given and grow with each milestone; TODO.md has the latest.
 - Toolchain: Node 24 (the Node inside Electron 44; the automatic
-  builds run it, and Node 26 for lint, types, and unit tests; 22.13 or
-  newer still installs until `engines` is raised, owner, prompt 161);
-  pnpm 12.4.1, pinned in package.json.
+  builds run it, and Node 26 for lint, types, and unit tests; owner,
+  prompt 161; `engines` asks for 24 or newer since prompt 164); pnpm
+  12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
 - Unit: `pnpm test` (Vitest; 502 tests passed on 2026-09-30;
   each test may take up to 20 seconds, vitest.config.ts)

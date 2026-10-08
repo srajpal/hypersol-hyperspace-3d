@@ -9,6 +9,12 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # @types/node follows the Node the code runs on: Electron 44's Node
+      # 24 (owner, prompt 161). A new major comes when the builds move,
+      # not on its own (prompt 162).
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     groups:
       minor-and-patch:
         update-types: [minor, patch]
