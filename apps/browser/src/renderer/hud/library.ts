@@ -199,9 +199,8 @@ export class HsLibrary extends LitElement {
       .preview h3 {
         margin: 10px 0 4px;
       }
-      .preview .why {
-        font-size: 12px;
-        color: var(--hs-text-muted);
+      .preview {
+        min-width: 0;
       }
     `,
   ];
@@ -428,7 +427,7 @@ export class HsLibrary extends LitElement {
         ? html`<h3>To add</h3>
             <ul data-testid="lib-import-found">
               ${p.found.slice(0, SHOWN).map(
-                (b) => html`<li><span class="login"><span class="title">${b.title}</span><span class="url">${b.folder ? `${b.folder} · ` : ''}${b.url}</span></span></li>`,
+                (b) => html`<li><div class="login"><div class="title">${b.title}</div><div class="url">${b.folder ? `${b.folder} · ` : ''}${b.url}</div></div></li>`,
               )}
             </ul>
             ${n > SHOWN ? html`<p class="muted">And ${(n - SHOWN).toLocaleString()} more.</p>` : nothing}`
@@ -437,7 +436,7 @@ export class HsLibrary extends LitElement {
         ? html`<h3>Skipped</h3>
             <ul data-testid="lib-import-skipped">
               ${p.skipped.slice(0, SHOWN).map(
-                (b) => html`<li><span class="login"><span class="title">${b.title}</span><span class="why">${b.why}${b.url ? ` · ${b.url}` : ''}</span></span></li>`,
+                (b) => html`<li><div class="login"><div class="title">${b.title}</div><div class="url why">${b.why}${b.url ? ` · ${b.url}` : ''}</div></div></li>`,
               )}
             </ul>
             ${p.skippedCount > SHOWN ? html`<p class="muted">And ${(p.skippedCount - SHOWN).toLocaleString()} more.</p>` : nothing}`
@@ -611,10 +610,10 @@ export class HsLibrary extends LitElement {
       </li>`;
     }
     return html`<li data-testid="sites-item">
-      <span class="login">
-        <span class="title" data-testid="sites-host">${s.host}</span>
-        <span class="url" data-testid="sites-detail">${cookies}${open}${s.parents.length > 0 ? ` · also receives ${s.parents.join(' and ')}'s cookies` : ''}</span>
-      </span>
+      <div class="login">
+        <div class="title" data-testid="sites-host">${s.host}</div>
+        <div class="url" data-testid="sites-detail">${cookies}${open}${s.parents.length > 0 ? ` · also receives ${s.parents.join(' and ')}'s cookies` : ''}</div>
+      </div>
       <button class="small" data-testid="sites-clear" aria-label=${`Clear ${s.host}'s data`} @click=${() => (this.clearing = s.host)}>Clear</button>
     </li>`;
   }
