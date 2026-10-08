@@ -196,7 +196,9 @@ Where the work is (nothing here is pushed yet):
   package file takes its version, 0.2.2, from the copied packages.
 - On GitHub (the lead's record, 2026-09-30): the rule on main requires
   the one check "All checks"; Dependabot's alerts and security updates
-  are on, and code scanning is set up, in both repositories; merged
+  are on, and code scanning is set up, in both repositories (here, since
+  prompt 166, by the repository's own CodeQL workflow, which also builds
+  and scans the Android app's Kotlin); merged
   branches are deleted on merge from now on. Not done there: the three
   old merged branches (left for the owner), and requiring actions by
   commit (only after both pull requests are merged).

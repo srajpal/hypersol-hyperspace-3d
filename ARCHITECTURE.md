@@ -297,6 +297,7 @@ hypersol-hyperspace-3d/
                                vitest.readme.config.ts, and
                                vitest.examples.config.ts: the screenshots
   .github/                     workflows/ci.yml (the automatic builds),
+                               workflows/codeql.yml (code scanning),
                                dependabot.yml (weekly updates proposed for
                                the packages and the actions), the issue
                                and pull request templates
@@ -948,7 +949,13 @@ only when every part has; the rule on main names it alone. A change to
 documents only (the `*.md` files at the top and the docs folder, which
 no check reads) skips the parts, and "All checks" passes at once. The
 actions are named by commit, and Dependabot proposes updates to them
-and to the packages each week (.github/dependabot.yml).
+and to the packages each week (.github/dependabot.yml). Code scanning
+is the repository's own CodeQL workflow (.github/workflows/codeql.yml):
+the workflows, the JavaScript and TypeScript, and the Android app's
+Kotlin, compiled with Gradle, on every pull request, every push to main,
+and once a week. GitHub's default setup, used before, cannot build the
+Kotlin, and its run on main failed once the app was merged; it is off
+since prompt 166.
 
 Progress screenshots: `MILESTONE=m3 pnpm screenshots` builds the app and
 saves its main screens to docs/screenshots/m3/ (Electron's own capture,
