@@ -141,6 +141,9 @@ function testHooks() {
     },
     focusedTabId: () => store.focusedId,
     cardPoint: (key: number | 'plus', part: CardPart) => room.cardPoint(key, part),
+    // Milestone 25: the room's tooltip (over the card the pointer rests on), and a card's own.
+    roomTooltip: () => room.tooltip,
+    cardTooltip: (key: number) => room.cardTooltip(key),
     rail: () => room.rail,
     railVisible: () => room.railVisible,
     animating: () => room.animating,

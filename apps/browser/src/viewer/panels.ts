@@ -5,6 +5,7 @@
  * the board, sharp from a step away.
  */
 import { BackSide, CanvasTexture, FrontSide, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry, SRGBColorSpace } from 'three';
+import { direction, type Direction } from './language';
 
 /** Pixels a metre on a panel's picture: sharp from a step away. */
 const PANEL_PX = 1000;
@@ -26,6 +27,8 @@ export interface PanelLook {
   /** Its words in the page, for Find in page; and in the outline, after its button. */
   note: HTMLElement;
   words: HTMLElement | null;
+  /** Which way its words run (HoloML 0.3 `dir`; `auto` by each paragraph's own words); `ltr` in an older page. */
+  dir: Direction;
 }
 
 const PANEL_FONT = (px: number) => `500 ${px}px system-ui, "Segoe UI", sans-serif`;
@@ -67,13 +70,17 @@ export function drawPanel(holder: Object3D, look: PanelLook, anisotropy: number)
   ctx.fillStyle = look.color;
   ctx.textBaseline = 'middle';
   let y = pad;
-  for (const lines of look.lines) {
+  look.lines.forEach((lines, i) => {
+    // A right-to-left paragraph is laid out from the right edge, and its lines start there (HoloML 0.3).
+    const rtl = direction(look.dir, look.paragraphs[i] ?? '') === 'rtl';
+    ctx.direction = rtl ? 'rtl' : 'ltr';
+    ctx.textAlign = rtl ? 'right' : 'left';
     for (const l of lines) {
-      ctx.fillText(l, pad * k, (y + line / 2) * k);
+      ctx.fillText(l, (rtl ? width - pad : pad) * k, (y + line / 2) * k);
       y += line;
     }
     y += gap;
-  }
+  });
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
   texture.anisotropy = anisotropy;

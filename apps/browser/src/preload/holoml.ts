@@ -59,11 +59,13 @@ if (isHolomlDocument) {
     const channel = new MessageChannel();
     line = channel.port1;
     line.onmessage = (m) => {
-      const data = m.data as { busy?: unknown; textView?: unknown; drawn?: unknown } | null;
+      const data = m.data as { busy?: unknown; textView?: unknown; drawn?: unknown; description?: unknown } | null;
       if (typeof data !== 'object' || data === null) return;
       if (typeof data.busy === 'boolean') ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { busy: data.busy });
       if (typeof data.textView === 'boolean') ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { textView: data.textView });
       if (data.drawn === true) ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { drawn: true });
+      // The page's description, for its tab's tooltip (milestone 25): text, and no more than 500 characters.
+      if (typeof data.description === 'string') ipcRenderer.sendToHost(HOLOML_STATE_CHANNEL, { description: data.description.slice(0, 500) });
     };
     window.postMessage({ hypersolHolomlLine: true }, '*', [channel.port2]);
     for (const command of waiting.splice(0)) line.postMessage(command);

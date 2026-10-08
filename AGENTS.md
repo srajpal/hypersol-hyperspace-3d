@@ -504,9 +504,22 @@ milestone; the current milestone's checks are defined in TODO.md):
   regression, as the room, the top bar, and the viewer are shared). The
   shared parts' unit tests run with `pnpm test` (viewer/touch.test.ts,
   apps/android/src/bridge.test.ts), and the app's with Gradle.
-- Later milestones add: HoloML 0.3 (25), privacy and data tools (26),
-  free camera (27), lift to 3D (28), polish (29), and installers (30
-  and 31).
+- Milestone 25 checks HL1 to HL10 (TODO.md): HoloML 0.3. HL1 is
+  holoml's own tests (the language, and its RELAX NG schema checked by
+  Jing, which needs Java there). In this repository (same command,
+  tests/e2e/m25.e2e.ts): names for models and groups, and a link named
+  by them (HL2); the language and direction of text (HL3); a page's
+  description (HL7); compressed models, Draco, meshopt, and KTX2, the
+  last through the transcoder's own host (HL4; fixture pages and models
+  in tests/fixtures/holoml/compressed, made by its make.mjs); far models
+  (HL5); the scene API of 0.3 (HL6); how a panorama faces; and the
+  example sites (HL9: every model a screen reader reaches has a name;
+  the ocean tunnel's far fish, and its frame rate, logged in software
+  and skipped; the sneaker store's smaller download; Words in a room
+  for screen readers). HL8 is every earlier milestone's checks; HL10 the
+  full run, the Android app by hand, and the published sites.
+- Later milestones add: privacy and data tools (26), free camera (27),
+  lift to 3D (28), polish (29), and installers (30 and 31).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

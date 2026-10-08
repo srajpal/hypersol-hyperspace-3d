@@ -1,0 +1,10 @@
+<holoml version="0.3">
+  <head>
+    <title>HoloML 0.3: which way a panorama faces</title>
+  </head>
+  <!-- Milestone 25: the specification says which way a panorama's middle faces. The sky is blue, with a red band
+       down its middle (u = 0.5) and a green one at a quarter (u = 0.25). The viewer stands at the middle. -->
+  <scene sky="m25-sky.png">
+    <viewpoint position="0 0 0" look-at="0 0 -1" mode="walk" />
+  </scene>
+</holoml>

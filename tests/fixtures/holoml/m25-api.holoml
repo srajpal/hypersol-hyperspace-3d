@@ -1,0 +1,18 @@
+<holoml version="0.3">
+  <head>
+    <title>HoloML 0.3: the scene API</title>
+  </head>
+  <!-- Milestone 25, check HL6: what 0.3 adds to the scene API, driven by the checks: an animate, the water, the
+       floor plan, places, a model's and a group's name, holoml.add, and a sound's place. -->
+  <scene background="#1c2030">
+    <viewpoint id="hall" position="0 1.6 6" look-at="0 1 0" />
+    <viewpoint id="terrace" label="Terrace" position="0 1.6 -6" look-at="0 1 -12" />
+    <light type="ambient" intensity="0.8" />
+    <model id="car" src="models/placeholder-car.gltf" label="A car" />
+    <group id="stand" label="The stand" position="3 0 0" />
+    <animate id="spin" target="#car" attribute="rotation" to="0 360 0" duration="4s" repeat="indefinite" />
+    <water id="pool" size="4 1 4" position="0 0 -8" clarity="10" />
+    <plan id="map" src="gen/plan.png" area="-5 -10 5 10" label="Plan" />
+    <sound id="tone" src="gen/tone.wav" position="0 1 0" range="12" />
+  </scene>
+</holoml>

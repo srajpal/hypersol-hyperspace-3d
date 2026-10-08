@@ -36,12 +36,19 @@ export const HOLOML_MEDIA_TYPE = 'model/vnd.holoml';
 /**
  * The content policy of every HoloML page: only the viewer's script, and
  * data from the page's own site (data: and blob: are the viewer's own).
+ * Milestone 25 (compressed models): WebAssembly, the decoders' workers
+ * (made from blob: addresses), and the decoders' files from the viewer's
+ * address. A page's own scripts could start workers and compile
+ * WebAssembly too: that is no more than they can do in the page already.
  */
 export const HOLOML_CSP = [
   "default-src 'none'",
-  // The viewer, and (HoloML 0.2) the page's own scripts from its own site.
-  `script-src ${VIEWER_SCHEME}: 'self'`,
-  "connect-src 'self' data: blob:",
+  // The viewer, and (HoloML 0.2) the page's own scripts from its own site; WebAssembly for the decoders.
+  `script-src ${VIEWER_SCHEME}: 'self' 'wasm-unsafe-eval'`,
+  "worker-src blob:",
+  `connect-src 'self' data: blob: ${VIEWER_SCHEME}:`,
+  // The KTX2 transcoder's host (milestone 25), unseen in the page.
+  `frame-src ${VIEWER_SCHEME}:`,
   "img-src 'self' data: blob:",
   "style-src 'unsafe-inline'",
   "base-uri 'none'",
@@ -50,6 +57,27 @@ export const HOLOML_CSP = [
   // No peer connections: they would be a way out for what a page's script can read.
   "webrtc 'block'",
 ].join('; ');
+
+/**
+ * The content policy of the KTX2 transcoder's host (milestone 25; owner,
+ * prompt 170): a page of the viewer's address that HoloML pages frame,
+ * where the Basis transcoder may evaluate code (as Emscripten's builds
+ * do) in its workers; HoloML pages themselves stay without it. It runs
+ * only the viewer's scripts, reads only the viewer's files, and holds
+ * nothing of any page.
+ */
+export const KTX2_HOST_CSP = [
+  "default-src 'none'",
+  `script-src ${VIEWER_SCHEME}: blob: 'unsafe-eval' 'wasm-unsafe-eval'`,
+  "worker-src blob:",
+  `connect-src ${VIEWER_SCHEME}: blob: data:`,
+  `frame-ancestors http: https: ${VIEWER_SCHEME}: ${LOCAL_SCHEME}:`,
+  "base-uri 'none'",
+  "form-action 'none'",
+].join('; ');
+
+/** The transcoder's host page: it only loads its script. */
+const KTX2_HOST_PAGE = '<!doctype html><meta charset="utf-8"><title>KTX2 picture decoder</title><script type="module" src="assets/ktx2-host.js"></script>';
 
 type Headers = Record<string, string | string[]>;
 
@@ -237,6 +265,10 @@ export class HolomlPages {
 
   private async serveViewer(request: Request): Promise<Response> {
     const { pathname, search } = new URL(request.url);
+    // The KTX2 transcoder's host (milestone 25): its page, with a policy of its own.
+    if (pathname === '/ktx2-host.html') {
+      return new Response(KTX2_HOST_PAGE, { headers: { 'content-type': 'text/html; charset=utf-8', 'content-security-policy': KTX2_HOST_CSP, 'cache-control': 'no-cache' } });
+    }
     const headers = {
       'content-type': 'text/javascript; charset=utf-8',
       'access-control-allow-origin': '*',
@@ -252,17 +284,24 @@ export class HolomlPages {
       // answered its HTML page, and HoloML pages stayed blank in pnpm dev).
       const { devServer, viewerSource } = this.options;
       if (!devServer || !viewerSource) return new Response('Not found', { status: 404 });
-      const path = pathname === '/assets/viewer.js' ? `/@fs/${viewerSource.replace(/\\/g, '/').replace(/^\/+/, '')}` : pathname;
+      const source = (file: string) => `/@fs/${file.replace(/\\/g, '/').replace(/^\/+/, '')}`;
+      const path =
+        pathname === '/assets/viewer.js'
+          ? source(viewerSource)
+          : pathname === '/assets/ktx2-host.js'
+            ? source(join(dirname(viewerSource), 'ktx2-host.ts'))
+            : pathname;
       const res = await net.fetch(new URL(path + search, devServer).href);
       const type = res.headers.get('content-type') ?? '';
-      if (!/javascript/.test(type)) return new Response('Not found', { status: 404 });
-      return new Response(res.body, { status: res.status, headers });
+      // Scripts, and (milestone 25) the decoders' WebAssembly.
+      if (!/javascript|wasm/.test(type) && !/\.wasm(?:\?|$)/.test(path)) return new Response('Not found', { status: 404 });
+      return new Response(res.body, { status: res.status, headers: /wasm/.test(type) || /\.wasm(?:\?|$)/.test(path) ? { ...headers, 'content-type': 'application/wasm' } : headers });
     }
-    // Only the viewer's scripts: other files of the browser are not served.
-    if (!/^\/assets\/[\w.-]+\.js$/.test(pathname)) return new Response('Not found', { status: 404 });
+    // Only the viewer's scripts and (milestone 25) its decoders' WebAssembly: other files of the browser are not served.
+    if (!/^\/assets\/[\w.-]+\.(?:js|wasm)$/.test(pathname)) return new Response('Not found', { status: 404 });
     try {
       const body = await readFile(join(this.options.viewerFiles, pathname));
-      return new Response(body, { headers });
+      return new Response(body, { headers: pathname.endsWith('.wasm') ? { ...headers, 'content-type': 'application/wasm' } : headers });
     } catch {
       return new Response('Not found', { status: 404 });
     }

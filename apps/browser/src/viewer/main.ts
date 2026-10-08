@@ -21,7 +21,7 @@ import { HoloParseError, check, parse, type ElementNode, type Problem } from '@h
 import { HolomlView } from './scene';
 import { installApi } from './api';
 import { LIMITS } from './budget';
-import { attr, ownProblems, text, trimSpace } from './values';
+import { attr, collapse, ownProblems, text, trimSpace } from './values';
 import { VERSIONS, atLeast, pageVersion } from './versions';
 
 interface ViewerState {
@@ -33,9 +33,11 @@ interface ViewerState {
   textView: boolean;
   source: string[];
   title: string;
+  /** The page's description (`<meta name="description">`; milestone 25, Q2 a), or empty. */
+  description: string;
 }
 
-const state: ViewerState = { ready: false, error: null, problems: [], noWebGL: false, view: null, textView: false, source: [], title: '' };
+const state: ViewerState = { ready: false, error: null, problems: [], noWebGL: false, view: null, textView: false, source: [], title: '', description: '' };
 
 /**
  * The test run's mark (review 134, D12). The page's preload, which the
@@ -68,7 +70,7 @@ const line = new Promise<MessagePort>((resolve) => {
 });
 
 /** Tells the browser of the scene's state, over the private line (in order, once it is there). */
-function tell(what: { busy: boolean } | { textView: boolean } | { drawn: true }): void {
+function tell(what: { busy: boolean } | { textView: boolean } | { drawn: true } | { description: string }): void {
   void line.then((port) => port.postMessage(what));
 }
 
@@ -85,6 +87,7 @@ function sceneFacts(): unknown {
   return JSON.parse(
     JSON.stringify({
       title: state.title,
+      description: state.description,
       // The first 2,000 go to the inspector's tree each second; the rest are counted.
       entryCount: v?.entries.length ?? 0,
       entries: (v?.entries ?? []).slice(0, 2_000).map((x, i) => ({
@@ -153,8 +156,10 @@ const testHooks = {
     return state.view?.busy ?? false;
   },
   view: () => state.view?.view ?? null,
-  models: () => JSON.parse(JSON.stringify(state.view?.models.map(({ src, state: s, materials, animation, standsInFor }) => ({ src, state: s, materials, animation, standsInFor })) ?? [])),
+  models: () => JSON.parse(JSON.stringify(state.view?.models.map(({ src, state: s, materials, animation, standsInFor, farFor }) => ({ src, state: s, materials, animation, standsInFor, farFor })) ?? [])),
   labels: () => state.view?.labels.map((l) => l.text) ?? [],
+  // HoloML 0.3 (milestone 25): the direction each label is drawn in.
+  labelDirections: () => state.view?.labels.map((l) => ({ text: l.text, dir: l.dir })) ?? [],
   links: () => state.view?.links.map((l) => l.href) ?? [],
   object: (id: string) => state.view?.objectInfo(id) ?? null,
   point: (which: string | number) => state.view?.screenPoint(which) ?? null,
@@ -197,6 +202,8 @@ const testHooks = {
   /** Loading by area (milestone 20): the groups, their models and stand-ins; every model with a stand-in; and what the page's files count now. */
   areas: () => JSON.parse(JSON.stringify(state.view?.areasInfo ?? [])),
   standIns: () => JSON.parse(JSON.stringify(state.view?.standInsInfo ?? [])),
+  // HoloML 0.3 (milestone 25): models with a lighter version far away.
+  far: () => JSON.parse(JSON.stringify(state.view?.farInfo ?? [])),
   totals: () => state.view?.totals ?? null,
   /** Water and sounds from a place (milestone 21): the water's box, look, and moving light; how much a point has faded into it from where the viewer is; and how loud a sound from a place is in each ear now. */
   water: () => JSON.parse(JSON.stringify(state.view?.waterInfo ?? null)),
@@ -374,13 +381,29 @@ function start(): void {
   if (title && text(title)) document.title = text(title);
   state.title = document.title;
   heading.textContent = title && text(title) ? text(title) : 'HoloML scene';
+  // The page's description (milestone 25, Q2 a), any version's: under its title in the outline and the text view, in
+  // the Scene inspector, and in its tab's tooltip in the browser. Its first 500 characters.
+  const meta = doc.root.children
+    .find((c): c is ElementNode => c.type === 'element' && c.name === 'head')
+    ?.children.find((c): c is ElementNode => c.type === 'element' && c.name === 'meta' && attr(c, 'name')?.trim().toLowerCase() === 'description');
+  const description = meta ? collapse(attr(meta, 'content') ?? '').slice(0, 500) : '';
+  if (description) {
+    const p = document.createElement('p');
+    p.className = 'holoml-description';
+    p.dataset['testid'] = 'holoml-description';
+    p.textContent = description;
+    heading.after(p);
+    state.description = description;
+    tell({ description });
+  }
 
   // A version this viewer does not know is refused, not guessed at, and so is a page that names none
   // (SPEC.md section 11; review 134, V2).
   const version = pageVersion(doc.root);
   if (version === null) {
     const written = doc.root.attributes.find((a) => a.name === 'version');
-    const known = VERSIONS.join(' and ');
+    // "0.1 and 0.2", or "0.1, 0.2, and 0.3".
+    const known = VERSIONS.length < 3 ? VERSIONS.join(' and ') : `${VERSIONS.slice(0, -1).join(', ')}, and ${VERSIONS[VERSIONS.length - 1]}`;
     const at = written?.start ?? doc.root.start;
     if (typeof written?.value === 'string') {
       state.error = { code: 'unsupported-version', message: `This browser reads HoloML ${known}, not "${written.value}"`, line: at.line, column: at.column };

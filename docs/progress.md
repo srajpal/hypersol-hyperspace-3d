@@ -5,10 +5,12 @@ Moved here from the README on 2026-09-26 (owner, prompt 47).
 
 
 Screenshots from each finished milestone. Only the newest sets are
-kept in [docs/screenshots](screenshots) (milestone 22's, the newest of
+kept in [docs/screenshots](screenshots) (milestone 25's, the newest of
 the desktop, and milestone 24's, from the tablet); the older ones are
 shown from the repository as it was on 2026-10-07 (commit
-[64de0da](https://github.com/srajpal/hypersol-hyperspace-3d/tree/64de0da067ade4d27a8b28e9e76d4d208aa9ebad/docs/screenshots)),
+[64de0da](https://github.com/srajpal/hypersol-hyperspace-3d/tree/64de0da067ade4d27a8b28e9e76d4d208aa9ebad/docs/screenshots),
+and for milestone 22 commit
+[fdc318f](https://github.com/srajpal/hypersol-hyperspace-3d/tree/fdc318f74d0baab1b7d362fc3aa1f791e7cdef16/docs/screenshots/m22)),
 so a copy of the repository does not carry every set (the review of
 2026-09-30, H6; owner, prompt 160). The roadmap and the current
 milestone's tasks and checks are in [TODO.md](../TODO.md).
@@ -275,11 +277,11 @@ specification. Found while taking these pictures: the layers view drew
 a very tall page blank below its bar; a section too large to lift now
 stays flat and draws.
 
-![HoloML's site in the browser: the example sites as cards, with their pictures](screenshots/m22/64-holoml-docs.png)
+![HoloML's site in the browser: the example sites as cards, with their pictures](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/fdc318f74d0baab1b7d362fc3aa1f791e7cdef16/docs/screenshots/m22/64-holoml-docs.png)
 
-![The HoloML 0.2 specification in the browser, in the layers view: its title, status, and abstract](screenshots/m22/65-holoml-spec.png)
+![The HoloML 0.2 specification in the browser, in the layers view: its title, status, and abstract](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/fdc318f74d0baab1b7d362fc3aa1f791e7cdef16/docs/screenshots/m22/65-holoml-spec.png)
 
-![A how-to guide: hanging a door on a hinge, with its HoloML coloured](screenshots/m22/66-holoml-guide.png)
+![A how-to guide: hanging a door on a hinge, with its HoloML coloured](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/fdc318f74d0baab1b7d362fc3aa1f791e7cdef16/docs/screenshots/m22/66-holoml-guide.png)
 
 **Milestone 23: HoloML for VS Code** (accepted 2026-10-05).
 An extension for VS Code and the editors built on it, in the holoml
@@ -310,4 +312,20 @@ press for a right-click; a lighter drawing keeps the ocean tunnel at
 <img src="screenshots/m24/71-android-blockworld.png" width="240" alt="Blockworld on the tablet: grass blocks and trees at dusk, the walk pad and the Jump button at the bottom right">
 <img src="screenshots/m24/72-android-tab-cards.png" width="240" alt="Two tab cards on the left of the room on the tablet, drawn sharp: HoloML's documentation, with its text readable, and a new tab, beside a new tab's start panel">
 </p>
+
+**Milestone 25: HoloML 0.3** (built 2026-10-07; being checked).
+Names for models and groups that screen readers say and the text view
+and the Scene inspector show; text in its own language and direction,
+so Arabic and Hebrew run right to left in the scene and are read in
+their own voices; a lighter model for far away, which the ocean
+tunnel's fish now have; compressed models, which make the sneaker store
+a third of the download it was; and a page's description in its tab's
+tooltip, the text view, and the Scene inspector. A new HoloML example,
+Words in a room, shows the languages.
+
+![Words in a room: welcome signs in Arabic on the left, English ahead, and Hebrew on the right, each board's lines running in its own direction](screenshots/m25/73-words-in-a-room.jpg)
+
+![The text view of Words in a room: the page's description under its title, and each wall, sign, and board named in its own language, Arabic and Hebrew right to left](screenshots/m25/74-holoml-text-view-languages.png)
+
+![Harbour Loft with the instrument panel: the Scene part shows the page's description and the sofa chosen, outlined in the scene, its models named Window and Small window in the tree](screenshots/m25/75-holoml-inspector-names.png)
 

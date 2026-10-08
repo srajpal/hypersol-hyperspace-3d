@@ -1856,3 +1856,61 @@ repository's own that also builds and scans the Kotlin.
 ```text
 a, go ahead
 ```
+
+## 167 — 2026-10-07 · Claude Opus 5.5, high effort
+
+```text
+#57 and #56 merged; start milestone 25.
+```
+
+## 168 — 2026-10-07 · Claude Opus 5.5, high effort
+
+Approves the plan for milestone 25, HoloML 0.3, with the recommended
+answers: Q1 a, `far` and `far-from` on `model`; Q2 a, a page's
+description in its tab's tooltip, the top of the text view, and the
+Scene inspector; Q3 a, `lang` and `dir` on the page and on every element
+that holds or shows text, inherited as in HTML; Q4 a, Draco, meshopt,
+and KTX2 models, with three.js's decoders shipped in the browser; Q5 a,
+a RELAX NG validator for holoml's tests, researched and proposed before
+it is added; Q6 a, the existing example sites take up what fits them,
+and a new short page, "Words in a room"; Q7 a, the specification states
+the least every renderer must manage; Q8 b, the large-scene items
+later. Also approves the new tools: `@gltf-transform/cli` and
+`draco3dgltf` as development packages of holoml's example tools, and
+KTX2 test models from Khronos's glTF Sample Assets, fetched once.
+
+```text
+Use the recommendations, approve the plan and tools.
+```
+
+## 169 — 2026-10-07 · Claude Opus 5.5, high effort
+
+```text
+Build approved, go ahead.
+```
+
+## 170 — 2026-10-07 · Claude Opus 5.5, high effort
+
+Answers two questions during milestone 25's build. KTX2 pictures need
+code evaluated from text (three.js's Basis transcoder), which HoloML
+pages' content policy does not allow: the owner chose a separate worker,
+served with a policy of its own, so that pages stay without
+'unsafe-eval' (over allowing it, or KTX2 later). For Q5, the RELAX NG
+grammar checked by a validator: the owner approved Jing, the reference
+validator, a Java jar (BSD-3-Clause) kept in holoml with its SHA-256 and
+run by the tests with Java.
+
+```text
+KTX2: Separate worker. Validator: Approve Jing.
+```
+
+## 171 — 2026-10-08 · Claude Opus 5.5, high effort
+
+After milestone 25's build report, which noted that the showroom had
+stayed a HoloML 0.1 page, so its hall and plinths were still heard by
+their files' names.
+
+```text
+Update the showroom to current HoloML. And then collect whatever needs
+to be done before the new step. Push the branches and pull requests.
+```

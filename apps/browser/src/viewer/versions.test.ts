@@ -15,10 +15,12 @@ describe("a page's HoloML version (SPEC.md section 11; review 134, V2)", () => {
   it('reads the versions the viewer knows, as written', () => {
     expect(pageVersion(root('0.1'))).toBe('0.1');
     expect(pageVersion(root('0.2'))).toBe('0.2');
+    // HoloML 0.3 (milestone 25).
+    expect(pageVersion(root('0.3'))).toBe('0.3');
   });
 
   it('refuses a version it does not know, rather than guess', () => {
-    for (const other of ['0.3', '1.0', '0.20', '2', '', ' 0.2', '0.2 ', 'latest']) expect(pageVersion(root(other)), JSON.stringify(other)).toBeNull();
+    for (const other of ['0.4', '1.0', '0.20', '2', '', ' 0.2', '0.2 ', 'latest']) expect(pageVersion(root(other)), JSON.stringify(other)).toBeNull();
   });
 
   it('refuses a page that declares no version at all, or the word alone: it is not read as any version', () => {

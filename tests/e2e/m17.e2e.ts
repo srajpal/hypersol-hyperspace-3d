@@ -583,16 +583,17 @@ describe('T8: the HoloML examples section', () => {
     await h.shell.locator('[data-testid="start-examples"]').waitFor({ state: 'visible' });
     expect(await h.shell.locator('[data-testid="start-showroom"]').getAttribute('data-url')).toBe(url('showroom/index.holoml'));
     expect(await h.shell.locator('[data-testid="start-example-blockworld"]').getAttribute('data-url')).toBe(url('blockworld/index.holoml'));
-    // The sofa studio joined in milestone 18 (prompt 98), Harbour Loft in milestone 19, the sneaker store in milestone 20, and the aquarium in milestone 21.
+    // The sofa studio joined in milestone 18 (prompt 98), Harbour Loft in milestone 19, the sneaker store in milestone 20, the aquarium in milestone 21, and Words in a room in milestone 25.
     expect(await h.shell.locator('[data-testid="start-example-sofa-studio"]').getAttribute('data-url')).toBe(url('sofa-studio/index.holoml'));
     expect(await h.shell.locator('[data-testid="start-example-harbour-loft"]').getAttribute('data-url')).toBe(url('harbour-loft/index.holoml'));
     expect(await h.shell.locator('[data-testid="start-example-sneaker-store"]').getAttribute('data-url')).toBe(url('sneaker-store/index.holoml'));
     expect(await h.shell.locator('[data-testid="start-example-aquarium"]').getAttribute('data-url')).toBe(url('aquarium/index.holoml'));
+    expect(await h.shell.locator('[data-testid="start-example-words"]').getAttribute('data-url')).toBe(url('words/index.holoml'));
     const hits = holomlHits();
     // From the start panel.
     await h.shell.click('[data-testid="start-examples"]');
     await waitFor('the examples', isOpen, (n) => n === 1);
-    for (const id of ['showroom', 'blockworld', 'sofa-studio', 'harbour-loft', 'sneaker-store', 'aquarium']) {
+    for (const id of ['showroom', 'blockworld', 'sofa-studio', 'harbour-loft', 'sneaker-store', 'aquarium', 'words']) {
       const card = `hs-examples [data-testid="example-${id}"]`;
       expect(await h.shell.locator(card).isVisible()).toBe(true);
       const picture = (await waitFor(
@@ -603,7 +604,8 @@ describe('T8: the HoloML examples section', () => {
       expect(picture.w).toBeGreaterThan(300);
       expect(picture.alt).toMatch(/a picture of the site/);
     }
-    expect(await h.shell.locator('hs-examples [data-testid="example-blockworld"]').innerText()).toMatch(/HoloML 0\.2/);
+    // Blockworld is a HoloML 0.3 page since milestone 25 (Q6 a).
+    expect(await h.shell.locator('hs-examples [data-testid="example-blockworld"]').innerText()).toMatch(/HoloML 0\.3/);
     // Links to HoloML's repository, its specification (the published page since milestone 22, Y7), and each example's source (owner, prompt 88).
     expect(await h.shell.locator('hs-examples [data-testid="examples-repository"]').getAttribute('data-url')).toBe('https://github.com/srajpal/holoml');
     expect(await h.shell.locator('hs-examples [data-testid="examples-spec"]').getAttribute('data-url')).toBe('https://srajpal.github.io/holoml/spec/');

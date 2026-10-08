@@ -31,6 +31,8 @@ const TYPES: Record<string, string> = {
   '.hdr': 'image/vnd.radiance',
   // The README's sample page (prompt 99): its pictures.
   '.svg': 'image/svg+xml',
+  // Compressed models (milestone 25): a KTX2 picture.
+  '.ktx2': 'image/ktx2',
 };
 
 /** A solid-colour 16×16 PNG, built here so the fixture has no binary file. */

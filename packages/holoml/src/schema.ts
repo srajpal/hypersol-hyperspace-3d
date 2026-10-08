@@ -1,5 +1,5 @@
 // Copied from the holoml repository (https://github.com/srajpal/holoml),
-// packages/schema/src/index.ts at v0.2.2. Apache License 2.0, The HoloML Authors.
+// packages/schema/src/index.ts at holoml-0.3. Apache License 2.0, The HoloML Authors.
 // Do not edit here: change HoloML there and run pnpm holoml:sync.
 
 /**
@@ -22,6 +22,7 @@ import {
   FILE_EXTENSIONS,
   ID_PATTERN,
   INDEFINITE,
+  LANGUAGE_PATTERN,
   LIGHT_ONLY,
   NUMBER_PATTERN,
   ROOT,
@@ -36,8 +37,9 @@ import {
 } from './rules';
 
 export { ANIMATABLE, ANIMATION_VALUES, CLICKABLE, ELEMENTS, LIGHT_ONLY, ROOT, VERSION, VERSIONS, atLeast } from './rules';
-// The patterns a value must match, for a renderer that reads values as the checker does (HyperSpace 3D's viewer).
-export { COUNT_PATTERN, DURATION_PATTERN, INDEFINITE, NUMBER_PATTERN, whole } from './rules';
+// The patterns a value must match, for a renderer that reads values as the checker does (HyperSpace 3D's viewer),
+// and for the VS Code extension's colour swatches.
+export { COLOR_PATTERN, COUNT_PATTERN, DURATION_PATTERN, INDEFINITE, LANGUAGE_PATTERN, NUMBER_PATTERN, whole } from './rules';
 export type { AttributeRule, ElementRule, ValueKind, Version } from './rules';
 
 export interface CheckOptions {
@@ -86,6 +88,7 @@ const COLOR = whole(COLOR_PATTERN);
 const DURATION = whole(DURATION_PATTERN);
 const ID = whole(ID_PATTERN);
 const COUNT = whole(COUNT_PATTERN);
+const LANGUAGE = whole(LANGUAGE_PATTERN);
 const MODEL_FILE = endsWithExtension(FILE_EXTENSIONS.model);
 const SCRIPT_FILE = endsWithExtension(FILE_EXTENSIONS.script);
 const SOUND_FILE = endsWithExtension(FILE_EXTENSIONS.sound);
@@ -181,6 +184,13 @@ export function check(doc: HoloDocument, options: CheckOptions = {}): Problem[] 
     if (el.name === 'sound') sounds.push(el);
     if (el.name === 'viewpoint') viewpoints.push(el);
     if (el.name === 'a' && insideLink) report('nested-link', 'A link cannot be inside another link', el.start);
+    // A lighter model far away (0.3): the file and the distance it is shown from go together.
+    if (el.name === 'model' && atLeast(version, '0.3')) {
+      const far = attr(el, 'far');
+      const from = attr(el, 'far-from');
+      if (far && !from) report('missing-attribute', '<model> with "far" needs "far-from", the distance from which the lighter model is shown', far.start);
+      if (from && !far) report('missing-attribute', '<model> with "far-from" needs "far", the lighter model shown from that distance', from.start);
+    }
     // Loading by area (0.2): "near" says how near a group that loads by area must be.
     if (el.name === 'group' && atLeast(version, '0.2')) {
       const near = attr(el, 'near');
@@ -220,7 +230,7 @@ export function check(doc: HoloDocument, options: CheckOptions = {}): Problem[] 
       const n = (counts.get(child.name) ?? 0) + 1;
       counts.set(child.name, n);
       const many = rule.manyFrom?.[child.name];
-      if (n === 2 && rule.once?.includes(child.name) && (many === undefined || !atLeast(version, many))) {
+      if (n >= 2 && rule.once?.includes(child.name) && (many === undefined || !atLeast(version, many))) {
         report('too-many', `<${el.name}> may hold only one <${child.name}>`, child.start);
       }
       visit(child, insideLink || el.name === 'a');
@@ -351,6 +361,12 @@ function animatable(which: string | undefined, version: Version): which is strin
   return which !== undefined && choice.kind === 'choice' && choice.values.includes(which) && atLeast(version, choice.since?.[which]);
 }
 
+/** "0.1", "0.1 and 0.2", or "0.1, 0.2, and 0.3". */
+function listed(versions: readonly string[]): string {
+  if (versions.length < 3) return versions.join(' and ');
+  return `${versions.slice(0, -1).join(', ')}, and ${versions[versions.length - 1]}`;
+}
+
 function finite(p: string): boolean {
   return Number.isFinite(Number(p));
 }
@@ -450,6 +466,8 @@ function valueProblem(kind: ValueKind, value: string | null, name: string, ctx: 
     }
     // Written exactly: spaces around an id, a reference, a choice, or the
     // version are a mistake, not ignored (issue #4, SPEC.md section 4).
+    case 'language':
+      return LANGUAGE.test(value) ? null : bad(`"${value}" is not a language tag, such as "en", "ar", or "pt-BR"`);
     case 'id':
       return ID.test(value) ? null : bad(`"${value}" must start with a letter and use only letters, digits, "-", and "_"`);
     case 'idref':
@@ -463,7 +481,7 @@ function valueProblem(kind: ValueKind, value: string | null, name: string, ctx: 
     case 'version':
       return ctx.known.includes(value) && (VERSIONS as readonly string[]).includes(value)
         ? null
-        : { code: 'unsupported-version', message: `This checker knows HoloML ${ctx.known.join(' and ')}, not "${value}"` };
+        : { code: 'unsupported-version', message: `This checker knows HoloML ${listed(ctx.known)}, not "${value}"` };
     case 'animation-value':
       return null; // chosen by what is animated, in checkAttributes()
     case 'area': {

@@ -480,6 +480,7 @@ export class App {
       store.tabs.map((t) => ({
         key: t.id,
         title: t.title,
+        ...(this.views.get(t.id)?.pageDescription ? { description: this.views.get(t.id)!.pageDescription! } : {}),
         loading: t.state === 'loading',
         ...(t.favicon ? { favicon: t.favicon } : {}),
         focused: t.id === store.focusedId,
@@ -500,6 +501,7 @@ export class App {
     return this.store.tabs.map((t) => ({
       id: t.id,
       title: t.title,
+      ...(this.views.get(t.id)?.pageDescription ? { description: this.views.get(t.id)!.pageDescription! } : {}),
       url: this.views.get(t.id)?.pendingAddress ?? t.url,
       ...(t.favicon ? { favicon: t.favicon } : {}),
       focused: t.id === this.store.focusedId,
@@ -654,6 +656,8 @@ export class App {
         return reply.ok && reply.value;
       },
       onHoloml: () => {
+        // A HoloML page's description is on its card and in the list (milestone 25), whichever tab it is.
+        this.updateCards();
         if (id !== this.store.focusedId) return;
         this.updateFill();
         this.updateToolbar();

@@ -143,7 +143,8 @@ describe('review 134: the HoloML viewer', () => {
     expect(await holo(PAGE, 'window.__holoml.error')).toMatchObject({ code: 'unsupported-version', line: 1, column: 9 });
     const card = await inPage<string>(h, `document.querySelector('[data-testid="holoml-error"]').innerText`, PAGE);
     expect(card).toContain('written for another version');
-    expect(card).toContain('The page is written in HoloML "0.3", which this browser does not read yet. It reads HoloML 0.1 and 0.2.');
+    // 0.4: the first version this browser does not know since milestone 25.
+    expect(card).toContain('The page is written in HoloML "0.4", which this browser does not read yet. It reads HoloML 0.1, 0.2, and 0.3.');
     // Nothing of its scene is built or fetched.
     expect(await inPage<boolean>(h, 'document.querySelector("canvas") === null', PAGE)).toBe(true);
     expect(await holo(PAGE, 'window.__holoml.version')).toBeNull();
@@ -155,7 +156,7 @@ describe('review 134: the HoloML viewer', () => {
     expect(await holo(NONE, 'window.__holoml.error')).toMatchObject({ code: 'unsupported-version', line: 1, column: 1 });
     const none = await inPage<string>(h, `document.querySelector('[data-testid="holoml-error"]').innerText`, NONE);
     expect(none).toContain('does not say its version');
-    expect(none).toContain('This browser reads HoloML 0.1 and 0.2.');
+    expect(none).toContain('This browser reads HoloML 0.1, 0.2, and 0.3.');
     expect(await inPage<boolean>(h, 'document.querySelector("canvas") === null', NONE)).toBe(true);
     expect(await holo(NONE, 'window.__holoml.models()')).toEqual([]);
     expect(await inPage<string>(h, 'document.title', NONE)).toBe('HoloML page without a version');

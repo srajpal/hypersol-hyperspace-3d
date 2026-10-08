@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe as group, expect, it, vi } from 'vitest';
+import { COMPRESSION_EXTENSIONS } from './decoders';
 import { Budget, Claim, GLTF_EXTENSIONS, LIMITS, LeftOut, Unreadable, Unsupported, describe, hdrSize, headerSize, pictureSize, soundSeconds } from './budget';
 
 const enc = (o: unknown) => new TextEncoder().encode(JSON.stringify(o)).buffer as ArrayBuffer;
@@ -495,27 +496,28 @@ group('a model whose file needs a glTF extension (review 134; SPEC.md section 9,
 
   it('one the viewer does not read: the model is left out with the reason, before its other files are asked for, and holds nothing', async () => {
     const asked = served({
-      '/draco.gltf': withExtensions({ extensionsUsed: ['KHR_draco_mesh_compression'], extensionsRequired: ['KHR_draco_mesh_compression'] }),
-      '/unknown.gltf': withExtensions({ extensionsRequired: ['KHR_materials_unlit', 'EXT_made_up', 'KHR_texture_basisu', 'EXT_meshopt_compression', `VENDOR_${'x'.repeat(200)}`] }),
+      '/made-up.gltf': withExtensions({ extensionsUsed: ['EXT_made_up'], extensionsRequired: ['EXT_made_up'] }),
+      // Since milestone 25 the viewer reads the compressed ones (KHR_texture_basisu, EXT_meshopt_compression): not named.
+      '/unknown.gltf': withExtensions({ extensionsRequired: ['KHR_materials_unlit', 'EXT_made_up', 'KHR_texture_basisu', 'EXT_meshopt_compression', 'VENDOR_other', 'EXT_another', `VENDOR_${'x'.repeat(200)}`] }),
       '/mesh.bin': 2000,
     });
     const budget = new Budget();
-    const draco = await budget.load(at('/draco.gltf'), ORIGIN).catch((e: unknown) => e);
+    const madeUp = await budget.load(at('/made-up.gltf'), ORIGIN).catch((e: unknown) => e);
     // Left out like any other model that is left out, and marked as one that would be left out again.
-    expect(draco).toBeInstanceOf(LeftOut);
-    expect(draco).toBeInstanceOf(Unsupported);
-    expect(draco).toMatchObject({ reason: 'it needs the glTF extension KHR_draco_mesh_compression, which this browser does not read', overTotal: false });
-    // Several: the first three are named (one it reads is not among them), each at no great length.
+    expect(madeUp).toBeInstanceOf(LeftOut);
+    expect(madeUp).toBeInstanceOf(Unsupported);
+    expect(madeUp).toMatchObject({ reason: 'it needs the glTF extension EXT_made_up, which this browser does not read', overTotal: false });
+    // Several: the first three are named (those it reads are not among them), each at no great length.
     const unknown = (await budget.load(at('/unknown.gltf'), ORIGIN).catch((e: unknown) => e)) as Unsupported;
     expect(unknown).toBeInstanceOf(Unsupported);
-    expect(unknown.reason).toBe('it needs the glTF extensions EXT_made_up, KHR_texture_basisu, EXT_meshopt_compression, and more, which this browser does not read');
-    expect(asked).toEqual(['/draco.gltf', '/unknown.gltf']);
+    expect(unknown.reason).toBe('it needs the glTF extensions EXT_made_up, VENDOR_other, EXT_another, and more, which this browser does not read');
+    expect(asked).toEqual(['/made-up.gltf', '/unknown.gltf']);
     expect(budget).toMatchObject({ bytes: 0, triangles: 0, pixels: 0 });
   });
 
   it('an extension the viewer reads may be needed, and one it does not read may be used without being needed', async () => {
     const asked = served({
-      '/fine.gltf': withExtensions({ extensionsUsed: [...GLTF_EXTENSIONS, 'EXT_made_up', 'KHR_draco_mesh_compression'], extensionsRequired: [...GLTF_EXTENSIONS] }),
+      '/fine.gltf': withExtensions({ extensionsUsed: [...GLTF_EXTENSIONS, 'EXT_made_up'], extensionsRequired: [...GLTF_EXTENSIONS] }),
       '/mesh.bin': 2000,
     });
     const budget = new Budget();
@@ -524,13 +526,26 @@ group('a model whose file needs a glTF extension (review 134; SPEC.md section 9,
     expect(asked).toEqual(['/fine.gltf', '/mesh.bin']);
   });
 
-  it("the extensions it reads are those Three.js's loader reads by itself: all it knows, less those that need a decoder", () => {
+  it("the extensions it reads are all those Three.js's loader knows: since milestone 25 the viewer carries the decoders for the compressed ones", () => {
     const loader = readFileSync(createRequire(import.meta.url).resolve('three/examples/jsm/loaders/GLTFLoader.js'), 'utf8');
     const table = /const EXTENSIONS = \{([^}]*)\}/.exec(loader)![1]!;
     const known = [...table.matchAll(/'([A-Za-z0-9_]+)'/g)].map((m) => m[1]!);
     expect(known.length).toBeGreaterThan(15);
-    // KHR_binary_glTF is glTF 1.0's; the other four need decoders the viewer does not carry (SPEC.md's note says so).
-    const not = ['KHR_binary_glTF', 'KHR_draco_mesh_compression', 'EXT_meshopt_compression', 'KHR_meshopt_compression', 'KHR_texture_basisu'];
-    expect([...GLTF_EXTENSIONS].sort()).toEqual(known.filter((name) => !not.includes(name)).sort());
+    // KHR_binary_glTF is glTF 1.0's.
+    expect([...GLTF_EXTENSIONS].sort()).toEqual(known.filter((name) => name !== 'KHR_binary_glTF').sort());
+    for (const name of COMPRESSION_EXTENSIONS) expect(GLTF_EXTENSIONS.has(name), name).toBe(true);
+  });
+
+  it("reads a KTX2 picture's size from its header, for pictures inside models (milestone 25)", () => {
+    const ktx2 = new Uint8Array(80);
+    ktx2.set([0xab, 0x4b, 0x54, 0x58, 0x20, 0x32, 0x30, 0xbb, 0x0d, 0x0a, 0x1a, 0x0a]);
+    new DataView(ktx2.buffer).setUint32(20, 8192, true);
+    new DataView(ktx2.buffer).setUint32(24, 512, true);
+    expect(headerSize(ktx2)).toEqual({ width: 8192, height: 512 });
+    // A picture of one row writes its height as 0.
+    new DataView(ktx2.buffer).setUint32(24, 0, true);
+    expect(headerSize(ktx2)).toEqual({ width: 8192, height: 1 });
+    ktx2[1] = 0;
+    expect(headerSize(ktx2)).toBeNull();
   });
 });

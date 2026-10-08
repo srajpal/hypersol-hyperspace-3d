@@ -231,6 +231,20 @@ export class Water {
     if (this.causticsShown) this.uniforms.waterNetMap.value = netPicture();
   }
 
+  /** HoloML 0.3: a script changes the colour things seen through the water fade into. */
+  setColor(value: string): void {
+    this.look.color = value;
+    const rgb = { r: 0, g: 0, b: 0 };
+    new Color(value).getRGB(rgb, SRGBColorSpace);
+    this.uniforms.waterColor.value.set(rgb.r, rgb.g, rgb.b);
+  }
+
+  /** HoloML 0.3: a script changes how far one can see through the water, in metres. */
+  setClarity(value: number): void {
+    this.look.clarity = value;
+    this.uniforms.waterClarity.value = value;
+  }
+
   /** How bright the net of light is: it follows the page's lights from above. */
   set light(v: number) {
     this.uniforms.waterLight.value = v;

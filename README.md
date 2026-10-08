@@ -55,10 +55,14 @@ among, turn over, and add to a cart. Milestone 21 adds water, sounds
 that come from a place, and the ocean tunnel, an aquarium to walk
 through with 30 fish swimming over and around you, and completes HoloML
 0.2. Milestone 22 documents HoloML: its specification, guides, and site.
+Milestone 23 adds HoloML for VS Code, and milestone 24 HyperSpace 3D for
+Android, on a tablet. Milestone 25, being built, adds HoloML 0.3: names
+for models, the language and direction of text, lighter models far
+away, and compressed models.
 On 2026-09-30 both repositories were reviewed and the findings fixed,
 the security ones first ([CHANGELOG.md](CHANGELOG.md), Unreleased),
 except those [TODO.md](TODO.md) lists with the reason.
-Then HoloML 0.3, privacy and data tools, and more of the 3D room;
+Then privacy and data tools, and more of the 3D room;
 installers come last. See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
@@ -168,6 +172,12 @@ An archived copy of the 2001 site is available through the
   waves moving over what is in it; sounds that come from a place,
   quieter with distance and from their side; and a model's animation
   speed for scripts, shown by the ocean tunnel, an aquarium.
+- HoloML 0.3 pages (milestone 25, being built): names for models and
+  groups that screen readers say, text in any language and direction
+  (Arabic and Hebrew right to left; Words in a room shows them), a
+  lighter model for far away (the ocean tunnel's fish), compressed
+  models (the sneaker store's shoes), and a page's description in its
+  tab's tooltip.
 - Mouse and keyboard throughout; touch for scenes.
 
 ## Built with the Buildwright approach
@@ -221,8 +231,7 @@ by AI coding agents directed by prompts. To follow it:
 
 ## What comes next
 
-Milestone 25, HoloML 0.3: the features milestone 22's check found missing,
-such as names for models and the language of text. 26, privacy and
+Milestone 25, HoloML 0.3, is being built (above). 26, privacy and
 data tools: HTTPS-only browsing, per-site storage, and bookmark import
 and export. 27, free camera movement around the room. 28, pictures and
 3D models lifted out of ordinary pages. 29, polish. Last, 30 and 31,
@@ -232,7 +241,7 @@ roadmap is in [TODO.md](TODO.md).
 
 ## Progress
 
-Twenty-two milestones are done and accepted: 1 to 21, and 23.
+Twenty-four milestones are done and accepted: 1 to 24.
 Milestones 1 to 11 built the browser: a live page on a tilted panel in
 the 3D room, tabs as cards, bookmarks and history, ad and tracker
 blocking with encrypted DNS, the layers view, two themes, an instrument
@@ -256,7 +265,9 @@ place, and the ocean tunnel, an aquarium, and completes HoloML 0.2.
 Milestone 22 documents HoloML, with its specification, guides, and site.
 Milestone 23 adds HoloML for VS Code, an extension in the holoml
 repository: syntax colours, mistakes as you type, suggestions, and
-help on hover.
+help on hover. Milestone 24 adds HyperSpace 3D for Android, for a
+tablet: the room, tabs, live pages, and HoloML pages by touch.
+Milestone 25, HoloML 0.3, is being built.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
@@ -265,10 +276,12 @@ screenshots, and [TODO.md](TODO.md) for the roadmap.
 HoloML is the 3D markup language developed alongside the browser, in its
 own repository so it stays independent and reusable:
 [github.com/srajpal/holoml](https://github.com/srajpal/holoml).
-Versions 0.1 and 0.2 are written down there (SPEC.md), with a parser, a
-checker, and sample pages; 0.2 grew with the example sites and is
-released as [v0.2.0](https://github.com/srajpal/holoml/releases/tag/v0.2.0),
-a pre-release, as HoloML is experimental (one renderer so far, and until
+Versions 0.1, 0.2, and 0.3 are written down there (SPEC.md), with a
+parser, a checker, and sample pages; 0.2 grew with the example sites and
+is released as [v0.2.0](https://github.com/srajpal/holoml/releases/tag/v0.2.0)
+(its third edition as
+[v0.2.2](https://github.com/srajpal/holoml/releases/tag/v0.2.2)), and
+0.3 (milestone 25) is to be tagged once accepted; each is a pre-release, as HoloML is experimental (one renderer so far, and until
 1.0 a later version may change what an earlier one has).
 Its documentation, the specification with tutorials, how-to guides,
 reference pages, and explanation, is published at
@@ -316,10 +329,10 @@ those sites until you choose one.
 ## Technology
 
 In use now: Electron 44 (the current supported stable line), TypeScript,
-Three.js (with its glTF loader, for HoloML pages), Lit, SQLite through
+Three.js (with its glTF loader and the decoders of compressed models, for HoloML pages), Lit, SQLite through
 Node's built-in node:sqlite, and Ghostery's open-source ad-blocking
 engine with open filter lists; Vite and electron-vite to build; Vitest
-and Playwright to test. On Android (milestone 24, being built): Kotlin,
+and Playwright to test. On Android (milestone 24): Kotlin,
 Android's own WebView, and Gradle with the Android Gradle Plugin; JUnit
 to test.
 Planned, not yet installed: electron-builder for installers (milestones 30 and 31).
@@ -334,7 +347,7 @@ pages still work without the room, and a notice says so.
 
 ## Building and running
 
-The Android app, for a tablet (milestone 24, being built), has its own
+The Android app, for a tablet (milestone 24), has its own
 steps in [apps/android/README.md](apps/android/README.md).
 
 A developer preview (0.9.0): no installers yet, so build and run it from

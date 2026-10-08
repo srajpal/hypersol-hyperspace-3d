@@ -5,6 +5,8 @@
  * and nothing else: the `holoml` object, the viewer, each kind of thing,
  * a hit, a material's change, and the events. The API is installed against
  * a stand-in for the scene, which is all it needs to make its objects.
+ * The Web IDL is HoloML 0.3's (milestone 25): a 0.3 page's scripts have all
+ * of it, and a 0.2 page's have what they had (the last part).
  */
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -36,7 +38,9 @@ const membersOf = (name: string): string[] => {
 };
 const sorted = (list: Iterable<string>) => [...new Set(list)].sort();
 
-const KINDS = { model: 'ModelThing', group: 'GroupThing', light: 'LightThing', label: 'LabelThing', panel: 'PanelThing', sound: 'SoundThing', hud: 'HudThing', slider: 'SliderThing', choice: 'ChoiceThing' } as const;
+const KINDS = { model: 'ModelThing', group: 'GroupThing', light: 'LightThing', label: 'LabelThing', panel: 'PanelThing', sound: 'SoundThing', hud: 'HudThing', slider: 'SliderThing', choice: 'ChoiceThing', animate: 'AnimateThing', water: 'WaterThing', plan: 'PlanThing' } as const;
+/** The kinds and members HoloML 0.3 added, which a 0.2 page's scripts do not have. */
+const ADDED_03 = { kinds: ['animate', 'water', 'plan'], viewer: ['place', 'goTo'], model: ['label'], group: ['label'], events: ['place'] };
 
 type Api = Record<string, unknown> & {
   find(id: string): Record<string, unknown> | null;
@@ -53,7 +57,7 @@ const entries = new Map<string, Entry>();
 beforeAll(() => {
   for (const kind of Object.keys(KINDS)) entries.set(kind, { kind, id: kind, parent: null, removed: false, object: {} } as unknown as Entry);
   const view = {
-    pageVersion: '0.2',
+    pageVersion: '0.3',
     findEntry: (id: string) => entries.get(id) ?? null,
     listen: (type: string, fn: (e: SceneEvent) => void) => {
       listeners.set(type, fn);
@@ -104,6 +108,7 @@ describe('Y3: HyperSpace 3D has the scene API of the Web IDL, and no more (miles
       { type: 'frame', time: 16, dt: 16 },
       { type: 'change', entry, value: 0.5 },
       { type: 'load', entry: entries.get('group')!, loaded: true },
+      { type: 'place', place: 'terrace' },
     ];
     for (const e of events) {
       api.on(e.type, (event) => seen.push(event));
@@ -125,7 +130,7 @@ describe('things as the specification says (review 134; SPEC.md section 10, "Thi
   };
 
   /** The scene API over a small scene: a group that holds a link that holds a model and a label, a light, and two sounds. */
-  function scene() {
+  function scene(version = '0.2') {
     const made = new Map<string, Entry>();
     const entry = (kind: string, id: string, parent: Entry | null) => {
       const e = { kind, id, parent, removed: false, object: object(), children: [] } as unknown as Entry;
@@ -146,13 +151,13 @@ describe('things as the specification says (review 134; SPEC.md section 10, "Thi
     const moved: string[] = [];
     const places = new Map<string, [number, number, number] | null>([['here', [4, 1.6, 0]]]);
     const view = {
-      pageVersion: '0.2',
+      pageVersion: version,
       findEntry: (id: string) => made.get(id) ?? null,
       moved: (e: Entry) => moved.push(e.id!),
       viewerPosition: [0, 1.6, 5],
       viewerDirection: [0, 0, -1],
       soundPosition: (e: Entry) => places.get(e.id!) ?? null,
-      setSoundPosition: (e: Entry, at: [number, number, number]) => places.set(e.id!, at),
+      setSoundPosition: (e: Entry, at: [number, number, number] | null) => places.set(e.id!, at),
       removeEntry: (e: Entry) => (e.removed = true),
     } as unknown as HolomlView;
     const win: { holoml?: Api } = {};
@@ -260,5 +265,93 @@ describe('things as the specification says (review 134; SPEC.md section 10, "Thi
     expect(here['position']).toEqual([4, 1.6, 0]);
     here['position'] = [0, 1, 2];
     expect(here['position']).toEqual([0, 1, 2]);
+  });
+
+  it("in a 0.3 page, setting a sound's place to null takes it away (milestone 25)", () => {
+    const { holoml } = scene('0.3');
+    const here = holoml.find('here')!;
+    here['position'] = null;
+    expect(here['position']).toBeNull();
+    expect(() => (here['position'] = undefined)).toThrow(TypeError);
+  });
+});
+
+describe("HoloML 0.3's members (milestone 25)", () => {
+  function install(version: string) {
+    const made = new Map<string, Entry>();
+    for (const [kind, id] of [['model', 'lion'], ['group', 'hall'], ['animate', 'turn'], ['water', 'pool'], ['plan', 'map']] as const) {
+      made.set(id, { kind, id, parent: null, removed: false, object: { visible: true }, children: [] } as unknown as Entry);
+    }
+    const calls: string[] = [];
+    const labels = new Map<string, string | null>([['lion', 'A stone lion']]);
+    const view = {
+      pageVersion: version,
+      findEntry: (id: string) => made.get(id) ?? null,
+      listen: () => () => undefined,
+      labelOf: (e: Entry) => labels.get(e.id!) ?? null,
+      setLabel: (e: Entry, v: string | null) => labels.set(e.id!, v),
+      startAnimation: (e: Entry) => calls.push(`start ${e.id}`),
+      stopAnimation: (e: Entry) => calls.push(`stop ${e.id}`),
+      animationRunning: () => true,
+      waterLook: () => ({ color: '#1f6f8b', clarity: 15 }),
+      setWaterColor: (_e: Entry, v: string) => calls.push(`color ${v}`),
+      setWaterClarity: (_e: Entry, v: number) => calls.push(`clarity ${v}`),
+      planVisible: () => true,
+      setPlanVisible: (_e: Entry, v: boolean) => calls.push(`plan ${v}`),
+      viewerPlace: 'hall',
+      goToPlace: (id: string) => {
+        calls.push(`go ${id}`);
+        return id === 'terrace';
+      },
+    } as unknown as HolomlView;
+    const win: { holoml?: Api } = {};
+    (globalThis as { window?: unknown }).window = win;
+    installApi(view, Promise.resolve());
+    return { holoml: win.holoml!, calls, labels };
+  }
+
+  it("a 0.2 page's scripts have the API as it was: none of 0.3's kinds, members, or events", () => {
+    const { holoml } = install('0.2');
+    for (const id of ['turn', 'pool', 'map']) expect(holoml.find(id), id).toBeNull();
+    for (const m of ADDED_03.viewer) expect(Object.keys(holoml.viewer), m).not.toContain(m);
+    expect(Object.keys(holoml.find('lion')!)).not.toContain('label');
+    expect(Object.keys(holoml.find('hall')!)).not.toContain('label');
+    expect(() => holoml.on('place', () => undefined)).toThrow(TypeError);
+  });
+
+  it('a model and a group have a label; a script can change it, or set null for none', () => {
+    const { holoml, labels } = install('0.3');
+    const lion = holoml.find('lion')!;
+    expect(lion['label']).toBe('A stone lion');
+    lion['label'] = 'A lion of stone';
+    expect(labels.get('lion')).toBe('A lion of stone');
+    lion['label'] = null;
+    expect(labels.get('lion')).toBeNull();
+  });
+
+  it('an animate starts and stops; the water changes, and refuses a clarity that is not more than 0; the plan hides', () => {
+    const { holoml, calls } = install('0.3');
+    const turn = holoml.find('turn')! as Record<string, unknown> & { start(): void; stop(): void };
+    expect(turn['kind']).toBe('animate');
+    turn.start();
+    turn.stop();
+    expect(turn['running']).toBe(true);
+    const pool = holoml.find('pool')!;
+    expect(pool['clarity']).toBe(15);
+    pool['color'] = '#0A3';
+    pool['clarity'] = 4;
+    for (const bad of [0, -1, Number.NaN, '4']) expect(() => (pool['clarity'] = bad), String(bad)).toThrow(TypeError);
+    expect(() => (pool['color'] = 'blue')).toThrow(TypeError);
+    holoml.find('map')!['visible'] = false;
+    expect(calls).toEqual(['start turn', 'stop turn', 'color #00aa33', 'clarity 4', 'plan false']);
+  });
+
+  it("the viewer's place, and goTo: an id that is not a place's is an error", () => {
+    const { holoml, calls } = install('0.3');
+    expect(holoml.viewer['place']).toBe('hall');
+    (holoml.viewer['goTo'] as (id: string) => void)('terrace');
+    expect(() => (holoml.viewer['goTo'] as (id: unknown) => void)('nowhere')).toThrow(TypeError);
+    expect(() => (holoml.viewer['goTo'] as (id: unknown) => void)(3)).toThrow(TypeError);
+    expect(calls).toEqual(['go terrace', 'go nowhere']);
   });
 });

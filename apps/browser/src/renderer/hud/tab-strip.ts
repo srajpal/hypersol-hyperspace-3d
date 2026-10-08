@@ -3,6 +3,8 @@ import { LitElement, css, html, nothing } from 'lit';
 export interface StripTab {
   id: number;
   title: string;
+  /** A HoloML page's description (milestone 25): in its tooltip. */
+  description?: string;
   favicon?: string;
   focused: boolean;
   private: boolean;
@@ -147,7 +149,7 @@ export class HsTabStrip extends LitElement {
       aria-selected=${t.focused ? 'true' : 'false'}
       ?data-asleep=${t.asleep}
       ?data-private=${t.private}
-      title=${`${title}${t.asleep ? ' (asleep)' : ''}${t.private ? ' (private)' : ''}`}
+      title=${`${title}${t.asleep ? ' (asleep)' : ''}${t.private ? ' (private)' : ''}${t.description ? `\n${t.description}` : ''}`}
       @click=${() => this.fire('hs-strip-focus', t.id)}
       @keydown=${(e: KeyboardEvent) => {
         // Enter or Space on the tab itself; on its Close or Mute button the key is the button's.

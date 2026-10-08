@@ -522,6 +522,16 @@ export class Room {
     return this.cards.get(tabId)?.snapshotAt ?? 0;
   }
 
+  /** The room's tooltip now (milestone 25): the hovered card's title and description, or empty. */
+  get tooltip(): string {
+    return this.canvas.title;
+  }
+
+  /** What a card's tooltip says (milestone 25), for the tests. */
+  cardTooltip(key: number): string | null {
+    return this.cards.get(key)?.tooltip ?? null;
+  }
+
   /** The picture on a tab's card (a data address), for the tests. */
   snapshotSrc(tabId: number): string | null {
     return this.cards.get(tabId)?.snapshotSrc ?? null;
@@ -922,6 +932,9 @@ export class Room {
     this.hoveredCard = hit?.card ?? null;
     if (hit) changed = hit.card.setHover(true, hit.part === 'close') || changed;
     this.canvas.style.cursor = hit ? 'pointer' : '';
+    // The card's tooltip: its title, and a HoloML page's description (milestone 25); the browser shows it after a pause.
+    const tip = hit && hit.part !== 'close' ? hit.card.tooltip : '';
+    if (this.canvas.title !== tip) this.canvas.title = tip;
     if (changed) this.requestRender();
   }
 

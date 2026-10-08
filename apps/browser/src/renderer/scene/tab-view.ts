@@ -76,6 +76,8 @@ export class TabView implements PagePanel, RoomView {
   /** The HoloML page is still loading models; its text view is on (milestone 15). */
   private holomlBusy = false;
   private holomlTextView = false;
+  /** The HoloML page's description, as its viewer said it (milestone 25), or null. */
+  private holomlDescription: string | null = null;
   /**
    * A HoloML page stays muted until its first real click or key (HoloML
    * 0.2, milestone 17; owner, prompt 85, Q5 a): the address it is for, or
@@ -165,6 +167,11 @@ export class TabView implements PagePanel, RoomView {
   /** The tab shows a HoloML page (milestone 14): its preload said so for the current address. */
   get isHoloml(): boolean {
     return this.holomlUrl !== null && this.webview !== null && this.holomlUrl === withoutHash(this.currentStatus.url);
+  }
+
+  /** A HoloML page's description (milestone 25): for its tab's tooltip; null for none, or for any other page. */
+  get pageDescription(): string | null {
+    return this.isHoloml ? this.holomlDescription : null;
   }
 
   /** A HoloML page still loading its models. */
@@ -527,6 +534,7 @@ export class TabView implements PagePanel, RoomView {
         this.holomlUrl = typeof e.args[0] === 'string' ? withoutHash(e.args[0]) : null;
         this.holomlBusy = false;
         this.holomlTextView = false;
+        this.holomlDescription = null;
         // A new HoloML document: no sound until its first click or key.
         this.soundGateUrl = this.holomlUrl;
         this.applyMute(wv);
@@ -535,7 +543,8 @@ export class TabView implements PagePanel, RoomView {
         return;
       }
       if (e.channel === HOLOML_STATE_CHANNEL) {
-        const change = e.args[0] as { busy?: unknown; textView?: unknown; activated?: unknown; drawn?: unknown } | undefined;
+        const change = e.args[0] as { busy?: unknown; textView?: unknown; activated?: unknown; drawn?: unknown; description?: unknown } | undefined;
+        if (typeof change?.description === 'string') this.holomlDescription = change.description.slice(0, 500) || null;
         // The document finished loading before its models did: the card's
         // picture is taken again once the viewer has drawn the scene with
         // nothing left to load (prompt 89).

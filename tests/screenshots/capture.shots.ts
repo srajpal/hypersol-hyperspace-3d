@@ -531,6 +531,29 @@ it('captures the main screens', async () => {
         rmSync(site, { recursive: true, force: true });
       }
     }
+    // Milestone 25: Words in a room, its text view (each sign in its own language and direction), and the Scene
+    // inspector with a page's description and its models' names (Harbour Loft).
+    const WORDS = 'words/index.holoml';
+    await open(WORDS);
+    await inPage(loft, 'holoml.viewer.position = [0, 1.7, 4.3], holoml.viewer.lookAt([0, 1.7, -1]), true', WORDS);
+    await sleep(2000);
+    await capture(loft, '73-words-in-a-room', true);
+    await loft.shell.click('hs-toolbar [data-testid="text-view"]');
+    await waitFor('the text view', () => inPage<boolean>(loft, 'window.__holoml.textView', WORDS), (v) => v);
+    await capture(loft, '74-holoml-text-view-languages');
+    const names = await launch(server.url(`holoml/${LOFT}`), { userDataDir: profile });
+    try {
+      await waitForPage(names, LOFT);
+      await waitFor('the flat', () => inPage<boolean>(names, 'window.__holoml?.ready === true', LOFT), (r) => r, 30_000);
+      await waitFor('the flat drawn', () => inPage<boolean>(names, 'window.__holoml.frames > 0 && !window.__holoml.compiling', LOFT), (v) => v, 30_000);
+      await inPage(names, 'holoml.viewer.position = [1.3, 1.65, -0.6], holoml.viewer.lookAt([-3, 1, 3]), true', LOFT);
+      await sleep(2000);
+      await names.shell.locator('hs-instruments [data-testid="inst-scene-tree"] button', { hasText: 'Sofa' }).first().click();
+      await names.shell.locator('hs-instruments [data-testid="inst-scene-detail"]').waitFor({ state: 'visible' });
+      await capture(names, '75-holoml-inspector-names');
+    } finally {
+      await names.close();
+    }
   } finally {
     await loft.close();
     await server.close();

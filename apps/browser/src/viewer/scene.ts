@@ -100,6 +100,8 @@ import { check, CLICKABLE, HoloParseError, parse, type ElementNode, type HoloNod
 import { Budget, LeftOut, LIMITS, Unreadable, Unsupported, type Claim, type LoadedFiles } from './budget';
 import { keptByControl, orbitControls, TURN_SPEED, walkControls, WALK_SPEED, type ViewControls } from './controls';
 import { InstancePool, canInstance, centreOf, countTriangles, isShown, worldBox, type Template } from './instances';
+import { disposeDecoders, makeDecoders, type Decoders } from './decoders';
+import { direction, mark, own as ownLanguage, UNSTATED, type Language } from './language';
 import { SolidGrid, Walker, type Box } from './physics';
 import { disposePanel, drawPanel, type PanelLook } from './panels';
 import { Pictures, type PictureUse } from './pictures';
@@ -119,6 +121,8 @@ const ARRIVAL_WAIT_MS = 4000;
 const PLACE_FADE_MS = 180;
 /** Loading by area (milestone 20): a group's models are let go once the viewer is this many times its `near` away. */
 const LET_GO = 1.5;
+/** A far model (HoloML 0.3) is shown a little past its distance and the model itself a little within it, so that standing at the line does not make it flicker. */
+const FAR_MARGIN = 0.05;
 /** Why a model that loads by area is not loaded (the inspector shows it). */
 const FAR = 'it loads when the viewer comes near';
 /** Where Chromium draws in software, the scene is drawn with half as many pixels each way (owner, prompt 135). */
@@ -163,6 +167,8 @@ interface Animation {
   /** A toggle: where it was at the last click (0 at from, 1 at to), and which way it runs now. */
   at: number;
   way: 1 | -1;
+  /** HoloML 0.3: where a script stopped it (0 at from, 1 at to); it stays there until started or clicked again. */
+  halted?: number;
 }
 
 /** What the pointer is over: a link, or a click action's trigger (both are outlined, with the hand pointer). */
@@ -180,6 +186,8 @@ interface Trigger extends Hover {
   animations: Animation[];
   sounds: Entry[];
   label: string;
+  /** The language of the element its label came from (HoloML 0.3). */
+  language?: Language;
   button: HTMLButtonElement | null;
 }
 
@@ -189,10 +197,14 @@ interface PendingAction {
   animation?: Animation;
   sound?: Entry;
   label: string | null;
+  /** The language of the action's element, for its label (HoloML 0.3). */
+  language?: Language;
 }
 
 /** The floor plan (HoloML 0.2 `plan`, milestone 19): its picture, the ground it shows, and the viewer's marker. */
 interface PlanState {
+  /** HoloML 0.3: a script hid it (`visible`). */
+  hiddenByScript?: boolean;
   src: string;
   state: 'loading' | 'loaded' | 'failed' | 'refused' | 'left-out';
   reason?: string;
@@ -221,6 +233,30 @@ export interface ModelReport {
   animation: { name: string; playing: boolean; time: number } | null;
   /** A stand-in's report (milestone 20): the address of the model it stands in for. */
   standsInFor?: string;
+  /** A far model's report (HoloML 0.3, milestone 25): the address of the model it is the lighter version of. */
+  farFor?: string;
+}
+
+/** A model's lighter version, shown from `far-from` metres away (HoloML 0.3 `far`, milestone 25). */
+interface Far {
+  /** Inside the model's own holder: placed, turned, and sized as the model, and a click on it is a click on the model. */
+  holder: Object3D;
+  report: ModelReport;
+  src: string;
+  from: number;
+  /** The viewer is past the line (with a margin each way); until the view is set up, decided is false. */
+  isFar: boolean;
+  decided: boolean;
+  /** Its file's address, while it uses the file. */
+  href: string | null;
+  template?: Template;
+  triangles?: number;
+  lights?: number;
+  mixer?: AnimationMixer | null;
+  materials?: Material[];
+  looks?: Look[];
+  /** Counts its loads: one that finishes after it was let go is dropped. */
+  loads: number;
 }
 
 /** A group that loads by area (HoloML 0.2 load="near", milestone 20). */
@@ -315,6 +351,8 @@ interface EnvironmentState {
 interface ChoiceOption {
   value: string;
   label: string;
+  /** Its words' language (HoloML 0.3). */
+  language?: Language;
   look: Promise<Look> | null;
   made: Map<Material, Changeable>;
 }
@@ -373,10 +411,16 @@ export interface Entry {
   standIn?: StandIn;
   /** What a model holds while loaded or loading (milestone 20). */
   held?: Held;
+  /** A model's lighter version far away (HoloML 0.3 `far`, milestone 25). */
+  far?: Far;
   /** Counts a model's loads: a load that finishes after the model was let go is dropped. */
   loads?: number;
   /** A model's animation speed, as a script set it (milestone 21); 1 when never set. */
   animationSpeed?: number;
+  /** An animate element's animation (HoloML 0.3: a thing scripts start and stop). */
+  animation?: Animation;
+  /** A model's or a group's name as a script set it (HoloML 0.3 `label`); null for none; undefined when never set. */
+  ownLabel?: string | null;
 }
 
 /** What a click, a tap, or the crosshair hit. */
@@ -391,7 +435,8 @@ export type SceneEvent =
   | { type: 'key'; key: string; down: boolean; repeat: boolean }
   | { type: 'frame'; time: number; dt: number }
   | { type: 'change'; entry: Entry; value: number | string }
-  | { type: 'load'; entry: Entry; loaded: boolean };
+  | { type: 'load'; entry: Entry; loaded: boolean }
+  | { type: 'place'; place: string };
 
 interface LoadedTemplate {
   template: Template;
@@ -418,7 +463,8 @@ export class HolomlView {
    */
   clock = 0;
   readonly models: ModelReport[] = [];
-  readonly labels: { text: string; sprite: Sprite }[] = [];
+  /** Each label's words and the direction they are drawn in (HoloML 0.3: right to left for rtl). */
+  readonly labels: { text: string; sprite: Sprite; dir: 'ltr' | 'rtl' }[] = [];
   readonly links: Link[] = [];
   private readonly entryById = new Map<string, Entry>();
   private readonly entryOfObject = new WeakMap<Object3D, Entry>();
@@ -469,7 +515,10 @@ export class HolomlView {
     frame: new Set<(e: SceneEvent) => void>(),
     change: new Set<(e: SceneEvent) => void>(),
     load: new Set<(e: SceneEvent) => void>(),
+    place: new Set<(e: SceneEvent) => void>(),
   };
+  /** Each animate element's entry, to give it its animation once built (HoloML 0.3). */
+  private readonly animateEntries = new WeakMap<ElementNode, Entry>();
   private readonly version: Version;
   private sceneId: string | null = null;
   /**
@@ -489,6 +538,10 @@ export class HolomlView {
   private viewMoving = false;
   /** The page's own pictures: materials' and the surroundings' (milestone 18). */
   private readonly pictures: Pictures;
+  /** Decoders for compressed models (milestone 25), made when the first model file arrives. */
+  private decoders: Decoders | null = null;
+  /** The counted copies of the files of every model file being decoded, by address, for the KTX2 loader's pictures. */
+  private readonly decodingFiles = new Map<string, string>();
   /** Pictures and surroundings not shown, and why (for the notice). */
   private readonly pictureProblems: { what: string; why: string }[] = [];
   /** The WebGL renderer's name when Chromium draws in software (no graphics card), else null. */
@@ -524,6 +577,10 @@ export class HolomlView {
   private placesListed = false;
   private startPlace: string | null = null;
   private currentPlace: string | null = null;
+  /** HoloML 0.3 (milestone 25): each element's language and direction, inherited as in HTML; none in an older page. */
+  private readonly langs = new WeakMap<ElementNode, Language>();
+  /** The scene's own language, for what a script adds to it (HoloML 0.3). */
+  private sceneLanguage: Language | undefined;
   /** The fade over everything, between places and between HoloML pages of one site (milestone 19). */
   private readonly fader: HTMLElement;
   private fadeLevel = 0;
@@ -534,6 +591,8 @@ export class HolomlView {
   private planState: PlanState | null = null;
   /** Groups that load by area (milestone 20). */
   private readonly areas: Area[] = [];
+  /** The models with a far version (HoloML 0.3). */
+  private readonly fars: Entry[] = [];
   /** How many models (and stand-ins) use each model file, so a file that no model uses any more can be let go. */
   private readonly templateUsers = new Map<string, number>();
   /** The tiled copies of a made material's pictures, released with it. */
@@ -562,6 +621,13 @@ export class HolomlView {
     this.outline = outline;
     this.hudLayer = hudLayer;
     this.version = version;
+    // HoloML 0.3 (milestone 25): the language and direction of each element's text, from the nearest element that
+    // says them; the page's own language is the document's, for screen readers.
+    if (this.since('0.3')) {
+      this.learnLanguages(root, UNSTATED);
+      const page = this.langs.get(root);
+      if (page?.lang) document.documentElement.lang = page.lang;
+    }
     // Lines are hit only where they are, not a metre around them.
     this.raycaster.params.Line.threshold = 0.02;
     // Whether Chromium draws in software is asked first: smoothed edges are chosen when the renderer is made.
@@ -598,6 +664,7 @@ export class HolomlView {
     this.pictures = new Pictures(this.budget, this.origin, this.anisotropy);
 
     const scene = root.children.find((c): c is ElementNode => c.type === 'element' && c.name === 'scene');
+    this.sceneLanguage = this.langs.get(scene ?? root);
     const background = scene ? color(scene, 'background') : null;
     this.background = new Color(background ?? '#0b0f1e');
     this.scene.background = this.background;
@@ -686,6 +753,8 @@ export class HolomlView {
     this.setUpView(start);
     // Groups that load by area within reach of the start load with the page (milestone 20).
     this.updateAreas();
+    // HoloML 0.3: each model with a far version loads the one the view needs.
+    this.updateFar();
     if (this.placesListed) {
       // A link to #name on this page, the outline's "Go to", Back and Forward: to that place, or to the first.
       window.addEventListener('hashchange', () => this.goTo(this.placeNamed(addressName()) ?? this.viewpoints[0]!));
@@ -723,6 +792,24 @@ export class HolomlView {
   /** Stops every model still loading (Esc, the stop button). */
   stop(): void {
     this.budget.stop();
+  }
+
+  /** Each element's language under an element that inherits `inherited` (HoloML 0.3). */
+  private learnLanguages(el: ElementNode, inherited: Language): void {
+    const mine = ownLanguage(el, inherited);
+    this.langs.set(el, mine);
+    for (const c of el.children) if (c.type === 'element') this.learnLanguages(c, mine);
+  }
+
+  /** An element's language and direction (HoloML 0.3); undefined in an older page. */
+  private languageOf(el: ElementNode): Language | undefined {
+    return this.langs.get(el);
+  }
+
+  /** The direction an element's words run in: left to right in an older page; in 0.3, as its `dir` says (`auto` by the words). */
+  private directionOf(el: ElementNode, words: string): 'ltr' | 'rtl' {
+    const l = this.langs.get(el);
+    return l ? direction(l.dir, words) : 'ltr';
   }
 
   /** Whether the page's version has what a version added: every later version keeps it (review 134, V2). */
@@ -814,6 +901,7 @@ export class HolomlView {
     const release = (o: Object3D) => releaseObject(o, done);
     this.scene.traverse(release);
     for (const t of this.templates.values()) void t.then((loaded) => loaded.template.scene.traverse(release)).catch(() => undefined);
+    if (this.decoders) disposeDecoders(this.decoders);
     this.renderer.dispose();
   }
 
@@ -1024,9 +1112,10 @@ export class HolomlView {
    */
   private build(node: HoloNode, parent: Object3D, parentEntry: Entry | null, link: string | null, depth: number, fromScript: boolean, animates: ElementNode[]): Entry | null {
     if (node.type !== 'element') return null;
-    // What a script adds, the script moves and plays: an animate, and a sound that begins on a click, are left
-    // out wherever they are in its markup, and the console says so (SPEC.md section 10, `holoml.add`).
-    const notAdded = fromScript ? leftOutOfAdd(node) : null;
+    // In a 0.2 page, what a script adds, the script moves and plays: an animate, and a sound that begins on a click,
+    // are left out wherever they are in its markup, and the console says so (SPEC.md section 10, `holoml.add`).
+    // A 0.3 page's scripts may add them (milestone 25).
+    const notAdded = fromScript && !this.since('0.3') ? leftOutOfAdd(node) : null;
     if (notAdded) {
       console.warn(`HoloML: holoml.add: line ${node.start.line - 1}, column ${node.start.column}: ${notAdded}.`);
       return null;
@@ -1034,7 +1123,7 @@ export class HolomlView {
     // The page's limit on elements: later ones are left out (issue #23).
     if (!this.count(node)) return null;
     const id = attr(node, 'id') ?? null;
-    const entry: Entry = { el: node, kind: node.name, name: nameOf(node), depth, object: null, item: null, id: null, parent: parentEntry, children: [], link, fromScript };
+    const entry: Entry = { el: node, kind: node.name, name: nameOf(node, this.since('0.3')), depth, object: null, item: null, id: null, parent: parentEntry, children: [], link, fromScript };
     if (id) {
       if (this.entryById.has(id)) console.warn(`HoloML: the id "${id}" is used twice; the second is ignored.`);
       else {
@@ -1058,7 +1147,8 @@ export class HolomlView {
           entry.area = { entry, near: near > 0 ? near : 10, in: false, told: false };
           this.areas.push(entry.area);
         }
-        if (entry.id && listed) entry.item = this.addItem(entry, 'Group');
+        // A group is in the outline by its id, or (HoloML 0.3) by a name of its own.
+        if ((entry.id || (this.since('0.3') && collapse(attr(node, 'label') ?? ''))) && listed) entry.item = this.addItem(entry, 'Group');
         for (const c of node.children) this.build(c, g, entry, link, depth + 1, fromScript, animates);
         this.track(g, link);
         break;
@@ -1106,12 +1196,13 @@ export class HolomlView {
       }
       case 'animate':
         animates.push(node);
+        this.animateEntries.set(node, entry);
         break;
       case 'sound':
         if (this.since('0.2')) {
           this.sound(node, entry, parent);
           // Plays when its trigger is clicked (milestone 19).
-          if (attr(node, 'begin') === 'click') this.pendingActions.push({ trigger: idOf(attr(node, 'trigger')), sound: entry, label: attr(node, 'label') ?? null });
+          if (attr(node, 'begin') === 'click') this.pendingActions.push({ trigger: idOf(attr(node, 'trigger')), sound: entry, label: attr(node, 'label') ?? null, language: this.languageOf(node) });
         }
         break;
     }
@@ -1210,7 +1301,13 @@ export class HolomlView {
       // The loader reads the counted files only, never the network.
       const manager = new LoadingManager();
       manager.setURLModifier((u) => files.blobs.get(new URL(u, url).href) ?? (u.startsWith('data:') || u.startsWith('blob:') ? u : 'blob:uncounted'));
-      const gltf = await new GLTFLoader(manager).parseAsync(files.main, url.href.slice(0, url.href.lastIndexOf('/') + 1)).catch((e: unknown) => {
+      const loader = new GLTFLoader(manager);
+      // Compressed geometry and pictures (milestone 25): the viewer's own decoders. The KTX2 loader reads a model's
+      // pictures through its own manager, so it finds them among the counted files of the models being decoded.
+      for (const [address, blob] of files.blobs) this.decodingFiles.set(address, blob);
+      this.decoders ??= makeDecoders(this.renderer, (u) => this.decodingFiles.get(u) ?? null);
+      loader.setDRACOLoader(this.decoders.draco).setKTX2Loader(this.decoders.ktx2).setMeshoptDecoder(this.decoders.meshopt);
+      const gltf = await loader.parseAsync(files.main, url.href.slice(0, url.href.lastIndexOf('/') + 1)).catch((e: unknown) => {
         throw new Unreadable(e instanceof Error ? e.message : String(e));
       });
       scene = (gltf.scene as Object3D | undefined) ?? null;
@@ -1253,7 +1350,10 @@ export class HolomlView {
       if (e instanceof Unreadable || (e instanceof LeftOut && !e.overTotal)) this.unreadable.set(url.href, e);
       throw e;
     } finally {
-      for (const b of files.blobs.values()) URL.revokeObjectURL(b);
+      for (const [address, b] of files.blobs) {
+        URL.revokeObjectURL(b);
+        if (this.decodingFiles.get(address) === b) this.decodingFiles.delete(address);
+      }
     }
   }
 
@@ -1268,6 +1368,19 @@ export class HolomlView {
     // HoloML 0.2 (milestone 20): a lighter model stands in until this one has loaded.
     const standIn = this.since('0.2') ? attr(el, 'stand-in') : null;
     if (standIn) this.standIn(entry, holder, standIn);
+    // HoloML 0.3 (milestone 25): a lighter version far away. Which of the two loads first is decided once the view
+    // is set up (updateFar): until then neither loads.
+    const far = this.since('0.3') ? attr(el, 'far') : null;
+    const from = num(el, 'far-from', 0, 0);
+    if (far && from > 0) {
+      const report: ModelReport = { src: far, state: 'waiting', reason: 'it loads when the viewer is far', materials: {}, animation: null, farFor: src };
+      this.models.push(report);
+      const f: Far = { holder: new Object3D(), report, src: far, from, isFar: true, decided: false, href: null, loads: 0 };
+      f.holder.visible = false;
+      holder.add(f.holder);
+      entry.far = f;
+      this.fars.push(entry);
+    }
     // Loading by area (milestone 20): in a group the viewer is not near, it waits for the viewer
     // (one from another site is refused at once, wherever it is).
     if (!this.ownSite(src) || this.wanted(entry)) this.loadModel(entry);
@@ -1339,6 +1452,7 @@ export class HolomlView {
         }
         report.state = 'loaded';
         this.showStandIn(entry, false);
+        this.showFar(entry, false);
         if (shadows) this.shadowBox = null;
         if (this.isSolid(entry)) this.collidersDirty = true;
         this.applyMotion();
@@ -1461,6 +1575,8 @@ export class HolomlView {
   /** Shows a model's stand-in while the model is not loaded, and hides it once the model is. */
   private showStandIn(entry: Entry, shown: boolean): void {
     const s = entry.standIn;
+    // HoloML 0.3: the far version, once it shows, takes the stand-in's place.
+    if (shown && entry.far?.holder.visible) shown = false;
     if (!s || s.holder.visible === shown) return;
     s.holder.visible = shown;
     const pool = s.holder.userData['pool'] as InstancePool | undefined;
@@ -1483,6 +1599,194 @@ export class HolomlView {
     entry.standIn = undefined;
   }
 
+  // ---- A lighter model far away (HoloML 0.3, milestone 25) ---------------------------
+
+  /** Whether a far version can stand for its model: not one that could not be loaded. */
+  private farUsable(f: Far): boolean {
+    return f.report.state !== 'refused' && f.report.state !== 'left-out' && f.report.state !== 'failed';
+  }
+
+  /**
+   * Each model with a far version, as the viewer moves: past `far-from`
+   * (and a margin), the far version loads and shows, and once it shows the
+   * model itself is let go; within it (less a margin), the model loads, and
+   * once it is in the far version hides. In a group that loads by area and
+   * is let go, neither is loaded. A far version that cannot be loaded
+   * leaves the model to show at any distance.
+   */
+  private updateFar(): void {
+    if (this.fars.length === 0) return;
+    const eye = this.camera.position;
+    const at = new Vector3();
+    for (const entry of this.fars) {
+      const f = entry.far;
+      if (!f || entry.removed) continue;
+      if (!this.areasIn(entry)) {
+        if (f.holder.visible || f.href) this.releaseFar(entry, true);
+        f.decided = false;
+        continue;
+      }
+      const d = entry.object!.getWorldPosition(at).distanceTo(eye);
+      if (!f.decided) {
+        f.isFar = d >= f.from;
+        f.decided = true;
+      } else if (f.isFar && d < f.from * (1 - FAR_MARGIN)) f.isFar = false;
+      else if (!f.isFar && d > f.from * (1 + FAR_MARGIN)) f.isFar = true;
+      const report = entry.report!;
+      if (f.isFar && this.farUsable(f)) {
+        if (f.report.state === 'waiting') this.loadFar(entry);
+        else if (f.report.state === 'loaded') {
+          if (!f.holder.visible) this.showFar(entry, true);
+          // Shown: the model itself is let go, and holds nothing while the viewer is far.
+          if (report.state === 'loaded' || report.state === 'loading') this.letGo(entry);
+        }
+      } else {
+        // Near, or the far version cannot stand for it: the model itself; the far one shows until it is in.
+        if (report.state === 'waiting' && this.wanted(entry)) this.loadModel(entry);
+        else if (report.state === 'loaded' && f.holder.visible) this.showFar(entry, false);
+        else if (!this.farUsable(f) && f.holder.visible) this.showFar(entry, false);
+      }
+    }
+  }
+
+  /** Shows or hides a far version (and the stand-in with it hides). */
+  private showFar(entry: Entry, shown: boolean): void {
+    const f = entry.far;
+    if (!f || f.holder.visible === shown) return;
+    f.holder.visible = shown;
+    if (shown) this.showStandIn(entry, false);
+    const pool = f.holder.userData['pool'] as InstancePool | undefined;
+    if (pool) pool.dirty = true;
+    if (f.template && this.isSolid(entry)) this.collidersDirty = true;
+    if (f.template && this.castsShadows(entry)) this.shadowBox = null;
+    this.requestFrame();
+  }
+
+  /**
+   * Loads a far version: drawn as an instance of its file where it can be,
+   * or as its own copy when the model changes its materials or plays one of
+   * its animations, which the far version then does too. It counts toward
+   * the page's limits like any model.
+   */
+  private loadFar(entry: Entry): void {
+    const f = entry.far!;
+    const report = f.report;
+    const load = (f.loads += 1);
+    const current = () => !entry.removed && f.loads === load;
+    report.state = 'loading';
+    delete report.reason;
+    void this.guarded(
+      f.src,
+      "models load only from the page's own site",
+      async (url) => {
+        if (!this.templates.has(url.href) && this.templates.size >= LIMITS.modelFiles) throw new LeftOut(`more than ${LIMITS.modelFiles} model files on the page`);
+        f.href = url.href;
+        this.useTemplate(url.href);
+        const el = entry.el;
+        const changes = el.children.filter((c): c is ElementNode => c.type === 'element' && c.name === 'material');
+        const clipName = attr(el, 'animation');
+        const [loaded, looks] = await Promise.all([this.loadTemplate(url), Promise.all(changes.map((c) => this.lookOf(c)))]);
+        if (!current()) return;
+        const t = loaded.template;
+        loaded.claim.setTriangles(0);
+        this.budget.useTriangles(t.triangles);
+        f.template = t;
+        f.triangles = t.triangles;
+        f.looks = looks;
+        report.bytes = t.bytes;
+        report.triangles = t.triangles;
+        report.pictures = t.pictures;
+        f.holder.userData['template'] = t;
+        const shadows = this.shadowsOn && this.castsShadows(entry);
+        if (t.instanceable && changes.length === 0 && !clipName) {
+          this.poolFor(t, url.href, shadows).add(f.holder);
+          this.materialsOf(t.scene, report);
+        } else {
+          const copy = cloneModel(t.scene);
+          f.lights = this.fileLights(copy);
+          if (shadows) castShadows(copy);
+          f.holder.add(copy);
+          f.holder.userData['copy'] = copy;
+          f.materials = this.changeMaterials(changes, looks, copy, report);
+          if (clipName) f.mixer = this.startClip(el, copy, loaded.animations, clipName, report);
+          if (f.mixer && entry.animationSpeed !== undefined) f.mixer.timeScale = entry.animationSpeed;
+        }
+        report.state = 'loaded';
+        this.applyMotion();
+        this.requestFrame();
+      },
+      (state, reason) => {
+        if (current()) this.farLeftOut(entry, reason, state);
+      },
+    );
+  }
+
+  /** A far version that could not be loaded: reported; the model itself shows at any distance. */
+  private farLeftOut(entry: Entry, reason: string, state: NotShown = 'left-out'): void {
+    const f = entry.far!;
+    this.releaseFar(entry, false);
+    f.report.state = state;
+    f.report.reason = reason;
+    console.warn(`HoloML: the far model "${f.report.src}" was ${state === 'failed' ? 'not loaded' : 'left out'}: ${reason}; the model itself is shown at every distance.`);
+    this.onLeftOut?.();
+    this.requestFrame();
+  }
+
+  /** Releases what a far version holds; it loads again when wanted. With `drop`, a file no model uses any more is let go too. */
+  private releaseFar(entry: Entry, drop: boolean): void {
+    const f = entry.far;
+    if (!f) return;
+    f.loads += 1;
+    this.showFar(entry, false);
+    // The stand-in shows again where neither the far version nor the model itself is drawn.
+    if (entry.report?.state !== 'loaded') this.showStandIn(entry, true);
+    (f.holder.userData['pool'] as InstancePool | undefined)?.remove(f.holder);
+    (f.holder.userData['copy'] as Object3D | undefined)?.removeFromParent();
+    delete f.holder.userData['copy'];
+    delete f.holder.userData['template'];
+    if (f.triangles) this.budget.releaseTriangles(f.triangles);
+    f.triangles = undefined;
+    f.template = undefined;
+    this.placedLights -= f.lights ?? 0;
+    f.lights = 0;
+    for (const m of f.materials ?? []) this.disposeMade(m);
+    f.materials = undefined;
+    if (f.mixer) {
+      f.mixer.stopAllAction();
+      this.mixers.splice(this.mixers.indexOf(f.mixer), 1);
+      for (const a of [...this.playing]) if (a.getMixer() === f.mixer) this.playing.delete(a);
+    }
+    f.mixer = null;
+    for (const l of f.looks ?? []) for (const t of [l.map, l.normalMap, l.roughnessMap]) if (t) this.pictures.release(t, drop);
+    f.looks = undefined;
+    if (f.href) this.releaseTemplate(f.href, drop);
+    f.href = null;
+    if (this.farUsable(f)) {
+      f.report.state = 'waiting';
+      f.report.reason = 'it loads when the viewer is far';
+    }
+    delete f.report.bytes;
+    delete f.report.triangles;
+    delete f.report.pictures;
+  }
+
+  /** The models with a far version, for the tests and the inspector: the distance, which one the view needs, and both states. */
+  get farInfo(): { id: string | null; src: string; state: string; far: { src: string; state: string; reason: string | null; shown: boolean }; from: number; isFar: boolean; distance: number }[] {
+    const eye = this.camera.position;
+    const at = new Vector3();
+    return this.fars
+      .filter((e) => !e.removed && e.far)
+      .map((e) => ({
+        id: e.id,
+        src: e.report!.src,
+        state: e.report!.state,
+        far: { src: e.far!.report.src, state: e.far!.report.state, reason: e.far!.report.reason ?? null, shown: e.far!.holder.visible && e.far!.report.state === 'loaded' },
+        from: e.far!.from,
+        isFar: e.far!.isFar,
+        distance: e.object!.getWorldPosition(at).distanceTo(eye),
+      }));
+  }
+
   // ---- Loading by area (HoloML 0.2, milestone 20) -------------------------------
 
   /** Whether a model loads by area: a group around it has load="near". */
@@ -1493,6 +1797,13 @@ export class HolomlView {
 
   /** Whether a model may load now: the viewer is near every group around it that loads by area. */
   private wanted(entry: Entry): boolean {
+    if (!this.areasIn(entry)) return false;
+    // HoloML 0.3: not while the viewer is far and its far version can stand for it.
+    return !(entry.far?.isFar && this.farUsable(entry.far));
+  }
+
+  /** Whether the viewer is near every group around a model that loads by area. */
+  private areasIn(entry: Entry): boolean {
     for (let e = entry.parent; e; e = e.parent) if (e.area && !e.area.in) return false;
     return true;
   }
@@ -2153,6 +2464,7 @@ export class HolomlView {
       pixels: [0, 0],
       note,
       words: null,
+      dir: this.languageOf(el)?.dir ?? 'ltr',
     };
     drawPanel(holder, entry.panelLook, this.anisotropy);
     return holder;
@@ -2166,6 +2478,7 @@ export class HolomlView {
       list.map((words) => {
         const p = document.createElement('p');
         p.textContent = words;
+        mark(p, this.languageOf(entry.el));
         return p;
       });
     look.note.replaceChildren(...paras(look.paragraphs));
@@ -2216,6 +2529,7 @@ export class HolomlView {
     marker.setAttribute('aria-hidden', 'true');
     marker.hidden = true;
     box.append(img, marker);
+    mark(box, this.languageOf(el));
     // Shown once its picture has arrived.
     box.hidden = true;
     this.corner(el, 'top-right').append(box);
@@ -2233,7 +2547,7 @@ export class HolomlView {
           throw e;
         });
         plan.state = 'loaded';
-        box.hidden = false;
+        box.hidden = plan.hiddenByScript === true;
         this.updatePlan();
       },
       (how, reason) => {
@@ -2269,13 +2583,15 @@ export class HolomlView {
     const size = num(el, 'size', 0.2, Number.MIN_VALUE);
     const fill = color(el, 'color') ?? this.textColor;
     const sprite = new Sprite(new SpriteMaterial({ transparent: true, depthWrite: false, toneMapped: false }));
-    drawLabel(sprite, words, size, fill);
+    const dir = this.directionOf(el, words);
+    drawLabel(sprite, words, size, fill, dir);
     sprite.position.set(...vec3(el, 'position', [0, 0, 0]));
     parent.add(sprite);
-    this.labels.push({ text: words, sprite });
-    // The label's words are in the page too, for Find in page and screen readers.
+    this.labels.push({ text: words, sprite, dir });
+    // The label's words are in the page too, for Find in page and screen readers, in their language (HoloML 0.3).
     const note = document.createElement('p');
     note.textContent = words;
+    mark(note, this.languageOf(el));
     document.getElementById('holoml-labels')?.append(note);
     entry.labelLook = { words, size, color: fill, note };
     return sprite;
@@ -2299,6 +2615,7 @@ export class HolomlView {
     box.style.fontSize = `${num(el, 'size', 18, Number.MIN_VALUE)}px`;
     const c = color(el, 'color');
     if (c) box.style.color = c;
+    mark(box, this.languageOf(el));
     place.append(box);
     entry.hud = box;
     this.setHudText(entry, el.children.map((ch) => (ch.type === 'text' ? ch.value : '')).join(''));
@@ -2350,6 +2667,7 @@ export class HolomlView {
     input.step = String(step);
     input.value = String(value);
     box.append(words, input);
+    mark(words, this.languageOf(el));
     this.corner(el).append(box);
     entry.hud = box;
     entry.slider = { input, label: words };
@@ -2402,7 +2720,7 @@ export class HolomlView {
       const value = attr(o, 'value') ?? label;
       // Two options with one value: the checker reports it, and the first is kept.
       if (options.some((x) => x.value === value)) continue;
-      options.push({ value, label: label || value, look: changes ? this.lookOf(o) : null, made: new Map() });
+      options.push({ value, label: label || value, look: changes ? this.lookOf(o) : null, made: new Map(), language: this.languageOf(o) });
     }
     const box = document.createElement('fieldset');
     box.className = 'holoml-choice';
@@ -2410,6 +2728,7 @@ export class HolomlView {
     if (entry.id) box.dataset['id'] = entry.id;
     const legend = document.createElement('legend');
     legend.textContent = collapse(attr(el, 'label') ?? '');
+    mark(legend, this.languageOf(el));
     legend.hidden = legend.textContent === '';
     if (legend.hidden) box.setAttribute('aria-label', entry.id ?? 'Choice');
     const list = document.createElement('div');
@@ -2425,6 +2744,7 @@ export class HolomlView {
       input.checked = i === start;
       const words = document.createElement('span');
       words.textContent = o.label;
+      mark(words, o.language);
       label.append(input, words);
       list.append(label);
       input.addEventListener('change', () => {
@@ -2588,10 +2908,114 @@ export class HolomlView {
   }
 
   /** A script gives a sound a place: from there on it comes from that place (its range as the page gave it, or 20 metres). */
-  setSoundPosition(entry: Entry, at: Vec3): void {
+  setSoundPosition(entry: Entry, at: Vec3 | null): void {
     if (entry.kind !== 'sound' || entry.removed) return;
+    if (at === null) {
+      // HoloML 0.3: its place taken away, it is heard as a sound from everywhere again.
+      const marker = entry.object;
+      if (marker) {
+        marker.removeFromParent();
+        this.entryOfObject.delete(marker);
+        entry.object = null;
+      }
+      entry.sound?.place(null, num(entry.el, 'range', 20, Number.MIN_VALUE));
+      this.requestFrame();
+      return;
+    }
     const parent = entry.parent?.object ?? this.scene;
     this.placeSound(entry, parent, at, num(entry.el, 'range', 20, Number.MIN_VALUE));
+  }
+
+  // ---- HoloML 0.3 in the scene API (milestone 25) -----------------------------------
+
+  /** Starts an animate from its beginning, as when it begins by itself; with reduced motion it shows its end at once. */
+  startAnimation(entry: Entry): void {
+    const a = entry.animation;
+    if (!a || entry.removed) return;
+    a.halted = undefined;
+    a.clickedAt = performance.now();
+    if (a.toggle) {
+      a.at = 0;
+      a.way = 1;
+    }
+    this.requestFrame();
+  }
+
+  /** Stops an animate where it is; it keeps that place until started or clicked again. */
+  stopAnimation(entry: Entry): void {
+    const a = entry.animation;
+    if (!a || entry.removed || a.halted !== undefined) return;
+    const p = this.progress(a, performance.now());
+    if (p) a.halted = p.t;
+  }
+
+  /** Whether an animate runs now. */
+  animationRunning(entry: Entry): boolean {
+    const a = entry.animation;
+    if (!a || entry.removed || a.halted !== undefined) return false;
+    const p = this.progress(a, performance.now());
+    return p !== null && !p.done;
+  }
+
+  /** The water's colour and clarity, for scripts. */
+  waterLook(entry: Entry): { color: string; clarity: number } | undefined {
+    return entry.kind === 'water' && this.water ? { color: this.water.look.color, clarity: this.water.look.clarity } : undefined;
+  }
+
+  setWaterColor(entry: Entry, value: string): void {
+    if (entry.kind !== 'water' || !this.water) return;
+    this.water.setColor(value);
+    this.requestFrame();
+  }
+
+  setWaterClarity(entry: Entry, value: number): void {
+    if (entry.kind !== 'water' || !this.water) return;
+    this.water.setClarity(value);
+    this.requestFrame();
+  }
+
+  /** Whether the floor plan is shown, as a script sees it (it may still be loading). */
+  planVisible(entry: Entry): boolean | undefined {
+    return entry.kind === 'plan' && this.planState ? this.planState.hiddenByScript !== true : undefined;
+  }
+
+  setPlanVisible(entry: Entry, on: boolean): void {
+    const plan = this.planState;
+    if (entry.kind !== 'plan' || !plan) return;
+    plan.hiddenByScript = !on;
+    plan.box.hidden = !on || plan.state !== 'loaded';
+  }
+
+  /** A model's or a group's own name (its label), or null for none. */
+  labelOf(entry: Entry): string | null | undefined {
+    if (entry.kind !== 'model' && entry.kind !== 'group') return undefined;
+    if (entry.ownLabel !== undefined) return entry.ownLabel;
+    return collapse(attr(entry.el, 'label') ?? '') || null;
+  }
+
+  /** A script names a model or a group: screen readers and the text view hear the new name. */
+  setLabel(entry: Entry, value: string | null): void {
+    if ((entry.kind !== 'model' && entry.kind !== 'group') || entry.removed) return;
+    entry.ownLabel = value === null ? null : collapse(value) || null;
+    entry.name = entry.ownLabel ?? (entry.id || nameOf(entry.el));
+    if (entry.item) this.nameItem(entry.item, entry);
+    // A group without an id is in the outline by its name only.
+    else if (entry.kind === 'group' && entry.ownLabel && !entry.link) entry.item = this.addItem(entry, 'Group');
+  }
+
+  /** The place the viewer last arrived at (HoloML 0.3 `viewer.place`). */
+  get viewerPlace(): string | null {
+    return this.currentPlace;
+  }
+
+  /** Takes the viewer to a place by its id, as a link to #id does; false when no viewpoint has the id. */
+  goToPlace(id: string): boolean {
+    const vp = this.viewpoints.find((v) => attr(v, 'id') === id);
+    if (!vp) return false;
+    // Through the page's address where places are listed, so that Back returns.
+    if (this.placesListed) this.visit(id);
+    else this.goTo(vp);
+    return true;
   }
 
   /** How loud a sound from a place is in each of the viewer's ears now (the page's hooks), by its id. */
@@ -2608,6 +3032,7 @@ export class HolomlView {
     if (entry.kind !== 'model' || entry.removed) return;
     entry.animationSpeed = speed;
     if (entry.held?.mixer) entry.held.mixer.timeScale = speed;
+    if (entry.far?.mixer) entry.far.mixer.timeScale = speed;
     this.requestFrame();
   }
 
@@ -2617,6 +3042,14 @@ export class HolomlView {
    * take much of every frame there, and the console says so.
    */
   private makeWater(el: ElementNode): void {
+    // HoloML 0.3: a thing scripts find by its id, to change its colour and clarity.
+    const id = this.since('0.3') ? (attr(el, 'id') ?? null) : null;
+    const entry: Entry = { el, kind: 'water', name: id ?? 'water', depth: 0, object: null, item: null, id: null, parent: null, children: [], link: null, fromScript: false };
+    if (id && !this.entryById.has(id)) {
+      entry.id = id;
+      this.entryById.set(id, entry);
+    }
+    this.entries.push(entry);
     const size = vec3(el, 'size', [1, 1, 1]);
     const caustics = has(el, 'caustics');
     if (caustics && this.software !== null) {
@@ -2671,10 +3104,16 @@ export class HolomlView {
       if (n.name === 'label') words.push(text(n));
       // A panel's first paragraph (HoloML 0.2).
       if (n.name === 'panel' && this.since('0.2')) words.push(paragraphs(rawText(n))[0] ?? '');
+      // A model's or a group's own name (HoloML 0.3): a link around a shoe is named by the shoe.
+      if ((n.name === 'model' || n.name === 'group') && this.since('0.3')) {
+        const label = collapse(attr(n, 'label') ?? '');
+        if (label) words.push(label);
+      }
       n.children.forEach(collect);
     };
     collect(el);
     anchor.textContent = words.join(' ') || `Link to ${href}`;
+    if (words.length > 0) mark(anchor, this.languageOf(el));
     const link: Link = { href, object, anchor };
     // Keyboard: Tab reaches each link, which lights up in the scene; Enter follows it.
     anchor.addEventListener('focus', () => this.setHovered(link));
@@ -2702,12 +3141,25 @@ export class HolomlView {
     const li = document.createElement('li');
     const button = document.createElement('button');
     button.type = 'button';
-    button.textContent = `${kind}: ${entry.name}`;
+    button.dataset['kind'] = kind;
+    this.nameItem(button, entry);
     button.addEventListener('focus', () => this.outlineObject(entry.object));
     button.addEventListener('blur', () => this.outlineObject(null));
     li.append(button);
     this.outline.append(li);
     return button;
+  }
+
+  /**
+   * An outline item's words: the kind in the browser's words ("Model: "),
+   * then the thing's name in the page's, with its language and direction
+   * (HoloML 0.3), so that a screen reader reads each in its own voice.
+   */
+  private nameItem(button: HTMLElement, entry: Entry): void {
+    const name = document.createElement('span');
+    name.textContent = entry.name;
+    mark(name, this.languageOf(entry.el));
+    button.replaceChildren(`${button.dataset['kind'] ?? entry.kind}: `, name);
   }
 
   /** Removes a thing from the outline; if it had focus, the next one (or the one before) takes it. */
@@ -2792,7 +3244,9 @@ export class HolomlView {
     const toggle = onClick && has(el, 'toggle');
     const animation: Animation = { entry, object, attribute, from, to, duration: ms, repeat: toggle ? 1 : repeat(el), start, onClick, toggle, clickedAt: null, at: 0, way: 1 };
     this.animations.push(animation);
-    if (onClick) this.pendingActions.push({ trigger: idOf(attr(el, 'trigger') ?? attr(el, 'target')), animation, label: attr(el, 'label') ?? null });
+    const self = this.animateEntries.get(el);
+    if (self) self.animation = animation;
+    if (onClick) this.pendingActions.push({ trigger: idOf(attr(el, 'trigger') ?? attr(el, 'target')), animation, label: attr(el, 'label') ?? null, language: this.languageOf(el) });
   }
 
   // ---- Click actions (HoloML 0.2, milestone 19) ----------------------------------
@@ -2817,7 +3271,10 @@ export class HolomlView {
       if (p.animation) t.animations.push(p.animation);
       if (p.sound) t.sounds.push(p.sound);
       const label = collapse(p.label ?? '');
-      if (!t.label && label) t.label = label;
+      if (!t.label && label) {
+        t.label = label;
+        t.language = p.language;
+      }
       touched.add(t);
     }
     for (const t of touched) {
@@ -2857,6 +3314,7 @@ export class HolomlView {
   private nameActionButton(t: Trigger): void {
     if (!t.button) return;
     t.button.textContent = t.label || t.entry.name;
+    mark(t.button, t.label ? t.language : this.languageOf(t.entry.el));
     const toggle = t.animations.find((a) => a.toggle);
     if (toggle) t.button.setAttribute('aria-pressed', String(toggle.clickedAt !== null && toggle.way === 1));
     else t.button.removeAttribute('aria-pressed');
@@ -2878,6 +3336,7 @@ export class HolomlView {
     const now = performance.now();
     for (const a of t.animations) {
       if (a.entry?.removed) continue;
+      a.halted = undefined;
       if (a.toggle) {
         a.at = this.toggleAt(a, now);
         a.way = a.clickedAt === null ? 1 : a.way === 1 ? -1 : 1;
@@ -2898,6 +3357,7 @@ export class HolomlView {
 
   /** Where an animation is now (0 at from, 1 at to) and whether it has finished; null for a click action not yet clicked. */
   private progress(a: Animation, now: number): { t: number; done: boolean } | null {
+    if (a.halted !== undefined) return { t: a.halted, done: true };
     if (a.toggle) {
       if (a.clickedAt === null) return null;
       const t = this.toggleAt(a, now);
@@ -2924,7 +3384,10 @@ export class HolomlView {
     li.className = 'holoml-place';
     const button = document.createElement('button');
     button.type = 'button';
-    button.textContent = `Go to: ${placeName(vp)}`;
+    const name = document.createElement('span');
+    name.textContent = placeName(vp);
+    mark(name, this.languageOf(vp));
+    button.replaceChildren('Go to: ', name);
     button.addEventListener('click', () => this.visit(entry.id!));
     li.append(button);
     this.outline.append(li);
@@ -2948,6 +3411,8 @@ export class HolomlView {
       this.controls?.moveTo(position);
       this.controls?.lookAt(lookAt);
       this.currentPlace = id;
+      // HoloML 0.3: the page's scripts hear where the viewer arrived.
+      if (id && this.since('0.3')) this.emit({ type: 'place', place: id });
       this.requestFrame();
     };
     if (this.reducedMotion.matches) {
@@ -3062,6 +3527,9 @@ export class HolomlView {
     if (o && e.template && e.report?.state === 'loaded') {
       if (o.userData['pool']) worldBox(e.template, o, b);
       else b.setFromObject((o.userData['copy'] as Object3D | undefined) ?? o);
+    } else if (e.far?.template && e.far.holder.visible) {
+      if (e.far.holder.userData['pool']) worldBox(e.far.template, e.far.holder, b);
+      else b.setFromObject(e.far.holder);
     } else if (s?.template && s.holder.visible) {
       if (s.holder.userData['pool']) worldBox(s.template, s.holder, b);
       else b.setFromObject(s.holder);
@@ -3336,10 +3804,17 @@ export class HolomlView {
     const added: Entry[] = [];
     const animates: ElementNode[] = [];
     const into = parent?.object ?? this.scene;
+    // HoloML 0.3 (milestone 25): animations, panels, and links too, and what they hold may have click actions.
+    const addable = this.since('0.3') ? ['group', 'model', 'light', 'label', 'sound', 'animate', 'panel', 'a'] : ['group', 'model', 'light', 'label', 'sound'];
+    // The new elements' language and direction, as if they stood where they are added.
+    if (this.since('0.3')) {
+      const around = (parent ? this.langs.get(parent.el) : this.sceneLanguage) ?? UNSTATED;
+      for (const node of tops) this.learnLanguages(node, around);
+    }
     tops.forEach((node, i) => {
       const next = tops[i + 1];
-      if (!['group', 'model', 'light', 'label', 'sound'].includes(node.name)) {
-        console.warn(`HoloML: holoml.add adds groups, models, lights, labels, and sounds, not <${node.name}>.`);
+      if (!addable.includes(node.name)) {
+        console.warn(`HoloML: holoml.add adds ${this.since('0.3') ? 'groups, models, lights, labels, sounds, animations, panels, and links' : 'groups, models, lights, labels, and sounds'}, not <${node.name}>.`);
         return;
       }
       const own = problems.filter((p) => after(p, node.start) && (!next || !after(p, next.start)));
@@ -3353,6 +3828,19 @@ export class HolomlView {
       if (entry) added.push(entry);
       else if (full) console.warn(`HoloML: holoml.add: <${node.name}> left out: past the page's limit of ${LIMITS.elements.toLocaleString('en')} elements.`);
     });
+    // HoloML 0.3: the animations and click actions it added, once every element it added is in the scene. One whose
+    // target or trigger is not there is left out, and the console says why.
+    for (const a of animates) {
+      const target = idOf(attr(a, 'target'));
+      if (!this.entryById.has(target) && target !== this.sceneId) {
+        console.warn(`HoloML: holoml.add: <animate> left out: no element has the id "${target}".`);
+        continue;
+      }
+      this.addAnimation(a);
+    }
+    const waiting = this.pendingActions.filter((p) => !this.entryById.has(p.trigger));
+    for (const p of waiting) console.warn(`HoloML: holoml.add: a click action left out: no element has the id "${p.trigger}".`);
+    this.wireActions();
     if (added.some((e) => this.hasSolid(e))) this.collidersDirty = true;
     if (this.leftOutElements > 0) this.onLeftOut?.();
     this.requestFrame();
@@ -3414,6 +3902,13 @@ export class HolomlView {
         // Its triangles and what it held no longer count; its file stays loaded for the next (milestone 20).
         this.unload(e, false);
         this.removeStandIn(e);
+        if (e.far) {
+          this.releaseFar(e, false);
+          const i = this.models.indexOf(e.far.report);
+          if (i >= 0) this.models.splice(i, 1);
+          this.fars.splice(this.fars.indexOf(e), 1);
+          e.far = undefined;
+        }
       }
       if (e.area) this.areas.splice(this.areas.indexOf(e.area), 1);
       this.elementCount -= 1;
@@ -3491,7 +3986,7 @@ export class HolomlView {
       entry.panelLook.paragraphs = paragraphs(value);
       drawPanel(entry.object, entry.panelLook, this.anisotropy);
       entry.name = entry.panelLook.paragraphs[0] ?? entry.id ?? 'panel';
-      if (entry.item && !this.triggers.get(entry)?.button?.isSameNode(entry.item)) entry.item.textContent = `Panel: ${entry.name}`;
+      if (entry.item && !this.triggers.get(entry)?.button?.isSameNode(entry.item)) this.nameItem(entry.item, entry);
       this.panelWords(entry);
       if (entry.object) this.markMoved(entry);
       this.requestFrame();
@@ -3508,11 +4003,16 @@ export class HolomlView {
       const words = collapse(value);
       entry.labelLook.words = words;
       entry.labelLook.note.textContent = words;
-      drawLabel(entry.object as Sprite, words, entry.labelLook.size, entry.labelLook.color);
+      mark(entry.labelLook.note, this.languageOf(entry.el));
+      const dir = this.directionOf(entry.el, words);
+      drawLabel(entry.object as Sprite, words, entry.labelLook.size, entry.labelLook.color, dir);
       const listed = this.labels.find((l) => l.sprite === entry.object);
-      if (listed) listed.text = words;
+      if (listed) {
+        listed.text = words;
+        listed.dir = dir;
+      }
       entry.name = words || 'label';
-      if (entry.item) entry.item.textContent = `Label: ${entry.name}`;
+      if (entry.item) this.nameItem(entry.item, entry);
       this.requestFrame();
     }
   }
@@ -3528,7 +4028,7 @@ export class HolomlView {
     if (entry.kind === 'light') (entry.object as (Object3D & { color: Color }) | null)?.color.set(value);
     else if (entry.kind === 'label' && entry.labelLook && entry.object) {
       entry.labelLook.color = value;
-      drawLabel(entry.object as Sprite, entry.labelLook.words, entry.labelLook.size, value);
+      drawLabel(entry.object as Sprite, entry.labelLook.words, entry.labelLook.size, value, this.directionOf(entry.el, entry.labelLook.words));
     } else if (entry.kind === 'hud' && entry.hud) entry.hud.style.color = value;
     this.requestFrame();
   }
@@ -3702,6 +4202,8 @@ export class HolomlView {
     this.viewMoving = moving;
     // Loading by area (milestone 20): what the viewer came near loads, and what it left is let go.
     this.updateAreas();
+    // Far models (HoloML 0.3): the lighter version past the line, the model itself within it.
+    this.updateFar();
     if (this.stepAnimations(performance.now())) moving = true;
     if (this.playing.size > 0 && !this.reducedMotion.matches) {
       for (const m of this.mixers) m.update(dt / 1000);
@@ -3881,16 +4383,19 @@ function arrivedFromHolomlPage(): boolean {
 }
 
 /** Draws a label's words into its sprite (again, when a script changes them). */
-function drawLabel(sprite: Sprite, words: string, size: number, fill: string): void {
+function drawLabel(sprite: Sprite, words: string, size: number, fill: string, dir: 'ltr' | 'rtl' = 'ltr'): void {
   const px = 96;
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
   const font = `600 ${px}px system-ui, "Segoe UI", sans-serif`;
   ctx.font = font;
+  // HoloML 0.3: right-to-left words are laid out from the right (the Unicode Bidirectional Algorithm's base direction).
+  ctx.direction = dir;
   const width = Math.ceil(ctx.measureText(words).width) + px;
   canvas.width = width;
   canvas.height = Math.ceil(px * 1.5);
   ctx.font = font;
+  ctx.direction = dir;
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
   ctx.shadowColor = 'rgba(0,0,0,0.55)';
@@ -3936,7 +4441,12 @@ function countElements(node: ElementNode): number {
 }
 
 /** A name for the outline and the inspector: the text, the id, or the file. */
-function nameOf(el: ElementNode): string {
+function nameOf(el: ElementNode, v03 = false): string {
+  // HoloML 0.3 (milestone 25): a model's and a group's own name, before its id and its file's name.
+  if (v03 && (el.name === 'model' || el.name === 'group')) {
+    const label = collapse(attr(el, 'label') ?? '');
+    if (label) return label;
+  }
   if (el.name === 'label') return text(el) || 'label';
   if (el.name === 'panel') return paragraphs(rawText(el))[0] || attr(el, 'id') || 'panel';
   if (el.name === 'plan') return collapse(attr(el, 'label') ?? '') || attr(el, 'id') || 'plan';

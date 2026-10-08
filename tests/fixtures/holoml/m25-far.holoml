@@ -1,0 +1,17 @@
+<holoml version="0.3">
+  <head>
+    <title>HoloML 0.3: far models</title>
+  </head>
+  <!-- Milestone 25, check HL5: a model with a lighter version far away; one whose far version cannot be loaded
+       (shown itself at every distance); and one in a group that loads by area, with a stand-in. The viewer starts
+       40 m from the first. -->
+  <scene background="#1c2030">
+    <viewpoint position="0 1.6 40" look-at="0 1 0" mode="walk" />
+    <light type="ambient" intensity="0.8" />
+    <model id="car" src="models/placeholder-car.gltf" far="models/stand-in.gltf" far-from="20" label="A car" />
+    <model id="no-far" src="models/placeholder-car.gltf" far="models/missing-far.gltf" far-from="20" position="6 0 0" />
+    <group id="area" load="near" near="12" position="-30 0 0">
+      <model id="area-car" src="models/placeholder-car.gltf" far="models/stand-in.gltf" far-from="6" stand-in="models/stand-in.gltf" />
+    </group>
+  </scene>
+</holoml>

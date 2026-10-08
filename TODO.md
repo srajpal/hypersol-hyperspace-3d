@@ -36,7 +36,7 @@ Plan approved 2026-09-24.
 | 22 | HoloML documentation | Documentation for HoloML to recognised standards (prompt 115); which ones is for its plan, for example a W3C-style specification with RFC 2119 requirement words, a formal grammar (such as RELAX NG or XML Schema), and guides organised as tutorials, how-to guides, reference, and explanation (Diátaxis), published with GitHub Pages | Done (accepted 2026-10-07, prompt 160) |
 | 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Done (accepted, prompt 153) |
 | 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Done (accepted 2026-10-07, prompt 161) |
-| 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Later (prompt 128, Q4 a; its plan drafted when milestone 22 ends) |
+| 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Current (plan approved with the recommended answers and the tools, prompt 168; build approved, prompt 169) |
 | 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
 | 27 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
 | 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
@@ -5059,6 +5059,312 @@ tests, and the app's 15 JUnit tests pass (2026-10-07).
 
 - AN1 to AN9 pass on the owner's tablet, the documents are updated, and
   the owner accepts.
+
+## Milestone 25 — HoloML 0.3
+
+Status: Plan approved (2026-10-07, prompt 168): the owner chose the
+recommended answers to Q1 to Q8 and approved the new tools. Build
+approved (prompt 169). Rule 13 check done (ARCHITECTURE.md section 3: 44.7.0 is still the
+newest stable release). Built 2026-10-07 on the branches m25-holoml-0.3
+(this repository) and holoml-0.3 (holoml), not yet pushed; the results
+so far are below; the screenshots, the Linux run, the Android build,
+and the checks by hand are still to do. Asked for in prompts 127 and 128 (Q4 a): the
+features milestone 22's check found missing, with the review's
+additions (2026-09-30) and the language engineer's list (the roadmap's
+notes above).
+
+Goal: HoloML 0.3, a version that pages opt into with `version="0.3"`,
+adding names for models and groups, the language and direction of text,
+a lighter model shown far away, and more of the scene API; HyperSpace 3D
+reading compressed models and showing a page's description; and the
+specification saying what 0.2 left to each renderer (the look, limits,
+a panorama's projection), so that a second renderer could match
+HyperSpace 3D's pictures. Every 0.1 and 0.2 page keeps its meaning.
+
+### How it would work (proposed)
+
+New in the language (SPEC.md, the grammar, the checker, conformance
+samples):
+
+1. **Names for models and groups.** A `label` on `model` and `group`
+   (as `sound`, `choice`, places, and plans already have), heard by
+   screen readers and shown in the text view and the Scene inspector.
+   Without one, what is heard today stays: the `id`, then the file's
+   name.
+   `<model src="fish/shark.glb" label="Blacktip reef shark" />`
+2. **The language and direction of text.** `lang` (a language tag, as
+   in HTML: `ar`, `en-GB`) and `dir` (`ltr`, `rtl`, or `auto`) on
+   `holoml` and on every element that holds or shows text (`title`,
+   `label`, `panel`, `hud`, `a`, `option`, and the `label` attributes),
+   taken from the nearest element that says so, as in HTML (Q3). Screen
+   readers get the language; labels, panels, and the screen's text are
+   drawn in their direction; the text view says both.
+3. **A lighter model far away (level of detail).** Q1 a: `far`, a
+   lighter file, and `far-from`, the distance in metres from which it
+   is shown, on `model`:
+   `<model src="fish/shark.glb" far="fish/shark-far.glb" far-from="20" />`
+   Near, the full model; farther than `far-from`, the lighter one. Only
+   what is shown is loaded at first; the other loads as the viewer
+   comes near it. It works with loading by area and stand-ins.
+4. **More of the scene API** (section 10, Web IDL): an `animate` can be
+   started and stopped (`start()`, `stop()`, `running`); the viewer can
+   be sent to a place (`holoml.viewer.goTo("terrace")`) and says which
+   place it is at (`holoml.viewer.place`, and a `place` event); the
+   water's `color` and `clarity` can change; the floor plan is a thing
+   scripts can find; `holoml.add` takes animations, click actions, and
+   a panel or a link at the top level; a sound's place can be taken
+   away again (`position = null`).
+
+The specification, for every version (no new features; from the review
+and the language engineer):
+
+5. **The look written down**: how bright a light of a given
+   `intensity` is, the tone mapping (HyperSpace 3D uses ACES filmic, in
+   sRGB), the renderer's own soft light when a page has no
+   `environment`, the field of view (HyperSpace 3D's is 50 degrees,
+   vertical), and a panorama's projection (equirectangular) and which
+   way its middle faces.
+6. **Limits as the specification's own requirements** (Q7): what every
+   renderer must manage at least (text, elements, files, decoded
+   pixels and seconds of sound, lights, and the time a page may take),
+   so that a page within them works in every renderer; today they are
+   HyperSpace 3D's own, in a note.
+7. **Readers**: what is reported for a further copy of an element a
+   page may have only once (generalising `water`'s `too-many`), and
+   whether text on both sides of a comment is one text.
+8. **The RELAX NG grammar checked by a validator** in holoml's tests
+   (Q5).
+
+In HyperSpace 3D:
+
+9. **Compressed models** (Q4): glTF files whose geometry is compressed
+   (Draco, meshopt) or whose pictures are (KTX2), common on the web,
+   load and draw. The decoders come with three.js, which the viewer
+   already uses (Draco and Basis Universal, Apache 2.0; meshopt, MIT),
+   and ship inside the browser, served from its own viewer address:
+   nothing is fetched from anywhere but the page's own site. They run
+   in the page's process, in workers; the limits count what they
+   decode, as today. On Android too.
+10. **A page's description** (Q2): a 0.3 page's (and an older page's)
+    `<meta name="description">` shown as its tab's tooltip, at the top
+    of the text view, and in the Scene inspector.
+11. **0.3 in the viewer**: names, language and direction, far models,
+    and the new scene API, on the desktop and on Android; the text view
+    and the accessibility tree updated.
+
+The examples (Q6 a): the existing sites take up what fits them, with
+their checks updated: names for every fish, model, and group that a
+screen reader reaches (the aquarium, Harbour Loft, the sneaker store,
+the sofa studio, Blockworld, the showroom); far models for the
+aquarium's fish (it had to thin its models by hand, milestone 21); the
+sneaker store's shoes compressed (a smaller download); a
+`description` on every site; and one new short page in the HoloML
+examples, "Words in a room", with labels and panels in English, Arabic,
+and Hebrew, to show `lang` and `dir`.
+
+### Software to install (approved with the plan, prompt 168)
+
+- Q5: a RELAX NG validator for holoml's tests, as a development
+  package; which one is researched first and proposed with its
+  licence (JavaScript validators of the compact form are few; Jing,
+  the reference one, needs Java).
+- Q6 a: `@gltf-transform/cli` (MIT) and its Draco encoder
+  `draco3dgltf` (Apache 2.0) as development packages of holoml's
+  example tools, to compress the sneaker store's shoes and make the
+  test models; KTX2 test pictures from Khronos's glTF Sample Assets
+  (CC0 or CC BY 4.0), fetched once by a tool and recorded with their
+  SHA-256, as the examples' models are.
+- Nothing new in the browser: the decoders are part of three.js.
+
+### Questions (answered with the recommendations, prompt 168)
+
+- Q1, a lighter model far away.
+  - a (recommended): `far` and `far-from` on `model`: one lighter
+    version, the case the examples have (the aquarium's fish), as
+    simple to write as `stand-in`.
+  - b: a `lod` element holding several `model`s, each with the
+    distance it starts at: any number of levels, more to write and
+    check.
+  - c: none in the language; the renderer simplifies models itself
+    (not reliable, and every renderer would differ).
+- Q2, where HyperSpace 3D shows a page's description.
+  - a (recommended): its tab's tooltip, the top of the text view, and
+    the Scene inspector; the examples section's cards keep their own
+    words.
+  - b: also the examples section's cards, taken from each site's page
+    (the browser would fetch each page to show the card).
+  - c: nowhere; the specification only.
+- Q3, where `lang` and `dir` may be written.
+  - a (recommended): on `holoml` and on every element that holds or
+    shows text, inherited as in HTML, so a page in one language says
+    it once and a quote in another says it where it is.
+  - b: on `holoml` only: one language and direction for the whole page.
+- Q4, compressed models in HyperSpace 3D.
+  - a (recommended): all three, Draco, meshopt, and KTX2, with the
+    decoders from three.js shipped in the browser (about 0.9 MB:
+    Draco's glTF decoder 0.25 MB, the Basis transcoder 0.59 MB, meshopt
+    0.03 MB), served from the browser's own address, nothing from the
+    network.
+  - b: meshopt only (plain JavaScript, no WebAssembly, the smallest
+    change; Draco and KTX2 files still left out with a notice).
+  - c: none; the specification names them as optional only.
+- Q5, the RELAX NG grammar checked by a validator.
+  - a (recommended): yes: the agent researches a validator and proposes
+    it, with its licence, before adding it.
+  - b: no; the grammar stays generated from the checker's table and
+    checked against it (as today).
+- Q6, the examples.
+  - a (recommended): the existing sites take up what fits them (names,
+    far models for the fish, compressed shoes, descriptions), and one
+    new short page, "Words in a room", shows `lang` and `dir`.
+  - b: a new example site built around 0.3 (for example a small
+    gallery with its labels in three languages), the existing sites
+    unchanged.
+  - c: no example changes; conformance samples and test pages only.
+- Q7, limits.
+  - a (recommended): the specification states the least every renderer
+    must manage (a renderer may allow more), so a page within them
+    works everywhere; HyperSpace 3D's own limits stay above them.
+  - b: limits stay each renderer's choice, as today.
+- Q8, the large-scene items (ARCHITECTURE.md, open question 4: compiling
+  materials without holding up the first frame, a Tab stop for every
+  model, and a model's files fetched one after another).
+  - a: in this milestone, as they touch what names change (Tab stops).
+  - b (recommended): a milestone of their own, or polish (29): they are
+    the viewer's speed, not the language.
+
+### Tasks
+
+- [x] 1. HoloML 0.3 in holoml: SPEC.md (features 1 to 4, and 5 to 7 for
+      every version), the grammar (ABNF, RELAX NG, Web IDL), the
+      checker and parser, conformance samples for every new attribute,
+      value, and problem, and the guides (a how-to for each feature).
+- [x] 2. The viewer: names, language and direction, far models, the new
+      scene API, and compressed models with the decoders shipped in the
+      browser; the text view, the accessibility tree, and the Scene
+      inspector; on Android too.
+- [x] 3. The shell: a page's description (Q2).
+- [x] 4. The examples (Q6), and the browser's copy of them (`pnpm
+      holoml:sync`).
+- [x] 5. The RELAX NG validator (Q5), after its approval (Jing, prompt
+      170).
+- [ ] 6. Checks HL1 to HL10: unit tests beside the code, holoml's tests,
+      and tests/e2e/m25.e2e.ts; run on Windows, with `pnpm test:linux`,
+      and in the automatic builds.
+- [ ] 7. Documents: both READMEs, SPEC, ARCHITECTURE, THIRD-PARTY.md (the
+      decoders), docs/privacy.md (nothing new on the network), AGENTS.md's
+      testing list, both CHANGELOGs, HANDOFF, and TODO; the screenshots
+      (`MILESTONE=m25 pnpm screenshots`, the previous set out of the
+      tree) and the README's four pictures.
+- [ ] 8. HoloML 0.3 tagged v0.3.0, after the owner accepts the milestone
+      and says go.
+
+### Checks (named HL, for HoloML 0.3)
+
+| # | Check | Expected result |
+|---|---|---|
+| HL1 | The language | holoml's tests: SPEC.md's form, the grammar against the checker's table (and the validator, Q5), a valid and an invalid conformance sample for every new attribute and value, and every 0.1 and 0.2 sample unchanged |
+| HL2 | Names | A model's and a group's `label` is what screen readers hear and what the text view and the Scene inspector show; without one, the id, then the file's name, as before |
+| HL3 | Language and direction | The accessibility tree carries each text's language; an Arabic or Hebrew label, panel, and screen text are drawn right to left; `auto` follows the text; the text view says both |
+| HL4 | Compressed models | A Draco, a meshopt, and a KTX2 model load and draw (also in software); their decoded pictures and triangles count against the limits; a broken one is left out with a notice; nothing is fetched but the page's own files; on Android too |
+| HL5 | Far models | Beyond `far-from` the lighter model is drawn and near it the full one, switching as the walker moves; only what is shown is loaded at first; with loading by area and stand-ins |
+| HL6 | The scene API | Scripts start and stop an `animate`, send the viewer to a place and hear `place`, change the water, find the floor plan, add animations, click actions, a panel, and a link, and take a sound's place away |
+| HL7 | A page's description | Shown where Q2 says, for 0.3 and older pages; none when a page has none |
+| HL8 | Older pages | Every 0.1 and 0.2 example and fixture page draws and behaves as before (every earlier milestone's checks pass) |
+| HL9 | The examples | Every fish and model a screen reader reaches has a name; the aquarium at 30 frames a second or more with its far models (with a graphics card) and drawing fewer triangles; the sneaker store's download smaller than before; "Words in a room" read correctly by a screen reader |
+| HL10 | Regression and the published site | The full end-to-end run, the unit tests, the Android build and its checks by hand on the tablet; the published sites and specification checked by hand |
+
+### Done when
+
+- HL1 to HL10 pass, the documents and screenshots are updated, and the
+  owner accepts; then HoloML 0.3 is tagged on the owner's go.
+
+### Decisions made while building
+
+- KTX2 pictures (owner, prompt 170, asked while building): the Basis
+  transcoder, an Emscripten build, evaluates code as it starts, which a
+  HoloML page's content policy forbids. It runs in workers of an unseen
+  frame from the viewer's own address (`hypersol-viewer://app/ktx2-host.html`,
+  viewer/ktx2-host.ts), with a policy of its own that allows that; the
+  page's KTX2 loader talks to it over a MessagePort through stand-in
+  workers. A HoloML page itself never gets `'unsafe-eval'`; it gets
+  `'wasm-unsafe-eval'` (compiling WebAssembly, for Draco and Basis),
+  blob: workers, and that one frame. On Android, where the viewer comes
+  from the page's own site, three.js's own workers do it.
+- The RELAX NG validator (Q5, prompt 170): Jing 20241231, the reference
+  one, with its SHA-256 in holoml's tests; it needs Java, so its checks
+  are skipped without Java and fail in the automatic builds without it.
+  It found one fault in the schema made for 0.3 (one viewpoint at most),
+  fixed before anything was published.
+- The decoders are the files three.js's loaders name, which the build
+  carries beside the viewer's scripts (the viewer imports none of them
+  itself, so each is there once), served from the viewer's address: the
+  viewer's loaders load only the viewer's own files, the files the
+  page's limits counted, and blob: and data: (decoders.ts). The Android
+  app's viewer carries the same files (its build, 2026-10-07).
+- Names go where a screen reader reaches: every model and group in a
+  page's outline (the viewer lists every model there) is named on the
+  example sites, the walls and windows too ("Wall", "Tall window"). A
+  model inside a link is left without a label: a link is named by its
+  labels and panels and, from 0.3, by the labels of the models and
+  groups in it, so a label there doubled the link's name (Harbour
+  Loft's door up to the terrace, found by V9).
+- The sneaker store, its shoe page, and its about page are HoloML 0.3
+  now, for the names. The showroom first stayed a HoloML 0.1 site, so
+  its hall and plinths were heard by their files' names; the owner had
+  it moved to 0.3 (prompt 171): the hall, the plinths, and each car on
+  its own page are named, and HL9 checks three of its pages. In the
+  hall each car stays inside its link, named by its label. It keeps a
+  page per colour, without scripts.
+- The far fish keep under a third of their triangles (about a fifth;
+  the mackerel 29 per cent, as its seams hold on to its corners), made
+  by the example's tools/far.mjs, which welds, then simplifies with a
+  smaller ratio until the fish is light enough; at 10 m and beyond.
+- The KTX2 test picture is a carbon-fibre normal map from Khronos's
+  "Chronograph Watch" (CC BY 4.0), not the sample assets' logo picture.
+- Checks changed because what they check changed: the version a viewer
+  does not know is 0.4 or 9.9 now, not 0.3 (review-134-viewer, holoml's
+  tests); T8 has seven examples and Blockworld at 0.3; V9 hears the
+  walls and furniture by their labels; W10's bay is 0.23 MB, not 0.7;
+  X5 lets a far fish wait for its own model while its lighter version
+  is drawn; holoml's site test expects seven example sites, and its
+  aquarium test finds the air stones with their labels.
+- tests/e2e/m25.e2e.ts runs in part 1 of the automatic builds (every
+  file not listed in another part) until its time on GitHub's machines
+  is known.
+
+### Results so far (Windows 11, 2026-10-07)
+
+- HL1: holoml's 883 tests pass (Jing with Java 17 among them), and its
+  lint and type check are clean.
+- HL2 to HL7, HL9: tests/e2e/m25.e2e.ts, 18 checks, pass, with m17 to
+  m21 (the example sites' own checks, 50 with m25 in the last run). The
+  ocean tunnel: 130 frames a second; its fish draw 35,863 triangles,
+  132,266 if all were near. The sneaker store loads 0.76 MB at first
+  (2.4 MB before). The unit tests (526) pass; lint and the type check
+  are clean.
+- HL8 and HL10, the full end-to-end run on this computer: 388 of 393
+  checks pass. The five that fail all use the clipboard (D8's copy a
+  link, copy text, and paste; K2; and M1's copy after a real click):
+  each found the clipboard empty. Windows itself refused the clipboard
+  at the time (PowerShell's Set-Clipboard failed five times of five), so
+  another program was holding it; they are to be run again when it is
+  free (`pnpm test:e2e tests/e2e/m2.e2e.ts tests/e2e/m9.e2e.ts
+  tests/e2e/review-134-main.e2e.ts -t "D8|K2|copy"`). Nothing in this
+  milestone touches the clipboard.
+- On Linux (`pnpm test:linux` with m19, m20, m21, and m25, drawn in
+  software): 43 pass and 7 are skipped (the budgets for a graphics
+  card); the ocean tunnel draws 4 frames a second there, logged.
+- The Android app builds, its unit tests pass, and it carries the
+  decoders (`./gradlew testDebugUnitTest assembleDebug`); its checks on
+  the tablet, the automatic builds, and the published sites: not
+  checked yet.
+- Found while taking the screenshots, not part of this milestone:
+  HoloML's content policy's `webrtc 'block'` is not a directive
+  Chromium knows, so it is ignored (the console says so on every
+  HoloML page), and a HoloML page can make a peer connection. The
+  review of 2026-09-30 (M6) meant it to block them. Offered to the
+  owner as a separate task, to be approved before it is built.
 
 ## The review's last items (2026-10-07, prompt 160)
 
