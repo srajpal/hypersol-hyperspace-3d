@@ -24,7 +24,7 @@
     "holoml:sync": "node packages/holoml/sync.mjs"
   },
   "devDependencies": {
-    "@types/node": "^24.13.6",
+    "@types/node": "^24.19.1",
     "eslint": "^10.12.0",
     "playwright": "^1.63.0",
     "typescript": "^6.0.3",
