@@ -1941,3 +1941,9 @@ sure there are no bugs or issues that would prevent that.
 ```text
 There are CI failures in #60.
 ```
+
+## 174 — 2026-10-08 · Claude Opus 5.5, high effort
+
+```text
+#60 merged, tablet tested and works, milestone 25 accepted.
+```
