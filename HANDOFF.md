@@ -87,9 +87,9 @@ holoml's #19 merged, 2026-09-29):
 
 On the branch m26-privacy-data. Plan approved with the recommended
 answers (prompt 178), build approved (prompt 179). TODO.md, "Milestone
-26", has the plan, the decisions made while building (one for the
-owner: Q5's "whether a site has some" storage cannot be known from
-Electron), and the results.
+26", has the plan, the decisions made while building (among them:
+Q5's "whether a site has some" storage cannot be known from Electron,
+and the owner kept Q5 a as built, prompt 181), and the results.
 - HTTPS-only (#24): main/privacy/https-only.ts (decisions, unit tested),
   wired into the shield's listeners in main/privacy/index.ts; the card
   in renderer/load-errors.ts and scene/tab-view.ts; the site panel and

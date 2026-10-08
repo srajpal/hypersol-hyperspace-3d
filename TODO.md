@@ -5555,7 +5555,7 @@ lists are; the script would be one new fetch, from publicsuffix.org.
   each site's cookies and open tabs, and says plainly that its other
   storage and its cached files are not reported per site; Clear removes
   them all. A site with neither cookies nor an open tab is not listed.
-  For the owner to confirm, or to choose Q5 b instead.
+  The owner kept Q5 a as built (prompt 181).
 - Clearing a site covers its origins on the usual ports and on any port
   an open tab of it uses: site storage is kept by origin, port and all,
   and the check (PD7, whose test site has a random port) found that the

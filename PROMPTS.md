@@ -1997,3 +1997,15 @@ going.
 ```text
 How is it going?
 ```
+
+## 181 — 2026-10-08 · Claude Opus 5.5, high effort
+
+Answers the question raised during milestone 26's build: Electron
+reports a site's cookies but not which other kinds of storage it has,
+so the Sites tab shows cookies and says the rest is not reported, and
+Clear removes it all (Q5 a as built), rather than reading Chromium's
+own folders (Q5 b). The owner keeps Q5 a.
+
+```text
+Q5 a is fine, keep going.
+```
