@@ -1914,3 +1914,24 @@ their files' names.
 Update the showroom to current HoloML. And then collect whatever needs
 to be done before the new step. Push the branches and pull requests.
 ```
+
+## 172 — 2026-10-08 · Claude Opus 5.5, high effort
+
+After the two pull requests for milestone 25 were opened (prompt 171).
+Attached: the terminal's output of the clipboard checks run again, 7
+passed (D8's right-click menu, K2, and M1's copy).
+
+```text
+All CI passes, all PRs merged. Clipboard test results attached.
+I could not test on the tablet, as opening the aquarium gave me an error
+saying the browser does not support HoloML 0.3. Fix the security
+advisory. WebRTC gap approved. %APPDATA%\npm added to the PATH. Go ahead
+and work on "the large-scene items (Q8 b), and the D8 right-click check
+that sometimes times out on main's Linux CI."
+
+Then, before you work on the next milestone, push everything. Also
+remove milestones 30 and 31 from the to-dos: we are going to keep this
+an open-source repository, so no live builds; others can fork the
+repository if they want to do an installable build. But check to make
+sure there are no bugs or issues that would prevent that.
+```
