@@ -5515,7 +5515,7 @@ lists are; the script would be one new fetch, from publicsuffix.org.
       Settings section (Q7).
 - [x] 3. Bookmark import and export: the parser and the writer (unit
       tested), the preview, the file dialogs, the limits.
-- [ ] 4. Checks PD1 to PD10: unit tests beside the code and
+- [x] 4. Checks PD1 to PD10: unit tests beside the code and
       tests/e2e/m26.e2e.ts. HTTPS is tested with local fixtures: a test
       host name mapped to 127.0.0.1 and a test certificate trusted only
       in test runs, so nothing leaves the computer.
@@ -5585,6 +5585,28 @@ lists are; the script would be one new fetch, from publicsuffix.org.
   the address that was asked for, and Retry asks for it again.
 - Checks changed because what they check changed: E10 walks the
   Library's tabs with Shift+Tab, and meets the new Sites tab first.
+- Found in the screenshots: the Sites tab's rows and the import
+  preview's ran a name and its detail on one line, and the preview
+  scrolled sideways; their rows are blocks now, as the Passwords tab's.
+
+### Results so far (2026-10-08)
+
+- Unit tests: 555 pass (new: storage/bookmark-file, privacy/https-only,
+  site-data, and the service's import and export); lint and the type
+  check are clean.
+- tests/e2e/m26.e2e.ts: PD1 to PD9 pass, 9 checks.
+- The full end-to-end run on Windows: 399 of 403 passed. The four that
+  failed were this milestone's doing: D7 (a name not found shown with
+  the https:// address it was upgraded to: fixed), E10 (the Library's
+  new tab: the check lists it), and R5 (passes as written once D7 was
+  fixed). Run again: D7, E10, R5, the shield's F checks, and PD1 to PD9
+  pass (34 checks).
+- On Linux (`pnpm test:linux` with m26, m2, m3, m4, m8,
+  review-134-shell, and review-134-main): 148 pass.
+- The screenshots (m26, 72; milestone 25's set out of the tree) and the
+  README's four pictures, looked at.
+- Not checked yet: a second full run after the last fixes, and the
+  automatic builds.
 
 ## After milestone 25 (2026-10-08, prompt 172)
 
