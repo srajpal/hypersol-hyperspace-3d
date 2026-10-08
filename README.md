@@ -60,11 +60,13 @@ through with 30 fish swimming over and around you, and completes HoloML
 Milestone 23 adds HoloML for VS Code, and milestone 24 HyperSpace 3D for
 Android, on a tablet. Milestone 25 adds HoloML 0.3: names
 for models, the language and direction of text, lighter models far
-away, and compressed models.
+away, and compressed models. Milestone 26, being built, adds
+privacy and data tools: HTTPS-only browsing, per-site storage, and
+bookmark import and export.
 On 2026-09-30 both repositories were reviewed and the findings fixed,
 the security ones first ([CHANGELOG.md](CHANGELOG.md), Unreleased),
 except those [TODO.md](TODO.md) lists with the reason.
-Then privacy and data tools, and more of the 3D room; no installers
+Then more of the 3D room; no installers
 (owner, 2026-10-08). See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
@@ -137,7 +139,12 @@ An archived copy of the 2001 site is available through the
 - A layers view that lifts a page's sections and pictures to different
   depths.
 - Privacy on by default: ad and tracker blocking with a shield, encrypted
-  DNS, private tabs, and no telemetry.
+  DNS, private tabs, and no telemetry. Pages load over HTTPS only,
+  with a warning before any site is used over plain HTTP (milestone 26).
+- Your data in your hands (milestone 26): one site's cookies and stored
+  data seen and cleared in the Library's Sites tab, and bookmarks
+  imported from another browser's bookmark file, after a preview, and
+  exported to one.
 - A password manager using the system's keychain, site permissions
   for the camera, microphone, and location, and a prompt for sites and
   proxies that ask for a user name and password in the browser's own
@@ -233,9 +240,9 @@ by AI coding agents directed by prompts. To follow it:
 
 ## What comes next
 
-Next, 26, privacy and
-data tools: HTTPS-only browsing, per-site storage, and bookmark import
-and export. 27, free camera movement around the room. 28, pictures and
+Milestone 26, privacy and data tools (HTTPS-only browsing, per-site
+storage, and bookmark import and export), is being built. Next, 27,
+free camera movement around the room. 28, pictures and
 3D models lifted out of ordinary pages. 29, polish, the last
 planned (installers were dropped on 2026-10-08: anyone may fork the
 repository and make one). Later: phones, and VR. The full

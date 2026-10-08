@@ -519,6 +519,23 @@ milestone; the current milestone's checks are defined in TODO.md):
   and skipped; the sneaker store's smaller download; Words in a room
   for screen readers). HL8 is every earlier milestone's checks; HL10 the
   full run, the Android app by hand, and the published sites.
+- Milestone 26 checks PD1 to PD10 (TODO.md): privacy and data tools.
+  In tests/e2e/m26.e2e.ts (same command): HTTPS-only, typed, followed,
+  and redirected (PD1), no quiet fallback and no loop (PD2), exceptions
+  until the browser closes and kept ones across a restart (PD3), a
+  private tab's own (PD4), and the switch (PD5); the Sites tab's list
+  (PD6) and clearing one site (PD7); bookmark import, with its preview,
+  duplicates, text as written, and a file refused (PD8), and export
+  with a round trip (PD9). HTTPS is checked with local fixtures only
+  (fixture-server.ts, startDualFixtureServer: three test sites, HTTP
+  and HTTPS on one port, a certificate a test run alone trusts by its
+  fingerprint, --test-trusted-cert); test runs pass --test-plain-http
+  for the plain-HTTP test server's names (shop.test and the shield's
+  stand-ins), which HTTPS-only leaves alone, as it does local
+  addresses. The pure parts are unit tests beside the code
+  (privacy/https-only, site-data, storage/bookmark-file, and the
+  service's import and export). PD10 is every earlier milestone's
+  checks.
 - Later milestones add: privacy and data tools (26), free camera (27),
   lift to 3D (28), and polish (29). No installers (dropped, prompt
   172).

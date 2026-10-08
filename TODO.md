@@ -5507,13 +5507,13 @@ lists are; the script would be one new fetch, from publicsuffix.org.
 
 ### Tasks
 
-- [ ] 1. HTTPS-only: the upgrade in the shield's one onBeforeRequest
+- [x] 1. HTTPS-only: the upgrade in the shield's one onBeforeRequest
       listener, the redirect check, the card, the exceptions (normal
       and private), the setting, the site panel, Settings.
-- [ ] 2. Per-site storage: the site list (cookies, site storage, cache),
+- [x] 2. Per-site storage: the site list (cookies, site storage, cache),
       clearing one site, reloading its tabs, the Library tab or the
       Settings section (Q7).
-- [ ] 3. Bookmark import and export: the parser and the writer (unit
+- [x] 3. Bookmark import and export: the parser and the writer (unit
       tested), the preview, the file dialogs, the limits.
 - [ ] 4. Checks PD1 to PD10: unit tests beside the code and
       tests/e2e/m26.e2e.ts. HTTPS is tested with local fixtures: a test
@@ -5544,6 +5544,41 @@ lists are; the script would be one new fetch, from publicsuffix.org.
 
 - PD1 to PD10 pass, the documents and screenshots are updated, and the
   owner accepts the milestone.
+
+### Decisions made while building
+
+- Q5 a asked for "for each kind of site storage whether the site has
+  some". Electron reports no such thing: per site it reports cookies
+  only (session.cookies), and the cache only as one total. What a site
+  holds in local storage, IndexedDB, and the rest could be learnt only
+  from Chromium's own folders, which is Q5 b. So the Sites tab shows
+  each site's cookies and open tabs, and says plainly that its other
+  storage and its cached files are not reported per site; Clear removes
+  them all. A site with neither cookies nor an open tab is not listed.
+  For the owner to confirm, or to choose Q5 b instead.
+- Clearing a site covers its origins on the usual ports and on any port
+  an open tab of it uses: site storage is kept by origin, port and all,
+  and the check (PD7, whose test site has a random port) found that the
+  usual ports alone missed it. A site's storage on another port with no
+  open tab is not reached.
+- A redirect back to HTTP is refused only when it goes back to the very
+  address that was upgraded (a loop); a redirect to another http://
+  address on the same site is upgraded too, and a chain of them ends at
+  Chromium's own redirect limit, which gets the card.
+- Private tabs neither see nor make lasting exceptions: theirs last
+  until the last private tab closes (the plan's "their own exceptions,
+  in memory only").
+- HTTPS-only is the desktop browser's: the Android app's pages are in
+  Android's own WebView, which this milestone does not change.
+- Test runs: the earlier checks' plain-HTTP test server is reached under
+  names such as shop.test, which HTTPS-only would now upgrade. Test runs
+  name them with --test-plain-http (main/launch-options.ts, test mode
+  only), and HTTPS-only leaves them alone as it does local addresses,
+  so those checks still check what they are about. HTTPS itself is
+  checked with startDualFixtureServer and a certificate trusted by its
+  fingerprint in test runs only (--test-trusted-cert).
+- The dialogs for bookmark files are the system's; test runs show none,
+  and a check names the file in the test log (nextFile).
 
 ## After milestone 25 (2026-10-08, prompt 172)
 
