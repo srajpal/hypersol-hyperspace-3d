@@ -5605,8 +5605,9 @@ lists are; the script would be one new fetch, from publicsuffix.org.
   review-134-shell, and review-134-main): 148 pass.
 - The screenshots (m26, 72; milestone 25's set out of the tree) and the
   README's four pictures, looked at.
-- Not checked yet: a second full run after the last fixes, and the
-  automatic builds.
+- The full end-to-end run again, after the last fixes: 403 of 403
+  passed (29 files), on Windows.
+- Not checked yet: the automatic builds.
 
 ## After milestone 25 (2026-10-08, prompt 172)
 
