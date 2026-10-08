@@ -5133,9 +5133,8 @@ odejs` is a folder of the
   and 59.5. The median frame took 16.7 ms, the slowest 33.5 to 66.8 ms.
   The page was 479 by 962 CSS pixels on the tilted panel, its canvas
   269 by 541 (half the sharpness). So the sharper room costs the scene
-  nothing that shows, and AN6 (30 or more) passes with room to spare;
-  why the first figure (33) was lower was not looked into (it was taken
-  before the build's last changes, in another place in the tunnel).
+  nothing that shows, and AN6 (30 or more) passes with room to spare.
+  Why the first figure (33, 2026-10-05) was lower was not looked into.
 - Done with the owner's go (prompt 163): the code-scanning alerts
   dismissed, 18 here as used in tests (all in test code) and holoml's 2
   (one a false positive: what `plain()` gives is escaped again before it
