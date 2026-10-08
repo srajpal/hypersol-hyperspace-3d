@@ -3,7 +3,7 @@
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-10-07 (milestones 1 to 24 accepted; milestone 25,
 HoloML 0.3, plan approved on the branch m25-holoml-0.3 (prompt 168),
-waiting for the build's approval (TODO.md, "Milestone 25"); the review's last items in
+build approved (prompt 169), being built (TODO.md, "Milestone 25"); the review's last items in
 TODO.md, "The review's last items". The roadmap is in TODO.md).
 
 ## Where things stand
