@@ -922,6 +922,9 @@ export class Room {
     this.hoveredCard = hit?.card ?? null;
     if (hit) changed = hit.card.setHover(true, hit.part === 'close') || changed;
     this.canvas.style.cursor = hit ? 'pointer' : '';
+    // The card's tooltip: its title, and a HoloML page's description (milestone 25); the browser shows it after a pause.
+    const tip = hit && hit.part !== 'close' ? hit.card.tooltip : '';
+    if (this.canvas.title !== tip) this.canvas.title = tip;
     if (changed) this.requestRender();
   }
 

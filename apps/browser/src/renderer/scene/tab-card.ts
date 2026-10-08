@@ -21,6 +21,8 @@ export interface CardModel {
   /** Tab id, or 'plus' for the new-tab card. */
   key: number | 'plus';
   title: string;
+  /** A HoloML page's description (milestone 25): in the card's tooltip, under its title. */
+  description?: string;
   loading: boolean;
   favicon?: string;
   focused: boolean;
@@ -101,6 +103,13 @@ export class TabCard {
   /** The picture on the card (a data address), for the tests. */
   get snapshotSrc(): string | null {
     return this.snapshot?.src ?? null;
+  }
+
+  /** What the room's tooltip says over the card: its title, and a HoloML page's description under it. */
+  get tooltip(): string {
+    if (this.model.key === 'plus') return '';
+    const title = this.model.title || 'Untitled';
+    return this.model.description ? `${title}\n${this.model.description}` : title;
   }
 
   update(model: CardModel): void {

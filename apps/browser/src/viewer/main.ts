@@ -21,7 +21,7 @@ import { HoloParseError, check, parse, type ElementNode, type Problem } from '@h
 import { HolomlView } from './scene';
 import { installApi } from './api';
 import { LIMITS } from './budget';
-import { attr, ownProblems, text, trimSpace } from './values';
+import { attr, collapse, ownProblems, text, trimSpace } from './values';
 import { VERSIONS, atLeast, pageVersion } from './versions';
 
 interface ViewerState {
@@ -33,9 +33,11 @@ interface ViewerState {
   textView: boolean;
   source: string[];
   title: string;
+  /** The page's description (`<meta name="description">`; milestone 25, Q2 a), or empty. */
+  description: string;
 }
 
-const state: ViewerState = { ready: false, error: null, problems: [], noWebGL: false, view: null, textView: false, source: [], title: '' };
+const state: ViewerState = { ready: false, error: null, problems: [], noWebGL: false, view: null, textView: false, source: [], title: '', description: '' };
 
 /**
  * The test run's mark (review 134, D12). The page's preload, which the
@@ -68,7 +70,7 @@ const line = new Promise<MessagePort>((resolve) => {
 });
 
 /** Tells the browser of the scene's state, over the private line (in order, once it is there). */
-function tell(what: { busy: boolean } | { textView: boolean } | { drawn: true }): void {
+function tell(what: { busy: boolean } | { textView: boolean } | { drawn: true } | { description: string }): void {
   void line.then((port) => port.postMessage(what));
 }
 
@@ -85,6 +87,7 @@ function sceneFacts(): unknown {
   return JSON.parse(
     JSON.stringify({
       title: state.title,
+      description: state.description,
       // The first 2,000 go to the inspector's tree each second; the rest are counted.
       entryCount: v?.entries.length ?? 0,
       entries: (v?.entries ?? []).slice(0, 2_000).map((x, i) => ({
@@ -374,6 +377,21 @@ function start(): void {
   if (title && text(title)) document.title = text(title);
   state.title = document.title;
   heading.textContent = title && text(title) ? text(title) : 'HoloML scene';
+  // The page's description (milestone 25, Q2 a), any version's: under its title in the outline and the text view, in
+  // the Scene inspector, and in its tab's tooltip in the browser. Its first 500 characters.
+  const meta = doc.root.children
+    .find((c): c is ElementNode => c.type === 'element' && c.name === 'head')
+    ?.children.find((c): c is ElementNode => c.type === 'element' && c.name === 'meta' && attr(c, 'name')?.trim().toLowerCase() === 'description');
+  const description = meta ? collapse(attr(meta, 'content') ?? '').slice(0, 500) : '';
+  if (description) {
+    const p = document.createElement('p');
+    p.className = 'holoml-description';
+    p.dataset['testid'] = 'holoml-description';
+    p.textContent = description;
+    heading.after(p);
+    state.description = description;
+    tell({ description });
+  }
 
   // A version this viewer does not know is refused, not guessed at, and so is a page that names none
   // (SPEC.md section 11; review 134, V2).

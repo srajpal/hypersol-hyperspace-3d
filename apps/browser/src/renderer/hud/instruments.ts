@@ -554,6 +554,7 @@ export class HsInstruments extends LitElement {
           title="Pick: a click in the scene selects an object instead of following a link"
           @click=${() => this.fire('hs-scene-pick', !s.picking)}>Pick</button>
       </header>
+      ${s.description ? html`<p class="muted" data-testid="inst-scene-description">${s.description}</p>` : nothing}
       <ul class="log tree" data-testid="inst-scene-tree" aria-label="Scene objects" @keydown=${this.onTreeKey}>
         ${s.entries.map(
           (e) => html`<li>

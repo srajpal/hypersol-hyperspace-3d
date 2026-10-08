@@ -116,6 +116,8 @@ export interface SceneDetail {
 
 export interface SceneReadout {
   title: string;
+  /** The page's description (milestone 25), or empty. */
+  description: string;
   /** All the scene's elements; entries holds the first of them. */
   entryCount: number;
   entries: SceneEntry[];
@@ -219,6 +221,7 @@ export function parseSceneReadout(raw: unknown): SceneReadout | null {
   const bounds = d && Array.isArray(d['bounds']) && d['bounds'].length === 2 ? ([vec(d['bounds'][0]), vec(d['bounds'][1])] as [number[], number[]]) : null;
   return {
     title: str(r['title'], 200),
+    description: str(r['description'], 500),
     entryCount: int(r['entryCount'], 0, 10_000_000),
     entries: list(r['entries'], 2_000).map((e) => {
       const o = obj(e);
