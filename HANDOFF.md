@@ -105,11 +105,17 @@ and the results so far.
   page with its own content policy, owner's choice in prompt 170), and
   a page's description in the tab's tooltip, the text view, and the
   Scene inspector. Checks HL2 to HL9 in tests/e2e/m25.e2e.ts.
-- Still to do: the full end-to-end run, `pnpm test:linux`, the
-  screenshots (`MILESTONE=m25 pnpm screenshots`, then m22's set out of
-  the tree) and the README's four, the Android build and the checks on
-  the tablet, pushing both branches and their pull requests, and the
-  owner's acceptance; then HoloML 0.3 tagged v0.3.0 on the owner's go.
+- Done: the full end-to-end run (388 of 393; the five clipboard checks
+  failed because Windows refused the clipboard to every program at the
+  time, to be run again), the changed files on Linux, the screenshots
+  (m25; m22's set out of the tree) and the README's four, and the
+  Android build. Still to do: the clipboard checks again, the checks on
+  the tablet, pushing both branches and their pull requests (with the
+  owner's go), the automatic builds, and the owner's acceptance; then
+  HoloML 0.3 tagged v0.3.0 on the owner's go.
+- Found, not part of this milestone: HoloML's `webrtc 'block'` is
+  ignored by Chromium, so HoloML pages can make peer connections (TODO.md,
+  milestone 25, results).
 
 ## Milestone 24, HyperSpace 3D for Android (2026-10-05 to 2026-10-07, prompts 152 to 160)
 

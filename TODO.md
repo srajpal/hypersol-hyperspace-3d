@@ -5296,10 +5296,12 @@ and Hebrew, to show `lang` and `dir`.
   are skipped without Java and fail in the automatic builds without it.
   It found one fault in the schema made for 0.3 (one viewpoint at most),
   fixed before anything was published.
-- The decoders are three.js's own files, served from the viewer's
-  address, not copies made by the build: the viewer's loaders load only
-  the viewer's own files, the files the page's limits counted, and blob:
-  and data: (decoders.ts).
+- The decoders are the files three.js's loaders name, which the build
+  carries beside the viewer's scripts (the viewer imports none of them
+  itself, so each is there once), served from the viewer's address: the
+  viewer's loaders load only the viewer's own files, the files the
+  page's limits counted, and blob: and data: (decoders.ts). The Android
+  app's viewer carries the same files (its build, 2026-10-07).
 - Names go where a screen reader reaches: every model and group in a
   page's outline (the viewer lists every model there) is named on the
   example sites, the walls and windows too ("Wall", "Tall window"). A
@@ -5339,9 +5341,28 @@ and Hebrew, to show `lang` and `dir`.
   132,266 if all were near. The sneaker store loads 0.76 MB at first
   (2.4 MB before). The unit tests (526) pass; lint and the type check
   are clean.
-- HL8 and HL10: the full end-to-end run, `pnpm test:linux`, the
-  automatic builds, the Android build and its checks on the tablet, and
-  the published sites: not checked yet.
+- HL8 and HL10, the full end-to-end run on this computer: 388 of 393
+  checks pass. The five that fail all use the clipboard (D8's copy a
+  link, copy text, and paste; K2; and M1's copy after a real click):
+  each found the clipboard empty. Windows itself refused the clipboard
+  at the time (PowerShell's Set-Clipboard failed five times of five), so
+  another program was holding it; they are to be run again when it is
+  free (`pnpm test:e2e tests/e2e/m2.e2e.ts tests/e2e/m9.e2e.ts
+  tests/e2e/review-134-main.e2e.ts -t "D8|K2|copy"`). Nothing in this
+  milestone touches the clipboard.
+- On Linux (`pnpm test:linux` with m19, m20, m21, and m25, drawn in
+  software): 43 pass and 7 are skipped (the budgets for a graphics
+  card); the ocean tunnel draws 4 frames a second there, logged.
+- The Android app builds, its unit tests pass, and it carries the
+  decoders (`./gradlew testDebugUnitTest assembleDebug`); its checks on
+  the tablet, the automatic builds, and the published sites: not
+  checked yet.
+- Found while taking the screenshots, not part of this milestone:
+  HoloML's content policy's `webrtc 'block'` is not a directive
+  Chromium knows, so it is ignored (the console says so on every
+  HoloML page), and a HoloML page can make a peer connection. The
+  review of 2026-09-30 (M6) meant it to block them. Offered to the
+  owner as a separate task, to be approved before it is built.
 
 ## The review's last items (2026-10-07, prompt 160)
 
