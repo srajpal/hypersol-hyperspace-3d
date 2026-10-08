@@ -53,7 +53,8 @@ state; this is a summary.
   aquarium, where HoloML 0.2 is completed (accepted 2026-09-29, prompt
   125; merged in holoml, #19, and the browser, #38; published at
   https://srajpal.github.io/holoml/aquarium/; HoloML 0.2 released as
-  v0.2.0, https://github.com/srajpal/holoml/releases/tag/v0.2.0)); 22 documentation for HoloML to recognised standards (prompt
+  v0.2.0, https://github.com/srajpal/holoml/releases/tag/v0.2.0, and
+  its third edition as v0.2.2, 2026-10-07)); 22 documentation for HoloML to recognised standards (prompt
   115; accepted 2026-10-07, prompt 160); 23 HoloML for VS Code, an extension
   kept in holoml and installed by hand (prompt 146; plan approved with
   the recommended answers, 2026-10-02; accepted 2026-10-05, prompt

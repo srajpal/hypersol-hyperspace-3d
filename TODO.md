@@ -5126,13 +5126,16 @@ odejs` is a folder of the
   load in 15 s); the same checks passed on #55 and in the full run here.
 - The ocean tunnel on the tablet with the sharper room (AN6): not
   measured yet (the tablet was locked).
-- Still open: the screenshots of the VS Code extension at work for
-  holoml's README (milestone 23, task 9); the code-scanning alerts (18
-  here, all in test code; 2 in holoml, false positives: what `plain()`
-  gives is escaped again before it reaches a page), to be dismissed with
-  the owner's go; issue #44 to close once #55 is merged (the setting
-  that requires actions named by commit is on in both repositories);
-  and a GitHub release for holoml's v0.2.2 tag, if the owner wants one.
+- Done with the owner's go (prompt 163): the code-scanning alerts
+  dismissed, 18 here as used in tests (all in test code) and holoml's 2
+  (one a false positive: what `plain()` gives is escaped again before it
+  reaches a page; one in a test); issue #44 closed (#55 merged; the
+  setting that requires actions named by commit is on in both
+  repositories); and a GitHub release for holoml's v0.2.2 tag,
+  https://github.com/srajpal/holoml/releases/tag/v0.2.2 (pre-release, as
+  0.2.0).
+- Later (owner, prompt 163): the screenshots of the VS Code extension
+  at work for holoml's README (milestone 23, task 9).
 
 ## The review of 2026-09-30 (prompts 134 and 135)
 
