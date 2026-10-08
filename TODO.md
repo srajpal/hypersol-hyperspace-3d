@@ -5150,6 +5150,22 @@ pm`, where pnpm is, off the user PATH; the owner puts
   0.2.0).
 - Later (owner, prompt 163): the screenshots of the VS Code extension
   at work for holoml's README (milestone 23, task 9).
+- The automatic builds after #55 (prompts 165 and 166):
+  - CodeQL failed on main: GitHub's default setup added the Android
+    app's Kotlin by itself and cannot build it. It is off, and
+    .github/workflows/codeql.yml scans the workflows, the JavaScript and
+    TypeScript, and the Kotlin (compiled with Gradle); its first run, on
+    #57, passed for all three.
+  - M10's "a second sign-in in a tab waits its turn" failed once on
+    Windows (#57): the check sent both requests at once and took the
+    first to be asked first, which the network does not promise. It now
+    sends the second once the first is held; what it checks is
+    unchanged. The file passed on this computer, and that check three
+    times more.
+  - Lost clicks on GitHub's Linux machines (issue #30), each gone on a
+    second run: D8's "copies selected text" on #56 (four right-clicks
+    that never reached the page, though the page view was where the
+    check aimed) and U5's slider on #57. Recorded, not changed.
 
 ## The review of 2026-09-30 (prompts 134 and 135)
 
