@@ -5421,6 +5421,13 @@ automatic build passed. The owner then asked for the items below.
   and 2 are skipped (the budgets for a graphics card). The Android app
   builds from main and its unit tests pass. Not checked yet: the full
   run, the tablet, and packaging a build.
+- The first automatic build of pull request #60 failed R9 on Windows
+  (part 2; prompt 173): with the Scene part's picking on, three clicks
+  on the car were each lost (the page had taken 5.3 s to load there),
+  and R9's keyboard check failed after it, picking being left on. Run
+  again, the part passed (R9 in 1.5 s), as R9 does here drawn in
+  software, and every other part passed. R9 had not failed in the forty
+  builds before, so it is noted to be watched, like D8 was.
 
 ## The review's last items (2026-10-07, prompt 160)
 
