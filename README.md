@@ -284,7 +284,8 @@ parser, a checker, and sample pages; 0.2 grew with the example sites and
 is released as [v0.2.0](https://github.com/srajpal/holoml/releases/tag/v0.2.0)
 (its third edition as
 [v0.2.2](https://github.com/srajpal/holoml/releases/tag/v0.2.2)), and
-0.3 (milestone 25) is to be tagged once accepted; each is a pre-release, as HoloML is experimental (one renderer so far, and until
+0.3 (milestone 25) as
+[v0.3.0](https://github.com/srajpal/holoml/releases/tag/v0.3.0); each is a pre-release, as HoloML is experimental (one renderer so far, and until
 1.0 a later version may change what an earlier one has).
 Its documentation, the specification with tutorials, how-to guides,
 reference pages, and explanation, is published at
