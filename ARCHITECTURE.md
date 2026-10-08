@@ -161,6 +161,16 @@ npm; 45.0.0-alpha.14 (2026-10-01) is not a stable line. Nothing to
 upgrade. The Android app does not use Electron: its pages are in
 Android's own WebView, which Android keeps up to date.
 
+Rule 13 check, 2026-10-07 (after milestone 24, before milestone 25;
+owner, prompt 162): 44.7.0 (2026-10-07) is the newest stable release on
+npm; 44.6.0 (2026-10-06) came before it. 44.7.0's notes name backported
+fixes from ANGLE, Chromium, Dawn, fontconfig, Skia, V8, and WebRTC
+(two rounds), so it is taken as a security release; 44.6.0's fix of
+`webview.findInPage()` hanging when the host page has an iframe applies
+to this browser too. The browser is upgraded to 44.7.0 (its Node is
+24.21, the Node of the automatic builds since prompt 161). The newest
+release of any kind is 45.0.0-alpha.16, not a stable line.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |
