@@ -1888,3 +1888,18 @@ Use the recommendations, approve the plan and tools.
 ```text
 Build approved, go ahead.
 ```
+
+## 170 — 2026-10-07 · Claude Opus 5.5, high effort
+
+Answers two questions during milestone 25's build. KTX2 pictures need
+code evaluated from text (three.js's Basis transcoder), which HoloML
+pages' content policy does not allow: the owner chose a separate worker,
+served with a policy of its own, so that pages stay without
+'unsafe-eval' (over allowing it, or KTX2 later). For Q5, the RELAX NG
+grammar checked by a validator: the owner approved Jing, the reference
+validator, a Java jar (BSD-3-Clause) kept in holoml with its SHA-256 and
+run by the tests with Java.
+
+```text
+KTX2: Separate worker. Validator: Approve Jing.
+```
