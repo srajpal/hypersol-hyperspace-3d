@@ -5265,8 +5265,12 @@ and Hebrew, to show `lang` and `dir`.
       testing list, both CHANGELOGs, HANDOFF, and TODO; the screenshots
       (`MILESTONE=m25 pnpm screenshots`, the previous set out of the
       tree) and the README's four pictures.
-- [ ] 8. HoloML 0.3 tagged v0.3.0, after the owner accepts the milestone
-      and says go.
+- [x] 8. HoloML 0.3 tagged v0.3.0, after the owner accepts the milestone
+      and says go. (Ticked 2026-10-08, prompt 176: the release changes
+      merged as holoml #40, the tag on its merge commit 64e4e3e, and a
+      GitHub pre-release,
+      https://github.com/srajpal/holoml/releases/tag/v0.3.0; the
+      browser's copy of HoloML made from the tag.)
 
 ### Checks (named HL, for HoloML 0.3)
 

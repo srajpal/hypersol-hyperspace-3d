@@ -1947,3 +1947,15 @@ There are CI failures in #60.
 ```text
 #60 merged, tablet tested and works, milestone 25 accepted.
 ```
+
+## 175 — 2026-10-08 · Claude Opus 5.5, high effort
+
+```text
+#61 merged, go ahead and tag v0.3.0.
+```
+
+## 176 — 2026-10-08 · Claude Opus 5.5, high effort
+
+```text
+#40 merged, go ahead and tag.
+```

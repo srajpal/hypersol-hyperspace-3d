@@ -115,8 +115,12 @@ and the results so far.
   #59), the automatic builds passed, and the clipboard checks passed
   when run again (prompt 172). The checks on the tablet
   passed (prompt 174), and the owner accepted the milestone. Still to
-  do: HoloML 0.3 tagged v0.3.0 on the owner's go, and the published
-  sites checked by hand.
+  do: the published sites checked by hand (Words in a room answers).
+  HoloML 0.3 is tagged v0.3.0 (holoml #40's merge, 64e4e3e; a
+  pre-release, https://github.com/srajpal/holoml/releases/tag/v0.3.0,
+  prompt 176), and the browser's copy of HoloML is made from the tag
+  (`pnpm holoml:sync v0.3.0 --examples v0.3.0`; only the copied
+  files' "at" lines, the package's version, and SOURCE.json changed).
 - After it (prompt 172, branch m25-follow-up): peer connections blocked
   for real (viewer/guard.ts), local KTX2 pictures served, the
   large-scene items, D8's lost right-click, the installers dropped
