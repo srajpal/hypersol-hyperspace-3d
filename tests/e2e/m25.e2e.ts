@@ -343,3 +343,42 @@ describe('HL6: the scene API of HoloML 0.3', () => {
     expect(await inPage(h, `[typeof holoml.viewer.goTo, 'place' in holoml.viewer, 'label' in holoml.find('car')]`, 'review-134-api.holoml')).toEqual(['undefined', false, false]);
   });
 });
+
+describe('the look, as the specification now writes it down', () => {
+  let h: Harness;
+  const PAGE = 'm25-sky.holoml';
+  beforeAll(async () => {
+    h = await launch(server.url('link-a.html'), { userDataDir: newProfile({ layersOnOpen: false }) });
+    await waitForPage(h, 'link-a.html');
+    await openPage(h, PAGE);
+  });
+  afterAll(async () => h?.close());
+
+  /** The colour in the middle of the view, looking along a direction. */
+  async function seen(direction: Vec): Promise<Colour> {
+    await inPage(h, `(holoml.viewer.lookAt(${JSON.stringify(direction)}), true)`, PAGE);
+    // Turned and still (looking up, walking stops a little short of straight up).
+    let last: Vec | null = null;
+    await waitFor('turned', () => inPage<Vec>(h, 'holoml.viewer.direction', PAGE), (d) => {
+      const still = last !== null && Math.hypot(...d.map((v, i) => v - last![i]!)) < 1e-6;
+      last = d;
+      return still && d.reduce((sum, v, i) => sum + v * direction[i]!, 0) > 0;
+    });
+    await sleep(300);
+    const [w, hgt] = await inPage<number[]>(h, '[innerWidth, innerHeight]', PAGE);
+    return (await pixels(h, PAGE, [{ x: w! / 2, y: hgt! / 2 }], 1))[0]!;
+  }
+  const RED = { r: 255, g: 0, b: 0 };
+  const GREEN = { r: 0, g: 255, b: 0 };
+  const BLUE = { r: 0, g: 0, b: 255 };
+  const YELLOW = { r: 255, g: 255, b: 0 };
+
+  it("a panorama's middle faces +x, a quarter across faces -z, and its top is straight up (SPEC.md section 9, \"Drawing\")", async () => {
+    // The sky: blue, a red band down its middle, a green one a quarter across, and yellow along its top.
+    expect(away(await seen([1, 0, 0]), RED)).toBeLessThan(40);
+    expect(away(await seen([0, 0, -1]), GREEN)).toBeLessThan(40);
+    expect(away(await seen([0, 0, 1]), BLUE)).toBeLessThan(40);
+    expect(away(await seen([-1, 0, 0]), BLUE)).toBeLessThan(40);
+    expect(away(await seen([0, 10, -1]), YELLOW)).toBeLessThan(40);
+  });
+});
