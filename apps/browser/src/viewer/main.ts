@@ -251,6 +251,11 @@ const STYLE = `
   #holoml-notice { position: fixed; left: 16px; bottom: 16px; max-width: min(520px, calc(100vw - 32px)); background: #161a2ee6; color: #eef1ff;
     border: 1px solid #ffb36b; border-radius: 10px; padding: 10px 14px; font-size: 13px; line-height: 1.4; }
   #holoml-notice[hidden] { display: none; }
+  /* The way past the outline to the screen's controls: seen only while it has the focus. */
+  #holoml-skip { position: fixed; left: 16px; top: 16px; z-index: 2; padding: 8px 14px; border-radius: 8px; border: 1px solid #7fd8ff;
+    background: #161a2e; color: #eef1ff; font: inherit; font-size: 14px; }
+  #holoml-skip:not(:focus) { width: 1px; height: 1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  #holoml-skip[hidden] { display: none; }
   #holoml-notice ul { margin: 6px 0 0; padding-left: 18px; }
   /* HoloML 0.2: screen text in the corners, and the crosshair. */
   #holoml-hud-layer { position: fixed; inset: 0; pointer-events: none; }
@@ -345,7 +350,10 @@ function start(): void {
   // HoloML 0.2: screen text and the crosshair, over the scene.
   const hudLayer = document.createElement('div');
   hudLayer.id = 'holoml-hud-layer';
-  document.body.append(root, nav, hudLayer, labels, notice);
+  // A large scene's outline can hold a hundred stops (Harbour Loft's models: ARCHITECTURE.md, open question 4b),
+  // and the screen's controls come after it: one stop before the outline goes straight to them (prompt 172).
+  const skip = skipToControls(hudLayer);
+  document.body.append(root, skip, nav, hudLayer, labels, notice);
 
   // The page's own text, over its limit, is not read at all (issue #23).
   const bytes = new TextEncoder().encode(source).length;
@@ -555,6 +563,39 @@ function runScripts(root: ElementNode, problems: Problem[]): void {
       document.head.append(script);
     });
   }
+}
+
+/** What can take the focus among the screen's controls. */
+const CONTROLS = 'button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])';
+
+/**
+ * "Skip to the screen's controls": the first Tab stop of a page whose
+ * screen (its huds) has controls, before the outline, which has a stop for
+ * every link and named thing; Enter or Space moves the focus to the first
+ * control (a choice's chosen option). Shown only while it has the focus,
+ * and only while the screen has a control to go to.
+ */
+function skipToControls(hudLayer: HTMLElement): HTMLButtonElement {
+  const skip = document.createElement('button');
+  skip.type = 'button';
+  skip.id = 'holoml-skip';
+  skip.textContent = "Skip to the screen's controls";
+  skip.hidden = true;
+  const first = (): HTMLElement | null => {
+    const found = [...hudLayer.querySelectorAll<HTMLElement>(CONTROLS)].find((el) => !el.closest('[hidden]') && !(el as HTMLButtonElement).disabled) ?? null;
+    if (found instanceof HTMLInputElement && found.type === 'radio') {
+      // Into a choice where Tab would land: on its chosen option.
+      const group = found.closest('[role="radiogroup"], fieldset') ?? hudLayer;
+      return [...group.querySelectorAll<HTMLInputElement>('input[type="radio"]')].find((r) => r.name === found.name && r.checked) ?? found;
+    }
+    return found;
+  };
+  const update = () => {
+    skip.hidden = first() === null;
+  };
+  new MutationObserver(update).observe(hudLayer, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'disabled'] });
+  skip.addEventListener('click', () => first()?.focus());
+  return skip;
 }
 
 /** The notice of what was left out, and why (issue #23). */

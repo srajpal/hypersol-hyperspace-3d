@@ -871,6 +871,14 @@ describe('V8 to V10: Harbour Loft', () => {
     console.log(`V9: the Light choice after ${more} more Tab stops`);
     await pressInPage(h, 'Right', [], LOFT);
     await waitFor('evening', () => intensity('fill'), (v) => v < 0.1);
+    // Or at once (prompt 172; ARCHITECTURE.md, open question 4b): the page's first stop skips the outline and goes to
+    // the screen's controls, on the choice's chosen option.
+    // From the top of the page, as on arriving (a blur alone leaves Tab's starting point where the focus was).
+    await inPage(h, "(document.body.tabIndex = -1, document.body.focus(), document.body.removeAttribute('tabindex'), true)", LOFT);
+    await pressInPage(h, 'Tab', [], LOFT);
+    expect(await focusedText(h, LOFT)).toBe("Skip to the screen's controls");
+    await press(h, LOFT, 'Enter');
+    await waitFor('the Light choice in focus', focusedRadio, (r) => r === 'evening');
 
     // Screen readers: the places, doors, and lamps are named buttons (a lamp that is on is pressed), the panels' words, the plan, the links, the choice.
     const tree = await axNodes(h, LOFT);

@@ -926,6 +926,17 @@ HoloML pages in milestone 14.)
    one after another, so a model as one .glb loads fastest (the flat's,
    as .gltf files with their pictures beside them, took 203 requests
    and 2.3 s more).
+   Resolved after milestone 25 (owner, prompt 172, which had put them
+   off in Q8 b): (a) was already done in milestone 21, which compiles a
+   scene's new shaders with compileAsync before they are drawn, the
+   last frame staying meanwhile (viewer/scene.ts); (b) the first Tab
+   stop of a page whose screen has controls is "Skip to the screen's
+   controls", seen only while in focus, which takes the keyboard past
+   the outline to the first of them (a choice's chosen option;
+   viewer/main.ts), and every model keeps its stop, as screen readers
+   list them; (c) a model's files are fetched six at a time, side by
+   side, each still counted against the limits as it arrives, and the
+   first to fail stops the others (viewer/budget.ts, fetchAll).
 
 ## 11. Run and test
 
