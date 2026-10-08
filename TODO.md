@@ -37,7 +37,7 @@ Plan approved 2026-09-24.
 | 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Done (accepted, prompt 153) |
 | 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Done (accepted 2026-10-07, prompt 161) |
 | 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Done (accepted 2026-10-08, prompt 174) |
-| 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). | Current (plan drafted, prompt 177; the review's item for the history search index was done by its D6) |
+| 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). | Current (plan approved with the recommended answers, prompt 178; the review's item for the history search index was done by its D6) |
 | 27 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
 | 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
 | 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (was 29, prompt 129) |
@@ -5382,8 +5382,9 @@ and Hebrew, to show `lang` and `dir`.
 
 ## Milestone 26 — Privacy and data tools
 
-Status: Plan drafted (2026-10-08, prompt 177), waiting for the owner's
-approval. Rule 13 check done (ARCHITECTURE.md section 3: 44.7.0 is
+Status: Plan approved (2026-10-08, prompt 178) with the recommended
+answers to Q1 to Q7; the build waits for its own approval. Rule 13
+check done (ARCHITECTURE.md section 3: 44.7.0 is
 still the newest stable release). The roadmap's fourth item, the
 history search index cleared of a deleted entry's pieces at once, was
 done by the review of 2026-09-30 (D6: schema 5 gives the index its own
@@ -5455,7 +5456,7 @@ Public Suffix List, a data file (MPL 2.0), copied into the repository
 with its SHA-256 and refreshed by a script run by hand, as the filter
 lists are; the script would be one new fetch, from publicsuffix.org.
 
-### Questions
+### Questions (answered with the recommendations, prompt 178)
 
 - Q1, HTTPS-only's default.
   - a (recommended): on, for normal and private tabs. Most sites offer
