@@ -110,13 +110,22 @@ and the results so far.
   failed because Windows refused the clipboard to every program at the
   time, to be run again), the changed files on Linux, the screenshots
   (m25; m22's set out of the tree) and the README's four, and the
-  Android build. Still to do: the clipboard checks again, the checks on
-  the tablet, pushing both branches and their pull requests (with the
-  owner's go), the automatic builds, and the owner's acceptance; then
-  HoloML 0.3 tagged v0.3.0 on the owner's go.
+  Android build. Both pull requests merged (holoml #39, the browser
+  #59), the automatic builds passed, and the clipboard checks passed
+  when run again (prompt 172). Still to do: the checks on the tablet
+  (the app on it was older than milestone 25; the new build is
+  installed), and the owner's acceptance; then HoloML 0.3 tagged v0.3.0
+  on the owner's go.
+- After it (prompt 172, branch m25-follow-up): peer connections blocked
+  for real (viewer/guard.ts), local KTX2 pictures served, the
+  large-scene items, D8's lost right-click, the installers dropped
+  (CONTRIBUTING.md, "Making your own build"), and the ocean tunnel's
+  example picture taken again. TODO.md, "After milestone 25".
 - Found, not part of this milestone: HoloML's `webrtc 'block'` is
-  ignored by Chromium, so HoloML pages can make peer connections (TODO.md,
-  milestone 25, results).
+  ignored by Chromium, so HoloML pages could make peer connections
+  (TODO.md, milestone 25, results). Fixed in prompt 172: the viewer
+  takes them out of the page's JavaScript (viewer/guard.ts; TODO.md,
+  "After milestone 25").
 
 ## Milestone 24, HyperSpace 3D for Android (2026-10-05 to 2026-10-07, prompts 152 to 160)
 

@@ -444,7 +444,8 @@ milestone; the current milestone's checks are defined in TODO.md):
     that leads to a download, leaving a page that asks to
     be kept, what counts as a HoloML page (a download, a sandboxed
     answer, the site's own policy kept), HoloML files from the computer
-    (from Downloads, leaving for the web, a dropped file), Block for a
+    (from Downloads, leaving for the web, no peer connections and no
+    frames for its script (prompt 172), a dropped file), Block for a
     page that asks to be kept, a start that fails, and a shell that
     crashes.
   - tests/e2e/review-134-shell.e2e.ts, the shell (R1 to R7): a HoloML

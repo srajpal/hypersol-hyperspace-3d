@@ -5372,7 +5372,55 @@ and Hebrew, to show `lang` and `dir`.
   Chromium knows, so it is ignored (the console says so on every
   HoloML page), and a HoloML page can make a peer connection. The
   review of 2026-09-30 (M6) meant it to block them. Offered to the
-  owner as a separate task, to be approved before it is built.
+  owner as a separate task, to be approved before it is built;
+  approved and fixed in prompt 172 ("After milestone 25", below).
+
+## After milestone 25 (2026-10-08, prompt 172)
+
+Both pull requests merged (holoml #39, the browser #59), and every
+automatic build passed. The owner then asked for the items below.
+
+- The clipboard checks again (D8, K2, and M1's copy, which had found
+  the clipboard empty): run by the owner, 7 passed.
+- The tablet: the owner's aquarium said the browser does not know
+  HoloML 0.3, as the app on it was the build of 2026-10-07, before
+  milestone 25. The app built from main (its unit tests pass) is
+  installed over USB; the checks on the tablet are the owner's, not
+  checked yet.
+- Peer connections on HoloML pages, approved: the viewer takes the RTC
+  constructors out of the page's JavaScript and refuses frames
+  (viewer/guard.ts); the decoder's frame for KTX2 pictures is sandboxed,
+  in a closed shadow root. The policy's `webrtc 'block'`, ignored by
+  Chromium, is gone. Its check (review-134-main.e2e.ts, M6) fails
+  without the guard and passes with it, and found that a folder opened
+  from the computer did not serve `.ktx2` files: it does now. The
+  published advisory GHSA-w263-76q5-f8fx said the policy blocked WebRTC;
+  it is corrected.
+- The large-scene items (Q8 b, ARCHITECTURE.md open question 4):
+  compiling materials without holding up the first frame was done in
+  milestone 21 already; a page whose screen has controls starts with
+  "Skip to the screen's controls" (V9 checks it on Harbour Loft's Light
+  choice); a model's files are fetched six at a time (budget.test.ts).
+- D8's right-click that was lost now and then ("copies selected text",
+  four times in a month of automatic builds, on Linux and Windows): it
+  came while the tab opened behind was being captured for its card
+  (which shows the hidden page to Chromium for a moment). The check
+  now waits for that capture to end (the test log's `captures`), and
+  the diagnostic sends the same button. Five runs of five pass here;
+  the automatic builds are the check of it over time.
+- No installers: milestones 30 and 31 are dropped. A fresh clone
+  installs, builds, and passes the type check; CONTRIBUTING.md, "Making
+  your own build", lists what a fork's packaged build needs. The ocean
+  tunnel's picture in the examples, which showed the turtle under a
+  non-commercial licence, is taken again.
+- Results: unit tests 532 pass; lint and the type check are clean. On
+  Windows, m2, m14, m15, m17, m18, m19, m20, m21, m25,
+  review-134-viewer, and review-134-main pass (D8 five times of five,
+  V9 after its step was set to start Tab from the page's top). On
+  Linux (`pnpm test:linux` with m2, m19, and review-134-main): 71 pass
+  and 2 are skipped (the budgets for a graphics card). The Android app
+  builds from main and its unit tests pass. Not checked yet: the full
+  run, the tablet, and packaging a build.
 
 ## The review's last items (2026-10-07, prompt 160)
 
