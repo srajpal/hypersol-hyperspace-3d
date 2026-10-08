@@ -1935,3 +1935,9 @@ an open-source repository, so no live builds; others can fork the
 repository if they want to do an installable build. But check to make
 sure there are no bugs or issues that would prevent that.
 ```
+
+## 173 — 2026-10-08 · Claude Opus 5.5, high effort
+
+```text
+There are CI failures in #60.
+```
