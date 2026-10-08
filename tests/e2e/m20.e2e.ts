@@ -683,9 +683,10 @@ describe('W6 to W10: the sneaker store', () => {
         `by the entrance (${within(calmBays).join(', ')}), ${(calmTotals.bytes / MB).toFixed(1)} MB counted, heap ${(calm.heap / MB).toFixed(1)} MB, buffers ${(calm.buffers / MB).toFixed(1)} MB, working set ${(calm.workingSet / MB).toFixed(0)} MB`,
     );
     expect(fewer).toBe(2);
-    // Each bay's six shoes are 136,200 triangles and a file of about 0.7 MB (its meshes about 0.55 MB in memory).
+    // Each bay's six shoes are 136,200 triangles and a file of about 0.23 MB (0.7 MB before milestone 25 compressed
+    // the shoes; its meshes about 0.55 MB in memory either way).
     expect(calmTotals.triangles).toBe(busyTotals.triangles - fewer * 6 * 22_700);
-    expect(calmTotals.bytes).toBeLessThan(busyTotals.bytes - fewer * 0.6 * MB);
+    expect(calmTotals.bytes).toBeLessThan(busyTotals.bytes - fewer * 0.2 * MB);
     expect(calm.heap + calm.buffers, 'the page memory').toBeLessThan(busy.heap + busy.buffers - fewer * 0.35 * MB);
     await idle('by the entrance');
   }, 240_000);

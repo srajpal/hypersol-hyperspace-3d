@@ -434,8 +434,18 @@ describe('X5 to X9: the aquarium', () => {
     console.log(`X5: ready in ${ms} ms, drawn in ${drawnMs} ms`);
     expect(await holo<unknown[]>(h, 'window.__holoml.problems', TANK_PAGE)).toEqual([]);
     expect(await holo<unknown[]>(h, 'window.__holoml.leftOut()', TANK_PAGE)).toEqual([]);
-    const models = await holo<{ src: string; state: string }[]>(h, 'window.__holoml.models()', TANK_PAGE);
-    expect(models.filter((m) => m.state !== 'loaded')).toEqual([]);
+    // Since milestone 25 (HoloML 0.3 `far`) a fish past 10 m is drawn from its lighter version, and its own model
+    // waits until it swims near: every other model is loaded, and every far fish's lighter version is drawn (a near
+    // fish's lighter version waits in turn).
+    const [models, far] = await holo<[{ src: string; state: string; farFor?: string }[], { state: string; isFar: boolean; far: { shown: boolean } }[]]>(
+      h,
+      '[window.__holoml.models(), window.__holoml.far()]',
+      TANK_PAGE,
+    );
+    const waiting = models.filter((m) => m.state !== 'loaded' && !m.farFor);
+    expect(waiting.every((m) => m.state === 'waiting')).toBe(true);
+    expect(waiting).toHaveLength(far.filter((f) => f.isFar).length);
+    expect(far.filter((f) => f.isFar && !(f.far.shown && f.state === 'waiting'))).toEqual([]);
     expect(ids).toHaveLength(30);
     for (const k of ocean.KINDS) expect(models.filter((m) => m.src === `models/${k.kind}.glb`), k.kind).toHaveLength(k.count);
 

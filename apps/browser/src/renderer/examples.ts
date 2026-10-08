@@ -1,5 +1,5 @@
 /**
- * HoloML's example sites (milestones 16 to 21; owner, prompt 85): what the
+ * HoloML's example sites (milestones 16 to 21 and 25; owner, prompt 85): what the
  * start panel's "Try HoloML" and the examples dialog list. The sites are
  * published from the holoml repository with GitHub Pages; the pictures are
  * part of the browser (pnpm screenshots makes them from local copies), so
@@ -11,6 +11,7 @@ import sofaStudioPicture from './examples/sofa-studio.jpg';
 import harbourLoftPicture from './examples/harbour-loft.jpg';
 import sneakerStorePicture from './examples/sneaker-store.jpg';
 import aquariumPicture from './examples/aquarium.jpg';
+import wordsPicture from './examples/words.jpg';
 
 export interface Example {
   id: string;
@@ -53,7 +54,7 @@ export const EXAMPLES: readonly Example[] = [
     name: 'Blockworld',
     line: 'A small block game: break and place blocks, find five gems in the stone, and see day turn to night.',
     row: 'Blockworld: a small block game to play',
-    features: 'HoloML 0.2: a script, sound, walls and gravity, a speed slider, day and night',
+    features: 'HoloML 0.3: a script, sound, walls and gravity, a speed slider, day and night',
     picture: blockworldPicture,
   },
   {
@@ -61,7 +62,7 @@ export const EXAMPLES: readonly Example[] = [
     name: 'Sofa studio',
     line: 'A sofa in a sunlit room: choose its fabric and its wood in place, watch the price follow, and switch to evening light.',
     row: 'Sofa studio: choose a fabric and see it in 3D',
-    features: 'HoloML 0.2: choices, textured materials, shadows, a studio panorama for light, a script for the price',
+    features: 'HoloML 0.3: choices, textured materials, shadows, a studio panorama for light, a script for the price',
     picture: sofaStudioPicture,
   },
   {
@@ -69,7 +70,7 @@ export const EXAMPLES: readonly Example[] = [
     name: 'Harbour Loft',
     line: 'A loft by the harbour to tour: open the doors, switch the lamps on, read about each room, and go up to the roof terrace.',
     row: 'Harbour Loft: tour a flat by the harbour',
-    features: 'HoloML 0.2: panels, click actions, places, a sky, a floor plan, and a fade between pages',
+    features: 'HoloML 0.3: panels, click actions, places, a sky, a floor plan, a fade between pages, and names for the furniture',
     picture: harbourLoftPicture,
   },
   {
@@ -77,7 +78,7 @@ export const EXAMPLES: readonly Example[] = [
     name: 'Sneaker store',
     line: 'A sneaker store to walk through: a shoe in ten colourways, each loaded as you come near. Turn one over, choose its colour and size, and add it to your cart.',
     row: 'Sneaker store: walk the shelves and try a shoe',
-    features: 'HoloML 0.2: loading by area, stand-ins, colour and size choices, and a cart kept by a script',
+    features: 'HoloML 0.3: loading by area, stand-ins, colour and size choices, a cart kept by a script, and compressed shoes',
     picture: sneakerStorePicture,
   },
   {
@@ -85,8 +86,16 @@ export const EXAMPLES: readonly Example[] = [
     name: 'Ocean tunnel',
     line: 'An aquarium to walk through: sharks, a sea turtle, tuna, and schools of fish swim over and around a glass tunnel. Feed them, and read about each.',
     row: 'Ocean tunnel: walk under the fish',
-    features: 'HoloML 0.2: water, light from the waves, sounds from a place, and 30 fish swum by a script',
+    features: 'HoloML 0.3: water, light from the waves, sounds from a place, and 30 fish swum by a script, lighter far away',
     picture: aquariumPicture,
+  },
+  {
+    id: 'words',
+    name: 'Words in a room',
+    line: 'Welcome signs in English, Arabic, and Hebrew: each in its own language and direction, and read in its own voice.',
+    row: 'Words in a room: signs in three languages',
+    features: 'HoloML 0.3: lang and dir, right-to-left text, and names for screen readers',
+    picture: wordsPicture,
   },
 ];
 

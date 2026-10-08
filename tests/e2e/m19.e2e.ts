@@ -844,8 +844,9 @@ describe('V8 to V10: Harbour Loft', () => {
     for (const s of wanted) expect(stops, `the Tab stops: ${stops.join(' | ')}`).toContain(s);
     const source = await (await fetch(url(PAGE))).text();
     const block = source.slice(source.indexOf('<!-- prepare.mjs: from here'), source.indexOf('<!-- prepare.mjs: to here'));
-    const structure = new Set([...block.matchAll(/<model (?:id="([^"]+)" )?src="models\/([^"]+)"/g)].map((m) => `Model: ${m[1] ?? m[2]}`));
-    expect(structure.has('Model: wall.glb')).toBe(true);
+    // Each is heard by its label (HoloML 0.3, milestone 25), else its id, else its file's name.
+    const structure = new Set([...block.matchAll(/<model (?:id="([^"]+)" )?src="models\/([^"]+)"(?: label="([^"]+)")?/g)].map((m) => `Model: ${m[3] ?? m[1] ?? m[2]}`));
+    expect(structure.has('Model: Wall')).toBe(true);
     expect(stops.filter((s) => structure.has(s))).toEqual([]);
     console.log(`V9: every place, panel, link, door, and lamp within ${stops.length} Tab stops, before the walls and furniture`);
 

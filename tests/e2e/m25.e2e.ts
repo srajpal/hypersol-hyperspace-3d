@@ -1,14 +1,16 @@
 /**
  * Milestone 25 end-to-end checks (TODO.md): HoloML 0.3 in HyperSpace 3D.
  * HL2 names, HL3 language and direction, HL4 compressed models, HL5 far
- * models, HL6 the scene API, and HL7 a page's description. HL1 (the
- * language) is the holoml repository's tests; HL8 (older pages) is every
- * earlier milestone's checks; HL9 (the examples) is below once they are
- * updated; HL10 is the full run, the Android app, and the published site.
+ * models, HL6 the scene API, HL7 a page's description, and HL9 the
+ * example sites. HL1 (the language) is the holoml repository's tests;
+ * HL8 (older pages) is every earlier milestone's checks; HL10 is the full
+ * run, the Android app, and the published site.
  */
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
-import { inPage, launch, newProfile, sceneWait, settled, shellCall, sleep, tabs, waitFor, waitForPage, type Harness, type Point } from './harness';
+import { inPage, launch, newProfile, sceneWait, settled, shellCall, sleep, softwareRenderer, tabs, waitFor, waitForPage, type Harness, type Point } from './harness';
 
 let server: FixtureServer;
 
@@ -99,11 +101,13 @@ describe('HL2, HL3, HL7: names, language and direction, and a page\'s descriptio
   });
   afterAll(async () => h?.close());
 
-  it("HL2 a model's and a group's label is what the outline lists and screen readers hear; without one, the id, then the file's name; a group is listed by its name alone", async () => {
+  it("HL2 a model's and a group's label is what the outline lists and screen readers hear; without one, the id, then the file's name; a group is listed by its name alone; a link is named by them", async () => {
     const outline = await holo<string[]>(h, 'window.__holoml.outline()', PAGE);
     expect(outline).toContain('button:Group: Two cars');
     expect(outline).toContain('button:Model: מכונית כחולה');
     expect(outline).toContain('button:Model: plain');
+    // A link is named by the models and groups in it (0.3), as by its labels and panels.
+    expect(await inPage<string[]>(h, "[...document.querySelectorAll('#holoml-outline a')].map((a) => a.textContent)", PAGE)).toEqual(['A yellow car']);
     // The red car is a trigger: its button says its click action's label, as before 0.3, in the action's language.
     expect(outline).toContain('button:أدر السيارة');
     // A script reads and changes a name.
@@ -380,5 +384,142 @@ describe('the look, as the specification now writes it down', () => {
     expect(away(await seen([0, 0, 1]), BLUE)).toBeLessThan(40);
     expect(away(await seen([-1, 0, 0]), BLUE)).toBeLessThan(40);
     expect(away(await seen([0, 10, -1]), YELLOW)).toBeLessThan(40);
+  });
+});
+
+/** A .glb file's triangles and the extensions it needs (from the fixtures' copy of the example sites). */
+function glbFacts(page: string, src: string): { triangles: number; required: string[] } {
+  const bytes = readFileSync(fileURLToPath(new URL(`../fixtures/holoml/${page.replace(/[^/]+$/, '')}${src}`, import.meta.url)));
+  const json = JSON.parse(bytes.subarray(20, 20 + bytes.readUInt32LE(12)).toString('utf8')) as {
+    meshes?: { primitives: { indices?: number }[] }[];
+    accessors: { count: number }[];
+    extensionsRequired?: string[];
+  };
+  let triangles = 0;
+  for (const m of json.meshes ?? []) for (const p of m.primitives) triangles += json.accessors[p.indices!]!.count / 3;
+  return { triangles, required: json.extensionsRequired ?? [] };
+}
+
+describe('HL9: the example sites', () => {
+  let h: Harness;
+  const MB = 1024 * 1024;
+  beforeAll(async () => {
+    h = await launch(server.url('link-a.html'), { userDataDir: newProfile({ layersOnOpen: false }) });
+    await waitForPage(h, 'link-a.html');
+  });
+  afterAll(async () => h?.close());
+
+  it('HL9 every model and group a screen reader reaches on the example sites has a name: none is heard as a file or an id', async () => {
+    const PAGES = [
+      'harbour-loft/index.holoml',
+      'harbour-loft/terrace.holoml',
+      'harbour-loft/about.holoml',
+      'aquarium/index.holoml',
+      'aquarium/about.holoml',
+      'sneaker-store/index.holoml',
+      'sneaker-store/shoe.holoml',
+      'sneaker-store/about.holoml',
+      'sofa-studio/index.holoml',
+      'sofa-studio/about.holoml',
+      'blockworld/index.holoml',
+      'words/index.holoml',
+    ];
+    for (const page of PAGES) {
+      await openPage(h, page);
+      const named = (await holo<string[]>(h, 'window.__holoml.outline()', page))
+        .filter((item) => /^button:(Model|Group): /.test(item))
+        .map((item) => item.replace(/^button:(Model|Group): /, ''));
+      // A model inside a link is reached as the link, which its panel or its label names.
+      expect(named.filter((n) => /\.(glb|gltf)$/.test(n) || /^[a-z0-9]+(-[a-z0-9]+)*$/.test(n)), page).toEqual([]);
+    }
+  }, 600_000);
+
+  it('HL9 the ocean tunnel: far fish are drawn from their lighter versions, with far fewer triangles; at least 30 frames a second (with a graphics card)', async (ctx) => {
+    const PAGE = 'aquarium/index.holoml';
+    await openPage(h, PAGE);
+    // One look at every fish: drawn from its far version (its own model not loaded), or near.
+    const fish = await holo<FarInfo[]>(h, 'window.__holoml.far()', PAGE);
+    expect(fish).toHaveLength(30);
+    const far = fish.filter((f) => f.isFar);
+    // From the entrance most fish are past 10 m.
+    expect(far.length, 'fish drawn far').toBeGreaterThanOrEqual(15);
+    for (const f of far) expect(f, f.id!).toMatchObject({ state: 'waiting', far: { shown: true } });
+    for (const f of fish.filter((x) => !x.isFar)) expect(f.state, f.id!).toBe('loaded');
+    // Each far version has under a third of its fish's triangles (about a fifth; the mackerel, whose seams hold on to
+    // its corners, 29 per cent); what the fish draw now, against all of them near.
+    let now = 0;
+    let allNear = 0;
+    for (const f of fish) {
+      const [near, light] = [glbFacts(PAGE, f.src), glbFacts(PAGE, f.far.src)];
+      expect(light.triangles, f.far.src).toBeLessThan(near.triangles / 3);
+      now += f.isFar ? light.triangles : near.triangles;
+      allNear += near.triangles;
+    }
+    console.log(`HL9: the fish draw ${now} triangles, ${allNear} if all were near`);
+    expect(now).toBeLessThan(allNear / 2);
+    // The frame rate while they swim.
+    const f0 = await holo<number>(h, 'window.__holoml.frames', PAGE);
+    await sleep(2000);
+    const rate = ((await holo<number>(h, 'window.__holoml.frames', PAGE)) - f0) / 2;
+    console.log(`HL9: ${rate.toFixed(1)} frames a second in the ocean tunnel`);
+    // With a graphics card; drawn in software (GitHub's machines), the rate is logged, and this check is skipped, not passed.
+    const software = await softwareRenderer(h);
+    if (software) ctx.skip(`the frame-rate budget is for graphics hardware; drawing in software (${software})`);
+    expect(rate).toBeGreaterThanOrEqual(30);
+  }, 120_000);
+
+  it('HL9 the sneaker store downloads less: its shoes are compressed with Draco, and it loads under 1 MB at first (2.4 MB before)', async () => {
+    const PAGE = 'sneaker-store/index.holoml';
+    await openPage(h, PAGE);
+    const loaded = (await holo<ModelReport[]>(h, 'window.__holoml.models()', PAGE)).filter((m) => m.state === 'loaded').map((m) => m.src);
+    const shoes = [...new Set(loaded.filter((src) => /shoe-/.test(src)))];
+    // The bays by the entrance, and every bay's stand-ins.
+    expect(shoes.filter((s) => !s.endsWith('-far.glb')).length).toBeGreaterThanOrEqual(1);
+    expect(shoes.filter((s) => s.endsWith('-far.glb'))).toHaveLength(10);
+    for (const src of shoes) expect(glbFacts(PAGE, src).required, src).toContain('KHR_draco_mesh_compression');
+    const { bytes } = (await holo<{ bytes: number }>(h, 'window.__holoml.totals()', PAGE))!;
+    console.log(`HL9: the sneaker store loaded ${(bytes / MB).toFixed(2)} MB at first`);
+    expect(bytes).toBeLessThan(1 * MB);
+  }, 120_000);
+
+  it('HL9 Words in a room: each wall, sign, and board in its own language and direction, for screen readers and as drawn', async () => {
+    const PAGE = 'words/index.holoml';
+    await openPage(h, PAGE);
+    expect(await inPage<string>(h, 'document.documentElement.lang', PAGE)).toBe('en');
+    const named = await inPage<{ text: string; lang: string; dir: string }[]>(
+      h,
+      `[...document.querySelectorAll('#holoml-outline button span')].map((s) => ({ text: s.textContent, lang: s.lang, dir: s.dir }))`,
+      PAGE,
+    );
+    expect(named).toEqual(
+      expect.arrayContaining([
+        { text: 'The English wall', lang: 'en', dir: 'ltr' },
+        { text: 'الجدار العربي', lang: 'ar', dir: 'rtl' },
+        { text: 'הקיר העברי', lang: 'he', dir: 'rtl' },
+      ]),
+    );
+    const signs = await inPage<{ text: string; lang: string; dir: string }[]>(h, `[...document.querySelectorAll('#holoml-labels > p')].map((p) => ({ text: p.textContent, lang: p.lang, dir: p.dir }))`, PAGE);
+    expect(signs).toEqual([
+      { text: 'Welcome', lang: 'en', dir: 'ltr' },
+      { text: 'أهلاً وسهلاً', lang: 'ar', dir: 'rtl' },
+      { text: 'ברוכים הבאים', lang: 'he', dir: 'rtl' },
+    ]);
+    expect(await holo<{ text: string; dir: string }[]>(h, 'window.__holoml.labelDirections()', PAGE)).toEqual([
+      { text: 'Welcome', dir: 'ltr' },
+      { text: 'أهلاً وسهلاً', dir: 'rtl' },
+      { text: 'ברוכים הבאים', dir: 'rtl' },
+    ]);
+    // Each board's paragraphs, in its wall's language.
+    const boards = await inPage<[string, string][]>(h, `[...document.querySelectorAll('#holoml-labels div p')].map((p) => [p.lang, p.dir])`, PAGE);
+    expect(boards).toEqual([
+      ['en', 'ltr'],
+      ['en', 'ltr'],
+      ['ar', 'rtl'],
+      ['ar', 'rtl'],
+      ['he', 'rtl'],
+      ['he', 'rtl'],
+    ]);
+    // The screen's text: dir="auto", in the page's language.
+    expect(await inPage(h, `(() => { const s = document.querySelector('[data-testid="holoml-hud"]'); return [s.lang, s.dir]; })()`, PAGE)).toEqual(['en', 'auto']);
   });
 });

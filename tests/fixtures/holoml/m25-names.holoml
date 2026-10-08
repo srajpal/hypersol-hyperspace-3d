@@ -14,6 +14,9 @@
       <model src="models/placeholder-car.gltf" label="מכונית כחולה" lang="he" dir="rtl" position="2.5 0 0" />
     </group>
     <model id="plain" src="models/placeholder-car.gltf" position="0 0 -3" />
+    <a href="m25-far.holoml">
+      <model src="models/placeholder-car.gltf" label="A yellow car" position="-5 0 -3" />
+    </a>
     <label id="welcome" position="0 3 0">Welcome</label>
     <label id="arabic" position="0 2.6 0" lang="ar" dir="rtl">أهلاً وسهلاً بكم</label>
     <label id="auto" position="0 2.2 0" dir="auto">שלום עולם</label>

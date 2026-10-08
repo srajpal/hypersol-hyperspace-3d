@@ -3104,6 +3104,11 @@ export class HolomlView {
       if (n.name === 'label') words.push(text(n));
       // A panel's first paragraph (HoloML 0.2).
       if (n.name === 'panel' && this.since('0.2')) words.push(paragraphs(rawText(n))[0] ?? '');
+      // A model's or a group's own name (HoloML 0.3): a link around a shoe is named by the shoe.
+      if ((n.name === 'model' || n.name === 'group') && this.since('0.3')) {
+        const label = collapse(attr(n, 'label') ?? '');
+        if (label) words.push(label);
+      }
       n.children.forEach(collect);
     };
     collect(el);

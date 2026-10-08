@@ -79,6 +79,15 @@ const SHOTS: { id: string; page: string; steps?: [string, number][]; until?: str
       ['holoml.viewer.lookAt([-1.5, 3.2, -4]), true', 1500],
     ],
   },
+  {
+    // From the back of the room, all three walls: English ahead, Arabic and Hebrew turned in at the sides.
+    id: 'words',
+    page: 'words/index.holoml',
+    steps: [
+      ['holoml.viewer.position = [0, 1.7, 4.3], true', 300],
+      ['holoml.viewer.lookAt([0, 1.7, -1]), true', 0],
+    ],
+  },
 ];
 
 /** Stone blocks from the ground up to a height, at one column. */
