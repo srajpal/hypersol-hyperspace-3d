@@ -1845,3 +1845,14 @@ Node uninstalled and switched to 24, verify.
 ```text
 Some CIs on hypersol-hyperspace-3d have failed; please check and fix.
 ```
+
+## 166 — 2026-10-07 · Claude Opus 5.5, high effort
+
+Answers the agent's question after prompt 165, about CodeQL failing on
+main once the Android app's Kotlin was merged: a, the agent switches
+GitHub's default code scanning off and adds a CodeQL workflow of the
+repository's own that also builds and scans the Kotlin.
+
+```text
+a, go ahead
+```
