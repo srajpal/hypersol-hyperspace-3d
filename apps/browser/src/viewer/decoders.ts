@@ -14,6 +14,7 @@ import { LoadingManager, type WebGLRenderer } from 'three';
 import { DRACO_GLTF_CONFIG, DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { hiddenFrame } from './guard';
 
 /** The glTF extensions these decoders add to what three.js's loader reads by itself. */
 export const COMPRESSION_EXTENSIONS: readonly string[] = ['KHR_draco_mesh_compression', 'EXT_meshopt_compression', 'KHR_meshopt_compression', 'KHR_texture_basisu'];
@@ -74,7 +75,7 @@ export function makeDecoders(renderer: WebGLRenderer, counted: (url: string) => 
 /**
  * Stand-ins for the KTX2 transcoder's workers: what three.js's KTX2Loader
  * posts to one goes, over a message port, to the transcoder's host (an
- * unseen frame of the viewer's own address), which posts it to a real
+ * unseen, sandboxed frame of the viewer's own address, guard.ts), which posts it to a real
  * worker there and sends back its answers. The frame is made when the
  * first KTX2 picture needs it.
  */
@@ -83,19 +84,14 @@ function remoteWorkers(hostUrl: string): () => Worker {
   const listeners = new Map<number, Set<(e: { data: unknown }) => void>>();
   const connect = (): Promise<MessagePort> =>
     (host ??= new Promise((resolve) => {
-      const frame = document.createElement('iframe');
-      frame.hidden = true;
-      frame.tabIndex = -1;
-      frame.setAttribute('aria-hidden', 'true');
-      frame.title = 'KTX2 picture decoder';
-      frame.src = hostUrl;
       const channel = new MessageChannel();
       channel.port1.onmessage = (e: MessageEvent<{ ready?: boolean; worker?: number; data?: unknown }>) => {
         if (e.data.ready) resolve(channel.port1);
         else if (e.data.worker !== undefined) for (const fn of listeners.get(e.data.worker) ?? []) fn({ data: e.data.data });
       };
-      frame.addEventListener('load', () => frame.contentWindow?.postMessage({ hypersolKtx2: true }, new URL(hostUrl).origin, [channel.port2]), { once: true });
-      document.documentElement.append(frame);
+      // Sandboxed, the host has no origin to name (guard.ts): the port goes to whatever the frame holds, and the
+      // frame can only hold the viewer's own pages (the page's content policy) or none that runs scripts.
+      hiddenFrame(hostUrl, 'KTX2 picture decoder', (win) => win.postMessage({ hypersolKtx2: true }, '*', [channel.port2]));
     }));
   let next = 0;
   return () => {

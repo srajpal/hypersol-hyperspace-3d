@@ -59,7 +59,7 @@ describe('isHolomlResponse', () => {
 });
 
 describe('holomlHeaders', () => {
-  it('shows the page as text under HoloML\'s policy, which allows no peer connections (review of 2026-09-30, M6)', () => {
+  it('shows the page as text under HoloML\'s policy, with no directive Chromium ignores (prompt 172)', () => {
     const out = holomlHeaders({ 'content-type': ['model/vnd.holoml'], 'x-content-type-options': ['anything'], 'Cache-Control': 'no-store' });
     expect(out).toEqual({
       'Cache-Control': ['no-store'],
@@ -67,7 +67,9 @@ describe('holomlHeaders', () => {
       'Content-Security-Policy': [HOLOML_CSP],
       'X-Content-Type-Options': ['nosniff'],
     });
-    expect(HOLOML_CSP.split('; ')).toContain("webrtc 'block'");
+    // `webrtc 'block'` (review of 2026-09-30, M6) did nothing: the viewer blocks peer connections itself
+    // (viewer/guard.ts), checked by review-134-main.e2e.ts, M6.
+    expect(HOLOML_CSP).not.toMatch(/webrtc/);
     expect(HOLOML_CSP.split('; ')).toContain("default-src 'none'");
     expect(holomlHeaders(undefined)['Content-Security-Policy']).toEqual([HOLOML_CSP]);
   });

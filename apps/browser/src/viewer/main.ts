@@ -18,6 +18,7 @@
  * browser's tests use are on the page only in a test run (D12).
  */
 import { HoloParseError, check, parse, type ElementNode, type Problem } from '@hypersol/holoml';
+import { lockRealm } from './guard';
 import { HolomlView } from './scene';
 import { installApi } from './api';
 import { LIMITS } from './budget';
@@ -610,6 +611,9 @@ function showCard(heading: string, lines: string[], code: string | null): void {
   }
   document.body.append(card);
 }
+
+// No peer connections, and no frames to find them in, before any script of the page exists (guard.ts).
+lockRealm();
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
 else start();

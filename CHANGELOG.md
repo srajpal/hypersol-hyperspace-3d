@@ -203,6 +203,15 @@
   each of the ocean tunnel's fish far away, and the sneaker store's shoes compressed (it
   loads 0.8 MB at first, 2.4 MB before). A new example, Words in a
   room, shows signs in English, Arabic, and Hebrew.
+- HoloML pages make no peer connections, now in fact (prompt 172): the
+  review's fix [M6] rested on a content policy directive, `webrtc
+  'block'`, which Chromium does not know and ignored, so a HoloML
+  page's script could still open one. Before any script of the page
+  runs, the viewer now takes the RTC constructors out of the page's
+  JavaScript and refuses every way of making a frame, where they would
+  be found again; the KTX2 decoder's frame is sandboxed and out of the
+  page's reach. A HoloML file opened from the computer now loads its
+  KTX2 pictures (`.ktx2` files were not served).
 
 After a review of both repositories on 2026-09-30 (the ids in brackets
 are the review's):
@@ -235,7 +244,8 @@ are the review's):
   the folders inside. A local HoloML page can leave for a web address
   only within five seconds of a real click or key press, and then
   without the address's query and fragment; no HoloML page can open a
-  peer connection. [M6]
+  peer connection (this last did not work until prompt 172, above).
+  [M6]
 - An answer at a `.holoml` address that the site sends as a download,
   or sandboxes, is no longer run as a HoloML page, and a HoloML page
   keeps the site's own content policy and frame options beside HoloML's
