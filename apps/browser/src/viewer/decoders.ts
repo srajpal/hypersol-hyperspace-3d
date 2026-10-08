@@ -48,9 +48,70 @@ export function makeDecoders(renderer: WebGLRenderer, counted: (url: string) => 
     return url.startsWith(VIEWER_FILES) ? url : 'blob:uncounted';
   });
   // The decoder made for glTF files: smaller than the general one, which the build carries but the viewer never loads.
-  const draco = new DRACOLoader(manager).setDecoderPath(DRACO_GLTF_CONFIG).setDecoderConfig({ type: 'wasm' }).setWorkerLimit(2);
+  const draco = new DRACOLoader(manager).setDecoderPath(DRACO_GLTF_CONFIG).setWorkerLimit(2);
   const ktx2 = new KTX2Loader(manager).setWorkerLimit(2).detectSupport(renderer);
+  // On the desktop the viewer comes from its own address, and a HoloML page's content policy does not let the
+  // Basis transcoder evaluate code: its workers run in the transcoder's host instead (ktx2-host.ts; owner, prompt
+  // 170). Where the viewer is served from the page's own site (Android), three.js's own workers do.
+  if (here.origin !== location.origin) {
+    const remote = remoteWorkers(new URL('../ktx2-host.html', import.meta.url).href);
+    const init = ktx2.init.bind(ktx2);
+    const loader = ktx2 as unknown as { workerConfig: unknown; transcoderBinary: ArrayBuffer };
+    ktx2.init = () =>
+      init().then(() =>
+        ktx2.workerPool.setWorkerCreator(() => {
+          // As three.js's own creator does: each new worker is first given the settings and the transcoder.
+          const worker = remote();
+          const transcoderBinary = loader.transcoderBinary.slice(0);
+          worker.postMessage({ type: 'init', config: loader.workerConfig, transcoderBinary }, [transcoderBinary]);
+          return worker;
+        }),
+      );
+  }
   return { draco, ktx2, meshopt: MeshoptDecoder };
+}
+
+/**
+ * Stand-ins for the KTX2 transcoder's workers: what three.js's KTX2Loader
+ * posts to one goes, over a message port, to the transcoder's host (an
+ * unseen frame of the viewer's own address), which posts it to a real
+ * worker there and sends back its answers. The frame is made when the
+ * first KTX2 picture needs it.
+ */
+function remoteWorkers(hostUrl: string): () => Worker {
+  let host: Promise<MessagePort> | null = null;
+  const listeners = new Map<number, Set<(e: { data: unknown }) => void>>();
+  const connect = (): Promise<MessagePort> =>
+    (host ??= new Promise((resolve) => {
+      const frame = document.createElement('iframe');
+      frame.hidden = true;
+      frame.tabIndex = -1;
+      frame.setAttribute('aria-hidden', 'true');
+      frame.title = 'KTX2 picture decoder';
+      frame.src = hostUrl;
+      const channel = new MessageChannel();
+      channel.port1.onmessage = (e: MessageEvent<{ ready?: boolean; worker?: number; data?: unknown }>) => {
+        if (e.data.ready) resolve(channel.port1);
+        else if (e.data.worker !== undefined) for (const fn of listeners.get(e.data.worker) ?? []) fn({ data: e.data.data });
+      };
+      frame.addEventListener('load', () => frame.contentWindow?.postMessage({ hypersolKtx2: true }, new URL(hostUrl).origin, [channel.port2]), { once: true });
+      document.documentElement.append(frame);
+    }));
+  let next = 0;
+  return () => {
+    const id = next++;
+    const heard = new Set<(e: { data: unknown }) => void>();
+    listeners.set(id, heard);
+    const stand = {
+      addEventListener: (_type: string, fn: (e: { data: unknown }) => void) => heard.add(fn),
+      postMessage: (msg: unknown, transfer: Transferable[] = []) => void connect().then((port) => port.postMessage({ worker: id, op: 'post', msg }, transfer)),
+      terminate: () => {
+        listeners.delete(id);
+        if (host) void host.then((port) => port.postMessage({ worker: id, op: 'terminate' }));
+      },
+    };
+    return stand as unknown as Worker;
+  };
 }
 
 /** Releases the decoders' workers. */

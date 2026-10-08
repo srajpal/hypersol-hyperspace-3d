@@ -47,6 +47,8 @@ export const HOLOML_CSP = [
   `script-src ${VIEWER_SCHEME}: 'self' 'wasm-unsafe-eval'`,
   "worker-src blob:",
   `connect-src 'self' data: blob: ${VIEWER_SCHEME}:`,
+  // The KTX2 transcoder's host (milestone 25), unseen in the page.
+  `frame-src ${VIEWER_SCHEME}:`,
   "img-src 'self' data: blob:",
   "style-src 'unsafe-inline'",
   "base-uri 'none'",
@@ -55,6 +57,27 @@ export const HOLOML_CSP = [
   // No peer connections: they would be a way out for what a page's script can read.
   "webrtc 'block'",
 ].join('; ');
+
+/**
+ * The content policy of the KTX2 transcoder's host (milestone 25; owner,
+ * prompt 170): a page of the viewer's address that HoloML pages frame,
+ * where the Basis transcoder may evaluate code (as Emscripten's builds
+ * do) in its workers; HoloML pages themselves stay without it. It runs
+ * only the viewer's scripts, reads only the viewer's files, and holds
+ * nothing of any page.
+ */
+export const KTX2_HOST_CSP = [
+  "default-src 'none'",
+  `script-src ${VIEWER_SCHEME}: blob: 'unsafe-eval' 'wasm-unsafe-eval'`,
+  "worker-src blob:",
+  `connect-src ${VIEWER_SCHEME}: blob: data:`,
+  `frame-ancestors http: https: ${VIEWER_SCHEME}: ${LOCAL_SCHEME}:`,
+  "base-uri 'none'",
+  "form-action 'none'",
+].join('; ');
+
+/** The transcoder's host page: it only loads its script. */
+const KTX2_HOST_PAGE = '<!doctype html><meta charset="utf-8"><title>KTX2 picture decoder</title><script type="module" src="assets/ktx2-host.js"></script>';
 
 type Headers = Record<string, string | string[]>;
 
@@ -242,6 +265,10 @@ export class HolomlPages {
 
   private async serveViewer(request: Request): Promise<Response> {
     const { pathname, search } = new URL(request.url);
+    // The KTX2 transcoder's host (milestone 25): its page, with a policy of its own.
+    if (pathname === '/ktx2-host.html') {
+      return new Response(KTX2_HOST_PAGE, { headers: { 'content-type': 'text/html; charset=utf-8', 'content-security-policy': KTX2_HOST_CSP, 'cache-control': 'no-cache' } });
+    }
     const headers = {
       'content-type': 'text/javascript; charset=utf-8',
       'access-control-allow-origin': '*',
@@ -257,7 +284,13 @@ export class HolomlPages {
       // answered its HTML page, and HoloML pages stayed blank in pnpm dev).
       const { devServer, viewerSource } = this.options;
       if (!devServer || !viewerSource) return new Response('Not found', { status: 404 });
-      const path = pathname === '/assets/viewer.js' ? `/@fs/${viewerSource.replace(/\\/g, '/').replace(/^\/+/, '')}` : pathname;
+      const source = (file: string) => `/@fs/${file.replace(/\\/g, '/').replace(/^\/+/, '')}`;
+      const path =
+        pathname === '/assets/viewer.js'
+          ? source(viewerSource)
+          : pathname === '/assets/ktx2-host.js'
+            ? source(join(dirname(viewerSource), 'ktx2-host.ts'))
+            : pathname;
       const res = await net.fetch(new URL(path + search, devServer).href);
       const type = res.headers.get('content-type') ?? '';
       // Scripts, and (milestone 25) the decoders' WebAssembly.

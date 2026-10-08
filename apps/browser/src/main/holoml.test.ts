@@ -10,7 +10,7 @@ vi.mock('electron', () => ({
   // Stands in for Chromium reading a file: address in, the file's bytes out.
   net: { fetch: async (url: string) => new Response(readFileSync(fileURLToPath(url))) },
 }));
-const { HOLOML_CSP, HOLOML_MEDIA_TYPE, HolomlPages, SHARED_FOLDER_NOTE, holomlHeaders, isHolomlResponse, isInsideFolder, isSharedFolder } = await import('./holoml');
+const { HOLOML_CSP, HOLOML_MEDIA_TYPE, KTX2_HOST_CSP, HolomlPages, SHARED_FOLDER_NOTE, holomlHeaders, isHolomlResponse, isInsideFolder, isSharedFolder } = await import('./holoml');
 
 const page = (over: Partial<Parameters<typeof isHolomlResponse>[0]> = {}) => ({
   url: 'https://site.example/scenes/room.holoml',
@@ -70,6 +70,18 @@ describe('holomlHeaders', () => {
     expect(HOLOML_CSP.split('; ')).toContain("webrtc 'block'");
     expect(HOLOML_CSP.split('; ')).toContain("default-src 'none'");
     expect(holomlHeaders(undefined)['Content-Security-Policy']).toEqual([HOLOML_CSP]);
+  });
+
+  it("compressed models (milestone 25): WebAssembly and the decoders' workers, but no code evaluated from text in a HoloML page; the KTX2 transcoder's host alone may (prompt 170)", () => {
+    const page = HOLOML_CSP.split('; ');
+    expect(page).toContain("script-src hypersol-viewer: 'self' 'wasm-unsafe-eval'");
+    expect(page).toContain('worker-src blob:');
+    expect(page).toContain('frame-src hypersol-viewer:');
+    expect(HOLOML_CSP).not.toContain("'unsafe-eval'");
+    const host = KTX2_HOST_CSP.split('; ');
+    expect(host).toContain("default-src 'none'");
+    expect(host).toContain("script-src hypersol-viewer: blob: 'unsafe-eval' 'wasm-unsafe-eval'");
+    expect(host.find((d) => d.startsWith('connect-src'))).toBe('connect-src hypersol-viewer: blob: data:');
   });
 
   it('keeps the site\'s own content policies and adds HoloML\'s as one more (review of 2026-09-30, V1)', () => {

@@ -1738,6 +1738,8 @@ export class HolomlView {
     if (!f) return;
     f.loads += 1;
     this.showFar(entry, false);
+    // The stand-in shows again where neither the far version nor the model itself is drawn.
+    if (entry.report?.state !== 'loaded') this.showStandIn(entry, true);
     (f.holder.userData['pool'] as InstancePool | undefined)?.remove(f.holder);
     (f.holder.userData['copy'] as Object3D | undefined)?.removeFromParent();
     delete f.holder.userData['copy'];

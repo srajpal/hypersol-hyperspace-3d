@@ -39,9 +39,12 @@ export default defineConfig({
           // The HoloML viewer (milestone 14): served to HoloML pages as
           // hypersol-viewer://app/assets/viewer.js (main/holoml.ts).
           viewer: resolve(__dirname, 'src/viewer/main.ts'),
+          // The KTX2 transcoder's host (milestone 25): framed by HoloML pages, as
+          // hypersol-viewer://app/ktx2-host.html, which loads assets/ktx2-host.js.
+          'ktx2-host': resolve(__dirname, 'src/viewer/ktx2-host.ts'),
         },
         output: {
-          entryFileNames: (chunk) => (chunk.name === 'viewer' ? 'assets/viewer.js' : 'assets/[name]-[hash].js'),
+          entryFileNames: (chunk) => (chunk.name === 'viewer' ? 'assets/viewer.js' : chunk.name === 'ktx2-host' ? 'assets/ktx2-host.js' : 'assets/[name]-[hash].js'),
         },
       },
     },

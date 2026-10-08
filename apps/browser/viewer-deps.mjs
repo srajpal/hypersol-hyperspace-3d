@@ -11,4 +11,8 @@ export const VIEWER_DEPS = [
   'three/examples/jsm/environments/RoomEnvironment.js',
   'three/examples/jsm/controls/OrbitControls.js',
   'three/examples/jsm/loaders/HDRLoader.js',
+  // Milestone 25: compressed models (viewer/decoders.ts).
+  'three/examples/jsm/loaders/DRACOLoader.js',
+  'three/examples/jsm/loaders/KTX2Loader.js',
+  'three/examples/jsm/libs/meshopt_decoder.module.js',
 ];

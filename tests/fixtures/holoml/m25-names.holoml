@@ -1,0 +1,28 @@
+<holoml version="0.3" lang="en">
+  <head>
+    <title>HoloML 0.3: names and languages</title>
+    <meta name="description" content="Names for models and groups, and text in English, Arabic, and Hebrew." />
+  </head>
+  <!-- Milestone 25, checks HL2, HL3, and HL7: names for models and groups, the language and direction of text,
+       and a page's description. Nothing moves by itself. -->
+  <scene background="#1c2030">
+    <viewpoint id="hall" label="The hall" position="0 1.6 7" look-at="0 1.4 0" />
+    <viewpoint id="garden" label="الحديقة" lang="ar" dir="rtl" position="0 1.6 -4" look-at="0 1.4 -10" />
+    <light type="ambient" intensity="0.8" />
+    <group label="Two cars">
+      <model id="red-car" src="models/placeholder-car.gltf" label="A red car" position="-2.5 0 0" />
+      <model src="models/placeholder-car.gltf" label="מכונית כחולה" lang="he" dir="rtl" position="2.5 0 0" />
+    </group>
+    <model id="plain" src="models/placeholder-car.gltf" position="0 0 -3" />
+    <label id="welcome" position="0 3 0">Welcome</label>
+    <label id="arabic" position="0 2.6 0" lang="ar" dir="rtl">أهلاً وسهلاً بكم</label>
+    <label id="auto" position="0 2.2 0" dir="auto">שלום עולם</label>
+    <panel id="hebrew-panel" position="3 1.5 2" width="1.2" size="0.08" lang="he" dir="rtl">
+      ברוכים הבאים לגלריה.
+
+      פסקה שנייה.
+    </panel>
+    <hud id="status" corner="top-right" lang="ar" dir="rtl">مرحبا</hud>
+    <animate target="#red-car" attribute="rotation" to="0 30 0" duration="1s" begin="click" toggle label="أدر السيارة" lang="ar" dir="rtl" />
+  </scene>
+</holoml>

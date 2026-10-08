@@ -156,8 +156,10 @@ const testHooks = {
     return state.view?.busy ?? false;
   },
   view: () => state.view?.view ?? null,
-  models: () => JSON.parse(JSON.stringify(state.view?.models.map(({ src, state: s, materials, animation, standsInFor }) => ({ src, state: s, materials, animation, standsInFor })) ?? [])),
+  models: () => JSON.parse(JSON.stringify(state.view?.models.map(({ src, state: s, materials, animation, standsInFor, farFor }) => ({ src, state: s, materials, animation, standsInFor, farFor })) ?? [])),
   labels: () => state.view?.labels.map((l) => l.text) ?? [],
+  // HoloML 0.3 (milestone 25): the direction each label is drawn in.
+  labelDirections: () => state.view?.labels.map((l) => ({ text: l.text, dir: l.dir })) ?? [],
   links: () => state.view?.links.map((l) => l.href) ?? [],
   object: (id: string) => state.view?.objectInfo(id) ?? null,
   point: (which: string | number) => state.view?.screenPoint(which) ?? null,
@@ -200,6 +202,8 @@ const testHooks = {
   /** Loading by area (milestone 20): the groups, their models and stand-ins; every model with a stand-in; and what the page's files count now. */
   areas: () => JSON.parse(JSON.stringify(state.view?.areasInfo ?? [])),
   standIns: () => JSON.parse(JSON.stringify(state.view?.standInsInfo ?? [])),
+  // HoloML 0.3 (milestone 25): models with a lighter version far away.
+  far: () => JSON.parse(JSON.stringify(state.view?.farInfo ?? [])),
   totals: () => state.view?.totals ?? null,
   /** Water and sounds from a place (milestone 21): the water's box, look, and moving light; how much a point has faded into it from where the viewer is; and how loud a sound from a place is in each ear now. */
   water: () => JSON.parse(JSON.stringify(state.view?.waterInfo ?? null)),
@@ -398,7 +402,8 @@ function start(): void {
   const version = pageVersion(doc.root);
   if (version === null) {
     const written = doc.root.attributes.find((a) => a.name === 'version');
-    const known = VERSIONS.join(' and ');
+    // "0.1 and 0.2", or "0.1, 0.2, and 0.3".
+    const known = VERSIONS.length < 3 ? VERSIONS.join(' and ') : `${VERSIONS.slice(0, -1).join(', ')}, and ${VERSIONS[VERSIONS.length - 1]}`;
     const at = written?.start ?? doc.root.start;
     if (typeof written?.value === 'string') {
       state.error = { code: 'unsupported-version', message: `This browser reads HoloML ${known}, not "${written.value}"`, line: at.line, column: at.column };
