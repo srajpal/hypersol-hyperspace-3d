@@ -5124,8 +5124,18 @@ odejs` is a folder of the
   `@types/node`'s major alone, and holoml's `@types/vscode`'s minor and
   major. #54 also failed C5 and C6 on Windows (a page that did not
   load in 15 s); the same checks passed on #55 and in the full run here.
-- The ocean tunnel on the tablet with the sharper room (AN6): not
-  measured yet (the tablet was locked).
+- The ocean tunnel on the tablet with the sharper room (AN6), measured
+  2026-10-07 the way the first figure was (the page's own frame
+  callbacks, over the WebView's debugging connection by USB), the
+  published site opened from the start panel, the lighter drawing on:
+  at the entrance 58.2, 56.5, and 56.2 frames a second in three runs of
+  10 seconds; walked in with the pad, the shark overhead, 55.8, 57.8,
+  and 59.5. The median frame took 16.7 ms, the slowest 33.5 to 66.8 ms.
+  The page was 479 by 962 CSS pixels on the tilted panel, its canvas
+  269 by 541 (half the sharpness). So the sharper room costs the scene
+  nothing that shows, and AN6 (30 or more) passes with room to spare;
+  why the first figure (33) was lower was not looked into (it was taken
+  before the build's last changes, in another place in the tunnel).
 - Done with the owner's go (prompt 163): the code-scanning alerts
   dismissed, 18 here as used in tests (all in test code) and holoml's 2
   (one a false positive: what `plain()` gives is escaped again before it
