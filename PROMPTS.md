@@ -1903,3 +1903,14 @@ run by the tests with Java.
 ```text
 KTX2: Separate worker. Validator: Approve Jing.
 ```
+
+## 171 — 2026-10-08 · Claude Opus 5.5, high effort
+
+After milestone 25's build report, which noted that the showroom had
+stayed a HoloML 0.1 page, so its hall and plinths were still heard by
+their files' names.
+
+```text
+Update the showroom to current HoloML. And then collect whatever needs
+to be done before the new step. Push the branches and pull requests.
+```
