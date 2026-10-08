@@ -1,8 +1,9 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-07 (milestones 1 to 24 accepted; next, milestone
-25, HoloML 0.3, its plan to be drafted; the review's last items in
+Last updated 2026-10-07 (milestones 1 to 24 accepted; milestone 25,
+HoloML 0.3, planned on the branch m25-holoml-0.3 and waiting for the
+owner's approval (TODO.md, "Milestone 25"); the review's last items in
 TODO.md, "The review's last items". The roadmap is in TODO.md).
 
 ## Where things stand

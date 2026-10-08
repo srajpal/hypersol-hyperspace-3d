@@ -171,6 +171,10 @@ to this browser too. The browser is upgraded to 44.7.0 (its Node is
 24.21, the Node of the automatic builds since prompt 161). The newest
 release of any kind is 45.0.0-alpha.16, not a stable line.
 
+Rule 13 check, 2026-10-07 (start of milestone 25, HoloML 0.3; prompt
+167): 44.7.0 (2026-10-07) is still the newest stable release on npm.
+Nothing to upgrade.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |
