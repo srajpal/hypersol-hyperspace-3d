@@ -423,6 +423,10 @@ describe('HL9: the example sites', () => {
       'sofa-studio/about.holoml',
       'blockworld/index.holoml',
       'words/index.holoml',
+      // The showroom, a 0.1 site until prompt 171: the hall, a car's own page, and the about page.
+      'showroom/index.holoml',
+      'showroom/pippet-sunflower.holoml',
+      'showroom/about.holoml',
     ];
     for (const page of PAGES) {
       await openPage(h, page);

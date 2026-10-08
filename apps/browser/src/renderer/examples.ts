@@ -46,7 +46,7 @@ export const EXAMPLES: readonly Example[] = [
     name: 'Showroom',
     line: 'Five cars in a round hall: walk around each, and see it in three colours.',
     row: 'HoloML showroom: five cars to walk around in 3D',
-    features: 'HoloML 0.1: models, materials, lights, labels, links, a turntable',
+    features: 'HoloML 0.3 without scripts: models, materials, lights, labels, links, a turntable',
     picture: showroomPicture,
   },
   {

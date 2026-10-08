@@ -5310,10 +5310,12 @@ and Hebrew, to show `lang` and `dir`.
   groups in it, so a label there doubled the link's name (Harbour
   Loft's door up to the terrace, found by V9).
 - The sneaker store, its shoe page, and its about page are HoloML 0.3
-  now, for the names; the showroom stays the example of HoloML 0.1, so
-  its hall and plinths are still heard by their files' names (its cars
-  are links, named by their labels). The plan named the showroom among
-  the sites to get names: the owner may want it moved to 0.3 instead.
+  now, for the names. The showroom first stayed a HoloML 0.1 site, so
+  its hall and plinths were heard by their files' names; the owner had
+  it moved to 0.3 (prompt 171): the hall, the plinths, and each car on
+  its own page are named, and HL9 checks three of its pages. In the
+  hall each car stays inside its link, named by its label. It keeps a
+  page per colour, without scripts.
 - The far fish keep under a third of their triangles (about a fifth;
   the mackerel 29 per cent, as its seams hold on to its corners), made
   by the example's tools/far.mjs, which welds, then simplifies with a

@@ -198,9 +198,9 @@
 - A HoloML page's description (milestone 25) is its tab's tooltip, on
   its card and in the list, under its title in the text view, and in
   the Scene inspector.
-- The HoloML examples (milestone 25) take up 0.3: names for every model
-  a screen reader reaches, a lighter version of each of the ocean
-  tunnel's fish far away, and the sneaker store's shoes compressed (it
+- The HoloML examples (milestone 25) take up 0.3, the showroom too:
+  names for every model a screen reader reaches, a lighter version of
+  each of the ocean tunnel's fish far away, and the sneaker store's shoes compressed (it
   loads 0.8 MB at first, 2.4 MB before). A new example, Words in a
   room, shows signs in English, Arabic, and Hebrew.
 
