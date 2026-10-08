@@ -79,9 +79,15 @@ function attributes(source: string): Map<string, string> {
 
 /** Plain text from an element's content: tags inside it dropped, references decoded, spaces collapsed. */
 function plainText(html: string): string {
-  return decodeEntities(html.replace(/<[^>]*>/g, ''))
-    .replace(/\s+/g, ' ')
-    .trim();
+  // Tags are taken out again until nothing changes, so that no pass can leave a tag behind (as CodeQL's
+  // js/incomplete-multi-character-sanitization asks). The title is text wherever it goes: shown as text, and
+  // written back escaped.
+  let text = html;
+  for (let before = ''; before !== text; ) {
+    before = text;
+    text = text.replace(/<[^>]*>/g, '');
+  }
+  return decodeEntities(text).replace(/\s+/g, ' ').trim();
 }
 
 const isWeb = (url: string): boolean => /^https?:\/\/[^\s]/i.test(url);

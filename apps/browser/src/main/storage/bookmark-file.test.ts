@@ -59,6 +59,11 @@ describe('reading a bookmark file (milestone 26, issue #27)', () => {
     expect(readBookmarkFile(file, none).found).toEqual([{ url: 'https://x.example/', title: 'alert(1)Bold title', createdAt: null, favicon: null, folder: '' }]);
   });
 
+  it('takes out a tag with another inside it, leaving only text', () => {
+    const file = '<!DOCTYPE NETSCAPE-Bookmark-file-1><DL><p><DT><A HREF="https://x.example/"><scr<b>ipt>Title</A></DL>';
+    expect(readBookmarkFile(file, () => false).found[0]!.title).toBe('ipt>Title');
+  });
+
   it('refuses a file that is not a bookmark file', () => {
     expect(() => readBookmarkFile('{"roots": {}}', none)).toThrow(BookmarkFileError);
     expect(() => readBookmarkFile('<html><body><a href="https://x.example/">x</a></body></html>', none)).toThrow(/not a bookmark file/);
