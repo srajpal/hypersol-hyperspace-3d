@@ -241,7 +241,9 @@ the list updates can be turned off:
   (the page's content policy allows nothing else), through the page's
   own session, so the shield and encrypted DNS apply as for any page.
   The browser's HoloML viewer itself comes from the app, not the
-  network. Every model, sound, and picture file counts against the
+  network, and so do the decoders of compressed models (milestone 25),
+  which run in the page's own process: nothing is fetched to decode a
+  model. Every model, sound, and picture file counts against the
   page's limits as it arrives (milestones 15, 17, 18, and 19); a file that
   crosses one is not fetched further. An answer that a site marks as a
   download, or sandboxes, is not shown as a HoloML page, and a HoloML
@@ -258,7 +260,8 @@ the list updates can be turned off:
   and 17) and the HoloML examples section (the menu, or Ctrl+Shift+E)
   open the example sites HoloML publishes with GitHub Pages at
   `https://srajpal.github.io/holoml/` (the showroom, Blockworld, the
-  sofa studio, Harbour Loft, the sneaker store, the ocean tunnel), only
+  sofa studio, Harbour Loft, the sneaker store, the ocean tunnel, Words
+  in a room), only
   when you choose one; each is then an ordinary HoloML page. The sofa studio's script
   keeps your fabric and wood for its cart page, Harbour Loft's your
   choice of day or evening for its other pages, and the sneaker store's

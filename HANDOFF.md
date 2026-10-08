@@ -3,7 +3,8 @@
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-10-07 (milestones 1 to 24 accepted; milestone 25,
 HoloML 0.3, plan approved on the branch m25-holoml-0.3 (prompt 168),
-build approved (prompt 169), being built (TODO.md, "Milestone 25"); the review's last items in
+build approved (prompt 169), built and being checked (TODO.md,
+"Milestone 25", and below); the review's last items in
 TODO.md, "The review's last items". The roadmap is in TODO.md).
 
 ## Where things stand
@@ -80,6 +81,35 @@ holoml's #19 merged, 2026-09-29):
 - Browser: https://github.com/srajpal/hypersol-hyperspace-3d (renamed
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
+
+## Milestone 25, HoloML 0.3 (2026-10-07, prompts 167 to 170)
+
+Built on two branches, not yet pushed: m25-holoml-0.3 here and
+holoml-0.3 in holoml (the browser's copy of HoloML and its examples is
+synced from it: `pnpm holoml:sync holoml-0.3 --examples holoml-0.3`).
+TODO.md, milestone 25, has the plan, the decisions made while building,
+and the results so far.
+
+- holoml: SPEC.md is HoloML 0.3 (first edition, 2026-10-07): `label` on
+  models and groups, `lang` and `dir`, `far` and `far-from`, more
+  of the scene API, and, for every version, the look, panoramas, and
+  minimum limits written down; the grammar, the checker, conformance
+  samples, guides, and the RELAX NG schema checked by Jing
+  (tools/jing/; needs Java). The examples take up 0.3, and a new one,
+  Words in a room. The tools for the examples use glTF Transform
+  (development packages): the store's compress.mjs, the aquarium's
+  far.mjs.
+- The browser: the viewer's names, language and direction
+  (viewer/language.ts), far models, the 0.3 scene API, compressed
+  models (viewer/decoders.ts; KTX2 through viewer/ktx2-host.ts, a host
+  page with its own content policy, owner's choice in prompt 170), and
+  a page's description in the tab's tooltip, the text view, and the
+  Scene inspector. Checks HL2 to HL9 in tests/e2e/m25.e2e.ts.
+- Still to do: the full end-to-end run, `pnpm test:linux`, the
+  screenshots (`MILESTONE=m25 pnpm screenshots`, then m22's set out of
+  the tree) and the README's four, the Android build and the checks on
+  the tablet, pushing both branches and their pull requests, and the
+  owner's acceptance; then HoloML 0.3 tagged v0.3.0 on the owner's go.
 
 ## Milestone 24, HyperSpace 3D for Android (2026-10-05 to 2026-10-07, prompts 152 to 160)
 

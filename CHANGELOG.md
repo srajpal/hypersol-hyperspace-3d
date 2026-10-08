@@ -181,6 +181,28 @@
 - Built on Electron 44.7.0, with its backported Chromium, V8, ANGLE,
   Dawn, Skia, and WebRTC fixes, and 44.6.0's fix for find in page
   hanging on a page with a frame (rule 13; prompt 162).
+- HoloML 0.3 (milestone 25): names for models and groups (`label`),
+  heard by screen readers and shown in the text view and the Scene
+  inspector, and a link named by them; the language and direction of
+  text (`lang`, `dir`), so Arabic and Hebrew labels and panels are drawn
+  right to left and screen readers read each text in its language; a
+  lighter model far away (`far`, `far-from`), loaded only when shown;
+  and more of the scene API (animations started and stopped, places,
+  the water, the floor plan, and more that scripts may add).
+- Compressed models (milestone 25), in pages of any version: glTF files
+  compressed with Draco or meshopt, and KTX2 pictures, load and draw.
+  The decoders are three.js's own, carried in the browser: nothing is
+  fetched to decode a model. The KTX2 transcoder runs in a host page of
+  its own, so a HoloML page's content policy still never allows code to
+  be evaluated.
+- A HoloML page's description (milestone 25) is its tab's tooltip, on
+  its card and in the list, under its title in the text view, and in
+  the Scene inspector.
+- The HoloML examples (milestone 25) take up 0.3: names for every model
+  a screen reader reaches, a lighter version of each of the ocean
+  tunnel's fish far away, and the sneaker store's shoes compressed (it
+  loads 0.8 MB at first, 2.4 MB before). A new example, Words in a
+  room, shows signs in English, Arabic, and Hebrew.
 
 After a review of both repositories on 2026-09-30 (the ids in brackets
 are the review's):

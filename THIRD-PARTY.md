@@ -18,14 +18,15 @@ again.
 
 | Project | Version | Licence | Used for |
 |---|---|---|---|
-| [Electron](https://www.electronjs.org/) | 44.5.1 | MIT; it includes Chromium, Node.js, and V8 under their own licences (BSD-3-Clause and others), listed in Electron's `LICENSES.chromium.html` | The browser engine and the app shell |
-| [Three.js](https://threejs.org/) | 0.186.0 | MIT | The 3D room, and the HoloML viewer (with the loaders and controls from its examples) |
+| [Electron](https://www.electronjs.org/) | 44.7.0 | MIT; it includes Chromium, Node.js, and V8 under their own licences (BSD-3-Clause and others), listed in Electron's `LICENSES.chromium.html` | The browser engine and the app shell |
+| [Three.js](https://threejs.org/) | 0.186.1 | MIT | The 3D room, and the HoloML viewer (with the loaders and controls from its examples) |
+| The decoders of compressed glTF files, as three.js carries them in its examples (examples/jsm/libs): [Draco](https://github.com/google/draco)'s glTF decoder (draco/gltf), the [Basis Universal](https://github.com/BinomialLLC/basis_universal) transcoder (basis), and [meshoptimizer](https://github.com/zeux/meshoptimizer)'s decoder (meshopt_decoder.module.js) | as in three.js 0.186.1 | Apache-2.0 (Draco, Google; Basis Universal, Binomial), MIT (meshoptimizer, Arseny Kapoulkine) | Reading HoloML models whose geometry or pictures are compressed (milestone 25) |
 | [Lit](https://lit.dev/) (lit and lit-html 3.3.3, lit-element 4.2.2, @lit/reactive-element 2.1.2, @lit-labs/ssr-dom-shim 1.6.0) | 3.3.3 | BSD-3-Clause | The top bar, panels, and other controls |
 | [Ghostery adblocker](https://github.com/ghostery/adblocker) (@ghostery/adblocker, -electron, -electron-preload, -content, and -extended-selectors, all 2.18.2; @ghostery/url-parser 1.3.1) | 2.18.2 | MPL-2.0 | Ad and tracker blocking, element hiding |
 | @remusao/guess-url-type, small, and trie (2.1.0); smaz, smaz-compress, and smaz-decompress (2.2.0); all used by the adblocker | 2.1.0 to 2.2.0 | MPL-2.0 | Parts of the adblocker |
 | [tldts](https://github.com/remusao/tldts) (tldts-experimental, tldts-core) | 7.4.15 | MIT | Site names for the adblocker |
 | @types/trusted-types | 2.0.7 | MIT | Type definitions used by Lit |
-| [HoloML](https://github.com/srajpal/holoml) parser and checker, and its scene API in Web IDL (packages/holoml, copied from the repository; the tag or branch and commit are in its SOURCE.json) | 0.2 (its third edition; HoloML's own packages are at 0.2.2) | Apache-2.0, The HoloML Authors | Reading and checking HoloML pages |
+| [HoloML](https://github.com/srajpal/holoml) parser and checker, and its scene API in Web IDL (packages/holoml, copied from the repository; the tag or branch and commit are in its SOURCE.json) | 0.3 (its first edition, 2026-10-07; HoloML's own packages are at 0.2.2 until 0.3 is tagged) | Apache-2.0, The HoloML Authors | Reading and checking HoloML pages |
 
 The Mozilla Public License 2.0 applies file by file: the adblocker's
 files stay under MPL-2.0 and their source is available from the link
@@ -74,7 +75,8 @@ HoloML's examples (tests/fixtures/holoml, copied by `pnpm holoml:sync`):
   mark on its heel and the lettering on its sole are painted out, as the
   licence leaves out logos and trademarks. Its pages, scripts, hall,
   bays, bench, counter, plants, turntable, and chime (made by its
-  script) are Apache-2.0, The HoloML Authors.
+  script) are Apache-2.0, The HoloML Authors. Since milestone 25 the
+  shoe's shapes are compressed with Draco by its tools (glTF Transform).
 - The ocean tunnel, an aquarium (tests/fixtures/holoml/aquarium). Its
   fish, as its models/CREDITS.md lists them:
   - Great white shark: "shark.glb" by the Babylon.js authors,
@@ -113,8 +115,11 @@ HoloML's examples (tests/fixtures/holoml, copied by `pnpm holoml:sync`):
   its materials made drawable by three.js, turned, sized, and centred,
   its pictures made smaller, where its file had no swim, given a
   skeleton and one (made for the example), and the great white shark and
-  the mackerel made lighter (fewer triangles). The fish are credited on
-  the example's about page too.
+  the mackerel made lighter (fewer triangles). Since milestone 25 each
+  fish also has a lighter version for far away (<fish>-far.glb), made
+  from it by the example's tools (glTF Transform), under the fish's own
+  licence and credit. The fish are credited on the example's about page
+  too.
 
   The turtle was replaced on 2026-09-30. Until then it was a flatback
   sea turtle by DigitalLife3D, credited here and in HoloML as CC BY 4.0.
@@ -146,6 +151,15 @@ HoloML's examples (tests/fixtures/holoml, copied by `pnpm holoml:sync`):
   Its pages, script, tank, tunnel, gallery, plants, bubbles, food, air
   stones, and sounds (made by its tools) are Apache-2.0, The HoloML
   Authors.
+- Words in a room (tests/fixtures/holoml/words): text only, Apache-2.0,
+  The HoloML Authors.
+- The compressed test models (tests/fixtures/holoml/compressed,
+  milestone 25, check HL4), made by its make.mjs from Khronos's glTF
+  Sample Assets (https://github.com/KhronosGroup/glTF-Sample-Assets),
+  each download recorded with its SHA-256: "Box" and "Box Textured",
+  © 2017 Cesium, and a picture of "Chronograph Watch" (its
+  carbon-fibre normal map), © 2025 Darmstadt Graphics Group GmbH, all
+  under CC BY 4.0, as its CREDITS.md says.
 - Some checks use Blockworld's blocks in pages of their own
   (walls.holoml, shadows.holoml, textures.holoml, choice.holoml, and
   environment.holoml).

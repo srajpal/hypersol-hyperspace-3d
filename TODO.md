@@ -5065,7 +5065,10 @@ tests, and the app's 15 JUnit tests pass (2026-10-07).
 Status: Plan approved (2026-10-07, prompt 168): the owner chose the
 recommended answers to Q1 to Q8 and approved the new tools. Build
 approved (prompt 169). Rule 13 check done (ARCHITECTURE.md section 3: 44.7.0 is still the
-newest stable release). Asked for in prompts 127 and 128 (Q4 a): the
+newest stable release). Built 2026-10-07 on the branches m25-holoml-0.3
+(this repository) and holoml-0.3 (holoml), not yet pushed; the results
+so far are below; the screenshots, the Linux run, the Android build,
+and the checks by hand are still to do. Asked for in prompts 127 and 128 (Q4 a): the
 features milestone 22's check found missing, with the review's
 additions (2026-09-30) and the language engineer's list (the roadmap's
 notes above).
@@ -5232,18 +5235,19 @@ and Hebrew, to show `lang` and `dir`.
 
 ### Tasks
 
-- [ ] 1. HoloML 0.3 in holoml: SPEC.md (features 1 to 4, and 5 to 7 for
+- [x] 1. HoloML 0.3 in holoml: SPEC.md (features 1 to 4, and 5 to 7 for
       every version), the grammar (ABNF, RELAX NG, Web IDL), the
       checker and parser, conformance samples for every new attribute,
       value, and problem, and the guides (a how-to for each feature).
-- [ ] 2. The viewer: names, language and direction, far models, the new
+- [x] 2. The viewer: names, language and direction, far models, the new
       scene API, and compressed models with the decoders shipped in the
       browser; the text view, the accessibility tree, and the Scene
       inspector; on Android too.
-- [ ] 3. The shell: a page's description (Q2).
-- [ ] 4. The examples (Q6), and the browser's copy of them (`pnpm
+- [x] 3. The shell: a page's description (Q2).
+- [x] 4. The examples (Q6), and the browser's copy of them (`pnpm
       holoml:sync`).
-- [ ] 5. The RELAX NG validator (Q5), after its approval.
+- [x] 5. The RELAX NG validator (Q5), after its approval (Jing, prompt
+      170).
 - [ ] 6. Checks HL1 to HL10: unit tests beside the code, holoml's tests,
       and tests/e2e/m25.e2e.ts; run on Windows, with `pnpm test:linux`,
       and in the automatic builds.
@@ -5274,6 +5278,70 @@ and Hebrew, to show `lang` and `dir`.
 
 - HL1 to HL10 pass, the documents and screenshots are updated, and the
   owner accepts; then HoloML 0.3 is tagged on the owner's go.
+
+### Decisions made while building
+
+- KTX2 pictures (owner, prompt 170, asked while building): the Basis
+  transcoder, an Emscripten build, evaluates code as it starts, which a
+  HoloML page's content policy forbids. It runs in workers of an unseen
+  frame from the viewer's own address (`hypersol-viewer://app/ktx2-host.html`,
+  viewer/ktx2-host.ts), with a policy of its own that allows that; the
+  page's KTX2 loader talks to it over a MessagePort through stand-in
+  workers. A HoloML page itself never gets `'unsafe-eval'`; it gets
+  `'wasm-unsafe-eval'` (compiling WebAssembly, for Draco and Basis),
+  blob: workers, and that one frame. On Android, where the viewer comes
+  from the page's own site, three.js's own workers do it.
+- The RELAX NG validator (Q5, prompt 170): Jing 20241231, the reference
+  one, with its SHA-256 in holoml's tests; it needs Java, so its checks
+  are skipped without Java and fail in the automatic builds without it.
+  It found one fault in the schema made for 0.3 (one viewpoint at most),
+  fixed before anything was published.
+- The decoders are three.js's own files, served from the viewer's
+  address, not copies made by the build: the viewer's loaders load only
+  the viewer's own files, the files the page's limits counted, and blob:
+  and data: (decoders.ts).
+- Names go where a screen reader reaches: every model and group in a
+  page's outline (the viewer lists every model there) is named on the
+  example sites, the walls and windows too ("Wall", "Tall window"). A
+  model inside a link is left without a label: a link is named by its
+  labels and panels and, from 0.3, by the labels of the models and
+  groups in it, so a label there doubled the link's name (Harbour
+  Loft's door up to the terrace, found by V9).
+- The sneaker store, its shoe page, and its about page are HoloML 0.3
+  now, for the names; the showroom stays the example of HoloML 0.1, so
+  its hall and plinths are still heard by their files' names (its cars
+  are links, named by their labels). The plan named the showroom among
+  the sites to get names: the owner may want it moved to 0.3 instead.
+- The far fish keep under a third of their triangles (about a fifth;
+  the mackerel 29 per cent, as its seams hold on to its corners), made
+  by the example's tools/far.mjs, which welds, then simplifies with a
+  smaller ratio until the fish is light enough; at 10 m and beyond.
+- The KTX2 test picture is a carbon-fibre normal map from Khronos's
+  "Chronograph Watch" (CC BY 4.0), not the sample assets' logo picture.
+- Checks changed because what they check changed: the version a viewer
+  does not know is 0.4 or 9.9 now, not 0.3 (review-134-viewer, holoml's
+  tests); T8 has seven examples and Blockworld at 0.3; V9 hears the
+  walls and furniture by their labels; W10's bay is 0.23 MB, not 0.7;
+  X5 lets a far fish wait for its own model while its lighter version
+  is drawn; holoml's site test expects seven example sites, and its
+  aquarium test finds the air stones with their labels.
+- tests/e2e/m25.e2e.ts runs in part 1 of the automatic builds (every
+  file not listed in another part) until its time on GitHub's machines
+  is known.
+
+### Results so far (Windows 11, 2026-10-07)
+
+- HL1: holoml's 883 tests pass (Jing with Java 17 among them), and its
+  lint and type check are clean.
+- HL2 to HL7, HL9: tests/e2e/m25.e2e.ts, 18 checks, pass, with m17 to
+  m21 (the example sites' own checks, 50 with m25 in the last run). The
+  ocean tunnel: 130 frames a second; its fish draw 35,863 triangles,
+  132,266 if all were near. The sneaker store loads 0.76 MB at first
+  (2.4 MB before). The unit tests (526) pass; lint and the type check
+  are clean.
+- HL8 and HL10: the full end-to-end run, `pnpm test:linux`, the
+  automatic builds, the Android build and its checks on the tablet, and
+  the published sites: not checked yet.
 
 ## The review's last items (2026-10-07, prompt 160)
 
