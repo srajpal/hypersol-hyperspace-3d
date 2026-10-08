@@ -42,7 +42,7 @@ Plan approved 2026-09-24.
 | 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
 | 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (was 29, prompt 129) |
 | 30 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55). (review, 2026-09-30) Licence texts and credits inside the app (the GPL's text for the filter lists, the examples' credits); how security updates reach users (how often Electron is raised, and how people get it); and a check that test mode and the test hooks are absent from a packaged app | Last (was 25; moved to the end, prompt 129: not ready for builds) |
-| 31 | macOS release | Signing, notarization, Mac checks. (review, 2026-09-30) The same three as milestone 28, on macOS | Last (was 26, prompt 129) |
+| 31 | macOS release | Signing, notarization, Mac checks. (review, 2026-09-30) The same three as milestone 30, on macOS | Last (was 26, prompt 129) |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS, and Android phones (Android tablets are milestone 24) | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
@@ -4250,11 +4250,13 @@ finished documents.
       specification, and T8 (f2c5973).
 - [x] 7. The feature check repeated over the finished documents, and what
       is missing planned (Q4) in the roadmap (below; milestone 23).
-- [ ] 8. Checks Y1 to Y10, run on Windows, with `pnpm test:linux`, and in
+- [x] 8. Checks Y1 to Y10, run on Windows, with `pnpm test:linux`, and in
       the automatic builds.
-- [ ] 9. Documents: both READMEs, ARCHITECTURE, CHANGELOG, HANDOFF, and
+- [x] 9. Documents: both READMEs, ARCHITECTURE, CHANGELOG, HANDOFF, and
       AGENTS.md's testing list; screenshots, with the documentation in
-      the browser; holoml tagged v0.2.1 on the owner's go (Q6).
+      the browser; holoml tagged on the owner's go (Q6; the tag is
+      v0.2.2, after the review's fixes). (Both ticked 2026-10-07, prompt
+      162: done, and the milestone accepted in prompt 160.)
 
 ### Checks (named Y; milestone 21 used X)
 
@@ -4642,11 +4644,14 @@ published.
       automatic builds run them.
 - [x] 8. Checks Z1 to Z10 on Windows, with the extension installed by
       hand from its .vsix in VS Code and in Cursor.
-- [ ] 9. Documents: in holoml, a how-to guide in its docs ("Write HoloML
+- [x] 9. Documents: in holoml, a how-to guide in its docs ("Write HoloML
       in VS Code": installing, the features, and what it does not do),
       the README, AGENTS.md's testing list, and the CHANGELOG; in this
       repository, ARCHITECTURE.md (the parts), TODO.md, and HANDOFF.md;
       and screenshots of the extension at work for holoml's README.
+      (Ticked 2026-10-07, prompt 162: all done but the screenshots of
+      the extension at work, which were never made; they stay open, in
+      "Clearing up before milestone 25" below.)
 
 ### Checks (named Z; milestone 22 used Y)
 
@@ -5093,6 +5098,41 @@ What the review of 2026-09-30 left for the owner, decided in prompt 160.
   tests) until 26 becomes the long-term version; in both repositories.
   `engines` stays at 22.13 until this computer has Node 24.
 - REVIEW-2026-09-30.md deleted, as the owner asked (to the Recycle Bin).
+
+## Clearing up before milestone 25 (2026-10-07, prompt 162)
+
+- Node: Node 24.21.0 is installed on this computer through nvm (Herd's),
+  but not active: `C:Program Files
+odejs` is a folder of the
+  standalone installer's Node 22.16, where nvm puts its link, so `nvm
+  use` cannot switch. Until the owner removes that installation, the
+  agent puts nvm's 24.21.0 first on the path for its runs. `engines`
+  stays at 22.13 until then.
+- Branches: gone in both repositories, here and on GitHub (the owner,
+  prompt 162). The old working copy's folder
+  (.claude/worktrees/sweet-volhard-d6177a, 505 MB, no longer a git
+  working tree) was left on disk; its one commit, prompt 112, is in the
+  log; removed.
+- Electron 44.7.0 (rule 13; ARCHITECTURE.md section 3). On Node 24.21
+  with it, on this computer: type check, lint, the 512 unit tests, and
+  the full end-to-end run, 375 of 375 (17.5 minutes; X9, the ocean
+  tunnel, at 144.5 frames a second; T5, Blockworld, 117).
+- Dependabot: its group updates (#54 here, holoml's #33) moved
+  `@types/node` back to 26, and holoml's moved `@types/vscode` past
+  the extension's engines.vscode, so vsce refused to package it (both
+  builds failed). Both repositories' dependabot.yml now leave
+  `@types/node`'s major alone, and holoml's `@types/vscode`'s minor and
+  major. #54 also failed C5 and C6 on Windows (a page that did not
+  load in 15 s); the same checks passed on #55 and in the full run here.
+- The ocean tunnel on the tablet with the sharper room (AN6): not
+  measured yet (the tablet was locked).
+- Still open: the screenshots of the VS Code extension at work for
+  holoml's README (milestone 23, task 9); the code-scanning alerts (18
+  here, all in test code; 2 in holoml, false positives: what `plain()`
+  gives is escaped again before it reaches a page), to be dismissed with
+  the owner's go; issue #44 to close once #55 is merged (the setting
+  that requires actions named by commit is on in both repositories);
+  and a GitHub release for holoml's v0.2.2 tag, if the owner wants one.
 
 ## The review of 2026-09-30 (prompts 134 and 135)
 
