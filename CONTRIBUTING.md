@@ -2,7 +2,7 @@
 
 Thank you for taking a look. HyperSpace 3D is a personal open-source
 project: a desktop web browser with a 3D interface, built with Electron.
-This version is a developer preview: there are no installers yet, so you
+This version is a developer preview: there are no installers, so you
 build and run it from source.
 
 ## Set up
@@ -79,6 +79,35 @@ Where things are: the app in `apps/browser` (main process, preloads, the
 - `main` is protected: it cannot be force-pushed or deleted, and a pull
   request is merged once its "All checks" job passes (Windows and Linux,
   each in four parts).
+
+## Making your own build
+
+The project publishes no installers, and plans none (owner,
+2026-10-08): it is source for developers. Under the Apache 2.0 licence
+anyone may fork it and make an installable build of their own. No
+packaging tool is set up here, and packaging has not been checked in
+this repository; what a packaged build needs:
+
+- Package `apps/browser`, after `pnpm build`: its `main` is
+  `out/main/index.js`. Electron's own packagers (Electron Forge, or
+  electron-builder) can do it.
+- Include `out/**` and `resources/filters/**`. The privacy shield's
+  starter filter lists are read from inside the app's folder
+  (`app.getAppPath()/resources/filters`, apps/browser/src/main/index.ts),
+  so keep them there rather than among a packager's extra resources.
+  Nothing else under `apps/browser` is needed when the app runs.
+- The filter lists and the history search run in worker threads from
+  `out/main`. If your packager's archive (asar) keeps them from
+  starting, leave `out/main` unpacked.
+- Ship `LICENSE`, `NOTICE`, and `THIRD-PARTY.md` from the repository's
+  top, and `resources/filters/GPL-3.0.txt` with its `NOTICE.md`, beside
+  the app: Apache 2.0 asks for the NOTICE file, the filter lists are
+  under the GPL, and THIRD-PARTY.md credits the example sites' models
+  and pictures. The About panel names the Apache licence only.
+- Test mode and the tests' hooks are off in a packaged app (they need
+  `app.isPackaged` to be false), as are DevTools for the shell.
+- There are no app icons yet (docs/branding has the logo's concepts),
+  so Electron's own icon is used until you add some.
 
 ## Licence of contributions
 

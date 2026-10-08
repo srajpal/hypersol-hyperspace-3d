@@ -250,7 +250,9 @@ the list updates can be turned off:
   page keeps the site's own content policy beside HoloML's. A HoloML
   0.2 page's scripts (milestone 17) run in the page's own sandboxed
   process like a web page's. They can fetch only from the page's own
-  site and cannot open peer-to-peer connections; like any page's
+  site and cannot open peer-to-peer connections (the viewer takes
+  them out of the page's scripts, which cannot make frames either);
+  like any page's
   script, they can take the tab to another address, as a link does.
   Their scene API gives them the scene, where you look in it, and your
   clicks and keys on the page, nothing else. Its sounds play only after your first click or key on the page,

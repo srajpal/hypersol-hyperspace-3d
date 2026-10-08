@@ -416,7 +416,7 @@ describe('D8 right-click menu', () => {
     const opened = async () => (await menus()).length > count;
     // A right-click lost on its way to the page brings no menu at all (issue #30); if every one is,
     // the failure says what the shell has at the point (Linux, pull request #52).
-    await clickUntil(h, p, 'a right-click menu', opened, { button: 'right' }, () => describeMissedClick(h, p, opened));
+    await clickUntil(h, p, 'a right-click menu', opened, { button: 'right' }, () => describeMissedClick(h, p, opened, 'right'));
     const all = await menus();
     return all[all.length - 1]!;
   }
@@ -444,6 +444,12 @@ describe('D8 right-click menu', () => {
     await tabCount(h, 2);
     expect((await tabs(h))[1]!.url).toContain('link-b.html');
     expect((await focusedTab(h)).url).toContain('link-a.html');
+    // The next check starts once the new tab has loaded behind and its card's picture has been asked for (prompt
+    // 172): the capture shows the hidden page to Chromium for a moment, and a right-click sent then was lost now and
+    // then ("copies selected text"; four times in a month of automatic builds, on Linux and on Windows). Behind
+    // others, the page gives no picture, but the capture ends.
+    await waitFor('link-b loaded behind', () => inPage<string>(h, 'document.readyState', 'link-b'), (s) => s === 'complete');
+    await waitFor("link-b's card picture asked for", () => mainLog(h, 'captures'), (urls) => urls.some((u) => u.includes('link-b.html')));
   });
 
   it('copies selected text', async () => {

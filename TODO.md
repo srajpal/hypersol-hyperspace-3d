@@ -41,8 +41,6 @@ Plan approved 2026-09-24.
 | 27 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
 | 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
 | 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (was 29, prompt 129) |
-| 30 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55). (review, 2026-09-30) Licence texts and credits inside the app (the GPL's text for the filter lists, the examples' credits); how security updates reach users (how often Electron is raised, and how people get it); and a check that test mode and the test hooks are absent from a packaged app | Last (was 25; moved to the end, prompt 129: not ready for builds) |
-| 31 | macOS release | Signing, notarization, Mac checks. (review, 2026-09-30) The same three as milestone 30, on macOS | Last (was 26, prompt 129) |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS, and Android phones (Android tablets are milestone 24) | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
@@ -104,6 +102,16 @@ milestone 24, after HoloML for VS Code: HoloML 0.3 moved from 24 to
 25, privacy and data tools from 25 to 26, free camera from 26 to 27,
 lift to 3D from 27 to 28, polish from 28 to 29, and the installers
 from 29 and 30 to 30 and 31.
+
+On 2026-10-08 (prompt 172) the owner dropped milestones 30 and 31,
+the installers for Windows and Linux and for macOS: the project stays
+an open-source repository with no builds of its own to download, and
+anyone may fork it and make an installable build of their own
+(CONTRIBUTING.md, "Making your own build", says what one needs).
+Their other items go with them: licence texts and credits inside the
+app, how security updates reach users, and a check that test mode is
+absent from a packaged app (it is off whenever `app.isPackaged`).
+Polish (29) is the last milestone planned.
 
 - Milestone 25 (HoloML 0.3; 23 when this was written), the language
   engineer's list for its plan:
@@ -5364,7 +5372,62 @@ and Hebrew, to show `lang` and `dir`.
   Chromium knows, so it is ignored (the console says so on every
   HoloML page), and a HoloML page can make a peer connection. The
   review of 2026-09-30 (M6) meant it to block them. Offered to the
-  owner as a separate task, to be approved before it is built.
+  owner as a separate task, to be approved before it is built;
+  approved and fixed in prompt 172 ("After milestone 25", below).
+
+## After milestone 25 (2026-10-08, prompt 172)
+
+Both pull requests merged (holoml #39, the browser #59), and every
+automatic build passed. The owner then asked for the items below.
+
+- The clipboard checks again (D8, K2, and M1's copy, which had found
+  the clipboard empty): run by the owner, 7 passed.
+- The tablet: the owner's aquarium said the browser does not know
+  HoloML 0.3, as the app on it was the build of 2026-10-07, before
+  milestone 25. The app built from main (its unit tests pass) is
+  installed over USB; the checks on the tablet are the owner's, not
+  checked yet.
+- Peer connections on HoloML pages, approved: the viewer takes the RTC
+  constructors out of the page's JavaScript and refuses frames
+  (viewer/guard.ts); the decoder's frame for KTX2 pictures is sandboxed,
+  in a closed shadow root. The policy's `webrtc 'block'`, ignored by
+  Chromium, is gone. Its check (review-134-main.e2e.ts, M6) fails
+  without the guard and passes with it, and found that a folder opened
+  from the computer did not serve `.ktx2` files: it does now. The
+  published advisory GHSA-w263-76q5-f8fx said the policy blocked WebRTC;
+  it is corrected.
+- The large-scene items (Q8 b, ARCHITECTURE.md open question 4):
+  compiling materials without holding up the first frame was done in
+  milestone 21 already; a page whose screen has controls starts with
+  "Skip to the screen's controls" (V9 checks it on Harbour Loft's Light
+  choice); a model's files are fetched six at a time (budget.test.ts).
+- D8's right-click that was lost now and then ("copies selected text",
+  four times in a month of automatic builds, on Linux and Windows): it
+  came while the tab opened behind was being captured for its card
+  (which shows the hidden page to Chromium for a moment). The check
+  now waits for that capture to end (the test log's `captures`), and
+  the diagnostic sends the same button. Five runs of five pass here;
+  the automatic builds are the check of it over time.
+- No installers: milestones 30 and 31 are dropped. A fresh clone
+  installs, builds, and passes the type check; CONTRIBUTING.md, "Making
+  your own build", lists what a fork's packaged build needs. The ocean
+  tunnel's picture in the examples, which showed the turtle under a
+  non-commercial licence, is taken again.
+- Results: unit tests 532 pass; lint and the type check are clean. On
+  Windows, m2, m14, m15, m17, m18, m19, m20, m21, m25,
+  review-134-viewer, and review-134-main pass (D8 five times of five,
+  V9 after its step was set to start Tab from the page's top). On
+  Linux (`pnpm test:linux` with m2, m19, and review-134-main): 71 pass
+  and 2 are skipped (the budgets for a graphics card). The Android app
+  builds from main and its unit tests pass. Not checked yet: the full
+  run, the tablet, and packaging a build.
+- The first automatic build of pull request #60 failed R9 on Windows
+  (part 2; prompt 173): with the Scene part's picking on, three clicks
+  on the car were each lost (the page had taken 5.3 s to load there),
+  and R9's keyboard check failed after it, picking being left on. Run
+  again, the part passed (R9 in 1.5 s), as R9 does here drawn in
+  software, and every other part passed. R9 had not failed in the forty
+  builds before, so it is noted to be watched, like D8 was.
 
 ## The review's last items (2026-10-07, prompt 160)
 

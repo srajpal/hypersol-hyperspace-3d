@@ -450,6 +450,86 @@ describe('M6: a HoloML file opened from the computer', () => {
       await h.close();
     }
   });
+
+  it('makes no peer connection: its script finds no RTC constructor, and no frame with one, whichever way it tries (prompt 172)', async () => {
+    // The review's policy line, `webrtc 'block'`, is one Chromium ignores; the viewer takes them out itself (viewer/guard.ts).
+    const folder = mkdtempSync(join(tmpdir(), 'hypersol-holoml-'));
+    folders.push(folder);
+    mkdirSync(join(folder, 'page'));
+    for (const f of ['ktx2-box.gltf', 'ktx2-box.bin', 'ktx2-box.ktx2']) copyFileSync(join(FIXTURES_DIR, 'holoml', 'compressed', f), join(folder, 'page', f));
+    writeFileSync(
+      join(folder, 'page', 'escape.holoml'),
+      '<holoml version="0.3">\n  <head>\n    <title>A way out?</title>\n    <script src="escape.js"></script>\n  </head>\n  <scene>\n    <model id="ktx2" src="ktx2-box.gltf" />\n  </scene>\n</holoml>\n',
+    );
+    // Every way a page's script could reach a fresh window, whose RTCPeerConnection would be its own.
+    writeFileSync(
+      join(folder, 'page', 'escape.js'),
+      `const out = {};
+const attempt = (name, fn) => { try { out[name] = fn() ?? 'done'; } catch (e) { out[name] = 'refused: ' + e.name; } };
+const XHTML = 'http://www.w3.org/1999/xhtml';
+attempt('constructors', () => Object.getOwnPropertyNames(window).filter((n) => /RTC/.test(n)).join(','));
+attempt('createElement', () => void document.body.appendChild(document.createElement('IFRAME')));
+attempt('createElementNS', () => void document.body.append(document.createElementNS(XHTML, 'x:iframe')));
+attempt('innerHTML', () => { const d = document.createElement('div'); document.body.append(d); d.innerHTML = '<iframe srcdoc="x"></iframe>'; });
+attempt('outerHTML', () => { const d = document.createElement('div'); document.body.append(d); d.outerHTML = '<object data="escape.js"></object>'; });
+attempt('insertAdjacentHTML', () => document.body.insertAdjacentHTML('beforeend', '<EMBED src="escape.js">'));
+attempt('setHTMLUnsafe', () => document.body.setHTMLUnsafe('<frameset><frame></frameset>'));
+attempt('shadowRoot', () => { const d = document.createElement('div'); document.body.append(d); d.attachShadow({ mode: 'open' }).innerHTML = '<iframe></iframe>'; });
+attempt('contextualFragment', () => void document.body.append(document.createRange().createContextualFragment('<iframe></iframe>')));
+attempt('xmlEntity', () => {
+  const doc = new DOMParser().parseFromString('<!DOCTYPE r [<!ENTITY e "&#60;iframe xmlns=&#34;' + XHTML + '&#34;/&#62;">]><r>&e;</r>', 'application/xml');
+  document.body.append(document.adoptNode(doc.documentElement));
+});
+attempt('customElement', () => {
+  customElements.define('x-frame', class extends HTMLIFrameElement {}, { extends: 'iframe' });
+  document.body.append(new (customElements.get('x-frame'))());
+});
+attempt('write', () => document.write('<ifr'));
+attempt('restore', () => { try { delete Node.prototype.appendChild; } catch {} try { Node.prototype.appendChild = null; } catch {} return Node.prototype.appendChild.name; });
+attempt('popup', () => String(window.open('about:blank')));
+out.done = true;
+window.__escape = out;
+`,
+    );
+    const h = await launch(server.url('link-a.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'link-a');
+      await shellCall(h, 'showUrl', (await openLocal(h, join(folder, 'page', 'escape.holoml')))!);
+      await waitForPage(h, 'escape.holoml');
+      const page = await focusedPage(h);
+      const out = await waitFor('the script tried every way', () => inPage<Record<string, unknown> | null>(h, 'window.__escape ?? null', page), (o) => o?.['done'] === true);
+      const refused = 'refused: NotSupportedError';
+      expect(out).toEqual({
+        constructors: '',
+        createElement: refused,
+        createElementNS: refused,
+        innerHTML: refused,
+        outerHTML: refused,
+        insertAdjacentHTML: refused,
+        setHTMLUnsafe: refused,
+        shadowRoot: refused,
+        contextualFragment: refused,
+        xmlEntity: refused,
+        customElement: refused,
+        write: refused,
+        // The guarded method cannot be deleted, or written over.
+        restore: 'appendChild',
+        popup: 'null',
+        done: true,
+      });
+
+      // The viewer's own frame, the KTX2 picture's decoder: the page still decodes its picture through it, but
+      // the frame is in a closed shadow root, so it is not among the page's frames (window[0]) for its script to
+      // reach or to load a page of its own into; and it is sandboxed, of no origin the page shares.
+      await waitFor('the KTX2 model', () => models(h), (m) => m.length === 1 && m[0]!.state !== 'loading');
+      expect((await models(h)).map((m) => [m.src, m.state])).toEqual([['ktx2-box.gltf', 'loaded']]);
+      const frames = await h.app.evaluate(({ webContents }, id) => webContents.fromId(id)!.mainFrame.frames.map((f) => f.url), page.id);
+      expect(frames).toEqual([expect.stringMatching(/^hypersol-viewer:\/\/app\/.*ktx2-host\.html$/)]);
+      expect(await inPage(h, '[window.length, typeof window[0], document.querySelectorAll("iframe").length]', page)).toEqual([0, 'undefined', 0]);
+    } finally {
+      await h.close();
+    }
+  });
 });
 
 describe('M11: a .holoml file dropped on a page', () => {

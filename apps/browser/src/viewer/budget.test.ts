@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe as group, expect, it, vi } from 'vitest';
 import { COMPRESSION_EXTENSIONS } from './decoders';
-import { Budget, Claim, GLTF_EXTENSIONS, LIMITS, LeftOut, Unreadable, Unsupported, describe, hdrSize, headerSize, pictureSize, soundSeconds } from './budget';
+import { Budget, Claim, FETCHES_AT_ONCE, GLTF_EXTENSIONS, LIMITS, LeftOut, Unreadable, Unsupported, describe, hdrSize, headerSize, pictureSize, soundSeconds } from './budget';
 
 const enc = (o: unknown) => new TextEncoder().encode(JSON.stringify(o)).buffer as ArrayBuffer;
 
@@ -547,5 +547,49 @@ group('a model whose file needs a glTF extension (review 134; SPEC.md section 9,
     expect(headerSize(ktx2)).toEqual({ width: 8192, height: 1 });
     ktx2[1] = 0;
     expect(headerSize(ktx2)).toBeNull();
+  });
+});
+
+group("a model's files fetched side by side (ARCHITECTURE.md, open question 4c; prompt 172)", () => {
+  const ORIGIN = 'http://127.0.0.1:1';
+  const names = Array.from({ length: 10 }, (_, i) => `part${i}.bin`);
+  const main = enc({ buffers: names.map((uri, i) => ({ uri, byteLength: i + 1 })) });
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** fetch() for a model naming ten files, each answered after a moment; `missing` answers 404 at once. */
+  function serveParts(missing?: string): { most: () => number; asked: string[] } {
+    let inFlight = 0;
+    let most = 0;
+    const asked: string[] = [];
+    vi.stubGlobal('fetch', async (url: URL) => {
+      if (url.pathname === '/many.gltf') return new Response(main);
+      asked.push(url.pathname);
+      if (url.pathname === missing) return new Response(null, { status: 404 });
+      inFlight++;
+      most = Math.max(most, inFlight);
+      await new Promise((r) => setTimeout(r, 10));
+      inFlight--;
+      const i = names.indexOf(url.pathname.slice(1));
+      return new Response(new Uint8Array(i + 1).fill(i));
+    });
+    return { most: () => most, asked };
+  }
+
+  it('fetches several at once, never more than six, keeps them in order, and counts every byte', async () => {
+    const seen = serveParts();
+    const budget = new Budget();
+    const loaded = await budget.load(new URL('/many.gltf', ORIGIN), ORIGIN);
+    expect(seen.most()).toBe(FETCHES_AT_ONCE);
+    expect([...loaded.blobs.keys()]).toEqual(names.map((n) => new URL(n, ORIGIN).href));
+    expect(loaded.bytes).toBe(main.byteLength + 55);
+    expect(budget.bytes).toBe(loaded.bytes);
+  });
+
+  it('stops at the first file that fails, asks for no more, and gives back everything it held', async () => {
+    const seen = serveParts('/part0.bin');
+    const budget = new Budget();
+    await expect(budget.load(new URL('/many.gltf', ORIGIN), ORIGIN)).rejects.toThrow(/part0\.bin answered 404/);
+    expect(seen.asked.length).toBeLessThan(names.length);
+    expect(budget.bytes).toBe(0);
   });
 });

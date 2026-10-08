@@ -270,10 +270,12 @@ export class Budget {
       // Held at once, so models loading side by side cannot pass the limit together.
       claim.setTriangles(parsed.triangles);
       const pictures = [...parsed.embeddedPictures];
-      for (const uri of parsed.externalUris) {
-        const target = new URL(uri, url);
-        if (target.origin !== origin) throw new LeftOut(`it names a file from another site (${target.origin})`);
-        const data = new Uint8Array(await this.fetchCounted(target, controller.signal, claim));
+      const named = parsed.externalUris.map((uri) => ({ uri, target: new URL(uri, url) }));
+      const foreign = named.find((f) => f.target.origin !== origin);
+      if (foreign) throw new LeftOut(`it names a file from another site (${foreign.target.origin})`);
+      const fetched = await this.fetchAll(named.map((f) => f.target), controller, claim);
+      for (const [i, { uri, target }] of named.entries()) {
+        const data = fetched[i]!;
         const size = parsed.pictureUris.has(uri) ? headerSize(data) : null;
         if (size) pictures.push(size);
         // Pictures kept inside this file (a .gltf's images in its .bin): their sizes too, before anything is decoded.
@@ -351,6 +353,38 @@ export class Budget {
     }
   }
 
+  /**
+   * The files a model names, side by side, a few at a time (as a browser
+   * fetches a page's pictures), in place of one after another: a flat of
+   * .gltf files with their pictures beside them took 203 requests and 2.3 s
+   * more than the same as one .glb (ARCHITECTURE.md, open question 4c;
+   * prompt 172). Each is counted as it arrives, as before. The first to
+   * fail stops the others (through the load's controller), and this
+   * resolves or rejects only once every fetch has ended, so nothing
+   * arrives after the load has given back what it held.
+   */
+  private async fetchAll(urls: URL[], controller: AbortController, claim: Claim): Promise<Uint8Array<ArrayBuffer>[]> {
+    const out = new Array<Uint8Array<ArrayBuffer>>(urls.length);
+    let next = 0;
+    let failure: { reason: unknown } | null = null;
+    const fetcher = async (): Promise<void> => {
+      while (failure === null && next < urls.length) {
+        const i = next++;
+        try {
+          out[i] = new Uint8Array(await this.fetchCounted(urls[i]!, controller.signal, claim));
+        } catch (e) {
+          if (failure === null) {
+            failure = { reason: e };
+            controller.abort(e);
+          }
+        }
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(FETCHES_AT_ONCE, urls.length) }, fetcher));
+    if (failure !== null) throw (failure as { reason: unknown }).reason;
+    return out;
+  }
+
   /** A file's bytes, counted as they arrive against the file and page limits. */
   private async fetchCounted(url: URL, signal: AbortSignal, claim: Claim): Promise<ArrayBuffer> {
     const res = await fetch(url, { signal });
@@ -389,6 +423,9 @@ export class Budget {
     return out.buffer;
   }
 }
+
+/** A model's files fetched at once, at most (six, as a browser opens to one site over HTTP/1.1). */
+export const FETCHES_AT_ONCE = 6;
 
 /** Enough of a file's start for any picture's header. */
 const HEAD = 65_536;

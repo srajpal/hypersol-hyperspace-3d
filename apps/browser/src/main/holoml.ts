@@ -54,8 +54,8 @@ export const HOLOML_CSP = [
   "base-uri 'none'",
   "form-action 'none'",
   "frame-ancestors 'self'",
-  // No peer connections: they would be a way out for what a page's script can read.
-  "webrtc 'block'",
+  // No peer connections: the viewer takes them out of the page's JavaScript itself (viewer/guard.ts). The
+  // review of 2026-09-30 (M6) wrote `webrtc 'block'` here, a directive Chromium does not know and ignored.
 ].join('; ');
 
 /**
@@ -186,6 +186,8 @@ const LOCAL_TYPES: Record<string, string> = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
+  // HoloML 0.3 (milestone 25): KTX2 pictures in a glTF file (found by the check of prompt 172).
+  '.ktx2': 'image/ktx2',
   // HoloML 0.2 (milestones 18 and 19): panoramas of the surroundings and the sky.
   '.hdr': 'image/vnd.radiance',
   // HoloML 0.2 (milestone 17): scripts and sounds next to the page.

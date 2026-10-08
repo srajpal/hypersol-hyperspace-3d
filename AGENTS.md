@@ -444,7 +444,8 @@ milestone; the current milestone's checks are defined in TODO.md):
     that leads to a download, leaving a page that asks to
     be kept, what counts as a HoloML page (a download, a sandboxed
     answer, the site's own policy kept), HoloML files from the computer
-    (from Downloads, leaving for the web, a dropped file), Block for a
+    (from Downloads, leaving for the web, no peer connections and no
+    frames for its script (prompt 172), a dropped file), Block for a
     page that asks to be kept, a start that fails, and a shell that
     crashes.
   - tests/e2e/review-134-shell.e2e.ts, the shell (R1 to R7): a HoloML
@@ -519,7 +520,8 @@ milestone; the current milestone's checks are defined in TODO.md):
   for screen readers). HL8 is every earlier milestone's checks; HL10 the
   full run, the Android app by hand, and the published sites.
 - Later milestones add: privacy and data tools (26), free camera (27),
-  lift to 3D (28), polish (29), and installers (30 and 31).
+  lift to 3D (28), and polish (29). No installers (dropped, prompt
+  172).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

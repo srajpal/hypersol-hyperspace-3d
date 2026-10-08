@@ -552,6 +552,8 @@ if (!app.requestSingleInstanceLock()) {
         return `data:image/jpeg;base64,${image.resize({ width: 400, quality: 'good' }).toJPEG(80).toString('base64')}`;
       } catch {
         return null;
+      } finally {
+        if (!guest.isDestroyed()) testLog?.captures.push(guest.getURL());
       }
     }, null);
 
