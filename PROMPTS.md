@@ -1959,3 +1959,9 @@ There are CI failures in #60.
 ```text
 #40 merged, go ahead and tag.
 ```
+
+## 177 — 2026-10-08 · Claude Opus 5.5, high effort
+
+```text
+#62 merged, start milestone 26.
+```
