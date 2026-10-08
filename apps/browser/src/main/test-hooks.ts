@@ -44,6 +44,13 @@ export interface TestLog {
    * screen tells the page nothing, so a check can only see it here.
    */
   refusedPermissions: string[];
+  /**
+   * The addresses of tabs whose card picture was asked for, as each
+   * capture ends, a picture or none (a tab behind others has none): a
+   * capture shows the page to Chromium for a moment, and a check aims a
+   * click once it has ended (prompt 172, D8).
+   */
+  captures: string[];
 }
 
 declare global {
@@ -51,7 +58,7 @@ declare global {
 }
 
 export function installTestHooks(): TestLog {
-  const log: TestLog = { attaches: [], requests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave', refusedPermissions: [], layersSettled: {}, faviconEnds: [] };
+  const log: TestLog = { attaches: [], requests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave', refusedPermissions: [], layersSettled: {}, faviconEnds: [], captures: [] };
   globalThis.__hypersolTest = log;
   // log.requests is filled by the privacy shield's request listener
   // (main/privacy/index.ts): Electron allows one listener per session.

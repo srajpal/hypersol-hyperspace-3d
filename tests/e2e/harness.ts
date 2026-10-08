@@ -347,7 +347,7 @@ afterAll(async () => {
 });
 
 /** The parts of the main process's test log that can be read as they are (the others hold functions). */
-type LogList = 'attaches' | 'requests' | 'blockedPopups' | 'dataOps' | 'dnsApplied' | 'opened' | 'refusedPermissions' | 'faviconEnds';
+type LogList = 'attaches' | 'requests' | 'blockedPopups' | 'dataOps' | 'dnsApplied' | 'opened' | 'refusedPermissions' | 'faviconEnds' | 'captures';
 
 /**
  * Reads a part of the log the main process keeps in test runs
@@ -787,7 +787,7 @@ export async function clickAt(h: Harness, p: Point, options: { button?: 'left' |
  * a second later, reaches the page. Tells a click that went to the wrong
  * element from one that was lost in routing (milestone 12, Linux).
  */
-export async function describeMissedClick(h: Harness, p: Point, registered: () => Promise<boolean>): Promise<string> {
+export async function describeMissedClick(h: Harness, p: Point, registered: () => Promise<boolean>, button: 'left' | 'right' = 'left'): Promise<string> {
   const at = await h.shell.evaluate(([x, y]) => {
     const name = (el: Element | null) =>
       el ? `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${el.getAttribute('data-testid') ? `[${el.getAttribute('data-testid')}]` : ''}` : 'nothing';
@@ -806,9 +806,10 @@ export async function describeMissedClick(h: Harness, p: Point, registered: () =
     return `shell element at the point: ${path.join(' > ')}; webviews: ${views.join(' | ') || 'none'}`;
   }, [p.x, p.y]);
   await sleep(1000);
-  await clickAt(h, p);
+  // The same button as the clicks that were lost (a left click never opened a right-click menu).
+  await clickAt(h, p, { button });
   await sleep(1000);
-  return `${at}; a second click a second later ${(await registered()) ? 'reached the page' : 'was lost too'}`;
+  return `${at}; a second ${button === 'right' ? 'right-' : ''}click a second later ${(await registered()) ? 'reached the page' : 'was lost too'}`;
 }
 
 /**
