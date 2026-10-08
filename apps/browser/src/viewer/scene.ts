@@ -100,6 +100,7 @@ import { check, CLICKABLE, HoloParseError, parse, type ElementNode, type HoloNod
 import { Budget, LeftOut, LIMITS, Unreadable, Unsupported, type Claim, type LoadedFiles } from './budget';
 import { keptByControl, orbitControls, TURN_SPEED, walkControls, WALK_SPEED, type ViewControls } from './controls';
 import { InstancePool, canInstance, centreOf, countTriangles, isShown, worldBox, type Template } from './instances';
+import { direction, mark, own as ownLanguage, UNSTATED, type Language } from './language';
 import { SolidGrid, Walker, type Box } from './physics';
 import { disposePanel, drawPanel, type PanelLook } from './panels';
 import { Pictures, type PictureUse } from './pictures';
@@ -163,6 +164,8 @@ interface Animation {
   /** A toggle: where it was at the last click (0 at from, 1 at to), and which way it runs now. */
   at: number;
   way: 1 | -1;
+  /** HoloML 0.3: where a script stopped it (0 at from, 1 at to); it stays there until started or clicked again. */
+  halted?: number;
 }
 
 /** What the pointer is over: a link, or a click action's trigger (both are outlined, with the hand pointer). */
@@ -180,6 +183,8 @@ interface Trigger extends Hover {
   animations: Animation[];
   sounds: Entry[];
   label: string;
+  /** The language of the element its label came from (HoloML 0.3). */
+  language?: Language;
   button: HTMLButtonElement | null;
 }
 
@@ -189,10 +194,14 @@ interface PendingAction {
   animation?: Animation;
   sound?: Entry;
   label: string | null;
+  /** The language of the action's element, for its label (HoloML 0.3). */
+  language?: Language;
 }
 
 /** The floor plan (HoloML 0.2 `plan`, milestone 19): its picture, the ground it shows, and the viewer's marker. */
 interface PlanState {
+  /** HoloML 0.3: a script hid it (`visible`). */
+  hiddenByScript?: boolean;
   src: string;
   state: 'loading' | 'loaded' | 'failed' | 'refused' | 'left-out';
   reason?: string;
@@ -315,6 +324,8 @@ interface EnvironmentState {
 interface ChoiceOption {
   value: string;
   label: string;
+  /** Its words' language (HoloML 0.3). */
+  language?: Language;
   look: Promise<Look> | null;
   made: Map<Material, Changeable>;
 }
@@ -377,6 +388,10 @@ export interface Entry {
   loads?: number;
   /** A model's animation speed, as a script set it (milestone 21); 1 when never set. */
   animationSpeed?: number;
+  /** An animate element's animation (HoloML 0.3: a thing scripts start and stop). */
+  animation?: Animation;
+  /** A model's or a group's name as a script set it (HoloML 0.3 `label`); null for none; undefined when never set. */
+  ownLabel?: string | null;
 }
 
 /** What a click, a tap, or the crosshair hit. */
@@ -391,7 +406,8 @@ export type SceneEvent =
   | { type: 'key'; key: string; down: boolean; repeat: boolean }
   | { type: 'frame'; time: number; dt: number }
   | { type: 'change'; entry: Entry; value: number | string }
-  | { type: 'load'; entry: Entry; loaded: boolean };
+  | { type: 'load'; entry: Entry; loaded: boolean }
+  | { type: 'place'; place: string };
 
 interface LoadedTemplate {
   template: Template;
@@ -418,7 +434,8 @@ export class HolomlView {
    */
   clock = 0;
   readonly models: ModelReport[] = [];
-  readonly labels: { text: string; sprite: Sprite }[] = [];
+  /** Each label's words and the direction they are drawn in (HoloML 0.3: right to left for rtl). */
+  readonly labels: { text: string; sprite: Sprite; dir: 'ltr' | 'rtl' }[] = [];
   readonly links: Link[] = [];
   private readonly entryById = new Map<string, Entry>();
   private readonly entryOfObject = new WeakMap<Object3D, Entry>();
@@ -469,7 +486,10 @@ export class HolomlView {
     frame: new Set<(e: SceneEvent) => void>(),
     change: new Set<(e: SceneEvent) => void>(),
     load: new Set<(e: SceneEvent) => void>(),
+    place: new Set<(e: SceneEvent) => void>(),
   };
+  /** Each animate element's entry, to give it its animation once built (HoloML 0.3). */
+  private readonly animateEntries = new WeakMap<ElementNode, Entry>();
   private readonly version: Version;
   private sceneId: string | null = null;
   /**
@@ -524,6 +544,10 @@ export class HolomlView {
   private placesListed = false;
   private startPlace: string | null = null;
   private currentPlace: string | null = null;
+  /** HoloML 0.3 (milestone 25): each element's language and direction, inherited as in HTML; none in an older page. */
+  private readonly langs = new WeakMap<ElementNode, Language>();
+  /** The scene's own language, for what a script adds to it (HoloML 0.3). */
+  private sceneLanguage: Language | undefined;
   /** The fade over everything, between places and between HoloML pages of one site (milestone 19). */
   private readonly fader: HTMLElement;
   private fadeLevel = 0;
@@ -562,6 +586,13 @@ export class HolomlView {
     this.outline = outline;
     this.hudLayer = hudLayer;
     this.version = version;
+    // HoloML 0.3 (milestone 25): the language and direction of each element's text, from the nearest element that
+    // says them; the page's own language is the document's, for screen readers.
+    if (this.since('0.3')) {
+      this.learnLanguages(root, UNSTATED);
+      const page = this.langs.get(root);
+      if (page?.lang) document.documentElement.lang = page.lang;
+    }
     // Lines are hit only where they are, not a metre around them.
     this.raycaster.params.Line.threshold = 0.02;
     // Whether Chromium draws in software is asked first: smoothed edges are chosen when the renderer is made.
@@ -598,6 +629,7 @@ export class HolomlView {
     this.pictures = new Pictures(this.budget, this.origin, this.anisotropy);
 
     const scene = root.children.find((c): c is ElementNode => c.type === 'element' && c.name === 'scene');
+    this.sceneLanguage = this.langs.get(scene ?? root);
     const background = scene ? color(scene, 'background') : null;
     this.background = new Color(background ?? '#0b0f1e');
     this.scene.background = this.background;
@@ -723,6 +755,24 @@ export class HolomlView {
   /** Stops every model still loading (Esc, the stop button). */
   stop(): void {
     this.budget.stop();
+  }
+
+  /** Each element's language under an element that inherits `inherited` (HoloML 0.3). */
+  private learnLanguages(el: ElementNode, inherited: Language): void {
+    const mine = ownLanguage(el, inherited);
+    this.langs.set(el, mine);
+    for (const c of el.children) if (c.type === 'element') this.learnLanguages(c, mine);
+  }
+
+  /** An element's language and direction (HoloML 0.3); undefined in an older page. */
+  private languageOf(el: ElementNode): Language | undefined {
+    return this.langs.get(el);
+  }
+
+  /** The direction an element's words run in: left to right in an older page; in 0.3, as its `dir` says (`auto` by the words). */
+  private directionOf(el: ElementNode, words: string): 'ltr' | 'rtl' {
+    const l = this.langs.get(el);
+    return l ? direction(l.dir, words) : 'ltr';
   }
 
   /** Whether the page's version has what a version added: every later version keeps it (review 134, V2). */
@@ -1024,9 +1074,10 @@ export class HolomlView {
    */
   private build(node: HoloNode, parent: Object3D, parentEntry: Entry | null, link: string | null, depth: number, fromScript: boolean, animates: ElementNode[]): Entry | null {
     if (node.type !== 'element') return null;
-    // What a script adds, the script moves and plays: an animate, and a sound that begins on a click, are left
-    // out wherever they are in its markup, and the console says so (SPEC.md section 10, `holoml.add`).
-    const notAdded = fromScript ? leftOutOfAdd(node) : null;
+    // In a 0.2 page, what a script adds, the script moves and plays: an animate, and a sound that begins on a click,
+    // are left out wherever they are in its markup, and the console says so (SPEC.md section 10, `holoml.add`).
+    // A 0.3 page's scripts may add them (milestone 25).
+    const notAdded = fromScript && !this.since('0.3') ? leftOutOfAdd(node) : null;
     if (notAdded) {
       console.warn(`HoloML: holoml.add: line ${node.start.line - 1}, column ${node.start.column}: ${notAdded}.`);
       return null;
@@ -1034,7 +1085,7 @@ export class HolomlView {
     // The page's limit on elements: later ones are left out (issue #23).
     if (!this.count(node)) return null;
     const id = attr(node, 'id') ?? null;
-    const entry: Entry = { el: node, kind: node.name, name: nameOf(node), depth, object: null, item: null, id: null, parent: parentEntry, children: [], link, fromScript };
+    const entry: Entry = { el: node, kind: node.name, name: nameOf(node, this.since('0.3')), depth, object: null, item: null, id: null, parent: parentEntry, children: [], link, fromScript };
     if (id) {
       if (this.entryById.has(id)) console.warn(`HoloML: the id "${id}" is used twice; the second is ignored.`);
       else {
@@ -1058,7 +1109,8 @@ export class HolomlView {
           entry.area = { entry, near: near > 0 ? near : 10, in: false, told: false };
           this.areas.push(entry.area);
         }
-        if (entry.id && listed) entry.item = this.addItem(entry, 'Group');
+        // A group is in the outline by its id, or (HoloML 0.3) by a name of its own.
+        if ((entry.id || (this.since('0.3') && collapse(attr(node, 'label') ?? ''))) && listed) entry.item = this.addItem(entry, 'Group');
         for (const c of node.children) this.build(c, g, entry, link, depth + 1, fromScript, animates);
         this.track(g, link);
         break;
@@ -1106,12 +1158,13 @@ export class HolomlView {
       }
       case 'animate':
         animates.push(node);
+        this.animateEntries.set(node, entry);
         break;
       case 'sound':
         if (this.since('0.2')) {
           this.sound(node, entry, parent);
           // Plays when its trigger is clicked (milestone 19).
-          if (attr(node, 'begin') === 'click') this.pendingActions.push({ trigger: idOf(attr(node, 'trigger')), sound: entry, label: attr(node, 'label') ?? null });
+          if (attr(node, 'begin') === 'click') this.pendingActions.push({ trigger: idOf(attr(node, 'trigger')), sound: entry, label: attr(node, 'label') ?? null, language: this.languageOf(node) });
         }
         break;
     }
@@ -2153,6 +2206,7 @@ export class HolomlView {
       pixels: [0, 0],
       note,
       words: null,
+      dir: this.languageOf(el)?.dir ?? 'ltr',
     };
     drawPanel(holder, entry.panelLook, this.anisotropy);
     return holder;
@@ -2166,6 +2220,7 @@ export class HolomlView {
       list.map((words) => {
         const p = document.createElement('p');
         p.textContent = words;
+        mark(p, this.languageOf(entry.el));
         return p;
       });
     look.note.replaceChildren(...paras(look.paragraphs));
@@ -2216,6 +2271,7 @@ export class HolomlView {
     marker.setAttribute('aria-hidden', 'true');
     marker.hidden = true;
     box.append(img, marker);
+    mark(box, this.languageOf(el));
     // Shown once its picture has arrived.
     box.hidden = true;
     this.corner(el, 'top-right').append(box);
@@ -2233,7 +2289,7 @@ export class HolomlView {
           throw e;
         });
         plan.state = 'loaded';
-        box.hidden = false;
+        box.hidden = plan.hiddenByScript === true;
         this.updatePlan();
       },
       (how, reason) => {
@@ -2269,13 +2325,15 @@ export class HolomlView {
     const size = num(el, 'size', 0.2, Number.MIN_VALUE);
     const fill = color(el, 'color') ?? this.textColor;
     const sprite = new Sprite(new SpriteMaterial({ transparent: true, depthWrite: false, toneMapped: false }));
-    drawLabel(sprite, words, size, fill);
+    const dir = this.directionOf(el, words);
+    drawLabel(sprite, words, size, fill, dir);
     sprite.position.set(...vec3(el, 'position', [0, 0, 0]));
     parent.add(sprite);
-    this.labels.push({ text: words, sprite });
-    // The label's words are in the page too, for Find in page and screen readers.
+    this.labels.push({ text: words, sprite, dir });
+    // The label's words are in the page too, for Find in page and screen readers, in their language (HoloML 0.3).
     const note = document.createElement('p');
     note.textContent = words;
+    mark(note, this.languageOf(el));
     document.getElementById('holoml-labels')?.append(note);
     entry.labelLook = { words, size, color: fill, note };
     return sprite;
@@ -2299,6 +2357,7 @@ export class HolomlView {
     box.style.fontSize = `${num(el, 'size', 18, Number.MIN_VALUE)}px`;
     const c = color(el, 'color');
     if (c) box.style.color = c;
+    mark(box, this.languageOf(el));
     place.append(box);
     entry.hud = box;
     this.setHudText(entry, el.children.map((ch) => (ch.type === 'text' ? ch.value : '')).join(''));
@@ -2350,6 +2409,7 @@ export class HolomlView {
     input.step = String(step);
     input.value = String(value);
     box.append(words, input);
+    mark(words, this.languageOf(el));
     this.corner(el).append(box);
     entry.hud = box;
     entry.slider = { input, label: words };
@@ -2402,7 +2462,7 @@ export class HolomlView {
       const value = attr(o, 'value') ?? label;
       // Two options with one value: the checker reports it, and the first is kept.
       if (options.some((x) => x.value === value)) continue;
-      options.push({ value, label: label || value, look: changes ? this.lookOf(o) : null, made: new Map() });
+      options.push({ value, label: label || value, look: changes ? this.lookOf(o) : null, made: new Map(), language: this.languageOf(o) });
     }
     const box = document.createElement('fieldset');
     box.className = 'holoml-choice';
@@ -2410,6 +2470,7 @@ export class HolomlView {
     if (entry.id) box.dataset['id'] = entry.id;
     const legend = document.createElement('legend');
     legend.textContent = collapse(attr(el, 'label') ?? '');
+    mark(legend, this.languageOf(el));
     legend.hidden = legend.textContent === '';
     if (legend.hidden) box.setAttribute('aria-label', entry.id ?? 'Choice');
     const list = document.createElement('div');
@@ -2425,6 +2486,7 @@ export class HolomlView {
       input.checked = i === start;
       const words = document.createElement('span');
       words.textContent = o.label;
+      mark(words, o.language);
       label.append(input, words);
       list.append(label);
       input.addEventListener('change', () => {
@@ -2588,10 +2650,114 @@ export class HolomlView {
   }
 
   /** A script gives a sound a place: from there on it comes from that place (its range as the page gave it, or 20 metres). */
-  setSoundPosition(entry: Entry, at: Vec3): void {
+  setSoundPosition(entry: Entry, at: Vec3 | null): void {
     if (entry.kind !== 'sound' || entry.removed) return;
+    if (at === null) {
+      // HoloML 0.3: its place taken away, it is heard as a sound from everywhere again.
+      const marker = entry.object;
+      if (marker) {
+        marker.removeFromParent();
+        this.entryOfObject.delete(marker);
+        entry.object = null;
+      }
+      entry.sound?.place(null, num(entry.el, 'range', 20, Number.MIN_VALUE));
+      this.requestFrame();
+      return;
+    }
     const parent = entry.parent?.object ?? this.scene;
     this.placeSound(entry, parent, at, num(entry.el, 'range', 20, Number.MIN_VALUE));
+  }
+
+  // ---- HoloML 0.3 in the scene API (milestone 25) -----------------------------------
+
+  /** Starts an animate from its beginning, as when it begins by itself; with reduced motion it shows its end at once. */
+  startAnimation(entry: Entry): void {
+    const a = entry.animation;
+    if (!a || entry.removed) return;
+    a.halted = undefined;
+    a.clickedAt = performance.now();
+    if (a.toggle) {
+      a.at = 0;
+      a.way = 1;
+    }
+    this.requestFrame();
+  }
+
+  /** Stops an animate where it is; it keeps that place until started or clicked again. */
+  stopAnimation(entry: Entry): void {
+    const a = entry.animation;
+    if (!a || entry.removed || a.halted !== undefined) return;
+    const p = this.progress(a, performance.now());
+    if (p) a.halted = p.t;
+  }
+
+  /** Whether an animate runs now. */
+  animationRunning(entry: Entry): boolean {
+    const a = entry.animation;
+    if (!a || entry.removed || a.halted !== undefined) return false;
+    const p = this.progress(a, performance.now());
+    return p !== null && !p.done;
+  }
+
+  /** The water's colour and clarity, for scripts. */
+  waterLook(entry: Entry): { color: string; clarity: number } | undefined {
+    return entry.kind === 'water' && this.water ? { color: this.water.look.color, clarity: this.water.look.clarity } : undefined;
+  }
+
+  setWaterColor(entry: Entry, value: string): void {
+    if (entry.kind !== 'water' || !this.water) return;
+    this.water.setColor(value);
+    this.requestFrame();
+  }
+
+  setWaterClarity(entry: Entry, value: number): void {
+    if (entry.kind !== 'water' || !this.water) return;
+    this.water.setClarity(value);
+    this.requestFrame();
+  }
+
+  /** Whether the floor plan is shown, as a script sees it (it may still be loading). */
+  planVisible(entry: Entry): boolean | undefined {
+    return entry.kind === 'plan' && this.planState ? this.planState.hiddenByScript !== true : undefined;
+  }
+
+  setPlanVisible(entry: Entry, on: boolean): void {
+    const plan = this.planState;
+    if (entry.kind !== 'plan' || !plan) return;
+    plan.hiddenByScript = !on;
+    plan.box.hidden = !on || plan.state !== 'loaded';
+  }
+
+  /** A model's or a group's own name (its label), or null for none. */
+  labelOf(entry: Entry): string | null | undefined {
+    if (entry.kind !== 'model' && entry.kind !== 'group') return undefined;
+    if (entry.ownLabel !== undefined) return entry.ownLabel;
+    return collapse(attr(entry.el, 'label') ?? '') || null;
+  }
+
+  /** A script names a model or a group: screen readers and the text view hear the new name. */
+  setLabel(entry: Entry, value: string | null): void {
+    if ((entry.kind !== 'model' && entry.kind !== 'group') || entry.removed) return;
+    entry.ownLabel = value === null ? null : collapse(value) || null;
+    entry.name = entry.ownLabel ?? (entry.id || nameOf(entry.el));
+    if (entry.item) this.nameItem(entry.item, entry);
+    // A group without an id is in the outline by its name only.
+    else if (entry.kind === 'group' && entry.ownLabel && !entry.link) entry.item = this.addItem(entry, 'Group');
+  }
+
+  /** The place the viewer last arrived at (HoloML 0.3 `viewer.place`). */
+  get viewerPlace(): string | null {
+    return this.currentPlace;
+  }
+
+  /** Takes the viewer to a place by its id, as a link to #id does; false when no viewpoint has the id. */
+  goToPlace(id: string): boolean {
+    const vp = this.viewpoints.find((v) => attr(v, 'id') === id);
+    if (!vp) return false;
+    // Through the page's address where places are listed, so that Back returns.
+    if (this.placesListed) this.visit(id);
+    else this.goTo(vp);
+    return true;
   }
 
   /** How loud a sound from a place is in each of the viewer's ears now (the page's hooks), by its id. */
@@ -2617,6 +2783,14 @@ export class HolomlView {
    * take much of every frame there, and the console says so.
    */
   private makeWater(el: ElementNode): void {
+    // HoloML 0.3: a thing scripts find by its id, to change its colour and clarity.
+    const id = this.since('0.3') ? (attr(el, 'id') ?? null) : null;
+    const entry: Entry = { el, kind: 'water', name: id ?? 'water', depth: 0, object: null, item: null, id: null, parent: null, children: [], link: null, fromScript: false };
+    if (id && !this.entryById.has(id)) {
+      entry.id = id;
+      this.entryById.set(id, entry);
+    }
+    this.entries.push(entry);
     const size = vec3(el, 'size', [1, 1, 1]);
     const caustics = has(el, 'caustics');
     if (caustics && this.software !== null) {
@@ -2675,6 +2849,7 @@ export class HolomlView {
     };
     collect(el);
     anchor.textContent = words.join(' ') || `Link to ${href}`;
+    if (words.length > 0) mark(anchor, this.languageOf(el));
     const link: Link = { href, object, anchor };
     // Keyboard: Tab reaches each link, which lights up in the scene; Enter follows it.
     anchor.addEventListener('focus', () => this.setHovered(link));
@@ -2702,12 +2877,25 @@ export class HolomlView {
     const li = document.createElement('li');
     const button = document.createElement('button');
     button.type = 'button';
-    button.textContent = `${kind}: ${entry.name}`;
+    button.dataset['kind'] = kind;
+    this.nameItem(button, entry);
     button.addEventListener('focus', () => this.outlineObject(entry.object));
     button.addEventListener('blur', () => this.outlineObject(null));
     li.append(button);
     this.outline.append(li);
     return button;
+  }
+
+  /**
+   * An outline item's words: the kind in the browser's words ("Model: "),
+   * then the thing's name in the page's, with its language and direction
+   * (HoloML 0.3), so that a screen reader reads each in its own voice.
+   */
+  private nameItem(button: HTMLElement, entry: Entry): void {
+    const name = document.createElement('span');
+    name.textContent = entry.name;
+    mark(name, this.languageOf(entry.el));
+    button.replaceChildren(`${button.dataset['kind'] ?? entry.kind}: `, name);
   }
 
   /** Removes a thing from the outline; if it had focus, the next one (or the one before) takes it. */
@@ -2792,7 +2980,9 @@ export class HolomlView {
     const toggle = onClick && has(el, 'toggle');
     const animation: Animation = { entry, object, attribute, from, to, duration: ms, repeat: toggle ? 1 : repeat(el), start, onClick, toggle, clickedAt: null, at: 0, way: 1 };
     this.animations.push(animation);
-    if (onClick) this.pendingActions.push({ trigger: idOf(attr(el, 'trigger') ?? attr(el, 'target')), animation, label: attr(el, 'label') ?? null });
+    const self = this.animateEntries.get(el);
+    if (self) self.animation = animation;
+    if (onClick) this.pendingActions.push({ trigger: idOf(attr(el, 'trigger') ?? attr(el, 'target')), animation, label: attr(el, 'label') ?? null, language: this.languageOf(el) });
   }
 
   // ---- Click actions (HoloML 0.2, milestone 19) ----------------------------------
@@ -2817,7 +3007,10 @@ export class HolomlView {
       if (p.animation) t.animations.push(p.animation);
       if (p.sound) t.sounds.push(p.sound);
       const label = collapse(p.label ?? '');
-      if (!t.label && label) t.label = label;
+      if (!t.label && label) {
+        t.label = label;
+        t.language = p.language;
+      }
       touched.add(t);
     }
     for (const t of touched) {
@@ -2857,6 +3050,7 @@ export class HolomlView {
   private nameActionButton(t: Trigger): void {
     if (!t.button) return;
     t.button.textContent = t.label || t.entry.name;
+    mark(t.button, t.label ? t.language : this.languageOf(t.entry.el));
     const toggle = t.animations.find((a) => a.toggle);
     if (toggle) t.button.setAttribute('aria-pressed', String(toggle.clickedAt !== null && toggle.way === 1));
     else t.button.removeAttribute('aria-pressed');
@@ -2878,6 +3072,7 @@ export class HolomlView {
     const now = performance.now();
     for (const a of t.animations) {
       if (a.entry?.removed) continue;
+      a.halted = undefined;
       if (a.toggle) {
         a.at = this.toggleAt(a, now);
         a.way = a.clickedAt === null ? 1 : a.way === 1 ? -1 : 1;
@@ -2898,6 +3093,7 @@ export class HolomlView {
 
   /** Where an animation is now (0 at from, 1 at to) and whether it has finished; null for a click action not yet clicked. */
   private progress(a: Animation, now: number): { t: number; done: boolean } | null {
+    if (a.halted !== undefined) return { t: a.halted, done: true };
     if (a.toggle) {
       if (a.clickedAt === null) return null;
       const t = this.toggleAt(a, now);
@@ -2924,7 +3120,10 @@ export class HolomlView {
     li.className = 'holoml-place';
     const button = document.createElement('button');
     button.type = 'button';
-    button.textContent = `Go to: ${placeName(vp)}`;
+    const name = document.createElement('span');
+    name.textContent = placeName(vp);
+    mark(name, this.languageOf(vp));
+    button.replaceChildren('Go to: ', name);
     button.addEventListener('click', () => this.visit(entry.id!));
     li.append(button);
     this.outline.append(li);
@@ -2948,6 +3147,8 @@ export class HolomlView {
       this.controls?.moveTo(position);
       this.controls?.lookAt(lookAt);
       this.currentPlace = id;
+      // HoloML 0.3: the page's scripts hear where the viewer arrived.
+      if (id && this.since('0.3')) this.emit({ type: 'place', place: id });
       this.requestFrame();
     };
     if (this.reducedMotion.matches) {
@@ -3336,10 +3537,17 @@ export class HolomlView {
     const added: Entry[] = [];
     const animates: ElementNode[] = [];
     const into = parent?.object ?? this.scene;
+    // HoloML 0.3 (milestone 25): animations, panels, and links too, and what they hold may have click actions.
+    const addable = this.since('0.3') ? ['group', 'model', 'light', 'label', 'sound', 'animate', 'panel', 'a'] : ['group', 'model', 'light', 'label', 'sound'];
+    // The new elements' language and direction, as if they stood where they are added.
+    if (this.since('0.3')) {
+      const around = (parent ? this.langs.get(parent.el) : this.sceneLanguage) ?? UNSTATED;
+      for (const node of tops) this.learnLanguages(node, around);
+    }
     tops.forEach((node, i) => {
       const next = tops[i + 1];
-      if (!['group', 'model', 'light', 'label', 'sound'].includes(node.name)) {
-        console.warn(`HoloML: holoml.add adds groups, models, lights, labels, and sounds, not <${node.name}>.`);
+      if (!addable.includes(node.name)) {
+        console.warn(`HoloML: holoml.add adds ${this.since('0.3') ? 'groups, models, lights, labels, sounds, animations, panels, and links' : 'groups, models, lights, labels, and sounds'}, not <${node.name}>.`);
         return;
       }
       const own = problems.filter((p) => after(p, node.start) && (!next || !after(p, next.start)));
@@ -3353,6 +3561,19 @@ export class HolomlView {
       if (entry) added.push(entry);
       else if (full) console.warn(`HoloML: holoml.add: <${node.name}> left out: past the page's limit of ${LIMITS.elements.toLocaleString('en')} elements.`);
     });
+    // HoloML 0.3: the animations and click actions it added, once every element it added is in the scene. One whose
+    // target or trigger is not there is left out, and the console says why.
+    for (const a of animates) {
+      const target = idOf(attr(a, 'target'));
+      if (!this.entryById.has(target) && target !== this.sceneId) {
+        console.warn(`HoloML: holoml.add: <animate> left out: no element has the id "${target}".`);
+        continue;
+      }
+      this.addAnimation(a);
+    }
+    const waiting = this.pendingActions.filter((p) => !this.entryById.has(p.trigger));
+    for (const p of waiting) console.warn(`HoloML: holoml.add: a click action left out: no element has the id "${p.trigger}".`);
+    this.wireActions();
     if (added.some((e) => this.hasSolid(e))) this.collidersDirty = true;
     if (this.leftOutElements > 0) this.onLeftOut?.();
     this.requestFrame();
@@ -3491,7 +3712,7 @@ export class HolomlView {
       entry.panelLook.paragraphs = paragraphs(value);
       drawPanel(entry.object, entry.panelLook, this.anisotropy);
       entry.name = entry.panelLook.paragraphs[0] ?? entry.id ?? 'panel';
-      if (entry.item && !this.triggers.get(entry)?.button?.isSameNode(entry.item)) entry.item.textContent = `Panel: ${entry.name}`;
+      if (entry.item && !this.triggers.get(entry)?.button?.isSameNode(entry.item)) this.nameItem(entry.item, entry);
       this.panelWords(entry);
       if (entry.object) this.markMoved(entry);
       this.requestFrame();
@@ -3508,11 +3729,16 @@ export class HolomlView {
       const words = collapse(value);
       entry.labelLook.words = words;
       entry.labelLook.note.textContent = words;
-      drawLabel(entry.object as Sprite, words, entry.labelLook.size, entry.labelLook.color);
+      mark(entry.labelLook.note, this.languageOf(entry.el));
+      const dir = this.directionOf(entry.el, words);
+      drawLabel(entry.object as Sprite, words, entry.labelLook.size, entry.labelLook.color, dir);
       const listed = this.labels.find((l) => l.sprite === entry.object);
-      if (listed) listed.text = words;
+      if (listed) {
+        listed.text = words;
+        listed.dir = dir;
+      }
       entry.name = words || 'label';
-      if (entry.item) entry.item.textContent = `Label: ${entry.name}`;
+      if (entry.item) this.nameItem(entry.item, entry);
       this.requestFrame();
     }
   }
@@ -3528,7 +3754,7 @@ export class HolomlView {
     if (entry.kind === 'light') (entry.object as (Object3D & { color: Color }) | null)?.color.set(value);
     else if (entry.kind === 'label' && entry.labelLook && entry.object) {
       entry.labelLook.color = value;
-      drawLabel(entry.object as Sprite, entry.labelLook.words, entry.labelLook.size, value);
+      drawLabel(entry.object as Sprite, entry.labelLook.words, entry.labelLook.size, value, this.directionOf(entry.el, entry.labelLook.words));
     } else if (entry.kind === 'hud' && entry.hud) entry.hud.style.color = value;
     this.requestFrame();
   }
@@ -3881,16 +4107,19 @@ function arrivedFromHolomlPage(): boolean {
 }
 
 /** Draws a label's words into its sprite (again, when a script changes them). */
-function drawLabel(sprite: Sprite, words: string, size: number, fill: string): void {
+function drawLabel(sprite: Sprite, words: string, size: number, fill: string, dir: 'ltr' | 'rtl' = 'ltr'): void {
   const px = 96;
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
   const font = `600 ${px}px system-ui, "Segoe UI", sans-serif`;
   ctx.font = font;
+  // HoloML 0.3: right-to-left words are laid out from the right (the Unicode Bidirectional Algorithm's base direction).
+  ctx.direction = dir;
   const width = Math.ceil(ctx.measureText(words).width) + px;
   canvas.width = width;
   canvas.height = Math.ceil(px * 1.5);
   ctx.font = font;
+  ctx.direction = dir;
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
   ctx.shadowColor = 'rgba(0,0,0,0.55)';
@@ -3936,7 +4165,12 @@ function countElements(node: ElementNode): number {
 }
 
 /** A name for the outline and the inspector: the text, the id, or the file. */
-function nameOf(el: ElementNode): string {
+function nameOf(el: ElementNode, v03 = false): string {
+  // HoloML 0.3 (milestone 25): a model's and a group's own name, before its id and its file's name.
+  if (v03 && (el.name === 'model' || el.name === 'group')) {
+    const label = collapse(attr(el, 'label') ?? '');
+    if (label) return label;
+  }
   if (el.name === 'label') return text(el) || 'label';
   if (el.name === 'panel') return paragraphs(rawText(el))[0] || attr(el, 'id') || 'panel';
   if (el.name === 'plan') return collapse(attr(el, 'label') ?? '') || attr(el, 'id') || 'plan';

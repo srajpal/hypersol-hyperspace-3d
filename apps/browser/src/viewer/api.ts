@@ -13,12 +13,20 @@
  * 10): setting a member that a thing's kind does not have is no error and
  * changes nothing; the arrays a thing or the viewer gives are frozen; and
  * a thing's parent is the nearest group it is in, also through a link.
+ *
+ * HoloML 0.3 (milestone 25), for a 0.3 page's scripts only: an animate, the
+ * water, and the floor plan are things too; a model's and a group's label;
+ * the viewer's place and goTo, and the place event; and a sound's place
+ * taken away. A 0.2 page's scripts see the API as it was.
  */
 import type { Entry, HolomlView, Hit, SceneEvent } from './scene';
 import type { Vec3 } from './values';
+import { atLeast } from './versions';
 
-type Kind = 'model' | 'group' | 'light' | 'label' | 'panel' | 'sound' | 'hud' | 'slider' | 'choice';
+type Kind = 'model' | 'group' | 'light' | 'label' | 'panel' | 'sound' | 'hud' | 'slider' | 'choice' | 'animate' | 'water' | 'plan';
 const KINDS = new Set<string>(['model', 'group', 'light', 'label', 'panel', 'sound', 'hud', 'slider', 'choice']);
+/** The kinds HoloML 0.3 added. */
+const KINDS_03 = new Set<string>(['animate', 'water', 'plan']);
 const COLOR = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 function vector(v: unknown, what: string): Vec3 {
@@ -58,9 +66,10 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
   const entryOf = new WeakMap<object, Entry>();
   const thingOf = new WeakMap<Entry, HolomlThing>();
   const deg = (r: number) => (r * 180) / Math.PI;
+  const v03 = atLeast(view.pageVersion, '0.3');
 
   const thing = (e: Entry | null | undefined): HolomlThing | null => {
-    if (!e || e.removed || !KINDS.has(e.kind)) return null;
+    if (!e || e.removed || !(KINDS.has(e.kind) || (v03 && KINDS_03.has(e.kind)))) return null;
     const known = thingOf.get(e);
     if (known) return known;
     const kind = e.kind as Kind;
@@ -124,6 +133,41 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
       // Loading by area (milestone 20): a model's file is in; a group's models near enough to load are all in.
       define('loaded', () => !e.removed && view.isLoaded(e));
     }
+    if (v03 && has('model', 'group')) {
+      // Its name, as screen readers hear it (HoloML 0.3); null for none.
+      define(
+        'label',
+        () => view.labelOf(e),
+        (v) => view.setLabel(e, v === null ? null : String(v).slice(0, 10_000)),
+      );
+    }
+    if (v03 && has('plan')) {
+      define(
+        'visible',
+        () => view.planVisible(e),
+        (v) => view.setPlanVisible(e, v !== false),
+      );
+    }
+    if (v03 && has('water')) {
+      define(
+        'color',
+        () => view.waterLook(e)?.color,
+        (v) => view.setWaterColor(e, colour(v, 'color')),
+      );
+      define(
+        'clarity',
+        () => view.waterLook(e)?.clarity,
+        (v) => {
+          if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) throw new TypeError('clarity must be a number more than 0');
+          view.setWaterClarity(e, v);
+        },
+      );
+    }
+    if (v03 && has('animate')) {
+      t['start'] = () => view.startAnimation(e);
+      t['stop'] = () => view.stopAnimation(e);
+      define('running', () => view.animationRunning(e));
+    }
     if (has('model', 'group', 'label', 'panel')) {
       define(
         'visible',
@@ -184,14 +228,15 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
       t['stop'] = () => (e.removed ? undefined : e.sound?.stop());
       define('playing', () => e.soundReport?.playing === true);
       // Where it comes from (milestone 21): null for a sound from everywhere; a place makes it a sound from there.
-      // Setting null is an error, as anything that is not a place is: a sound that has a place keeps one.
+      // In a 0.2 page, setting null is an error, as anything that is not a place is: a sound that has a place keeps
+      // one. In a 0.3 page, null takes its place away (milestone 25).
       define(
         'position',
         () => {
           const p = view.soundPosition(e);
           return p ? given(...p) : null;
         },
-        (v) => view.setSoundPosition(e, vector(v, 'position')),
+        (v) => view.setSoundPosition(e, v03 && v === null ? null : vector(v, 'position')),
       );
       define(
         'volume',
@@ -239,9 +284,11 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
   };
 
   const hitOut = (h: Hit | null) => (h ? { thing: thing(h.entry), point: h.point, normal: h.normal } : null);
-  const TYPES = new Set<SceneEvent['type']>(['click', 'key', 'frame', 'change', 'load']);
+  const TYPES = new Set<SceneEvent['type']>(v03 ? ['click', 'key', 'frame', 'change', 'load', 'place'] : ['click', 'key', 'frame', 'change', 'load']);
+  const typeNames = [...TYPES].map((t) => `"${t}"`);
+  const typeList = `${typeNames.slice(0, -1).join(', ')}, or ${typeNames[typeNames.length - 1]}`;
 
-  const viewer = Object.freeze({
+  const viewerMembers = {
     get position(): Readonly<Vec3> {
       return given(...view.viewerPosition);
     },
@@ -268,7 +315,20 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
     set turnSpeed(v: unknown) {
       view.viewerTurnSpeed = within(v, 10, 720, 'viewer.turnSpeed');
     },
-  });
+  };
+  // HoloML 0.3: where the viewer last arrived, and going to a place by its id.
+  if (v03) {
+    Object.defineProperties(viewerMembers, {
+      place: { enumerable: true, get: () => view.viewerPlace },
+      goTo: {
+        enumerable: true,
+        value: (id: unknown) => {
+          if (typeof id !== 'string' || !view.goToPlace(id)) throw new TypeError(`viewer.goTo(id): ${JSON.stringify(id)} is not the id of a place (a viewpoint)`);
+        },
+      },
+    });
+  }
+  const viewer = Object.freeze(viewerMembers);
 
   const api = Object.freeze({
     version: view.pageVersion,
@@ -289,7 +349,7 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
     },
     on: (type: unknown, listener: unknown) => {
       if (typeof type !== 'string' || !TYPES.has(type as SceneEvent['type'])) {
-        throw new TypeError('holoml.on(type, listener): type must be "click", "key", "frame", "change", or "load"');
+        throw new TypeError(`holoml.on(type, listener): type must be ${typeList}`);
       }
       if (typeof listener !== 'function') throw new TypeError('holoml.on(type, listener): listener must be a function');
       const call = listener as (e: unknown) => void;
@@ -298,6 +358,7 @@ export function installApi(view: HolomlView, ready: Promise<void>): void {
         else if (e.type === 'key') call(Object.freeze({ type: 'key', key: e.key, down: e.down, repeat: e.repeat }));
         else if (e.type === 'change') call(Object.freeze({ type: 'change', thing: thing(e.entry), value: e.value }));
         else if (e.type === 'load') call(Object.freeze({ type: 'load', thing: thing(e.entry), loaded: e.loaded }));
+        else if (e.type === 'place') call(Object.freeze({ type: 'place', place: e.place }));
         else call(Object.freeze({ type: 'frame', time: e.time, dt: e.dt }));
       });
     },
