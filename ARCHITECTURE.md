@@ -175,6 +175,12 @@ Rule 13 check, 2026-10-07 (start of milestone 25, HoloML 0.3; prompt
 167): 44.7.0 (2026-10-07) is still the newest stable release on npm.
 Nothing to upgrade.
 
+Rule 13 check, 2026-10-08 (start of milestone 26, privacy and data
+tools; prompt 177): 44.7.0 (2026-10-07) is still the newest stable
+release on npm, and the one installed; since then only 45.0.0-alpha
+releases (the newest 45.0.0-alpha.16, 2026-10-07), not a stable line.
+Nothing to upgrade.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |

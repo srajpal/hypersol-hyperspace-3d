@@ -37,7 +37,7 @@ Plan approved 2026-09-24.
 | 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Done (accepted, prompt 153) |
 | 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Done (accepted 2026-10-07, prompt 161) |
 | 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Done (accepted 2026-10-08, prompt 174) |
-| 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). (review, 2026-09-30) The history search index cleared of a deleted entry's pieces at once | Later (prompt 67, Q2 a; moved from 17, prompt 85, from 22, prompt 115, and from 23, prompt 128) |
+| 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). | Current (plan drafted, prompt 177; the review's item for the history search index was done by its D6) |
 | 27 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
 | 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
 | 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (was 29, prompt 129) |
@@ -5379,6 +5379,170 @@ and Hebrew, to show `lang` and `dir`.
   review of 2026-09-30 (M6) meant it to block them. Offered to the
   owner as a separate task, to be approved before it is built;
   approved and fixed in prompt 172 ("After milestone 25", below).
+
+## Milestone 26 — Privacy and data tools
+
+Status: Plan drafted (2026-10-08, prompt 177), waiting for the owner's
+approval. Rule 13 check done (ARCHITECTURE.md section 3: 44.7.0 is
+still the newest stable release). The roadmap's fourth item, the
+history search index cleared of a deleted entry's pieces at once, was
+done by the review of 2026-09-30 (D6: schema 5 gives the index its own
+secure-delete; scrub.test.ts checks it), so it is not in this plan.
+
+Goal: three tools from GitHub issues #24, #26, and #27. Pages are
+loaded over HTTPS unless the person chooses otherwise for a site. One
+site's stored data can be seen and cleared without touching the
+others. Bookmarks come in from another browser and go out to a file.
+Nothing new is sent over the network.
+
+### How it would work (proposed)
+
+1. **HTTPS-only browsing (#24).**
+   - An `http://` address is tried as `https://` first, for typed
+     addresses, links, and redirects alike, with the rest of the
+     address unchanged.
+   - A site that cannot be reached that way gets a card in place of
+     the page: "This site does not offer a secure connection". It has
+     two buttons, "Go back" and "Continue to the site (not secure)".
+     Nothing goes over plain HTTP until that button is clicked.
+   - Continuing makes an exception for that site. How long it lasts is
+     Q2. Exceptions are listed in Settings, each with Remove, and the
+     site panel shows a site's exception and can remove it.
+   - Private tabs keep their own exceptions, in memory only, gone when
+     the last private tab closes.
+   - Addresses that cannot have a certificate are never upgraded:
+     `localhost`, loopback and private network addresses, and
+     single-word host names. Q4 asks whether that is right.
+   - A setting turns HTTPS-only off. Its default is Q1.
+   - A redirect from https back to http on the same site counts as a
+     failure, and gets the card, so it cannot loop.
+2. **Per-site storage (#26).**
+   - A list of the sites that keep data in the normal profile: cookies,
+     site storage (local storage, IndexedDB, service workers, cache
+     storage, file systems), and cached files. For each site it gives
+     what can be known; Q5 says how much that is.
+   - Clear removes one site's cookies and site storage, and its cached
+     files, through Electron's `session.clearData` with that site's
+     origins. The words say exactly what is cleared. Bookmarks,
+     history, and saved passwords are kept.
+   - A site's open tabs are reloaded after a clear, so a page does not
+     write back what it still holds in memory.
+   - Private tabs are never listed (their data is in memory and cleared
+     when the last one closes, as now), and the list itself is never
+     saved.
+   - Where it lives is Q7. How sites are grouped is Q6.
+3. **Bookmark import and export (#27).**
+   - Import reads the bookmark file every browser exports (the
+     "Netscape bookmark file", HTML), chosen with the system's file
+     chooser. It is read as text by a small parser of our own: it is
+     never shown as a page, and nothing in it runs.
+   - A preview lists what would be added, and what is skipped and why
+     (already bookmarked, not an http(s) address, malformed), with Add
+     and Cancel. Nothing changes before Add.
+   - Duplicates: an address already bookmarked is skipped and keeps its
+     title. Folders: Q3.
+   - Export writes the same format, every bookmark with its title, its
+     date, and its icon, to a file chosen with the system's save
+     dialog. History, passwords, and other data are never included.
+   - Limits: a file of at most 10 MB and 20,000 bookmarks; past them,
+     the import stops and says so.
+   - Import and export are in the Library's Bookmarks tab.
+
+### Software to install
+
+None. The system file dialogs are Electron's own. Q6 b would add the
+Public Suffix List, a data file (MPL 2.0), copied into the repository
+with its SHA-256 and refreshed by a script run by hand, as the filter
+lists are; the script would be one new fetch, from publicsuffix.org.
+
+### Questions
+
+- Q1, HTTPS-only's default.
+  - a (recommended): on, for normal and private tabs. Most sites offer
+    HTTPS, and a privacy browser should not fall back to HTTP quietly.
+  - b: off by default, turned on in Settings.
+  - c: on in private tabs only.
+- Q2, how long an exception lasts.
+  - a (recommended): continuing from the card makes an exception until
+    the browser closes. A lasting one is set on purpose, in the site
+    panel ("Always allow HTTP for this site") or in Settings, and stays
+    until removed.
+  - b: every exception lasts 30 days, then the card shows again.
+  - c: every exception lasts until removed.
+- Q3, folders in imported bookmarks (bookmarks have none today).
+  - a (recommended): no folders. Imported bookmarks join the one list,
+    and the folder each came from is shown with it in the preview only.
+    Export writes one flat list.
+  - b: add folders to bookmarks (a schema change, and a tree in the
+    Library), kept on import and written on export.
+- Q4, which addresses are never upgraded.
+  - a (recommended): `localhost` and `*.localhost`, loopback addresses,
+    private network addresses (10/8, 172.16/12, 192.168/16, fc00::/7,
+    fe80::/10), and single-word host names (`router`, `nas`), as
+    Chrome does.
+  - b: loopback only; everything else upgraded.
+- Q5, what the site list shows of each site's storage.
+  - a (recommended): what the browser can count without guessing:
+    cookies (how many, and their size), and for each kind of site
+    storage whether the site has some. The words say that sizes of site
+    storage and cached files are not shown per site, as Electron does
+    not report them.
+  - b: also sizes on disk for the kinds Chromium keeps in a folder per
+    site (IndexedDB, file systems, service workers), read from the
+    profile folder: closer to a size, but it depends on Chromium's
+    folder layout, which may change.
+- Q6, how sites are grouped.
+  - a (recommended): by host name, as the shield and the zoom do. A
+    cookie set for a parent domain (`.example.com`) is listed under
+    that domain, and clearing a host says when such cookies stay.
+  - b: by registrable domain (`news.example.co.uk` under
+    `example.co.uk`), as Chromium and Firefox group them, using the
+    Public Suffix List (a new data file and a new fetch, above).
+- Q7, where per-site storage lives.
+  - a (recommended): a fourth tab in the Library, "Sites", beside
+    Bookmarks, History, and Passwords, with search. The site panel gets
+    a link to its site there.
+  - b: in Settings, under "Clear data".
+
+### Tasks
+
+- [ ] 1. HTTPS-only: the upgrade in the shield's one onBeforeRequest
+      listener, the redirect check, the card, the exceptions (normal
+      and private), the setting, the site panel, Settings.
+- [ ] 2. Per-site storage: the site list (cookies, site storage, cache),
+      clearing one site, reloading its tabs, the Library tab or the
+      Settings section (Q7).
+- [ ] 3. Bookmark import and export: the parser and the writer (unit
+      tested), the preview, the file dialogs, the limits.
+- [ ] 4. Checks PD1 to PD10: unit tests beside the code and
+      tests/e2e/m26.e2e.ts. HTTPS is tested with local fixtures: a test
+      host name mapped to 127.0.0.1 and a test certificate trusted only
+      in test runs, so nothing leaves the computer.
+- [ ] 5. Documents: README, ARCHITECTURE (decisions, files, the privacy
+      parts), docs/privacy.md (what is kept and where), AGENTS.md's
+      testing list, CHANGELOG, HANDOFF, TODO; #24, #26, and #27 closed
+      on merge; the screenshots (`MILESTONE=m26 pnpm screenshots`, the
+      previous set out of the tree) and the README's four pictures.
+
+### Checks (named PD, for privacy and data)
+
+| # | Check | Pass when |
+|---|---|---|
+| PD1 | HTTPS upgrade | A typed `http://` address, a link, and a redirect to http all load over HTTPS with the same path and query; local addresses (Q4) are left alone |
+| PD2 | No quiet fallback | A site without HTTPS gets the card, and no request goes over HTTP before "Continue"; Go back returns; an https-to-http redirect gets the card, not a loop |
+| PD3 | Exceptions | Continue makes the exception Q2 says; it is listed in Settings and the site panel; Remove ends it, and the card shows again; it outlives a restart only when lasting |
+| PD4 | Private tabs | A private tab's exception does not reach normal tabs, and is gone when the last private tab closes |
+| PD5 | The setting | With HTTPS-only off, http loads as before; the setting persists |
+| PD6 | The site list | Sites with cookies and site storage are listed, from several origins, with what Q5 says; private tabs' sites are not; the list is not saved |
+| PD7 | Clearing one site | Its cookies, local storage, and IndexedDB go, and its open tab is reloaded; another site's data, bookmarks, history, and passwords stay; a parent domain's cookie is handled as Q6 says |
+| PD8 | Bookmark import | The preview lists what is added and skipped; Add adds them; Cancel adds nothing; duplicates are skipped; Unicode and escaped titles are kept; a large file within the limits imports, and one past them stops with a message; malformed input is reported, and nothing in the file runs |
+| PD9 | Bookmark export | The file is in the standard format, and importing it into an empty profile gives the same bookmarks (a round trip); it holds nothing but bookmarks |
+| PD10 | Regression | Every earlier milestone's checks, the unit tests, and the automatic builds on Windows and Linux |
+
+### Done when
+
+- PD1 to PD10 pass, the documents and screenshots are updated, and the
+  owner accepts the milestone.
 
 ## After milestone 25 (2026-10-08, prompt 172)
 
