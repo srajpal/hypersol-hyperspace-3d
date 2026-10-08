@@ -3,7 +3,7 @@
 # except one that changes documents only (the *.md files at the top and
 # the docs folder, which no check reads): its parts are skipped and "All
 # checks" passes at once (owner, prompt 135).
-# macOS joins with the macOS release milestone. Each system runs the
+# macOS is not built (no macOS release is planned, prompt 172). Each system runs the
 # end-to-end checks in four parts side by side, so a build takes as long
 # as its longest part (two parts from milestone 21, owner, prompt 122,
 # Q7 a; four from prompt 134): parts 2 to 4 are the HoloML files listed

@@ -41,8 +41,6 @@ Plan approved 2026-09-24.
 | 27 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
 | 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
 | 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (was 29, prompt 129) |
-| 30 | Windows and Linux release 1.0 | Installers, the app logo and icons, signing, updates (the questions put off in prompt 55). (review, 2026-09-30) Licence texts and credits inside the app (the GPL's text for the filter lists, the examples' credits); how security updates reach users (how often Electron is raised, and how people get it); and a check that test mode and the test hooks are absent from a packaged app | Last (was 25; moved to the end, prompt 129: not ready for builds) |
-| 31 | macOS release | Signing, notarization, Mac checks. (review, 2026-09-30) The same three as milestone 30, on macOS | Last (was 26, prompt 129) |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS, and Android phones (Android tablets are milestone 24) | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
@@ -104,6 +102,16 @@ milestone 24, after HoloML for VS Code: HoloML 0.3 moved from 24 to
 25, privacy and data tools from 25 to 26, free camera from 26 to 27,
 lift to 3D from 27 to 28, polish from 28 to 29, and the installers
 from 29 and 30 to 30 and 31.
+
+On 2026-10-08 (prompt 172) the owner dropped milestones 30 and 31,
+the installers for Windows and Linux and for macOS: the project stays
+an open-source repository with no builds of its own to download, and
+anyone may fork it and make an installable build of their own
+(CONTRIBUTING.md, "Making your own build", says what one needs).
+Their other items go with them: licence texts and credits inside the
+app, how security updates reach users, and a check that test mode is
+absent from a packaged app (it is off whenever `app.isPackaged`).
+Polish (29) is the last milestone planned.
 
 - Milestone 25 (HoloML 0.3; 23 when this was written), the language
   engineer's list for its plan:

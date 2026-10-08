@@ -35,8 +35,10 @@ planned but untested. Apache 2.0. No telemetry.
 
 **Status (2026-09-30): experimental.** Released: the
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
-a pre-release, as source for developers (no installers yet; releases
-stay pre-releases until 1.0). Since then, HoloML 0.1 has
+a pre-release, as source for developers. There are no installers,
+and none are planned: the project stays a repository of source, and a
+fork may make an installable build of its own (see
+[CONTRIBUTING.md](CONTRIBUTING.md), "Making your own build"). Since then, HoloML 0.1 has
 been written down in its own repository (milestone 13), and this browser
 shows HoloML pages (milestones 14 to 21, accepted; not yet in a
 release), with limits for heavy scenes, keyboard and screen-reader
@@ -62,8 +64,8 @@ away, and compressed models.
 On 2026-09-30 both repositories were reviewed and the findings fixed,
 the security ones first ([CHANGELOG.md](CHANGELOG.md), Unreleased),
 except those [TODO.md](TODO.md) lists with the reason.
-Then privacy and data tools, and more of the 3D room;
-installers come last. See [Progress](#progress),
+Then privacy and data tools, and more of the 3D room; no installers
+(owner, 2026-10-08). See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
 ## The story
@@ -234,9 +236,9 @@ by AI coding agents directed by prompts. To follow it:
 Milestone 25, HoloML 0.3, is being built (above). 26, privacy and
 data tools: HTTPS-only browsing, per-site storage, and bookmark import
 and export. 27, free camera movement around the room. 28, pictures and
-3D models lifted out of ordinary pages. 29, polish. Last, 30 and 31,
-installers as 1.0 for Windows and Linux, then macOS. Later: phones, and
-VR. The full
+3D models lifted out of ordinary pages. 29, polish, the last
+planned (installers were dropped on 2026-10-08: anyone may fork the
+repository and make one). Later: phones, and VR. The full
 roadmap is in [TODO.md](TODO.md).
 
 ## Progress
@@ -335,7 +337,6 @@ engine with open filter lists; Vite and electron-vite to build; Vitest
 and Playwright to test. On Android (milestone 24): Kotlin,
 Android's own WebView, and Gradle with the Android Gradle Plugin; JUnit
 to test.
-Planned, not yet installed: electron-builder for installers (milestones 30 and 31).
 Reasons for each choice are in ARCHITECTURE.md.
 
 Known limitations: Electron ships no DRM module, so video from Netflix
@@ -350,7 +351,7 @@ pages still work without the room, and a notice says so.
 The Android app, for a tablet (milestone 24), has its own
 steps in [apps/android/README.md](apps/android/README.md).
 
-A developer preview (0.9.0): no installers yet, so build and run it from
+A developer preview (0.9.0): no installers, so build and run it from
 source. Checked on Windows 11 here, and on Windows and Linux (Ubuntu) by
 GitHub Actions for every pull request and every push to main; macOS is
 untested.

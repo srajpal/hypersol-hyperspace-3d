@@ -519,7 +519,8 @@ milestone; the current milestone's checks are defined in TODO.md):
   for screen readers). HL8 is every earlier milestone's checks; HL10 the
   full run, the Android app by hand, and the published sites.
 - Later milestones add: privacy and data tools (26), free camera (27),
-  lift to 3D (28), polish (29), and installers (30 and 31).
+  lift to 3D (28), and polish (29). No installers (dropped, prompt
+  172).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

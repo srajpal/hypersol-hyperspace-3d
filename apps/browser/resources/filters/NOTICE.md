@@ -28,6 +28,7 @@ pages. They are fetched only when `starter.bin` is built; the app's own
 daily refresh downloads the list texts and keeps the scripts it came
 with.
 
-`GPL-3.0.txt` and this file must ship alongside the app's installers
-(milestones 28 and 29). THIRD-PARTY.md at the repository root lists
+`GPL-3.0.txt` and this file must ship alongside any packaged build of
+the app (the project makes none; CONTRIBUTING.md, "Making your own
+build"). THIRD-PARTY.md at the repository root lists
 these and the app's other third-party parts.

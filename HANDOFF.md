@@ -64,12 +64,13 @@ state; this is a summary.
   2026-10-07); 25 HoloML 0.3, the features its check found missing
   (prompt 128, Q4 a); 26 privacy and data tools
   (HTTPS-only, per-site storage, bookmark import and export: #24, #26,
-  #27); then free camera (27), lift to 3D (28), and polish (29);
-  installers as 1.0 come last (30 for Windows and Linux, 31 for macOS;
-  moved to the end in prompt 129, as the browser is not ready for
-  builds), with mobile later (owner, prompt 67).
+  #27); then free camera (27), lift to 3D (28), and polish (29), the
+  last planned. The installers (30 and 31) were dropped in prompt 172:
+  the project stays source only, and a fork may package its own build
+  (CONTRIBUTING.md, "Making your own build").
 - The logo direction is chosen (concept 4d in
-  docs/branding/logo-concepts/); the real icons come with the installers.
+  docs/branding/logo-concepts/); there are no app icons yet (the
+  installers that would have brought them were dropped, prompt 172).
 - HyperSol, the company founded in 2001, no longer exists. This is a
   personal project honouring it, not marketed for now. Copyright: "The
   HyperSpace 3D Authors" and "The HoloML Authors" (AUTHORS files).
@@ -284,8 +285,8 @@ Worth knowing:
   process started the page's process with `--hypersol-test-run`
   (shared/test-run.ts), which it does in test mode alone, never in a
   packaged app; the page preload reads nothing from the environment
-  (ARCHITECTURE.md, Scene inspector). Milestone 30 keeps a check that
-  a packaged app has neither test mode nor the hooks.
+  (ARCHITECTURE.md, Scene inspector). Test mode is off whenever
+  `app.isPackaged`, so a fork's packaged build has neither.
 - The Scene inspector's choosing and picking reach the viewer as
   `select:<index>`, `pick-on`, and `pick-off` on the HoloML command
   channel (main/inspect/index.ts); `window.__holoml` in a normal run
@@ -609,18 +610,11 @@ to this repository for rules and the prompt log.
   and conformance samples (milestone 13).
 - License: Apache 2.0 for both repositories; the HoloML spec text also
   CC BY 4.0. Contributions come under Apache 2.0's own terms.
-- Versions: 0.9.0 is the source-only developer preview; 1.0 is
-  installers plus HoloML.
+- Versions: 0.9.0 is the source-only developer preview; no installers
+  are planned (prompt 172).
 
 ## Open items (need an owner decision when their milestone comes)
 
-- With the installers (milestone 30): Windows signing (Microsoft's
-  Artifact Signing recommended, or SignPath Foundation), updates
-  (automatic from GitHub Releases recommended), Linux formats (AppImage
-  and .deb recommended), the Windows installer type (per user
-  recommended).
-- With the macOS release (milestone 31): the Apple Developer Program for
-  signing and notarization.
 - Product gaps noted in the 2026-09-24 review and not yet scheduled:
   bookmark import and onboarding, a touch equivalent for closing tabs.
 
@@ -646,5 +640,5 @@ to this repository for rules and the prompt log.
 
 - HoloML's packages are not published to npm; the browser keeps a copy
   (packages/holoml, pnpm holoml:sync).
-- No installers, signing, or updates (milestones 30 and 31).
+- No installers, signing, or updates: none are planned (prompt 172).
 - No installers attached to releases: v0.9.0 is source only.

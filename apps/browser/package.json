@@ -5,6 +5,13 @@
   "private": true,
   "description": "HyperSol HyperSpace 3D, the Electron app.",
   "license": "Apache-2.0",
+  "author": "The HyperSpace 3D Authors",
+  "homepage": "https://github.com/srajpal/hypersol-hyperspace-3d",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/srajpal/hypersol-hyperspace-3d.git",
+    "directory": "apps/browser"
+  },
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
