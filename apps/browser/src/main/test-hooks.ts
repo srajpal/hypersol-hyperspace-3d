@@ -11,6 +11,8 @@ import type { AttachRecord } from './security';
 export interface TestLog {
   attaches: AttachRecord[];
   requests: string[];
+  /** Requests of the private session held while its old data was cleared (GHSA-h34m-3f58-vj6h). */
+  heldRequests: string[];
   /** Addresses of new-window requests that were blocked. */
   blockedPopups: string[];
   /** Right-click menus, in order; run() picks an entry by label. */
@@ -64,7 +66,7 @@ declare global {
 }
 
 export function installTestHooks(): TestLog {
-  const log: TestLog = { attaches: [], requests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave', refusedPermissions: [], layersSettled: {}, faviconEnds: [], captures: [] };
+  const log: TestLog = { attaches: [], requests: [], heldRequests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave', refusedPermissions: [], layersSettled: {}, faviconEnds: [], captures: [] };
   globalThis.__hypersolTest = log;
   // log.requests is filled by the privacy shield's request listener
   // (main/privacy/index.ts): Electron allows one listener per session.

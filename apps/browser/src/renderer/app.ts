@@ -1415,6 +1415,8 @@ export class App {
           if (this.openPanelName === 'settings') void this.options.settingsPanel.load();
           break;
         }
+        // Shown passwords are hidden at once, before the Library reloads (GHSA-vv44-hw63-7mm7).
+        if (command.what === 'passwords') this.options.library.passwordsChanged();
         // Visits and title changes come in bursts; answer once per burst.
         window.clearTimeout(this.dataChangeTimer);
         this.dataChangeTimer = window.setTimeout(() => {

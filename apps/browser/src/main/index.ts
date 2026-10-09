@@ -275,13 +275,13 @@ function createWindow(): void {
     // private session now, from the main process, since the shell can no
     // longer say so. On macOS the app keeps running, and a reopened window
     // must not find the old private data (PR #16 review).
-    endPrivate();
+    void endPrivate();
   });
   // A crashed shell takes its tabs with it too. It is reloaded once; if it
   // goes again within a minute the app says so and ends (main/start-up.ts).
   let lastCrashAt: number | null = null;
   win.webContents.on('render-process-gone', (_event, details) => {
-    endPrivate();
+    void endPrivate();
     if (details.reason === 'clean-exit' || win.isDestroyed()) return;
     const now = Date.now();
     if (afterShellCrash(lastCrashAt, now) === 'quit') {
@@ -317,16 +317,29 @@ function createWindow(): void {
   }
 }
 
-/** A clearing of the private session in progress; a new window waits for it. */
+/**
+ * A clearing of the private session in progress. A new window waits for
+ * it, and so does every request of the private session (the shield holds
+ * them, main/privacy), so a private tab opened meanwhile can neither read
+ * the old session's data nor write any that the clearing would then take
+ * (advisory GHSA-h34m-3f58-vj6h).
+ */
 let privateClearing: Promise<void> | null = null;
 
-/** Starts clearing the private session (window closed, shell gone); a new window waits for it. */
-function endPrivate(): void {
-  const clearing = forgetPrivateData().catch((e: unknown) => console.warn(`Couldn't clear private data: ${String(e)}`));
+/**
+ * Starts clearing the private session (the last private tab closed, the
+ * window closed, the shell gone). Clearings run one after another, so a
+ * new one never overlaps an old one.
+ */
+function endPrivate(): Promise<void> {
+  const clearing = (privateClearing ?? Promise.resolve())
+    .then(forgetPrivateData)
+    .catch((e: unknown) => console.warn(`Couldn't clear private data: ${String(e)}`));
   privateClearing = clearing;
   void clearing.finally(() => {
     if (privateClearing === clearing) privateClearing = null;
   });
+  return clearing;
 }
 
 /** The last private tab closed: its session's cookies, storage, and cache go. */
@@ -744,11 +757,13 @@ if (!app.requestSingleInstanceLock()) {
       ...(log
         ? {
             observe: (url: string) => log.requests.push(url),
+            onHeld: (url: string) => log.heldRequests.push(url),
             onDnsApplied: (mode: string, resolver: string) => log.dnsApplied.push({ mode, resolver }),
           }
         : {}),
       isShell,
-      onPrivateEnded: forgetPrivateData,
+      onPrivateEnded: endPrivate,
+      privateHold: () => privateClearing,
       ...(options.testPlainHosts ? { testPlainHosts: options.testPlainHosts } : {}),
     });
     privacy.start();

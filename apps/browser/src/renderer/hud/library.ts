@@ -51,7 +51,12 @@ export class HsLibrary extends LitElement {
   declare logins: SavedLogin[];
   /** Sites where passwords are never saved. */
   declare never: string[];
-  /** Passwords shown with Show, by saved sign-in id; forgotten when the panel closes. */
+  /**
+   * Passwords shown with Show, by saved sign-in id; forgotten when the
+   * panel closes and whenever saved passwords change (a sign-in deleted,
+   * saved, or updated), so an id used again never shows an old password
+   * (advisories GHSA-2mm9-j4r3-p2v2 and GHSA-vv44-hw63-7mm7).
+   */
   declare revealed: Record<number, string>;
   /** A passing message on the Passwords tab (copied; why passwords can't be saved), or the Bookmarks tab (imported, exported). */
   declare note: string;
@@ -64,6 +69,8 @@ export class HsLibrary extends LitElement {
   privacy: PrivacyClient | null = null;
   passwords: PasswordsClient | null = null;
   private request = 0;
+  /** Counts the times shown passwords were forgotten: a Show answered after one is dropped. */
+  private reveals = 0;
   /** A refresh is running; another was asked for meanwhile. */
   private running = false;
   private again = false;
@@ -218,11 +225,21 @@ export class HsLibrary extends LitElement {
     if (!this.open) return;
     this.open = false;
     this.confirming = false;
-    this.revealed = {};
+    this.forgetShown();
     this.note = '';
     this.importing = null;
     this.clearing = null;
     this.dispatchEvent(new CustomEvent('hs-panel-closed', { bubbles: true, composed: true }));
+  }
+
+  /** Saved passwords changed: every password shown is hidden again, and a Show still waiting is dropped. */
+  passwordsChanged(): void {
+    this.forgetShown();
+  }
+
+  private forgetShown(): void {
+    this.revealed = {};
+    this.reveals++;
   }
 
   /**
@@ -283,6 +300,11 @@ export class HsLibrary extends LitElement {
         if (ticket !== this.request) return;
         this.logins = logins;
         this.never = never;
+        // A password shown stays only while its sign-in is still listed.
+        const listed = new Set(logins.map((l) => l.id));
+        if (Object.keys(this.revealed).some((id) => !listed.has(Number(id)))) {
+          this.revealed = Object.fromEntries(Object.entries(this.revealed).filter(([id]) => listed.has(Number(id))));
+        }
         if (!status.available) this.note = status.message ?? '';
       } else {
         const found = await this.client.get({ op: 'history.search', query: this.query, limit: 500 });
@@ -545,7 +567,7 @@ export class HsLibrary extends LitElement {
       <button class="small" data-testid="pw-copy" aria-label=${`Copy the password for ${l.username} on ${siteName(l.origin)}`}
         @click=${() => this.copy(l.id)}>Copy</button>
       <button class="icon-button" data-testid="pw-delete" aria-label=${`Delete the saved password for ${l.username} on ${siteName(l.origin)}`}
-        @click=${() => this.act(() => this.passwords!.get({ op: 'delete', id: l.id }))}>×</button>
+        @click=${() => this.deleteLogin(l.id)}>×</button>
     </li>`;
   }
 
@@ -554,12 +576,21 @@ export class HsLibrary extends LitElement {
       this.revealed = Object.fromEntries(Object.entries(this.revealed).filter(([key]) => Number(key) !== id));
       return;
     }
+    const asked = this.reveals;
     try {
       const password = await this.passwords!.get({ op: 'reveal', id });
+      // Dropped if the panel closed, or saved passwords changed, before the answer came.
+      if (asked !== this.reveals || !this.open || !this.logins.some((l) => l.id === id)) return;
       this.revealed = { ...this.revealed, [id]: password };
     } catch (e) {
       this.note = e instanceof Error ? e.message : String(e);
     }
+  }
+
+  /** Deletes a saved sign-in; the passwords shown are hidden first. */
+  private deleteLogin(id: number): Promise<void> {
+    this.forgetShown();
+    return this.act(() => this.passwords!.get({ op: 'delete', id }));
   }
 
   private async copy(id: number): Promise<void> {
