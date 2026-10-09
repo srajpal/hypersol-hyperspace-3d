@@ -5634,8 +5634,8 @@ lists are; the script would be one new fetch, from publicsuffix.org.
 ## Milestone 27 — Free camera and room navigation
 
 Status: Current. Plan approved (2026-10-09, prompt 192) with the
-recommended answers to Q1 to Q6; build not yet approved. Drafted in
-prompt 191. Rule 13 check done (ARCHITECTURE.md section 3: 44.7.0 is
+recommended answers to Q1 to Q6; build approved (prompt 193). Drafted
+in prompt 191. Rule 13 check done (ARCHITECTURE.md section 3: 44.7.0 is
 still the newest stable release).
 
 Goal: leave the desk and look around the room, then come back to the
