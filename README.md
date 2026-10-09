@@ -62,11 +62,13 @@ Android, on a tablet. Milestone 25 adds HoloML 0.3: names
 for models, the language and direction of text, lighter models far
 away, and compressed models. Milestone 26 adds
 privacy and data tools: HTTPS-only browsing, per-site storage, and
-bookmark import and export.
+bookmark import and export. Milestone 27 lets you look around the room:
+leave the desk by dragging on the room, with the keys, or with a button,
+and come back to the page exactly as it was.
 On 2026-09-30 both repositories were reviewed and the findings fixed,
 the security ones first ([CHANGELOG.md](CHANGELOG.md), Unreleased),
 except those [TODO.md](TODO.md) lists with the reason.
-Then more of the 3D room; no installers
+Then lift to 3D and polish; no installers
 (owner, 2026-10-08). See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
@@ -138,6 +140,10 @@ An archived copy of the 2001 site is available through the
   searches, bookmarks, history, and a Library.
 - A layers view that lifts a page's sections and pictures to different
   depths.
+- Looking around the room (milestone 27): drag on the room, use the
+  arrows and W, A, S, D, or press the top bar's button (Ctrl+Shift+K) to
+  leave the desk; Escape brings you back, with the page as sharp as
+  before.
 - Privacy on by default: ad and tracker blocking with a shield, encrypted
   DNS, private tabs, and no telemetry. Pages load over HTTPS only,
   with a warning before any site is used over plain HTTP (milestone 26).
@@ -278,6 +284,7 @@ tablet: the room, tabs, live pages, and HoloML pages by touch.
 Milestone 25 adds HoloML 0.3: names, languages, and far and
 compressed models. Milestone 26 adds privacy and data tools:
 HTTPS-only browsing, clearing one site's data, and bookmark files.
+Milestone 27 adds looking around the room, and back to the desk.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 

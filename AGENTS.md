@@ -164,7 +164,7 @@ date given and grow with each milestone; TODO.md has the latest.
   prompt 161; `engines` asks for 24 or newer since prompt 164); pnpm
   12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 555 tests passed on 2026-10-08;
+- Unit: `pnpm test` (Vitest; 565 tests passed on 2026-10-09;
   each test may take up to 20 seconds, vitest.config.ts)
 - HyperSpace 3D for Android (milestone 24; first run 2026-10-05): after
   `pnpm build` and `pnpm --filter @hypersol/android build:web`, in
@@ -181,9 +181,10 @@ date given and grow with each milestone; TODO.md has the latest.
   a promise nobody awaits or catches is an error, since the review of
   2026-09-30)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about twenty minutes; 403 checks in 29 files, all passed
-  on this computer in the full run of 2026-10-08, milestone 26; TODO.md
-  has the details). On
+  against it (about twenty-five minutes; 421 checks in 31 files: in the
+  full run of 2026-10-09, milestone 27, 418 passed on this computer,
+  and of the three that failed two passed run again and C9's frame rate
+  is to be run again; TODO.md has the details). On
   this computer vitest's report leaves out what passing checks log (the
   load times, frame rates, and memory); `pnpm test:e2e
   --reporter=verbose` shows it, as the automatic builds do. Needs
@@ -548,8 +549,20 @@ milestone; the current milestone's checks are defined in TODO.md):
   one name (#66), and a hit's normal under a stretch (#67); each check
   fails without its fix (fixture pages
   tests/fixtures/holoml/fixes-189-*).
-- Later milestones add: free camera (27), lift to 3D (28), and polish
-  (29). No installers (dropped, prompt 172).
+- Milestone 27 checks FC1 to FC10 (TODO.md): looking around the room.
+  The camera's movement and limits are unit tests
+  (packages/scene-core/src/free-camera.test.ts); tests/e2e/m27.e2e.ts
+  (same command, in part 1) has entering and leaving (the button, the
+  shortcut, a drag, Escape, Home, the notice) with the page back where
+  it was to the pixel and clicks landing, the mouse and the wheel, the
+  keys and a changed shortcut, the limits, the page held while away (a
+  click comes back; nothing gives it the keyboard), the cards, reduced
+  motion, economy mode's cap, HoloML pages, a private tab, no WebGL 2,
+  screen readers, no frames while still, and the frame rate while
+  moving (logged in software, and skipped). FC10 is every earlier
+  milestone's checks.
+- Later milestones add: lift to 3D (28) and polish (29). No installers
+  (dropped, prompt 172).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

@@ -247,6 +247,15 @@
   says (#66); and a click's or an aim's normal stays square to the
   surface under a scale that differs by axis (#67).
 - The build and test tools' source-map-js is 1.2.2 (#68).
+- Looking around the room (milestone 27): leave the desk by dragging on
+  the room, with the top bar's new button, or with Ctrl+Shift+K
+  (changeable in Settings > Shortcuts), and move around it with the
+  mouse, the wheel, the arrows, W, A, S, D, + and -, and Page Up and
+  Page Down, within the room's limits. A notice at the top says how,
+  and Escape, Home, the button, or "Back to the desk" come back, with
+  the page exactly where it was and as sharp as before. While away the
+  page takes no clicks or keys; a click on it, or on a tab's card,
+  comes back first. Not on the Android app yet.
 
 After a review of both repositories on 2026-09-30 (the ids in brackets
 are the review's):

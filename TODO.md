@@ -5749,20 +5749,20 @@ so the room's limits and keys are its own.
 
 ### Tasks
 
-- [ ] 1. The room's free camera: entering and leaving, the movement (Q1),
+- [x] 1. The room's free camera: entering and leaving, the movement (Q1),
       the limits (Q6), the return to the exact desk pose, the horizon and
       glow kept in the world, and drawing only while moving.
-- [ ] 2. The page and the cards while away (Q2): input held, a click on
+- [x] 2. The page and the cards while away (Q2): input held, a click on
       the page or a card bringing the camera back, and the parallax,
       instrument panels, and layers view kept as at the desk.
-- [ ] 3. The controls: the top bar button, the shortcut (in Settings >
+- [x] 3. The controls: the top bar button, the shortcut (in Settings >
       Shortcuts), dragging on the room (Q5), the notice while away, the
       keys, announcements, reduced motion, economy mode, fill and full
       screen, and no WebGL 2.
-- [ ] 4. Checks FC1 to FC10: unit tests (the movement and its limits in
+- [x] 4. Checks FC1 to FC10: unit tests (the movement and its limits in
       packages/scene-core, beside parallax and layout) and
       tests/e2e/m27.e2e.ts.
-- [ ] 5. Documents: README, ARCHITECTURE (the room, the decisions),
+- [x] 5. Documents: README, ARCHITECTURE (the room, the decisions),
       AGENTS.md's testing list, CHANGELOG, HANDOFF, TODO; the screenshots
       (`MILESTONE=m27 pnpm screenshots`, the previous set out of the
       tree, with a view of the room from away among them) and the
@@ -5787,6 +5787,63 @@ so the room's limits and keys are its own.
 
 - FC1 to FC10 pass, the documents and screenshots are updated, and the
   owner accepts the milestone.
+
+### Decisions made while building
+
+- The movement is its own (packages/scene-core/src/free-camera.ts, pure
+  and unit tested), not the HoloML viewer's controls: the room's limits
+  and its return to exactly the desk are what it is about. At the desk
+  the camera is the fixed desk camera as before (the parallax); away,
+  the free camera places it.
+- The keys: the arrows turn; W and S (and + and -) come closer and go
+  further; A and D slide sideways; Page Up and Page Down rise and sink;
+  Shift moves three times as far; Home and Escape come back. A drag
+  turns by a quarter of a degree a pixel.
+- A limit added by check FC4 (Q6 a, "never behind the page"): turned to
+  one side with the pivot slid the other way, the camera passed the
+  page's plane beyond its edge, where the page shows its back. The
+  camera now stays in front of the plane by a fifth of the desk's
+  distance; the turn is held back first, then the pivot.
+- The page while away (Q2 a): its panel takes pointer events of its own,
+  so a class on the CSS layer holds them; and it is inert, so nothing
+  gives it the keyboard (a webview taking the keyboard tells the shell
+  nothing a check could rely on: test windows never take focus). A panel
+  that closes while away gives the keyboard back to the notice; back at
+  the desk, the page has it again if the notice had it.
+- The horizon band (the plan's step 5): at a wide angle a flat band at a
+  fixed place ended in the view. It now turns with the view, at the
+  same distance and height, so it reaches across the view as a horizon
+  does; the sun, the cards, the desk, and the floor keep their places in
+  the world.
+- The Android app shares the room: it is built with `lookAround: false`
+  (Q4 a), so a touch dragged across the room there does not start it,
+  and its top bar leaves the button out.
+- Checks changed because what they check changed: M7 counts the
+  shortcuts in Settings, 26 now with "Look around the room".
+
+### Results so far (Windows 11, 2026-10-09)
+
+- Unit tests: 565 pass (new: packages/scene-core/src/free-camera.test.ts,
+  9); lint and the type check are clean.
+- tests/e2e/m27.e2e.ts: FC1 to FC9 pass, 13 checks. FC9 measured 137
+  frames a second while looking around (graphics card); FC7 measured 23
+  in economy mode (at most 30).
+- FC10, the full end-to-end run: 418 of 421 passed (31 files). The
+  three that failed: M7 (the shortcut count, changed as above, then
+  passed); L9 (a search took 73 ms against 50 once, then passed run
+  again, with and without this milestone's code); and C9 (the frame
+  rate while the camera follows the pointer: 33 to 45 frames a second
+  against 50, in six runs, three with this milestone's code, 39 to 45,
+  and three without it, 37 to 42; this morning's full run passed C9 on
+  the same code without the milestone, so this computer draws more
+  slowly now than then, not because of the change). C9 is not changed;
+  it is to be run again.
+- The Android app: `pnpm --filter @hypersol/android build:web`, then
+  Gradle's unit tests and the build pass (JDK 21, the Android SDK); not
+  installed on the tablet (nothing it shows changes).
+- The screenshots (m27, 75; milestone 26's set out of the tree) and the
+  README's four pictures, looked at.
+- Not checked yet: `pnpm test:linux` with m27, and the automatic builds.
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 

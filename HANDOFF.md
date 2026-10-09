@@ -3,8 +3,9 @@
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-10-09 (milestones 1 to 26 accepted, milestone 26,
 privacy and data tools, on 2026-10-08, prompt 184; the next is 27,
-free camera, its plan approved 2026-10-09 (prompt 192), its build
-not yet; the fixes of 2026-10-09 below;
+free camera, its plan approved 2026-10-09 (prompt 192) and built
+(prompt 193), waiting for the owner's acceptance; the fixes of
+2026-10-09 below;
 the review's last items in TODO.md, "The review's last items". The
 roadmap is in TODO.md).
 
@@ -84,6 +85,25 @@ Both main branches are up to date: milestone 26 is merged here (#63,
 - Browser: https://github.com/srajpal/hypersol-hyperspace-3d (renamed
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
+
+## Milestone 27, free camera and room navigation (2026-10-09, prompts 191 to 193)
+
+Plan approved with the recommended answers (prompt 192), build approved
+(prompt 193), on the branch `m27-free-camera`. TODO.md, "Milestone 27",
+has the plan, the decisions made while building, and the results.
+
+- The movement and its limits: packages/scene-core/src/free-camera.ts
+  (unit tested), placed by renderer/scene/room.ts (lookAround,
+  lookTurn, lookSlide, lookZoom; the page held while away; a drag on the
+  room; the wheel; the horizon turning with the view).
+- The controls: the top bar's "Look around" button (hud/toolbar.ts),
+  the shortcut `look-around` (shared/shortcuts.ts, Ctrl+Shift+K), the
+  keys and Escape (renderer/app.ts, wireLook), and the notice
+  (hud/look-notice.ts). The Android app leaves it out (`lookAround:
+  false`, and the button in its NOT_YET list).
+- Checks FC1 to FC9 in tests/e2e/m27.e2e.ts; FC10 is the full run.
+- How to resume: the owner's look at it and acceptance; then the pull
+  request, and milestone 28 (lift to 3D).
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
