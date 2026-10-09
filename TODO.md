@@ -5664,9 +5664,11 @@ Results so far (Windows 11, 2026-10-09):
   tests/e2e/fixes-189.e2e.ts, 5 checks, pass.
 - holoml (pull request #44): 885 tests, lint, the type check, and the
   site's build pass; its automatic builds passed.
-- Not checked yet: the full end-to-end run, the copy of HoloML from
-  v0.3.1 (after holoml #44 merges and is tagged), and the automatic
-  builds of this pull request.
+- The full end-to-end run on Windows: 408 of 408 passed (30 files,
+  21 minutes), with these fixes and HoloML 0.3.0's copy.
+- Not checked yet: the copy of HoloML from v0.3.1 (after holoml #44
+  merges and is tagged), and the automatic builds of this pull
+  request.
 
 ## After milestone 25 (2026-10-08, prompt 172)
 
