@@ -661,7 +661,9 @@ to this repository for rules and the prompt log.
   with milestone 26.
 - No checks by hand are open: the owner cleared Y6 (milestone 22,
   the documentation read with Narrator) and HL10 (milestone 25, the
-  published sites and specification) on 2026-10-09 (prompt 186).
+  published sites and specification) on 2026-10-09 (prompt 186). The
+  documents' review of prompt 185 is merged (#65 here, holoml #41;
+  prompt 187).
   Proposed, not placed in a milestone: a run of the frame-rate
   and load-time budgets on a machine with a graphics card in the
   automatic builds (TODO.md, after the roadmap).
