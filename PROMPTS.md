@@ -2115,3 +2115,25 @@ Use the recommendations, approve the plan.
 ```text
 Build approved, go ahead.
 ```
+
+## 194 — 2026-10-09 · Claude Opus 5.5, high effort
+
+A screenshot of the sneaker store from the published site, open in the
+browser run from source: a list of "could not be loaded" problems over
+the scene.
+
+```text
+Went to https://srajpal.github.io/holoml/sneaker-store/index.holoml in
+the browser and got these:
+```
+
+Pasted: the list's lines, each a far shoe model that "could not be
+loaded" because the fetch for the Draco decoder
+(`hypersol-viewer://app/@fs/.../node_modules/.vite/libs/draco/gltf/draco_wasm_wrapper.js`)
+answered 404.
+
+## 195 — 2026-10-09 · Claude Opus 5.5, high effort
+
+```text
+#71 had some failures.
+```

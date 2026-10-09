@@ -5820,6 +5820,18 @@ so the room's limits and keys are its own.
   and its top bar leaves the button out.
 - Checks changed because what they check changed: M7 counts the
   shortcuts in Settings, 26 now with "Look around the room".
+- Found by the owner while trying the build (prompt 194), not part of
+  this milestone: in a development run (`pnpm dev`) the sneaker store's
+  far shoes (Draco) could not be loaded, as the dev server prepares
+  three's loaders in its own folder and the Draco and KTX2 loaders look
+  for their decoders beside themselves; and the KTX2 transcoder's host
+  page was looked for under the viewer's sources. The two loaders are
+  now served as they are (viewer-deps.mjs, VIEWER_UNPREPARED) and the
+  host is at the viewer's address's root in a development run too
+  (viewer/decoders.ts). The development-run check in m16 now loads the
+  compressed models' page as well: it fails without either fix (the
+  Draco box failed; then the KTX2 box never finished) and passes with
+  both. Built copies were not affected (HL4 passes).
 
 ### Results so far (Windows 11, 2026-10-09)
 

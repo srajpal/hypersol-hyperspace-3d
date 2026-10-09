@@ -26,6 +26,13 @@ export const COMPRESSION_EXTENSIONS: readonly string[] = ['KHR_draco_mesh_compre
  */
 const here = new URL(import.meta.url);
 const VIEWER_FILES = import.meta.env.DEV ? `${here.protocol}//${here.host}/` : new URL('.', import.meta.url).href;
+/**
+ * The KTX2 transcoder's host page, at the viewer's address's root. Built,
+ * the viewer's scripts are in assets/; in a development run this file's
+ * own address is its place in the sources, and a path from it led nowhere
+ * (owner, prompt 194).
+ */
+const KTX2_HOST = import.meta.env.DEV ? `${here.protocol}//${here.host}/ktx2-host.html` : new URL('../ktx2-host.html', import.meta.url).href;
 
 export interface Decoders {
   draco: DRACOLoader;
@@ -55,7 +62,7 @@ export function makeDecoders(renderer: WebGLRenderer, counted: (url: string) => 
   // Basis transcoder evaluate code: its workers run in the transcoder's host instead (ktx2-host.ts; owner, prompt
   // 170). Where the viewer is served from the page's own site (Android), three.js's own workers do.
   if (here.origin !== location.origin) {
-    const remote = remoteWorkers(new URL('../ktx2-host.html', import.meta.url).href);
+    const remote = remoteWorkers(KTX2_HOST);
     const init = ktx2.init.bind(ktx2);
     const loader = ktx2 as unknown as { workerConfig: unknown; transcoderBinary: ArrayBuffer };
     ktx2.init = () =>

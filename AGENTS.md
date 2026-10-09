@@ -351,7 +351,9 @@ milestone; the current milestone's checks are defined in TODO.md):
   links and colours, the keyboard and text view, reduced motion,
   efficiency, and credits (the load and frame-rate budgets are logged
   in software, and skipped). S1 is holoml's own unit test. Also a HoloML
-  page in a development run (the viewer from the dev server).
+  page in a development run (the viewer from the dev server), and since
+  prompt 194 compressed models there too (Draco, meshopt, and a KTX2
+  picture).
 - Milestone 17 checks T2 to T8 (same command, tests/e2e/m17.e2e.ts):
   HoloML 0.2 scripts (the scene API; inline, other-site, failing, and
   never-ending scripts; the browser answering within 200 ms beside a

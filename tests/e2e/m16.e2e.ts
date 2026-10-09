@@ -311,18 +311,21 @@ describe('HoloML pages in a development run (pnpm dev)', () => {
   // the viewer's address, so every HoloML page stayed blank. Here the dev
   // server is started on its own (Vite, as electron-vite starts it) and
   // the built app is pointed at it, in a throwaway profile, offline.
-  it('the showroom draws with the viewer served by the dev server', async () => {
+  it('the showroom and compressed models draw with the viewer served by the dev server', async () => {
     const req = createRequire(join(APP_DIR, 'package.json'));
     // Vite belongs to the browser package (tests do not import it directly).
     type DevServer = { listen(): Promise<unknown>; close(): Promise<void>; resolvedUrls: { local: string[] } | null };
     const vite = (await import(pathToFileURL(req.resolve('vite')).href)) as { createServer(options: object): Promise<DevServer> };
     // As electron.vite.config.ts sets it up: the viewer's imports prepared at start.
-    const { VIEWER_DEPS } = (await import(pathToFileURL(join(APP_DIR, 'viewer-deps.mjs')).href)) as { VIEWER_DEPS: string[] };
+    const { VIEWER_DEPS, VIEWER_UNPREPARED } = (await import(pathToFileURL(join(APP_DIR, 'viewer-deps.mjs')).href)) as {
+      VIEWER_DEPS: string[];
+      VIEWER_UNPREPARED: string[];
+    };
     const dev = await vite.createServer({
       root: join(APP_DIR, 'src/renderer'),
       configFile: false,
       logLevel: 'warn',
-      optimizeDeps: { include: VIEWER_DEPS },
+      optimizeDeps: { include: VIEWER_DEPS, exclude: VIEWER_UNPREPARED },
       server: { port: 0, host: '127.0.0.1' },
     });
     await dev.listen();
@@ -345,6 +348,26 @@ describe('HoloML pages in a development run (pnpm dev)', () => {
       const done = await waitFor('the showroom drawn in a development run', scene, (s) => s?.ready === true, 30_000);
       expect(done!.models).toHaveLength(11);
       expect(done!.models.every((m) => m === 'loaded')).toBe(true);
+      // Compressed models (milestone 25), whose decoders the dev server serves too: Draco, meshopt, and a KTX2
+      // picture. The Draco and KTX2 decoders were not found in a development run (owner, prompt 194).
+      const compressed = server.url('holoml/compressed/index.holoml');
+      await app.evaluate(({ webContents }, address) => {
+        const page = webContents.getAllWebContents().find((w) => w.getType() === 'webview' && w.getURL().includes('index.holoml'))!;
+        void page.loadURL(address);
+      }, compressed);
+      const models = () =>
+        app.evaluate(async ({ webContents }) => {
+          const page = webContents.getAllWebContents().find((w) => w.getType() === 'webview' && w.getURL().includes('compressed/index.holoml'));
+          return page
+            ? ((await page.executeJavaScript(
+                'window.__holoml ? { ready: window.__holoml.ready, models: window.__holoml.models().map((m) => m.state), pictures: window.__holoml.models().map((m) => Object.values(m.materials).filter((x) => x.map !== null).length) } : null',
+              )) as { ready: boolean; models: string[]; pictures: number[] } | null)
+            : null;
+        });
+      const squeezed = await waitFor('the compressed models in a development run', models, (s) => s?.ready === true, 30_000);
+      expect(squeezed!.models, JSON.stringify(squeezed)).toEqual(['loaded', 'loaded', 'loaded']);
+      // And the KTX2 box has its picture: a model whose picture could not be decoded still loads, without it.
+      expect(squeezed!.pictures[2], JSON.stringify(squeezed)).toBeGreaterThan(0);
     } finally {
       await app.close();
       await dev.close();

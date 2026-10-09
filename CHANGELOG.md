@@ -256,6 +256,11 @@
   the page exactly where it was and as sharp as before. While away the
   page takes no clicks or keys; a click on it, or on a tab's card,
   comes back first. Not on the Android app yet.
+- Fixed: in a development run (`pnpm dev`), models compressed with
+  Draco could not be loaded, and KTX2 pictures never finished (their
+  decoders were looked for in the dev server's own folder, and the
+  transcoder's host page at a place nothing served). Built copies of
+  the browser were not affected.
 
 After a review of both repositories on 2026-09-30 (the ids in brackets
 are the review's):
