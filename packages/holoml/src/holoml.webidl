@@ -1,5 +1,5 @@
 // Copied from the holoml repository (https://github.com/srajpal/holoml),
-// spec/holoml.webidl at v0.3.0. Apache License 2.0, The HoloML Authors.
+// spec/holoml.webidl at v0.3.1. Apache License 2.0, The HoloML Authors.
 // Do not edit here: change HoloML there and run pnpm holoml:sync.
 
 // HoloML 0.3: the scene API (SPEC.md section 10), in Web IDL. A page's

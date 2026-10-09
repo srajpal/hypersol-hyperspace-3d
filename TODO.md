@@ -5666,9 +5666,13 @@ Results so far (Windows 11, 2026-10-09):
   site's build pass; its automatic builds passed.
 - The full end-to-end run on Windows: 408 of 408 passed (30 files,
   21 minutes), with these fixes and HoloML 0.3.0's copy.
-- Not checked yet: the copy of HoloML from v0.3.1 (after holoml #44
-  merges and is tagged), and the automatic builds of this pull
-  request.
+- holoml #44 merged; tagged v0.3.1 at 51af846, a pre-release (prompt
+  190). The copy here is made from it (`pnpm holoml:sync v0.3.1
+  --examples v0.3.1`: the checker and the version; the example sites
+  unchanged). Then: the unit tests (556), lint, and the type check
+  pass, and m14, m15, m17, m18, m25, review-134-viewer, and fixes-189
+  pass, 115 checks.
+- Not checked yet: the automatic builds of pull request #69.
 
 ## After milestone 25 (2026-10-08, prompt 172)
 
