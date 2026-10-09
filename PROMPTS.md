@@ -2059,3 +2059,11 @@ PR #64 accepted.
 ```text
 #65 and holoml #41 merged. Record and wait.
 ```
+
+## 188 — 2026-10-09 · Claude Opus 5.5, high effort
+
+```text
+There are some new GitHub issues and private draft advisories. Please
+review both repos and give me a list of the things you see and what
+you will tackle in what order.
+```
