@@ -2015,3 +2015,18 @@ Q5 a is fine, keep going.
 ```text
 #63 has failures.
 ```
+
+## 183 — 2026-10-08 · Claude Opus 5.5, high effort
+
+```text
+Still 2 failures.
+```
+
+## 184 — 2026-10-08 · Claude Opus 5.5, high effort
+
+Accepts milestone 26 (privacy and data tools: HTTPS-only, the Sites
+tab, and bookmark import and export) after PR #63 merged.
+
+```text
+#63 merged, milestone 26 accepted.
+```
