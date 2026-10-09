@@ -1,11 +1,9 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-09 (milestones 1 to 26 accepted, milestone 26,
-privacy and data tools, on 2026-10-08, prompt 184; the next is 27,
-free camera, its plan approved 2026-10-09 (prompt 192) and built
-(prompt 193), waiting for the owner's acceptance; the fixes of
-2026-10-09 below;
+Last updated 2026-10-09 (milestones 1 to 27 accepted, milestone 27,
+free camera and room navigation, on 2026-10-09, prompt 196; the next
+is 28, lift to 3D, not yet planned; the fixes of 2026-10-09 below;
 the review's last items in TODO.md, "The review's last items". The
 roadmap is in TODO.md).
 
@@ -66,8 +64,9 @@ state; this is a summary.
   2026-10-07); 25 HoloML 0.3, the features its check found missing
   (prompt 128, Q4 a; accepted 2026-10-08, prompt 174); 26 privacy and data tools
   (HTTPS-only, per-site storage, bookmark import and export: #24, #26,
-  #27; accepted 2026-10-08, prompt 184); then free camera (27), lift to 3D (28), and polish (29), the
-  last planned. The installers (30 and 31) were dropped in prompt 172:
+  #27; accepted 2026-10-08, prompt 184); 27 free camera and room
+  navigation, looking around the room (accepted 2026-10-09, prompt
+  196); then lift to 3D (28) and polish (29), the last planned. The installers (30 and 31) were dropped in prompt 172:
   the project stays source only, and a fork may package its own build
   (CONTRIBUTING.md, "Making your own build").
 - The logo direction is chosen (concept 4d in
@@ -86,10 +85,11 @@ Both main branches are up to date: milestone 26 is merged here (#63,
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
 
-## Milestone 27, free camera and room navigation (2026-10-09, prompts 191 to 193)
+## Milestone 27, free camera and room navigation (2026-10-09, prompts 191 to 196)
 
-Plan approved with the recommended answers (prompt 192), build approved
-(prompt 193), on the branch `m27-free-camera`. TODO.md, "Milestone 27",
+Accepted 2026-10-09 (prompt 196). Plan approved with the recommended
+answers (prompt 192), build approved (prompt 193), on the branch
+`m27-free-camera`, merged as #71 with every automatic build passed. TODO.md, "Milestone 27",
 has the plan, the decisions made while building, and the results.
 
 - The movement and its limits: packages/scene-core/src/free-camera.ts
@@ -102,8 +102,12 @@ has the plan, the decisions made while building, and the results.
   (hud/look-notice.ts). The Android app leaves it out (`lookAround:
   false`, and the button in its NOT_YET list).
 - Checks FC1 to FC9 in tests/e2e/m27.e2e.ts; FC10 is the full run.
-- How to resume: the owner's look at it and acceptance; then the pull
-  request, and milestone 28 (lift to 3D).
+- Found while the owner tried it (prompt 194): compressed models in a
+  development run (`pnpm dev`), fixed in #71 (viewer-deps.mjs,
+  viewer/decoders.ts; m16's development-run check covers it).
+- How to resume: milestone 28, lift to 3D. Push first (rule 11), check
+  Electron's security releases (rule 13), then draft its plan and
+  questions in TODO.md for the owner's approval.
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
@@ -726,7 +730,8 @@ to this repository for rules and the prompt log.
    `MILESTONE=mN pnpm screenshots`, add them to docs/progress.md, take
    the previous desktop set out of the tree, and refresh the README's
    four with `pnpm screenshots:readme` (AGENTS.md, Working agreement).
-8. Next: milestone 27, free camera and room navigation. Push first
+8. Next: milestone 28, lift to 3D (images and 3D models on 2D pages
+   become objects). Push first
    (rule 11), check Electron's security releases (rule 13), then draft
    its plan and questions in TODO.md for the owner's approval; nothing
    is built before the plan and then the build are approved.

@@ -347,7 +347,7 @@ one.
 
 ![A bookmark file's preview in the Library: four bookmarks to add, with their folders, one skipped, and nothing added until Add](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/9b36abf685b520b3624e7424603ce5906c5aeca6/docs/screenshots/m26/78-bookmark-import-preview.png)
 
-**Milestone 27: looking around the room.** Leave the desk by dragging
+**Milestone 27: looking around the room** (accepted 2026-10-09). Leave the desk by dragging
 on the room, with the arrows and W, A, S, D, or with the top bar's new
 button (Ctrl+Shift+K), and move around the desk within the room; a
 notice says how, and Escape or "Back to the desk" brings the camera
