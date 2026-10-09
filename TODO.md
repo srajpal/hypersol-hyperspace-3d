@@ -5869,6 +5869,160 @@ so the room's limits and keys are its own.
   (prompt 196). L9 is noted to be watched, with C9 (to be run again on
   this computer).
 
+## Milestone 28 — Lift to 3D
+
+Status: Planned, waiting for the owner's approval (drafted 2026-10-09,
+prompt 197). Rule 13 check done (ARCHITECTURE.md section 3: 44.7.0 is
+still the newest stable release).
+
+Goal: pictures and 3D models on ordinary web pages become objects in
+the room. A picture lifts out of the page and stands in the room as a
+framed picture; a model a page shows or links stands in the room as a
+3D object you can turn and look at from every side (with milestone
+27's free camera too). Nothing is lifted without asking, and nothing
+the browser did not already have leaves the page without the owner's
+agreement (Q1, Q3).
+
+### What is there today (the parts this touches)
+
+- The page preload reports the pictures in view (img, video, canvas; at
+  least 16 pixels a side, up to 100), with their places and addresses
+  (preload/layers.ts, shared/layers.ts). The shell keeps them per tab
+  for this milestone (tab-view.ts), and nothing uses them yet. Pictures
+  inside frames, CSS background pictures, and inline SVG are not
+  reported.
+- The tab cards are meshes in the room with pictures captured from the
+  page (main/index.ts: capturePage, no network), hit by a ray
+  (room.ts). Electron can capture one rectangle of a page the same way.
+- No 3D model on an ordinary page is recognised. The HoloML viewer loads
+  glTF models in a page's own process, within limits (viewer/budget.ts:
+  32 MB a file, 2 million triangles, pictures up to 4096 pixels), from
+  the page's own site only, with its decoders from the browser itself;
+  the KTX2 transcoder runs in a sandboxed host of the viewer's own
+  address (viewer/decoders.ts).
+- The shell fetches nothing from the web (its content policy); the only
+  thing the browser fetches for a page on its own is the page's named
+  icon, through the page's own session after the shield (main/favicon.ts).
+
+### How it would work (proposed)
+
+1. **Lifting.** On a picture or a model, the right-click menu has "Lift
+   into the room". By Q2, a "Lift" button in the top bar (with a
+   shortcut) also lifts everything in view at once, up to 12 objects, so
+   it works from the keyboard. A lifted picture rises out of the page
+   where it is shown and settles beside the page, in an arc on the right
+   (as the tab cards are on the left), facing the desk.
+2. **Pictures** (Q1): captured from the page as it is drawn, the part in
+   view, at the screen's resolution: no new request, and exactly what
+   the page shows. A picture at least 48 pixels a side; a video lifts as
+   a still of its current frame; a canvas as it is now.
+3. **Models** (Q3): a page's `<model-viewer>` element, a `<model>`
+   element, or a link to a `.glb` or `.gltf` file is recognised by the
+   page preload and reported with the pictures. Lifted, the file is
+   fetched by the main process through the page's own session after the
+   shield (as the page's icon is), from the page's own site only, within
+   the HoloML viewer's limits, and decoded in a sandboxed frame of the
+   viewer's own address, which has no network and hands the room plain
+   shapes and pictures (as the KTX2 transcoder's host does). The room
+   draws it lit by its own lights, scaled to stand about as high as a
+   card.
+4. **Looking at them.** Hovering an object shows its name (the picture's
+   text or the model's file name); dragging it turns it; a click brings
+   it nearer, and again sends it back; with milestone 27's camera the
+   whole arc can be walked round. Each has a close button that puts it
+   back into the page.
+5. **Their life** (Q4): lifted objects belong to their tab's page. They
+   go when the page navigates or the tab closes, and when another tab
+   is in front they wait. They are kept in memory only, never saved; a
+   private tab's are the same.
+6. **The rest.** Not offered on a HoloML page (its scene is already 3D)
+   or without WebGL 2 (the menu entry and button say why). Reduced
+   motion: objects appear in place without rising. Economy mode: as now.
+   The layers view and lifting work together (a lifted picture is the
+   page's picture as drawn, without the layers view's lift).
+7. **Android** (Q5): unchanged in this milestone.
+
+### Software to install
+
+None. Three.js (installed) has the glTF loader the viewer uses already.
+
+### Questions
+
+- Q1, where a lifted picture's pixels come from.
+  - a (recommended): captured from the page as it is drawn: no new
+    request, and what you see is what lifts. A picture partly out of
+    view lifts as far as it shows; its sharpness is the screen's.
+  - b: fetched again from its address, at its full size, through the
+    page's own session and the shield (a new kind of request, as the
+    icon's): sharper, and whole even when partly out of view.
+- Q2, how objects are lifted.
+  - a (recommended): "Lift into the room" in the right-click menu for one,
+    and a top bar button and a shortcut that lift everything in view (up
+    to 12), so the keyboard alone can do it.
+  - b: the right-click menu only.
+- Q3, 3D models on pages.
+  - a (recommended): in this milestone, fetched by the main process
+    through the page's own session after the shield, from the page's
+    own site only, within the viewer's limits, and decoded in a
+    sandboxed frame (step 3). A new kind of request: made only when
+    asked, by "Lift".
+  - b: later; this milestone lifts pictures only, and recognises models
+    without lifting them.
+- Q4, how long lifted objects last.
+  - a (recommended): as long as their page: gone when it navigates or its
+    tab closes, never saved.
+  - b: kept for the browser's session as a collection beside the desk,
+    across pages (still never saved).
+- Q5, the Android app.
+  - a (recommended): unchanged in this milestone.
+  - b: lifting by a long press on the tablet too.
+
+### Tasks
+
+- [ ] 1. Finding what can be lifted: the picture report as it is, and
+      models (`<model-viewer>`, `<model>`, links to `.glb` and `.gltf`),
+      parsed and limited in the shell as the pictures are.
+- [ ] 2. Lifting pictures (Q1): the capture of one rectangle in the main
+      process (only for the shell, only of its own tab's page), the
+      objects in the room, rising out of the page, the arc, hover,
+      turning, nearer and back, close.
+- [ ] 3. Lifting models (Q3): the fetch through the page's session and
+      the shield, with the limits; the sandboxed decoding frame; the
+      models in the room.
+- [ ] 4. The controls (Q2): the right-click entry, the top bar button and
+      its shortcut, keyboard access and announcements; the states (HoloML
+      pages, no WebGL 2, reduced motion, economy mode, private tabs, the
+      page navigating, the tab closing or sleeping).
+- [ ] 5. Checks LT1 to LT10: unit tests beside the code and
+      tests/e2e/m28.e2e.ts, with fixture pages of pictures, a video, a
+      canvas, and models embedded and linked (the fixtures' own glTF
+      files, no network).
+- [ ] 6. Documents: README, ARCHITECTURE (the room, the decisions, what
+      is fetched and why), docs/privacy.md (what is captured, fetched,
+      and kept), AGENTS.md's testing list, CHANGELOG, HANDOFF, TODO; the
+      screenshots (`MILESTONE=m28 pnpm screenshots`, the previous set
+      out of the tree) and the README's four pictures.
+
+### Checks (named LT, for lift)
+
+| # | Check | Pass when |
+|---|---|---|
+| LT1 | Finding | Pictures (img, video, canvas) and models (`<model-viewer>`, `<model>`, links to `.glb`/`.gltf`) in view are found; a report that is malformed, too large, or names another scheme is refused |
+| LT2 | Lifting a picture | "Lift into the room" on a picture puts it in the room with the page's own pixels (compared with the page), rising from where it was shown; nothing is requested from the network (Q1 a) |
+| LT3 | Lifting everything | The top bar button and its shortcut lift every picture and model in view, up to 12, in the arc; again with more in view, still 12 |
+| LT4 | Lifting a model | An embedded and a linked model come into the room with their shapes and pictures; only the page's own site is asked, through the page's session and the shield; a file over a limit, from another site, or that cannot be decoded is refused with a notice, and the rest lift (Q3) |
+| LT5 | The decoding frame | The model is decoded in the sandboxed frame, which can reach no network (checked with a file that asks for an outside address) |
+| LT6 | Looking at them | Hover names an object; a drag turns it; a click brings it nearer and back; close puts it back; the free camera reaches them |
+| LT7 | Their life | They go when the page navigates or the tab closes, wait while another tab is in front, are never saved (the profile's files), and a private tab's go with it (Q4) |
+| LT8 | Other states | Not offered on HoloML pages or without WebGL 2 (saying why); reduced motion; economy mode; the layers view on |
+| LT9 | Keyboard and screen readers | Lifting by the keyboard alone; each object named; lifting and putting back announced |
+| LT10 | Regression | Every earlier milestone's checks, the unit tests, and the automatic builds on Windows and Linux |
+
+### Done when
+
+- LT1 to LT10 pass, the documents and screenshots are updated, and the
+  owner accepts the milestone.
+
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
 Five new issues (#66 to #68 here, #42 and #43 in holoml) and three
