@@ -2137,3 +2137,12 @@ answered 404.
 ```text
 #71 had some failures.
 ```
+
+## 196 — 2026-10-09 · Claude Opus 5.5, high effort
+
+Accepts milestone 27 (free camera and room navigation: looking around
+the room) after pull request #71 merged.
+
+```text
+#71 merged, milestone 27 accepted.
+```

@@ -33,7 +33,7 @@ a made-up sample page.*
 For Windows and Linux (checked by automatic tests on both); macOS is
 planned but untested. Apache 2.0. No telemetry.
 
-**Status (2026-10-08): experimental.** Released: the
+**Status (2026-10-09): experimental.** Released: the
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
 a pre-release, as source for developers. There are no installers,
 and none are planned: the project stays a repository of source, and a
