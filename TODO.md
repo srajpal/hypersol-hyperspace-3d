@@ -4085,7 +4085,7 @@ milestone ends (milestone 17's plan, Q5 a).
 
 ## Milestone 22 — HoloML documentation
 
-Status: Done, accepted 2026-10-07 (prompt 160: "checked the docs, very good"; Y6's reading with a screen reader by hand has no result recorded and is still the owner's to do). Built; checks ran from 2026-09-29. Planned (prompt 127): the owner asked for this
+Status: Done, accepted 2026-10-07 (prompt 160: "checked the docs, very good"; Y6's reading with a screen reader by hand cleared by the owner, 2026-10-09, prompt 186). Built; checks ran from 2026-09-29. Planned (prompt 127): the owner asked for this
 plan, and for HoloML's features to be checked while the documents are
 made, with a plan for anything missing; that check was done for the
 draft (below). The owner answered Q1 to Q7 with the recommendations and
@@ -5381,7 +5381,8 @@ and Hebrew, to show `lang` and `dir`.
   the tablet, the automatic builds, and the published sites: not
   checked yet when this was written. Since: the automatic builds passed
   (#59 and #60) and the tablet's checks passed (prompt 174); the
-  published sites checked by hand (HL10) are still the owner's to do.
+  published sites and specification checked by hand (HL10) were
+  cleared by the owner (2026-10-09, prompt 186).
 - Found while taking the screenshots, not part of this milestone:
   HoloML's content policy's `webrtc 'block'` is not a directive
   Chromium knows, so it is ignored (the console says so on every

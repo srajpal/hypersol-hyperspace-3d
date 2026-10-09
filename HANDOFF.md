@@ -135,8 +135,9 @@ and the results so far.
   Android build. Both pull requests merged (holoml #39, the browser
   #59), the automatic builds passed, and the clipboard checks passed
   when run again (prompt 172). The checks on the tablet
-  passed (prompt 174), and the owner accepted the milestone. Still to
-  do: the published sites checked by hand (Words in a room answers).
+  passed (prompt 174), and the owner accepted the milestone. The
+  published sites checked by hand (HL10): cleared by the owner
+  (2026-10-09, prompt 186).
   HoloML 0.3 is tagged v0.3.0 (holoml #40's merge, 64e4e3e; a
   pre-release, https://github.com/srajpal/holoml/releases/tag/v0.3.0,
   prompt 176), and the browser's copy of HoloML is made from the tag
@@ -385,8 +386,8 @@ Built (2026-09-29), on branches not yet merged:
   is pushed with the automatic builds in four parts, an "All checks"
   job, the skip for documents, and actions named by commit (fce1e63,
   pull request #39); the fixes are on `review-134-fixes`, made from it.
-- Still to do then: a screen reader by hand (Y6, the owner's; still
-  not recorded), the owner's acceptance (prompt 160), and the v0.2.1
+- Still to do then: a screen reader by hand (Y6, the owner's; cleared
+  2026-10-09, prompt 186), the owner's acceptance (prompt 160), and the v0.2.1
   tag on the owner's go (made as v0.2.2, a pre-release). Both projects are marked
   experimental (prompts 129 and 131): HoloML in its specification,
   README, and site, with its releases as pre-releases; the browser in
@@ -658,10 +659,10 @@ to this repository for rules and the prompt log.
   onboarding, and a touch equivalent for closing tabs on the desktop
   (the Android app has one: a swipe on a card). Bookmark import came
   with milestone 26.
-- Checks by hand still open for the owner: Y6 (milestone 22, the
-  documentation read with Narrator) and HL10 (milestone 25, the
-  published sites and specification checked, Words in a room among
-  them). Proposed, not placed in a milestone: a run of the frame-rate
+- No checks by hand are open: the owner cleared Y6 (milestone 22,
+  the documentation read with Narrator) and HL10 (milestone 25, the
+  published sites and specification) on 2026-10-09 (prompt 186).
+  Proposed, not placed in a milestone: a run of the frame-rate
   and load-time budgets on a machine with a graphics card in the
   automatic builds (TODO.md, after the roadmap).
 
