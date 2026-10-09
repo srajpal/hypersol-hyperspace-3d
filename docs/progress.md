@@ -331,8 +331,7 @@ Words in a room, shows the languages.
 
 ![Harbour Loft with the instrument panel: the Scene part shows the page's description and the sofa chosen, outlined in the scene, its models named Window and Small window in the tree](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/8fc14842d7bab690822d4a83244537051cc13734/docs/screenshots/m25/75-holoml-inspector-names.png)
 
-**Milestone 26: privacy and data tools** (built 2026-10-08; being
-checked). Pages load over HTTPS only: a site that does not offer it
+**Milestone 26: privacy and data tools** (accepted 2026-10-08). Pages load over HTTPS only: a site that does not offer it
 gets a card before anything goes over plain HTTP, and continuing
 allows it until the browser closes (or for good, from the site panel
 or Settings). The Library's new Sites tab shows each site's cookies and

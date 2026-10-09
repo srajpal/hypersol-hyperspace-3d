@@ -60,7 +60,7 @@ through with 30 fish swimming over and around you, and completes HoloML
 Milestone 23 adds HoloML for VS Code, and milestone 24 HyperSpace 3D for
 Android, on a tablet. Milestone 25 adds HoloML 0.3: names
 for models, the language and direction of text, lighter models far
-away, and compressed models. Milestone 26, being built, adds
+away, and compressed models. Milestone 26 adds
 privacy and data tools: HTTPS-only browsing, per-site storage, and
 bookmark import and export.
 On 2026-09-30 both repositories were reviewed and the findings fixed,
@@ -240,8 +240,7 @@ by AI coding agents directed by prompts. To follow it:
 
 ## What comes next
 
-Milestone 26, privacy and data tools (HTTPS-only browsing, per-site
-storage, and bookmark import and export), is being built. Next, 27,
+Next, 27,
 free camera movement around the room. 28, pictures and
 3D models lifted out of ordinary pages. 29, polish, the last
 planned (installers were dropped on 2026-10-08: anyone may fork the
@@ -250,7 +249,7 @@ roadmap is in [TODO.md](TODO.md).
 
 ## Progress
 
-Twenty-five milestones are done and accepted: 1 to 25.
+Twenty-six milestones are done and accepted: 1 to 26.
 Milestones 1 to 11 built the browser: a live page on a tilted panel in
 the 3D room, tabs as cards, bookmarks and history, ad and tracker
 blocking with encrypted DNS, the layers view, two themes, an instrument
@@ -277,7 +276,8 @@ repository: syntax colours, mistakes as you type, suggestions, and
 help on hover. Milestone 24 adds HyperSpace 3D for Android, for a
 tablet: the room, tabs, live pages, and HoloML pages by touch.
 Milestone 25 adds HoloML 0.3: names, languages, and far and
-compressed models.
+compressed models. Milestone 26 adds privacy and data tools:
+HTTPS-only browsing, clearing one site's data, and bookmark files.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 

@@ -37,7 +37,7 @@ Plan approved 2026-09-24.
 | 23 | HoloML for VS Code | An extension that helps people write `.holoml` files in VS Code and editors built on it: colours for the syntax, mistakes underlined as you type, suggestions, help on hover, the outline and folding, and end tags kept in step with start tags; installed by hand from a file, not published; no live preview (prompt 146) | Done (accepted, prompt 153) |
 | 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Done (accepted 2026-10-07, prompt 161) |
 | 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Done (accepted 2026-10-08, prompt 174) |
-| 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). | Current (plan approved with the recommended answers, prompt 178; build approved, prompt 179; the review's item for the history search index was done by its D6) |
+| 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). | Done (accepted 2026-10-08, prompt 184; the review's item for the history search index was done by its D6) |
 | 27 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
 | 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
 | 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (was 29, prompt 129) |
@@ -5382,7 +5382,8 @@ and Hebrew, to show `lang` and `dir`.
 
 ## Milestone 26 — Privacy and data tools
 
-Status: Plan approved (2026-10-08, prompt 178) with the recommended
+Status: Accepted 2026-10-08 (prompt 184), after pull request #63
+merged. Plan approved (2026-10-08, prompt 178) with the recommended
 answers to Q1 to Q7. Build approved (prompt 179). Rule 13
 check done (ARCHITECTURE.md section 3: 44.7.0 is
 still the newest stable release). The roadmap's fourth item, the
@@ -5519,7 +5520,7 @@ lists are; the script would be one new fetch, from publicsuffix.org.
       tests/e2e/m26.e2e.ts. HTTPS is tested with local fixtures: a test
       host name mapped to 127.0.0.1 and a test certificate trusted only
       in test runs, so nothing leaves the computer.
-- [ ] 5. Documents: README, ARCHITECTURE (decisions, files, the privacy
+- [x] 5. Documents: README, ARCHITECTURE (decisions, files, the privacy
       parts), docs/privacy.md (what is kept and where), AGENTS.md's
       testing list, CHANGELOG, HANDOFF, TODO; #24, #26, and #27 closed
       on merge; the screenshots (`MILESTONE=m26 pnpm screenshots`, the
@@ -5615,7 +5616,9 @@ lists are; the script would be one new fetch, from publicsuffix.org.
   within 15 seconds of 5 and Q. It had not failed in the fifty failed
   builds before, passes here drawn in software (twice), and this
   milestone touches nothing of HoloML pages; run again, as a flaky
-  check, and noted to be watched.
+  check, and noted to be watched. The second try passed, and every
+  part with it; #63 merged, closing #24, #26, and #27, and the owner
+  accepted the milestone (prompt 184).
 
 ## After milestone 25 (2026-10-08, prompt 172)
 

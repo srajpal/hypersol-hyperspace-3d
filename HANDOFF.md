@@ -1,10 +1,9 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-08 (milestones 1 to 25 accepted, milestone 25,
-HoloML 0.3, on 2026-10-08, prompt 174; what followed it in TODO.md,
-"After milestone 25"; the next is 26, privacy and data tools, not yet
-planned; the review's last items in
+Last updated 2026-10-08 (milestones 1 to 26 accepted, milestone 26,
+privacy and data tools, on 2026-10-08, prompt 184; the next is 27,
+free camera, not yet planned; the review's last items in
 TODO.md, "The review's last items". The roadmap is in TODO.md).
 
 ## Where things stand
@@ -64,7 +63,7 @@ state; this is a summary.
   2026-10-07); 25 HoloML 0.3, the features its check found missing
   (prompt 128, Q4 a; accepted 2026-10-08, prompt 174); 26 privacy and data tools
   (HTTPS-only, per-site storage, bookmark import and export: #24, #26,
-  #27); then free camera (27), lift to 3D (28), and polish (29), the
+  #27; accepted 2026-10-08, prompt 184); then free camera (27), lift to 3D (28), and polish (29), the
   last planned. The installers (30 and 31) were dropped in prompt 172:
   the project stays source only, and a fork may package its own build
   (CONTRIBUTING.md, "Making your own build").
@@ -85,8 +84,11 @@ holoml's #19 merged, 2026-09-29):
 
 ## Milestone 26, privacy and data tools (2026-10-08, prompts 177 to 179)
 
-On the branch m26-privacy-data. Plan approved with the recommended
-answers (prompt 178), build approved (prompt 179). TODO.md, "Milestone
+Accepted 2026-10-08 (prompt 184). Built on the branch m26-privacy-data,
+merged as #63, which closed #24, #26, and #27; every automatic build
+passed (T6 once only on a second try, noted in TODO.md to be watched).
+Plan approved with the recommended answers (prompt 178), build approved
+(prompt 179). TODO.md, "Milestone
 26", has the plan, the decisions made while building (among them:
 Q5's "whether a site has some" storage cannot be known from Electron,
 and the owner kept Q5 a as built, prompt 181), and the results.
