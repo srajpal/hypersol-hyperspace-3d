@@ -1,7 +1,7 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-08 (milestones 1 to 26 accepted, milestone 26,
+Last updated 2026-10-09 (milestones 1 to 26 accepted, milestone 26,
 privacy and data tools, on 2026-10-08, prompt 184; the next is 27,
 free camera, not yet planned; the review's last items in
 TODO.md, "The review's last items". The roadmap is in TODO.md).
@@ -55,7 +55,7 @@ state; this is a summary.
   125; merged in holoml, #19, and the browser, #38; published at
   https://srajpal.github.io/holoml/aquarium/; HoloML 0.2 released as
   v0.2.0, https://github.com/srajpal/holoml/releases/tag/v0.2.0, and
-  its third edition as v0.2.2, 2026-10-07)); 22 documentation for HoloML to recognised standards (prompt
+  its third edition as v0.2.2, tagged 2026-10-01 and released 2026-10-07)); 22 documentation for HoloML to recognised standards (prompt
   115; accepted 2026-10-07, prompt 160); 23 HoloML for VS Code, an extension
   kept in holoml and installed by hand (prompt 146; plan approved with
   the recommended answers, 2026-10-02; accepted 2026-10-05, prompt
@@ -75,8 +75,9 @@ state; this is a summary.
   HyperSpace 3D Authors" and "The HoloML Authors" (AUTHORS files).
 
 Two repositories, kept as sibling folders (never one inside the other).
-Both main branches have milestones 19 to 21 (the browser's #38 and
-holoml's #19 merged, 2026-09-29):
+Both main branches are up to date: milestone 26 is merged here (#63,
+2026-10-08), and HoloML 0.3 in holoml (#39, released as v0.3.0 with
+#40):
 
 - Browser: https://github.com/srajpal/hypersol-hyperspace-3d (renamed
   from hypersol-websurfer-3d; GitHub redirects the old address)
@@ -134,8 +135,9 @@ and the results so far.
   Android build. Both pull requests merged (holoml #39, the browser
   #59), the automatic builds passed, and the clipboard checks passed
   when run again (prompt 172). The checks on the tablet
-  passed (prompt 174), and the owner accepted the milestone. Still to
-  do: the published sites checked by hand (Words in a room answers).
+  passed (prompt 174), and the owner accepted the milestone. The
+  published sites checked by hand (HL10): cleared by the owner
+  (2026-10-09, prompt 186).
   HoloML 0.3 is tagged v0.3.0 (holoml #40's merge, 64e4e3e; a
   pre-release, https://github.com/srajpal/holoml/releases/tag/v0.3.0,
   prompt 176), and the browser's copy of HoloML is made from the tag
@@ -163,7 +165,7 @@ Accepted 2026-10-07 (prompt 161). What follows is from the build
 The browser on the owner's Android tablet, in apps/android: a Kotlin
 app on Android's own WebView. Plan approved with the recommended
 answers and the build tools (prompt 155); built 2026-10-05 on the
-branch `m24-android` (not yet pushed). TODO.md, milestone 24, has the
+branch `m24-android` (since merged, #53). TODO.md, milestone 24, has the
 plan, the decisions made while building, and the results so far.
 
 - How it works: the desktop's own room, top bar, start panel, and
@@ -219,9 +221,10 @@ made while building, and the results so far.
   2026-10-05). holoml's CI runs them in a downloaded VS Code 1.96.0 on
   Windows and Linux.
 - The checks by hand (Z1 in Cursor, Z3's indentation, Z9's session)
-  were done by the owner on 2026-10-05. Next: the owner's acceptance.
+  were done by the owner on 2026-10-05. Accepted 2026-10-05 (prompt
+  153).
 
-## The review of 2026-09-30, in progress (prompts 134 and 135)
+## The review of 2026-09-30, done (prompts 134 and 135)
 
 The owner asked for a thorough review of both repositories and the
 automatic builds (prompt 134), then for its recommendations to be taken
@@ -233,7 +236,8 @@ repository's root on the owner's computer and is not committed: it
 named weaknesses before they were fixed. Where it is kept is the
 owner's decision.
 
-Where the work is (nothing here is pushed yet):
+Where the work was (nothing was pushed yet when this was written; all
+of it is merged since, #39 and #45, and holoml's #21):
 
 - Browser: branch `review-134-fixes`, made from `m22-holoml-docs`
   (pull request #39). Merged into it, in two waves: the main process
@@ -298,10 +302,11 @@ review"). The example sites' copy is from holoml's main (267e66e).
 How to resume:
 
 1. A GitHub release for v0.2.2 (a pre-release, like 0.2's) is the
-   owner's to make; the tag is pushed.
+   owner's to make; the tag is pushed. (Done, prompt 163.)
 2. Publish or close the draft advisories as the owner decides, and
    take the owner's decisions listed under "Deliberately not done" in
-   TODO.md.
+   TODO.md. (Done: the advisories published 2026-10-07; the decisions
+   in TODO.md, "The review's last items", prompt 160.)
 
 Worth knowing:
 
@@ -340,7 +345,7 @@ Worth knowing:
 - `pnpm lint` takes about half a minute now that three of its rules
   need the types (eslint.config.js).
 
-## Milestone 22, in progress (2026-09-29, prompts 127 and 128)
+## Milestone 22, accepted (2026-09-29 to 2026-10-07, prompts 127 to 160)
 
 The plan and its checks (Y1 to Y10) are in TODO.md, "Milestone 22 —
 HoloML documentation". The owner answered Q1 to Q7 with the
@@ -381,9 +386,9 @@ Built (2026-09-29), on branches not yet merged:
   is pushed with the automatic builds in four parts, an "All checks"
   job, the skip for documents, and actions named by commit (fce1e63,
   pull request #39); the fixes are on `review-134-fixes`, made from it.
-- Still to do: a screen reader by hand (Y6, the owner's),
-  the owner's acceptance, and the v0.2.1 tag on
-  the owner's go (as a pre-release). Both projects are marked
+- Still to do then: a screen reader by hand (Y6, the owner's; cleared
+  2026-10-09, prompt 186), the owner's acceptance (prompt 160), and the v0.2.1
+  tag on the owner's go (made as v0.2.2, a pre-release). Both projects are marked
   experimental (prompts 129 and 131): HoloML in its specification,
   README, and site, with its releases as pre-releases; the browser in
   its README and About dialog.
@@ -614,8 +619,9 @@ to this repository for rules and the prompt log.
   since prompt 135), which the owner, as admin, may bypass (so the
   agreed direct pushes to main still work). TODO.md, "Branch
   protection", has the details.
-- Desktop first: Windows and Linux, then macOS; mobile later, as its own
-  project. Mouse, keyboard, and touch.
+- Desktop first: Windows and Linux, then macOS (not checked yet).
+  Android tablets in this repository (apps/android, milestone 24;
+  prompt 152); phones and iOS later. Mouse, keyboard, and touch.
 - Stack: Electron (the newest stable line; 44.7.0 since 2026-10-07),
   TypeScript, Three.js, Lit, SQLite through Node's node:sqlite,
   @ghostery/adblocker-electron, electron-vite, Vitest, Playwright. Node
@@ -650,7 +656,15 @@ to this repository for rules and the prompt log.
 ## Open items (need an owner decision when their milestone comes)
 
 - Product gaps noted in the 2026-09-24 review and not yet scheduled:
-  bookmark import and onboarding, a touch equivalent for closing tabs.
+  onboarding, and a touch equivalent for closing tabs on the desktop
+  (the Android app has one: a swipe on a card). Bookmark import came
+  with milestone 26.
+- No checks by hand are open: the owner cleared Y6 (milestone 22,
+  the documentation read with Narrator) and HL10 (milestone 25, the
+  published sites and specification) on 2026-10-09 (prompt 186).
+  Proposed, not placed in a milestone: a run of the frame-rate
+  and load-time budgets on a machine with a graphics card in the
+  automatic builds (TODO.md, after the roadmap).
 
 ## How to resume
 
@@ -668,7 +682,13 @@ to this repository for rules and the prompt log.
 6. One active session per working tree. A second session works in the
    other folder or waits.
 7. At the end of each milestone, save screenshots with
-   `MILESTONE=mN pnpm screenshots` and add them to docs/progress.md.
+   `MILESTONE=mN pnpm screenshots`, add them to docs/progress.md, take
+   the previous desktop set out of the tree, and refresh the README's
+   four with `pnpm screenshots:readme` (AGENTS.md, Working agreement).
+8. Next: milestone 27, free camera and room navigation. Push first
+   (rule 11), check Electron's security releases (rule 13), then draft
+   its plan and questions in TODO.md for the owner's approval; nothing
+   is built before the plan and then the build are approved.
 
 ## Not done yet, on purpose
 

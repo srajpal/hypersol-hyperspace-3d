@@ -5,8 +5,8 @@ usage counts. This page lists everything it keeps on your computer and
 everything it sends over the network. It is updated whenever that
 changes (AGENTS.md rule 9).
 
-Status: as of 2026-09-30 (after the review of that date): ad and
-tracker blocking and encrypted DNS are on by default. The layers view
+Status: as of 2026-10-08 (milestone 26): ad and tracker blocking,
+encrypted DNS, and HTTPS-only are on by default. The layers view
 and the instrument panel send nothing anywhere.
 
 ## Blocked by default
@@ -99,7 +99,7 @@ is run from source: a packaged app ignores its switch.)
 
 | What | File | When it is written | How to delete it |
 |---|---|---|---|
-| Bookmarks: each page's address, title, and small icon | `hypersol.sqlite` | When you press the star or Ctrl+D | Remove them in the Library, or press the star again |
+| Bookmarks: each page's address, title, and small icon | `hypersol.sqlite` | When you press the star or Ctrl+D, or choose Add after "Import bookmarks…" in the Library (the file you import is only read) | Remove them in the Library, or press the star again |
 | History: each page's address, title, and time of visit | `hypersol.sqlite` | When a tab arrives at a page; the same page again in the same tab (a reload) adds nothing | Delete entries in the Library, "Clear all history", or Settings > Clear browsing data |
 | Settings: search engine, what opens at startup, encrypted DNS mode, daily list updates on or off, sites where the shield is paused, whether pages open in the layers view, and the sites where you switched the layers view, the theme, the page tilt, the instrument panel's switches and its console's level, the zoom level of sites you zoomed, the size of the tab cards, whether tabs show as cards or as a list, economy mode, and when tabs go to sleep; and the window's size and place on the screen, and whether it was maximised, so it opens as you left it | `settings.json` | When you change a setting, pause the shield on a site, or switch the layers view on a page; the window's size half a second after you stop moving or resizing it, and when it closes | Delete the file; the defaults return. Settings > "Forget site choices" clears the layers view choices |
 | Filter lists from the last update, and when they were downloaded | `filters/engine.bin`, `filters/engine.json` | After a list update | Delete the folder; the starter copy included in the app is used |
