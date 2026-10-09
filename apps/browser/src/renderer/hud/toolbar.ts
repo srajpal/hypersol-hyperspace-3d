@@ -32,6 +32,9 @@ const icon = {
   stop: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>`,
   reload: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95M19 4v4h-4" /></svg>`,
   menu: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6h.01M12 12h.01M12 18h.01" /></svg>`,
+  look: html`<svg viewBox="0 0 24 24" aria-hidden="true">
+    <ellipse cx="12" cy="13" rx="9" ry="4" /><path d="M12 4v5" /><path d="M9.5 6.5 12 4l2.5 2.5" /><circle cx="12" cy="13" r="1.4" />
+  </svg>`,
   layers: html`<svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M12 3 3 8l9 5 9-5-9-5Z" /><path d="m3 12.5 9 5 9-5" /><path d="m3 17 9 5 9-5" />
   </svg>`,
@@ -58,6 +61,7 @@ const icon = {
  * address bar's "Search ... for" row), hs-back, hs-forward, hs-reload,
  * hs-stop, hs-new-tab, hs-site (the site button: open the site panel),
  * hs-zoom (detail: 1, -1, or 0 to reset), hs-instruments, hs-layers,
+ * hs-look-around (milestone 27: look around the room, or come back),
  * hs-text-view (a HoloML page's text view), hs-bookmark, and hs-menu
  * (detail: MenuAction).
  *
@@ -80,6 +84,9 @@ export class HsToolbar extends LitElement {
     private: { type: Boolean },
     downloading: { type: Boolean },
     canLayers: { type: Boolean },
+    lookAround: { type: Boolean },
+    canLookAround: { type: Boolean },
+    lookReason: { type: String },
     holoml: { type: Boolean },
     textView: { type: Boolean },
     site: { type: String },
@@ -106,6 +113,11 @@ export class HsToolbar extends LitElement {
   /** The layers view is on for the page in front (milestone 5). */
   declare layers: boolean;
   declare canLayers: boolean;
+  /** Looking around the room (milestone 27): the camera is away from the desk. */
+  declare lookAround: boolean;
+  declare canLookAround: boolean;
+  /** Why looking around is not offered now, or empty. */
+  declare lookReason: string;
   /** A HoloML page in front (milestone 15): the text view button shows. */
   declare holoml: boolean;
   declare textView: boolean;
@@ -178,6 +190,9 @@ export class HsToolbar extends LitElement {
     this.canBookmark = false;
     this.layers = false;
     this.canLayers = false;
+    this.lookAround = false;
+    this.canLookAround = false;
+    this.lookReason = '';
     this.instruments = false;
     this.zoom = 1;
     this.canZoom = false;
@@ -357,7 +372,8 @@ export class HsToolbar extends LitElement {
       position: relative;
     }
     .instruments-button[aria-pressed='true'],
-    .layers-button[aria-pressed='true'] {
+    .layers-button[aria-pressed='true'],
+    .look-button[aria-pressed='true'] {
       color: var(--hs-accent);
       background: color-mix(in srgb, var(--hs-accent) 18%, transparent);
     }
@@ -744,6 +760,23 @@ export class HsToolbar extends LitElement {
           @click=${() => this.fire('hs-layers')}
         >
           ${icon.layers}
+        </button>`
+          : nothing}
+        ${this.shows('look-around')
+          ? html`<button
+          class="look-button"
+          data-testid="look-around"
+          aria-label="Look around the room"
+          title=${this.lookReason
+            ? `Look around the room: ${this.lookReason}`
+            : this.lookAround
+              ? `Back to the desk (${this.keys['look-around'] ?? ''}, or Esc)`
+              : `Look around the room (${this.keys['look-around'] ?? ''})`}
+          aria-pressed=${this.lookAround ? 'true' : 'false'}
+          ?disabled=${!this.canLookAround}
+          @click=${() => this.fire('hs-look-around')}
+        >
+          ${icon.look}
         </button>`
           : nothing}
         ${this.holoml

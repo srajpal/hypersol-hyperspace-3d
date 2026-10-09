@@ -38,7 +38,7 @@ Plan approved 2026-09-24.
 | 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Done (accepted 2026-10-07, prompt 161) |
 | 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Done (accepted 2026-10-08, prompt 174) |
 | 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). | Done (accepted 2026-10-08, prompt 184; the review's item for the history search index was done by its D6) |
-| 27 | Free camera and room navigation | Move freely around the room | Later (moved before the installers, prompt 129; numbered 27 since 2026-10-05) |
+| 27 | Free camera and room navigation | Move freely around the room | Current (plan approved 2026-10-09, prompt 192; moved before the installers, prompt 129; numbered 27 since 2026-10-05) |
 | 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (numbered 28 since 2026-10-05) |
 | 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (numbered 29 since 2026-10-05; the last milestone planned, prompt 172) |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS, and Android phones (Android tablets are milestone 24) | Later |
@@ -5630,6 +5630,237 @@ lists are; the script would be one new fetch, from publicsuffix.org.
   check, and noted to be watched. The second try passed, and every
   part with it; #63 merged, closing #24, #26, and #27, and the owner
   accepted the milestone (prompt 184).
+
+## Milestone 27 — Free camera and room navigation
+
+Status: Current. Plan approved (2026-10-09, prompt 192) with the
+recommended answers to Q1 to Q6; build approved (prompt 193). Drafted
+in prompt 191. Rule 13 check done (ARCHITECTURE.md section 3: 44.7.0 is
+still the newest stable release).
+
+Goal: leave the desk and look around the room, then come back to the
+desk exactly as it was. Today the camera is fixed at the desk: it moves
+only a little with the pointer (the parallax, up to 24 units) and always
+looks at the page, from the one distance where the page is pixel-sharp
+(packages/scene-core/src/layout.ts). This milestone adds a way to move
+it freely, with the mouse, the keyboard, and a button, without ever
+leaving the page blurred or a click landing somewhere unexpected.
+
+### What is there today (the parts this touches)
+
+- The camera (renderer/scene/room.ts): Three.js, field of view 40°,
+  placed at (parallax x, parallax y, the pixel-sharp distance), looking
+  at the middle of the page. The page is a CSS 3D panel drawn with the
+  same camera; Chromium finds what a click hits through the 3D
+  transform, so clicks land from any angle, but text is sharp only from
+  the desk.
+- What assumes the desk: the page's size and lean (computePanelLayout),
+  the tab cards' arc (computeTabArc, in screen pixels), the horizon and
+  sun (at the camera's height), the instrument panels' drift and the
+  layers view's vanishing point (both fed by the parallax), and the
+  checks that click on the page (C2, C3, H6, M3, M4, R4).
+- Settings > Appearance > Page view: lean, its direction, "Room
+  movement with the pointer" (the parallax), space around the page,
+  "Flat and still", and "Default view".
+- Drawn only when something changes; economy mode caps frames at 30 and
+  turns the parallax off; reduced motion holds the camera still; a
+  HoloML page that fills the window is drawn flat.
+
+### How it would work (proposed)
+
+1. **Looking around.** A "Look around" button in the top bar, a
+   shortcut (Ctrl+Shift+K by default, changeable in Settings >
+   Shortcuts), and, by Q5, dragging on the room itself start it. The
+   camera then moves as Q1 says: by dragging, the wheel, and the keys
+   (the arrows and W, A, S, D to turn and move, + and - or the wheel to
+   come closer or go further, Page Up and Page Down to rise and sink).
+2. **Coming back.** Escape, Home, the button again, or "Back to the
+   desk" (a small notice at the top while away, which also says how to
+   come back) return the camera to the desk in a quarter of a second,
+   at once with reduced motion. Back at the desk the page is exactly
+   where it was, to the pixel, so it is sharp again.
+3. **Limits** (Q6). The camera stays in the room: above the floor, in
+   front of the far horizon, within a distance of the desk, and never
+   behind the page or inside a card.
+4. **The page while away** (Q2). The page stays as it is (it keeps
+   playing and loading) but takes no clicks or keys while the camera is
+   away; a click on it brings the camera back to the desk first.
+5. **The tab cards.** Clicking a card while away switches to its tab
+   and returns to the desk, as a card click does now. The cards, the
+   room, the horizon, and the glow keep their places in the world; the
+   horizon no longer follows the camera's height while away.
+6. **The other parts.** While away: the parallax is off, the instrument
+   panels and the layers view stay as they are at the desk, and the top
+   bar, menus, and panels work as usual (opening a panel does not bring
+   the camera back). Opening a HoloML page that fills the window brings the
+   camera back first; "Look around" is not offered there (pages cannot
+   go full screen yet: it is refused until milestone 29). Without WebGL 2 it is not offered (the button
+   says why).
+7. **Economy mode** keeps its cap of 30 frames a second while moving;
+   nothing is drawn while the camera is still, away or at the desk.
+8. **Keyboard and screen readers.** Every movement has keys; the button
+   has a name and a pressed state; entering and leaving are announced
+   ("Looking around the room. Escape returns to the desk."); while away
+   the keys go to the room, not the page.
+9. **Starting** (Q3): the browser always starts at the desk.
+10. **Android** (Q4): unchanged in this milestone; the tablet keeps its
+    tilt.
+
+### Software to install
+
+None. Three.js (already installed) has the maths needed; the movement
+is written for the room, as the HoloML viewer's is (viewer/controls.ts),
+so the room's limits and keys are its own.
+
+### Questions (answered with the recommendations, prompt 192)
+
+- Q1, how the camera moves.
+  - a (recommended): around the desk. Dragging turns the view around the
+    page's middle, the wheel comes closer or goes further, and the keys
+    also move it sideways and up and down. Hard to get lost, and the
+    page stays in sight.
+  - b: flying freely, as in a game: the mouse turns the head, W, A, S, D
+    move. More freedom, and easier to get lost in a room that is mostly
+    empty.
+  - c: both, with a switch between them.
+- Q2, the page while the camera is away.
+  - a (recommended): it takes no clicks or keys; a click on it brings the
+    camera back first. Nothing is typed or clicked at an angle where it
+    is hard to see, and the page's text is never read blurred.
+  - b: it stays live: clicks and keys reach it from any angle (Chromium
+    finds the target), and the camera comes back only when asked.
+- Q3, where the browser starts.
+  - a (recommended): always at the desk.
+  - b: where the camera was when the browser closed.
+- Q4, the Android app.
+  - a (recommended): unchanged in this milestone (it keeps its tilt);
+    touch gestures for the room can come with a later Android milestone.
+  - b: in this milestone too: two fingers turn the view, a pinch comes
+    closer, and a button returns to the desk.
+- Q5, dragging on the room.
+  - a (recommended): dragging on the empty room (not the page, not a
+    card, not the top bar) starts looking around, so the room invites
+    it; a plain click there still does nothing.
+  - b: only the button and the shortcut start it; dragging the room does
+    nothing, as now.
+- Q6, the limits.
+  - a (recommended): the room's (step 3), so the room always shows.
+  - b: none beyond the floor.
+
+### Tasks
+
+- [x] 1. The room's free camera: entering and leaving, the movement (Q1),
+      the limits (Q6), the return to the exact desk pose, the horizon and
+      glow kept in the world, and drawing only while moving.
+- [x] 2. The page and the cards while away (Q2): input held, a click on
+      the page or a card bringing the camera back, and the parallax,
+      instrument panels, and layers view kept as at the desk.
+- [x] 3. The controls: the top bar button, the shortcut (in Settings >
+      Shortcuts), dragging on the room (Q5), the notice while away, the
+      keys, announcements, reduced motion, economy mode, fill and full
+      screen, and no WebGL 2.
+- [x] 4. Checks FC1 to FC10: unit tests (the movement and its limits in
+      packages/scene-core, beside parallax and layout) and
+      tests/e2e/m27.e2e.ts.
+- [x] 5. Documents: README, ARCHITECTURE (the room, the decisions),
+      AGENTS.md's testing list, CHANGELOG, HANDOFF, TODO; the screenshots
+      (`MILESTONE=m27 pnpm screenshots`, the previous set out of the
+      tree, with a view of the room from away among them) and the
+      README's four pictures.
+
+### Checks (named FC, for free camera)
+
+| # | Check | Pass when |
+|---|---|---|
+| FC1 | Entering and leaving | The button, the shortcut, and (Q5) a drag on the room start it; Escape, Home, the button, and the notice end it; back at the desk the page's corners on screen are the same as before to the pixel, and clicks land as before (C2's grid) |
+| FC2 | The mouse | Dragging and the wheel move the camera as Q1 says, smoothly, and a plain click on the room still does nothing |
+| FC3 | The keys | Every movement by the keys alone; the keys do not reach the page while away; the shortcut is changeable and the changed one works |
+| FC4 | The limits | However far it is pushed (keys held, a long drag, the wheel), the camera stays above the floor, within the room's distance, and never behind the page (Q6) |
+| FC5 | The page while away | As Q2 says: with a, a click or a key on the page does not reach it and brings the camera back; the page keeps loading and playing meanwhile |
+| FC6 | The cards while away | A click on a card switches to its tab and returns to the desk; hovering and the rail's wheel work as at the desk |
+| FC7 | Other states | Reduced motion: no animation, jumps; economy mode: at most 30 frames a second while moving; a HoloML page that fills the window brings the camera back and does not offer it; without WebGL 2 the button is unavailable and says why; a private tab works the same |
+| FC8 | Screen readers | The button's name and pressed state; entering and leaving announced; the notice reachable by the keyboard |
+| FC9 | Efficiency | Nothing drawn while the camera is still, away or at the desk; frames while moving at the display's rate (with a graphics card; logged in software, and skipped); idle after returning |
+| FC10 | Regression | Every earlier milestone's checks (C2, C3, H6, M3, M4, and R4 among them, unchanged), the unit tests, and the automatic builds on Windows and Linux |
+
+### Done when
+
+- FC1 to FC10 pass, the documents and screenshots are updated, and the
+  owner accepts the milestone.
+
+### Decisions made while building
+
+- The movement is its own (packages/scene-core/src/free-camera.ts, pure
+  and unit tested), not the HoloML viewer's controls: the room's limits
+  and its return to exactly the desk are what it is about. At the desk
+  the camera is the fixed desk camera as before (the parallax); away,
+  the free camera places it.
+- The keys: the arrows turn; W and S (and + and -) come closer and go
+  further; A and D slide sideways; Page Up and Page Down rise and sink;
+  Shift moves three times as far; Home and Escape come back. A drag
+  turns by a quarter of a degree a pixel.
+- A limit added by check FC4 (Q6 a, "never behind the page"): turned to
+  one side with the pivot slid the other way, the camera passed the
+  page's plane beyond its edge, where the page shows its back. The
+  camera now stays in front of the plane by a fifth of the desk's
+  distance; the turn is held back first, then the pivot.
+- The page while away (Q2 a): its panel takes pointer events of its own,
+  so a class on the CSS layer holds them; and it is inert, so nothing
+  gives it the keyboard (a webview taking the keyboard tells the shell
+  nothing a check could rely on: test windows never take focus). A panel
+  that closes while away gives the keyboard back to the notice; back at
+  the desk, the page has it again if the notice had it.
+- The horizon band (the plan's step 5): at a wide angle a flat band at a
+  fixed place ended in the view. It now turns with the view, at the
+  same distance and height, so it reaches across the view as a horizon
+  does; the sun, the cards, the desk, and the floor keep their places in
+  the world.
+- The Android app shares the room: it is built with `lookAround: false`
+  (Q4 a), so a touch dragged across the room there does not start it,
+  and its top bar leaves the button out.
+- Checks changed because what they check changed: M7 counts the
+  shortcuts in Settings, 26 now with "Look around the room".
+- Found by the owner while trying the build (prompt 194), not part of
+  this milestone: in a development run (`pnpm dev`) the sneaker store's
+  far shoes (Draco) could not be loaded, as the dev server prepares
+  three's loaders in its own folder and the Draco and KTX2 loaders look
+  for their decoders beside themselves; and the KTX2 transcoder's host
+  page was looked for under the viewer's sources. The two loaders are
+  now served as they are (viewer-deps.mjs, VIEWER_UNPREPARED) and the
+  host is at the viewer's address's root in a development run too
+  (viewer/decoders.ts). The development-run check in m16 now loads the
+  compressed models' page as well: it fails without either fix (the
+  Draco box failed; then the KTX2 box never finished) and passes with
+  both. Built copies were not affected (HL4 passes).
+
+### Results so far (Windows 11, 2026-10-09)
+
+- Unit tests: 565 pass (new: packages/scene-core/src/free-camera.test.ts,
+  9); lint and the type check are clean.
+- tests/e2e/m27.e2e.ts: FC1 to FC9 pass, 13 checks. FC9 measured 137
+  frames a second while looking around (graphics card); FC7 measured 23
+  in economy mode (at most 30).
+- FC10, the full end-to-end run: 418 of 421 passed (31 files). The
+  three that failed: M7 (the shortcut count, changed as above, then
+  passed); L9 (a search took 73 ms against 50 once, then passed run
+  again, with and without this milestone's code); and C9 (the frame
+  rate while the camera follows the pointer: 33 to 45 frames a second
+  against 50, in six runs, three with this milestone's code, 39 to 45,
+  and three without it, 37 to 42; this morning's full run passed C9 on
+  the same code without the milestone, so this computer draws more
+  slowly now than then, not because of the change). C9 is not changed;
+  it is to be run again.
+- The Android app: `pnpm --filter @hypersol/android build:web`, then
+  Gradle's unit tests and the build pass (JDK 21, the Android SDK); not
+  installed on the tablet (nothing it shows changes).
+- The screenshots (m27, 75; milestone 26's set out of the tree) and the
+  README's four pictures, looked at.
+- On Linux (`pnpm test:linux` with m27, and m11 once): the first run
+  failed FC3 once (it read where the camera was going before the shell
+  had handled the key: the check now waits for each key's change), then
+  12 pass and FC9's frame rate is skipped (drawn in software, 13 frames
+  a second), in two runs; FC7 measured 19 in economy mode.
+- Not checked yet: the automatic builds.
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 

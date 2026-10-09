@@ -181,6 +181,11 @@ release on npm, and the one installed; since then only 45.0.0-alpha
 releases (the newest 45.0.0-alpha.16, 2026-10-07), not a stable line.
 Nothing to upgrade.
 
+Rule 13 check, 2026-10-09 (start of milestone 27, free camera; prompt
+191): 44.7.0 (2026-10-07) is still the newest stable release, and the
+one installed; since then only 45.0.0-beta.1 (2026-10-09), not a stable
+line. Nothing to upgrade.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |
@@ -208,7 +213,8 @@ Nothing to upgrade.
 | Spellchecker | Off by default | Electron otherwise downloads dictionaries from a CDN on Windows and Linux, contradicting the privacy statement. |
 | Default search engine | DuckDuckGo | Privacy-respecting default; changeable in Settings. |
 | Telemetry | None. No analytics, no crash reporter. | Brief requirement. |
-| Camera | Fixed desk view with subtle mouse parallax; parallax pauses while the pointer is over the page | Simple and predictable; targets never move under the cursor. Free movement is a later milestone. |
+| Camera | Fixed desk view with subtle mouse parallax; parallax pauses while the pointer is over the page | Simple and predictable; targets never move under the cursor. |
+| Looking around the room | Milestone 27 (owner, prompt 192, Q1 to Q6 a). The camera leaves the desk by the top bar's button, a shortcut (Ctrl+Shift+K, changeable), or a drag on the empty room (a press that moves 5 pixels; a plain click still does nothing), and moves around the desk: dragging and the arrows turn it around a pivot (the page's middle at first), the wheel, W and S, + and - bring it closer or further, A and D and Page Up and Page Down slide the pivot; Shift moves three times as far. It eases there in a quarter of a second, as the parallax does (packages/scene-core/src/free-camera.ts, unit tested). Limits (Q6 a): within 70° of the page's own facing, from 0.6 to 2.5 times the desk's distance, 40 units above the floor, and always in front of the page's plane, by a fifth of the desk's distance, even beyond its edge (found by check FC4: turned to one side with the pivot slid the other way, the camera passed the plane). While away the page is held (Q2 a): inert, with no pointer events (a class on the CSS layer, as the page's own panel takes them otherwise), so a click on it reaches the room and brings the camera back, and nothing can give it the keyboard; the notice at the top has the keyboard, says how to move, and has "Back to the desk"; a panel that closes gives the keyboard back to it. Escape (with nothing else open, before it would stop a loading page), Home, the button, a click on the page or on a card, and the notice bring the camera back; it is exactly the desk's place again (DESK), so the page is as sharp as before and clicks land as before (FC1). The parallax is off while away, and the instrument panels and the layers view keep their desk state. The horizon band turns with the view, at the same distance and height, so it reaches across the view from any angle; the sun, cards, desk, and floor keep their places. Reduced motion jumps; economy mode keeps its 30 frames a second; a HoloML page that fills the window brings the camera back and does not offer it (nor does a room without WebGL 2: the button says why). Always starts at the desk (Q3 a). The Android app leaves the button out (Q4 a) | The page is sharp only from the desk: its distance there makes one world unit one CSS pixel. A camera that orbits the desk keeps the page in sight and is hard to get lost with in a room that is mostly empty (Q1 a); holding the page while away means nothing is typed or clicked where it is hard to see (Q2 a). |
 | Window frame | Standard OS title bar | Reliable on all three OSes; a custom frame is considered in the theme milestone. |
 | Tab ownership | The shell owns the tabs: each tab is a `<webview>` the shell creates once and keeps in its page | Follows from the milestone 1 decision to show pages as webviews in the shell: a webview lives in the shell's page and reloads if moved, so the shell must own it. The main process keeps the jobs only it can do: shortcuts, new-window rules, the right-click menu, favicons, snapshots. Changed in milestone 2 from "TabManager in the main process"; confirmed with the milestone 2 approval (prompt 20). |
 | Keyboard shortcuts | Handled in the main process (before-input-event) for the shell and every page | Work wherever the keyboard focus is, including inside a page; the page never sees the shortcut keys. |
@@ -486,7 +492,9 @@ hypersol-hyperspace-3d/
                                controls.ts (dial, meter, readout, switch),
                                instruments.ts (the instrument panel),
                                room-message.ts (the notice without WebGL
-                               2), dismiss.ts (menus that close),
+                               2), look-notice.ts (the notice while
+                               looking around, milestone 27),
+                               dismiss.ts (menus that close),
                                dialog-focus.ts (Tab kept inside dialogs),
                                panel-styles.ts
           examples.ts, examples/
@@ -534,7 +542,9 @@ hypersol-hyperspace-3d/
                                JUnit tests in app/src/test
   packages/
     scene-core/                @hypersol/scene-core: room layout math,
-                               PagePanel interface, camera rig. No Electron
+                               PagePanel interface, camera rig (the
+                               parallax, and free-camera.ts: looking
+                               around the room, milestone 27). No Electron
                                imports, so it can be unit tested and reused
                                by HoloML rendering later.
     themes/                    @hypersol/themes: theme schema, the two
@@ -855,7 +865,10 @@ Cmd+Tab is the macOS app switcher). Escape closes what is open (a menu,
 a panel, the address bar's list); with nothing open for it to close,
 Escape in the shell stops a loading page. Mouse and touch:
 click or tap cards and buttons; scroll inside the page scrolls the page.
-No free camera movement in the first result.
+Looking around the room (milestone 27): a drag on the room, the top
+bar's button, or Ctrl+Shift+K leaves the desk; the arrows and W, A, S,
+D move; Escape or Home comes back (section 3, "Looking around the
+room").
 
 ### States
 
@@ -908,10 +921,11 @@ No free camera movement in the first result.
 
 ### Later screens and polish (not built yet)
 
-Free camera and room navigation, image lift-to-3D, extensions, sync, a
+Image lift-to-3D, extensions, sync, a
 theme editor, custom fonts, sound design, VR. (Built since this list was
 first written: the downloads panel and find in page in milestone 8, and
-HoloML pages in milestone 14.)
+HoloML pages in milestone 14, and looking around the room in milestone
+27.)
 
 ## 10. Open questions
 

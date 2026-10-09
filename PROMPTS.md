@@ -2087,3 +2087,53 @@ Approved, use the recommendations, go ahead.
 ```text
 holoml #44 merged, go ahead and tag.
 ```
+
+## 191 — 2026-10-09 · Claude Opus 5.5, high effort
+
+```text
+#70 merged, start milestone 27.
+```
+
+## 192 — 2026-10-09 · Claude Opus 5.5, high effort
+
+Answers milestone 27's plan (free camera and room navigation) with the
+recommended answers: Q1 a, the camera moves around the desk (dragging
+turns the view around the page's middle, the wheel comes closer); Q2 a,
+the page takes no clicks or keys while the camera is away, and a click
+on it brings the camera back first; Q3 a, the browser always starts at
+the desk; Q4 a, the Android app unchanged in this milestone; Q5 a,
+dragging on the empty room starts looking around; Q6 a, the room's
+limits (above the floor, within a distance, never behind the page).
+Approves the plan.
+
+```text
+Use the recommendations, approve the plan.
+```
+
+## 193 — 2026-10-09 · Claude Opus 5.5, high effort
+
+```text
+Build approved, go ahead.
+```
+
+## 194 — 2026-10-09 · Claude Opus 5.5, high effort
+
+A screenshot of the sneaker store from the published site, open in the
+browser run from source: a list of "could not be loaded" problems over
+the scene.
+
+```text
+Went to https://srajpal.github.io/holoml/sneaker-store/index.holoml in
+the browser and got these:
+```
+
+Pasted: the list's lines, each a far shoe model that "could not be
+loaded" because the fetch for the Draco decoder
+(`hypersol-viewer://app/@fs/.../node_modules/.vite/libs/draco/gltf/draco_wasm_wrapper.js`)
+answered 404.
+
+## 195 — 2026-10-09 · Claude Opus 5.5, high effort
+
+```text
+#71 had some failures.
+```

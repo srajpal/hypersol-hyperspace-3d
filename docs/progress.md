@@ -5,14 +5,16 @@ Moved here from the README on 2026-09-26 (owner, prompt 47).
 
 
 Screenshots from each finished milestone. Only the newest sets are
-kept in [docs/screenshots](screenshots) (milestone 26's, the newest of
+kept in [docs/screenshots](screenshots) (milestone 27's, the newest of
 the desktop, and milestone 24's, from the tablet); the older ones are
 shown from the repository as it was on 2026-10-07 (commit
 [64de0da](https://github.com/srajpal/hypersol-hyperspace-3d/tree/64de0da067ade4d27a8b28e9e76d4d208aa9ebad/docs/screenshots),
 for milestone 22 commit
 [fdc318f](https://github.com/srajpal/hypersol-hyperspace-3d/tree/fdc318f74d0baab1b7d362fc3aa1f791e7cdef16/docs/screenshots/m22),
-and for milestone 25 commit
-[8fc1484](https://github.com/srajpal/hypersol-hyperspace-3d/tree/8fc14842d7bab690822d4a83244537051cc13734/docs/screenshots/m25)),
+for milestone 25 commit
+[8fc1484](https://github.com/srajpal/hypersol-hyperspace-3d/tree/8fc14842d7bab690822d4a83244537051cc13734/docs/screenshots/m25),
+and for milestone 26 commit
+[9b36abf](https://github.com/srajpal/hypersol-hyperspace-3d/tree/9b36abf685b520b3624e7424603ce5906c5aeca6/docs/screenshots/m26)),
 so a copy of the repository does not carry every set (the review of
 2026-09-30, H6; owner, prompt 160). The roadmap and the current
 milestone's tasks and checks are in [TODO.md](../TODO.md).
@@ -339,9 +341,21 @@ clears one site's data without touching the others; and bookmarks come
 in from another browser's bookmark file, after a preview, and go out to
 one.
 
-![HTTPS-only's card: this site does not offer a secure connection, with Continue to the site (not secure), Retry, and Go back](screenshots/m26/76-https-only-card.png)
+![HTTPS-only's card: this site does not offer a secure connection, with Continue to the site (not secure), Retry, and Go back](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/9b36abf685b520b3624e7424603ce5906c5aeca6/docs/screenshots/m26/76-https-only-card.png)
 
-![The Library's Sites tab: each site with its cookies and a Clear button, and a note on what is not reported per site](screenshots/m26/77-library-sites.png)
+![The Library's Sites tab: each site with its cookies and a Clear button, and a note on what is not reported per site](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/9b36abf685b520b3624e7424603ce5906c5aeca6/docs/screenshots/m26/77-library-sites.png)
 
-![A bookmark file's preview in the Library: four bookmarks to add, with their folders, one skipped, and nothing added until Add](screenshots/m26/78-bookmark-import-preview.png)
+![A bookmark file's preview in the Library: four bookmarks to add, with their folders, one skipped, and nothing added until Add](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/9b36abf685b520b3624e7424603ce5906c5aeca6/docs/screenshots/m26/78-bookmark-import-preview.png)
 
+**Milestone 27: looking around the room.** Leave the desk by dragging
+on the room, with the arrows and W, A, S, D, or with the top bar's new
+button (Ctrl+Shift+K), and move around the desk within the room; a
+notice says how, and Escape or "Back to the desk" brings the camera
+back, with the page exactly where it was. While away the page takes no
+clicks or keys.
+
+![Looking around the room in Nebula: the camera to the right of the desk and above it, the tab cards in their arc on the left, the floor, and the notice at the top with the keys and Back to the desk](screenshots/m27/79-looking-around.jpg)
+
+![Looking around in Daylight: the page seen from the left and above, its desk and the cards beside it](screenshots/m27/80-daylight-looking-around.jpg)
+
+![Back at the desk: the page where it was, and the top bar's Look around button beside the layers view's](screenshots/m27/81-back-at-the-desk.png)

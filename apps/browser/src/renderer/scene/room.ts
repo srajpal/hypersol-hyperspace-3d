@@ -24,17 +24,20 @@ import {
 import { CSS3DObject, CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import {
   DEFAULT_PARALLAX,
+  FreeCamera,
   Parallax,
   clampScroll,
   computePanelLayout,
   computeTabArc,
   pointInPolygon,
   scrollToShow,
+  type FreeCameraRoom,
   type Insets,
   type PanelLayout,
   type TabArcInput,
   type TabArcLayout,
   type Vec2,
+  type Vec3,
 } from '@hypersol/scene-core';
 import type { Theme } from '@hypersol/themes';
 import { CARD_HEIGHT, CARD_WIDTH, TabCard, type CardModel, type CardPart } from './tab-card';
@@ -73,6 +76,13 @@ const ECONOMY_FPS = 30;
 const GLOW_MARGIN = 64;
 const DESK_DEPTH = 360;
 const SWITCH_MS = 250;
+/** Looking around (milestone 27): how far a drag turns the camera, per pixel, and a pointer's travel before a press on the room counts as a drag. */
+const DRAG_TURN = (0.25 * Math.PI) / 180;
+const DRAG_START_PX = 5;
+/** Below the page's bottom edge: where the floor grid lies. */
+const FLOOR_BELOW = 120;
+/** How far away the horizon band is. */
+const HORIZON_FAR = 7000;
 
 export interface RoomCallbacks {
   onCardClick(key: number | 'plus'): void;
@@ -91,6 +101,8 @@ export interface RoomOptions {
    * blurred the cards). The desktop leaves this off.
    */
   economyFullResolution?: boolean;
+  /** Looking around the room (milestone 27) is offered; the Android app leaves it out for now (owner, prompt 192, Q4 a). */
+  lookAround?: boolean;
 }
 
 interface Pose {
@@ -126,6 +138,15 @@ export class Room {
   /** Frames drawn so far; read by the idle-efficiency check (C9). */
   frames = 0;
   readonly parallax = new Parallax();
+  /**
+   * Looking around the room (milestone 27): the camera away from the desk.
+   * At the desk it is idle, and the desk camera (with its parallax) is used.
+   */
+  readonly free = new FreeCamera({ deskDistance: 1, floorY: -1, pageTurn: 0, pageX: 0, pageZ: 0, slideX: 0, slideUp: 0 });
+  /** Called when looking around starts (true) and when the way back to the desk starts (false). */
+  onLook: ((away: boolean) => void) | null = null;
+  /** Called once the camera is back at the desk and the page takes clicks and keys again. */
+  onHome: (() => void) | null = null;
   /** Called on each frame the camera's parallax moves, with the offset as -1 to 1 on each axis (y up). */
   onCameraMove: ((offset: { x: number; y: number }) => void) | null = null;
   /** Called after each frame is drawn (milestone 24: the Android app follows the page's outline). */
@@ -176,6 +197,12 @@ export class Room {
   /** A HoloML page in front (milestone 14): the page fills the window, flat and still. */
   private fill = false;
   private lastDrawn = 0;
+  /** The page takes no clicks while the camera is away (milestone 27, Q2 a), until it is back at the desk. */
+  private pageHeld = false;
+  /** A press on the room that may become a drag (milestone 27, Q5 a); dragged once it has moved far enough. */
+  private press: { id: number; x: number; y: number; lastX: number; lastY: number; dragged: boolean } | null = null;
+  /** The last press on the room was a drag: its click is not a click. */
+  private dragClick = false;
   /** The last few parallax decisions, for diagnosing test failures. */
   readonly pointerLog: { x: number; y: number; target: string; overPage: boolean }[] = [];
   private readonly raycaster = new Raycaster();
@@ -281,7 +308,11 @@ export class Room {
     // too: the camera holds still and loading cards show a still mark.
     this.reducedMotion.addEventListener('change', () => {
       const still = this.reducedMotion.matches;
-      if (still) this.centreCamera();
+      if (still) {
+        this.centreCamera();
+        this.free.jump();
+        this.afterLook();
+      }
       for (const card of this.cards.values()) card.setStill(still);
       this.requestRender();
     });
@@ -480,7 +511,11 @@ export class Room {
   setFill(on: boolean): void {
     if (on === this.fill) return;
     this.fill = on;
-    if (on) this.centreCamera();
+    if (on) {
+      // A page that fills the window is flat and still: the camera comes back at once.
+      this.lookAround(false, true);
+      this.centreCamera();
+    }
     this.layout();
     this.requestRender();
   }
@@ -507,6 +542,119 @@ export class Room {
   /** False where Chromium could not start WebGL 2, so the room is not drawn. */
   get drawsRoom(): boolean {
     return this.webgl !== null;
+  }
+
+  // ---- Looking around (milestone 27) --------------------------------------
+
+  /** Looking around is offered: the room is drawn, and the page in front does not fill the window. */
+  get canLookAround(): boolean {
+    return this.webgl !== null && !this.fill && this.options.lookAround !== false;
+  }
+
+  /** The camera is away from the desk, and not on its way back. */
+  get lookingAround(): boolean {
+    return this.free.active && !this.free.leaving;
+  }
+
+  /**
+   * Starts or ends looking around. Ending brings the camera back to the
+   * desk over a quarter of a second, or at once (with reduced motion, or
+   * when asked); the page takes clicks again once it is there.
+   */
+  lookAround(on: boolean, instant = false): void {
+    if (on) {
+      if (!this.canLookAround || this.lookingAround) return;
+      this.centreCamera();
+      this.free.enter();
+      this.holdPage(true);
+      this.onLook?.(true);
+      this.requestRender();
+      return;
+    }
+    if (!this.lookingAround) {
+      // Already on the way back: a call for at once finishes it.
+      if (instant && this.free.active) {
+        this.free.jump();
+        this.afterLook();
+        this.requestRender();
+      }
+      return;
+    }
+    this.free.leave(instant || this.reducedMotion.matches);
+    this.onLook?.(false);
+    this.afterLook();
+    this.requestRender();
+  }
+
+  /** Turns the camera around the desk, in radians (milestone 27). */
+  lookTurn(dYaw: number, dPitch: number): void {
+    this.free.turn(dYaw, dPitch);
+    this.lookMoved();
+  }
+
+  /** Slides the camera sideways and up, in world units. */
+  lookSlide(dx: number, dy: number): void {
+    this.free.slide(dx, dy);
+    this.lookMoved();
+  }
+
+  /** Comes closer (below 1) or goes further (above 1). */
+  lookZoom(factor: number): void {
+    this.free.zoom(factor);
+    this.lookMoved();
+  }
+
+  /** The camera's place and a point straight ahead of it, for the tests. */
+  get cameraPose(): { position: Vec3; ahead: Vec3 } {
+    this.camera.updateMatrixWorld();
+    const ahead = new Vector3(0, 0, -100).applyQuaternion(this.camera.quaternion).add(this.camera.position);
+    const p = this.camera.position;
+    return { position: { x: p.x, y: p.y, z: p.z }, ahead: { x: ahead.x, y: ahead.y, z: ahead.z } };
+  }
+
+  private lookMoved(): void {
+    if (this.reducedMotion.matches) {
+      this.free.jump();
+      this.afterLook();
+    }
+    this.requestRender();
+  }
+
+  /** Once the camera is home: the page takes clicks and keys again. */
+  private afterLook(): void {
+    if (this.free.active || !this.pageHeld) return;
+    this.holdPage(false);
+    this.onHome?.();
+  }
+
+  /**
+   * The page in front takes no clicks and no keys (milestone 27, Q2 a):
+   * clicks on it reach the room, which brings the camera back, and it is
+   * inert, so nothing can give it the keyboard meanwhile.
+   */
+  private holdPage(on: boolean): void {
+    this.pageHeld = on;
+    this.css.domElement.classList.toggle('hs-page-held', on);
+    this.applyHold();
+  }
+
+  /** Only the page in front is held; one that comes to the front while the camera is away is held too. */
+  private applyHold(): void {
+    for (const [id, { view }] of this.views) view.element.inert = this.pageHeld && id === this.focusedId;
+  }
+
+  /** The limits of looking around, from the room as laid out now. */
+  private freeRoom(): FreeCameraRoom {
+    const l = this.currentLayout;
+    return {
+      deskDistance: l.cameraZ,
+      floorY: l.position.y - l.panelHeight / 2 - FLOOR_BELOW,
+      pageTurn: l.rotationY,
+      pageX: l.position.x,
+      pageZ: l.position.z,
+      slideX: window.innerWidth / 2,
+      slideUp: window.innerHeight / 2,
+    };
   }
 
   setSnapshot(tabId: number, dataUrl: string): void {
@@ -568,6 +716,7 @@ export class Room {
       if (duration > 0) this.addTween(old.object, () => this.cardPose(previous), duration, hide);
       else hide();
     }
+    this.applyHold();
     this.requestRender();
   }
 
@@ -616,6 +765,7 @@ export class Room {
     this.camera.aspect = w / h;
     this.camera.fov = layout.fovDeg;
     this.camera.updateProjectionMatrix();
+    this.free.setRoom(this.freeRoom());
     this.applyCamera();
 
     for (const { view, object } of this.views.values()) {
@@ -631,13 +781,13 @@ export class Room {
     // The instrument panel's bottom strip takes the desk's place (it would
     // otherwise float under the raised page and cover the tab rail's lowest card).
     this.desk.visible = this.extra.bottom === 0 && !this.fill;
-    this.grid.position.set(0, bottom - 120, 0);
+    this.grid.position.set(0, bottom - FLOOR_BELOW, 0);
 
-    // The horizon is at the camera's height, far away; the glow and sun sit on it.
-    const far = 7000;
+    // The horizon is at the desk camera's height, far away; the glow and sun sit on it.
+    const far = HORIZON_FAR;
     const halfWidth = Math.tan(((layout.fovDeg / 2) * Math.PI) / 180) * far * (w / h);
     this.horizon.scale.set(halfWidth * 4, far * 0.22, 1);
-    this.horizon.position.set(0, 0, -far);
+    this.placeHorizon();
     const r = far * 0.16;
     this.sun.scale.set(r * 2, r * 2, 1);
     // To the right of the page, half risen, where the room shows around it.
@@ -739,6 +889,9 @@ export class Room {
     const dt = this.lastFrameTime === 0 ? 16 : Math.min(50, time - this.lastFrameTime);
     this.lastFrameTime = time;
 
+    const wasAway = this.free.active;
+    const looking = this.free.step(dt);
+    if (wasAway && !this.free.active) this.afterLook();
     const moving = this.parallax.step(dt);
     if (moving && this.onCameraMove) {
       const { x, y } = this.parallax.offset;
@@ -764,7 +917,7 @@ export class Room {
     this.css.render(this.cssScene, this.camera);
     this.frames += 1;
     this.onDrawn?.();
-    if (moving || this.tweens.length > 0 || spinning) this.requestRender();
+    if (moving || looking || this.tweens.length > 0 || spinning) this.requestRender();
     else this.lastFrameTime = 0;
   }
 
@@ -789,9 +942,37 @@ export class Room {
   }
 
   private applyCamera(): void {
-    const { x, y } = this.parallax.offset;
-    this.camera.position.set(x, y, this.currentLayout.cameraZ);
-    this.camera.lookAt(0, 0, 0);
+    if (this.free.active) {
+      const { position, lookAt } = this.free.pose();
+      this.camera.position.set(position.x, position.y, position.z);
+      this.camera.lookAt(lookAt.x, lookAt.y, lookAt.z);
+    } else {
+      const { x, y } = this.parallax.offset;
+      this.camera.position.set(x, y, this.currentLayout.cameraZ);
+      this.camera.lookAt(0, 0, 0);
+    }
+    this.placeHorizon();
+  }
+
+  /**
+   * The horizon band: straight ahead of the desk, far away. Looking around
+   * (milestone 27) it turns with the view, the same distance away and at
+   * the same height, so it reaches across the view from any angle, as a
+   * horizon does; the sun keeps its place in the world.
+   */
+  private placeHorizon(): void {
+    if (!this.free.active) {
+      this.horizon.position.set(0, 0, -HORIZON_FAR);
+      this.horizon.rotation.set(0, 0, 0);
+      return;
+    }
+    const facing = Math.atan2(this.camera.position.x - this.free.pose().lookAt.x, this.camera.position.z);
+    this.horizon.position.set(
+      this.camera.position.x - Math.sin(facing) * HORIZON_FAR,
+      0,
+      this.camera.position.z - Math.cos(facing) * HORIZON_FAR,
+    );
+    this.horizon.rotation.set(0, facing, 0);
   }
 
   /** The glow sits just behind the focused page, following it as it moves. */
@@ -939,6 +1120,32 @@ export class Room {
   }
 
   /**
+   * A press on the room moving far enough becomes a drag: it starts
+   * looking around (milestone 27, Q5 a) and turns the camera. True while a
+   * drag has the pointer.
+   */
+  private dragMove(e: PointerEvent): boolean {
+    const p = this.press;
+    if (!p || p.id !== e.pointerId) return false;
+    if (!p.dragged) {
+      if (Math.hypot(e.clientX - p.x, e.clientY - p.y) < DRAG_START_PX) return false;
+      if (!this.free.active) this.lookAround(true);
+      if (!this.lookingAround) {
+        this.press = null;
+        return false;
+      }
+      p.dragged = true;
+      this.canvas.setPointerCapture(e.pointerId);
+      this.setHovered(null);
+    }
+    // The room follows the pointer: dragging right turns the camera to the left of the page.
+    this.lookTurn(-(e.clientX - p.lastX) * DRAG_TURN, (e.clientY - p.lastY) * DRAG_TURN);
+    p.lastX = e.clientX;
+    p.lastY = e.clientY;
+    return true;
+  }
+
+  /**
    * Parallax follows the pointer over the room and pauses over the page,
    * so click targets never move under the cursor. Cards react to hover,
    * clicks, and the mouse wheel.
@@ -962,6 +1169,12 @@ export class Room {
         overPage: over,
       });
       if (this.pointerLog.length > 20) this.pointerLog.shift();
+      if (this.dragMove(e)) return;
+      // Looking around: no parallax; the cards still answer hover.
+      if (this.free.active) {
+        this.setHovered(e.target === canvas && !this.free.leaving ? this.cardAt(e.clientX, e.clientY) : null);
+        return;
+      }
       if (over) {
         this.parallax.setPaused(true);
         this.setHovered(null);
@@ -983,8 +1196,34 @@ export class Room {
     });
     canvas.addEventListener('pointerleave', () => this.setHovered(null));
 
+    // A press on the empty room may become a drag that looks around (milestone 27, Q5 a).
+    canvas.addEventListener('pointerdown', (e) => {
+      this.dragClick = false;
+      if (e.button !== 0 || !this.webgl) return;
+      if (this.cardAt(e.clientX, e.clientY)) return;
+      // At the desk a press over the page is the page's; away, the page takes no clicks.
+      if (!this.free.active && overPage(e.clientX, e.clientY, e.target)) return;
+      this.press = { id: e.pointerId, x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, dragged: false };
+    });
+    const endPress = (e: PointerEvent) => {
+      if (this.press?.id !== e.pointerId) return;
+      this.dragClick = this.press.dragged;
+      if (this.press.dragged && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+      this.press = null;
+    };
+    canvas.addEventListener('pointerup', endPress);
+    canvas.addEventListener('pointercancel', endPress);
+
     canvas.addEventListener('click', (e) => {
+      if (this.dragClick) {
+        this.dragClick = false;
+        return;
+      }
       const hit = this.cardAt(e.clientX, e.clientY);
+      // Away from the desk (Q2 a): a click on the page, or on a card, brings the camera back first.
+      if (this.free.active && !this.free.leaving) {
+        if (hit || overPage(e.clientX, e.clientY, null)) this.lookAround(false);
+      }
       if (!hit) return;
       if (hit.part === 'close' && hit.card.key !== 'plus') this.options.callbacks.onCardClose(hit.card.key);
       else if (hit.part === 'audio' && hit.card.key !== 'plus') this.options.callbacks.onCardAudio?.(hit.card.key);
@@ -994,7 +1233,14 @@ export class Room {
     canvas.addEventListener(
       'wheel',
       (e) => {
-        if (!this.railShown || e.clientX > RAIL.left + this.railWidth + 24) return;
+        // Looking around: the wheel comes closer or goes further, but on a card it still scrolls the rail.
+        if (this.free.active) {
+          if (this.free.leaving) return;
+          if (!(this.railShown && this.cardAt(e.clientX, e.clientY))) {
+            this.lookZoom(Math.exp(e.deltaY * 0.0015));
+            return;
+          }
+        } else if (!this.railShown || e.clientX > RAIL.left + this.railWidth + 24) return;
         const before = this.railScroll;
         this.railScroll = clampScroll(this.arcInput(), this.railScroll + e.deltaY);
         if (this.railScroll === before) return;

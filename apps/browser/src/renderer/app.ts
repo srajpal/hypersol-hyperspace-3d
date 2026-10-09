@@ -13,6 +13,7 @@ import type { OfferAnswer, PasswordOffer } from '../shared/passwords';
 import type { HsTabStrip } from './hud/tab-strip';
 import { STRIP_HEIGHT } from './hud/tab-strip';
 import type { HsTabSearch } from './hud/tab-search';
+import type { HsLookNotice } from './hud/look-notice';
 import { CARD_SCALES } from './scene/room';
 import { ClosedTabs } from './state/closed-tabs';
 import { shouldSleep, sleepMinutes } from './state/sleep';
@@ -65,6 +66,8 @@ export interface AppOptions {
   /** Milestone 10: the list of tabs in the top bar, and tab search. */
   tabStrip: HsTabStrip;
   tabSearch: HsTabSearch;
+  /** Milestone 27: the notice while looking around the room. */
+  lookNotice: HsLookNotice;
   /** Test runs: how long a "minute" is for sleeping tabs, so the checks need not wait. */
   sleepMinuteMs?: number;
   /** Test runs: printing is counted instead of opening the system's dialog. */
@@ -209,6 +212,7 @@ export class App {
         onCardAudio: (key) => this.toggleMute(key),
       },
     });
+    this.wireLook();
     this.store.subscribe(() => this.sync());
     // A closed tab can be reopened (milestone 10): not private ones, nor start tabs.
     this.store.onClosed = (tab, index) => {
@@ -334,6 +338,124 @@ export class App {
   /** A HoloML page in front fills the window; other pages lean back (milestone 14). */
   private updateFill(): void {
     this.room.setFill(this.focusedView?.isHoloml ?? false);
+    this.updateLook();
+  }
+
+  /**
+   * Looking around the room (milestone 27, owner, prompt 192): the top
+   * bar's button, the shortcut, and the notice start and end it; while it
+   * lasts the keys move the camera, and the page takes neither clicks nor
+   * the keyboard (Q2 a): the keyboard going into the page brings the
+   * camera back first.
+   */
+  private wireLook(): void {
+    const { toolbar, lookNotice } = this.options;
+    // The keyboard was the notice's when the way back started: the page has it again once home.
+    let keysToPage = false;
+    this.room.onLook = (away) => {
+      toolbar.lookAround = away;
+      if (away) {
+        lookNotice.show();
+        return;
+      }
+      keysToPage = lookNotice.hasFocus;
+      lookNotice.hide();
+    };
+    this.room.onHome = () => {
+      if (keysToPage) this.focusPage();
+      keysToPage = false;
+    };
+    lookNotice.addEventListener('hs-look-back', () => this.room.lookAround(false));
+    toolbar.addEventListener('hs-look-around', () => this.toggleLook());
+    // In the capture phase, before Escape stops a loading page (wired later): Escape with nothing else open comes back to the desk.
+    document.addEventListener(
+      'keydown',
+      (e) => {
+        if (!this.room.lookingAround || e.defaultPrevented) return;
+        if (e.key === 'Escape') {
+          if (this.escapeTaken) return;
+          e.preventDefault();
+          this.room.lookAround(false);
+          return;
+        }
+        if (e.ctrlKey || e.metaKey || e.altKey || this.escapeTaken) return;
+        const typing = e
+          .composedPath()
+          .some((n) => n instanceof HTMLInputElement || n instanceof HTMLTextAreaElement || n instanceof HTMLSelectElement || (n instanceof HTMLElement && n.isContentEditable));
+        if (typing) return;
+        if (this.lookKey(e.key, e.shiftKey)) e.preventDefault();
+      },
+      true,
+    );
+    this.updateLook();
+  }
+
+  /** A key while looking around (milestone 27); false for a key that is not the room's. Shift moves three times as far. */
+  private lookKey(key: string, shift: boolean): boolean {
+    const room = this.room;
+    const k = shift ? 3 : 1;
+    const turn = (5 * Math.PI) / 180;
+    const slide = 40;
+    const closer = 0.9;
+    switch (key.length === 1 ? key.toLowerCase() : key) {
+      case 'ArrowLeft':
+        room.lookTurn(-turn * k, 0);
+        break;
+      case 'ArrowRight':
+        room.lookTurn(turn * k, 0);
+        break;
+      case 'ArrowUp':
+        room.lookTurn(0, turn * k);
+        break;
+      case 'ArrowDown':
+        room.lookTurn(0, -turn * k);
+        break;
+      case 'a':
+        room.lookSlide(-slide * k, 0);
+        break;
+      case 'd':
+        room.lookSlide(slide * k, 0);
+        break;
+      case 'w':
+      case '+':
+      case '=':
+        room.lookZoom(closer ** k);
+        break;
+      case 's':
+      case '-':
+      case '_':
+        room.lookZoom(1 / closer ** k);
+        break;
+      case 'PageUp':
+        room.lookSlide(0, slide * k);
+        break;
+      case 'PageDown':
+        room.lookSlide(0, -slide * k);
+        break;
+      case 'Home':
+        room.lookAround(false);
+        break;
+      default:
+        return false;
+    }
+    return true;
+  }
+
+  /** The top bar's button and the shortcut: start looking around, or come back to the desk. */
+  private toggleLook(): void {
+    this.room.lookAround(!this.room.lookingAround);
+  }
+
+  /** Whether the top bar offers looking around, and why not when it does not. */
+  private updateLook(): void {
+    const t = this.options.toolbar;
+    t.canLookAround = this.room.canLookAround;
+    t.lookReason = this.room.drawsRoom
+      ? this.room.filling
+        ? 'not while a HoloML scene fills the window'
+        : ''
+      : "this computer can't draw the 3D room";
+    t.lookAround = this.room.lookingAround;
   }
 
   /**
@@ -360,6 +482,11 @@ export class App {
    * password must not get what is typed next.
    */
   focusPage(view: TabView | undefined = this.focusedView): void {
+    // Looking around (milestone 27, Q2 a): the page takes no keys; the notice keeps them.
+    if (this.room.lookingAround) {
+      this.options.lookNotice.takeKeys();
+      return;
+    }
     if (view !== undefined && view === this.focusedView && this.options.prompts.signIn) this.options.prompts.focusSignIn();
     else view?.focusContent();
   }
@@ -1466,6 +1593,9 @@ export class App {
         break;
       case 'layers':
         void this.toggleLayers();
+        break;
+      case 'look-around':
+        this.toggleLook();
         break;
       case 'instruments':
         void this.saveSettings({ instruments: !this.settings.instruments });

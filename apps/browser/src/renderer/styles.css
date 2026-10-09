@@ -51,6 +51,13 @@ body {
   overflow: clip !important;
 }
 
+/* Looking around the room (milestone 27, Q2 a): the page takes no clicks
+   while the camera is away; they reach the room, which brings it back. */
+.hs-css-layer.hs-page-held .hs-panel,
+.hs-css-layer.hs-page-held .hs-panel * {
+  pointer-events: none !important;
+}
+
 .hs-panel {
   pointer-events: auto;
   /* A web page's own default background (pages assume white), not a theme colour. */

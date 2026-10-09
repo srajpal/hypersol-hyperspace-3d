@@ -38,6 +38,7 @@ export const PRIVATE_PARTITION = 'hypersol-private';
 export const RESTORE_BLANK = 'about:blank#hypersol-restore';
 
 export type ShortcutName =
+  | 'look-around'
   | 'zoom-in'
   | 'zoom-out'
   | 'zoom-reset'
