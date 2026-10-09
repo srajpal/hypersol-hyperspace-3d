@@ -104,7 +104,7 @@ is run from source: a packaged app ignores its switch.)
 | Settings: search engine, what opens at startup, encrypted DNS mode, daily list updates on or off, sites where the shield is paused, whether pages open in the layers view, and the sites where you switched the layers view, the theme, the page tilt, the instrument panel's switches and its console's level, the zoom level of sites you zoomed, the size of the tab cards, whether tabs show as cards or as a list, economy mode, and when tabs go to sleep; and the window's size and place on the screen, and whether it was maximised, so it opens as you left it | `settings.json` | When you change a setting, pause the shield on a site, or switch the layers view on a page; the window's size half a second after you stop moving or resizing it, and when it closes | Delete the file; the defaults return. Settings > "Forget site choices" clears the layers view choices |
 | Filter lists from the last update, and when they were downloaded | `filters/engine.bin`, `filters/engine.json` | After a list update | Delete the folder; the starter copy included in the app is used |
 | Open tabs: their addresses and which one is in front | `session.json` | While you browse, shortly after tabs change | Reopened only when Settings > On startup is "Reopen your tabs from last time"; delete the file to forget them |
-| Saved passwords: the site, the user name, and the password encrypted with your system's keychain (Windows' data protection, the macOS Keychain, or the Linux secret service); when each was saved and last used; sites where you chose "Never" | `hypersol.sqlite` | Only when you choose Save or Update after signing in, or Never | The Library's Passwords tab, or Settings > Clear browsing data > Saved passwords |
+| Saved passwords: the site, the user name, and the password encrypted with your system's keychain (Windows' data protection, the macOS Keychain, or the Linux secret service); when each was saved and last used; sites where you chose "Never" | `hypersol.sqlite` | Only when you choose Save or Update after signing in, or Never | The Library's Passwords tab, or Settings > Clear browsing data > Saved passwords. A password shown there with Show is held only while the Library is open and the saved passwords do not change |
 | How the address bar completes: each address you visited, how many times, and when last; made from your history | `hypersol.sqlite` | With each visit | Removing a suggestion (its × in the list) forgets that address's visits; clearing history clears it all |
 | Your own shortcut keys, and how the page view is set (lean, movement, space) | `settings.json` | When you change them in Settings | Settings > Shortcuts > Reset, or delete the file |
 | Camera, microphone, and location choices you made with Allow or Block, by site | `settings.json` | When you answer a site's request, or change it in the site panel | The site panel (set it back to Ask), or Settings > Site permissions > Forget |
@@ -117,7 +117,9 @@ is run from source: a packaged app ignores its switch.)
 Private tabs (Ctrl+Shift+N, or New private tab in the menu) keep none
 of this: their pages are not added to history, are not reopened with
 "reopen your tabs", and their cookies, site storage, and cache live in
-memory only and are cleared when the last private tab closes. Choices
+memory only and are cleared when the last private tab closes (a
+private tab opened while that clearing runs loads nothing until it is
+done, so it never sees the old session's data). Choices
 made for a site from a private tab (switching the layers view, pausing
 the shield) are kept in memory only: they apply to that site in every
 private tab while one is open, never to normal tabs, never reach

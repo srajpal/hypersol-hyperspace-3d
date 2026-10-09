@@ -540,6 +540,14 @@ milestone; the current milestone's checks are defined in TODO.md):
   unsent drafts and live capture, a script alone brings no password
   offer, and Block in the site panel ends a site's camera and
   microphone (#20 is checked by F9 and I6).
+- The fixes of 2026-10-09 (prompt 189; same command,
+  tests/e2e/fixes-189.e2e.ts, in part 1): a private tab opened while
+  the last private session is cleared waits for it and sees none of
+  it, the Library never shows a password without Show (a late answer,
+  a deleted sign-in's id given again), several `material` elements for
+  one name (#66), and a hit's normal under a stretch (#67); each check
+  fails without its fix (fixture pages
+  tests/fixtures/holoml/fixes-189-*).
 - Later milestones add: free camera (27), lift to 3D (28), and polish
   (29). No installers (dropped, prompt 172).
 

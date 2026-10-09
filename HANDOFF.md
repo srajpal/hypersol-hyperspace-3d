@@ -3,8 +3,9 @@
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-10-09 (milestones 1 to 26 accepted, milestone 26,
 privacy and data tools, on 2026-10-08, prompt 184; the next is 27,
-free camera, not yet planned; the review's last items in
-TODO.md, "The review's last items". The roadmap is in TODO.md).
+free camera, not yet planned, after the fixes of 2026-10-09 below;
+the review's last items in TODO.md, "The review's last items". The
+roadmap is in TODO.md).
 
 ## Where things stand
 
@@ -82,6 +83,22 @@ Both main branches are up to date: milestone 26 is merged here (#63,
 - Browser: https://github.com/srajpal/hypersol-hyperspace-3d (renamed
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
+
+## Issues and advisories of 2026-10-09 (prompts 188 and 189)
+
+Before milestone 27: three draft advisories (private tabs, the
+Library's passwords), #66 to #68 here, and holoml's #42 and #43, fixed
+in the order the owner approved (prompt 189). Branches:
+`fix-advisories-issues-66-68` here and `fix-issues-42-43` in holoml
+(pull request #44, which also makes HoloML 0.3.1: the specification's
+second edition of 0.3). TODO.md, "Issues and advisories of 2026-10-09",
+has each fix, its check (tests/e2e/fixes-189.e2e.ts), and the results.
+
+How to resume: once holoml #44 is merged, tag v0.3.1 there (a
+pre-release, as 0.3.0) and make the copy here from it (`pnpm
+holoml:sync v0.3.1 --examples v0.3.1`), run the unit tests and the
+HoloML checks, then this repository's pull request. The advisories stay
+drafts until the owner publishes them; then milestone 27.
 
 ## Milestone 26, privacy and data tools (2026-10-08, prompts 177 to 179)
 
