@@ -9,6 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
   clickUntil,
+  sceneStill,
   focusedPage,
   focusedTab,
   inPage,
@@ -17,6 +18,7 @@ import {
   navigateTo,
   newProfile as freshProfile,
   pressInShell,
+  sceneWait,
   screenPointOf,
   shellCall,
   waitFor,
@@ -258,6 +260,85 @@ describe('The advisories of 2026-10-09', () => {
       expect(await h.shell.evaluate(() => (document.querySelector('hs-library') as unknown as { revealed: object }).revealed)).toEqual({});
     } finally {
       await h.close();
+    }
+  });
+});
+
+type Vec = [number, number, number];
+
+/** Opens a HoloML fixture page in the harness's tab and waits until it is ready. */
+async function openScene(h: Harness, page: string): Promise<void> {
+  await shellCall(h, 'showUrl', server.url(`holoml/${page}`));
+  await waitForPage(h, page, await sceneWait(h, 15_000));
+  await waitFor(`${page} ready`, () => inPage<boolean>(h, 'window.__holoml?.ready === true', page), (r) => r, await sceneWait(h, 20_000));
+}
+
+describe('The HoloML viewer: issues #66 and #67', () => {
+  let h: Harness;
+
+  beforeAll(async () => {
+    h = await launch(server.url('link-a.html'));
+    await waitForPage(h, 'link-a.html');
+  });
+
+  afterAll(async () => {
+    await h?.close();
+  });
+
+  it('#66: every <material> for a name changes it, in document order, what none gives kept', async () => {
+    const page = 'fixes-189-materials.holoml';
+    await openScene(h, page);
+    // In document order: conflicting, disjoint, pictured, and one left as the file has it.
+    type Model = { state: string; materials: Record<string, { color: string; metalness: number | null; roughness: number | null; opacity: number; map: string | null; repeat: [number, number] | null }> };
+    const models = await inPage<Model[]>(h, 'window.__holoml.models()', page);
+    const order = ['conflicting', 'disjoint', 'pictured', 'own'];
+    expect(models.map((m) => m.state)).toEqual(['loaded', 'loaded', 'loaded', 'loaded']);
+    const paint = (id: string) => {
+      const m = models[order.indexOf(id)]!;
+      return m.materials['Paint']!;
+    };
+    // Conflicting: the later colour, and the later's roughness; the model's own metalness.
+    expect(paint('conflicting')).toMatchObject({ color: '#0000ff', roughness: 0.9, opacity: 1, map: null });
+    expect(paint('conflicting').metalness).toBeCloseTo(0.2, 5);
+    // Disjoint: both changes, and the model's own colour and roughness.
+    expect(paint('own')).toMatchObject({ opacity: 1, map: null });
+    expect(paint('disjoint')).toMatchObject({ color: paint('own').color, opacity: 0.5 });
+    expect(paint('disjoint').metalness).toBeCloseTo(0.7, 5);
+    expect(paint('disjoint').roughness).toBeCloseTo(0.5, 5);
+    // A picture from the first stays, tiled, under the second's colour.
+    expect(paint('pictured')).toMatchObject({ color: '#00ff00', repeat: [2, 2] });
+    expect(paint('pictured').map).toContain('stripes.png');
+  });
+
+  it("#67: a hit's normal is square to the surface under a scale that differs by axis, drawn alone and as an instance", async () => {
+    const page = 'fixes-189-normals.holoml';
+    await openScene(h, page);
+    type Aim = { thing: { id: string | null } | null; point: Vec; normal: Vec } | null;
+    /** What the viewer aims at from in front of (x, y), looking straight along -z. */
+    const aimFrom = async (x: number, y: number): Promise<Aim> => {
+      await inPage(h, `holoml.viewer.position = [${x}, ${y}, 6]; holoml.viewer.lookAt([${x}, ${y}, 0]); true`, page);
+      await sceneStill(h, page, await sceneWait(h, 10_000));
+      return inPage<Aim>(h, '(() => { const a = holoml.aim(); return a && { thing: a.thing && { id: a.thing.id }, point: [...a.point], normal: [...a.normal] }; })()', page);
+    };
+    const sub = (a: Vec, b: Vec): Vec => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+    const dot = (a: Vec, b: Vec) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const unit = (a: Vec): Vec => {
+      const n = Math.hypot(...a);
+      return [a[0] / n, a[1] / n, a[2] / n];
+    };
+    for (const [id, x] of [['cloned', 20], ['instanced', -20]] as const) {
+      // Three points close together on one face: two directions along it.
+      const a = (await aimFrom(x - 0.3, 0.2))!;
+      const b = (await aimFrom(x - 0.32, 0.2))!;
+      const c = (await aimFrom(x - 0.3, 0.22))!;
+      for (const hit of [a, b, c]) expect(hit.thing?.id, `${id}: the aim finds the model`).toBe(id);
+      expect(b.normal, `${id}: the three points are on one face`).toEqual(a.normal);
+      expect(c.normal).toEqual(a.normal);
+      expect(Math.hypot(...a.normal), `${id}: a unit normal`).toBeCloseTo(1, 3);
+      expect(Math.abs(dot(a.normal, unit(sub(b.point, a.point)))), `${id}: square to the face, across`).toBeLessThan(0.01);
+      expect(Math.abs(dot(a.normal, unit(sub(c.point, a.point)))), `${id}: square to the face, up`).toBeLessThan(0.01);
+      // It faces the viewer, who looks along -z.
+      expect(a.normal[2], `${id}: facing the viewer`).toBeGreaterThan(0);
     }
   });
 });

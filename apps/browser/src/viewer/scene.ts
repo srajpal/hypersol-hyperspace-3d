@@ -66,6 +66,7 @@ import {
   LineSegments,
   LoadingManager,
   MathUtils,
+  Matrix3,
   Matrix4,
   Mesh,
   MeshBasicMaterial,
@@ -2109,19 +2110,25 @@ export class HolomlView {
     this.onLeftOut?.();
   }
 
-  /** <material> children: change the named materials, only what is given (with their looks, pictures included); the materials made. */
+  /**
+   * <material> children: change the named materials, only what is given
+   * (with their looks, pictures included); the materials made. Several for
+   * one name each change it, in document order, a later one's attributes
+   * taking the place of an earlier one's (SPEC.md section 7, issue #66).
+   */
   private changeMaterials(changes: ElementNode[], looks: Look[], model: Object3D, report: ModelReport): Material[] {
     const done = new Map<Material, Changeable>();
     model.traverse((o) => {
       if (!(o instanceof Mesh)) return;
       const list = Array.isArray(o.material) ? o.material : [o.material];
       const next = list.map((m: Material) => {
-        const i = changes.findIndex((c) => attr(c, 'name') === m.name);
-        if (i < 0 || !changeable(m)) return m;
+        if (!changeable(m)) return m;
+        const which = changes.flatMap((c, i) => (attr(c, 'name') === m.name ? [i] : []));
+        if (which.length === 0) return m;
         let copy = done.get(m);
         if (!copy) {
           copy = m.clone();
-          this.applyLook(copy, looks[i]!);
+          for (const i of which) this.applyLook(copy, looks[i]!);
           done.set(m, copy);
         }
         return copy;
@@ -2224,8 +2231,9 @@ export class HolomlView {
         }
         slots[slot] = copy;
       }
-      // Released with the material, when its model is let go (milestone 20).
-      this.tiledOf.set(m, [...tiled.values()]);
+      // Released with the material, when its model is let go (milestone 20); with
+      // several looks on one material (issue #66), every one's copies.
+      this.tiledOf.set(m, [...(this.tiledOf.get(m) ?? []), ...tiled.values()]);
     }
     m.needsUpdate = true;
   }
@@ -3597,7 +3605,9 @@ export class HolomlView {
         hit.object.getMatrixAt(hit.instanceId, m);
         world.multiply(m);
       }
-      n.transformDirection(world);
+      // A surface's facing turns with the inverse transpose, so it stays square to the
+      // surface under a scale that differs by axis (issue #67).
+      n.applyMatrix3(new Matrix3().getNormalMatrix(world)).normalize();
       normal = [round(n.x), round(n.y), round(n.z)];
     }
     return { entry, point: [hit.point.x, hit.point.y, hit.point.z], normal };
