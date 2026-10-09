@@ -19,6 +19,7 @@ import './hud/notice';
 import './hud/tab-strip';
 import './hud/tab-search';
 import './hud/room-message';
+import './hud/look-notice';
 import { DEFAULT_TILT_DEG, clampTilt } from '@hypersol/scene-core';
 import { defaultTheme } from '@hypersol/themes';
 import type { ShellBridge } from '../shared/commands';
@@ -76,6 +77,7 @@ const app = new App({
   notice: document.querySelector('hs-notice')!,
   tabStrip: document.querySelector('hs-tab-strip')!,
   tabSearch: document.querySelector('hs-tab-search')!,
+  lookNotice: document.querySelector('hs-look-notice')!,
   ...(params.get('test') === '1' && params.get('sleepMinuteMs') ? { sleepMinuteMs: Number(params.get('sleepMinuteMs')) } : {}),
   testMode: params.get('test') === '1',
   tabList: document.getElementById('tab-list') as HTMLElement,
@@ -105,6 +107,16 @@ function testHooks() {
     showUrl: (url: string) => app.showUrl(url),
     layout: () => room.layoutInfo,
     cameraOffset: () => room.parallax.offset,
+    look: () => ({
+      away: room.lookingAround,
+      active: room.free.active,
+      can: room.canLookAround,
+      moving: room.free.moving,
+      state: room.free.state,
+      goal: room.free.goal,
+      camera: room.cameraPose,
+      noticeShown: document.querySelector('hs-look-notice')!.open,
+    }),
     parallaxPaused: () => room.parallax.paused,
     pointerLog: () => room.pointerLog,
     projectPagePoint: (u: number, v: number) => room.projectPagePoint(u, v),

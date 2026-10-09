@@ -26,6 +26,7 @@ const NOT_YET: readonly string[] = [
   'zoom',
   'instruments',
   'layers',
+  'look-around',
   'star',
   'private-tab',
   'open-file',
@@ -55,6 +56,8 @@ const room = new Room(document.getElementById('room')!, theme, {
     onCardClose: (key) => post({ type: 'close', id: key }),
   },
   economyFullResolution: true,
+  // Looking around the room is the desktop's for now (milestone 27, owner, prompt 192, Q4 a).
+  lookAround: false,
 });
 // The tablet draws the room lighter: at most 30 frames a second, no glow; at
 // the display's own resolution, as half of it blurred the cards (prompt 160).

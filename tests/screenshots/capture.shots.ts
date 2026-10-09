@@ -635,3 +635,46 @@ it("captures milestone 26's screens", async () => {
     rmSync(files, { recursive: true, force: true });
   }
 }, 300_000);
+
+/** Milestone 27: looking around the room, in both themes, and back at the desk. */
+it("captures milestone 27's screens", async () => {
+  if (!milestone || !/^m\d+$/.test(milestone)) throw new Error('Set MILESTONE, for example MILESTONE=m27 pnpm screenshots');
+  const server = await startFixtureServer();
+  const h = await launch(server.url('link-a.html'));
+  try {
+    await waitForPage(h, 'link-a');
+    for (const page of ['form.html', 'long.html', 'link-b.html']) {
+      await pressInShell(h, 'T', ['control']);
+      await settled(h);
+      await navigateTo(h, server.url(page));
+      await waitForPage(h, page.replace('.html', ''));
+    }
+    /** Turns (right, or left when negative), raises the view, and steps back. */
+    const view = async (right: number, up: number, further: number) => {
+      for (let i = 0; i < Math.abs(right); i++) await pressInShell(h, right > 0 ? 'Right' : 'Left');
+      for (let i = 0; i < up; i++) await pressInShell(h, 'Up');
+      for (let i = 0; i < further; i++) await pressInShell(h, 'S');
+      await waitFor('there', () => shellCall(h, 'look'), (l) => l.goal.yaw !== 0 && !l.moving);
+      await settled(h);
+    };
+    await pressInShell(h, 'K', ['control', 'shift']);
+    await view(6, 4, 2);
+    await capture(h, '79-looking-around', true);
+    await pressInShell(h, 'Home');
+    await waitFor('back at the desk', () => shellCall(h, 'look'), (l) => !l.active);
+
+    await h.shell.click('hs-theme-button [data-testid="theme"]');
+    await waitFor('Daylight', () => h.shell.evaluate(() => document.documentElement.style.colorScheme), (s) => s === 'light');
+    await pressInShell(h, 'K', ['control', 'shift']);
+    await view(-5, 3, 3);
+    await capture(h, '80-daylight-looking-around', true);
+    await pressInShell(h, 'Home');
+    await waitFor('back at the desk', () => shellCall(h, 'look'), (l) => !l.active);
+    // Back at the desk, exactly as before (the top bar's button beside the layers view's).
+    await settled(h);
+    await capture(h, '81-back-at-the-desk');
+  } finally {
+    await h.close();
+    await server.close();
+  }
+}, 300_000);
