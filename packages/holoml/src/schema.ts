@@ -1,5 +1,5 @@
 // Copied from the holoml repository (https://github.com/srajpal/holoml),
-// packages/schema/src/index.ts at v0.3.0. Apache License 2.0, The HoloML Authors.
+// packages/schema/src/index.ts at v0.3.1. Apache License 2.0, The HoloML Authors.
 // Do not edit here: change HoloML there and run pnpm holoml:sync.
 
 /**
@@ -160,6 +160,11 @@ export function check(doc: HoloDocument, options: CheckOptions = {}): Problem[] 
   const named = (reference: Attribute | undefined): string | null => {
     const value = reference?.value;
     return value?.startsWith('#') && ID.test(value.slice(1)) ? value.slice(1) : null;
+  };
+  /** Is this attribute's value good by its kind? A bad one is already reported, and the checks between values say nothing more of it (SPEC.md section 11). */
+  const goodByKind = (el: ElementNode, a: Attribute): boolean => {
+    const r = own(ELEMENTS, el.name) && own(ELEMENTS[el.name]!.attributes, a.name);
+    return !!r && valueProblem(r.value, a.value, a.name, ctx) === null;
   };
   /** Is this an element of the page's version? One that is not is already reported, and nothing more is said of it. */
   const inVersion = (el: ElementNode): boolean => {
@@ -336,13 +341,14 @@ export function check(doc: HoloDocument, options: CheckOptions = {}): Problem[] 
     for (const option of choice.children) {
       if (option.type !== 'element' || option.name !== 'option') continue;
       const given = attr(option, 'value');
+      if (given && !goodByKind(option, given)) continue;
       const text = trimSpace(option.children.map((c) => (c.type === 'text' ? c.value : '')).join('')).split(SPACES).join(' ');
       const value = given?.value ?? text;
       if (values.has(value)) report('bad-value', `Two options of this <choice> have the value "${value}"`, given?.start ?? option.start);
       values.add(value);
     }
     const chosen = attr(choice, 'value');
-    if (chosen?.value !== undefined && chosen.value !== null && values.size > 0 && !values.has(chosen.value)) {
+    if (chosen?.value !== undefined && chosen.value !== null && goodByKind(choice, chosen) && values.size > 0 && !values.has(chosen.value)) {
       report('bad-value', `"value": "${chosen.value}" is not one of its options' values`, chosen.start);
     }
   }

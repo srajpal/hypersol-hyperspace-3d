@@ -89,16 +89,17 @@ Both main branches are up to date: milestone 26 is merged here (#63,
 Before milestone 27: three draft advisories (private tabs, the
 Library's passwords), #66 to #68 here, and holoml's #42 and #43, fixed
 in the order the owner approved (prompt 189). Branches:
-`fix-advisories-issues-66-68` here and `fix-issues-42-43` in holoml
-(pull request #44, which also makes HoloML 0.3.1: the specification's
-second edition of 0.3). TODO.md, "Issues and advisories of 2026-10-09",
+`fix-advisories-issues-66-68` here (pull request #69) and
+`fix-issues-42-43` in holoml (pull request #44, merged, which also made
+HoloML 0.3.1: the specification's second edition of 0.3; tagged v0.3.1
+at 51af846, a pre-release, prompt 190). TODO.md, "Issues and advisories of 2026-10-09",
 has each fix, its check (tests/e2e/fixes-189.e2e.ts), and the results.
 
-How to resume: once holoml #44 is merged, tag v0.3.1 there (a
-pre-release, as 0.3.0) and make the copy here from it (`pnpm
-holoml:sync v0.3.1 --examples v0.3.1`), run the unit tests and the
-HoloML checks, then this repository's pull request. The advisories stay
-drafts until the owner publishes them; then milestone 27.
+The copy here is made from v0.3.1 (`pnpm holoml:sync v0.3.1 --examples
+v0.3.1`; the example sites did not change), on the branch
+`holoml-0.3.1`, as #69 was merged before it. How to resume: that pull
+request's merge, then the advisories, which stay drafts until the owner
+publishes them; then milestone 27.
 
 ## Milestone 26, privacy and data tools (2026-10-08, prompts 177 to 179)
 

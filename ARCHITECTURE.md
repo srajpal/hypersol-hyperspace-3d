@@ -704,9 +704,12 @@ tag (packages/holoml/SOURCE.json names the tag and its commit).
 Milestone 25 (2026-10-08) brought HoloML 0.3, first edition: names for
 models and groups, the language and direction of text, far models,
 more of the scene API, and the look and limits written down. holoml's
-packages are at 0.3.0, tagged v0.3.0 (a pre-release, at holoml's
-64e4e3e), and HyperSpace 3D's copy and the example sites are made from
-that tag (`pnpm holoml:sync v0.3.0 --examples v0.3.0`).
+packages were at 0.3.0, tagged v0.3.0 (a pre-release, at holoml's
+64e4e3e). Its second edition (2026-10-09) says what several `material`
+elements for one name do, and the checker reports a choice's value bad
+by its kind once: holoml 0.3.1, tagged v0.3.1 (a pre-release, at
+51af846). HyperSpace 3D's copy and the example sites are made from that
+tag (`pnpm holoml:sync v0.3.1 --examples v0.3.1`).
 
 ## 7. Data flow
 
