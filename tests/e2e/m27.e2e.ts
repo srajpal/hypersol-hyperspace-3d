@@ -230,9 +230,13 @@ describe('FC3: the keys', () => {
       expect(await h.shell.evaluate(() => document.activeElement?.tagName.toLowerCase())).toBe('hs-look-notice');
       const goal = async () => (await look(h)).goal;
       const g0 = await goal();
-      const after = async (key: string) => {
-        await pressInShell(h, key);
-        return goal();
+      // Each key changes where the camera is going; the change is waited for, as a key sent to the window is handled a moment later.
+      let last = g0;
+      const after = async (key: string, modifiers: ('shift')[] = []) => {
+        const before = JSON.stringify(last);
+        await pressInShell(h, key, modifiers);
+        last = await waitFor(`${key} taken`, goal, (g) => JSON.stringify(g) !== before);
+        return last;
       };
       expect((await after('Right')).yaw).toBeGreaterThan(g0.yaw);
       expect((await after('Left')).yaw).toBeCloseTo(g0.yaw, 9);
@@ -249,8 +253,7 @@ describe('FC3: the keys', () => {
       // Shift moves further.
       const one = (await after('Right')).yaw;
       await after('Left');
-      await pressInShell(h, 'Right', ['shift']);
-      expect((await goal()).yaw).toBeCloseTo(3 * one, 6);
+      expect((await after('Right', ['shift'])).yaw).toBeCloseTo(3 * one, 6);
       // None of it reached the page's text field.
       await caughtUp(h, 'form');
       expect(await inPage<string>(h, `document.getElementById('name').value`, 'form')).toBe('');

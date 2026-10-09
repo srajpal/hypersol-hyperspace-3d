@@ -5843,7 +5843,12 @@ so the room's limits and keys are its own.
   installed on the tablet (nothing it shows changes).
 - The screenshots (m27, 75; milestone 26's set out of the tree) and the
   README's four pictures, looked at.
-- Not checked yet: `pnpm test:linux` with m27, and the automatic builds.
+- On Linux (`pnpm test:linux` with m27, and m11 once): the first run
+  failed FC3 once (it read where the camera was going before the shell
+  had handled the key: the check now waits for each key's change), then
+  12 pass and FC9's frame rate is skipped (drawn in software, 13 frames
+  a second), in two runs; FC7 measured 19 in economy mode.
+- Not checked yet: the automatic builds.
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
