@@ -2146,3 +2146,9 @@ the room) after pull request #71 merged.
 ```text
 #71 merged, milestone 27 accepted.
 ```
+
+## 197 — 2026-10-09 · Claude Opus 5.5, high effort
+
+```text
+#72 merged, start milestone 28.
+```
