@@ -5672,7 +5672,9 @@ Results so far (Windows 11, 2026-10-09):
   unchanged). Then: the unit tests (556), lint, and the type check
   pass, and m14, m15, m17, m18, m25, review-134-viewer, and fixes-189
   pass, 115 checks.
-- Not checked yet: the automatic builds of pull request #69.
+- Pull request #69 merged (its 16 automatic checks passed) before the
+  copy reached it; the copy goes in its own pull request, from the
+  branch holoml-0.3.1.
 
 ## After milestone 25 (2026-10-08, prompt 172)
 

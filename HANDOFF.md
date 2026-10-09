@@ -96,9 +96,10 @@ at 51af846, a pre-release, prompt 190). TODO.md, "Issues and advisories of 2026-
 has each fix, its check (tests/e2e/fixes-189.e2e.ts), and the results.
 
 The copy here is made from v0.3.1 (`pnpm holoml:sync v0.3.1 --examples
-v0.3.1`; the example sites did not change). How to resume: #69's
-automatic builds, the owner's merge, then the advisories, which stay
-drafts until the owner publishes them; then milestone 27.
+v0.3.1`; the example sites did not change), on the branch
+`holoml-0.3.1`, as #69 was merged before it. How to resume: that pull
+request's merge, then the advisories, which stay drafts until the owner
+publishes them; then milestone 27.
 
 ## Milestone 26, privacy and data tools (2026-10-08, prompts 177 to 179)
 
