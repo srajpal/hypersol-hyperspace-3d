@@ -38,9 +38,9 @@ Plan approved 2026-09-24.
 | 24 | HyperSpace 3D for Android | The browser on an Android tablet, to see how far it reaches (prompt 152): an app in this repository (apps/android) on Android's own engine, the 3D room and its pages, HoloML pages, and touch in place of the mouse and keyboard; first, a quick look at the HoloML viewer and the example sites in the tablet's browser (prompt 153) | Done (accepted 2026-10-07, prompt 161) |
 | 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Done (accepted 2026-10-08, prompt 174) |
 | 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). | Done (accepted 2026-10-08, prompt 184; the review's item for the history search index was done by its D6) |
-| 27 | Free camera and room navigation | Move freely around the room | Later (was 27; moved before the installers, prompt 129) |
-| 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (was 28, prompt 129) |
-| 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (was 29, prompt 129) |
+| 27 | Free camera and room navigation | Move freely around the room | Later (moved before the installers, prompt 129; numbered 27 since 2026-10-05) |
+| 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Later (numbered 28 since 2026-10-05) |
+| 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (numbered 29 since 2026-10-05; the last milestone planned, prompt 172) |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS, and Android phones (Android tablets are milestone 24) | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
@@ -150,8 +150,8 @@ Polish (29) is the last milestone planned.
   pass get their own milestone (6), because exact colours are still an
   open question and reviewing every real screen together keeps them
   consistent.
-- Later polish goes after the first release (22), so it cannot delay a
-  working browser.
+- Later polish goes in the last milestone (29, Polish), so it cannot
+  delay a working browser.
 
 ## Milestone 1 — Live page in the 3D room
 
@@ -672,9 +672,11 @@ Pull request #7 review (prompt 26), two findings, both fixed:
 Status: Done. Accepted by the owner 2026-09-26 (prompt 33), after
 testing it on real sites. Plan and build approved 2026-09-26 (prompt 29),
 with the owner's answers Q1 a, Q2 a, Q3 a. Electron security check done
-at the start (ARCHITECTURE.md section 3). All tasks done; waiting for
-the owner's look-and-feel check (F11), the optional live check (L1), and
-acceptance. Screenshots: docs/screenshots/m4/.
+at the start (ARCHITECTURE.md section 3). All tasks done; the owner's
+look-and-feel check (F11) passed with the acceptance, and the optional
+live check (L1) was the owner's test on real sites (results below).
+Screenshots: docs/screenshots/m4/ (out of the tree since; see
+docs/progress.md).
 
 Goal: ads and trackers are blocked on every page and website lookups
 are encrypted, with no setup; you can see what was blocked on each page
@@ -838,8 +840,9 @@ flattening works"). Screenshots: docs/screenshots/m5/. Plan and build
 approved 2026-09-26 (prompt 31), with
 the owner's answers Q1 b ("to start"), Q2 (on by default for now, with a
 per-site and a global setting), Q3 a. Electron security check: done the
-same day for milestone 4 (ARCHITECTURE.md section 3). Milestone 4 still
-awaits the owner's acceptance (F11).
+same day for milestone 4 (ARCHITECTURE.md section 3). Milestone 4 then
+still awaited the owner's acceptance (F11; accepted the same day,
+prompt 33).
 
 Goal: everyday pages gain visible depth. A layers view breaks a page's
 main sections and images apart into separate layers at different
@@ -1522,8 +1525,9 @@ Status: Done. Accepted by the owner 2026-09-26 (prompt 50) after testing; feedba
 then list the tests (prompt 49, 2026-09-26), without a separate plan
 review; the choices below are the agent's defaults, marked for the
 owner's review at acceptance, and each can be changed in Settings or
-later. Milestone 9 was pushed first; its acceptance is still to come
-(the owner will test it with this milestone's list). Electron security
+later. Milestone 9 was pushed first; its acceptance was then still to
+come (the owner tested it with this milestone's list and accepted both,
+prompt 50). Electron security
 check at the start: 44.4.5 still newest (2026-09-26).
 
 Goal: the tab requests from prompt 42 and a lighter browser: reopen,
@@ -4081,7 +4085,7 @@ milestone ends (milestone 17's plan, Q5 a).
 
 ## Milestone 22 — HoloML documentation
 
-Status: Done, accepted 2026-10-07 (prompt 160: "checked the docs, very good"). Built; checks ran from 2026-09-29. Planned (prompt 127): the owner asked for this
+Status: Done, accepted 2026-10-07 (prompt 160: "checked the docs, very good"; Y6's reading with a screen reader by hand has no result recorded and is still the owner's to do). Built; checks ran from 2026-09-29. Planned (prompt 127): the owner asked for this
 plan, and for HoloML's features to be checked while the documents are
 made, with a plan for anything missing; that check was done for the
 draft (below). The owner answered Q1 to Q7 with the recommendations and
@@ -4425,7 +4429,9 @@ finished documents.
 ### Done when
 
 - Y1 to Y10 pass, the documentation is published, and the owner
-  accepts; then holoml is tagged v0.2.1 on the owner's go (Q6).
+  accepts; then holoml is tagged v0.2.1 on the owner's go (Q6). (The
+  tag made was v0.2.2, the third edition, 2026-10-01; there is no
+  v0.2.1.)
 
 ## Milestone 23 — HoloML for VS Code
 
@@ -5045,7 +5051,8 @@ own resolution; the desktop's economy mode is unchanged (milestone
 and 75). Checked on the tablet: the cards' text and edges are sharp,
 side by side with the earlier screenshot at the same zoom. The
 ocean tunnel's frame rate with the sharper room (AN6) is not measured
-again yet. The automatic builds on pull request #53 passed, the
+again yet (measured later the same day: 56 to 59 frames a second;
+"Clearing up before milestone 25"). The automatic builds on pull request #53 passed, the
 Android job included. After the fix: type check, lint, the 512 unit
 tests, and the app's 15 JUnit tests pass (2026-10-07).
 
@@ -5364,14 +5371,17 @@ and Hebrew, to show `lang` and `dir`.
   another program was holding it; they are to be run again when it is
   free (`pnpm test:e2e tests/e2e/m2.e2e.ts tests/e2e/m9.e2e.ts
   tests/e2e/review-134-main.e2e.ts -t "D8|K2|copy"`). Nothing in this
-  milestone touches the clipboard.
+  milestone touches the clipboard. (Run again by the owner: 7 passed,
+  "After milestone 25", below.)
 - On Linux (`pnpm test:linux` with m19, m20, m21, and m25, drawn in
   software): 43 pass and 7 are skipped (the budgets for a graphics
   card); the ocean tunnel draws 4 frames a second there, logged.
 - The Android app builds, its unit tests pass, and it carries the
   decoders (`./gradlew testDebugUnitTest assembleDebug`); its checks on
   the tablet, the automatic builds, and the published sites: not
-  checked yet.
+  checked yet when this was written. Since: the automatic builds passed
+  (#59 and #60) and the tablet's checks passed (prompt 174); the
+  published sites checked by hand (HL10) are still the owner's to do.
 - Found while taking the screenshots, not part of this milestone:
   HoloML's content policy's `webrtc 'block'` is not a directive
   Chromium knows, so it is ignored (the console says so on every
@@ -5630,8 +5640,8 @@ automatic build passed. The owner then asked for the items below.
 - The tablet: the owner's aquarium said the browser does not know
   HoloML 0.3, as the app on it was the build of 2026-10-07, before
   milestone 25. The app built from main (its unit tests pass) is
-  installed over USB; the checks on the tablet are the owner's, not
-  checked yet.
+  installed over USB; the checks on the tablet are the owner's (they
+  passed, prompt 174).
 - Peer connections on HoloML pages, approved: the viewer takes the RTC
   constructors out of the page's JavaScript and refuses frames
   (viewer/guard.ts); the decoder's frame for KTX2 pictures is sandboxed,
@@ -5664,8 +5674,11 @@ automatic build passed. The owner then asked for the items below.
   V9 after its step was set to start Tab from the page's top). On
   Linux (`pnpm test:linux` with m2, m19, and review-134-main): 71 pass
   and 2 are skipped (the budgets for a graphics card). The Android app
-  builds from main and its unit tests pass. Not checked yet: the full
-  run, the tablet, and packaging a build.
+  builds from main and its unit tests pass. Not checked yet when this
+  was written: the full run, the tablet, and packaging a build. Since:
+  the tablet passed (prompt 174), and the full run passed 403 of 403
+  with milestone 26 (above); packaging a build is a fork's to check
+  now that the installers are dropped.
 - The first automatic build of pull request #60 failed R9 on Windows
   (part 2; prompt 173): with the Scene part's picking on, three clicks
   on the car were each lost (the page had taken 5.3 s to load there),
@@ -5716,16 +5729,14 @@ What the review of 2026-09-30 left for the owner, decided in prompt 160.
 ## Clearing up before milestone 25 (2026-10-07, prompt 162)
 
 - Node: Node 24.21.0 is installed on this computer through nvm (Herd's),
-  but not active: `C:Program Files
-odejs` is a folder of the
+  but not active: `C:\Program Files\nodejs` is a folder of the
   standalone installer's Node 22.16, where nvm puts its link, so `nvm
   use` cannot switch. Until the owner removes that installation, the
   agent puts nvm's 24.21.0 first on the path for its runs. `engines`
   stays at 22.13 until then. (Prompt 164: the owner removed it and
   switched nvm to 24.21.0, which is now the Node on this computer;
   `engines` asks for 24 or newer in both repositories. Removing it also
-  took `%APPDATA%
-pm`, where pnpm is, off the user PATH; the owner puts
+  took `%APPDATA%\npm`, where pnpm is, off the user PATH; the owner puts
   it back.)
 - Branches: gone in both repositories, here and on GitHub (the owner,
   prompt 162). The old working copy's folder

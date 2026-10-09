@@ -2030,3 +2030,11 @@ tab, and bookmark import and export) after PR #63 merged.
 ```text
 #63 merged, milestone 26 accepted.
 ```
+
+## 185 — 2026-10-09 · Claude Opus 5.5, high effort
+
+```text
+Review the milestones and other docs, make sure everything is good and
+nothing is out of sync. Let me know if there are any tests from my side
+waiting to be done.
+```

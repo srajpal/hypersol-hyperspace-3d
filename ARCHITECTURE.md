@@ -592,7 +592,8 @@ holoml/
                                specifications (0.2's second edition;
                                its third, with corrections, after the
                                review of 2026-09-30), with an index
-                               made from the code
+                               made from the code; and 0.3
+                               (milestone 25, first edition)
   CHANGELOG.md                 what changed with each release (since the
                                review of 2026-09-30)
   spec/                        its grammar (milestone 22): the syntax in
@@ -685,7 +686,7 @@ development package, `marked`, and published by holoml's Pages workflow;
 the missing features found by the feature check became milestone 23,
 HoloML 0.3 (24 since 2026-10-02, 25 since 2026-10-05); the media type is not registered with IANA; the
 clarifications go into 0.2's text as its second edition, tagged v0.2.1
-at the end, on the owner's go. Tests keep the documents true: the
+at the end, on the owner's go (the tag made was v0.2.2, below). Tests keep the documents true: the
 grammar, the Web IDL and the scene API's tables, the reference pages,
 the index, every HoloML example in the guides, and the site's links,
 headings, pictures' text, keyboard access, and colour contrast.
@@ -699,6 +700,13 @@ longer slow on a long run of digits, and the aquarium's turtle is
 replaced (THIRD-PARTY.md). It is tagged v0.2.2 (2026-10-01, at holoml's
 dc2ad98; there is no v0.2.1), and HyperSpace 3D's copy is made from that
 tag (packages/holoml/SOURCE.json names the tag and its commit).
+
+Milestone 25 (2026-10-08) brought HoloML 0.3, first edition: names for
+models and groups, the language and direction of text, far models,
+more of the scene API, and the look and limits written down. holoml's
+packages are at 0.3.0, tagged v0.3.0 (a pre-release, at holoml's
+64e4e3e), and HyperSpace 3D's copy and the example sites are made from
+that tag (`pnpm holoml:sync v0.3.0 --examples v0.3.0`).
 
 ## 7. Data flow
 
@@ -972,7 +980,7 @@ computer (`pnpm test:linux`) since 2026-09-28. macOS not checked yet.
 - Lint and type check: `pnpm lint` (about half a minute: three of its
   rules need the types, section 4, "Tests"), `pnpm typecheck`
 - End-to-end: `pnpm test:e2e` (every milestone's checks and the review's,
-  about nineteen minutes on this computer; needs openssl on PATH for the certificate-error check, which
+  about twenty minutes on this computer; needs openssl on PATH for the certificate-error check, which
   Git for Windows provides)
 - Linux, as GitHub's machines run it: `pnpm test:linux` (needs Docker)
 

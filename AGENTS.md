@@ -164,7 +164,7 @@ date given and grow with each milestone; TODO.md has the latest.
   prompt 161; `engines` asks for 24 or newer since prompt 164); pnpm
   12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 502 tests passed on 2026-09-30;
+- Unit: `pnpm test` (Vitest; 555 tests passed on 2026-10-08;
   each test may take up to 20 seconds, vitest.config.ts)
 - HyperSpace 3D for Android (milestone 24; first run 2026-10-05): after
   `pnpm build` and `pnpm --filter @hypersol/android build:web`, in
@@ -181,9 +181,8 @@ date given and grow with each milestone; TODO.md has the latest.
   a promise nobody awaits or catches is an error, since the review of
   2026-09-30)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about nineteen minutes; 374 checks in 27 files: 372 in
-  the full run on 2026-09-30, after the review's fixes, all passed on
-  this computer, and two added after it, each run in its file; TODO.md
+  against it (about twenty minutes; 403 checks in 29 files, all passed
+  on this computer in the full run of 2026-10-08, milestone 26; TODO.md
   has the details). On
   this computer vitest's report leaves out what passing checks log (the
   load times, frame rates, and memory); `pnpm test:e2e
@@ -299,8 +298,8 @@ milestone; the current milestone's checks are defined in TODO.md):
   internet (run before a release; first run 2026-09-26). It is the only
   place the blocker's page scripts are fetched, and it records the
   SHA-256 of the starter copy and of the scripts in starter.json, which
-  the app checks (not run again since the review's change to it: not
-  checked yet).
+  the app checks (run again after the review's change to it,
+  2026-09-30: the same bytes, the scripts' checksum recorded).
 - Milestone 6 checks H1 to H7 (same command): theme switch, Settings >
   Theme with "Match the system", the room and window following the
   theme, page tilt, the layers view's outline; H5 (contrast) and H8 (no
@@ -536,9 +535,13 @@ milestone; the current milestone's checks are defined in TODO.md):
   (privacy/https-only, site-data, storage/bookmark-file, and the
   service's import and export). PD10 is every earlier milestone's
   checks.
-- Later milestones add: privacy and data tools (26), free camera (27),
-  lift to 3D (28), and polish (29). No installers (dropped, prompt
-  172).
+- GitHub issues #17 to #22 (same command,
+  tests/e2e/issues-17-to-22.e2e.ts, in part 1): sleeping tabs keep
+  unsent drafts and live capture, a script alone brings no password
+  offer, and Block in the site panel ends a site's camera and
+  microphone (#20 is checked by F9 and I6).
+- Later milestones add: free camera (27), lift to 3D (28), and polish
+  (29). No installers (dropped, prompt 172).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

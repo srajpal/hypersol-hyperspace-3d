@@ -2,25 +2,6 @@
 
 ## Unreleased
 
-- Privacy and data tools (milestone 26):
-  - HTTPS-only browsing (GitHub issue #24), on by default: an `http://`
-    address is loaded over HTTPS, and a site that does not answer that
-    way gets "This site does not offer a secure connection" before
-    anything goes over plain HTTP. "Continue to the site (not secure)"
-    allows the site until the browser closes; "Always allow HTTP for
-    this site", in the site panel or Settings, keeps it. Settings lists
-    every allowed site with Remove. Private tabs keep their own, in
-    memory. Local addresses (localhost, private networks, single-word
-    names) are never upgraded.
-  - Per-site storage (#26): the Library's Sites tab lists the sites
-    that keep data, with their cookies, and clears one site's cookies,
-    site storage, and cached files, reloading its open tabs; other
-    sites, bookmarks, history, and passwords stay. The site panel links
-    to it.
-  - Bookmark import and export (#27): the Library's Bookmarks tab reads
-    the bookmark file other browsers export, as text, and shows what
-    would be added and what is skipped before anything is; it exports
-    every bookmark to one.
 - HoloML pages (milestone 14): a `.holoml` address shows its 3D scene
   across the window, with models, material changes, lights, labels,
   links, animation, and orbit or walk movement by mouse, keyboard, and
@@ -231,6 +212,25 @@
   be found again; the KTX2 decoder's frame is sandboxed and out of the
   page's reach. A HoloML file opened from the computer now loads its
   KTX2 pictures (`.ktx2` files were not served).
+- Privacy and data tools (milestone 26):
+  - HTTPS-only browsing (GitHub issue #24), on by default: an `http://`
+    address is loaded over HTTPS, and a site that does not answer that
+    way gets "This site does not offer a secure connection" before
+    anything goes over plain HTTP. "Continue to the site (not secure)"
+    allows the site until the browser closes; "Always allow HTTP for
+    this site", in the site panel or Settings, keeps it. Settings lists
+    every allowed site with Remove. Private tabs keep their own, in
+    memory. Local addresses (localhost, private networks, single-word
+    names) are never upgraded.
+  - Per-site storage (#26): the Library's Sites tab lists the sites
+    that keep data, with their cookies, and clears one site's cookies,
+    site storage, and cached files, reloading its open tabs; other
+    sites, bookmarks, history, and passwords stay. The site panel links
+    to it.
+  - Bookmark import and export (#27): the Library's Bookmarks tab reads
+    the bookmark file other browsers export, as text, and shows what
+    would be added and what is skipped before anything is; it exports
+    every bookmark to one.
 
 After a review of both repositories on 2026-09-30 (the ids in brackets
 are the review's):
