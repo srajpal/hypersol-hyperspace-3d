@@ -186,6 +186,10 @@ Rule 13 check, 2026-10-09 (start of milestone 27, free camera; prompt
 one installed; since then only 45.0.0-beta.1 (2026-10-09), not a stable
 line. Nothing to upgrade.
 
+Rule 13 check, 2026-10-09 (start of milestone 28, lift to 3D; prompt
+197): 44.7.0 (2026-10-07) is still the newest stable release, and the
+one installed; 45 is still in beta (45.0.0-beta.1). Nothing to upgrade.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |
