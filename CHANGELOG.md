@@ -231,6 +231,22 @@
     the bookmark file other browsers export, as text, and shows what
     would be added and what is skipped before anything is; it exports
     every bookmark to one.
+- Security fixes of 2026-10-09 (the advisories' ids in brackets):
+  - A private tab opened while the last private session's data was
+    still being cleared could read that data, and the late clearing
+    could take what the new tab wrote. Its pages now wait until the
+    clearing is done. [GHSA-h34m-3f58-vj6h]
+  - The Library could show a password without Show: one whose Show was
+    answered after the Library closed [GHSA-2mm9-j4r3-p2v2], or a
+    deleted sign-in's, under a new sign-in that SQLite gave the same id
+    [GHSA-vv44-hw63-7mm7]. Shown passwords are now forgotten when the
+    Library closes, on Delete, and whenever saved passwords change, and
+    a Show answered after that is dropped.
+- HoloML pages: a model with more than one `material` of the same name
+  takes every one, in document order, as HoloML 0.3's second edition
+  says (#66); and a click's or an aim's normal stays square to the
+  surface under a scale that differs by axis (#67).
+- The build and test tools' source-map-js is 1.2.2 (#68).
 
 After a review of both repositories on 2026-09-30 (the ids in brackets
 are the review's):

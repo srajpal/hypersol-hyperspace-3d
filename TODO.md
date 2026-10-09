@@ -5631,6 +5631,45 @@ lists are; the script would be one new fetch, from publicsuffix.org.
   part with it; #63 merged, closing #24, #26, and #27, and the owner
   accepted the milestone (prompt 184).
 
+## Issues and advisories of 2026-10-09 (prompts 188 and 189)
+
+Five new issues (#66 to #68 here, #42 and #43 in holoml) and three
+draft advisories here, filed by the owner from a review of earlier
+snapshots (the browser at a8a7df8, holoml at v0.2.2); each was checked
+against main and still applied. Approved in prompt 189 with the
+recommendations: in this order, in ordinary public pull requests;
+holoml released as 0.3.1 and the browser's copy made from that tag; and
+SPEC.md's sentence on several `material` elements for one name.
+
+| # | Item | Fix | Check |
+|---|---|---|---|
+| 1 | GHSA-h34m-3f58-vj6h: a private tab opened while the last private session was cleared read its data | The private session's requests wait for the clearing (the shield holds them); clearings run one after another | fixes-189 "GHSA-h34m" |
+| 2 | GHSA-2mm9-j4r3-p2v2: a Show answered after the Library closed was shown on reopening | A Show answered after shown passwords were forgotten is dropped | fixes-189 "GHSA-2mm9" |
+| 3 | GHSA-vv44-hw63-7mm7: a deleted sign-in's shown password under a new sign-in given its id | Shown passwords forgotten on Delete and whenever saved passwords change | fixes-189 "GHSA-vv44" |
+| 4 | #68 and holoml #43: source-map-js 1.2.1 (GHSA-68fv-2mgg-jv7q) | PostCSS 8.5.29, source-map-js 1.2.2, lockfiles only | `pnpm audit` here finds nothing |
+| 5 | #66: only the first `material` for a name applied | Each, in document order; SPEC.md says so (0.3, second edition) | fixes-189 "#66" |
+| 6 | #67: a hit's normal turned as a direction | The normal matrix (inverse transpose) | fixes-189 "#67" |
+| 7 | holoml #42: a choice's value bad by its kind reported twice | The checks between values pass over it | holoml's conformance sample choice-values-bad-by-kind |
+
+Each check fails without its fix (run with the fix set aside).
+
+Found on the way: holoml's `pnpm audit` also lists, in development
+tools only, serialize-javascript and diff (through @vscode/test-cli's
+mocha) and braces (through @gltf-transform/cli; no patched version).
+Not part of #43; for the owner to decide.
+
+Results so far (Windows 11, 2026-10-09):
+
+- Here: the unit tests (556), lint, and the type check pass;
+  tests/e2e/fixes-189.e2e.ts, 5 checks, pass.
+- holoml (pull request #44): 885 tests, lint, the type check, and the
+  site's build pass; its automatic builds passed.
+- The full end-to-end run on Windows: 408 of 408 passed (30 files,
+  21 minutes), with these fixes and HoloML 0.3.0's copy.
+- Not checked yet: the copy of HoloML from v0.3.1 (after holoml #44
+  merges and is tagged), and the automatic builds of this pull
+  request.
+
 ## After milestone 25 (2026-10-08, prompt 172)
 
 Both pull requests merged (holoml #39, the browser #59), and every

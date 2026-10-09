@@ -64,6 +64,10 @@ export interface PrivacyOptions {
   isShell(contents: WebContents): boolean;
   /** The shell's last private tab closed: forget everything private (main/index.ts). */
   onPrivateEnded?: () => Promise<void>;
+  /** While the private session's data is being cleared, the clearing: the private session's requests wait for it. */
+  privateHold?: () => Promise<void> | null;
+  /** A private request held for the clearing (test log). */
+  onHeld?: (url: string) => void;
   /** Test mode only: test host names answered over plain HTTP only, never upgraded (main/launch-options.ts). */
   testPlainHosts?: readonly string[];
 }
@@ -238,37 +242,14 @@ export class Privacy {
    */
   protect(ses: Session): void {
     ses.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, callback) => {
-      this.options.observe?.(details.url);
-      const tab = details.webContentsId;
-      if (tab === undefined) {
-        // No tab made this request: the app itself, or a service worker
-        // (review of 2026-09-30, M3). The site's pause is its session's.
-        const paused = ses === this.privateSession ? this.privatePaused : this.paused;
-        callback(this.own.has(details.url) ? {} : this.shield.decideUntabbed(details, (site) => paused.has(site)));
-        return;
-      }
-      // The shell's own requests, and its developer tools'.
-      if (!this.tabs.has(tab)) {
-        callback({});
-        return;
-      }
-      // HTTPS-only first (milestone 26): a page asked for over HTTP is loaded over HTTPS, and the shield then
-      // decides on that address, as on any other.
-      if (details.resourceType === 'mainFrame') {
-        const https = this.https.decide(tab, details.url, this.privateTabs.has(tab));
-        if (https && 'redirectURL' in https) {
-          callback({ redirectURL: https.redirectURL });
-          return;
-        }
-        if (https && 'refuse' in https) {
-          // Electron drops a cancelled page load without a failure event: the tab is told, as for a blocked page.
-          callback({ cancel: true });
-          this.sendToHost(tab, { type: 'https-only-refused', webContentsId: tab, url: https.refuse });
-          return;
-        }
-      }
-      this.options.onTabRequest?.(tab, details);
-      callback(this.shield.decide({ url: details.url, resourceType: details.resourceType, tab }));
+      // A private page's request waits while the last private session's
+      // data is cleared, so a private tab opened meanwhile neither reads
+      // it nor writes what the clearing would take (GHSA-h34m-3f58-vj6h).
+      const hold = ses === this.privateSession ? this.options.privateHold?.() : null;
+      if (hold) {
+        this.options.onHeld?.(details.url);
+        void hold.then(() => this.beforeRequest(ses, details, callback));
+      } else this.beforeRequest(ses, details, callback);
     });
     // HTTPS-only knows a page load's redirects, so that one back to HTTP is not upgraded again for ever.
     ses.webRequest.onBeforeRedirect({ urls: ['<all_urls>'] }, (details) => {
@@ -287,6 +268,45 @@ export class Privacy {
       }
       this.filters.engine.onHeadersReceived(details, callback);
     });
+  }
+
+  /** The shield's decision on one request of a session's web pages. */
+  private beforeRequest(
+    ses: Session,
+    details: Electron.OnBeforeRequestListenerDetails,
+    callback: (response: Electron.CallbackResponse) => void,
+  ): void {
+    this.options.observe?.(details.url);
+    const tab = details.webContentsId;
+    if (tab === undefined) {
+      // No tab made this request: the app itself, or a service worker
+      // (review of 2026-09-30, M3). The site's pause is its session's.
+      const paused = ses === this.privateSession ? this.privatePaused : this.paused;
+      callback(this.own.has(details.url) ? {} : this.shield.decideUntabbed(details, (site) => paused.has(site)));
+      return;
+    }
+    // The shell's own requests, and its developer tools'.
+    if (!this.tabs.has(tab)) {
+      callback({});
+      return;
+    }
+    // HTTPS-only first (milestone 26): a page asked for over HTTP is loaded over HTTPS, and the shield then
+    // decides on that address, as on any other.
+    if (details.resourceType === 'mainFrame') {
+      const https = this.https.decide(tab, details.url, this.privateTabs.has(tab));
+      if (https && 'redirectURL' in https) {
+        callback({ redirectURL: https.redirectURL });
+        return;
+      }
+      if (https && 'refuse' in https) {
+        // Electron drops a cancelled page load without a failure event: the tab is told, as for a blocked page.
+        callback({ cancel: true });
+        this.sendToHost(tab, { type: 'https-only-refused', webContentsId: tab, url: https.refuse });
+        return;
+      }
+    }
+    this.options.onTabRequest?.(tab, details);
+    callback(this.shield.decide({ url: details.url, resourceType: details.resourceType, tab }));
   }
 
   private handleCosmetics(): void {

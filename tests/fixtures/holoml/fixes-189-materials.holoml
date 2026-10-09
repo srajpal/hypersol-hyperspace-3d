@@ -1,0 +1,24 @@
+<holoml version="0.3">
+  <head>
+    <title>HoloML: several materials for one name</title>
+  </head>
+  <!-- Issue #66: each <material> for a name changes it, in document order
+       (SPEC.md section 7). The last spinner keeps its own Paint
+       (metalness 0.2, roughness 0.5, opaque, no picture). -->
+  <scene>
+    <viewpoint position="0 1 6" look-at="0 0 0" />
+    <model id="conflicting" src="models/spinner.gltf" position="-2 0 0">
+      <material name="Paint" color="#ff0000" />
+      <material name="Paint" color="#0000ff" roughness="0.9" />
+    </model>
+    <model id="disjoint" src="models/spinner.gltf" position="0 0 0">
+      <material name="Paint" metalness="0.7" />
+      <material name="Paint" opacity="0.5" />
+    </model>
+    <model id="pictured" src="models/spinner.gltf" position="2 0 0">
+      <material name="Paint" map="gen/stripes.png" repeat="2" />
+      <material name="Paint" color="#00ff00" />
+    </model>
+    <model id="own" src="models/spinner.gltf" position="0 0 -3" />
+  </scene>
+</holoml>
