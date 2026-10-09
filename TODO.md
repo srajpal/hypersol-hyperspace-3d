@@ -5631,6 +5631,162 @@ lists are; the script would be one new fetch, from publicsuffix.org.
   part with it; #63 merged, closing #24, #26, and #27, and the owner
   accepted the milestone (prompt 184).
 
+## Milestone 27 — Free camera and room navigation
+
+Status: Planned, waiting for the owner's approval (drafted 2026-10-09,
+prompt 191). Rule 13 check done (ARCHITECTURE.md section 3: 44.7.0 is
+still the newest stable release).
+
+Goal: leave the desk and look around the room, then come back to the
+desk exactly as it was. Today the camera is fixed at the desk: it moves
+only a little with the pointer (the parallax, up to 24 units) and always
+looks at the page, from the one distance where the page is pixel-sharp
+(packages/scene-core/src/layout.ts). This milestone adds a way to move
+it freely, with the mouse, the keyboard, and a button, without ever
+leaving the page blurred or a click landing somewhere unexpected.
+
+### What is there today (the parts this touches)
+
+- The camera (renderer/scene/room.ts): Three.js, field of view 40°,
+  placed at (parallax x, parallax y, the pixel-sharp distance), looking
+  at the middle of the page. The page is a CSS 3D panel drawn with the
+  same camera; Chromium finds what a click hits through the 3D
+  transform, so clicks land from any angle, but text is sharp only from
+  the desk.
+- What assumes the desk: the page's size and lean (computePanelLayout),
+  the tab cards' arc (computeTabArc, in screen pixels), the horizon and
+  sun (at the camera's height), the instrument panels' drift and the
+  layers view's vanishing point (both fed by the parallax), and the
+  checks that click on the page (C2, C3, H6, M3, M4, R4).
+- Settings > Appearance > Page view: lean, its direction, "Room
+  movement with the pointer" (the parallax), space around the page,
+  "Flat and still", and "Default view".
+- Drawn only when something changes; economy mode caps frames at 30 and
+  turns the parallax off; reduced motion holds the camera still; a
+  HoloML page that fills the window is drawn flat.
+
+### How it would work (proposed)
+
+1. **Looking around.** A "Look around" button in the top bar, a
+   shortcut (Ctrl+Shift+K by default, changeable in Settings >
+   Shortcuts), and, by Q5, dragging on the room itself start it. The
+   camera then moves as Q1 says: by dragging, the wheel, and the keys
+   (the arrows and W, A, S, D to turn and move, + and - or the wheel to
+   come closer or go further, Page Up and Page Down to rise and sink).
+2. **Coming back.** Escape, Home, the button again, or "Back to the
+   desk" (a small notice at the top while away, which also says how to
+   come back) return the camera to the desk in a quarter of a second,
+   at once with reduced motion. Back at the desk the page is exactly
+   where it was, to the pixel, so it is sharp again.
+3. **Limits** (Q6). The camera stays in the room: above the floor, in
+   front of the far horizon, within a distance of the desk, and never
+   behind the page or inside a card.
+4. **The page while away** (Q2). The page stays as it is (it keeps
+   playing and loading) but takes no clicks or keys while the camera is
+   away; a click on it brings the camera back to the desk first.
+5. **The tab cards.** Clicking a card while away switches to its tab
+   and returns to the desk, as a card click does now. The cards, the
+   room, the horizon, and the glow keep their places in the world; the
+   horizon no longer follows the camera's height while away.
+6. **The other parts.** While away: the parallax is off, the instrument
+   panels and the layers view stay as they are at the desk, and the top
+   bar, menus, and panels work as usual (opening a panel does not bring
+   the camera back). Opening a HoloML page that fills the window brings the
+   camera back first; "Look around" is not offered there (pages cannot
+   go full screen yet: it is refused until milestone 29). Without WebGL 2 it is not offered (the button
+   says why).
+7. **Economy mode** keeps its cap of 30 frames a second while moving;
+   nothing is drawn while the camera is still, away or at the desk.
+8. **Keyboard and screen readers.** Every movement has keys; the button
+   has a name and a pressed state; entering and leaving are announced
+   ("Looking around the room. Escape returns to the desk."); while away
+   the keys go to the room, not the page.
+9. **Starting** (Q3): the browser always starts at the desk.
+10. **Android** (Q4): unchanged in this milestone; the tablet keeps its
+    tilt.
+
+### Software to install
+
+None. Three.js (already installed) has the maths needed; the movement
+is written for the room, as the HoloML viewer's is (viewer/controls.ts),
+so the room's limits and keys are its own.
+
+### Questions
+
+- Q1, how the camera moves.
+  - a (recommended): around the desk. Dragging turns the view around the
+    page's middle, the wheel comes closer or goes further, and the keys
+    also move it sideways and up and down. Hard to get lost, and the
+    page stays in sight.
+  - b: flying freely, as in a game: the mouse turns the head, W, A, S, D
+    move. More freedom, and easier to get lost in a room that is mostly
+    empty.
+  - c: both, with a switch between them.
+- Q2, the page while the camera is away.
+  - a (recommended): it takes no clicks or keys; a click on it brings the
+    camera back first. Nothing is typed or clicked at an angle where it
+    is hard to see, and the page's text is never read blurred.
+  - b: it stays live: clicks and keys reach it from any angle (Chromium
+    finds the target), and the camera comes back only when asked.
+- Q3, where the browser starts.
+  - a (recommended): always at the desk.
+  - b: where the camera was when the browser closed.
+- Q4, the Android app.
+  - a (recommended): unchanged in this milestone (it keeps its tilt);
+    touch gestures for the room can come with a later Android milestone.
+  - b: in this milestone too: two fingers turn the view, a pinch comes
+    closer, and a button returns to the desk.
+- Q5, dragging on the room.
+  - a (recommended): dragging on the empty room (not the page, not a
+    card, not the top bar) starts looking around, so the room invites
+    it; a plain click there still does nothing.
+  - b: only the button and the shortcut start it; dragging the room does
+    nothing, as now.
+- Q6, the limits.
+  - a (recommended): the room's (step 3), so the room always shows.
+  - b: none beyond the floor.
+
+### Tasks
+
+- [ ] 1. The room's free camera: entering and leaving, the movement (Q1),
+      the limits (Q6), the return to the exact desk pose, the horizon and
+      glow kept in the world, and drawing only while moving.
+- [ ] 2. The page and the cards while away (Q2): input held, a click on
+      the page or a card bringing the camera back, and the parallax,
+      instrument panels, and layers view kept as at the desk.
+- [ ] 3. The controls: the top bar button, the shortcut (in Settings >
+      Shortcuts), dragging on the room (Q5), the notice while away, the
+      keys, announcements, reduced motion, economy mode, fill and full
+      screen, and no WebGL 2.
+- [ ] 4. Checks FC1 to FC10: unit tests (the movement and its limits in
+      packages/scene-core, beside parallax and layout) and
+      tests/e2e/m27.e2e.ts.
+- [ ] 5. Documents: README, ARCHITECTURE (the room, the decisions),
+      AGENTS.md's testing list, CHANGELOG, HANDOFF, TODO; the screenshots
+      (`MILESTONE=m27 pnpm screenshots`, the previous set out of the
+      tree, with a view of the room from away among them) and the
+      README's four pictures.
+
+### Checks (named FC, for free camera)
+
+| # | Check | Pass when |
+|---|---|---|
+| FC1 | Entering and leaving | The button, the shortcut, and (Q5) a drag on the room start it; Escape, Home, the button, and the notice end it; back at the desk the page's corners on screen are the same as before to the pixel, and clicks land as before (C2's grid) |
+| FC2 | The mouse | Dragging and the wheel move the camera as Q1 says, smoothly, and a plain click on the room still does nothing |
+| FC3 | The keys | Every movement by the keys alone; the keys do not reach the page while away; the shortcut is changeable and the changed one works |
+| FC4 | The limits | However far it is pushed (keys held, a long drag, the wheel), the camera stays above the floor, within the room's distance, and never behind the page (Q6) |
+| FC5 | The page while away | As Q2 says: with a, a click or a key on the page does not reach it and brings the camera back; the page keeps loading and playing meanwhile |
+| FC6 | The cards while away | A click on a card switches to its tab and returns to the desk; hovering and the rail's wheel work as at the desk |
+| FC7 | Other states | Reduced motion: no animation, jumps; economy mode: at most 30 frames a second while moving; a HoloML page that fills the window brings the camera back and does not offer it; without WebGL 2 the button is unavailable and says why; a private tab works the same |
+| FC8 | Screen readers | The button's name and pressed state; entering and leaving announced; the notice reachable by the keyboard |
+| FC9 | Efficiency | Nothing drawn while the camera is still, away or at the desk; frames while moving at the display's rate (with a graphics card; logged in software, and skipped); idle after returning |
+| FC10 | Regression | Every earlier milestone's checks (C2, C3, H6, M3, M4, and R4 among them, unchanged), the unit tests, and the automatic builds on Windows and Linux |
+
+### Done when
+
+- FC1 to FC10 pass, the documents and screenshots are updated, and the
+  owner accepts the milestone.
+
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
 Five new issues (#66 to #68 here, #42 and #43 in holoml) and three
