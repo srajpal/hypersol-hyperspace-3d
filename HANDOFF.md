@@ -3,7 +3,8 @@
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-10-09 (milestones 1 to 26 accepted, milestone 26,
 privacy and data tools, on 2026-10-08, prompt 184; the next is 27,
-free camera, not yet planned, after the fixes of 2026-10-09 below;
+free camera, its plan approved 2026-10-09 (prompt 192), its build
+not yet; the fixes of 2026-10-09 below;
 the review's last items in TODO.md, "The review's last items". The
 roadmap is in TODO.md).
 
