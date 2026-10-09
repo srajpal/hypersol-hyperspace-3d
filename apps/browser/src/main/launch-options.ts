@@ -45,6 +45,18 @@ export interface LaunchOptions {
   /** Test mode only (--test-sleep-minute-ms=N): a "minute" for sleeping tabs, so the checks need not wait (milestone 10). */
   testSleepMinuteMs?: number;
   /**
+   * Test mode only (--test-trusted-cert=sha256/<base64>): the one
+   * certificate trusted besides the system's, by its fingerprint: the
+   * HTTPS fixture's, made for the run (milestone 26, HTTPS-only).
+   */
+  testTrustedCertificate?: string;
+  /**
+   * Test mode only (--test-plain-http=a.test,b.test): host names the test
+   * server answers over plain HTTP only, which HTTPS-only leaves alone
+   * as it does local addresses (milestone 26).
+   */
+  testPlainHosts?: string[];
+  /**
    * Whether the window's size and place are remembered and used again
    * (main/window-bounds.ts). Always, except in test mode: test windows
    * are 1280 by 800 whatever was saved, unless --test-remember-window
@@ -81,6 +93,8 @@ function localAddress(value: string | undefined): string | undefined {
  *   --test-no-keychain              passwords act as if the keychain were missing, test mode only
  *   --test-no-webgl                 the shell without WebGL (no 3D room), test mode only
  *   --test-remember-window          the window's size is remembered as in a normal run, test mode only
+ *   --test-trusted-cert=sha256/...  one certificate trusted by its fingerprint, test mode only
+ *   --test-plain-http=<hosts>       test host names never upgraded to HTTPS, test mode only
  * and HYPERSOL_TEST=1 for test mode, HYPERSOL_TEST_BACKGROUND=1 for
  * test windows that stay out of the way.
  *
@@ -106,6 +120,10 @@ export function parseLaunchOptions(
   const downloadsDir = testMode ? switchValue(argv, 'downloads-dir') : undefined;
   const sleepMinuteText = testMode ? switchValue(argv, 'test-sleep-minute-ms') : undefined;
   const sleepMinute = sleepMinuteText !== undefined && /^\d{2,6}$/.test(sleepMinuteText) ? Number(sleepMinuteText) : undefined;
+  const trustedText = testMode ? switchValue(argv, 'test-trusted-cert') : undefined;
+  const plainText = testMode ? switchValue(argv, 'test-plain-http') : undefined;
+  const plainHosts = plainText?.split(',').filter((h) => /^[a-z0-9.-]{1,253}$/.test(h));
+  const trusted = trustedText !== undefined && /^sha256\/[A-Za-z0-9+/]{43}=$/.test(trustedText) ? trustedText : undefined;
   const searchUrl =
     testMode && search !== undefined && search.includes('%s') && isAllowedPageUrl(search) && search !== ''
       ? search
@@ -126,6 +144,8 @@ export function parseLaunchOptions(
     testNoKeychain: testMode && argv.includes('--test-no-keychain'),
     testNoWebGL: testMode && argv.includes('--test-no-webgl'),
     ...(sleepMinute !== undefined ? { testSleepMinuteMs: sleepMinute } : {}),
+    ...(trusted ? { testTrustedCertificate: trusted } : {}),
+    ...(plainHosts && plainHosts.length > 0 ? { testPlainHosts: plainHosts } : {}),
     rememberWindow: !testMode || argv.includes('--test-remember-window'),
   };
 }

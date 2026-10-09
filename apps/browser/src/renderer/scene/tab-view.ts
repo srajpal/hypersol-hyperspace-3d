@@ -1,6 +1,6 @@
 import type { PagePanel, PageState, PageStatus } from '@hypersol/scene-core';
 import type { WebviewTag } from 'electron';
-import { BLOCKED_CARD, CRASHED_CARD, DNS_BLOCKED_CARD, describeLoadError, isLookupFailure, type LoadErrorCard } from '../load-errors';
+import { BLOCKED_CARD, CRASHED_CARD, DNS_BLOCKED_CARD, HTTPS_ONLY_CARD, describeLoadError, isLookupFailure, type LoadErrorCard } from '../load-errors';
 import { PRIVATE_PARTITION, RESTORE_BLANK } from '../../shared/commands';
 import { LAYERS_CHANNEL, PAGE_IMAGES_CHANNEL, parseImageReport, type LayersState, type PageImage } from '../../shared/layers';
 import { PAGE_STATE_CHANNEL, parsePageState } from '../../shared/page-state';
@@ -28,6 +28,10 @@ export interface TabViewEvents {
   isDnsBlocked(): Promise<boolean>;
   /** "Use this network's DNS for now". */
   useNetworkDns(): Promise<void>;
+  /** HTTPS-only (milestone 26): the http:// address a failed https:// page load stood for, or null when it was no upgrade. */
+  httpsOnlyFailure(url: string): Promise<string | null>;
+  /** "Continue to the site (not secure)": an exception for the site until the browser closes. */
+  continueHttp(url: string): Promise<void>;
   /** A new document is ready in the page: time to tell it the layers view's state. */
   onPageReady(): void;
   /** Find in page results (milestone 8). */
@@ -610,6 +614,27 @@ export class TabView implements PagePanel, RoomView {
       this.failed = true;
       this.shimmer.removeAttribute('data-visible');
       const card = describeLoadError(e.errorCode, e.errorDescription);
+      // An https:// page that HTTPS-only loaded in place of an http:// one (milestone 26): asked before any card is
+      // shown, so the card is the right one. A name that cannot be found is not found either way, and the card
+      // names the address that was asked for.
+      if (e.validatedURL.startsWith('https:')) {
+        const seq = this.loadSeq;
+        void this.events
+          .httpsOnlyFailure(e.validatedURL)
+          .catch(() => null)
+          .then((http) => {
+            if (seq !== this.loadSeq || !this.failed) return;
+            if (http && !isLookupFailure(e.errorCode)) this.showHttpsOnly(http, false);
+            else {
+              const url = http ?? e.validatedURL;
+              this.showError(card, url);
+              this.emit({ state: 'failed', url, title: this.currentStatus.title, message: card.title });
+              if (isLookupFailure(e.errorCode)) void this.checkDns(url);
+            }
+            navState();
+          });
+        return;
+      }
       this.showError(card, e.validatedURL);
       this.emit({ state: 'failed', url: e.validatedURL, title: this.currentStatus.title, message: card.title });
       navState();
@@ -640,6 +665,19 @@ export class TabView implements PagePanel, RoomView {
     this.emit({ state: 'failed', url, title: this.currentStatus.title, message: BLOCKED_CARD.title });
   }
 
+  /**
+   * HTTPS-only's card (milestone 26) for an http:// address: the site did
+   * not answer over HTTPS (the failed page is what the tab holds), or sent
+   * its page back to HTTP (`stayed`: the load was stopped, and the tab is
+   * still on its page, as for a blocked one).
+   */
+  showHttpsOnly(url: string, stayed = true): void {
+    this.failed = true;
+    this.shimmer.removeAttribute('data-visible');
+    this.showError(HTTPS_ONLY_CARD, url, stayed);
+    this.emit({ state: 'failed', url, title: this.currentStatus.title, message: HTTPS_ONLY_CARD.title });
+  }
+
   /** A lookup failed: if encrypted DNS is blocked on this network, say so instead of "not found". */
   private async checkDns(url: string): Promise<void> {
     const seq = this.loadSeq;
@@ -649,7 +687,7 @@ export class TabView implements PagePanel, RoomView {
     this.emit({ ...this.currentStatus, message: DNS_BLOCKED_CARD.title });
   }
 
-  private showError(card: LoadErrorCard, url: string): void {
+  private showError(card: LoadErrorCard, url: string, stayed = card.kind === 'blocked'): void {
     const box = document.createElement('div');
     box.className = 'hs-error-card';
     box.dataset['kind'] = card.kind;
@@ -680,10 +718,11 @@ export class TabView implements PagePanel, RoomView {
     if (card.action) {
       const through = document.createElement('button');
       through.type = 'button';
-      through.id = card.action === 'open-anyway' ? 'panel-open-anyway' : 'panel-use-network-dns';
-      through.textContent = card.action === 'open-anyway' ? 'Open anyway' : "Use this network's DNS for now";
+      through.id = { 'open-anyway': 'panel-open-anyway', 'use-network-dns': 'panel-use-network-dns', 'continue-http': 'panel-continue-http' }[card.action];
+      through.textContent = { 'open-anyway': 'Open anyway', 'use-network-dns': "Use this network's DNS for now", 'continue-http': 'Continue to the site (not secure)' }[card.action];
       through.addEventListener('click', () => {
-        const done = card.action === 'open-anyway' ? this.events.allowOnce(url) : this.events.useNetworkDns();
+        const done =
+          card.action === 'open-anyway' ? this.events.allowOnce(url) : card.action === 'continue-http' ? this.events.continueHttp(url) : this.events.useNetworkDns();
         void done.then(
           () => this.load(url),
           (e: unknown) => console.warn(e instanceof Error ? e.message : String(e)),
@@ -692,7 +731,7 @@ export class TabView implements PagePanel, RoomView {
       // The way through comes first: it is what the card is for.
       actions.prepend(through);
     }
-    const stayedOn = card.kind === 'blocked' && this.webview && this.ready ? this.webview.getURL() : '';
+    const stayedOn = stayed && this.webview && this.ready ? this.webview.getURL() : '';
     if (stayedOn && stayedOn !== url) {
       // A blocked page never replaced the one the tab is on: going back
       // means closing the card and showing that page again.

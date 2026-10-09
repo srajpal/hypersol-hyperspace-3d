@@ -79,6 +79,10 @@ export interface Settings {
   filterRefresh: boolean;
   /** Sites (host names) where the privacy shield is paused. */
   pausedSites: string[];
+  /** HTTPS-only browsing (milestone 26, GitHub issue #24): on by default (owner, prompt 178, Q1 a). */
+  httpsOnly: boolean;
+  /** Sites (host names) allowed over plain HTTP until removed; set on purpose, in the site panel or Settings (Q2 a). */
+  httpsOnlySites: string[];
   /** Pages open in the layers view (milestone 5), unless the site has its own choice. */
   layersOnOpen: boolean;
   /** Per-site choice for the layers view, by host name; set when the view is switched on a page. */
@@ -126,6 +130,8 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   dnsMode: 'secure',
   filterRefresh: true,
   pausedSites: Object.freeze([]) as unknown as string[],
+  httpsOnly: true,
+  httpsOnlySites: Object.freeze([]) as unknown as string[],
   layersOnOpen: true,
   layersSites: Object.freeze({}) as Record<string, boolean>,
   theme: 'nebula',
@@ -161,6 +167,7 @@ const SETTING_KEYS: readonly string[] = Object.keys(DEFAULT_SETTINGS);
 const platform = typeof process !== 'undefined' && typeof process.platform === 'string' ? process.platform : 'win32';
 const INSTRUMENT_SWITCHES = ['instruments', 'instrumentsReadouts', 'instrumentsGauges', 'instrumentsConsole', 'instrumentsNetwork'] as const;
 export const MAX_PAUSED_SITES = 1000;
+export const MAX_HTTP_SITES = 1000;
 export const MAX_LAYERS_SITES = 1000;
 /** Sites with their own zoom: its own limit, the same number. */
 export const MAX_ZOOM_SITES = 1000;
@@ -184,6 +191,7 @@ export function applySettingsPatch(current: Settings, patch: unknown): { setting
   const next: Settings = {
     ...current,
     pausedSites: [...current.pausedSites],
+    httpsOnlySites: [...current.httpsOnlySites],
     layersSites: { ...current.layersSites },
     zoomSites: { ...current.zoomSites },
     sitePermissions: { ...current.sitePermissions },
@@ -207,6 +215,14 @@ export function applySettingsPatch(current: Settings, patch: unknown): { setting
         return { error: 'pausedSites must be a list of host names' };
       }
       next.pausedSites = [...new Set(value.map((h: string) => h.toLowerCase()))];
+    } else if (key === 'httpsOnly') {
+      if (typeof value !== 'boolean') return { error: 'httpsOnly must be true or false' };
+      next.httpsOnly = value;
+    } else if (key === 'httpsOnlySites') {
+      if (!Array.isArray(value) || value.length > MAX_HTTP_SITES || !value.every(isHostName)) {
+        return { error: 'httpsOnlySites must be a list of host names' };
+      }
+      next.httpsOnlySites = [...new Set(value.map((h: string) => h.toLowerCase()))];
     } else if ((INSTRUMENT_SWITCHES as readonly string[]).includes(key)) {
       if (typeof value !== 'boolean') return { error: `${key} must be true or false` };
       next[key as (typeof INSTRUMENT_SWITCHES)[number]] = value;
@@ -286,7 +302,7 @@ export function applySettingsPatch(current: Settings, patch: unknown): { setting
 
 /** A fresh copy of the defaults (the list inside is never shared). */
 export function defaults(): Settings {
-  return { ...DEFAULT_SETTINGS, pausedSites: [], layersSites: {}, zoomSites: {}, sitePermissions: {}, shortcuts: {} };
+  return { ...DEFAULT_SETTINGS, pausedSites: [], httpsOnlySites: [], layersSites: {}, zoomSites: {}, sitePermissions: {}, shortcuts: {} };
 }
 
 /**

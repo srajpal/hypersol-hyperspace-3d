@@ -1959,3 +1959,59 @@ There are CI failures in #60.
 ```text
 #40 merged, go ahead and tag.
 ```
+
+## 177 — 2026-10-08 · Claude Opus 5.5, high effort
+
+```text
+#62 merged, start milestone 26.
+```
+
+## 178 — 2026-10-08 · Claude Opus 5.5, high effort
+
+Answers milestone 26's plan (privacy and data tools) with the
+recommended answers: Q1 a, HTTPS-only on by default for normal and
+private tabs; Q2 a, continuing past the card makes an exception until
+the browser closes, and a lasting one is set on purpose in the site
+panel or Settings; Q3 a, imported bookmarks without folders; Q4 a,
+localhost, loopback and private network addresses, and single-word host
+names never upgraded; Q5 a, the site list shows cookies (count and
+size) and which kinds of site storage a site has, no sizes guessed;
+Q6 a, sites grouped by host name; Q7 a, a "Sites" tab in the Library.
+Approves the plan.
+
+```text
+Use the recommendations, approve the plan.
+```
+
+## 179 — 2026-10-08 · Claude Opus 5.5, high effort
+
+```text
+Build approved, go ahead.
+```
+
+## 180 — 2026-10-08 · Claude Opus 5.5, high effort
+
+Asked during milestone 26's build, while the full end-to-end run was
+going.
+
+```text
+How is it going?
+```
+
+## 181 — 2026-10-08 · Claude Opus 5.5, high effort
+
+Answers the question raised during milestone 26's build: Electron
+reports a site's cookies but not which other kinds of storage it has,
+so the Sites tab shows cookies and says the rest is not reported, and
+Clear removes it all (Q5 a as built), rather than reading Chromium's
+own folders (Q5 b). The owner keeps Q5 a.
+
+```text
+Q5 a is fine, keep going.
+```
+
+## 182 — 2026-10-08 · Claude Opus 5.5, high effort
+
+```text
+#63 has failures.
+```

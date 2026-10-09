@@ -3,7 +3,7 @@
  * net error codes as reported by the webview's did-fail-load event.
  */
 
-export type LoadErrorKind = 'not-found' | 'connection' | 'certificate' | 'crashed' | 'blocked' | 'dns-blocked' | 'other';
+export type LoadErrorKind = 'not-found' | 'connection' | 'certificate' | 'crashed' | 'blocked' | 'dns-blocked' | 'https-only' | 'other';
 
 export interface LoadErrorCard {
   kind: LoadErrorKind;
@@ -11,8 +11,8 @@ export interface LoadErrorCard {
   message: string;
   /** Retry is offered except where retrying cannot help safely. */
   canRetry: boolean;
-  /** A way through the card: open a blocked page once, or use the network's DNS for now. */
-  action?: 'open-anyway' | 'use-network-dns';
+  /** A way through the card: open a blocked page once, use the network's DNS for now, or continue over plain HTTP. */
+  action?: 'open-anyway' | 'use-network-dns' | 'continue-http';
 }
 
 const NOT_FOUND = new Set([-105, -137]); // NAME_NOT_RESOLVED, NAME_RESOLUTION_FAILED
@@ -90,6 +90,20 @@ export const DNS_BLOCKED_CARD: LoadErrorCard = {
     "This network won't let HyperSpace 3D look up sites privately. You can use this network's own DNS until you close the app; the network can then see which sites you visit.",
   canRetry: true,
   action: 'use-network-dns',
+};
+
+/**
+ * HTTPS-only (milestone 26, GitHub issue #24): the site could not be
+ * reached over HTTPS, or sent the page back to plain HTTP. Nothing goes
+ * over HTTP until the person continues; Retry tries HTTPS again.
+ */
+export const HTTPS_ONLY_CARD: LoadErrorCard = {
+  kind: 'https-only',
+  title: 'This site does not offer a secure connection',
+  message:
+    'HyperSpace 3D asked for this page over HTTPS, and the site did not answer that way. If you continue, others on the network can see and change what you send and receive on this site. You can continue for this site until you close the browser.',
+  canRetry: true,
+  action: 'continue-http',
 };
 
 export const CRASHED_CARD: LoadErrorCard = {

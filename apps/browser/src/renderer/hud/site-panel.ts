@@ -7,7 +7,8 @@ import {
   type PermissionKind,
   type SitePermissions,
 } from '../../shared/permissions';
-import type { PermissionsClient } from '../data';
+import type { HttpsOnlySite } from '../../shared/privacy';
+import type { PermissionsClient, PrivacyClient } from '../data';
 import { siteName } from './prompts';
 import { watchDismiss } from './dismiss';
 
@@ -16,6 +17,8 @@ import { watchDismiss } from './dismiss';
  * bar: whether the page is secure, and its camera, microphone, and
  * location choices, each Ask, Allow, or Block. A choice made in a private
  * tab is kept in memory only. Escape or a click elsewhere closes it.
+ * Milestone 26: a site allowed over plain HTTP says so, and its exception
+ * can be kept or ended here (HTTPS-only, GitHub issue #24).
  *
  * Events: hs-site-closed.
  */
@@ -24,12 +27,15 @@ export class HsSitePanel extends LitElement {
     open: { type: Boolean, reflect: true },
     site: { state: true },
     message: { state: true },
+    https: { state: true },
   };
 
   declare open: boolean;
   declare site: SitePermissions | null;
   declare message: string;
+  declare https: HttpsOnlySite | null;
   client: PermissionsClient | null = null;
+  privacy: PrivacyClient | null = null;
   /** The focused tab's page (its web contents id), or null. */
   tab: () => number | null = () => null;
 
@@ -38,6 +44,7 @@ export class HsSitePanel extends LitElement {
     this.open = false;
     this.site = null;
     this.message = '';
+    this.https = null;
   }
 
   static override styles = css`
@@ -104,6 +111,25 @@ export class HsSitePanel extends LitElement {
       font-size: 12px;
       color: var(--hs-text-muted);
     }
+    .https {
+      margin: 0 0 12px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--hs-warning) 12%, transparent);
+      font-size: 12px;
+    }
+    .https p {
+      margin: 0 0 6px;
+    }
+    .https button,
+    button.data {
+      margin-right: 6px;
+      padding: 3px 8px;
+      font-size: 12px;
+    }
+    button.data {
+      margin-top: 8px;
+    }
   `;
 
   /** Opens the panel for the focused page. */
@@ -128,6 +154,7 @@ export class HsSitePanel extends LitElement {
     }
     try {
       this.site = await this.client.get({ op: 'site', tab });
+      this.https = this.privacy ? await this.privacy.get({ op: 'https-only.site', tab }) : null;
     } catch (e) {
       this.message = e instanceof Error ? e.message : String(e);
     }
@@ -155,7 +182,9 @@ export class HsSitePanel extends LitElement {
             <p class="security" ?data-insecure=${s.insecure}>
               ${s.insecure ? 'Not secure: this page uses http, without encryption.' : 'Connection is encrypted (https).'}
             </p>
+            ${this.httpsRow()}
             ${PERMISSION_KINDS.map((k) => this.row(s, k))}
+            <button class="data" data-testid="site-data" @click=${this.openSiteData}>Cookies and site data…</button>
             <p class="note">
               ${s.private
                 ? 'Private tab: these choices are forgotten when the last private tab closes.'
@@ -164,6 +193,38 @@ export class HsSitePanel extends LitElement {
         : html`<p class="note">No web page in this tab.</p>`}
       ${this.message ? html`<p class="note" role="status">${this.message}</p>` : nothing}
     </section>`;
+  }
+
+  /** A site allowed over plain HTTP (milestone 26): until the browser closes, or kept; to keep or end. */
+  private httpsRow() {
+    const h = this.https;
+    if (!h || !h.on || !h.host || h.exception === null) return nothing;
+    return html`<div class="https" data-testid="site-https">
+      <p data-testid="site-https-state">
+        ${h.exception === 'lasting'
+          ? 'Always allowed over plain HTTP (HTTPS-only makes an exception for this site).'
+          : h.private
+            ? 'Allowed over plain HTTP until the last private tab closes.'
+            : 'Allowed over plain HTTP until you close the browser.'}
+      </p>
+      ${h.exception === 'session' && !h.private
+        ? html`<button data-testid="site-https-keep" @click=${() => this.setHttps('lasting')}>Always allow HTTP for this site</button>`
+        : nothing}
+      <button data-testid="site-https-stop" @click=${() => this.setHttps('none')}>Stop allowing</button>
+    </div>`;
+  }
+
+  private async setHttps(exception: 'none' | 'lasting'): Promise<void> {
+    const tab = this.tab();
+    const host = this.https?.host;
+    if (!this.privacy || tab === null || !host) return;
+    try {
+      await this.privacy.get({ op: 'https-only.set', tab, host, exception });
+      this.https = await this.privacy.get({ op: 'https-only.site', tab });
+      this.message = exception === 'none' ? 'This site will be asked for over HTTPS again.' : 'Saved.';
+    } catch (e) {
+      this.message = e instanceof Error ? e.message : String(e);
+    }
   }
 
   private row(s: SitePermissions, kind: PermissionKind) {
@@ -195,6 +256,19 @@ export class HsSitePanel extends LitElement {
       this.message = e instanceof Error ? e.message : String(e);
     }
   }
+
+  /** The Library's Sites tab, on this site (milestone 26). */
+  private readonly openSiteData = () => {
+    const origin = this.site?.origin;
+    if (!origin) return;
+    let host = '';
+    try {
+      host = new URL(origin).hostname;
+    } catch {
+      return;
+    }
+    this.dispatchEvent(new CustomEvent('hs-open-site-data', { detail: host, bubbles: true, composed: true }));
+  };
 
   private readonly onKey = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {

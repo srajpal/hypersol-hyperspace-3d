@@ -35,6 +35,20 @@ export interface Suggestions {
   items: Suggestion[];
 }
 
+/** A bookmark file's contents, before anything is added (milestone 26, issue #27). */
+export interface ImportPreview {
+  /** Names this preview, for bookmarks.import-add. */
+  token: number;
+  /** The file's name (not its folder). */
+  file: string;
+  /** Why the file was refused as a whole; then nothing is listed. */
+  error?: string;
+  found: { url: string; title: string; folder: string }[];
+  /** The first of those skipped (skippedCount counts them all). */
+  skipped: { title: string; url: string; why: string }[];
+  skippedCount: number;
+}
+
 export interface SavedSession {
   tabs: string[];
   focused: number;
@@ -46,6 +60,11 @@ export type DataRequest =
   | { op: 'bookmarks.has'; url: string }
   | { op: 'bookmarks.add'; url: string; title: string; favicon: string | null }
   | { op: 'bookmarks.remove'; url: string }
+  /** Milestone 26: a bookmark file chosen with the system's file chooser, read, and shown before anything is added. */
+  | { op: 'bookmarks.import-read' }
+  | { op: 'bookmarks.import-add'; token: number }
+  /** Every bookmark written to a file chosen with the system's save dialog. */
+  | { op: 'bookmarks.export' }
   | { op: 'history.search'; query: string; limit: number }
   | { op: 'history.recent'; limit: number }
   | { op: 'history.delete'; id: number }
@@ -66,6 +85,12 @@ export interface DataResults {
   'bookmarks.has': boolean;
   'bookmarks.add': Bookmark | null;
   'bookmarks.remove': null;
+  /** Null when no file was chosen. */
+  'bookmarks.import-read': ImportPreview | null;
+  /** How many were added. */
+  'bookmarks.import-add': number;
+  /** The file's name and how many bookmarks it holds; null when no place was chosen. */
+  'bookmarks.export': { file: string; count: number } | null;
   'history.search': HistoryEntry[];
   'history.recent': HistoryEntry[];
   'history.delete': null;
@@ -104,6 +129,8 @@ export function parseDataRequest(raw: unknown): { request: DataRequest } | { err
   switch (r['op']) {
     case 'status':
     case 'bookmarks.list':
+    case 'bookmarks.import-read':
+    case 'bookmarks.export':
     case 'history.clear':
     case 'settings.get':
     case 'startup':
@@ -121,6 +148,9 @@ export function parseDataRequest(raw: unknown): { request: DataRequest } | { err
       }
       return { request: { op: 'bookmarks.add', url: r['url'], title: r['title'], favicon } };
     }
+    case 'bookmarks.import-add':
+      if (!isCount(r['token'], Number.MAX_SAFE_INTEGER)) return bad('token must be a whole number');
+      return { request: { op: 'bookmarks.import-add', token: r['token'] } };
     case 'history.search':
       if (!isText(r['query'])) return bad('query must be text');
       if (!isCount(r['limit'], 1000)) return bad('limit must be 0 to 1000');

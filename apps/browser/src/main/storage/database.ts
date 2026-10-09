@@ -151,6 +151,25 @@ export class Store {
     return toBookmark(this.db.prepare('SELECT * FROM bookmarks WHERE url = ?').get(url) as unknown as BookmarkRow);
   }
 
+  /**
+   * Adds bookmarks from a bookmark file (milestone 26), in one go: an
+   * address already bookmarked is left as it is. Returns how many were
+   * added.
+   */
+  importBookmarks(items: { url: string; title: string; favicon: string | null; createdAt: number }[]): number {
+    const insert = this.db.prepare('INSERT INTO bookmarks (url, title, favicon, created_at) VALUES (?, ?, ?, ?) ON CONFLICT (url) DO NOTHING');
+    let added = 0;
+    this.db.exec('BEGIN');
+    try {
+      for (const b of items) added += Number(insert.run(b.url, b.title, b.favicon, b.createdAt).changes);
+      this.db.exec('COMMIT');
+    } catch (e) {
+      this.db.exec('ROLLBACK');
+      throw e;
+    }
+    return added;
+  }
+
   removeBookmark(url: string): void {
     this.db.prepare('DELETE FROM bookmarks WHERE url = ?').run(url);
   }

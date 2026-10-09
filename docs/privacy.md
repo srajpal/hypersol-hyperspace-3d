@@ -28,6 +28,19 @@ once, in that tab). The shield at the bottom right counts what was
 blocked on the page in front; click it to see the list and to pause the
 shield on that site.
 
+Pages are loaded over HTTPS (milestone 26): an `http://` address is
+asked for as `https://`, and a site that does not answer that way gets
+"This site does not offer a secure connection" instead of the page.
+Nothing goes to it over plain HTTP until you choose "Continue to the
+site (not secure)", which allows that site until you close the browser;
+to allow it for good, use the site panel or Settings > Privacy and
+security > HTTPS-only, where every allowed site is listed with Remove.
+Addresses on your computer and your local network (localhost,
+192.168.x.x and the like, single-word names such as "router") are never
+asked for over HTTPS, as they cannot have certificates. A private tab's
+choices are its own and forgotten with the last private tab. HTTPS-only
+can be turned off in Settings.
+
 The lists (ads and trackers; no cookie-banner or annoyance lists),
 from Ghostery's copies on GitHub, all under
 `https://raw.githubusercontent.com/ghostery/adblocker/master/packages/adblocker/assets/`:
@@ -95,7 +108,9 @@ is run from source: a packaged app ignores its switch.)
 | How the address bar completes: each address you visited, how many times, and when last; made from your history | `hypersol.sqlite` | With each visit | Removing a suggestion (its × in the list) forgets that address's visits; clearing history clears it all |
 | Your own shortcut keys, and how the page view is set (lean, movement, space) | `settings.json` | When you change them in Settings | Settings > Shortcuts > Reset, or delete the file |
 | Camera, microphone, and location choices you made with Allow or Block, by site | `settings.json` | When you answer a site's request, or change it in the site panel | The site panel (set it back to Ask), or Settings > Site permissions > Forget |
-| Cookies, site storage, and cache | Chromium's profile files in the same folder | By the sites you visit, as in any browser | Settings > Clear browsing data |
+| HTTPS-only on or off, and the sites you allowed over plain HTTP for good | `settings.json` | When you change the setting, or choose "Always allow HTTP" | Settings > Privacy and security > HTTPS-only > Remove (sites allowed until the browser closes are kept in memory only) |
+| Cookies, site storage, and cache | Chromium's profile files in the same folder | By the sites you visit, as in any browser | Settings > Clear browsing data, or one site at a time in the Library's Sites tab (milestone 26; it shows each site's cookies, and clears its cookies, site storage, and cached files) |
+| A bookmark file you export | Where you choose to save it | When you choose Export bookmarks… in the Library | Delete the file; it holds your bookmarks only |
 | Files you download (outside the app data folder) | Your system's Downloads folder | When you download them | Delete them there |
 | The Downloads panel's list | Memory only | While downloads run and finish | It lasts this session; "Clear list" empties it (the files stay) |
 

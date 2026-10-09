@@ -1,4 +1,6 @@
-import { join } from 'node:path';
+import { readFile, stat, writeFile } from 'node:fs/promises';
+import { basename, join } from 'node:path';
+import { BookmarkFileError, IMPORT_LIMITS, readBookmarkFile, writeBookmarkFile, type ImportedBookmark } from './bookmark-file';
 import { parseDataRequest, type DataOp, type DataReply, type DataRequest } from '../../shared/data';
 import { applySettingsPatch, type Settings, type SettingsPatch } from '../../shared/settings';
 import { Store } from './database';
@@ -16,9 +18,19 @@ export interface SiteDataCleaner {
 
 const UNAVAILABLE = "Couldn't open your saved data";
 
+/** Files the person chooses with the system's dialogs (milestone 26, bookmark files). */
+export interface FileChooser {
+  /** A file to read; null when none was chosen. */
+  open(): Promise<string | null>;
+  /** Where to write, offering this name; null when no place was chosen. */
+  save(defaultName: string): Promise<string | null>;
+}
+
 export interface StorageOptions {
   /** Runs history elsewhere (the app: a worker thread); by default on this thread. */
   historyBackend?: (store: Store, databasePath: string) => HistoryBackend;
+  /** The system's file dialogs; without them, importing and exporting bookmarks is refused. */
+  files?: FileChooser;
 }
 
 /**
@@ -38,6 +50,10 @@ export class StorageService {
   readonly settingsFile: SettingsFile;
   private readonly sessionFile: SessionFile;
   private readonly listeners = new Set<(what: DataChange) => void>();
+  private readonly files: FileChooser | null;
+  /** The bookmark file last read, waiting for Add (milestone 26): only the newest can be added. */
+  private pendingImport: { token: number; found: ImportedBookmark[] } | null = null;
+  private importTokens = 0;
 
   constructor(
     folder: string,
@@ -57,6 +73,7 @@ export class StorageService {
     this.history = store ? (options.historyBackend?.(store, path) ?? inProcess(store.history)) : null;
     this.settingsFile = new SettingsFile(join(folder, 'settings.json'));
     this.sessionFile = new SessionFile(join(folder, 'session.json'));
+    this.files = options.files ?? null;
   }
 
   get available(): boolean {
@@ -150,6 +167,26 @@ export class StorageService {
     }
   }
 
+  /** Reads the bookmark file the person chooses, and keeps what it would add until Add or another file. */
+  private async readImport(): Promise<unknown> {
+    const store = this.needStore();
+    if (!this.files) throw new Error('Bookmarks cannot be imported here.');
+    const path = await this.files.open();
+    if (!path) return null;
+    this.pendingImport = null;
+    const token = ++this.importTokens;
+    const preview = { token, file: basename(path), found: [] as { url: string; title: string; folder: string }[], skipped: [] as unknown[], skippedCount: 0 };
+    try {
+      if ((await stat(path)).size > IMPORT_LIMITS.fileBytes) throw new BookmarkFileError(`This file is larger than ${IMPORT_LIMITS.fileBytes / 1024 / 1024} MB.`);
+      const read = readBookmarkFile(await readFile(path, 'utf8'), (url) => store.hasBookmark(url));
+      this.pendingImport = { token, found: read.found };
+      return { ...preview, found: read.found.map((b) => ({ url: b.url, title: b.title, folder: b.folder })), skipped: read.skipped, skippedCount: read.skippedCount };
+    } catch (e) {
+      if (e instanceof BookmarkFileError) return { ...preview, error: e.message };
+      throw new Error(`Couldn't read ${basename(path)}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+
   private needStore(): Store {
     if (!this.store) throw new Error(UNAVAILABLE);
     return this.store;
@@ -183,6 +220,26 @@ export class StorageService {
         this.needStore().removeBookmark(r.url);
         this.emit('bookmarks');
         return null;
+      case 'bookmarks.import-read':
+        return this.readImport();
+      case 'bookmarks.import-add': {
+        const pending = this.pendingImport;
+        if (!pending || pending.token !== r.token) throw new Error('That bookmark file is no longer waiting to be added. Choose it again.');
+        this.pendingImport = null;
+        const now = Date.now();
+        const added = this.needStore().importBookmarks(pending.found.map((b) => ({ url: b.url, title: b.title, favicon: b.favicon, createdAt: b.createdAt ?? now })));
+        this.emit('bookmarks');
+        return added;
+      }
+      case 'bookmarks.export': {
+        const store = this.needStore();
+        if (!this.files) throw new Error('Bookmarks cannot be exported here.');
+        const path = await this.files.save('bookmarks.html');
+        if (!path) return null;
+        const all = store.listBookmarks();
+        await writeFile(path, writeBookmarkFile(all), 'utf8');
+        return { file: basename(path), count: all.length };
+      }
       case 'history.search':
         return this.needHistory().search(r.query, r.limit);
       case 'history.recent':

@@ -77,6 +77,9 @@ export class HsSettings extends LitElement {
     query: { state: true },
     capturing: { state: true },
     keyMessage: { state: true },
+    httpSessions: { state: true },
+    httpsHost: { state: true },
+    httpsMessage: { state: true },
   };
 
   declare open: boolean;
@@ -94,6 +97,11 @@ export class HsSettings extends LitElement {
   /** The shortcut waiting for its new keys, if any. */
   declare capturing: ShortcutName | null;
   declare keyMessage: string;
+  /** HTTPS-only (milestone 26): the normal tabs' exceptions until the browser closes, from the main process. */
+  declare httpSessions: string[];
+  /** The site typed to always allow over HTTP, and what came of it. */
+  declare httpsHost: string;
+  declare httpsMessage: string;
   client: DataClient | null = null;
   privacy: PrivacyClient | null = null;
   /** The platform, for how keys read (Ctrl or Cmd). */
@@ -116,6 +124,9 @@ export class HsSettings extends LitElement {
     this.query = '';
     this.capturing = null;
     this.keyMessage = '';
+    this.httpSessions = [];
+    this.httpsHost = '';
+    this.httpsMessage = '';
   }
 
   static override styles = [
@@ -303,6 +314,7 @@ export class HsSettings extends LitElement {
       this.settings = await this.client.get({ op: 'settings.get' });
       const status = await this.client.get({ op: 'status' });
       this.problem = status.settingsProblem ?? '';
+      if (this.privacy) this.httpSessions = await this.privacy.get({ op: 'https-only.sessions' });
     } catch (e) {
       this.message = e instanceof Error ? e.message : String(e);
     }
@@ -566,6 +578,29 @@ export class HsSettings extends LitElement {
           </div>`,
       },
       {
+        id: 'https-only',
+        section: 'privacy',
+        title: 'HTTPS-only',
+        words: 'https http secure connection encryption not secure exceptions upgrade',
+        ids: ['set-https-*'],
+        render: () => html`<label>
+            <input type="checkbox" data-testid="set-https-only" .checked=${live(s.httpsOnly)}
+              @change=${(e: Event) => this.save({ httpsOnly: (e.target as HTMLInputElement).checked })} />
+            Load pages over HTTPS only, and ask before using plain HTTP (recommended)
+          </label>
+          <p class="note">
+            Addresses on this computer and your local network (localhost, 192.168.x.x, single-word names such as "router")
+            are never asked for over HTTPS: they cannot have certificates.
+          </p>
+          ${this.httpsList()}
+          <div class="actions">
+            <input type="text" data-testid="set-https-host" aria-label="A site to always allow over plain HTTP" placeholder="example.com"
+              .value=${live(this.httpsHost)} @input=${(e: Event) => (this.httpsHost = (e.target as HTMLInputElement).value)} />
+            <button data-testid="set-https-add" @click=${this.addHttpSite}>Always allow HTTP</button>
+          </div>
+          ${this.httpsMessage ? html`<p class="note" role="status" data-testid="set-https-message">${this.httpsMessage}</p>` : nothing}`,
+      },
+      {
         id: 'permissions',
         section: 'privacy',
         title: 'Site permissions',
@@ -754,6 +789,49 @@ export class HsSettings extends LitElement {
   }
 
   // ---- Controls -----------------------------------------------------------
+
+  /** HTTPS-only's exceptions (milestone 26): kept ones and those until the browser closes, each removable. */
+  private httpsList() {
+    const kept = this.settings.httpsOnlySites.map((host) => ({ host, kept: true }));
+    const now = this.httpSessions.filter((h) => !this.settings.httpsOnlySites.includes(h)).map((host) => ({ host, kept: false }));
+    const all = [...kept, ...now].sort((a, b) => a.host.localeCompare(b.host));
+    if (all.length === 0) return html`<p class="note" data-testid="set-https-empty">No site is allowed over plain HTTP.</p>`;
+    return html`<ul class="sites">
+      ${all.map(
+        (e) => html`<li data-testid="set-https-site">
+          <span><strong>${e.host}</strong><br /><span class="muted">${e.kept ? 'Always allowed over plain HTTP' : 'Allowed over plain HTTP until you close the browser'}</span></span>
+          <button data-testid="set-https-remove" aria-label=${`Stop allowing ${e.host} over plain HTTP`} @click=${() => this.removeHttpSite(e.host, e.kept)}>Remove</button>
+        </li>`,
+      )}
+    </ul>`;
+  }
+
+  private readonly addHttpSite = async () => {
+    let host = '';
+    try {
+      host = new URL(`http://${this.httpsHost.trim().replace(/^[a-z]+:\/\//i, '')}`).hostname;
+    } catch {
+      host = '';
+    }
+    if (!host) {
+      this.httpsMessage = 'Type a site such as example.com.';
+      return;
+    }
+    if (!this.settings.httpsOnlySites.includes(host)) await this.save({ httpsOnlySites: [...this.settings.httpsOnlySites, host] });
+    this.httpsHost = '';
+    this.httpsMessage = `${host} is always allowed over plain HTTP.`;
+  };
+
+  private async removeHttpSite(host: string, kept: boolean): Promise<void> {
+    try {
+      if (this.privacy) await this.privacy.get({ op: 'https-only.set', tab: null, host, exception: 'none' });
+      else if (kept) await this.save({ httpsOnlySites: this.settings.httpsOnlySites.filter((h) => h !== host) });
+      await this.load();
+      this.httpsMessage = `${host} will be asked for over HTTPS again.`;
+    } catch (e) {
+      this.httpsMessage = e instanceof Error ? e.message : String(e);
+    }
+  }
 
   /** Remembered camera, microphone, and location answers, each removable (milestone 9). */
   private permissionsList() {

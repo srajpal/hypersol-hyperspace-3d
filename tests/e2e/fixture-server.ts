@@ -1,9 +1,10 @@
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { createServer as createHttpsServer } from 'node:https';
-import type { AddressInfo } from 'node:net';
+import { createServer as createNetServer, type AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -723,4 +724,107 @@ export function startHttpsFixtureServer(): Promise<FixtureServer> {
     handler(req, res, c),
   );
   return listen(server as unknown as Server, 'https', c, () => rmSync(dir, { recursive: true, force: true }));
+}
+
+/** The HTTPS-only fixture's sites (milestone 26), mapped to 127.0.0.1 in every test run (harness.ts, OFFLINE_RULES). */
+export const HTTPS_ONLY_HOSTS = {
+  /** Answers over HTTP and HTTPS alike. */
+  secure: 'secure.test',
+  /** Answers over HTTP only: its HTTPS handshake is refused. */
+  plain: 'plain.test',
+  /** Its HTTPS answer sends the page back to the same http:// address. */
+  loop: 'loop.test',
+} as const;
+
+export interface DualFixtureServer {
+  /** The one port both HTTP and HTTPS answer on. */
+  port: number;
+  /** An address on one of the test sites, over http or https. */
+  url(scheme: 'http' | 'https', host: string, path: string): string;
+  /** Requests that came over plain HTTP, as "host/path?query", in order. */
+  httpRequests: string[];
+  /** The certificate's fingerprint as Electron gives it ("sha256/…"), for --test-trusted-cert. */
+  fingerprint: string;
+  close(): Promise<void>;
+}
+
+/**
+ * HTTPS-only's fixture (milestone 26): HTTP and HTTPS on one port, so an
+ * http:// address upgraded to https:// reaches the same server, as a real
+ * site's would on ports 80 and 443. The first byte of a connection tells
+ * which (a TLS handshake starts with 0x16). The certificate is made for
+ * this run, for the three test sites; a test run trusts it by its
+ * fingerprint and nothing else does. Every page is the usual fixtures'.
+ * Also: /to-http on https answers with a redirect to an http:// page on
+ * the same site.
+ */
+export async function startDualFixtureServer(): Promise<DualFixtureServer> {
+  const dir = mkdtempSync(join(tmpdir(), 'hypersol-dual-'));
+  const key = join(dir, 'key.pem');
+  const cert = join(dir, 'cert.pem');
+  const names = [...Object.values(HTTPS_ONLY_HOSTS), `*.${HTTPS_ONLY_HOSTS.secure}`].map((h) => `DNS:${h}`).join(',');
+  execFileSync(findOpenssl(), ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', cert, '-days', '1', '-subj', `/CN=${HTTPS_ONLY_HOSTS.secure}`, '-addext', `subjectAltName=${names}`], {
+    stdio: 'ignore',
+  });
+  const pem = readFileSync(cert, 'utf8');
+  const der = Buffer.from(pem.replace(/-----[^-]+-----/g, '').replace(/\s+/g, ''), 'base64');
+  const fingerprint = `sha256/${createHash('sha256').update(der).digest('base64')}`;
+  const c = counters();
+  const httpRequests: string[] = [];
+  let port = 0;
+  const host = (req: IncomingMessage) => (req.headers.host ?? '').split(':')[0]!.toLowerCase();
+  const plain = createServer((req, res) => {
+    httpRequests.push(`${host(req)}${req.url ?? '/'}`);
+    handler(req, res, c);
+  });
+  const secure = createHttpsServer(
+    {
+      key: readFileSync(key),
+      cert: pem,
+      // plain.test has no HTTPS: its handshake is refused, as at a site without a certificate.
+      SNICallback: (name, done) => (name === HTTPS_ONLY_HOSTS.plain ? done(new Error('no HTTPS here'), undefined) : done(null, undefined)),
+    },
+    (req, res) => {
+      if (host(req) === HTTPS_ONLY_HOSTS.loop) {
+        res.writeHead(301, { location: `http://${HTTPS_ONLY_HOSTS.loop}:${port}${req.url ?? '/'}` });
+        res.end();
+        return;
+      }
+      if ((req.url ?? '').startsWith('/to-http')) {
+        res.writeHead(302, { location: `http://${host(req)}:${port}/link-b.html` });
+        res.end();
+        return;
+      }
+      handler(req, res, c);
+    },
+  );
+  const front = createNetServer((socket) => {
+    socket.once('data', (first) => {
+      socket.pause();
+      socket.unshift(first);
+      (first[0] === 0x16 ? secure : plain).emit('connection', socket);
+      process.nextTick(() => socket.resume());
+    });
+    socket.on('error', () => undefined);
+  });
+  await new Promise<void>((resolve, reject) => {
+    front.once('error', reject);
+    front.listen(0, '127.0.0.1', resolve);
+  });
+  port = (front.address() as AddressInfo).port;
+  return {
+    port,
+    url: (scheme, h, path) => `${scheme}://${h}:${port}${path}`,
+    httpRequests,
+    fingerprint,
+    close: () =>
+      new Promise<void>((resolve) => {
+        plain.closeAllConnections();
+        secure.closeAllConnections();
+        front.close(() => {
+          rmSync(dir, { recursive: true, force: true });
+          resolve();
+        });
+      }),
+  };
 }

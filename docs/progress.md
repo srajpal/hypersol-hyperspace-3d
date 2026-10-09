@@ -5,12 +5,14 @@ Moved here from the README on 2026-09-26 (owner, prompt 47).
 
 
 Screenshots from each finished milestone. Only the newest sets are
-kept in [docs/screenshots](screenshots) (milestone 25's, the newest of
+kept in [docs/screenshots](screenshots) (milestone 26's, the newest of
 the desktop, and milestone 24's, from the tablet); the older ones are
 shown from the repository as it was on 2026-10-07 (commit
 [64de0da](https://github.com/srajpal/hypersol-hyperspace-3d/tree/64de0da067ade4d27a8b28e9e76d4d208aa9ebad/docs/screenshots),
-and for milestone 22 commit
-[fdc318f](https://github.com/srajpal/hypersol-hyperspace-3d/tree/fdc318f74d0baab1b7d362fc3aa1f791e7cdef16/docs/screenshots/m22)),
+for milestone 22 commit
+[fdc318f](https://github.com/srajpal/hypersol-hyperspace-3d/tree/fdc318f74d0baab1b7d362fc3aa1f791e7cdef16/docs/screenshots/m22),
+and for milestone 25 commit
+[8fc1484](https://github.com/srajpal/hypersol-hyperspace-3d/tree/8fc14842d7bab690822d4a83244537051cc13734/docs/screenshots/m25)),
 so a copy of the repository does not carry every set (the review of
 2026-09-30, H6; owner, prompt 160). The roadmap and the current
 milestone's tasks and checks are in [TODO.md](../TODO.md).
@@ -323,9 +325,24 @@ a third of the download it was; and a page's description in its tab's
 tooltip, the text view, and the Scene inspector. A new HoloML example,
 Words in a room, shows the languages.
 
-![Words in a room: welcome signs in Arabic on the left, English ahead, and Hebrew on the right, each board's lines running in its own direction](screenshots/m25/73-words-in-a-room.jpg)
+![Words in a room: welcome signs in Arabic on the left, English ahead, and Hebrew on the right, each board's lines running in its own direction](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/8fc14842d7bab690822d4a83244537051cc13734/docs/screenshots/m25/73-words-in-a-room.jpg)
 
-![The text view of Words in a room: the page's description under its title, and each wall, sign, and board named in its own language, Arabic and Hebrew right to left](screenshots/m25/74-holoml-text-view-languages.png)
+![The text view of Words in a room: the page's description under its title, and each wall, sign, and board named in its own language, Arabic and Hebrew right to left](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/8fc14842d7bab690822d4a83244537051cc13734/docs/screenshots/m25/74-holoml-text-view-languages.png)
 
-![Harbour Loft with the instrument panel: the Scene part shows the page's description and the sofa chosen, outlined in the scene, its models named Window and Small window in the tree](screenshots/m25/75-holoml-inspector-names.png)
+![Harbour Loft with the instrument panel: the Scene part shows the page's description and the sofa chosen, outlined in the scene, its models named Window and Small window in the tree](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/8fc14842d7bab690822d4a83244537051cc13734/docs/screenshots/m25/75-holoml-inspector-names.png)
+
+**Milestone 26: privacy and data tools** (built 2026-10-08; being
+checked). Pages load over HTTPS only: a site that does not offer it
+gets a card before anything goes over plain HTTP, and continuing
+allows it until the browser closes (or for good, from the site panel
+or Settings). The Library's new Sites tab shows each site's cookies and
+clears one site's data without touching the others; and bookmarks come
+in from another browser's bookmark file, after a preview, and go out to
+one.
+
+![HTTPS-only's card: this site does not offer a secure connection, with Continue to the site (not secure), Retry, and Go back](screenshots/m26/76-https-only-card.png)
+
+![The Library's Sites tab: each site with its cookies and a Clear button, and a note on what is not reported per site](screenshots/m26/77-library-sites.png)
+
+![A bookmark file's preview in the Library: four bookmarks to add, with their folders, one skipped, and nothing added until Add](screenshots/m26/78-bookmark-import-preview.png)
 

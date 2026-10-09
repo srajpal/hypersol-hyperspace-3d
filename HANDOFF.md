@@ -83,6 +83,24 @@ holoml's #19 merged, 2026-09-29):
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
 
+## Milestone 26, privacy and data tools (2026-10-08, prompts 177 to 179)
+
+On the branch m26-privacy-data. Plan approved with the recommended
+answers (prompt 178), build approved (prompt 179). TODO.md, "Milestone
+26", has the plan, the decisions made while building (among them:
+Q5's "whether a site has some" storage cannot be known from Electron,
+and the owner kept Q5 a as built, prompt 181), and the results.
+- HTTPS-only (#24): main/privacy/https-only.ts (decisions, unit tested),
+  wired into the shield's listeners in main/privacy/index.ts; the card
+  in renderer/load-errors.ts and scene/tab-view.ts; the site panel and
+  Settings; settings httpsOnly and httpsOnlySites.
+- Per-site storage (#26): main/site-data.ts; the Library's Sites tab.
+- Bookmark files (#27): main/storage/bookmark-file.ts, the data
+  service's import and export, the Library's Bookmarks tab.
+- Checks PD1 to PD9 in tests/e2e/m26.e2e.ts, with
+  startDualFixtureServer and the test switches --test-trusted-cert and
+  --test-plain-http.
+
 ## Milestone 25, HoloML 0.3 (2026-10-07, prompts 167 to 170)
 
 Accepted 2026-10-08 (prompt 174). Built on two branches, m25-holoml-0.3

@@ -373,3 +373,78 @@ describe('settings failures (GitHub issue #2)', () => {
     expect(file.problem).toBeNull();
   });
 });
+
+describe('bookmark files through the service (milestone 26, issue #27)', () => {
+  let folder: string;
+  let service: StorageService;
+  let next: string | null = null;
+  const files = { open: async () => next, save: async () => next };
+  const cleaner = { clearCookiesAndSiteData: async () => undefined, clearCache: async () => undefined };
+  beforeEach(() => {
+    folder = mkdtempSync(join(tmpdir(), 'hypersol-bookmark-files-'));
+    service = new StorageService(folder, cleaner, { files });
+  });
+  afterEach(async () => {
+    await service.closed();
+    rmSync(folder, { recursive: true, force: true });
+  });
+  const ask = async <T>(request: object): Promise<T> => {
+    const reply = await service.handle(request);
+    if (!reply.ok) throw new Error(reply.error);
+    return reply.value as T;
+  };
+  const file = (name: string, text: string) => {
+    const path = join(folder, name);
+    writeFileSync(path, text);
+    return path;
+  };
+
+  it('reads a file, adds nothing before Add, then adds what the preview listed, once', async () => {
+    await ask({ op: 'bookmarks.add', url: 'https://kept.example/', title: 'Kept title', favicon: null });
+    next = file('in.html', '<!DOCTYPE NETSCAPE-Bookmark-file-1><DL><p><DT><A HREF="https://kept.example/">Other title</A><DT><A HREF="https://new.example/" ADD_DATE="1700000000">New</A></DL>');
+    const preview = await ask<{ token: number; file: string; found: { url: string }[]; skipped: { why: string }[] }>({ op: 'bookmarks.import-read' });
+    expect(preview.file).toBe('in.html');
+    expect(preview.found.map((b) => b.url)).toEqual(['https://new.example/']);
+    expect(preview.skipped.map((s) => s.why)).toEqual(['already bookmarked']);
+    expect((await ask<{ url: string }[]>({ op: 'bookmarks.list' })).map((b) => b.url)).toEqual(['https://kept.example/']);
+    expect(await ask<number>({ op: 'bookmarks.import-add', token: preview.token })).toBe(1);
+    const all = await ask<{ url: string; title: string; createdAt: number }[]>({ op: 'bookmarks.list' });
+    expect(all.map((b) => [b.url, b.title])).toEqual([
+      ['https://kept.example/', 'Kept title'],
+      ['https://new.example/', 'New'],
+    ]);
+    expect(all[1]!.createdAt).toBe(1700000000_000);
+    // The same preview cannot be added twice.
+    await expect(ask({ op: 'bookmarks.import-add', token: preview.token })).rejects.toThrow(/no longer waiting/);
+  });
+
+  it('cancelled dialogs change nothing; a file that is not a bookmark file is refused with a reason', async () => {
+    next = null;
+    expect(await ask({ op: 'bookmarks.import-read' })).toBeNull();
+    expect(await ask({ op: 'bookmarks.export' })).toBeNull();
+    next = file('notes.html', '<p>Just a page</p>');
+    expect(await ask({ op: 'bookmarks.import-read' })).toMatchObject({ error: expect.stringMatching(/not a bookmark file/), found: [] });
+  });
+
+  it('exports every bookmark and nothing else, and the file imports into an empty profile as the same bookmarks', async () => {
+    await ask({ op: 'bookmarks.add', url: 'https://a.example/', title: 'A & "B"', favicon: 'data:image/png;base64,AAAA' });
+    await ask({ op: 'bookmarks.add', url: 'https://b.example/日本', title: '東京', favicon: null });
+    await service.recordVisit('https://visited.example/', 'A visit');
+    next = join(folder, 'out.html');
+    expect(await ask({ op: 'bookmarks.export' })).toEqual({ file: 'out.html', count: 2 });
+    const text = readFileSync(next, 'utf8');
+    expect(text).not.toContain('visited.example');
+    const other = mkdtempSync(join(tmpdir(), 'hypersol-bookmark-files-'));
+    const fresh = new StorageService(other, cleaner, { files });
+    try {
+      const preview = (await fresh.handle({ op: 'bookmarks.import-read' })) as { ok: true; value: { token: number } };
+      await fresh.handle({ op: 'bookmarks.import-add', token: preview.value.token });
+      const strip = (list: { url: string; title: string; favicon: string | null }[]) => list.map(({ url, title, favicon }) => ({ url, title, favicon })).sort((x, y) => x.url.localeCompare(y.url));
+      const theirs = (await fresh.handle({ op: 'bookmarks.list' })) as { ok: true; value: { url: string; title: string; favicon: string | null }[] };
+      expect(strip(theirs.value)).toEqual(strip(await ask({ op: 'bookmarks.list' })));
+    } finally {
+      await fresh.closed();
+      rmSync(other, { recursive: true, force: true });
+    }
+  });
+});
