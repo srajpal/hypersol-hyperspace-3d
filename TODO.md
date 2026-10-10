@@ -40,7 +40,7 @@ Plan approved 2026-09-24.
 | 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). | Done (accepted 2026-10-08, prompt 184; the review's item for the history search index was done by its D6) |
 | 27 | Free camera and room navigation | Move freely around the room | Done (accepted 2026-10-09, prompt 196; moved before the installers, prompt 129; numbered 27 since 2026-10-05) |
 | 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Done (accepted 2026-10-10, prompt 201; numbered 28 since 2026-10-05) |
-| 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (numbered 29 since 2026-10-05; the last milestone planned, prompt 172) |
+| 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Removed (prompt 203): its two needed items are GitHub issues #75 and #76; the rest is polish for later or a fork |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS, and Android phones (Android tablets are milestone 24) | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
@@ -113,6 +113,22 @@ app, how security updates reach users, and a check that test mode is
 absent from a packaged app (it is off whenever `app.isPackaged`).
 Polish (29) is the last milestone planned.
 
+On 2026-10-10 (prompts 202 and 203) the owner ended the milestones
+after 28: what was left was refinement rather than what the browser or
+HoloML needs to work. Milestone 29 is removed. Work continues from the
+GitHub issues of both repositories, bugs and enhancements; the review
+of what was left opened issues #75 (full screen and pointer lock, with a notice of the
+browser's own), #76 (the interface checked with a screen reader and an
+input method), #77 (soft text on the tilted page), #78 (a dropped
+.holoml file), #79 (checks that sleep and then look), #80 (the budgets
+with a graphics card in the automatic builds), #81 (macOS), and #82 (C9
+and L9 on the owner's computer). The rules
+tied to milestones (approval, pushing, the security check, the
+screenshots) were reworded for issues in AGENTS.md, and prompts are
+recorded only when the owner asks. The "Further out" row stays as a
+list of ideas, as does milestone 29's polish (a custom font, sound
+design, a theme editor, motion tuning).
+
 - Milestone 25 (HoloML 0.3; 23 when this was written), the language
   engineer's list for its plan:
   the look written down, so that a second renderer can match a picture
@@ -150,8 +166,9 @@ Polish (29) is the last milestone planned.
   pass get their own milestone (6), because exact colours are still an
   open question and reviewing every real screen together keeps them
   consistent.
-- Later polish goes in the last milestone (29, Polish), so it cannot
-  delay a working browser.
+- Later polish was to go in the last milestone (29, Polish), so it
+  could not delay a working browser; milestone 29 was removed (prompt
+  203), and polish is for later issues or a fork.
 
 ## Milestone 1 — Live page in the 3D room
 

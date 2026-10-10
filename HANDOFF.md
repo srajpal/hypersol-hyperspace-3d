@@ -2,8 +2,8 @@
 
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-10-10 (milestones 1 to 28 accepted, milestone 28,
-lift to 3D, on 2026-10-10, prompt 201; the next is 29, polish, the last
-planned, not yet planned; the fixes of 2026-10-09 below;
+lift to 3D, on 2026-10-10, prompt 201; no more milestones (prompt 203):
+work continues from GitHub issues; the fixes of 2026-10-09 below;
 the review's last items in TODO.md, "The review's last items". The
 roadmap is in TODO.md).
 
@@ -67,7 +67,8 @@ state; this is a summary.
   #27; accepted 2026-10-08, prompt 184); 27 free camera and room
   navigation, looking around the room (accepted 2026-10-09, prompt
   196); 28 lift to 3D, pictures and models lifted into the room
-  (accepted 2026-10-10, prompt 201); then polish (29), the last planned. The installers (30 and 31) were dropped in prompt 172:
+  (accepted 2026-10-10, prompt 201). Polish (29) was removed (prompt
+  203): no more milestones; work continues from GitHub issues. The installers (30 and 31) were dropped in prompt 172:
   the project stays source only, and a fork may package its own build
   (CONTRIBUTING.md, "Making your own build").
 - The logo direction is chosen (concept 4d in
@@ -111,9 +112,7 @@ made while building, and the results.
 - Still to run again on this computer: the five checks that use the
   system clipboard (it was out of use for every program on 2026-10-09;
   they pass on Linux and in the automatic builds), and C9's frame rate.
-- How to resume: milestone 29, polish. Push first (rule 11), check
-  Electron's security releases (rule 13), then draft its plan and
-  questions in TODO.md for the owner's approval.
+- How to resume: from the GitHub issues (below, "How to resume").
 
 ## Milestone 27, free camera and room navigation (2026-10-09, prompts 191 to 196)
 
@@ -758,10 +757,19 @@ to this repository for rules and the prompt log.
    `MILESTONE=mN pnpm screenshots`, add them to docs/progress.md, take
    the previous desktop set out of the tree, and refresh the README's
    four with `pnpm screenshots:readme` (AGENTS.md, Working agreement).
-8. Next: milestone 29, polish, the last planned. Push first (rule
-   11), check Electron's security releases (rule 13), then draft its
-   plan and questions in TODO.md for the owner's approval; nothing is
-   built before the plan and then the build are approved.
+8. Next: the GitHub issues of both repositories (prompt 203: no more
+   milestones). Open on 2026-10-10: issues #75 (full screen and pointer lock, with a notice of the
+   browser's own), #76 (the interface checked with a screen reader and an
+   input method), #77 (soft text on the tilted page), #78 (a dropped
+   .holoml file), #79 (checks that sleep and then look), #80 (the budgets
+   with a graphics card in the automatic builds), #81 (macOS), and #82 (C9
+   and L9 on the owner's computer).
+   One issue at a time, approved by the owner first (AGENTS.md rule 2);
+   check Electron's security releases at least monthly and before any
+   tag (rule 13). Prompts are recorded only when the owner asks. Also
+   the owner's: three draft advisories to publish (private tabs, the
+   Library's passwords; fixed 2026-10-09), and merged branches on
+   GitHub to delete.
 
 ## Not done yet, on purpose
 

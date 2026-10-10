@@ -70,7 +70,9 @@ and turn in your hands.
 On 2026-09-30 both repositories were reviewed and the findings fixed,
 the security ones first ([CHANGELOG.md](CHANGELOG.md), Unreleased),
 except those [TODO.md](TODO.md) lists with the reason.
-Then polish; no installers (owner, 2026-10-08). See [Progress](#progress),
+No more milestones are planned: work continues from the
+[GitHub issues](https://github.com/srajpal/hypersol-hyperspace-3d/issues)
+(owner, 2026-10-10); no installers (owner, 2026-10-08). See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
 ## The story
@@ -239,7 +241,9 @@ repository and in [holoml](https://github.com/srajpal/holoml) was made
 by AI coding agents directed by prompts. To follow it:
 
 - Read [PROMPTS.md](PROMPTS.md) in order. It has every prompt the owner
-  gave, lightly edited, with its date and the model that took it.
+  gave up to the end of the milestones (prompt 203, 2026-10-10), lightly
+  edited, with its date and the model that took it; after that, only
+  those the owner asked to be recorded.
 - Beside each prompt, read what it produced: the commits made after it
   (`git log`), and, for each milestone, its plan, decisions, and check
   results in [TODO.md](TODO.md).
@@ -255,9 +259,10 @@ by AI coding agents directed by prompts. To follow it:
 
 Next, 27,
 free camera movement around the room. 28, pictures and
-3D models lifted out of ordinary pages. 29, polish, the last
-planned (installers were dropped on 2026-10-08: anyone may fork the
-repository and make one). Later: phones, and VR. The full
+3D models lifted out of ordinary pages, the last milestone: from
+2026-10-10 the work is the GitHub issues, bugs and enhancements
+(installers were dropped on 2026-10-08: anyone may fork the repository
+and make one). Later: phones, and VR. The full
 roadmap is in [TODO.md](TODO.md).
 
 ## Progress
@@ -346,7 +351,7 @@ those sites until you choose one.
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Technical decisions, parts and files, screens and style, open questions |
 | [TODO.md](TODO.md) | Milestone roadmap and the current milestone's tasks and checks |
 | [AGENTS.md](AGENTS.md) | Rules for AI agents and contributors working in this repo |
-| [PROMPTS.md](PROMPTS.md) | Every owner prompt that shaped the project, in order, lightly edited |
+| [PROMPTS.md](PROMPTS.md) | Every owner prompt that shaped the project, in order, lightly edited (all of them to prompt 203; since then those the owner asks to be recorded) |
 | [HANDOFF.md](HANDOFF.md) | Current state, decisions made, open questions, how to resume |
 | [CHANGELOG.md](CHANGELOG.md) | What each release contains |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Setting up, testing, and sending changes |

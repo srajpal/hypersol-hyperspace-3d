@@ -11,8 +11,13 @@ plus HoloML, a 3D markup language kept in its own repository.
 
 - Brief: BRIEF.md (user, problem, idea, first result, later features)
 - Architecture: ARCHITECTURE.md (parts, files, decisions, screens, open questions)
-- Roadmap and current plan: TODO.md (milestones, tasks, checks)
-- Prompt log: PROMPTS.md (every prompt the owner gives, lightly edited)
+- Roadmap and history: TODO.md (milestones 1 to 28, their tasks,
+  checks, and results; no more milestones are planned, prompt 203: work
+  continues from GitHub issues)
+- Work now: the GitHub issues of both repositories (bugs and
+  enhancements)
+- Prompt log: PROMPTS.md (the owner's prompts up to 203, lightly
+  edited; later ones only when the owner asks)
 - Handoff: HANDOFF.md (current state and how to resume; keep it current)
 - Browser repo: https://github.com/srajpal/hypersol-hyperspace-3d
   (renamed from hypersol-websurfer-3d on 2026-09-26; GitHub redirects
@@ -53,12 +58,13 @@ plus HoloML, a 3D markup language kept in its own repository.
    allowed. Development and test runs use a disposable browser profile
    under the ignored `userData/` folder or a temporary directory, never
    the owner's real profile.
-2. Build only what the owner has approved. Approval comes in two kinds:
-   first a milestone's plan is approved, then its build. Build approval
-   covers every task in that milestone's plan in TODO.md. The agent
-   checks in at any decision point the plan marks (for example the
-   milestone 1 spike result) and at the end for acceptance. Anything not
-   in the plan's tasks needs its own approval.
+2. Build only what the owner has approved. Since prompt 203 the work is
+   GitHub issues, one at a time: the owner approves the work on an issue
+   (for a larger one, its plan first), and the agent checks in at any
+   decision point and at the end, with a pull request, for acceptance.
+   Anything not in the approved issue needs its own approval. (Milestones
+   1 to 28 were approved in two kinds, a plan and then its build; TODO.md
+   keeps their record.)
 3. Use only the data and services agreed in ARCHITECTURE.md. No new
    network calls, services, hosting, or third-party accounts without
    separate approval.
@@ -81,25 +87,30 @@ plus HoloML, a 3D markup language kept in its own repository.
 10. Mark run and test steps "not checked yet" until they have actually
     been executed in this project. Record commands only after they ran.
 11. Commit after each completed, approved change, with a clear message
-    that says what changed and why. Push before starting a milestone and
-    after finishing one (owner instruction, 2026-09-26, prompt 37);
-    otherwise push only when asked. When five or more commits are
+    that says what changed and why. Push when an issue's work is ready
+    for its pull request, and when the owner asks (prompt 203; before,
+    before and after each milestone, prompt 37); otherwise do not. When five or more commits are
     waiting to be pushed, remind the owner at the end of the reply.
     Never rewrite published history.
 12. One active agent session per working tree at a time. If two sessions
     must run at once, they work in different folders. Before appending to
-    PROMPTS.md, read its last heading and use the next number.
-13. Security cadence: at the start of each milestone, check Electron's
-    release notes for security releases. Upgrade to the current supported
-    stable line before any public release. Record the version and the
-    date checked in ARCHITECTURE.md section 3.
+    PROMPTS.md (when the owner asks for a prompt to be recorded), read its
+    last heading and use the next number.
+13. Security cadence: check Electron's release notes for security
+    releases at least once a month while work goes on, before any tag or
+    release, and when an issue touches the browser's security (prompt
+    203; before, at the start of each milestone). Upgrade to the current
+    supported stable line before any public release. Record the version
+    and the date checked in ARCHITECTURE.md section 3.
 
 ## Prompt log
 
 Applies to the project owner's sessions only; contributors do not log
-prompts. PROMPTS.md is a public record of how the software was built.
-Every prompt from the owner is added to it in order, before the work for
-it begins, as `## N — date · model, effort` followed by the prompt.
+prompts. PROMPTS.md is a public record of how the software was built,
+from the first prompt to 203. Since prompt 203 a prompt is added only
+when the owner asks for it to be recorded (owner, prompt 203); before,
+every prompt was. One that is recorded goes in order, before the work
+for it begins, as `## N — date · model, effort` followed by the prompt.
 
 The text is lightly edited (owner, prompt 57): spelling and typing slips
 are fixed and the meaning is kept; nothing personal, private, or secret
@@ -114,35 +125,36 @@ Do not change earlier entries except to correct an error.
 
 ## Working agreement
 
-- The owner approves: the brief, the architecture, each milestone plan,
-  each milestone build, and each finished milestone. Show drafts and
-  wait.
-- Prefer small, reviewable changes. One milestone at a time.
+- The owner approves: the brief, the architecture, and the work on each
+  issue and its finished pull request (until prompt 203, each milestone
+  plan, build, and finished milestone). Show drafts and wait.
+- Prefer small, reviewable changes. One issue at a time.
 - When a rule needs changing, propose the wording and wait for approval.
   Do not change this file silently.
 - Unfamiliar terms get a one-line explanation the first time they appear
   in a document.
-- At the end of each milestone, save screenshots of the main screens to
-  docs/screenshots/<milestone>/ with `MILESTONE=mN pnpm screenshots` (3D
-  scenes as JPEG), and add them to docs/progress.md. Then take the
-  previous set out of the tree and point its links in docs/progress.md
-  at the last commit that has it, so the tree keeps only the newest
-  desktop set. The README keeps a short progress paragraph that links
+- Screenshots (prompt 203): when an issue's change shows on screen,
+  update the screenshots it changes, in the newest set (docs/screenshots/
+  m28/; `MILESTONE=m28 pnpm screenshots` makes the whole set again, 3D
+  scenes as JPEG), and docs/progress.md where it shows them. The set is
+  no longer made anew at a milestone's end, as there are none; the
+  older sets stay where docs/progress.md points, at the commits that
+  have them. The README keeps a short progress paragraph that links
   there. (Added 2026-09-25, prompt 21; the progress page split out
   2026-09-26, prompt 47; only the newest set kept from prompt 161, the
   review of 2026-09-30, H6.)
 - The README always opens with four screenshots of the newest version
   or milestone, good-looking ones that show the variety of what the
   browser does: refresh docs/screenshots/readme*.png with `pnpm
-  screenshots:readme` at the end of each milestone and each release,
+  screenshots:readme` when a change shows in them, and at each release,
   and look at them. They show Harbour Loft, Blockworld, a sample page
   in the layers view, and the instrument panel, all served locally.
   (Owner, prompt 68; the showroom from prompt 81, Q5 a; four pictures
   since prompt 99, the wording approved in prompt 100; Harbour Loft in
   place of the sofa studio from prompt 118.)
-- Owner-only automation (Remote Control at session start, the prompt-log
-  reminder) lives in CLAUDE.local.md, which is gitignored, so
-  contributors' sessions never inherit it.
+- Owner-only automation (Remote Control at session start) lives in
+  CLAUDE.local.md, which is gitignored, so contributors' sessions never
+  inherit it. (It also held the prompt-log reminder until prompt 203.)
 
 ## Testing
 
@@ -265,8 +277,9 @@ date given and grow with each milestone; TODO.md has the latest.
   problems before a push and reproduces them in minutes; the automatic
   builds stay the check a pull request is merged on.
 
-What to recheck after any change (regression list; grows with each
-milestone; the current milestone's checks are defined in TODO.md):
+What to recheck after any change (regression list; it grew with each
+milestone, and now grows with the issues whose fixes add checks; each
+milestone's checks are defined in TODO.md):
 - Milestone 1 checks C1 to C11 from TODO.md (`pnpm test:e2e`): app
   launches, clicks land on the tilted page, parallax does not shift
   targets, typing, scrolling, hover and links, page isolation, no
@@ -582,8 +595,10 @@ milestone; the current milestone's checks are defined in TODO.md):
   off (LT8), and the keyboard and screen readers (LT9); fixture pages
   and models in tests/fixtures/lift (made by its make.mjs). LT10 is
   every earlier milestone's checks.
-- Later milestones add: polish (29). No installers (dropped, prompt
-  172).
+- No more milestones (prompt 203): polish (29) was taken off the
+  roadmap, and installers before it (prompt 172). A fix for a GitHub
+  issue adds its checks to the file of the part it changes, or to a
+  file named for the issue, and says so here.
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

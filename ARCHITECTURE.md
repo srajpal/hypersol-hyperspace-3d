@@ -959,11 +959,12 @@ Delete puts it back (section 4, "Lifting into the room").
 
 ### Later screens and polish (not built yet)
 
-Image lift-to-3D, extensions, sync, a
-theme editor, custom fonts, sound design, VR. (Built since this list was
-first written: the downloads panel and find in page in milestone 8, and
-HoloML pages in milestone 14, and looking around the room in milestone
-27.)
+Extensions, sync, a theme editor, custom fonts, sound design, VR: ideas
+for later issues or a fork (milestone 29, polish, was removed in prompt
+203). (Built since this list was first written: the downloads panel and
+find in page in milestone 8, HoloML pages in milestone 14, looking
+around the room in milestone 27, and lifting pictures and models into
+the room in milestone 28.)
 
 ## 10. Open questions
 
@@ -979,7 +980,7 @@ HoloML pages in milestone 14, and looking around the room in milestone
    spike (TODO.md task 8). Clicks, hover, scrolling, links, and real
    keyboard typing work at the default tilt (owner check 2026-09-25),
    so the flat-page fallback is not used. Remaining: text is slightly
-   soft when tilted (revisit tilt and sharpness in milestone 6).
+   soft when tilted (GitHub issue #77).
    Found in milestone 2: input sent in the same instant a page appears,
    moves, or resizes can be routed to the shell instead of the page.
    A pointer that has already arrived is routed correctly, so mouse use
