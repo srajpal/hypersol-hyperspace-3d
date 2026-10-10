@@ -204,7 +204,7 @@ one installed; 45 is still in beta (45.0.0-beta.1). Nothing to upgrade.
 | Page depth layering | A layers view (milestone 5): the page preload lifts the page's top-level sections and its images into separate depths. Bounded work (GitHub issue #11): pinned elements are found once, in 6 ms slices, then kept current from the page's changes (a restyle near a layer rechecks that element's whole subtree, and any change to what is pinned chooses the layers again, PR #16 review); at most 400 section candidates (a longer list is a feed, not sections) and 2000 images are looked at, and only changes that can affect the choice lead to choosing again. The page's own transforms and animations, including ones added after an element was lifted, release it (issue #9); scrolling inside boxes re-measures the layers in them and refreshes the image report (issue #14). Each lifted element gets its own CSS perspective transform around one shared vanishing point, which follows the room's parallax; styles go in through webFrame.insertCSS. Elements that are fixed or sticky or contain such parts, and elements the page already transforms or animates, are skipped; at most 24 sections and 24 images | Interactive, no copying: clicks and typing land where they appear. No ancestor gains a transform, so the page's pinned parts stay pinned (a transform on the body would unpin them). The page's 3D cannot share the room's 3D space, so the view happens inside the page panel. |
 | Layers view on or off | On by default (owner, prompt 31). Settings: "Open pages in the layers view" (global); switching the view on a page (button in the top bar, Ctrl/Cmd+Shift+L) is remembered for its site and wins over the global switch; Settings clears the site choices | Owner decision Q2. A switch applies to the tab in front at once, and to other tabs on their next page load. |
 | Shell and page messages | The shell sends the layers state with the webview's own send; the page preload reports image rectangles with sendToHost; both checked (shared/layers.ts) | The main process is not needed, and the page's own scripts cannot see either message. |
-| Ad/tracker blocking | @ghostery/adblocker-electron 2.18.2 (MPL-2.0; with @ghostery/adblocker and its page script, installed 2026-09-26). The app owns the session's request listener and asks the package's engine about each web page request; the package's page script (run from preload/page.ts) does element hiding | Open source, uBlock-compatible lists, built for Electron. The package has no allow-once or per-site switch, so the app's own listener adds "open anyway", pausing a site, and per-tab counts. Asked about (main/privacy/shield.ts): every request a web page (a webview tab) makes, WebSocket connections (lasting two-way connections a page opens to a server; `ws:` and `wss:` addresses) among them; requests that no tab made, such as a service worker's (a script a site leaves running in the background, apart from any tab), asked about with the address they name as their referrer as the page, and a blocked one counted for every tab showing a page of the referrer's site, as a worker serves all of them and does not say which it worked for; and a tab's favicon, which the main process fetches for the card: the shield is asked before it is fetched, and a listed one is not fetched and is counted. Not asked about: the shell's own requests and its developer tools', and the app's own while they are under way (list updates, the DNS check, a favicon the shield has passed: main/privacy/own-requests.ts). Until the review of 2026-09-30, WebSockets, requests without a tab, and favicons passed unseen. |
+| Ad/tracker blocking | @ghostery/adblocker-electron 2.18.2 (MPL-2.0; with @ghostery/adblocker and its page script, installed 2026-09-26). The app owns the session's request listener and asks the package's engine about each web page request; the package's page script (run from preload/page.ts) does element hiding | Open source, uBlock-compatible lists, built for Electron. The package has no allow-once or per-site switch, so the app's own listener adds "open anyway", pausing a site, and per-tab counts. Asked about (main/privacy/shield.ts): every request a web page (a webview tab) makes, WebSocket connections (lasting two-way connections a page opens to a server; `ws:` and `wss:` addresses) among them; requests that no tab made, such as a service worker's (a script a site leaves running in the background, apart from any tab), asked about with the address they name as their referrer as the page, and a blocked one counted for every tab showing a page of the referrer's site, as a worker serves all of them and does not say which it worked for; and a tab's favicon, which the main process fetches for the card: the shield is asked before it is fetched, and a listed one is not fetched and is counted; and (milestone 28) a 3D model the person lifts into the room and the files it names, which the main process fetches through the page's session, asked about as the page's own requests of that kind. Not asked about: the shell's own requests and its developer tools', and the app's own while they are under way (list updates, the DNS check, a favicon the shield has passed: main/privacy/own-requests.ts). Until the review of 2026-09-30, WebSockets, requests without a tab, and favicons passed unseen. |
 | Lists | Ads and trackers (EasyList, EasyPrivacy, uBlock Origin's lists, Peter Lowe's), from Ghostery's copies on GitHub; named in resources/filters/lists.json and docs/privacy.md | Owner decision 2026-09-26 (prompt 29, Q1 a). |
 | First start | A starter copy of the lists is included in the app (resources/filters/starter.bin, rebuilt by `pnpm filters:update`); a saved copy from the last refresh is used when present and valid | Pages are protected from the first one (Q2 a). Lists without a stated licence (Peter Lowe's) are download-only. |
 | Filter-list updates | Fetched once a day through Electron's net.fetch (Chromium's network stack, so encrypted DNS applies), on by default, switchable in Settings, plus "Update now"; parsed in a worker thread; a failure keeps the lists in use and retries after an hour. An update downloads the lists' text only (rules about addresses and page elements). The blocker's page scripts (uBlock Origin's "resources", which the blocker runs inside web pages) come with the app, inside the starter copy, and change only when `pnpm filters:update` rebuilds it before a release: before each build the starter copy is checked against its SHA-256 recorded in starter.json (SHA-256: a checksum, a short fingerprint of a file's exact contents), and the scripts inside it against theirs; a saved copy built with any other scripts is not used (main/privacy/filters-build.ts, filters.ts) | Keeps blocking current without holding up the main process (parsing takes about 0.8 s). Until the review of 2026-09-30 an update also downloaded the scripts, from a branch of another project that can change at any time, and ran them in every page within a day. |
@@ -220,6 +220,7 @@ one installed; 45 is still in beta (45.0.0-beta.1). Nothing to upgrade.
 | Camera | Fixed desk view with subtle mouse parallax; parallax pauses while the pointer is over the page | Simple and predictable; targets never move under the cursor. |
 | Looking around the room | Milestone 27 (owner, prompt 192, Q1 to Q6 a). The camera leaves the desk by the top bar's button, a shortcut (Ctrl+Shift+K, changeable), or a drag on the empty room (a press that moves 5 pixels; a plain click still does nothing), and moves around the desk: dragging and the arrows turn it around a pivot (the page's middle at first), the wheel, W and S, + and - bring it closer or further, A and D and Page Up and Page Down slide the pivot; Shift moves three times as far. It eases there in a quarter of a second, as the parallax does (packages/scene-core/src/free-camera.ts, unit tested). Limits (Q6 a): within 70° of the page's own facing, from 0.6 to 2.5 times the desk's distance, 40 units above the floor, and always in front of the page's plane, by a fifth of the desk's distance, even beyond its edge (found by check FC4: turned to one side with the pivot slid the other way, the camera passed the plane). While away the page is held (Q2 a): inert, with no pointer events (a class on the CSS layer, as the page's own panel takes them otherwise), so a click on it reaches the room and brings the camera back, and nothing can give it the keyboard; the notice at the top has the keyboard, says how to move, and has "Back to the desk"; a panel that closes gives the keyboard back to it. Escape (with nothing else open, before it would stop a loading page), Home, the button, a click on the page or on a card, and the notice bring the camera back; it is exactly the desk's place again (DESK), so the page is as sharp as before and clicks land as before (FC1). The parallax is off while away, and the instrument panels and the layers view keep their desk state. The horizon band turns with the view, at the same distance and height, so it reaches across the view from any angle; the sun, cards, desk, and floor keep their places. Reduced motion jumps; economy mode keeps its 30 frames a second; a HoloML page that fills the window brings the camera back and does not offer it (nor does a room without WebGL 2: the button says why). Always starts at the desk (Q3 a). The Android app leaves the button out (Q4 a) | The page is sharp only from the desk: its distance there makes one world unit one CSS pixel. A camera that orbits the desk keeps the page in sight and is hard to get lost with in a room that is mostly empty (Q1 a); holding the page while away means nothing is typed or clicked where it is hard to see (Q2 a). |
 | Window frame | Standard OS title bar | Reliable on all three OSes; a custom frame is considered in the theme milestone. |
+| Lifting into the room | Milestone 28 (owner, prompt 198, Q1 to Q5 a). Pictures (img, video, canvas) and 3D models (a `<model-viewer>` element, a `<model>` element, a link to a .glb or .gltf file) on an ordinary page are lifted by "Lift into the room" in the right-click menu (offered where the page preload found one, told to the main process before the menu shows), or all in view at once by the top bar's Lift button or Ctrl+Shift+U (changeable), up to 12 from a page: models first, then pictures, in the page's order (Q2 a). The page preload finds them where they are drawn now, the layers view's lift included, as far as they show (preload/lift.ts); everything it says is checked (shared/lift.ts). A picture must show at least 48 pixels each way. Its pixels are captured from the page as drawn (Q1 a): the main process captures that one rectangle of the shell's own tab (Electron's capturePage, at the page's zoom; no request), as the cards' pictures are; a video lifts as its frame then, a drawing as it is. A model (Q3 a) is fetched by the main process through the page's own session, after the privacy shield (as a page's request of its kind), from the page's own origin only (a redirect elsewhere is refused), within the HoloML viewer's limits: the file's own description is read first (triangles, the extensions it needs, its pictures' sizes) and the files it names are fetched only then, each up to 32 MB and all together up to 128 MB, within 30 seconds; a named file on another site is not fetched and the model shows without it, one on its own site that does not come refuses the model (main/lift.ts, unit tested). It is decoded in a frame of the viewer's own address, `hypersol-viewer://app/lift-host.html`, sandboxed (scripts only, of no origin), made for that model and removed once it answers, whose own content policy lets it read only the viewer's files and what it makes itself (blob: and data:): no network (LIFT_HOST_CSP, main/holoml.ts). It uses three.js's glTF loader with the viewer's Draco, meshopt, and KTX2 decoders (KTX2 pictures made plain RGBA, as there is no graphics card to ask) and sends back plain shapes and pictures: lists of numbers and picture bitmaps, every mesh in its place (viewer/lift-host.ts), which the shell checks again before it draws them (shared/lifted-shape.ts, unit tested). In the room (renderer/scene/lifted.ts) the objects are drawn by a second WebGL canvas over the page, with the room's camera, in an arc on the right of the page as the cards are on the left (the page leaves room for it); they always stand between the page and the camera, which never goes behind the page (milestone 27), so drawing them over the page is right. A picture rises from where it was on the page and is framed; a model stands about as high as a card, lit by the room's lights and one from the camera's side. Each has a button over where it is drawn: hover or focus shows its name, a drag or the arrow keys turn it, a click or Enter brings it nearer (one at a time) and again sends it back, its close button or Delete puts it back into the page; lifting and putting back are announced. They belong to their page (Q4 a): gone when it navigates (another document, or another address in the same one), sleeps, crashes, or its tab closes; waiting unseen while another tab is in front; kept in memory only, never saved, a private tab's the same. Not offered on a HoloML page (its scene is 3D already; its scene has no right-click menu) or without WebGL 2: the button and the shortcut's notice say why. Reduced motion: no rising or moving. The Android app leaves it out (Q5 a) | Capturing what is drawn makes no new request and lifts exactly what is seen (Q1 a). A model is a file the browser did not have, so it is fetched only when the person lifts it, only from the site whose page shows it, and decoded where a fault in a decoder reaches nothing: the shell, which holds the person's data, only takes numbers and pictures it has checked (Q3 a). Objects that belong to their page keep the room simple and leave nothing behind (Q4 a). |
 | Tab ownership | The shell owns the tabs: each tab is a `<webview>` the shell creates once and keeps in its page | Follows from the milestone 1 decision to show pages as webviews in the shell: a webview lives in the shell's page and reloads if moved, so the shell must own it. The main process keeps the jobs only it can do: shortcuts, new-window rules, the right-click menu, favicons, snapshots. Changed in milestone 2 from "TabManager in the main process"; confirmed with the milestone 2 approval (prompt 20). |
 | Keyboard shortcuts | Handled in the main process (before-input-event) for the shell and every page | Work wherever the keyboard focus is, including inside a page; the page never sees the shortcut keys. |
 | New windows | Always a tab: in front, or behind for Ctrl-click and middle-click; blocked unless the page had a click or key press in the last 5 seconds | Owner decision 2026-09-25 (prompt 19); 5 seconds matches Chromium's user-activation window. |
@@ -351,6 +352,10 @@ hypersol-hyperspace-3d/
           shortcuts.ts, popups.ts, context-menu.ts
                                the rules behind those, unit tested
           favicon.ts           favicons fetched within limits
+          lift.ts              lifting into the room (milestone 28): a
+                               model's files fetched from the page's own
+                               site within the viewer's limits, and the
+                               capture's rectangle (unit tested)
           leave-page.ts        "Leave this page?"
           security.ts          webview lock-down, allowed addresses, a
                                page's own navigations, no client
@@ -407,6 +412,10 @@ hypersol-hyperspace-3d/
                                on the person's own keys
           privacy.ts           privacy requests (shield, lists, DNS) and checks
           layers.ts            layers view messages between shell and page
+          lift.ts              lifting (milestone 28): what a page can
+                               lift, its messages and checks, which to
+                               lift; lifted-shape.ts: a decoded model's
+                               shapes and pictures, and their checks
           inspect.ts           instrument panel requests and checks
           downloads.ts         download requests, safe unique file names,
                                which files are programs
@@ -434,6 +443,8 @@ hypersol-hyperspace-3d/
           layers.ts            the layers view and image rectangles in the
                                page; layers-plan.ts: its arithmetic (unit
                                tested)
+          lift.ts              what can be lifted into the room, where it
+                               is drawn (milestone 28)
           passwords.ts         sign-in reports and the saved sign-ins list
                                under a field (milestone 9)
           form-state.ts        tells the shell when a form has typed text
@@ -471,7 +482,9 @@ hypersol-hyperspace-3d/
                                and direction of text), decoders.ts
                                (compressed models), ktx2-host.ts (the
                                KTX2 transcoder's host page), far models
-                               (scene.ts)
+                               (scene.ts); milestone 28: lift-host.ts
+                               (the decoding frame for lifted models,
+                               framed by the shell)
         renderer/              the 3D shell (one Chromium page)
           index.html, main.ts, styles.css
           app.ts               controller: tabs, pages, room, top bar, commands
@@ -479,7 +492,12 @@ hypersol-hyperspace-3d/
           scene/               room.ts (Three.js room, camera, cards, switch
                                animation, input), tab-view.ts (one tab's page,
                                shimmer, error cards), tab-card.ts,
-                               start-panel.ts
+                               start-panel.ts; milestone 28: lifted.ts
+                               (lifted pictures and models in the room),
+                               lift-decoder.ts (the decoding frame)
+          lift.ts              lifting into the room: the menu's entry,
+                               the button and shortcut, capture, fetch,
+                               and decoding in turn (milestone 28)
           hud/                 Lit components: toolbar.ts (nav buttons,
                                address bar, bookmark star, menu, loading
                                strip), tab-strip.ts (tabs as a list),
@@ -738,8 +756,9 @@ tag (`pnpm holoml:sync v0.3.1 --examples v0.3.1`).
 3. The webview's events update the tab list, which updates the address
    bar, loading strip, title, and card.
 4. The main process sends the shell what only it sees: shortcut key
-   presses, new-tab requests from pages, and favicons (each shown to the
-   shield before it is fetched).
+   presses, new-tab requests from pages, favicons (each shown to the
+   shield before it is fetched), and "Lift into the room" chosen in a
+   page's right-click menu (milestone 28).
 5. Shortly after a page settles, and when switching away from it, the
    shell asks the main process for a snapshot (only of its own tabs) and
    paints it onto the tab's card. A HoloML page settles before its models
@@ -753,6 +772,9 @@ process. It exposes read-only facts (platform, versions) and:
 - onCommand: messages from the main process (shortcuts, new tabs,
   favicons, saved-data changes, prepare-close);
 - captureTab: a snapshot of one of the shell's own tabs;
+- liftCapture and liftModel (milestone 28): one rectangle of one of its
+  tabs' pages, captured; a model's files, from that page's own site
+  (main/lift.ts);
 - data: saved-data requests (bookmarks, history, settings, open tabs,
   clearing data), each checked in the main process by parseDataRequest
   (shared/data.ts) and accepted only from the shell;
@@ -783,8 +805,12 @@ filter list changes as commands.
 6. The page preload (preload/layers.ts) lifts sections and images when
    the shell turns the layers view on, keeps them current as the page
    changes, scrolls, and resizes, and reports the rectangles of the
-   images in view (untransformed layout, CSS pixels) to the shell, which
-   keeps them per tab for a later lift-to-3D milestone.
+   images and (milestone 28) the 3D models in view (untransformed layout,
+   CSS pixels) to the shell, which keeps them per tab. Lifting into the
+   room (milestone 28) asks the preload afresh what can be lifted and
+   where it is drawn (preload/lift.ts); the shell has the main process
+   capture each picture, then fetch each model, which a sandboxed frame
+   of the viewer's address decodes (section 4, "Lifting into the room").
 7. The main process writes a history entry when a tab arrives at a web
    page. Bookmarks and settings are written when the user acts, and the
    open tabs shortly after they change. The main process tells the shell
@@ -829,10 +855,14 @@ filter list changes as commands.
 | Certificates checked (for the panel) | Memory only, per host | Up to 500, until the app closes; private tabs' apart, cleared with the last private tab |
 | Site choices from private tabs (layers, shield pause) | Memory only | Shared by private tabs while one is open; never in settings.json (issue #8) |
 | Image rectangles of the page in front | Memory only, in the shell | Not saved or sent anywhere |
+| Pictures and models lifted into the room (milestone 28) | Memory only, in the shell (a lifted model's files in the main process only while they are fetched) | Gone with their page: when it navigates, sleeps, or its tab closes; a private tab's the same; never saved |
 
 Nothing leaves the machine except user-initiated page loads (including
 the favicon a page names, fetched through that page's own session, as a
-browser tab does, once the shield has passed it), encrypted DNS lookups to the named resolver
+browser tab does, once the shield has passed it, and, from milestone 28,
+a 3D model the person lifts into the room and the files it names, from
+that page's own site only, through its session after the shield),
+encrypted DNS lookups to the named resolver
 (including the one reachability question after a failed lookup in
 Secure mode), and filter-list refreshes (docs/privacy.md). The
 spellchecker dictionary download is turned off. Any future update check
@@ -871,8 +901,12 @@ Escape in the shell stops a loading page. Mouse and touch:
 click or tap cards and buttons; scroll inside the page scrolls the page.
 Looking around the room (milestone 27): a drag on the room, the top
 bar's button, or Ctrl+Shift+K leaves the desk; the arrows and W, A, S,
-D move; Escape or Home comes back (section 3, "Looking around the
-room").
+D move; Escape or Home comes back (section 4, "Looking around the
+room"). Lifting into the room (milestone 28): "Lift into the room" in
+a page's right-click menu, the top bar's Lift button, or Ctrl+Shift+U;
+the lifted objects stand on the right; hover names one, a drag or the
+arrows turn it, a click or Enter brings it nearer, its close button or
+Delete puts it back (section 4, "Lifting into the room").
 
 ### States
 

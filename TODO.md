@@ -39,7 +39,7 @@ Plan approved 2026-09-24.
 | 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Done (accepted 2026-10-08, prompt 174) |
 | 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). | Done (accepted 2026-10-08, prompt 184; the review's item for the history search index was done by its D6) |
 | 27 | Free camera and room navigation | Move freely around the room | Done (accepted 2026-10-09, prompt 196; moved before the installers, prompt 129; numbered 27 since 2026-10-05) |
-| 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Current (plan approved 2026-10-09, prompt 198; numbered 28 since 2026-10-05) |
+| 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Current (plan approved 2026-10-09, prompt 198; build approved, prompt 199, and built, waiting for acceptance; numbered 28 since 2026-10-05) |
 | 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (numbered 29 since 2026-10-05; the last milestone planned, prompt 172) |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS, and Android phones (Android tablets are milestone 24) | Later |
 
@@ -5874,7 +5874,8 @@ so the room's limits and keys are its own.
 Status: Current. Plan approved (2026-10-09, prompt 198) with the
 recommended answers to Q1 to Q5, Q3 a's new kind of request (a lifted
 model's file) with it; build approved (prompt 199). Drafted in prompt 197. Rule 13 check done (ARCHITECTURE.md section 3: 44.7.0 is
-still the newest stable release).
+still the newest stable release). Built 2026-10-09 on the branch
+`m28-lift-to-3d`, waiting for the owner's acceptance.
 
 Goal: pictures and 3D models on ordinary web pages become objects in
 the room. A picture lifts out of the page and stands in the room as a
@@ -5980,29 +5981,93 @@ None. Three.js (installed) has the glTF loader the viewer uses already.
 
 ### Tasks
 
-- [ ] 1. Finding what can be lifted: the picture report as it is, and
+- [x] 1. Finding what can be lifted: the picture report as it is, and
       models (`<model-viewer>`, `<model>`, links to `.glb` and `.gltf`),
       parsed and limited in the shell as the pictures are.
-- [ ] 2. Lifting pictures (Q1): the capture of one rectangle in the main
+- [x] 2. Lifting pictures (Q1): the capture of one rectangle in the main
       process (only for the shell, only of its own tab's page), the
       objects in the room, rising out of the page, the arc, hover,
       turning, nearer and back, close.
-- [ ] 3. Lifting models (Q3): the fetch through the page's session and
+- [x] 3. Lifting models (Q3): the fetch through the page's session and
       the shield, with the limits; the sandboxed decoding frame; the
       models in the room.
-- [ ] 4. The controls (Q2): the right-click entry, the top bar button and
+- [x] 4. The controls (Q2): the right-click entry, the top bar button and
       its shortcut, keyboard access and announcements; the states (HoloML
       pages, no WebGL 2, reduced motion, economy mode, private tabs, the
       page navigating, the tab closing or sleeping).
-- [ ] 5. Checks LT1 to LT10: unit tests beside the code and
+- [x] 5. Checks LT1 to LT10: unit tests beside the code and
       tests/e2e/m28.e2e.ts, with fixture pages of pictures, a video, a
       canvas, and models embedded and linked (the fixtures' own glTF
       files, no network).
-- [ ] 6. Documents: README, ARCHITECTURE (the room, the decisions, what
+- [x] 6. Documents: README, ARCHITECTURE (the room, the decisions, what
       is fetched and why), docs/privacy.md (what is captured, fetched,
       and kept), AGENTS.md's testing list, CHANGELOG, HANDOFF, TODO; the
       screenshots (`MILESTONE=m28 pnpm screenshots`, the previous set
       out of the tree) and the README's four pictures.
+
+### Decisions made while building
+
+- Where things are (ARCHITECTURE.md section 4, "Lifting into the
+  room"): the page side in preload/lift.ts, its messages and checks in
+  shared/lift.ts; the capture and the model's fetch in main/lift.ts and
+  main/index.ts; the decoding frame in viewer/lift-host.ts, served at
+  `hypersol-viewer://app/lift-host.html` with its own content policy
+  (main/holoml.ts, LIFT_HOST_CSP), and framed by the shell
+  (renderer/scene/lift-decoder.ts; the shell's own policy now has
+  `frame-src hypersol-viewer:`); what it hands back, and its checks, in
+  shared/lifted-shape.ts; the objects in the room in
+  renderer/scene/lifted.ts; the menu, the button, the shortcut, and the
+  order of capture, fetch, and decoding in renderer/lift.ts.
+- Drawn over the page: the page is placed with CSS over the room's own
+  canvas, so an object drawn there was hidden wherever it crossed the
+  page (rising out of it, coming nearer). The objects have a second
+  WebGL canvas of their own over the page, with the room's camera; they
+  always stand between the page and the camera, which never goes behind
+  the page, so this is right from every place the camera can be. Each
+  object has a real button over where it is drawn, which takes the
+  mouse, the keyboard, and screen readers. The room's parallax holds
+  still while the pointer is on one, as over the page (found while
+  checking: the object moved under the pointer).
+- Where on the page: the preload reports where each thing is drawn now
+  (the layers view's lift included), as far as it shows; a picture is
+  captured from there and rises from there. The right-click menu learns
+  what was clicked before it shows: the preload sends it at once, and
+  waits for the answer, on the click itself.
+- Which to lift, with more than 12 in view: models first, then
+  pictures, each in the page's order (the first try took the largest
+  first; with the layers view on, a picture pushed partly out of view
+  by its lift then lost its place). A picture put back can be lifted
+  again; it joins the end of the arc.
+- The arc: the tab cards' arc mirrored on the right, its slots as high
+  as a card at most and smaller when there are many, so all 12 fit
+  without scrolling; the page leaves room for it (as for the cards'
+  rail) while the tab in front has objects.
+- A model's files: a file it names on another site is not fetched (the
+  model shows without it); one on its own site that does not come, or
+  passes a limit, refuses the model, with the reason in the notice
+  (the first build left it out quietly). Each file up to 32 MB, all of
+  a model's up to 128 MB (the viewer's limit for a page), 2 million
+  triangles, pictures up to 4096 pixels a side (made at most 1024 for
+  the room), 30 seconds. KTX2 pictures are made plain RGBA in the frame,
+  as there is no graphics card there to ask. A file the loader cannot
+  read is "it could not be read as a glTF model" in the notice, not the
+  loader's own words.
+- Refusals are said once, at the end: "Could not lift 4 models: …",
+  each with its reason; lifting is said by the notice, a model arriving
+  and putting back by the layer's own live region.
+- A HoloML scene has no right-click menu (its orbit controls take the
+  right button), so there the menu offers nothing; the button is
+  unavailable and says why, and the shortcut's notice too. The menu's
+  entry says why on a HoloML page where a menu does show.
+- Without WebGL 2 the main process cannot know, so the menu still offers
+  the entry; choosing it says why in the notice.
+- A picture's frame and a model's placeholder take the theme's colours
+  and change with it; a model's own colours are its own.
+- The Android app shares the room: built with `lift: false` (Q5 a), and
+  its top bar leaves the button out.
+- Checks changed because what they check changed: M7 counts the
+  shortcuts in Settings, 27 now with "Lift what is in view into the
+  room".
 
 ### Checks (named LT, for lift)
 
@@ -6023,6 +6088,42 @@ None. Three.js (installed) has the glTF loader the viewer uses already.
 
 - LT1 to LT10 pass, the documents and screenshots are updated, and the
   owner accepts the milestone.
+
+### Results so far (Windows 11, 2026-10-09)
+
+- Unit tests: 589 pass (new: shared/lift.test.ts, 9;
+  shared/lifted-shape.test.ts, 3; main/lift.test.ts, 10; and one each in
+  main/context-menu.test.ts and main/holoml.test.ts); lint and the type
+  check are clean.
+- tests/e2e/m28.e2e.ts: LT1 to LT9 pass, 25 checks, with the graphics
+  card and drawn in software (`HYPERSOL_TEST_SOFTWARE=1`).
+- LT10, the full end-to-end run (before the last two checks of LT6 and
+  the refinements they check were added): 438 of 446 passed (32 files).
+  The eight that failed:
+  - five that read the system clipboard (D8's copy link, copy text, and
+    paste; K2 and K3; M1's copy after a real click): the clipboard read
+    back empty. The clipboard of this computer was out of use for every
+    program at the time (PowerShell's Set-Clipboard failed too, "Requested
+    Clipboard operation did not succeed", and still did an hour later; no
+    window was holding it). On Linux (below) all five pass. To be run
+    again here once the clipboard works.
+  - LT6's new check (the room holding still on an object, the frames and
+    the theme), added after that run's build; it passes with the build
+    that has its code.
+  - L9 (a history search took longer than 50 ms; it passed run again
+    alone, as in milestone 27) and C9 (32.3 frames a second while the
+    camera follows the pointer, then 44.7 run again, against 50; the
+    range milestone 27 measured on this computer with and without its
+    code; nothing is lifted in C9, so the new layer draws nothing). C9 is
+    not changed; both stay on the watch list.
+- On Linux (`pnpm test:linux` with m2, m9, review-134-main, and m28):
+  95 of 95 pass, drawn in software, the clipboard checks among them.
+- The Android app: `pnpm --filter @hypersol/android build:web`, then
+  Gradle's unit tests and the build pass (Android Studio's JDK, the
+  Android SDK); not installed on the tablet (lifting is left out there).
+- The screenshots (m28, 78; milestone 27's set out of the tree, its
+  links at commit 55a5d0c) and the README's four pictures, looked at.
+- Not checked yet: the automatic builds of the pull request.
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
