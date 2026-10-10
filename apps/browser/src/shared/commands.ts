@@ -13,6 +13,10 @@ export const CLOSE_READY_CHANNEL = 'hypersol:close-ready';
 export const CAPTURE_KEYS_CHANNEL = 'hypersol:capture-keys';
 /** Open a HoloML file from the computer (milestone 14): a dropped file's path, or null to choose one. */
 export const OPEN_FILE_CHANNEL = 'hypersol:open-file';
+/** Lifting into the room (milestone 28, shared/lift.ts): the shell asks for one rectangle of one of its tabs' pages, captured (Q1 a). */
+export const LIFT_CAPTURE_CHANNEL = 'hypersol:lift-capture';
+/** And for a model's files, from that page's own site (Q3 a). */
+export const LIFT_MODEL_CHANNEL = 'hypersol:lift-model';
 
 import type { DataOp, DataReply, DataRequest } from './data';
 import type { PrivacyOp, PrivacyReply, PrivacyRequest } from './privacy';
@@ -38,6 +42,7 @@ export const PRIVATE_PARTITION = 'hypersol-private';
 export const RESTORE_BLANK = 'about:blank#hypersol-restore';
 
 export type ShortcutName =
+  | 'lift'
   | 'look-around'
   | 'zoom-in'
   | 'zoom-out'
@@ -98,7 +103,36 @@ export type ShellCommand =
   /** The filter lists changed (refreshed, or a refresh started or failed). */
   | { type: 'filters-changed' }
   /** The window is closing: save the open tabs now, then call closeReady(). */
-  | { type: 'prepare-close' };
+  | { type: 'prepare-close' }
+  /**
+   * "Lift into the room" in a page's right-click menu (milestone 28): what
+   * the page's preload found where it was clicked, unchecked (the shell
+   * checks it, shared/lift.ts parseLiftItem).
+   */
+  | { type: 'lift'; webContentsId: number; item: unknown };
+
+/** A rectangle of a page, in its CSS pixels (shared/lift.ts LiftRect; repeated here, as the shell's preload may not share a file with the page's). */
+export interface LiftArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** A model's files for lifting (milestone 28, Q3 a), from the page's own site, within the viewer's limits; or why not. */
+export type LiftModelReply =
+  | {
+      ok: true;
+      /** The model's address, after any redirect. */
+      url: string;
+      /** The model file itself. */
+      main: Uint8Array;
+      /** The files it names, by the address it names them with. */
+      resources: { uri: string; bytes: Uint8Array }[];
+      /** Files it names that were not fetched: from another site, or past a limit. It is shown without them. */
+      skipped: string[];
+    }
+  | { ok: false; reason: string };
 
 /** What the shell's preload exposes as window.hypersol. */
 export interface ShellBridge {
@@ -107,6 +141,10 @@ export interface ShellBridge {
   onCommand(listener: (command: ShellCommand) => void): () => void;
   /** A JPEG data: URL of a tab's page, or null if it cannot be captured. */
   captureTab(webContentsId: number): Promise<string | null>;
+  /** Lifting (milestone 28): one rectangle of a tab's page as drawn, as PNG bytes at the screen's resolution, or null. */
+  liftCapture(webContentsId: number, area: LiftArea): Promise<Uint8Array | null>;
+  /** Lifting (milestone 28): a model's files, from the tab's page's own site. */
+  liftModel(webContentsId: number, url: string): Promise<LiftModelReply>;
   /** Saved data: bookmarks, history, settings, session (shared/data.ts). */
   data<K extends DataOp>(request: Extract<DataRequest, { op: K }>): Promise<DataReply<K>>;
   /** Privacy shield, filter lists, and encrypted DNS (shared/privacy.ts). */

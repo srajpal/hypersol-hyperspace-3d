@@ -18,6 +18,7 @@ import { ipcRenderer, webFrame } from 'electron';
 import { LAYERS_CHANNEL, LAYERS_SETTLED_CHANNEL, MAX_PAGE_IMAGES, PAGE_IMAGES_CHANNEL, parseLayersState, type PageImage } from '../shared/layers';
 import { isTestRun } from '../shared/test-run';
 import { isHolomlDocument } from './holoml';
+import { liftable as liftableThing } from './lift';
 import { LAYERS, findSectionContainer, largest, liftTransform, liftable, sameExceptLift, vanishingPoint, type Box } from './layers-plan';
 
 const ATTR = 'data-hs-layer';
@@ -379,27 +380,34 @@ function setOn(next: boolean, animate: boolean): void {
 
 // ---- Image report -------------------------------------------------------------
 
-/** Reports the images in view (without the lift) to the shell, when they change. */
+/**
+ * Reports the images in view (without the lift) to the shell, when they
+ * change; and (milestone 28) the 3D models: `<model-viewer>` and `<model>`
+ * elements, and links to .glb and .gltf files (preload/lift.ts).
+ */
 function report(): void {
   window.clearTimeout(reportTimer);
   const images: PageImage[] = [];
   let looked = 0;
-  for (const el of document.querySelectorAll<HTMLElement>('img, video, canvas')) {
+  for (const el of document.querySelectorAll<HTMLElement>('img, video, canvas, model-viewer, model, a[href]')) {
     if (images.length >= MAX_PAGE_IMAGES || ++looked > MAX_MEDIA_CANDIDATES) break;
-    if (el.offsetWidth < 16 || el.offsetHeight < 16) continue;
+    const model = el.localName === 'img' || el.localName === 'video' || el.localName === 'canvas' ? null : liftableThing(el);
+    if (model === null && !MEDIA.has(el.tagName)) continue;
+    // A model's link may be a line of text; a picture of less than 16 pixels a side is left out.
+    if (model === null && (el.offsetWidth < 16 || el.offsetHeight < 16)) continue;
     const box = documentBox(el);
     const x = box.x - scrollX;
     const y = box.y - scrollY;
-    if (x + box.width <= 0 || y + box.height <= 0 || x >= innerWidth || y >= innerHeight) continue;
-    const kind = el.tagName === 'IMG' ? 'img' : el.tagName === 'VIDEO' ? 'video' : 'canvas';
-    const src = el instanceof HTMLImageElement ? el.currentSrc || el.src : el instanceof HTMLVideoElement ? el.currentSrc : '';
+    if (box.width <= 0 || box.height <= 0 || x + box.width <= 0 || y + box.height <= 0 || x >= innerWidth || y >= innerHeight) continue;
+    const kind = model ? 'model' : el.tagName === 'IMG' ? 'img' : el.tagName === 'VIDEO' ? 'video' : 'canvas';
+    const src = model ? model.src : el instanceof HTMLImageElement ? el.currentSrc || el.src : el instanceof HTMLVideoElement ? el.currentSrc : '';
     images.push({
       x,
       y,
       width: box.width,
       height: box.height,
       src: /^https?:\/\//i.test(src) ? src.slice(0, 2048) : '',
-      alt: el instanceof HTMLImageElement ? el.alt.slice(0, 200) : '',
+      alt: model ? model.name.slice(0, 200) : el instanceof HTMLImageElement ? el.alt.slice(0, 200) : '',
       kind,
     });
   }

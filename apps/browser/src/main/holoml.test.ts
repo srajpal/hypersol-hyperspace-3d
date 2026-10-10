@@ -10,7 +10,7 @@ vi.mock('electron', () => ({
   // Stands in for Chromium reading a file: address in, the file's bytes out.
   net: { fetch: async (url: string) => new Response(readFileSync(fileURLToPath(url))) },
 }));
-const { HOLOML_CSP, HOLOML_MEDIA_TYPE, KTX2_HOST_CSP, HolomlPages, SHARED_FOLDER_NOTE, holomlHeaders, isHolomlResponse, isInsideFolder, isSharedFolder } = await import('./holoml');
+const { HOLOML_CSP, HOLOML_MEDIA_TYPE, KTX2_HOST_CSP, LIFT_HOST_CSP, HolomlPages, SHARED_FOLDER_NOTE, holomlHeaders, isHolomlResponse, isInsideFolder, isSharedFolder } = await import('./holoml');
 
 const page = (over: Partial<Parameters<typeof isHolomlResponse>[0]> = {}) => ({
   url: 'https://site.example/scenes/room.holoml',
@@ -84,6 +84,17 @@ describe('holomlHeaders', () => {
     expect(host).toContain("default-src 'none'");
     expect(host).toContain("script-src hypersol-viewer: blob: 'unsafe-eval' 'wasm-unsafe-eval'");
     expect(host.find((d) => d.startsWith('connect-src'))).toBe('connect-src hypersol-viewer: blob: data:');
+  });
+
+  it("the decoding frame for lifted models (milestone 28, LT5) reaches no network: only the viewer's files and what it makes, and only the shell frames it", () => {
+    const host = LIFT_HOST_CSP.split('; ');
+    expect(host).toContain("default-src 'none'");
+    expect(host.find((d) => d.startsWith('connect-src'))).toBe('connect-src hypersol-viewer: blob: data:');
+    expect(host.find((d) => d.startsWith('img-src'))).toBe('img-src blob: data:');
+    expect(host.find((d) => d.startsWith('script-src'))).toBe("script-src hypersol-viewer: blob: 'unsafe-eval' 'wasm-unsafe-eval'");
+    expect(host.find((d) => d.startsWith('frame-ancestors'))).toBe('frame-ancestors file: http://localhost:* http://127.0.0.1:*');
+    // No web address anywhere but where the shell may be (a development run's dev server on this computer).
+    expect(host.filter((d) => !d.startsWith('frame-ancestors')).some((d) => /https?:/.test(d))).toBe(false);
   });
 
   it('keeps the site\'s own content policies and adds HoloML\'s as one more (review of 2026-09-30, V1)', () => {

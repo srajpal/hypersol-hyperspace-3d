@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Lift: models</title>
+    <style>
+      body { margin: 0; padding: 24px; font-family: sans-serif; background: #fff; }
+      model-viewer, model { display: block; width: 160px; height: 120px; border: 1px solid #888; }
+      .row { display: flex; gap: 16px; margin-bottom: 16px; }
+      ul { columns: 2; }
+    </style>
+  </head>
+  <body>
+    <!-- Milestone 28 (tests/e2e/m28.e2e.ts, LT4 and LT5): 3D models a page shows or links. The elements are not
+         drawn here (no script for them); the browser finds them by their markup. -->
+    <h1>Models to lift</h1>
+    <div class="row">
+      <model-viewer id="embedded" src="square.gltf" alt="Orange and teal square"></model-viewer>
+      <model id="element" alt="Meshopt box"><source src="/holoml/compressed/meshopt-box.glb" type="model/gltf-binary" /></model>
+    </div>
+    <ul>
+      <li><a id="gem" href="/holoml/blockworld/models/gem.gltf">Blockworld gem</a></li>
+      <li><a id="draco" href="/holoml/compressed/draco-box.gltf">Draco box</a></li>
+      <li><a id="ktx2" href="/holoml/compressed/ktx2-box.gltf">KTX2 box</a></li>
+      <li><a id="outside" href="outside.gltf">Square with an outside picture</a></li>
+      <li><a id="triangles" href="/holoml/gen/box.gltf?tris=2500000">Too many triangles</a></li>
+      <li><a id="large" href="/holoml/gen/box.gltf?mb=40">Too large</a></li>
+      <li><a id="broken" href="/holoml/gen/corrupt.glb">Broken model</a></li>
+      <li><a id="elsewhere" href="#">On another site</a></li>
+      <li><a id="text" href="readme.txt">Not a model</a></li>
+    </ul>
+    <script>
+      // The same file by another name for this computer: another site.
+      document.getElementById('elsewhere').href = `http://localhost:${location.port}/holoml/blockworld/models/gem.gltf`;
+    </script>
+  </body>
+</html>

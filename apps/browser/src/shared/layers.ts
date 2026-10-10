@@ -5,6 +5,8 @@
  * is not involved and the page's own scripts cannot see them.
  */
 
+import { isModelAddress } from './lift';
+
 /** Shell to page: the layers view's state. */
 /**
  * Test runs only: the page preload tells the main process each time the
@@ -29,16 +31,21 @@ export interface LayersState {
   accent: string;
 }
 
-/** One image on the page, in CSS pixels relative to the page's view, without the layers view's lift. */
+/**
+ * One image on the page, in CSS pixels relative to the page's view,
+ * without the layers view's lift; or (milestone 28) a 3D model: a
+ * `<model-viewer>` or `<model>` element, or a link to a .glb or .gltf file.
+ */
 export interface PageImage {
   x: number;
   y: number;
   width: number;
   height: number;
-  /** The image's address (http or https only; '' otherwise). */
+  /** The image's address (http or https only; '' otherwise); a model's file (always there). */
   src: string;
+  /** A picture's text; a model's name. */
   alt: string;
-  kind: 'img' | 'video' | 'canvas';
+  kind: 'img' | 'video' | 'canvas' | 'model';
 }
 
 export const MAX_PAGE_IMAGES = 100;
@@ -68,8 +75,10 @@ export function parseImageReport(raw: unknown): PageImage[] | null {
     if (!isNum(r['x']) || !isNum(r['y']) || !isNum(r['width']) || !isNum(r['height'])) return null;
     if (r['width'] < 0 || r['height'] < 0) return null;
     const kind = r['kind'];
-    if (kind !== 'img' && kind !== 'video' && kind !== 'canvas') return null;
+    if (kind !== 'img' && kind !== 'video' && kind !== 'canvas' && kind !== 'model') return null;
     const src = typeof r['src'] === 'string' && r['src'].length <= 2048 && /^https?:\/\//i.test(r['src']) ? r['src'] : '';
+    // A model is its file: one that names none, or another kind of file, is refused with the report.
+    if (kind === 'model' && !isModelAddress(src)) return null;
     const alt = typeof r['alt'] === 'string' ? r['alt'].slice(0, 200) : '';
     out.push({ x: r['x'], y: r['y'], width: r['width'], height: r['height'], src, alt, kind });
   }

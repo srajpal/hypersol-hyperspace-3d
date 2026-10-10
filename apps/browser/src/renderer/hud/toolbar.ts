@@ -32,6 +32,9 @@ const icon = {
   stop: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>`,
   reload: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95M19 4v4h-4" /></svg>`,
   menu: html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6h.01M12 12h.01M12 18h.01" /></svg>`,
+  lift: html`<svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 19h16" /><rect x="7" y="7" width="10" height="8" rx="1" /><path d="M12 2.5v3" /><path d="M9.8 4.5 12 2.5l2.2 2" />
+  </svg>`,
   look: html`<svg viewBox="0 0 24 24" aria-hidden="true">
     <ellipse cx="12" cy="13" rx="9" ry="4" /><path d="M12 4v5" /><path d="M9.5 6.5 12 4l2.5 2.5" /><circle cx="12" cy="13" r="1.4" />
   </svg>`,
@@ -62,6 +65,7 @@ const icon = {
  * hs-stop, hs-new-tab, hs-site (the site button: open the site panel),
  * hs-zoom (detail: 1, -1, or 0 to reset), hs-instruments, hs-layers,
  * hs-look-around (milestone 27: look around the room, or come back),
+ * hs-lift (milestone 28: lift what is in view into the room),
  * hs-text-view (a HoloML page's text view), hs-bookmark, and hs-menu
  * (detail: MenuAction).
  *
@@ -87,6 +91,7 @@ export class HsToolbar extends LitElement {
     lookAround: { type: Boolean },
     canLookAround: { type: Boolean },
     lookReason: { type: String },
+    liftReason: { type: String },
     holoml: { type: Boolean },
     textView: { type: Boolean },
     site: { type: String },
@@ -118,6 +123,8 @@ export class HsToolbar extends LitElement {
   declare canLookAround: boolean;
   /** Why looking around is not offered now, or empty. */
   declare lookReason: string;
+  /** Lifting (milestone 28): why the Lift button cannot lift now, or ''. */
+  declare liftReason: string;
   /** A HoloML page in front (milestone 15): the text view button shows. */
   declare holoml: boolean;
   declare textView: boolean;
@@ -193,6 +200,7 @@ export class HsToolbar extends LitElement {
     this.lookAround = false;
     this.canLookAround = false;
     this.lookReason = '';
+    this.liftReason = '';
     this.instruments = false;
     this.zoom = 1;
     this.canZoom = false;
@@ -777,6 +785,20 @@ export class HsToolbar extends LitElement {
           @click=${() => this.fire('hs-look-around')}
         >
           ${icon.look}
+        </button>`
+          : nothing}
+        ${this.shows('lift')
+          ? html`<button
+          class="lift-button"
+          data-testid="lift"
+          aria-label="Lift into the room"
+          title=${this.liftReason
+            ? `Lift into the room: ${this.liftReason}`
+            : `Lift the pictures and 3D models in view into the room (${this.keys['lift'] ?? ''})`}
+          ?disabled=${this.liftReason !== ''}
+          @click=${() => this.fire('hs-lift')}
+        >
+          ${icon.lift}
         </button>`
           : nothing}
         ${this.holoml

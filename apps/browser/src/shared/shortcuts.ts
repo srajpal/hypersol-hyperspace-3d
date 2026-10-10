@@ -50,6 +50,8 @@ export const SHORTCUTS: readonly ShortcutInfo[] = [
   { name: 'instruments', label: 'Instrument panel', keys: ['Mod+Shift+I'] },
   // Milestone 27 (owner, prompt 192).
   { name: 'look-around', label: 'Look around the room', keys: ['Mod+Shift+K'] },
+  // Milestone 28 (owner, prompt 198, Q2 a).
+  { name: 'lift', label: 'Lift what is in view into the room', keys: ['Mod+Shift+U'] },
   // Milestone 17 (owner, prompt 86, Q2 a).
   { name: 'examples', label: 'HoloML examples', keys: ['Mod+Shift+E'] },
   // Milestone 15's key, in the table since the review of 2026-09-30 (St4).

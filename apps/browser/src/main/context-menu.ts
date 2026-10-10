@@ -15,7 +15,16 @@ export interface MenuNav {
   canGoForward: boolean;
 }
 
+/**
+ * Lifting into the room (milestone 28): 'offer' when what was clicked can
+ * be lifted (the page's preload says, main/lift.ts), 'holoml' for a
+ * picture on a HoloML page, which lifts nothing (the entry says why), and
+ * null otherwise.
+ */
+export type MenuLift = 'offer' | 'holoml' | null;
+
 export type MenuAction =
+  | 'lift'
   | 'open-link-new-tab'
   | 'copy-link'
   | 'cut'
@@ -30,8 +39,10 @@ export type MenuEntry = { action: MenuAction; label: string; enabled: boolean } 
 
 const isWebLink = (url: string) => /^https?:\/\//i.test(url);
 
-export function contextMenuEntries(params: MenuParams, nav: MenuNav): MenuEntry[] {
+export function contextMenuEntries(params: MenuParams, nav: MenuNav, lift: MenuLift = null): MenuEntry[] {
   const groups: MenuEntry[][] = [];
+  if (lift === 'offer') groups.push([{ action: 'lift', label: 'Lift into the room', enabled: true }]);
+  else if (lift === 'holoml') groups.push([{ action: 'lift', label: 'Lift into the room (not on HoloML pages: the scene is 3D already)', enabled: false }]);
   const link = isWebLink(params.linkURL);
   if (link) {
     groups.push([

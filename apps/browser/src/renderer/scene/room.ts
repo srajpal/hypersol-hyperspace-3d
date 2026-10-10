@@ -41,6 +41,7 @@ import {
 } from '@hypersol/scene-core';
 import type { Theme } from '@hypersol/themes';
 import { CARD_HEIGHT, CARD_WIDTH, TabCard, type CardModel, type CardPart } from './tab-card';
+import { LIFT_RAIL, LIFT_RAIL_ROOM, LiftedLayer } from './lifted';
 
 /**
  * A page the room places (milestone 24): the desktop's tab view (a
@@ -103,6 +104,8 @@ export interface RoomOptions {
   economyFullResolution?: boolean;
   /** Looking around the room (milestone 27) is offered; the Android app leaves it out for now (owner, prompt 192, Q4 a). */
   lookAround?: boolean;
+  /** Lifting pictures and models into the room (milestone 28) is offered; the Android app leaves it out for now (owner, prompt 198, Q5 a). */
+  lift?: boolean;
 }
 
 interface Pose {
@@ -153,6 +156,8 @@ export class Room {
   onDrawn: (() => void) | null = null;
   /** Null where Chromium cannot start WebGL 2: the page and the top bar still work, the room is not drawn (milestone 12, owner prompt 60). */
   private readonly webgl: WebGLRenderer | null;
+  /** Pictures and models lifted from the pages (milestone 28), drawn over the page; null without WebGL 2, or where lifting is not offered. */
+  readonly lifted: LiftedLayer | null;
   /** The room's canvas, or a stand-in without WebGL, so the pointer wiring stays the same. */
   private readonly canvas: HTMLCanvasElement;
   private readonly css: CSS3DRenderer;
@@ -253,6 +258,27 @@ export class Room {
     this.cameraElement = this.css.domElement.firstElementChild!.firstElementChild as HTMLElement;
 
     this.camera = new PerspectiveCamera(options.fovDeg ?? 40, 1, 1, 20000);
+    // Over the page, with the room's camera (milestone 28, scene/lifted.ts).
+    this.lifted =
+      webgl && options.lift !== false
+        ? new LiftedLayer(container, theme, {
+            camera: this.camera,
+            pagePoint: (tabId, u, v) => this.pagePoint(tabId, u, v),
+            pageRotation: (tabId) => this.views.get(tabId)?.object.rotation.clone() ?? null,
+            layout: () => this.currentLayout,
+            railEdges: () => ({
+              right: window.innerWidth - this.extra.right - LIFT_RAIL.right,
+              top: HUD_HEIGHT + this.topExtra + LIFT_RAIL.topMargin,
+              bottom: window.innerHeight - LIFT_RAIL.bottomMargin - this.extra.bottom,
+            }),
+            reducedMotion: () => this.reducedMotion.matches,
+            requestRender: () => this.requestRender(),
+            railChanged: () => {
+              this.layout();
+              this.requestRender();
+            },
+          })
+        : null;
 
     const c = theme.colors;
     this.scene.fog = new Fog(new Color(c.backgroundBottom), 1500, 6000);
@@ -346,8 +372,9 @@ export class Room {
     this.views.set(view.tabId, { view, object });
   }
 
-  /** Removes a closed tab's view; its webview and page go with it. */
+  /** Removes a closed tab's view; its webview and page go with it, and what was lifted from it (milestone 28). */
   removeView(tabId: number): void {
+    this.lifted?.clearTab(tabId);
     const entry = this.views.get(tabId);
     if (!entry) return;
     this.tweens = this.tweens.filter((t) => t.object !== entry.object);
@@ -480,7 +507,9 @@ export class Room {
   /** The room's resolution: the display's, or half of it in economy mode (unless economyFullResolution). */
   private applyPixelRatio(): void {
     const half = this.economy && this.options.economyFullResolution !== true;
-    this.webgl?.setPixelRatio(half ? Math.max(0.5, window.devicePixelRatio * 0.5) : window.devicePixelRatio);
+    const ratio = half ? Math.max(0.5, window.devicePixelRatio * 0.5) : window.devicePixelRatio;
+    this.webgl?.setPixelRatio(ratio);
+    this.lifted?.setPixelRatio(ratio);
   }
 
   /**
@@ -692,6 +721,8 @@ export class Room {
   focus(tabId: number, animate: boolean): void {
     const previous = this.focusedId;
     this.focusedId = tabId;
+    // Its lifted objects show, and the arc takes room beside it while it has any (the page is laid out again).
+    this.lifted?.focus(tabId);
     this.railScroll = scrollToShow(this.arcInput(), this.order.indexOf(tabId));
     this.layoutCards();
     const duration = animate && !this.reducedMotion.matches && !this.economy ? SWITCH_MS : 0;
@@ -725,11 +756,13 @@ export class Room {
   private pageInsets(): Insets {
     const margin = this.fill ? 0 : this.margin;
     const left = this.railShown ? RAIL.left + this.railWidth + 32 : margin;
+    // Lifted objects (milestone 28) stand in an arc on the right, as the tab cards do on the left.
+    const lift = this.lifted?.rail && !this.fill ? LIFT_RAIL_ROOM : 0;
     return {
       ...PAGE_INSETS,
       left,
       top: PAGE_INSETS.top + this.topExtra,
-      right: margin + this.extra.right,
+      right: margin + this.extra.right + lift,
       bottom: margin + this.extra.bottom,
     };
   }
@@ -794,6 +827,7 @@ export class Room {
     this.sun.position.set(halfWidth * 0.78, r * 0.25, -far + 10);
 
     this.layoutCards();
+    this.lifted?.layout();
   }
 
   private arcInput(): TabArcInput {
@@ -898,6 +932,7 @@ export class Room {
       this.onCameraMove({ x: x / DEFAULT_PARALLAX.maxOffset, y: y / DEFAULT_PARALLAX.maxOffset });
     }
     this.stepTweens(performance.now());
+    const lifting = this.lifted?.step(performance.now()) ?? false;
     // A spinner asks for frames only where it is seen: not on a card out
     // of view (one tab, tabs shown as a list, a card scrolled off the
     // rail), and not while the room is not drawn. Otherwise every page
@@ -915,9 +950,10 @@ export class Room {
     this.placeGlow();
     if (!this.contextLost) this.webgl?.render(this.scene, this.camera);
     this.css.render(this.cssScene, this.camera);
+    this.lifted?.render();
     this.frames += 1;
     this.onDrawn?.();
-    if (moving || looking || this.tweens.length > 0 || spinning) this.requestRender();
+    if (moving || looking || lifting || this.tweens.length > 0 || spinning) this.requestRender();
     else this.lastFrameTime = 0;
   }
 
@@ -1003,6 +1039,15 @@ export class Room {
     return { x: ((p.x + 1) / 2) * window.innerWidth, y: ((1 - p.y) / 2) * window.innerHeight };
   }
 
+  /** Where a point of a tab's page (its pixels from its top-left) is in the room, or null (milestone 28). */
+  private pagePoint(tabId: number, u: number, v: number): Vector3 | null {
+    const entry = this.views.get(tabId);
+    if (!entry) return null;
+    const { panelWidth: w, panelHeight: h } = this.currentLayout;
+    entry.object.updateMatrixWorld();
+    return entry.object.localToWorld(new Vector3(u - w / 2, h / 2 - v, 0));
+  }
+
   /** Where a point on the focused page (page pixels from its top-left) is on screen now. */
   projectPagePoint(u: number, v: number): Vec2 {
     const entry = this.views.get(this.focusedId);
@@ -1073,6 +1118,7 @@ export class Room {
     this.sun.material.map = makeSunTexture(theme);
     this.sun.visible = theme.room.sun && !this.economy;
     for (const card of this.cards.values()) card.setTheme(theme);
+    this.lifted?.setTheme(theme);
     this.requestRender();
   }
 

@@ -339,8 +339,18 @@ export class Privacy {
    * site's cookies.
    */
   fetchFavicon(contents: WebContents, url: string, init: { signal: AbortSignal }): Promise<Response> {
+    return this.fetchForTab(contents, url, init, 'image');
+  }
+
+  /**
+   * Fetches a file a tab's page names, for the browser's own use: its
+   * favicon, or (milestone 28) a model the person lifts into the room and
+   * the files it names. The shield is asked first, as for the page's own
+   * requests of that kind, and the page's own session makes the request.
+   */
+  fetchForTab(contents: WebContents, url: string, init: { signal: AbortSignal }, resourceType: 'image' | 'xhr'): Promise<Response> {
     if (this.tabs.has(contents.id)) {
-      const decision = this.shield.decide({ url, resourceType: 'image', tab: contents.id });
+      const decision = this.shield.decide({ url, resourceType, tab: contents.id });
       if ('cancel' in decision || 'redirectURL' in decision) return Promise.reject(new Error('Blocked by the privacy shield'));
     }
     return this.own.run(url, () => contents.session.fetch(url, init));
