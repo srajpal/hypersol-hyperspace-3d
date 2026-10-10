@@ -6162,8 +6162,9 @@ None. Three.js (installed) has the glTF loader the viewer uses already.
 
 ## Issue #75: full screen and pointer lock
 
-Status: built 2026-10-10 on the branch `issue-75-fullscreen`, waiting
-for the owner's acceptance. Plan and build approved with the
+Status: Done. Accepted 2026-10-10, after pull request #83 merged with
+every automatic build passed (the issue closed with it). Built on the
+branch `issue-75-fullscreen`. Plan and build approved with the
 recommended answers to Q1 to Q5 (2026-10-10). The first issue after the
 milestones (prompt 203). Rule 13 check done
 (ARCHITECTURE.md section 3: 44.7.0 still the newest stable release).
