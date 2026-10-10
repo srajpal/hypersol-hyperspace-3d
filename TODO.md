@@ -6160,6 +6160,112 @@ None. Three.js (installed) has the glTF loader the viewer uses already.
   five clipboard checks (once its clipboard works), and C9; L9 is
   watched.
 
+## Issue #75: full screen and pointer lock (plan, for the owner's approval)
+
+Status: planned, waiting for the owner's approval (2026-10-10). The
+first issue after the milestones (prompt 203). Rule 13 check done
+(ARCHITECTURE.md section 3: 44.7.0 still the newest stable release).
+
+Goal: a video player's full-screen button and a game that holds the
+pointer work as in other browsers, and the browser itself always says
+so and how to leave, where no page can hide it.
+
+### What there is today, and what a short experiment showed
+
+- Both are refused to every page (main/permissions.ts,
+  ALLOWED_WITHOUT_ASKING; since milestone 9), because a page in full
+  screen could draw a fake top bar and the browser has no notice.
+- Allowed for a moment on a branch (since reverted), a click on a
+  page's full-screen button put the whole window into the system's full
+  screen, and the page's box filled it; in the shell the page's webview
+  is then the full-screen element, which is drawn over everything,
+  including the browser's own top bar and notices. A notice in the
+  browser's top layer (a "popover") is drawn over it: checked with a
+  picture.
+- Electron does not leave full screen on Escape (a browser's interface
+  does that, and the shell has to): pressing Escape did nothing. Asking
+  the page to leave from the main process works, and the window goes
+  back.
+- Pointer lock was refused in the test window ("WrongDocumentError"), as
+  the hidden test windows never take the keyboard focus; the checks can
+  make the page believe it has it (Chromium's focus emulation).
+
+### How it would work (proposed)
+
+1. **Full screen** (Q1, Q2): allowed to a web page after a real click or
+   key, as Chromium requires, without a question. The page fills the
+   whole screen; the room, the top bar, and the cards are hidden behind
+   it. Escape always leaves: the main process sees the key before the
+   page does, so no page can keep it; the page's own way out, a tab
+   switch, closing the tab, leaving the page, a crash, and looking
+   around also leave. Afterwards the window, the page, and the camera are
+   exactly as before.
+2. **Pointer lock** (Q3): allowed after a real click, the pointer
+   hidden and given back by Escape (the main process again), a tab
+   switch, or the window losing focus.
+3. **The notice** (Q4): the browser's own, in its top layer, over the
+   page: "127.0.0.1 is full screen. Press Esc to leave." (and "...has
+   the pointer. Press Esc to get it back."), with the site as the
+   address bar shows it; shown for 4 seconds on entering, and again when
+   the pointer reaches the top edge of the screen; announced to screen
+   readers. In the theme's colours.
+4. **The rest**: private tabs the same; a HoloML page the same (its
+   scripts may ask, as a page's may; the viewer itself asks for
+   neither); lifted objects and the instrument panel hidden while full;
+   economy mode and reduced motion unchanged. The Android app unchanged
+   (Q5).
+
+### Questions
+
+- Q1, where full screen goes.
+  - a (recommended): the whole screen, as other browsers do (what
+    Electron does by itself).
+  - b: the browser's window only: the page fills the window, the top
+    bar and the room hidden, the window as it was.
+- Q2, asking first.
+  - a (recommended): no question, the notice instead (as Chrome and
+    Firefox; only after a real click or key).
+  - b: a prompt for each site, remembered as the camera's is.
+- Q3, pointer lock.
+  - a (recommended): with full screen, the same way (after a real click,
+    the notice, Escape gives it back).
+  - b: still refused; full screen only.
+- Q4, when the notice shows.
+  - a (recommended): for 4 seconds on entering, and again whenever the
+    pointer reaches the top of the screen.
+  - b: only on entering.
+- Q5, the Android app.
+  - a (recommended): unchanged (its pages are in Android's WebView,
+    which has its own full screen).
+
+### Tasks
+
+- [ ] 1. The main process: allow both to web pages after a gesture;
+      Escape (and the other ways out) leave; the window put back.
+- [ ] 2. The shell: the notice in the top layer; the room, the top bar,
+      lifted objects, and the instrument panel while full; the camera
+      and the tab state afterwards.
+- [ ] 3. Checks FS1 to FS8 (below), in tests/e2e/issue-75.e2e.ts with a
+      fixture page (a box that asks for full screen, a button that asks
+      for the pointer), and unit tests for the rules.
+- [ ] 4. Documents: ARCHITECTURE (the decision; permissions), docs/
+      privacy.md if anything changes there (nothing is sent), the
+      CHANGELOG, the README's feature list, AGENTS.md's testing list,
+      HANDOFF, TODO; the issue closed by the pull request.
+
+### Checks (named FS)
+
+| # | Check | Pass when |
+|---|---|---|
+| FS1 | Full screen | A click on a page's full-screen button fills the screen with the page's element; the page says so (`fullscreenchange`) |
+| FS2 | Leaving | Escape leaves, and a page that listens for Escape and stops it cannot keep it; the page's own exit, a tab switch, closing the tab, and leaving the page leave too; the window's size and place, the page's size, and the camera are as before |
+| FS3 | No click, no full screen | A page that asks without a click is refused, as before |
+| FS4 | The notice | Shown over the page with the site and "Press Esc"; gone after 4 seconds; shown again at the top edge; announced; the page cannot cover it |
+| FS5 | Pointer lock | A click on the page's button holds the pointer; the notice says so; Escape gives it back; a page cannot keep it |
+| FS6 | Other states | Private tabs; a HoloML page's script; while looking around; lifted objects hidden while full and back after |
+| FS7 | Keyboard and screen readers | The notice is announced; the keyboard is the page's while full and the shell's after |
+| FS8 | Regression | Every earlier check, the unit tests, and the automatic builds on Windows and Linux |
+
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
 Five new issues (#66 to #68 here, #42 and #43 in holoml) and three

@@ -190,6 +190,12 @@ Rule 13 check, 2026-10-09 (start of milestone 28, lift to 3D; prompt
 197): 44.7.0 (2026-10-07) is still the newest stable release, and the
 one installed; 45 is still in beta (45.0.0-beta.1). Nothing to upgrade.
 
+Rule 13 check, 2026-10-10 (GitHub issue #75, full screen and pointer
+lock, which touches the browser's security): 44.7.0 (2026-10-07) is
+still the newest stable release, and the one installed (also 43.7.9 and
+42.11.12 on the older lines); 45 is in beta (45.0.0-beta.1, 2026-10-09).
+Nothing to upgrade.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |
