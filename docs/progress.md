@@ -362,8 +362,7 @@ clicks or keys.
 
 ![Back at the desk: the page where it was, and the top bar's Look around button beside the layers view's](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/55a5d0c7e391210474d735c932cdc7a8eb2ec0a2/docs/screenshots/m27/81-back-at-the-desk.png)
 
-**Milestone 28: lifting into the room** (built 2026-10-09, waiting for
-acceptance). Pictures, videos, drawings, and 3D models on a web page
+**Milestone 28: lifting into the room** (accepted 2026-10-10). Pictures, videos, drawings, and 3D models on a web page
 can stand in the room, in an arc on the right of the page: right-click
 one and choose "Lift into the room", or lift everything in view with the
 top bar's new Lift button (Ctrl+Shift+U). A picture rises out of the

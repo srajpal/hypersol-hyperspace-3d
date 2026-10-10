@@ -33,7 +33,7 @@ a made-up sample page.*
 For Windows and Linux (checked by automatic tests on both); macOS is
 planned but untested. Apache 2.0. No telemetry.
 
-**Status (2026-10-09): experimental.** Released: the
+**Status (2026-10-10): experimental.** Released: the
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
 a pre-release, as source for developers. There are no installers,
 and none are planned: the project stays a repository of source, and a
@@ -64,9 +64,9 @@ away, and compressed models. Milestone 26 adds
 privacy and data tools: HTTPS-only browsing, per-site storage, and
 bookmark import and export. Milestone 27 lets you look around the room:
 leave the desk by dragging on the room, with the keys, or with a button,
-and come back to the page exactly as it was. Milestone 28 (built,
-waiting for the owner's acceptance) lifts a page's pictures and 3D
-models into the room, to stand beside the page and turn in your hands.
+and come back to the page exactly as it was. Milestone 28 lifts a
+page's pictures and 3D models into the room, to stand beside the page
+and turn in your hands.
 On 2026-09-30 both repositories were reviewed and the findings fixed,
 the security ones first ([CHANGELOG.md](CHANGELOG.md), Unreleased),
 except those [TODO.md](TODO.md) lists with the reason.

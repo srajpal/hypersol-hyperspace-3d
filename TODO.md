@@ -39,7 +39,7 @@ Plan approved 2026-09-24.
 | 25 | HoloML 0.3 | The features milestone 22's check found missing (prompt 127): names for models and groups, the language and direction of text, compressed models in HyperSpace 3D, level of detail, more of the scene API, and a page's description shown. (review, 2026-09-30) Also for its plan: limits on what files become (decoded pictures, decoded sound, lights) and on the time a page may take without scripts, in the specification's own text; the look written down (lights, tone mapping, the default surroundings, the field of view) and a panorama's projection; and the rest of the language engineer's list below | Done (accepted 2026-10-08, prompt 174) |
 | 26 | Privacy and data tools | HTTPS-only browsing with explicit exceptions (#24); per-site storage management (#26); bookmark import and export (#27). | Done (accepted 2026-10-08, prompt 184; the review's item for the history search index was done by its D6) |
 | 27 | Free camera and room navigation | Move freely around the room | Done (accepted 2026-10-09, prompt 196; moved before the installers, prompt 129; numbered 27 since 2026-10-05) |
-| 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Current (plan approved 2026-10-09, prompt 198; build approved, prompt 199, and built, waiting for acceptance; numbered 28 since 2026-10-05) |
+| 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Done (accepted 2026-10-10, prompt 201; numbered 28 since 2026-10-05) |
 | 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Later (numbered 29 since 2026-10-05; the last milestone planned, prompt 172) |
 | — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS, and Android phones (Android tablets are milestone 24) | Later |
 
@@ -5871,11 +5871,13 @@ so the room's limits and keys are its own.
 
 ## Milestone 28 — Lift to 3D
 
-Status: Current. Plan approved (2026-10-09, prompt 198) with the
-recommended answers to Q1 to Q5, Q3 a's new kind of request (a lifted
-model's file) with it; build approved (prompt 199). Drafted in prompt 197. Rule 13 check done (ARCHITECTURE.md section 3: 44.7.0 is
-still the newest stable release). Built 2026-10-09 on the branch
-`m28-lift-to-3d`, waiting for the owner's acceptance.
+Status: Done. Accepted 2026-10-10 (prompt 201), after pull request #73
+merged with every automatic build passed. Plan approved (2026-10-09,
+prompt 198) with the recommended answers to Q1 to Q5, Q3 a's new kind
+of request (a lifted model's file) with it; build approved (prompt
+199). Drafted in prompt 197. Rule 13 check done (ARCHITECTURE.md
+section 3: 44.7.0 is still the newest stable release). Built 2026-10-09
+on the branch `m28-lift-to-3d`.
 
 Goal: pictures and 3D models on ordinary web pages become objects in
 the room. A picture lifts out of the page and stands in the room as a
@@ -6135,7 +6137,11 @@ None. Three.js (installed) has the glTF loader the viewer uses already.
   wraps where the page is narrow, and the check waits for the camera to
   arrive and counts any move. All 25 pass here in a 1024 by 768 window
   (a change to the harness for that run only, not kept), and at the
-  usual size with the graphics card and in software.
+  usual size with the graphics card and in software. Run again with
+  that, every part passed; #73 merged, and the owner accepted the
+  milestone (prompt 201). Still to be run again on this computer: the
+  five clipboard checks (once its clipboard works), and C9; L9 is
+  watched.
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 

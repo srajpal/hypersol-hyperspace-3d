@@ -2184,3 +2184,12 @@ Build approved, go ahead.
 ```text
 #73 has errors.
 ```
+
+## 201 — 2026-10-10 · Claude Opus 5.5, high effort
+
+Accepts milestone 28 (lift to 3D: pictures and 3D models lifted from
+web pages into the room) after pull request #73 merged.
+
+```text
+#73 merged, milestone 28 accepted.
+```
