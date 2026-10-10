@@ -6288,6 +6288,17 @@ so and how to leave, where no page can hide it.
 - The check of the review of 2026-09-30 that full screen is refused
   (review-134-main.e2e.ts, M1) changed with the requirement: full screen
   is given after a click, with the notice, and Escape leaves.
+- On Linux without a window manager (`pnpm test:linux`, as on GitHub's
+  machines), a page that left full screen by itself once left the
+  browser's own page at 1 by 1 pixel in a window of the right size, until
+  the window's bounds were set again. After a page leaves full screen the
+  main process now checks the browser's size against the window's and,
+  if they differ, sets the bounds again (main/fullscreen.ts, mendWindow).
+  FS2 checks the window back where it was and the browser as large as
+  it: without the mending two checks fail on Linux, with it they pass.
+- Each page's state is kept in a WeakMap: a "destroyed" listener of its
+  own took each page past Node's ten, and the warning was an error in C1
+  and in #12's check (found by the full run).
 - Checks that found their own faults, not the browser's: the harness
   runs code in a page as if after a click, and a click's activation
   lasts a few seconds, so FS3 waits until the page has none; a click
@@ -6308,6 +6319,25 @@ so and how to leave, where no page can hide it.
 | FS6 | Other states | Private tabs; a HoloML page's script; while looking around; lifted objects hidden while full and back after |
 | FS7 | Keyboard and screen readers | The notice is announced; the keyboard is the page's while full and the shell's after |
 | FS8 | Regression | Every earlier check, the unit tests, and the automatic builds on Windows and Linux |
+
+### Results so far (Windows 11, 2026-10-10)
+
+- Unit tests: 594 pass (new: shared/fullscreen.test.ts, 4; and one in
+  main/permissions.test.ts); lint and the type check are clean.
+- tests/e2e/issue-75.e2e.ts: FS1 to FS4, FS6, and FS7 pass, 7 checks,
+  with the graphics card and drawn in software; FS5 (pointer lock) is
+  reported as skipped in hidden windows and passes with
+  `HYPERSOL_TEST_SHOW=1` (run once, a few seconds on screen). FS1 to FS4
+  passed eight runs of eight once the checks' own faults were fixed.
+- FS8, the full run (before the WeakMap change): 450 of 454 passed, 1
+  skipped (FS5), in 33 files; the five clipboard checks passed (the
+  clipboard works again). The three that failed: C1 and #12's check (the
+  listener warning, fixed; both pass since) and C9 (35.3 frames a second
+  against 50, as in milestones 27 and 28; issue #82). Since: m1, m6,
+  review-134-main, and issue-75 run again, all pass but C9.
+- On Linux (`pnpm test:linux`): issue-75, review-134-main, and m1 pass,
+  FS5 skipped (with the mending of the window's size above).
+- Not checked yet: the automatic builds of the pull request.
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 

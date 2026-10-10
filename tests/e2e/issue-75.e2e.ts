@@ -14,6 +14,7 @@ import {
   caughtUp,
   clickAt,
   clickUntil,
+  describeMissedClick,
   focusedPage,
   inPage,
   launch,
@@ -47,14 +48,23 @@ const notice = (h: Harness) => shellCall(h, 'holdNotice');
 const windowState = (h: Harness) =>
   h.app.evaluate(({ BrowserWindow }) => {
     const w = BrowserWindow.getAllWindows()[0]!;
-    return { full: w.isFullScreen(), bounds: w.getBounds() };
+    return { full: w.isFullScreen(), bounds: w.getBounds(), content: w.getContentBounds() };
   });
 const site = () => new URL(server.base).host;
 
+/** The window's size and place before the last full screen: leaving must bring them back exactly (FS2). */
+let windowBefore: { x: number; y: number; width: number; height: number } | null = null;
+
 /** Clicks the page's full-screen button, and waits until the page fills the screen and the notice shows. */
 async function goFull(h: Harness, page = 'fullscreen.html'): Promise<void> {
+  windowBefore = (await windowState(h)).bounds;
   const before = (await events(h, page)).filter((e) => e === 'in').length;
-  await clickUntil(h, await screenPointOf(h, '#full', page), 'full screen', async () => (await events(h, page)).filter((e) => e === 'in').length > before);
+  const at = await screenPointOf(h, '#full', page);
+  const went = async () => (await events(h, page)).filter((e) => e === 'in').length > before;
+  // A click that misses says what it found there, the window's size and place, and the room's layout.
+  await clickUntil(h, at, 'full screen', went, {}, async () =>
+    JSON.stringify({ at: await describeMissedClick(h, at, went), window: await windowState(h), inner: await h.shell.evaluate(() => [innerWidth, innerHeight]), layout: await shellCall(h, 'layout') }),
+  );
   await waitFor('the window full screen', () => windowState(h), (w) => w.full);
   await waitFor('the notice', () => notice(h), (n) => n.open && n.holding.some((x) => x.full));
 }
@@ -65,13 +75,17 @@ async function goFull(h: Harness, page = 'fullscreen.html'): Promise<void> {
  * before that missed: the page was still the screen's size).
  */
 async function outOfFull(h: Harness, what: string): Promise<void> {
-  await waitFor(`${what}: the window back`, () => windowState(h), (w) => !w.full);
+  const was = windowBefore;
+  await waitFor(`${what}: the window back where it was`, () => windowState(h), (w) => !w.full && (was === null || JSON.stringify(w.bounds) === JSON.stringify(was)));
   await waitFor(`${what}: nothing held`, () => notice(h), (n) => n.holding.length === 0);
   await waitFor(
     `${what}: laid out again`,
     async () => {
       const layout = await shellCall(h, 'layout');
       const inner = await h.shell.evaluate(() => [window.innerWidth, window.innerHeight]);
+      // The browser's own page is as large as its window (on Linux it was once left at 1 by 1: main/fullscreen.ts).
+      const { content } = await windowState(h);
+      if (Math.abs(inner[0]! - content.width) > 2 || Math.abs(inner[1]! - content.height) > 2) return false;
       // A tab with the start panel has no web page to measure.
       const page = await focusedPage(h)
         .then((p) => inPage<number>(h, 'window.innerWidth', p))

@@ -1,4 +1,4 @@
-import { ipcMain, type WebContents } from 'electron';
+import { BrowserWindow, ipcMain, type WebContents } from 'electron';
 import type { ShellCommand } from '../shared/commands';
 import { LEAVE_SCRIPT, LEAVE_WORLD, POINTER_LOCK_CHANNEL, TOP_EDGE_EVERY_MS, TOP_EDGE_PX, escapeLeaves } from '../shared/fullscreen';
 
@@ -18,6 +18,12 @@ import { LEAVE_SCRIPT, LEAVE_WORLD, POINTER_LOCK_CHANNEL, TOP_EDGE_EVERY_MS, TOP
  * - The pointer at the top of the screen in full screen: the shell is
  *   told, to show its notice again. Mouse events of every frame of the
  *   page come here, an embedded player's too.
+ * - The window after full screen: on Linux without a window manager (as
+ *   on GitHub's machines), a page that left full screen by itself once
+ *   left the browser's own page at 1 by 1 pixel in a window of the right
+ *   size, until the window's bounds were set again (found by check FS2 in
+ *   `pnpm test:linux`). The size is checked after leaving and, if it is
+ *   wrong, the bounds are set again.
  */
 export class FullScreen {
   /** By page; kept weakly, so a page that is gone takes its state with it (no listener of its own on each page). */
@@ -63,6 +69,7 @@ export class FullScreen {
     page.on('leave-html-full-screen', () => {
       this.state(page).full = false;
       this.send(page, { type: 'page-fullscreen', webContentsId: id, on: false });
+      for (const ms of [300, 1200]) setTimeout(() => void this.mendWindow(page), ms);
     });
     page.on('before-input-event', (event, input) => {
       if (!escapeLeaves(input, this.holds(page))) return;
@@ -97,6 +104,19 @@ export class FullScreen {
       event.preventDefault();
       for (const p of holding) this.leave(p);
     });
+  }
+
+  /** After full screen: the browser's own page as large as its window, or the window's bounds set again. */
+  private async mendWindow(page: WebContents): Promise<void> {
+    const shell = page.isDestroyed() ? null : page.hostWebContents;
+    const win = shell && !shell.isDestroyed() ? BrowserWindow.fromWebContents(shell) : null;
+    if (!shell || !win || win.isDestroyed() || win.isFullScreen() || win.isMinimized()) return;
+    const inner = (await shell.executeJavaScript('[innerWidth, innerHeight]').catch(() => null)) as [number, number] | null;
+    const content = win.getContentBounds();
+    if (!inner || win.isDestroyed() || (Math.abs(inner[0] - content.width) <= 2 && Math.abs(inner[1] - content.height) <= 2)) return;
+    const bounds = win.getBounds();
+    win.setBounds({ ...bounds, width: bounds.width - 1 });
+    win.setBounds(bounds);
   }
 
   /** Takes a page out of full screen and gives the pointer back. */
