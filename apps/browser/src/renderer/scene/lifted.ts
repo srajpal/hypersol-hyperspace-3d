@@ -112,6 +112,8 @@ export interface LiftedInfo {
   shape: { meshes: number; triangles: number; pictures: number } | null;
   /** Moving (rising, going back, coming nearer, or to a new place in the arc). */
   moving: boolean;
+  /** The theme's colour it takes (a picture's frame, a model's placeholder), as #rrggbb; null for a model that has come. */
+  colour: string | null;
 }
 
 interface Pose {
@@ -154,6 +156,8 @@ class Lifted {
   shape: { meshes: number; triangles: number; pictures: number } | null = null;
   /** Its picture, for the checks. */
   picture: ImageBitmap | null = null;
+  /** What takes the theme's colours: the placeholder's lines, a picture's frame. */
+  readonly themed: { material: { color: Color }; token: 'accent' | 'desk' }[] = [];
   readonly owned: { dispose(): void }[] = [];
 
   constructor(
@@ -206,6 +210,7 @@ class Lifted {
       firstBox: this.firstBox ? { ...this.firstBox } : null,
       shape: this.shape ? { ...this.shape } : null,
       moving: this.move !== null,
+      colour: this.themed[0] ? `#${(this.themed[0].material.color as Color).getHexString()}` : null,
     };
   }
 
@@ -295,6 +300,11 @@ export class LiftedLayer {
     this.setTheme(theme);
   }
 
+  /** Whether an element under the pointer is a lifted object's (its button, its close button). */
+  holds(target: EventTarget | null): boolean {
+    return target instanceof Node && target !== this.element && this.element.contains(target);
+  }
+
   /** Tells screen readers (lifting itself is told by the notice). */
   announce(text: string): void {
     this.said.textContent = text;
@@ -351,6 +361,7 @@ export class LiftedLayer {
     const line = new LineSegments(edges, new LineBasicMaterial({ color: new Color(this.theme.colors.accent) }));
     const o = new Lifted(tabId, itemId, kind, name, from, line);
     o.owned.push(cube, edges, line.material);
+    o.themed.push({ material: line.material, token: 'accent' });
     o.size = { w: 1, h: 1 };
     if (picture) this.framePicture(o, picture);
     this.wire(o);
@@ -390,6 +401,7 @@ export class LiftedLayer {
     const group = new Group();
     group.add(frame, face);
     this.replaceContent(o, group, { w: w + border * 2, h: h + border * 2 }, false);
+    o.themed.push({ material: frame.material, token: 'desk' });
     o.owned.push(texture, face.geometry, face.material, frame.geometry, frame.material);
     o.picture = bitmap;
   }
@@ -476,12 +488,13 @@ export class LiftedLayer {
     o.near = false;
     o.element.hidden = true;
     const info = o.info();
-    const to = o.tabId === this.focused ? this.pagePose(o.tabId, o.from) : null;
-    if (!to || this.host.reducedMotion()) {
+    const start = o.tabId === this.focused ? this.pagePose(o.tabId, o.from) : null;
+    if (!start || this.host.reducedMotion()) {
       this.remove(o);
     } else {
+      // Back to where it came from on the page, followed as the page widens again when the arc goes.
       const scale = Math.max(o.from.width / o.size.w, o.from.height / o.size.h);
-      this.moveTo(o, () => ({ ...to, scale }), () => this.remove(o));
+      this.moveTo(o, () => ({ ...(this.pagePose(o.tabId, o.from) ?? start), scale }), () => this.remove(o));
     }
     this.relayout(true);
     this.onPutBack?.(info);
@@ -508,6 +521,7 @@ export class LiftedLayer {
     o.spinner.remove(o.content);
     // The placeholder's lines go with it.
     for (const d of o.owned.splice(0)) d.dispose();
+    o.themed.length = 0;
     o.content = content;
     o.spinner.add(content);
     o.spinner.rotation.set(o.pitch, o.yaw, 0);
@@ -714,6 +728,8 @@ export class LiftedLayer {
     this.key.intensity = theme.lighting.key.intensity;
     this.fill.color.set(theme.lighting.key.color);
     this.fill.intensity = theme.lighting.key.intensity * 0.6;
+    // Frames and placeholders change with the room.
+    for (const o of this.objects) for (const t of o.themed) t.material.color.set(theme.colors[t.token]);
     this.host.requestRender();
   }
 

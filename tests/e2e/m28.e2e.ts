@@ -397,6 +397,36 @@ describe('LT6: looking at them', () => {
   });
 });
 
+describe('LT6: the room around them', () => {
+  it('the room holds still while the pointer is on an object, as it does over the page; their frames change with the theme', async () => {
+    // The parallax on (the default), so the room follows the pointer elsewhere.
+    const h = await launch(server.url('lift/pictures.html'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'lift/pictures');
+      await h.shell.click(LIFT);
+      const l = await still(h, 'lifted', 3);
+      const o = byName(l, 'Green drawing');
+      const height = await h.shell.evaluate(() => window.innerHeight);
+      // Over the room: the parallax follows.
+      await h.shell.mouse.move(20, height - 20, { steps: 4 });
+      await waitFor('the parallax follows the pointer', () => shellCall(h, 'parallaxPaused'), (p) => p === false);
+      // On the object: it holds, and the object stays under the pointer.
+      await h.shell.mouse.move(centre(o.box!).x, centre(o.box!).y, { steps: 6 });
+      await waitFor('the parallax paused', () => shellCall(h, 'parallaxPaused'), (p) => p === true);
+      const at = byName(await still(h, 'held', 3), 'Green drawing').box!;
+      await h.shell.mouse.move(centre(at).x + 6, centre(at).y + 4, { steps: 3 });
+      expect(byName(await still(h, 'held', 3), 'Green drawing').box).toEqual(at);
+      // The theme: the frames take the new desk colour, as the room's own desk does.
+      expect(o.colour).toBe((await shellCall(h, 'sceneColors')).desk);
+      await h.shell.click('hs-theme-button [data-testid="theme"]');
+      const desk = await waitFor('the other theme', () => shellCall(h, 'sceneColors'), (c) => c.desk !== o.colour);
+      await waitFor('the frames recoloured', () => lifted(h), (x) => x.objects.every((y) => y.colour === desk.desk));
+    } finally {
+      await h.close();
+    }
+  });
+});
+
 describe('LT7: their life', () => {
   it('they wait while another tab is in front, and go when the page navigates or the tab closes', async () => {
     const h = await launch(server.url('lift/pictures.html'), { userDataDir: newProfile({ parallax: 'off' }) });

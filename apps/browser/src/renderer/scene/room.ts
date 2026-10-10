@@ -1206,7 +1206,9 @@ export class Room {
     };
 
     document.addEventListener('pointermove', (e) => {
-      const over = overPage(e.clientX, e.clientY, e.target);
+      // A lifted object (milestone 28) is a click target over the room as the page is: the parallax holds still
+      // over it too, so it does not move under the pointer.
+      const over = overPage(e.clientX, e.clientY, e.target) || (this.lifted?.holds(e.target) ?? false);
       const t = e.target instanceof Element ? e.target : null;
       this.pointerLog.push({
         x: Math.round(e.clientX),
@@ -1236,7 +1238,7 @@ export class Room {
     });
     document.addEventListener('pointerover', (e) => {
       const el = focusedElement();
-      if (el && e.target instanceof Node && el.contains(e.target)) {
+      if ((el && e.target instanceof Node && el.contains(e.target)) || this.lifted?.holds(e.target)) {
         this.parallax.setPaused(true);
       }
     });
