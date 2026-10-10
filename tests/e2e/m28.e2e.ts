@@ -398,11 +398,8 @@ describe('LT6: looking at them', () => {
 });
 
 describe('LT7: their life', () => {
-  it('they wait while another tab is in front, and go when the page navigates or the tab closes or sleeps', async () => {
-    const h = await launch(server.url('lift/pictures.html'), {
-      userDataDir: newProfile({ parallax: 'off', tabSleep: 5, economy: 'off' }),
-      sleepMinuteMs: 100,
-    });
+  it('they wait while another tab is in front, and go when the page navigates or the tab closes', async () => {
+    const h = await launch(server.url('lift/pictures.html'), { userDataDir: newProfile({ parallax: 'off' }) });
     try {
       await waitForPage(h, 'lift/pictures');
       const first = (await focusedTab(h)).id;
@@ -430,11 +427,21 @@ describe('LT7: their life', () => {
       await navigateTo(h, server.url('lift/models.html'));
       await waitForPage(h, 'lift/models');
       await waitFor('gone with the page', () => lifted(h), (x) => x.objects.length === 0 && !x.rail);
-      // A tab that sleeps: its page closes, and what was lifted from it goes.
-      await navigateTo(h, server.url('lift/pictures.html'));
+    } finally {
+      await h.close();
+    }
+  });
+
+  it('a tab that sleeps: its page closes, and what was lifted from it goes', async () => {
+    // A "minute" of 100 ms: five minutes is half a second here (as L7 does).
+    const h = await launch(server.url('lift/pictures.html'), {
+      userDataDir: newProfile({ parallax: 'off', tabSleep: 5, economy: 'off' }),
+      sleepMinuteMs: 100,
+    });
+    try {
       await waitForPage(h, 'lift/pictures');
       await h.shell.click(LIFT);
-      await still(h, 'lifted again', 3);
+      await still(h, 'lifted', 3);
       const sleeper = (await focusedTab(h)).id;
       await pressInShell(h, 'T', ['control']);
       await sleep(1000);

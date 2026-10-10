@@ -38,6 +38,8 @@ export const LIFT_LIMITS = {
   captureSide: 2048,
 } as const;
 
+export type LiftLimits = { readonly [K in keyof typeof LIFT_LIMITS]: number };
+
 /** A rectangle of the page to capture, in the page's CSS pixels, checked; null if it is not one. */
 export function captureArea(raw: unknown): { x: number; y: number; width: number; height: number } | null {
   if (typeof raw !== 'object' || raw === null) return null;
@@ -96,7 +98,7 @@ export type ModelResult =
 const MB = (n: number) => `${Math.round(n / (1024 * 1024))} MB`;
 
 /** Why a fetch failed, in words for the notice, of the model (`what` is "it") or of a file it names. */
-function failure(e: unknown, timedOut: boolean, what: string, limits: typeof LIFT_LIMITS): string {
+function failure(e: unknown, timedOut: boolean, what: string, limits: LiftLimits): string {
   if (timedOut) return `it took longer than ${limits.ms / 1000} seconds to arrive`;
   if (e instanceof Error && e.message === 'too large') return `${what} is larger than ${MB(limits.fileBytes)}`;
   if (e instanceof Error && /shield/i.test(e.message)) return `the privacy shield blocks ${what === 'it' ? 'its address' : `the address of ${what}`}`;
@@ -110,7 +112,7 @@ function failure(e: unknown, timedOut: boolean, what: string, limits: typeof LIF
  * and those elsewhere are left out (named in `skipped`; the model shows
  * without them). Never throws.
  */
-export async function fetchModel(pageUrl: string, url: string, fetchFn: ModelFetch, limits: typeof LIFT_LIMITS = LIFT_LIMITS): Promise<ModelResult> {
+export async function fetchModel(pageUrl: string, url: string, fetchFn: ModelFetch, limits: LiftLimits = LIFT_LIMITS): Promise<ModelResult> {
   if (!sameSite(pageUrl, url)) return { ok: false, reason: "it is not on this page's own site" };
   const controller = new AbortController();
   let timedOut = false;

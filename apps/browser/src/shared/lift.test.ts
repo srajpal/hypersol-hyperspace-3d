@@ -3,7 +3,7 @@ import { MAX_LIFT_ITEMS, chooseToLift, isModelAddress, modelFileName, parseLiftA
 
 /** Milestone 28 (check LT1): what a page's preload says can be lifted, as the shell and the main process check it. */
 
-const item = (over: Partial<LiftItem> & { rect?: Partial<LiftItem['rect']> } = {}): LiftItem => ({
+const item = (over: Omit<Partial<LiftItem>, 'rect'> & { rect?: Partial<LiftItem['rect']> } = {}): LiftItem => ({
   id: 1,
   kind: 'img',
   src: '',
