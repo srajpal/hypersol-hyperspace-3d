@@ -11,13 +11,15 @@
  * (preload/form-state.ts, milestone 10), and whether it is capturing from
  * the camera or microphone (preload/capture.ts), and hands HoloML pages to the
  * browser's HoloML viewer (preload/holoml.ts, milestone 14), and finds what
- * can be lifted into the room (preload/lift.ts, milestone 28). It exposes
+ * can be lifted into the room (preload/lift.ts, milestone 28), and when the
+ * page holds the pointer (preload/fullscreen.ts, issue #75). It exposes
  * nothing to pages.
  */
 import '@ghostery/adblocker-electron-preload';
 import './holoml';
 import './layers';
 import './lift';
+import './fullscreen';
 import './passwords';
 import './form-state';
 import './capture';

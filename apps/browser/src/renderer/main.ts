@@ -20,6 +20,7 @@ import './hud/tab-strip';
 import './hud/tab-search';
 import './hud/room-message';
 import './hud/look-notice';
+import './hud/hold-notice';
 import { DEFAULT_TILT_DEG, clampTilt } from '@hypersol/scene-core';
 import { defaultTheme } from '@hypersol/themes';
 import type { ShellBridge } from '../shared/commands';
@@ -78,6 +79,7 @@ const app = new App({
   tabStrip: document.querySelector('hs-tab-strip')!,
   tabSearch: document.querySelector('hs-tab-search')!,
   lookNotice: document.querySelector('hs-look-notice')!,
+  holdNotice: document.querySelector('hs-hold-notice')!,
   ...(params.get('test') === '1' && params.get('sleepMinuteMs') ? { sleepMinuteMs: Number(params.get('sleepMinuteMs')) } : {}),
   testMode: params.get('test') === '1',
   tabList: document.getElementById('tab-list') as HTMLElement,
@@ -145,6 +147,11 @@ function testHooks() {
         // The whole picture, for a failure's message or a look by hand.
         url: c.toDataURL('image/png'),
       };
+    },
+    // GitHub issue #75: what the browser's notice says now ('' when hidden), and which pages hold the screen or the pointer.
+    holdNotice: () => {
+      const n = document.querySelector('hs-hold-notice')!;
+      return { open: n.open, text: n.text, holding: app.holdingPages };
     },
     parallaxPaused: () => room.parallax.paused,
     pointerLog: () => room.pointerLog,

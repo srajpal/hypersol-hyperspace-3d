@@ -13,6 +13,7 @@ import {
   type SiteChoices,
   type SitePermissions,
 } from '../shared/permissions';
+import { ALLOWED_WITH_NOTICE } from '../shared/fullscreen';
 
 export interface PermissionDeps {
   isPrivate(contents: WebContents): boolean;
@@ -44,8 +45,10 @@ interface Pending {
  * Filling the screen and holding the pointer ('fullscreen' and
  * 'pointerLock') are not here: a page in full screen can draw what looks
  * like the browser's own top bar, and one that holds the pointer can keep
- * it, and the browser has no notice yet that says so and how to leave.
- * Until it has, both are refused, as they have been since milestone 9.
+ * it. They are given to web pages only (shared/fullscreen.ts,
+ * ALLOWED_WITH_NOTICE; GitHub issue #75), as the browser then says so in
+ * a notice of its own and Escape always leaves (main/fullscreen.ts);
+ * from milestone 9 until then both were refused.
  */
 export const ALLOWED_WITHOUT_ASKING: ReadonlySet<string> = new Set(['clipboard-sanitized-write']);
 
@@ -84,7 +87,7 @@ export class Permissions {
   /** Puts the handlers on a session (the default one and the private one). */
   protect(session: Session): void {
     session.setPermissionRequestHandler((contents, permission, callback, details) => {
-      if (ALLOWED_WITHOUT_ASKING.has(permission)) {
+      if (ALLOWED_WITHOUT_ASKING.has(permission) || (ALLOWED_WITH_NOTICE.has(permission) && contents.getType() === 'webview')) {
         callback(true);
         return;
       }
@@ -108,6 +111,7 @@ export class Permissions {
       // below: notifications, MIDI, reading the clipboard, and the rest
       // read as granted to every page.
       if (ALLOWED_WITHOUT_ASKING.has(permission)) return true;
+      if (ALLOWED_WITH_NOTICE.has(permission)) return contents?.getType() === 'webview';
       if (permission !== 'media' && permission !== 'geolocation') return false;
       if (!contents || contents.getType() !== 'webview') return false;
       const origin = originOf(details.requestingUrl ?? requestingOrigin) ?? originOf(requestingOrigin);

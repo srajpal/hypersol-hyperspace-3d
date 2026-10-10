@@ -7,6 +7,7 @@ import {
   CAPTURE_KEYS_CHANNEL,
   CAPTURE_TAB_CHANNEL,
   CLOSE_READY_CHANNEL,
+  LEAVE_FULLSCREEN_CHANNEL,
   LIFT_CAPTURE_CHANNEL,
   LIFT_MODEL_CHANNEL,
   OPEN_FILE_CHANNEL,
@@ -41,6 +42,7 @@ import { afterShellCrash, SHELL_FAILED_MESSAGE, SHELL_FAILED_TITLE, START_FAILED
 import { shellOnly } from './ipc';
 import { HolomlPages } from './holoml';
 import { LIFT_TARGET_CHANNEL } from '../shared/lift';
+import { FullScreen } from './fullscreen';
 import { LIFT_LIMITS, captureArea, fetchModel, modelRequest, zoomedArea } from './lift';
 import { HOLOML_DROP_CHANNEL, LOCAL_SCHEME, VIEWER_SCHEME } from '../shared/holoml-page';
 import { StorageService } from './storage/service';
@@ -101,6 +103,8 @@ let storage: StorageService | null = null;
 let privacy: Privacy | null = null;
 let inspector: Inspector | null = null;
 let permissions: Permissions | null = null;
+/** Pages in full screen or holding the pointer, and Escape (GitHub issue #75). */
+let fullScreen: FullScreen | null = null;
 let signIns: SignIns | null = null;
 let passwords: Passwords | null = null;
 let tabHistory: TabHistory | null = null;
@@ -261,6 +265,8 @@ function createWindow(): void {
   };
   hardenShell(win.webContents, PAGE_PRELOAD, (record) => testLog?.attaches.push(record), options.testNoWebGL, options.testMode);
   wireShortcuts(win.webContents, { send, platform: process.platform, shortcutKeys, capturingKeys: () => capturingKeys });
+  // Escape with the keyboard on the browser itself also takes a page out of full screen (GitHub issue #75).
+  fullScreen?.watchShell(win.webContents, () => webContents.getAllWebContents());
   if (!app.isPackaged) {
     // Developer tools for the shell in development runs only.
     win.webContents.on('before-input-event', (_event, input) => {
@@ -414,6 +420,7 @@ if (!app.requestSingleInstanceLock()) {
     if (contents.getType() !== 'webview') return;
     privacy?.trackTab(contents);
     inspector?.trackTab(contents);
+    fullScreen?.track(contents);
     permissions?.trackTab(contents);
     signIns?.trackTab(contents);
     passwords?.trackTab(contents);
@@ -730,6 +737,15 @@ if (!app.requestSingleInstanceLock()) {
     perms.protect(ses);
     perms.protect(privateSes);
     handleFromShell(PERMISSIONS_CHANNEL, (event, request) => perms.handle(event, request));
+
+    // Full screen and pointer lock (GitHub issue #75): what each page holds, Escape, and the shell's request to
+    // take one of its pages out of both (a tab switch, a closing tab).
+    const full = new FullScreen(sendToHost, testLog ? (y) => testLog?.fullscreenEdges.push(y) : undefined);
+    fullScreen = full;
+    handleFromShell(LEAVE_FULLSCREEN_CHANNEL, (event, id: unknown) => {
+      const page = typeof id === 'number' ? webContents.fromId(id) : undefined;
+      if (page && !page.isDestroyed() && page.getType() === 'webview' && page.hostWebContents === event.sender) full.leave(page);
+    }, undefined);
 
     // HTTP sign-in (main/sign-in.ts): a site or a proxy that asks for a user
     // name and password is answered through a prompt in the tab's shell.

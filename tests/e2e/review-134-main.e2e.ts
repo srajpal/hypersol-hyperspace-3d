@@ -26,6 +26,7 @@ import {
   launch,
   mainLog,
   navigateTo,
+  pressInPage,
   pressInShell,
   removeFolder,
   screenPointOf,
@@ -106,17 +107,20 @@ describe('M1: what a page may do without asking', () => {
     await h.app.evaluate(({ clipboard }) => clipboard.clear());
   });
 
-  it('full screen is refused, after a real click too: the page never gets it and the window stays as it is', async () => {
-    // Until the browser has its own full-screen notice, a page cannot fill
-    // the screen (it could draw what looks like the browser's top bar). A
-    // refused request tells the page nothing: its promise is never settled.
+  it('full screen after a real click is given, with the browser\'s own notice, and Escape leaves (GitHub issue #75)', async () => {
+    // Until issue #75 a page could not fill the screen, as it could draw what looks like the browser's top bar and
+    // the browser had no notice; now the browser says so and how to leave, and Escape always leaves (FS1 to FS7 in
+    // issue-75.e2e.ts check it in full).
     const page = await focusedPage(h);
     await clickUntil(h, await screenPointOf(h, '#full', page), 'the full screen button pressed', () => inPage<boolean>(h, 'window.did.fullAsked === true', page));
-    await waitFor('the request refused', () => mainLog(h, 'refusedPermissions'), (names) => names.includes('fullscreen'));
+    await waitFor('full screen', () => inPage<string | undefined>(h, 'window.did.full', page), (d) => d === 'done');
+    expect(await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.isFullScreen())).toBe(true);
+    await waitFor('the notice', () => shellCall(h, 'holdNotice'), (n) => n.open && n.text.endsWith('is full screen. Press Esc to leave.'));
+    expect(await mainLog(h, 'refusedPermissions')).not.toContain('fullscreen');
+    await pressInPage(h, 'Escape', [], page);
+    await waitFor('out of full screen', () => h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.isFullScreen()), (f) => !f);
+    await waitFor('the page out of it', () => inPage<boolean>(h, 'document.fullscreenElement === null', page), (v) => v);
     await caughtUp(h, page);
-    expect(await inPage<string | undefined>(h, 'window.did.full', page)).not.toBe('done');
-    expect(await inPage<boolean>(h, 'document.fullscreenElement === null', page)).toBe(true);
-    expect(await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.isFullScreen())).toBe(false);
   });
 });
 

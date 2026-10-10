@@ -3,6 +3,7 @@ import {
   CAPTURE_KEYS_CHANNEL,
   CAPTURE_TAB_CHANNEL,
   CLOSE_READY_CHANNEL,
+  LEAVE_FULLSCREEN_CHANNEL,
   LIFT_CAPTURE_CHANNEL,
   LIFT_MODEL_CHANNEL,
   OPEN_FILE_CHANNEL,
@@ -48,6 +49,9 @@ const bridge: ShellBridge = {
   },
   liftModel(webContentsId, url) {
     return ipcRenderer.invoke(LIFT_MODEL_CHANNEL, { webContentsId, url }) as ReturnType<ShellBridge['liftModel']>;
+  },
+  async leaveFullscreen(webContentsId) {
+    await ipcRenderer.invoke(LEAVE_FULLSCREEN_CHANNEL, webContentsId);
   },
   data(request) {
     return ipcRenderer.invoke(DATA_CHANNEL, request);
