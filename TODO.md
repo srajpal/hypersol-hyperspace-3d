@@ -6337,7 +6337,16 @@ so and how to leave, where no page can hide it.
   review-134-main, and issue-75 run again, all pass but C9.
 - On Linux (`pnpm test:linux`): issue-75, review-134-main, and m1 pass,
   FS5 skipped (with the mending of the window's size above).
-- Not checked yet: the automatic builds of the pull request.
+- The automatic builds of pull request #83: the first failed two checks
+  on Windows only, neither in what this issue changed: I8 (m7; the app
+  had gone when the check closed the page's DevTools) and Blockworld in
+  a development run (m17; the scene never came within 40 s). Both pass
+  here (m7 three runs of three, with the graphics card and drawn in
+  software; m17's check in both too). Run again, every check passed. I8
+  and the development-run check are noted to be watched, with C9 and L9
+  (issue #82).
+- The browser's own full screen (F11) is a separate issue, #84 (owner,
+  2026-10-10).
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
