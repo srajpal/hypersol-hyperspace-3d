@@ -6160,6 +6160,185 @@ None. Three.js (installed) has the glTF loader the viewer uses already.
   five clipboard checks (once its clipboard works), and C9; L9 is
   watched.
 
+## Issue #75: full screen and pointer lock
+
+Status: built 2026-10-10 on the branch `issue-75-fullscreen`, waiting
+for the owner's acceptance. Plan and build approved with the
+recommended answers to Q1 to Q5 (2026-10-10). The first issue after the
+milestones (prompt 203). Rule 13 check done
+(ARCHITECTURE.md section 3: 44.7.0 still the newest stable release).
+
+Goal: a video player's full-screen button and a game that holds the
+pointer work as in other browsers, and the browser itself always says
+so and how to leave, where no page can hide it.
+
+### What there is today, and what a short experiment showed
+
+- Both are refused to every page (main/permissions.ts,
+  ALLOWED_WITHOUT_ASKING; since milestone 9), because a page in full
+  screen could draw a fake top bar and the browser has no notice.
+- Allowed for a moment on a branch (since reverted), a click on a
+  page's full-screen button put the whole window into the system's full
+  screen, and the page's box filled it; in the shell the page's webview
+  is then the full-screen element, which is drawn over everything,
+  including the browser's own top bar and notices. A notice in the
+  browser's top layer (a "popover") is drawn over it: checked with a
+  picture.
+- Electron does not leave full screen on Escape (a browser's interface
+  does that, and the shell has to): pressing Escape did nothing. Asking
+  the page to leave from the main process works, and the window goes
+  back.
+- Pointer lock was refused in the test window ("WrongDocumentError"), as
+  the hidden test windows never take the keyboard focus; the checks can
+  make the page believe it has it (Chromium's focus emulation).
+
+### How it would work (proposed)
+
+1. **Full screen** (Q1, Q2): allowed to a web page after a real click or
+   key, as Chromium requires, without a question. The page fills the
+   whole screen; the room, the top bar, and the cards are hidden behind
+   it. Escape always leaves: the main process sees the key before the
+   page does, so no page can keep it; the page's own way out, a tab
+   switch, closing the tab, leaving the page, a crash, and looking
+   around also leave. Afterwards the window, the page, and the camera are
+   exactly as before.
+2. **Pointer lock** (Q3): allowed after a real click, the pointer
+   hidden and given back by Escape (the main process again), a tab
+   switch, or the window losing focus.
+3. **The notice** (Q4): the browser's own, in its top layer, over the
+   page: "127.0.0.1 is full screen. Press Esc to leave." (and "...has
+   the pointer. Press Esc to get it back."), with the site as the
+   address bar shows it; shown for 4 seconds on entering, and again when
+   the pointer reaches the top edge of the screen; announced to screen
+   readers. In the theme's colours.
+4. **The rest**: private tabs the same; a HoloML page the same (its
+   scripts may ask, as a page's may; the viewer itself asks for
+   neither); lifted objects and the instrument panel hidden while full;
+   economy mode and reduced motion unchanged. The Android app unchanged
+   (Q5).
+
+### Questions
+
+- Q1, where full screen goes.
+  - a (recommended): the whole screen, as other browsers do (what
+    Electron does by itself).
+  - b: the browser's window only: the page fills the window, the top
+    bar and the room hidden, the window as it was.
+- Q2, asking first.
+  - a (recommended): no question, the notice instead (as Chrome and
+    Firefox; only after a real click or key).
+  - b: a prompt for each site, remembered as the camera's is.
+- Q3, pointer lock.
+  - a (recommended): with full screen, the same way (after a real click,
+    the notice, Escape gives it back).
+  - b: still refused; full screen only.
+- Q4, when the notice shows.
+  - a (recommended): for 4 seconds on entering, and again whenever the
+    pointer reaches the top of the screen.
+  - b: only on entering.
+- Q5, the Android app.
+  - a (recommended): unchanged (its pages are in Android's WebView,
+    which has its own full screen).
+
+### Tasks
+
+- [x] 1. The main process: allow both to web pages after a gesture;
+      Escape (and the other ways out) leave; the window put back.
+- [x] 2. The shell: the notice in the top layer; the room, the top bar,
+      lifted objects, and the instrument panel while full; the camera
+      and the tab state afterwards.
+- [x] 3. Checks FS1 to FS8 (below), in tests/e2e/issue-75.e2e.ts with a
+      fixture page (a box that asks for full screen, a button that asks
+      for the pointer), and unit tests for the rules.
+- [x] 4. Documents: ARCHITECTURE (the decision; permissions), docs/
+      privacy.md if anything changes there (nothing is sent), the
+      CHANGELOG, the README's feature list, AGENTS.md's testing list,
+      HANDOFF, TODO; the issue closed by the pull request.
+
+### Decisions made while building
+
+- Where things are (ARCHITECTURE.md section 4, "Full screen and pointer
+  lock"): the rules and the notice's words in shared/fullscreen.ts; the
+  permissions in main/permissions.ts; what each page holds, Escape, and
+  leaving in main/fullscreen.ts; pointer lock reported by
+  preload/fullscreen.ts; the notice in renderer/hud/hold-notice.ts;
+  the rest in renderer/app.ts (onHold, releaseHeld).
+- The notice is a popover, in the top layer. The page's webview goes
+  into the top layer as the full-screen element after the main process
+  has said so, and was drawn over the notice shown then (found by check
+  FS4): the notice is shown again on the shell's own `fullscreenchange`,
+  which brings it above.
+- Escape: Electron does not leave full screen on Escape (a browser's
+  interface does that), so the main process does it, before the page
+  sees the key, on the page and on the shell. The page is taken out of
+  both by a script run in a world of the main process's own, so a page
+  that replaces `document.exitFullscreen` cannot stop it (the fixture
+  does).
+- The pointer at the top of the screen: told by the page's mouse events
+  as the main process sees them (every frame's, so an embedded player's
+  too), at most every 1.5 seconds.
+- A page whose tab closes in full screen never says it left: the shell
+  forgets it with its tab (found by check FS2).
+- Pointer lock is given by Chromium only to a page in a window that has
+  the system's focus; test windows never take it (they stay out of the
+  way). FS5 runs with visible windows (`HYPERSOL_TEST_SHOW=1`) and is
+  reported as skipped otherwise, as the budgets are in software.
+- Looking around is not offered while a page holds either, and the
+  camera comes back to the desk when one does.
+- The check of the review of 2026-09-30 that full screen is refused
+  (review-134-main.e2e.ts, M1) changed with the requirement: full screen
+  is given after a click, with the notice, and Escape leaves.
+- On Linux without a window manager (`pnpm test:linux`, as on GitHub's
+  machines), a page that left full screen by itself once left the
+  browser's own page at 1 by 1 pixel in a window of the right size, until
+  the window's bounds were set again. After a page leaves full screen the
+  main process now checks the browser's size against the window's and,
+  if they differ, sets the bounds again (main/fullscreen.ts, mendWindow).
+  FS2 checks the window back where it was and the browser as large as
+  it: without the mending two checks fail on Linux, with it they pass.
+- Each page's state is kept in a WeakMap: a "destroyed" listener of its
+  own took each page past Node's ten, and the warning was an error in C1
+  and in #12's check (found by the full run).
+- Checks that found their own faults, not the browser's: the harness
+  runs code in a page as if after a click, and a click's activation
+  lasts a few seconds, so FS3 waits until the page has none; a click
+  aimed before the page was laid out again after leaving missed, so the
+  checks wait for it; and the pointer moves sent through the shell now
+  and then reached nothing just after the window changed size (one run
+  in about eight), so FS4's moves are given to the page itself.
+
+### Checks (named FS)
+
+| # | Check | Pass when |
+|---|---|---|
+| FS1 | Full screen | A click on a page's full-screen button fills the screen with the page's element; the page says so (`fullscreenchange`) |
+| FS2 | Leaving | Escape leaves, and a page that listens for Escape and stops it cannot keep it; the page's own exit, a tab switch, closing the tab, and leaving the page leave too; the window's size and place, the page's size, and the camera are as before |
+| FS3 | No click, no full screen | A page that asks without a click is refused, as before |
+| FS4 | The notice | Shown over the page with the site and "Press Esc"; gone after 4 seconds; shown again at the top edge; announced; the page cannot cover it |
+| FS5 | Pointer lock | A click on the page's button holds the pointer; the notice says so; Escape gives it back; a page cannot keep it |
+| FS6 | Other states | Private tabs; a HoloML page's script; while looking around; lifted objects hidden while full and back after |
+| FS7 | Keyboard and screen readers | The notice is announced; the keyboard is the page's while full and the shell's after |
+| FS8 | Regression | Every earlier check, the unit tests, and the automatic builds on Windows and Linux |
+
+### Results so far (Windows 11, 2026-10-10)
+
+- Unit tests: 594 pass (new: shared/fullscreen.test.ts, 4; and one in
+  main/permissions.test.ts); lint and the type check are clean.
+- tests/e2e/issue-75.e2e.ts: FS1 to FS4, FS6, and FS7 pass, 7 checks,
+  with the graphics card and drawn in software; FS5 (pointer lock) is
+  reported as skipped in hidden windows and passes with
+  `HYPERSOL_TEST_SHOW=1` (run once, a few seconds on screen). FS1 to FS4
+  passed eight runs of eight once the checks' own faults were fixed.
+- FS8, the full run (before the WeakMap change): 450 of 454 passed, 1
+  skipped (FS5), in 33 files; the five clipboard checks passed (the
+  clipboard works again). The three that failed: C1 and #12's check (the
+  listener warning, fixed; both pass since) and C9 (35.3 frames a second
+  against 50, as in milestones 27 and 28; issue #82). Since: m1, m6,
+  review-134-main, and issue-75 run again, all pass but C9.
+- On Linux (`pnpm test:linux`): issue-75, review-134-main, and m1 pass,
+  FS5 skipped (with the mending of the window's size above).
+- Not checked yet: the automatic builds of the pull request.
+
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
 Five new issues (#66 to #68 here, #42 and #43 in holoml) and three

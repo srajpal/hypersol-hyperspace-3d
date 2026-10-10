@@ -65,6 +65,8 @@ export interface TestLog {
    * asked for (its address, and how it ended: 'ok' or the reason).
    */
   lifts: { kind: 'capture' | 'model'; url: string; area?: { x: number; y: number; width: number; height: number }; result: string }[];
+  /** GitHub issue #75: each time the pointer reached the top of the screen in full screen and the shell was told (the y the page saw). */
+  fullscreenEdges: number[];
 }
 
 declare global {
@@ -72,7 +74,7 @@ declare global {
 }
 
 export function installTestHooks(): TestLog {
-  const log: TestLog = { attaches: [], requests: [], heldRequests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave', refusedPermissions: [], layersSettled: {}, faviconEnds: [], captures: [], lifts: [] };
+  const log: TestLog = { attaches: [], requests: [], heldRequests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave', refusedPermissions: [], layersSettled: {}, faviconEnds: [], captures: [], lifts: [], fullscreenEdges: [] };
   globalThis.__hypersolTest = log;
   // log.requests is filled by the privacy shield's request listener
   // (main/privacy/index.ts): Electron allows one listener per session.

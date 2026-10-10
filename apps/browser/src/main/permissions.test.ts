@@ -75,7 +75,6 @@ describe('what a page may do without asking (review of 2026-09-30, M1)', () => {
     'deprecated-sync-clipboard-read',
     'display-capture',
     'fileSystem',
-    'fullscreen',
     'geolocation-approximate',
     'hand-tracking',
     'hid',
@@ -94,7 +93,6 @@ describe('what a page may do without asking (review of 2026-09-30, M1)', () => {
     'payment-handler',
     'periodic-background-sync',
     'persistent-storage',
-    'pointerLock',
     'screen-wake-lock',
     'sensors',
     'serial',
@@ -119,13 +117,26 @@ describe('what a page may do without asking (review of 2026-09-30, M1)', () => {
     for (const name of ALLOWED_WITHOUT_ASKING) expect(looks(name), name).toBe(true);
   });
 
-  it('a page that asks is refused the same names at once, full screen and the pointer among them, and may copy text without a prompt', () => {
+  it('a page that asks is refused the same names at once, and may copy text without a prompt', () => {
     const { ask, sent, refused } = setup();
     for (const name of REFUSED) expect(ask(name), name).toBe(false);
     for (const name of ALLOWED_WITHOUT_ASKING) expect(ask(name), name).toBe(true);
     expect(sent).toEqual([]);
     // Test runs are told of each refusal (a page refused full screen is told nothing).
     expect(refused).toEqual(REFUSED);
+  });
+
+  it('full screen and the pointer (GitHub issue #75): given to a web page that asks, without a prompt (Chromium wants a real click first; the browser shows its notice); never to the shell or to no page', () => {
+    const { ask, looks, check, sent, refused } = setup();
+    for (const name of ['fullscreen', 'pointerLock']) {
+      expect(ask(name), name).toBe(true);
+      expect(looks(name), name).toBe(true);
+      const shell = Object.assign(new EventEmitter(), { getType: () => 'window' });
+      expect(ask(name, undefined, shell as never), `${name} for the shell`).toBe(false);
+      expect(check(null, name, SITE, {}), `${name} for no page`).toBe(false);
+    }
+    expect(sent).toEqual([]);
+    expect(refused).toEqual(['fullscreen', 'pointerLock']);
   });
 
   it('a check with no page (a worker) gets the same answers', () => {

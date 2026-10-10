@@ -1,0 +1,13 @@
+<holoml version="0.2">
+  <head>
+    <title>HoloML full screen</title>
+    <!-- GitHub issue #75: a HoloML page's script may ask for full screen on a click, as a web page's may. -->
+    <script src="fullscreen.js" />
+  </head>
+  <scene background="#0b0f1e">
+    <viewpoint position="0 1.6 6" look-at="0 0.8 0" mode="orbit" />
+    <light type="ambient" intensity="0.6" />
+    <light type="directional" position="4 8 5" look-at="0 0 0" intensity="1" />
+    <model id="car" src="models/placeholder-car.gltf" />
+  </scene>
+</holoml>

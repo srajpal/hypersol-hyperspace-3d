@@ -143,6 +143,8 @@ An archived copy of the 2001 site is available through the
   searches, bookmarks, history, and a Library.
 - A layers view that lifts a page's sections and pictures to different
   depths.
+- Full screen for video players and games, with the browser's own
+  notice and Escape to leave (GitHub issue #75).
 - Looking around the room (milestone 27): drag on the room, use the
   arrows and W, A, S, D, or press the top bar's button (Ctrl+Shift+K) to
   leave the desk; Escape brings you back, with the page as sharp as

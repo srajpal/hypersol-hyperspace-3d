@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Full screen fixture</title>
+    <style>
+      body { margin: 0; padding: 24px; font-family: sans-serif; background: #fff; }
+      #stage { width: 320px; height: 180px; background: #2050c0; color: #fff; display: grid; place-items: center; }
+      button { font-size: 18px; margin: 8px 8px 8px 0; padding: 8px 14px; }
+      img { width: 120px; height: 80px; }
+    </style>
+  </head>
+  <body>
+    <!-- GitHub issue #75 (tests/e2e/issue-75.e2e.ts): a page that asks for full screen (a box, as a video player
+         does) and for the pointer (as a game does), each from a click on its button, and that tries to keep both
+         by stopping Escape. What happened is kept for the checks. The picture is there to be lifted into the room. -->
+    <h1>Full screen and the pointer</h1>
+    <div id="stage">A video player's box</div>
+    <button id="full">Full screen</button>
+    <button id="lock">Hold the pointer</button>
+    <img id="picture" src="lift/quadrants.png" alt="Four coloured quarters" />
+    <script>
+      window.__fixture = { events: [], escapes: 0 };
+      const log = (e) => window.__fixture.events.push(e);
+      document.getElementById('full').addEventListener('click', () =>
+        document.getElementById('stage').requestFullscreen().then(() => log('full'), (e) => log('full-refused:' + e.name)));
+      document.getElementById('lock').addEventListener('click', async () => {
+        try { await document.getElementById('stage').requestPointerLock(); } catch (e) { log('lock-refused:' + e.name); }
+      });
+      document.addEventListener('fullscreenchange', () => log(document.fullscreenElement ? 'in' : 'out'));
+      document.addEventListener('pointerlockchange', () => log(document.pointerLockElement ? 'locked' : 'unlocked'));
+      // A page that would keep the screen and the pointer: it stops Escape, and puts its own way out in place of
+      // the document's.
+      window.addEventListener('keydown', (e) => { if (e.key === 'Escape') { window.__fixture.escapes++; e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+      Document.prototype.exitFullscreen = () => Promise.resolve();
+      Document.prototype.exitPointerLock = () => undefined;
+      // Asked for without a click (check FS3).
+      window.askWithoutClick = () => document.getElementById('stage').requestFullscreen().then(() => 'granted', (e) => 'refused:' + e.name);
+    </script>
+  </body>
+</html>

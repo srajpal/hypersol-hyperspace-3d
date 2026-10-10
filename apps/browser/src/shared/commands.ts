@@ -17,6 +17,8 @@ export const OPEN_FILE_CHANNEL = 'hypersol:open-file';
 export const LIFT_CAPTURE_CHANNEL = 'hypersol:lift-capture';
 /** And for a model's files, from that page's own site (Q3 a). */
 export const LIFT_MODEL_CHANNEL = 'hypersol:lift-model';
+/** Full screen and pointer lock (GitHub issue #75): the shell asks the main process to take one of its tabs' pages out of both. */
+export const LEAVE_FULLSCREEN_CHANNEL = 'hypersol:leave-fullscreen';
 
 import type { DataOp, DataReply, DataRequest } from './data';
 import type { PrivacyOp, PrivacyReply, PrivacyRequest } from './privacy';
@@ -109,7 +111,13 @@ export type ShellCommand =
    * the page's preload found where it was clicked, unchecked (the shell
    * checks it, shared/lift.ts parseLiftItem).
    */
-  | { type: 'lift'; webContentsId: number; item: unknown };
+  | { type: 'lift'; webContentsId: number; item: unknown }
+  /** A page filled the screen, or left it (GitHub issue #75). */
+  | { type: 'page-fullscreen'; webContentsId: number; on: boolean }
+  /** A page took the pointer, or gave it back. */
+  | { type: 'pointer-lock'; webContentsId: number; on: boolean }
+  /** In full screen, the pointer reached the top of the screen: the notice shows again. */
+  | { type: 'fullscreen-top-edge'; webContentsId: number };
 
 /** A rectangle of a page, in its CSS pixels (shared/lift.ts LiftRect; repeated here, as the shell's preload may not share a file with the page's). */
 export interface LiftArea {
@@ -145,6 +153,8 @@ export interface ShellBridge {
   liftCapture(webContentsId: number, area: LiftArea): Promise<Uint8Array | null>;
   /** Lifting (milestone 28): a model's files, from the tab's page's own site. */
   liftModel(webContentsId: number, url: string): Promise<LiftModelReply>;
+  /** Takes a tab's page out of full screen and gives the pointer back (GitHub issue #75: a tab switch, a closing tab). */
+  leaveFullscreen(webContentsId: number): Promise<void>;
   /** Saved data: bookmarks, history, settings, session (shared/data.ts). */
   data<K extends DataOp>(request: Extract<DataRequest, { op: K }>): Promise<DataReply<K>>;
   /** Privacy shield, filter lists, and encrypted DNS (shared/privacy.ts). */

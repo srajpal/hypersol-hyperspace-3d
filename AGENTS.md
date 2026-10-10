@@ -595,6 +595,16 @@ milestone's checks are defined in TODO.md):
   off (LT8), and the keyboard and screen readers (LT9); fixture pages
   and models in tests/fixtures/lift (made by its make.mjs). LT10 is
   every earlier milestone's checks.
+- GitHub issue #75 checks FS1 to FS8 (TODO.md, "Issue #75"; same
+  command, tests/e2e/issue-75.e2e.ts, in part 1): full screen after a
+  click, refused without one, the notice over the page (it goes, and
+  comes back at the top edge), Escape that a page cannot stop, a tab
+  switch, closing the tab, and leaving the page, a private tab, a HoloML
+  page's script, looking around not offered meanwhile, and lifted objects
+  back after. FS5, pointer lock, needs a window with the system's focus:
+  hidden test windows never take it, so it is reported as skipped unless
+  HYPERSOL_TEST_SHOW=1. The rules are unit tests (shared/fullscreen.test.ts,
+  and main/permissions.test.ts).
 - No more milestones (prompt 203): polish (29) was taken off the
   roadmap, and installers before it (prompt 172). A fix for a GitHub
   issue adds its checks to the file of the part it changes, or to a

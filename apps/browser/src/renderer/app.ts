@@ -14,6 +14,8 @@ import type { HsTabStrip } from './hud/tab-strip';
 import { STRIP_HEIGHT } from './hud/tab-strip';
 import type { HsTabSearch } from './hud/tab-search';
 import type { HsLookNotice } from './hud/look-notice';
+import type { HsHoldNotice } from './hud/hold-notice';
+import { noticeSite } from '../shared/fullscreen';
 import { CARD_SCALES } from './scene/room';
 import { ClosedTabs } from './state/closed-tabs';
 import { shouldSleep, sleepMinutes } from './state/sleep';
@@ -69,6 +71,8 @@ export interface AppOptions {
   tabSearch: HsTabSearch;
   /** Milestone 27: the notice while looking around the room. */
   lookNotice: HsLookNotice;
+  /** The notice when a page fills the screen or holds the pointer (GitHub issue #75). */
+  holdNotice: HsHoldNotice;
   /** Test runs: how long a "minute" is for sleeping tabs, so the checks need not wait. */
   sleepMinuteMs?: number;
   /** Test runs: printing is counted instead of opening the system's dialog. */
@@ -169,6 +173,8 @@ export class App {
   private downloadItems: DownloadInfo[] = [];
   /** The notice each download last got (milestone 9), so each outcome is told once. */
   private readonly downloadNotices = new Map<number, 'done' | 'failed'>();
+  /** GitHub issue #75: the pages that hold the screen or the pointer now, by web contents id. */
+  private readonly holding = new Map<number, { full: boolean; locked: boolean }>();
   /** Milestone 10: recently closed tabs, and the power source. */
   private readonly closedTabs = new ClosedTabs();
   private onBattery = false;
@@ -458,6 +464,8 @@ export class App {
 
   /** The top bar's button and the shortcut: start looking around, or come back to the desk. */
   private toggleLook(): void {
+    // Not while a page holds the screen or the pointer (GitHub issue #75): Escape leaves those first.
+    if (this.holding.size > 0) return;
     this.room.lookAround(!this.room.lookingAround);
   }
 
@@ -564,10 +572,13 @@ export class App {
       }
     }
     const open = new Set(store.tabs.map((t) => t.id));
+    // A page holding the screen or the pointer gives both up when its tab is no longer in front, or closes (issue #75).
+    this.releaseHeld();
     for (const id of [...this.views.keys()]) {
       if (!open.has(id)) {
         this.room.removeView(id);
         this.views.delete(id);
+        this.releaseHeld();
         window.clearTimeout(this.records.get(id)?.snapshotTimer);
         this.records.delete(id);
         if (!store.tabs.some((t) => t.private)) {
@@ -1216,6 +1227,55 @@ export class App {
     }
   }
 
+  /**
+   * A page filled the screen or took the pointer, or gave it up (GitHub
+   * issue #75): the browser's notice says so; the camera comes back to the
+   * desk first, as for a HoloML page that fills the window.
+   */
+  private onHold(webContentsId: number, what: 'full' | 'locked', on: boolean): void {
+    const state = this.holding.get(webContentsId) ?? { full: false, locked: false };
+    state[what] = on;
+    if (!state.full && !state.locked) this.holding.delete(webContentsId);
+    else this.holding.set(webContentsId, state);
+    const notice = this.options.holdNotice;
+    if (on) {
+      this.room.lookAround(false, true);
+      notice.show(what === 'full' ? 'fullscreen' : 'pointer', this.siteOfPage(webContentsId));
+    } else if (!this.holding.has(webContentsId)) {
+      notice.hide();
+    }
+    // A page that is not in front, or no longer open, gives them up at once.
+    this.releaseHeld();
+  }
+
+  /**
+   * Every page that holds the screen or the pointer and is not the tab in
+   * front gives both up; one whose tab has closed holds nothing (a page
+   * that is gone never says it left: found by check FS2).
+   */
+  private releaseHeld(): void {
+    const front = this.focusedView?.webContentsId ?? null;
+    for (const id of [...this.holding.keys()]) {
+      if (this.tabForWebContents(id) === undefined) {
+        this.holding.delete(id);
+        if (this.holding.size === 0) this.options.holdNotice.hide();
+      } else if (id !== front) {
+        void this.options.bridge.leaveFullscreen(id).catch(() => undefined);
+      }
+    }
+  }
+
+  /** The site a page is on, as the notice names it. */
+  private siteOfPage(webContentsId: number): string {
+    const tab = this.tabForWebContents(webContentsId);
+    return noticeSite(tab === undefined ? '' : (this.views.get(tab)?.committedUrl ?? ''));
+  }
+
+  /** Test hook: the pages that hold the screen or the pointer. */
+  get holdingPages(): { webContentsId: number; full: boolean; locked: boolean }[] {
+    return [...this.holding].map(([webContentsId, s]) => ({ webContentsId, ...s }));
+  }
+
   /** Test hook: what a tab's page was given (the marker). */
   accessOf(tabId: number): PermissionKind[] {
     return this.tab(tabId).access;
@@ -1548,6 +1608,13 @@ export class App {
         break;
       case 'lift':
         void this.lifting.liftClicked(command.webContentsId, command.item);
+        break;
+      case 'page-fullscreen':
+      case 'pointer-lock':
+        this.onHold(command.webContentsId, command.type === 'page-fullscreen' ? 'full' : 'locked', command.on);
+        break;
+      case 'fullscreen-top-edge':
+        if (this.holding.get(command.webContentsId)?.full) this.options.holdNotice.show('fullscreen', this.siteOfPage(command.webContentsId));
         break;
       case 'prepare-close':
         if (this.testIgnorePrepareClose) break;
