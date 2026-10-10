@@ -170,13 +170,13 @@ Where tests live:
 How to run (from the repo root; first recorded 2026-09-24 on Windows 11
 after they ran; on Windows and Linux in GitHub Actions since 2026-09-26,
 see .github/workflows/ci.yml; macOS not checked yet). Counts are as of the
-date given and grow with each milestone; TODO.md has the latest.
+date given and grow with each issue; TODO.md has the latest.
 - Toolchain: Node 24 (the Node inside Electron 44; the automatic
   builds run it, and Node 26 for lint, types, and unit tests; owner,
   prompt 161; `engines` asks for 24 or newer since prompt 164); pnpm
   12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 589 tests passed on 2026-10-09;
+- Unit: `pnpm test` (Vitest; 594 tests passed on 2026-10-10;
   each test may take up to 20 seconds, vitest.config.ts)
 - HyperSpace 3D for Android (milestone 24; first run 2026-10-05): after
   `pnpm build` and `pnpm --filter @hypersol/android build:web`, in
@@ -193,12 +193,11 @@ date given and grow with each milestone; TODO.md has the latest.
   a promise nobody awaits or catches is an error, since the review of
   2026-09-30)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about twenty-five to thirty minutes; 446 checks in 32
-  files: in the full run of 2026-10-09, milestone 28, 438 passed on this
-  computer; five that use the system clipboard failed while it was out
-  of use for every program and pass on Linux, one was added after that
-  run's build and passes, L9 passed run again, and C9's frame rate is
-  to be run again; TODO.md has the details). On
+  against it (about twenty-five to thirty minutes; 454 checks in 33
+  files: in the full run of 2026-10-10, issue #75, 450 passed on this
+  computer and FS5 was skipped in hidden windows; C1 and #12's check
+  failed on a listener warning, fixed and passing since, and C9's frame
+  rate missed its budget, issue #82; TODO.md has the details). On
   this computer vitest's report leaves out what passing checks log (the
   load times, frame rates, and memory); `pnpm test:e2e
   --reporter=verbose` shows it, as the automatic builds do. Needs

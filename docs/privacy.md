@@ -5,9 +5,12 @@ usage counts. This page lists everything it keeps on your computer and
 everything it sends over the network. It is updated whenever that
 changes (AGENTS.md rule 9).
 
-Status: as of 2026-10-09 (milestone 28): ad and tracker blocking,
-encrypted DNS, and HTTPS-only are on by default. The layers view
-and the instrument panel send nothing anywhere. Lifting a picture into
+Status: as of 2026-10-10 (milestone 28 and GitHub issue #75), for the
+desktop app (the Android app has fewer of these features; see
+apps/android/README.md): ad and tracker blocking,
+encrypted DNS, and HTTPS-only are on by default. The layers view,
+the instrument panel, and full screen and pointer lock send nothing
+anywhere. Lifting a picture into
 the room fetches nothing; lifting a 3D model fetches its file from the
 page's own site (see below).
 

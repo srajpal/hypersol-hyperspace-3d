@@ -28,10 +28,11 @@ on the tilted panel. Android 10 or later; made for tablets first.
   at the display's own resolution: half of it, as on the desktop,
   blurred the tab cards on the tablet (prompt 160).
 
-Not yet on Android (later milestones): bookmarks and history, the ad
-and tracker blocker, private tabs, downloads, passwords and site
-permissions, the layers view, the instrument panel, and a HoloML page's
-text view.
+Not yet on Android (the desktop's only, for now): bookmarks and history,
+the ad and tracker blocker, HTTPS-only browsing, private tabs,
+downloads, passwords and site permissions, HTTP sign-in, the layers
+view, the instrument panel, looking around the room, lifting into the
+room, full screen for pages, and a HoloML page's text view.
 
 ## Building and installing
 

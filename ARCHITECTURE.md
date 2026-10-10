@@ -295,13 +295,13 @@ Nothing to upgrade.
 | The browser and a HoloML page's viewer | The shell's commands to a HoloML page (stop, the text view on and off, behind and in front) reach the page's preload from the tab view (hypersol:holoml-command), and the Scene inspector's (select:<index>, pick-on, pick-off) from the main process on the same channel; all go on to the viewer over a message channel (a private two-ended line between two scripts); the scene's state (loading, the text view, drawn) comes back over it and on to the shell (hypersol:holoml-state). The viewer asks for the line as it starts, before any script of the page exists; only the first asking is answered, and the page's scripts run once the line is there. A command that comes before the viewer has asked waits for it. Messages on the page's window are neither commands nor state (viewer/main.ts, preload/holoml.ts) | Review of 2026-09-30: both went as messages on the window, which a page's script can post: "in front" defeated the rule that a hidden tab draws nothing, and a script could tell the shell its scene was drawn or loading. |
 | HoloML drawn in software | Where Chromium draws in software (no graphics card: some virtual machines and remote desktops, GitHub's machines), the viewer draws the scene with half as many pixels each way and without smoothed edges (no anti-aliasing), and says so once in the console; shadows and the water's moving light are left out there, as before (viewer/scene.ts) | Owner, prompt 135 (the review's recommendation). Measured in the review with the ocean tunnel: 1.0 frame a second on GitHub's Linux machines before; 3.0 in the Linux container on this computer with the change. |
 | The text view and a still walker | In the text view the scene is not shown: it takes no keys and no pointer and draws nothing, and the window itself scrolls the text, so the arrow keys, Page Up, Page Down, and the space bar scroll it (viewer/controls.ts, paused). A walk page with gravity whose walker stands still asks for no frames. A thing a script hides takes no click and no link and stops no walker, whether it is drawn as an instance or as its own copy. A sound removed while its file is decoded never plays | Review of 2026-09-30: the hidden scene took the keys and kept drawing; a page with gravity never went idle; hidden things could still be hit; a removed sound played and could not be stopped. |
-| The viewer and the specification's third edition | What HoloML 0.2's third edition (2026-09-30) settled, the viewer does (viewer/api.ts, scene.ts, budget.ts, values.ts, main.ts). Scripts: setting a member of a thing that its kind does not have is no error and changes nothing (a thing is a frozen object behind a Proxy whose set trap takes such a member without a word; the member stays undefined); a thing's `parent` is the nearest group it is in, through a link; the vectors a thing or the viewer gives (position, rotation, scale, and the like) are frozen arrays; `holoml.add` leaves out an `animate` and a `sound` that begins on a click, wherever they stand in its markup, and the console says why (what a script adds, the script moves and plays itself). Models: a model whose file says it needs a glTF extension the viewer does not read (`extensionsRequired` outside GLTF_EXTENSIONS in budget.ts, the 18 Three.js's loader reads by itself; not the compressed geometry and picture extensions, KHR_draco_mesh_compression, EXT_meshopt_compression, KHR_meshopt_compression, KHR_texture_basisu, whose decoders the viewer does not carry) is left out with the reason, like any model left out, and its file is not fetched again; a material that takes no light (glTF's KHR_materials_unlit) is changed like any other in what it has, its colour, opacity, and colour picture with its tiling, by `material`, by an `option`, and by a script's `thing.material()`, and the console no longer says its name was not found. Lights: only the ambient lights in the scene now dim the soft light from the surroundings and the sky, so with all of them removed both are at full, not dark. Text: the text view lists every paragraph of a panel inside a link, after the link that has its first; the card of a syntax error shows the error's code with its message and its place. Versions: a 0.1 page's `hud` is not shown, as its slider is not, and the console says neither is a 0.1 element. Values: numbers, times, and counts are read with the checker's own patterns, imported from the package (`@hypersol/holoml`: NUMBER_PATTERN, DURATION_PATTERN, COUNT_PATTERN), and whitespace is the syntax's four characters (space, tab, line feed, carriage return), so a value the checker takes is read, and one it reports falls back to its default | The review's spec axis (Sp1 to Sp9): the viewer and the specification disagreed in these places, and holoml's language engineer decided each (holoml's CHANGELOG.md, 0.2.2). One reading for both. |
+| The viewer and the specification's third edition | What HoloML 0.2's third edition (2026-09-30) settled, the viewer does (viewer/api.ts, scene.ts, budget.ts, values.ts, main.ts). Scripts: setting a member of a thing that its kind does not have is no error and changes nothing (a thing is a frozen object behind a Proxy whose set trap takes such a member without a word; the member stays undefined); a thing's `parent` is the nearest group it is in, through a link; the vectors a thing or the viewer gives (position, rotation, scale, and the like) are frozen arrays; `holoml.add` leaves out an `animate` and a `sound` that begins on a click, wherever they stand in its markup, and the console says why (what a script adds, the script moves and plays itself). Models: a model whose file says it needs a glTF extension the viewer does not read (`extensionsRequired` outside GLTF_EXTENSIONS in budget.ts: the 18 Three.js's loader reads by itself and, since milestone 25, the four compressed geometry and picture extensions, KHR_draco_mesh_compression, EXT_meshopt_compression, KHR_meshopt_compression, KHR_texture_basisu, whose decoders the viewer now carries; at the third edition it carried none) is left out with the reason, like any model left out, and its file is not fetched again; a material that takes no light (glTF's KHR_materials_unlit) is changed like any other in what it has, its colour, opacity, and colour picture with its tiling, by `material`, by an `option`, and by a script's `thing.material()`, and the console no longer says its name was not found. Lights: only the ambient lights in the scene now dim the soft light from the surroundings and the sky, so with all of them removed both are at full, not dark. Text: the text view lists every paragraph of a panel inside a link, after the link that has its first; the card of a syntax error shows the error's code with its message and its place. Versions: a 0.1 page's `hud` is not shown, as its slider is not, and the console says neither is a 0.1 element. Values: numbers, times, and counts are read with the checker's own patterns, imported from the package (`@hypersol/holoml`: NUMBER_PATTERN, DURATION_PATTERN, COUNT_PATTERN), and whitespace is the syntax's four characters (space, tab, line feed, carriage return), so a value the checker takes is read, and one it reports falls back to its default | The review's spec axis (Sp1 to Sp9): the viewer and the specification disagreed in these places, and holoml's language engineer decided each (holoml's CHANGELOG.md, 0.2.2). One reading for both. |
 | HoloML 0.3 in the viewer | Milestone 25 (viewer/language.ts, decoders.ts, ktx2-host.ts, scene.ts, api.ts, main.ts). Names: a model's and a group's `label` names it in the outline, the text view, and the Scene inspector (then its id, then its file's name), and a link is named by the labels of the models and groups in it as by its labels and panels. Language and direction: `lang` and `dir` are taken from the nearest element that says so, as in HTML; the page's language is its document's, and every outline item, label, panel, screen text, slider, choice, place, and click action carries its own `lang` and `dir` where they differ (the kind in the browser's words, the name in the page's); labels and panels are drawn in their direction (`auto` by the first strong letter). Far models: a model with `far` loads only the version it shows: from `far-from` metres on the lighter one, nearer the model itself, measured before each frame like loading by area, with 5 per cent of the distance kept either side of the line so a model on it does not flicker; a far version that cannot load leaves the model to show at every distance. Compressed models: three.js's own Draco, meshopt, and Basis Universal decoders, carried in the browser and served from the viewer's address (the URL modifier lets a decoder load only the viewer's own files, the files the page's limits counted, and blob: and data:); Draco and KTX2 in two workers each; what they decode counts against the limits. The Basis transcoder (Emscripten) evaluates code as it starts, which a HoloML page's policy does not allow: it runs in workers of an unseen frame, `hypersol-viewer://app/ktx2-host.html`, sandboxed (scripts only, of no origin the page shares) and in a closed shadow root, made with functions the viewer kept before the page's scripts ran, so a page can neither reach the frame nor have it load a page of its own (viewer/guard.ts, prompt 172), with a policy of its own that allows it (KTX2_HOST_CSP, main/holoml.ts); the page's KTX2 loader gets stand-in workers that pass its messages over a MessagePort. The host holds nothing of any page and reads only the viewer's files. On Android the viewer comes from the page's own site, and three.js's own workers do it. The page's description (`meta name="description"`) goes to the shell (the tab's tooltip on its card and in the list) and the Scene inspector, and is under the title in the text view | Owner, prompts 168 to 170 (Q1 a to Q8 b; the KTX2 host, prompt 170: a HoloML page never gets `'unsafe-eval'`). |
 | Window frame, reconsidered | Standard OS frame kept | Considered in milestone 6: a custom frame would lose native dragging, snapping, and accessibility; the theme now sets the frame's light or dark scheme. |
 | Bookmarks and history | SQLite through Node's built-in node:sqlite (owner decision 2026-09-25, prompt 20) | Fast search over thousands of rows; standard for browsers. Built into Electron's Node, so no native module and no extra package. |
 | Deleted means overwritten | Every connection to hypersol.sqlite is opened with SQLite's `secure_delete` on (main/storage/scrub.ts), so a deleted row's text is overwritten with zeros in the file, where SQLite otherwise only marks the space as free. After a deletion the person asked for (a visit, every visit to an address, "Clear all history", a saved sign-in, clearing the sign-ins, a site taken off the "never" list) the write-ahead log (the file beside the database where changes wait before they are written into it) is written into the database and emptied, so the text is not left there either. The history search index (FTS5, trigram) is set to its own secure-delete (schema 5), so a deleted visit's three-letter pieces go at once too; without it the index only marked them as deleted. The operating system or the drive may keep older copies of the file; the browser cannot reach those | Review of 2026-09-30: "Clear all history" deleted the rows and left their text in the file. A unit test reads the file's and the log's bytes after each kind of deletion (storage/scrub.test.ts). |
 | Address bar: what it shows | While the keyboard is elsewhere, the bar shows the tab's address with the end of its host always in view: when the scheme and host do not fit, labels are left out from the host's left, never its right (`https://…google.com.long.evil.example/`), keeping at least the site's own name; a user name and password in the address are never shown. The whole address shows when the bar takes the keyboard. Left unedited, it shows where the tab is now when it loses the keyboard. An address typed stays in the bar while it loads (renderer/url.ts, displayAddress; hud/toolbar.ts) | Review of 2026-09-30: the raw address was shown from its left, so a long host could show a trustworthy-looking start and hide whose page it was. |
-| Access in the shell | The screen reader's list of tabs keeps its buttons, and the keyboard on them, as tabs change; an error card is an alert named by its heading; About and the HoloML examples keep Tab inside and put the keyboard back where it was when they close (hud/dialog-focus.ts); the arrow keys, Home, and End move through the top bar's menus; text being composed with an input method (the way languages such as Japanese and Chinese are typed, several key presses to a character) is not completed in place, and its Enter loads nothing; Escape in the shell stops a loading page once nothing else is open for it to close. Switching panels runs the open panel's own close, so a password shown in the Library is hidden again and a shortcut waiting for its new keys stops waiting | Review of 2026-09-30 (the shell's findings R1 and R7). Not checked with a screen reader or a real input method: both are on the roadmap (TODO.md, milestone 29). |
+| Access in the shell | The screen reader's list of tabs keeps its buttons, and the keyboard on them, as tabs change; an error card is an alert named by its heading; About and the HoloML examples keep Tab inside and put the keyboard back where it was when they close (hud/dialog-focus.ts); the arrow keys, Home, and End move through the top bar's menus; text being composed with an input method (the way languages such as Japanese and Chinese are typed, several key presses to a character) is not completed in place, and its Enter loads nothing; Escape in the shell stops a loading page once nothing else is open for it to close. Switching panels runs the open panel's own close, so a password shown in the Library is hidden again and a shortcut waiting for its new keys stops waiting | Review of 2026-09-30 (the shell's findings R1 and R7). Not checked with a screen reader or a real input method: both are GitHub issue #76 (milestone 29, which had them, was removed in prompt 203). |
 | UI widgets (address bar, menus) | Lit web components | Tiny, standards-based, no framework lock-in; themed with CSS variables. |
 | Build | electron-vite (Vite); no packaging tool (the installers were dropped, prompt 172: a fork packages its own build, CONTRIBUTING.md) | Fast dev reload. |
 | Toolchain | Node 24 (`.nvmrc`; the automatic builds, with a second build on Node 26 for lint, types, and unit tests); `engines` 24 or newer (prompt 164); `@types/node` 24; pnpm 12.4.1 pinned in package.json (`packageManager`, with the pnpm version recorded in the lockfile); installs use `--frozen-lockfile` | Reproducible installs (GitHub issue #5). Node 24 from prompt 161: it is the Node inside Electron 44 (24.21), so the tools and tests run on the Node the app runs on, and `@types/node` promises nothing the main process lacks; Node 26 is checked beside it until it becomes the long-term version (late October 2026). Node 25 is skipped: Vitest does not support it. |
@@ -495,7 +495,10 @@ hypersol-hyperspace-3d/
                                and direction of text), decoders.ts
                                (compressed models), ktx2-host.ts (the
                                KTX2 transcoder's host page), far models
-                               (scene.ts); milestone 28: lift-host.ts
+                               (scene.ts), guard.ts (no peer connections
+                               or frames for a page's script, prompt
+                               172); milestone 24: touch.ts (the touch
+                               controls); milestone 28: lift-host.ts
                                (the decoding frame for lifted models,
                                framed by the shell)
         renderer/              the 3D shell (one Chromium page)
@@ -575,7 +578,9 @@ hypersol-hyperspace-3d/
                                drawn onto the outline the room gives,
                                touches mapped back), Homography.kt (that
                                map), PageClient.kt (HoloML pages, the
-                               viewer's files), TabList.kt, TiltSensor.kt
+                               viewer's files), HolomlPage.kt (which
+                               pages are HoloML pages, the viewer's
+                               path), TabList.kt, TiltSensor.kt
                                (the tablet's tilt as parallax), Json.kt;
                                JUnit tests in app/src/test
   packages/
@@ -600,13 +605,17 @@ hypersol-hyperspace-3d/
     privacy.md                 what is blocked, what is stored, what is fetched
     progress.md                each milestone, with screenshots
     name-checks.md             trademark and file extension checks
-    screenshots/               progress screenshots, one folder per
-                               milestone, and the README's four
+    screenshots/               the newest progress screenshots (m28/,
+                               and m24/ from the tablet) and the
+                               README's four; the older sets are at the
+                               commits progress.md names
     branding/, history/        logo concepts; the 2001 to 2003 concept screen
   tests/
-    e2e/                       Playwright drives the built app: m1 to m22
-                               (one file a milestone; there is no m13),
-                               issues-17-to-22, and the review of
+    e2e/                       Playwright drives the built app: m1 to m28
+                               (one file a milestone; none for 13, 23,
+                               and 24, which changed nothing here or are
+                               checked by hand), issues-17-to-22,
+                               fixes-189, issue-75, and the review of
                                2026-09-30's five files (review-134-main,
                                -shell, -viewer, -harness, and -features:
                                HTTP sign-in, the window's size, the text
@@ -615,17 +624,23 @@ hypersol-hyperspace-3d/
                                fixture-server.ts (the local test site)
     fixtures/                  sample pages served from 127.0.0.1;
                                holoml/showroom/, blockworld/, sofa-studio/,
-                               harbour-loft/, sneaker-store/, and aquarium/
-                               are HoloML's examples, copied by pnpm
-                               holoml:sync (milestones 16 to 21); readme/
-                               is the README's sample page; the review's
-                               HoloML pages are holoml/review-134-*.holoml
+                               harbour-loft/, sneaker-store/, aquarium/,
+                               and words/ are HoloML's examples, copied by
+                               pnpm holoml:sync (milestones 16 to 21 and
+                               25); holoml/compressed/ holds compressed
+                               models made by its make.mjs (milestone
+                               25); lift/ the pages and models to lift,
+                               made by its make.mjs (milestone 28);
+                               readme/ is the README's sample page; the
+                               review's HoloML pages are
+                               holoml/review-134-*.holoml
                                (api, ambient, hud-01, needs, and unlit
                                among them), with the models
                                review-134-needs.gltf and -unlit.gltf,
                                written by review-134-make-models.mjs
     screenshots/               capture.shots.ts (pnpm screenshots),
-                               readme.capture.ts, examples.capture.ts
+                               readme.capture.ts, examples.capture.ts,
+                               aquarium.ts (the fish placed for a picture)
     linux/                     Dockerfile and run.mjs (pnpm test:linux)
 ```
 
@@ -641,7 +656,8 @@ holoml/
                                its third, with corrections, after the
                                review of 2026-09-30), with an index
                                made from the code; and 0.3
-                               (milestone 25, first edition)
+                               (milestone 25; its second edition
+                               2026-10-09)
   CHANGELOG.md                 what changed with each release (since the
                                review of 2026-09-30)
   spec/                        its grammar (milestone 22): the syntax in
@@ -656,6 +672,9 @@ holoml/
                                the published site from SPEC.md, docs/,
                                and examples/, checking every link
   LICENSE, LICENSE-SPEC        Apache 2.0 and CC BY 4.0
+  tools/jing/                  Jing, the RELAX NG validator that checks
+                               the schema in the tests (milestone 25;
+                               needs Java)
   packages/
     parser/                    @holoml/parser: text to a tree with line and
                                column; strict syntax; no dependencies
@@ -703,6 +722,9 @@ holoml/
                                fish (CC BY 4.0 and CC0) and Poly Haven's
                                rocks (CC0), gives the fish without one a
                                swim, and makes the tank and the sounds
+  examples/words/              Words in a room (milestone 25): text in
+                               English, Arabic, and Hebrew on three
+                               walls, with its language and direction
   examples/tools/              what the examples' tools share: sounds,
                                shapes, pictures, and the download cache
   .github/workflows/ci.yml     lint, types, and tests on Windows and Linux
@@ -812,6 +834,9 @@ process. It exposes read-only facts (platform, versions) and:
   the address to load;
 - captureKeys: tells the main process that Settings is waiting for a
   shortcut's new keys, so key presses pass through meanwhile;
+- signIn: answers to an HTTP sign-in prompt (shared/sign-in.ts);
+- leaveFullscreen (issue #75): takes a tab's page out of full screen
+  and gives the pointer back (main/fullscreen.ts);
 - closeReady: the answer to prepare-close, once the open tabs are saved.
 Each is checked in the main process and accepted only from the shell:
 the request channels through one helper (main/ipc.ts, handleFromShell),
@@ -936,12 +961,16 @@ Delete puts it back (section 4, "Lifting into the room").
   its heading; gone when the page loads again, however the load began.
   Cases: address not found, connection failed,
   certificate not valid (no Retry and no way to proceed; Go back only),
-  blocked by the privacy shield (with "open anyway"), page crashed
-  ("This page went dark"), encrypted DNS blocked on this network (with
-  "use this network's DNS for now").
+  any other failure ("Couldn't load this page"), blocked by the privacy
+  shield (with "open anyway"), page crashed ("This page went dark"),
+  encrypted DNS blocked on this network (with "use this network's DNS
+  for now"), and, with HTTPS-only, a site with no secure connection
+  ("This site does not offer a secure connection", milestone 26).
 - Right-click menu on a page: back, forward, reload; on a link, open in
   new tab and copy link address; on selected text, copy; in a text
-  field, cut, copy, paste, select all.
+  field, cut, copy, paste, select all; on a picture or model that can be
+  lifted, "Lift into the room" (milestone 28; on a HoloML page shown
+  unavailable, with why).
 - Library and Settings panels: waiting ("Loading…"), empty ("Nothing
   saved yet" with a hint, or "Nothing found" for a search), and error
   ("Couldn't open your saved data"). Destructive actions ask to confirm
@@ -984,8 +1013,8 @@ the room in milestone 28.)
 
 ## 10. Open questions
 
-1. Theme look: built in milestone 6 (agent's design, awaiting the owner's
-   review): Nebula, a synthwave night (indigo sky, magenta horizon,
+1. Theme look: built in milestone 6 (agent's design; accepted by the
+   owner 2026-09-26, prompt 33, check H9): Nebula, a synthwave night (indigo sky, magenta horizon,
    striped retro sun, violet grid, cyan accent, faint scanlines), and
    Daylight, a pastel 1990s day (pale blue sky, pink horizon, teal
    accent, lavender grid). Values in packages/themes. Owner direction (2026-09-26,
@@ -1051,9 +1080,10 @@ computer (`pnpm test:linux`) since 2026-09-28. macOS not checked yet.
 - Unit tests: `pnpm test` (each test may take up to 20 seconds)
 - Lint and type check: `pnpm lint` (about half a minute: three of its
   rules need the types, section 4, "Tests"), `pnpm typecheck`
-- End-to-end: `pnpm test:e2e` (every milestone's checks and the review's,
-  about twenty minutes on this computer; needs openssl on PATH for the certificate-error check, which
-  Git for Windows provides)
+- End-to-end: `pnpm test:e2e` (every milestone's checks, the review's,
+  and the issues', about twenty-five to thirty minutes on this computer;
+  needs openssl on PATH for the certificate-error check, which Git for
+  Windows provides)
 - Linux, as GitHub's machines run it: `pnpm test:linux` (needs Docker)
 
 The automatic builds (.github/workflows/ci.yml) run for every pull
@@ -1065,8 +1095,11 @@ review, part 3 milestones 18 to 20's, part 4 milestone 21's (the ocean
 tunnel, the slowest drawn in software), and part 1 everything else,
 with lint, the type check, and the unit tests; a new file is in part 1
 until it is given a part, and a part number that does not exist stops
-the run. Each job may take 30 minutes. A last job, "All checks", passes
-only when every part has; the rule on main names it alone. A change to
+the run. Two more jobs run beside them: "Node 26" (lint, the type check,
+and the unit tests on Node 26) and "Android" (the Android app built and
+its unit tests run, on Linux). The test and Android jobs may each take
+30 minutes. A last job, "All checks", passes only when every part, Node
+26, and Android have; the rule on main names it alone. A change to
 documents only (the `*.md` files at the top and the docs folder, which
 no check reads) skips the parts, and "All checks" passes at once. The
 actions are named by commit, and Dependabot proposes updates to them
@@ -1114,6 +1147,12 @@ environment itself. Its switches:
 - `--test-sleep-minute-ms=<N>`: a "minute" for sleeping tabs;
 - `--test-remember-window`: the window's size and place are remembered
   and used again, as in a normal run;
+- `--test-trusted-cert=sha256/<base64>`: the one certificate trusted
+  besides the system's, by its fingerprint: the HTTPS test server's,
+  made for the run (milestone 26);
+- `--test-plain-http=<hosts>`: test host names answered over plain HTTP
+  only, which HTTPS-only leaves alone as it does local addresses
+  (milestone 26);
 - `HYPERSOL_TEST_BACKGROUND=1` (set by the test harness unless
   HYPERSOL_TEST_SHOW=1): the window opens off screen, without focus or a
   taskbar button, and Chromium keeps drawing it;

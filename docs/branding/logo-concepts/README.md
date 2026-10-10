@@ -33,14 +33,16 @@ letters with a magenta extrusion, in the Impact font.
 | ![Concept 4c](4c-now-in-3d-sides.png) | **4c, beside it.** "NOW" to the left of the cube, "IN" over "3D" to the right. |
 
 **Chosen direction (owner, prompt 46): 4d**, which is 4b with "NOW IN"
-on the left face and a bigger "3D" on the right face. It becomes the
-real logo and icons in the first release milestone (12).
+on the left face and a bigger "3D" on the right face. It has not been
+made into a logo or icons yet: the 0.9.0 release shipped as source
+without them, and the installers that would have needed them were
+dropped (prompt 172).
 
 ![Concept 4d](4d-now-in-big-3d.png)
 
 The words are too small to read at app icon sizes (16 to 48 px), so the
 icon would be the same picture without them, and the version with words
-would be the logo for the README, the About box, and the installer.
+would be the logo for the README and the About box.
 Before real use the lettering is turned into outlines, so it does not
 depend on the Impact font being installed.
 
@@ -53,5 +55,4 @@ Other directions worth a sketch:
 
 Before a logo is final: it needs to read at 16 px (favicon, taskbar),
 work on light and dark backgrounds (Daylight and Nebula), and be drawn
-as proper vector artwork for the installers' icons (the first release
-milestone).
+as proper vector artwork for the app's icons.

@@ -9,8 +9,8 @@
     "src/holoml.webidl": "6cf3ad211938c77701083674a1e45fd4a8059effa8a45dc572bd25b012a98b7a"
   },
   "examples": {
-    "ref": "v0.3.1",
-    "commit": "51af846e346aedf6633c5e33495aea9b6ba5f147",
+    "ref": "6806015afcb0ecbcc7aee1a780b11480afcdeb1f",
+    "commit": "6806015afcb0ecbcc7aee1a780b11480afcdeb1f",
     "files": {
       "showroom/README.md": "0eb297fc392bd1afcf7abee9de6719bc401c17df699ba8e9624b7579d6b5a70d",
       "showroom/about.holoml": "2be07065be7ca41c2a525898cdaa680fbd5a47900fac0bf821e9419bcfcf8e23",
@@ -208,7 +208,7 @@
       "sneaker-store/colourways.js": "c1a7b102e625d80dc50a6dbd8f5e24643cd07452d395fd75345d462edd4c6e47",
       "sneaker-store/index.holoml": "fc5622c4e43468deb3a428cb56873571fb11ad24383201db202758cc032a422a",
       "sneaker-store/index.html": "d1b3c3001785def605a84b4dd9da18d6d67ac57aa49d81756c22129cafe07557",
-      "sneaker-store/models/CREDITS.md": "2ede1b23007e441355a2c0b0f8bcc54a19d025eec5922c12cf29e1d8811ef948",
+      "sneaker-store/models/CREDITS.md": "c0294c2df6646327b9b0fbcdc02e213780573212be55e4f0d70abaedf1eec4be",
       "sneaker-store/models/bay.glb": "639d843a0d2f9bb2cc97c02a7ff7f98ea1c071abadc1495e1f8dfb2c96b940c3",
       "sneaker-store/models/bench.glb": "40816d1a778ba09e3cc47f5caa7853d3ced2c1dbdd5fa31da308b0f328ff4315",
       "sneaker-store/models/ceiling.glb": "619a5ca390ee8c48604fee6fa277b5b1129f63b3d6e37112c78d032d7a25fded",

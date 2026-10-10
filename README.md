@@ -31,7 +31,7 @@ harbour from Poly Haven, CC0; Blockworld's blocks from Kenney, CC0) and
 a made-up sample page.*
 
 For Windows and Linux (checked by automatic tests on both); macOS is
-planned but untested. Apache 2.0. No telemetry.
+untested (GitHub issue #81). Apache 2.0. No telemetry.
 
 **Status (2026-10-10): experimental.** Released: the
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
@@ -40,9 +40,9 @@ and none are planned: the project stays a repository of source, and a
 fork may make an installable build of its own (see
 [CONTRIBUTING.md](CONTRIBUTING.md), "Making your own build"). Since then, HoloML 0.1 has
 been written down in its own repository (milestone 13), and this browser
-shows HoloML pages (milestones 14 to 21, accepted; not yet in a
-release), with limits for heavy scenes, keyboard and screen-reader
-access, a scene inspector, and a HoloML car showroom to try from the
+shows HoloML pages (milestones 14 to 21; like everything since 0.9.0,
+accepted but not yet in a release), with limits for heavy scenes,
+keyboard and screen-reader access, a scene inspector, and a HoloML car showroom to try from the
 start panel. Milestone 17 adds Blockworld, a small block game written in
 the first part of HoloML 0.2 (scripts, sound, walls and gravity), and a
 HoloML examples section. Milestone 18 adds walking and turning speeds a
@@ -66,7 +66,9 @@ bookmark import and export. Milestone 27 lets you look around the room:
 leave the desk by dragging on the room, with the keys, or with a button,
 and come back to the page exactly as it was. Milestone 28 lifts a
 page's pictures and 3D models into the room, to stand beside the page
-and turn in your hands.
+and turn in your hands. Since then the work comes from GitHub issues:
+the first, #75, lets a page go full screen and hold the pointer, with
+the browser's own notice.
 On 2026-09-30 both repositories were reviewed and the findings fixed,
 the security ones first ([CHANGELOG.md](CHANGELOG.md), Unreleased),
 except those [TODO.md](TODO.md) lists with the reason.
@@ -259,17 +261,16 @@ by AI coding agents directed by prompts. To follow it:
 
 ## What comes next
 
-Next, 27,
-free camera movement around the room. 28, pictures and
-3D models lifted out of ordinary pages, the last milestone: from
-2026-10-10 the work is the GitHub issues, bugs and enhancements
-(installers were dropped on 2026-10-08: anyone may fork the repository
-and make one). Later: phones, and VR. The full
-roadmap is in [TODO.md](TODO.md).
+No more milestones are planned: since 2026-10-10 the work is the
+[GitHub issues](https://github.com/srajpal/hypersol-hyperspace-3d/issues),
+bugs and enhancements, one at a time (installers were dropped on
+2026-10-08: anyone may fork the repository and make one). Ideas for
+later: phones, and VR. The roadmap that was, milestones 1 to 28, is in
+[TODO.md](TODO.md).
 
 ## Progress
 
-Twenty-six milestones are done and accepted: 1 to 26.
+Twenty-eight milestones are done and accepted: 1 to 28.
 Milestones 1 to 11 built the browser: a live page on a tilted panel in
 the 3D room, tabs as cards, bookmarks and history, ad and tracker
 blocking with encrypted DNS, the layers view, two themes, an instrument
@@ -300,6 +301,8 @@ compressed models. Milestone 26 adds privacy and data tools:
 HTTPS-only browsing, clearing one site's data, and bookmark files.
 Milestone 27 adds looking around the room, and back to the desk.
 Milestone 28 lifts pictures and 3D models from pages into the room.
+GitHub issue #75 (2026-10-10) adds full screen and pointer lock for
+pages, with the browser's own notice.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 
@@ -351,7 +354,7 @@ those sites until you choose one.
 |---|---|
 | [BRIEF.md](BRIEF.md) | User, problem, full idea, first useful result, features for later |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Technical decisions, parts and files, screens and style, open questions |
-| [TODO.md](TODO.md) | Milestone roadmap and the current milestone's tasks and checks |
+| [TODO.md](TODO.md) | The roadmap of milestones 1 to 28 and the GitHub issues worked since: each one's tasks, checks, and results |
 | [AGENTS.md](AGENTS.md) | Rules for AI agents and contributors working in this repo |
 | [PROMPTS.md](PROMPTS.md) | Every owner prompt that shaped the project, in order, lightly edited (all of them to prompt 203; since then those the owner asks to be recorded) |
 | [HANDOFF.md](HANDOFF.md) | Current state, decisions made, open questions, how to resume |
@@ -375,9 +378,7 @@ to test.
 Reasons for each choice are in ARCHITECTURE.md.
 
 Known limitations: Electron ships no DRM module, so video from Netflix
-and similar services will not play. A page cannot fill the screen or
-hold the mouse pointer yet (a video's full-screen button does nothing):
-both wait for a notice of the browser's own. The 3D room needs WebGL 2; where
+and similar services will not play. The 3D room needs WebGL 2; where
 Chromium cannot start it (no graphics driver, some virtual machines),
 pages still work without the room, and a notice says so.
 
@@ -441,8 +442,9 @@ What the browser stores and sends is listed in
 profile in the `userData/` folder, never your normal browser data.
 
 Tests: `pnpm test` (unit), `pnpm lint`, `pnpm typecheck`, and
-`pnpm test:e2e` (builds the app and drives it for about twenty minutes;
-needs openssl on PATH, which Git for Windows provides). Its windows stay
+`pnpm test:e2e` (builds the app and drives it for about twenty-five to
+thirty minutes; needs openssl on PATH, which Git for Windows provides).
+Its windows stay
 off screen and never take focus, so you can keep working; set
 `HYPERSOL_TEST_SHOW=1` to watch instead. With Docker, `pnpm test:linux`
 runs them all on Linux, as GitHub's Linux machines do. Current results

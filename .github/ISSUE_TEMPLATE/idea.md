@@ -8,5 +8,5 @@ labels: enhancement
 
 **Why it matters to you**
 
-The roadmap is in TODO.md; say which milestone this belongs to, if you
-can tell.
+The work comes from GitHub issues, one at a time; TODO.md has the
+milestones that came before and what each issue added.

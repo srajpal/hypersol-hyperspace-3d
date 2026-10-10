@@ -28,7 +28,7 @@
   section links to HoloML's showroom, five cars in a hall to walk around
   in three colours each, published at
   https://srajpal.github.io/holoml/showroom/ (nothing is fetched until
-  the link is clicked). The README's screenshot now shows it.
+  the link is clicked). The README's screenshot showed it then.
 - Fixed: HoloML pages stayed blank in development runs (`pnpm dev`): the
   viewer is now served through the renderer's dev server there.
 - Fixed: a page could be drawn away from where the room placed it after
@@ -279,6 +279,14 @@
   a click or key on the page. The browser says so in a notice of its own
   over the page, naming the site, and Escape always leaves; a page cannot
   stop it. Before, both were refused.
+- Fixed (GitHub issues #17 to #19 and #22, 2026-09-27): a sleeping tab
+  no longer loses what was typed in a frame of the same site, in a
+  shadow root, or in a form whose submit the page stopped (#17); a tab
+  that is using the camera, the microphone, or the screen is not put to
+  sleep (#18); a script's `requestSubmit()` alone brings no offer to
+  save a password, which needs a real click or key (#19); and Block in
+  the site panel ends the site's live camera and microphone in every
+  tab (#22).
 
 After a review of both repositories on 2026-09-30 (the ids in brackets
 are the review's):
@@ -457,9 +465,10 @@ are the review's):
   credited as CC BY 4.0 but licensed CC BY-NC 4.0 (non-commercial).
   [E1]
 - Built on Electron 44.5.1, with its backported Chromium, V8, ANGLE,
-  and Dawn fixes. [H2]
+  and Dawn fixes (44.7.0 since, above). [H2]
 - The copy of HoloML's parser and checker is HoloML 0.2.2, the
-  specification's third edition: the same language, stricter in places.
+  specification's third edition: the same language, stricter in places
+  (HoloML 0.3.1 since: milestone 25 and the fixes of 2026-10-09).
 - Zoom set in a private tab is kept in memory for its site while a
   private tab is open (it was lost at each new page), and never saved.
 - The permission prompt and the download notice take no click or key
