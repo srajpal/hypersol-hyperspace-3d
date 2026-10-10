@@ -757,7 +757,10 @@ to this repository for rules and the prompt log.
    `MILESTONE=mN pnpm screenshots`, add them to docs/progress.md, take
    the previous desktop set out of the tree, and refresh the README's
    four with `pnpm screenshots:readme` (AGENTS.md, Working agreement).
-8. Next: the GitHub issues of both repositories (prompt 203: no more
+8. Now: issue #75, full screen and pointer lock, built on the branch
+   `issue-75-fullscreen`, waiting for the owner's acceptance (TODO.md,
+   "Issue #75", has its plan, decisions, and results). Next: the other
+   GitHub issues of both repositories (prompt 203: no more
    milestones). Open on 2026-10-10: issues #75 (full screen and pointer lock, with a notice of the
    browser's own), #76 (the interface checked with a screen reader and an
    input method), #77 (soft text on the tilted page), #78 (a dropped

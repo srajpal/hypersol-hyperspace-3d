@@ -6160,10 +6160,12 @@ None. Three.js (installed) has the glTF loader the viewer uses already.
   five clipboard checks (once its clipboard works), and C9; L9 is
   watched.
 
-## Issue #75: full screen and pointer lock (plan, for the owner's approval)
+## Issue #75: full screen and pointer lock
 
-Status: planned, waiting for the owner's approval (2026-10-10). The
-first issue after the milestones (prompt 203). Rule 13 check done
+Status: built 2026-10-10 on the branch `issue-75-fullscreen`, waiting
+for the owner's acceptance. Plan and build approved with the
+recommended answers to Q1 to Q5 (2026-10-10). The first issue after the
+milestones (prompt 203). Rule 13 check done
 (ARCHITECTURE.md section 3: 44.7.0 still the newest stable release).
 
 Goal: a video player's full-screen button and a game that holds the
@@ -6240,18 +6242,59 @@ so and how to leave, where no page can hide it.
 
 ### Tasks
 
-- [ ] 1. The main process: allow both to web pages after a gesture;
+- [x] 1. The main process: allow both to web pages after a gesture;
       Escape (and the other ways out) leave; the window put back.
-- [ ] 2. The shell: the notice in the top layer; the room, the top bar,
+- [x] 2. The shell: the notice in the top layer; the room, the top bar,
       lifted objects, and the instrument panel while full; the camera
       and the tab state afterwards.
-- [ ] 3. Checks FS1 to FS8 (below), in tests/e2e/issue-75.e2e.ts with a
+- [x] 3. Checks FS1 to FS8 (below), in tests/e2e/issue-75.e2e.ts with a
       fixture page (a box that asks for full screen, a button that asks
       for the pointer), and unit tests for the rules.
-- [ ] 4. Documents: ARCHITECTURE (the decision; permissions), docs/
+- [x] 4. Documents: ARCHITECTURE (the decision; permissions), docs/
       privacy.md if anything changes there (nothing is sent), the
       CHANGELOG, the README's feature list, AGENTS.md's testing list,
       HANDOFF, TODO; the issue closed by the pull request.
+
+### Decisions made while building
+
+- Where things are (ARCHITECTURE.md section 4, "Full screen and pointer
+  lock"): the rules and the notice's words in shared/fullscreen.ts; the
+  permissions in main/permissions.ts; what each page holds, Escape, and
+  leaving in main/fullscreen.ts; pointer lock reported by
+  preload/fullscreen.ts; the notice in renderer/hud/hold-notice.ts;
+  the rest in renderer/app.ts (onHold, releaseHeld).
+- The notice is a popover, in the top layer. The page's webview goes
+  into the top layer as the full-screen element after the main process
+  has said so, and was drawn over the notice shown then (found by check
+  FS4): the notice is shown again on the shell's own `fullscreenchange`,
+  which brings it above.
+- Escape: Electron does not leave full screen on Escape (a browser's
+  interface does that), so the main process does it, before the page
+  sees the key, on the page and on the shell. The page is taken out of
+  both by a script run in a world of the main process's own, so a page
+  that replaces `document.exitFullscreen` cannot stop it (the fixture
+  does).
+- The pointer at the top of the screen: told by the page's mouse events
+  as the main process sees them (every frame's, so an embedded player's
+  too), at most every 1.5 seconds.
+- A page whose tab closes in full screen never says it left: the shell
+  forgets it with its tab (found by check FS2).
+- Pointer lock is given by Chromium only to a page in a window that has
+  the system's focus; test windows never take it (they stay out of the
+  way). FS5 runs with visible windows (`HYPERSOL_TEST_SHOW=1`) and is
+  reported as skipped otherwise, as the budgets are in software.
+- Looking around is not offered while a page holds either, and the
+  camera comes back to the desk when one does.
+- The check of the review of 2026-09-30 that full screen is refused
+  (review-134-main.e2e.ts, M1) changed with the requirement: full screen
+  is given after a click, with the notice, and Escape leaves.
+- Checks that found their own faults, not the browser's: the harness
+  runs code in a page as if after a click, and a click's activation
+  lasts a few seconds, so FS3 waits until the page has none; a click
+  aimed before the page was laid out again after leaving missed, so the
+  checks wait for it; and the pointer moves sent through the shell now
+  and then reached nothing just after the window changed size (one run
+  in about eight), so FS4's moves are given to the page itself.
 
 ### Checks (named FS)
 

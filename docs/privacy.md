@@ -231,8 +231,11 @@ only after you allow it. Everything else a site can ask for is refused
 (notifications, MIDI devices, reading the clipboard, knowing when you
 are idle, placing windows, your installed fonts, and the rest), and a
 page that only looks, without asking, is told the same: not granted.
-Full screen and holding the mouse pointer are refused too, until the
-browser has its own notice for them. One thing needs no permission:
+A page may fill the screen, or hold the mouse pointer (as a video
+player or a game does), after you click or press a key on it, without a
+question: the browser then says so in a notice of its own, over the
+page, and Escape always leaves (GitHub issue #75; refused before). Neither
+sends or keeps anything. One thing needs no permission:
 putting text on the clipboard when you click a page's "Copy" button. A
 site that asks for a client certificate (a certificate on your computer
 that says who you are) gets none, in private tabs too. Choosing Block

@@ -274,6 +274,11 @@
   Enter brings it nearer; its close button or Delete puts it back. They
   go with their page and are never saved. Not on HoloML pages, or
   without WebGL 2; not on the Android app yet.
+- Full screen and pointer lock (GitHub issue #75): a video player's
+  full-screen button and a game that holds the mouse pointer work, after
+  a click or key on the page. The browser says so in a notice of its own
+  over the page, naming the site, and Escape always leaves; a page cannot
+  stop it. Before, both were refused.
 
 After a review of both repositories on 2026-09-30 (the ids in brackets
 are the review's):

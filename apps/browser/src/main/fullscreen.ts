@@ -20,7 +20,8 @@ import { LEAVE_SCRIPT, LEAVE_WORLD, POINTER_LOCK_CHANNEL, TOP_EDGE_EVERY_MS, TOP
  *   page come here, an embedded player's too.
  */
 export class FullScreen {
-  private readonly holding = new Map<number, { full: boolean; locked: boolean; edgeAt: number }>();
+  /** By page; kept weakly, so a page that is gone takes its state with it (no listener of its own on each page). */
+  private readonly holding = new WeakMap<WebContents, { full: boolean; locked: boolean; edgeAt: number }>();
 
   constructor(
     private readonly send: (page: WebContents, command: ShellCommand) => void,
@@ -38,17 +39,17 @@ export class FullScreen {
   }
 
   private state(page: WebContents): { full: boolean; locked: boolean; edgeAt: number } {
-    let s = this.holding.get(page.id);
+    let s = this.holding.get(page);
     if (!s) {
       s = { full: false, locked: false, edgeAt: 0 };
-      this.holding.set(page.id, s);
+      this.holding.set(page, s);
     }
     return s;
   }
 
   /** Whether a page holds the screen or the pointer now. */
   holds(page: WebContents): boolean {
-    const s = this.holding.get(page.id);
+    const s = this.holding.get(page);
     return s !== undefined && (s.full || s.locked);
   }
 
@@ -69,7 +70,7 @@ export class FullScreen {
       this.leave(page);
     });
     page.on('input-event', (_event, input) => {
-      const s = this.holding.get(id);
+      const s = this.holding.get(page);
       if (!s?.full || input.type !== 'mouseMove') return;
       const y = (input as Electron.MouseInputEvent).y;
       const now = Date.now();
@@ -80,13 +81,12 @@ export class FullScreen {
     });
     // A new document holds neither; Chromium ends full screen as it goes.
     page.on('did-navigate', () => {
-      const s = this.holding.get(id);
+      const s = this.holding.get(page);
       if (s?.locked) {
         s.locked = false;
         this.send(page, { type: 'pointer-lock', webContentsId: id, on: false });
       }
     });
-    page.once('destroyed', () => this.holding.delete(id));
   }
 
   /** Escape on the shell (the keyboard was the browser's): every page the shell hosts leaves both. */
