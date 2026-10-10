@@ -1,10 +1,9 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-09 (milestones 1 to 27 accepted, milestone 27,
-free camera and room navigation, on 2026-10-09, prompt 196; the next
-is 28, lift to 3D, its plan approved 2026-10-09 (prompt 198), its
-build approved (prompt 199) and built, waiting for acceptance; the fixes of 2026-10-09 below;
+Last updated 2026-10-10 (milestones 1 to 28 accepted, milestone 28,
+lift to 3D, on 2026-10-10, prompt 201; no more milestones (prompt 203):
+work continues from GitHub issues; the fixes of 2026-10-09 below;
 the review's last items in TODO.md, "The review's last items". The
 roadmap is in TODO.md).
 
@@ -67,7 +66,9 @@ state; this is a summary.
   (HTTPS-only, per-site storage, bookmark import and export: #24, #26,
   #27; accepted 2026-10-08, prompt 184); 27 free camera and room
   navigation, looking around the room (accepted 2026-10-09, prompt
-  196); 28 lift to 3D, pictures and models lifted into the room (built 2026-10-09, waiting for acceptance); then polish (29), the last planned. The installers (30 and 31) were dropped in prompt 172:
+  196); 28 lift to 3D, pictures and models lifted into the room
+  (accepted 2026-10-10, prompt 201). Polish (29) was removed (prompt
+  203): no more milestones; work continues from GitHub issues. The installers (30 and 31) were dropped in prompt 172:
   the project stays source only, and a fork may package its own build
   (CONTRIBUTING.md, "Making your own build").
 - The logo direction is chosen (concept 4d in
@@ -86,11 +87,12 @@ Both main branches are up to date: milestone 26 is merged here (#63,
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
 
-## Milestone 28, lift to 3D (2026-10-09, prompts 197 to 199)
+## Milestone 28, lift to 3D (2026-10-09 and 10, prompts 197 to 201)
 
-Plan approved with the recommended answers (prompt 198), build approved
-(prompt 199), built on the branch `m28-lift-to-3d`; waiting for the
-owner's acceptance. TODO.md, "Milestone 28", has the plan, the decisions
+Accepted 2026-10-10 (prompt 201). Plan approved with the recommended
+answers (prompt 198), build approved (prompt 199), on the branch
+`m28-lift-to-3d`, merged as #73 with every automatic build passed (after
+two checks were fixed for GitHub's smaller Windows window, prompt 200). TODO.md, "Milestone 28", has the plan, the decisions
 made while building, and the results.
 
 - Finding: preload/lift.ts (what can be lifted, where it is drawn) and
@@ -107,8 +109,10 @@ made while building, and the results.
   menu, the Lift button, and Ctrl+Shift+U to capture, fetch, and decoding.
 - Checks LT1 to LT9 in tests/e2e/m28.e2e.ts (fixtures in
   tests/fixtures/lift, made by make.mjs); LT10 is the full run.
-- How to resume: the owner's look at it and acceptance; then the pull
-  request, and milestone 29 (polish).
+- Still to run again on this computer: the five checks that use the
+  system clipboard (it was out of use for every program on 2026-10-09;
+  they pass on Linux and in the automatic builds), and C9's frame rate.
+- How to resume: from the GitHub issues (below, "How to resume").
 
 ## Milestone 27, free camera and room navigation (2026-10-09, prompts 191 to 196)
 
@@ -753,11 +757,19 @@ to this repository for rules and the prompt log.
    `MILESTONE=mN pnpm screenshots`, add them to docs/progress.md, take
    the previous desktop set out of the tree, and refresh the README's
    four with `pnpm screenshots:readme` (AGENTS.md, Working agreement).
-8. Now: milestone 28, lift to 3D (images and 3D models on 2D pages
-   become objects), on the branch `m28-lift-to-3d`: plan approved
-   (prompt 198), build approved (prompt 199), and built; its checks
-   LT1 to LT10 and their results are in TODO.md. Next, the owner's
-   acceptance, then milestone 29 (polish).
+8. Next: the GitHub issues of both repositories (prompt 203: no more
+   milestones). Open on 2026-10-10: issues #75 (full screen and pointer lock, with a notice of the
+   browser's own), #76 (the interface checked with a screen reader and an
+   input method), #77 (soft text on the tilted page), #78 (a dropped
+   .holoml file), #79 (checks that sleep and then look), #80 (the budgets
+   with a graphics card in the automatic builds), #81 (macOS), and #82 (C9
+   and L9 on the owner's computer).
+   One issue at a time, approved by the owner first (AGENTS.md rule 2);
+   check Electron's security releases at least monthly and before any
+   tag (rule 13). Prompts are recorded only when the owner asks. Also
+   the owner's: three draft advisories to publish (private tabs, the
+   Library's passwords; fixed 2026-10-09), and merged branches on
+   GitHub to delete.
 
 ## Not done yet, on purpose
 

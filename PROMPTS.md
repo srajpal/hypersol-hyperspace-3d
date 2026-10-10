@@ -1,7 +1,9 @@
 # PROMPTS.md: how HyperSpace 3D was built, prompt by prompt
 
 Every prompt the owner gave the AI agents that built HyperSol HyperSpace
-3D and HoloML, in order. Together with the commit history, TODO.md, and
+3D and HoloML, in order, to the end of the milestones (prompt 203,
+2026-10-10). Since then, work goes on from GitHub issues, and a prompt
+is added here only when the owner asks for it to be recorded. Together with the commit history, TODO.md, and
 the other documents, it shows how a large piece of software was planned,
 built, tested, and steered through conversation.
 
@@ -2183,4 +2185,40 @@ Build approved, go ahead.
 
 ```text
 #73 has errors.
+```
+
+## 201 — 2026-10-10 · Claude Opus 5.5, high effort
+
+Accepts milestone 28 (lift to 3D: pictures and 3D models lifted from
+web pages into the room) after pull request #73 merged.
+
+```text
+#73 merged, milestone 28 accepted.
+```
+
+## 202 — 2026-10-10 · Claude Opus 5.5, high effort
+
+```text
+I think we stop here and remove further milestones. Everything else
+seems like a refinement rather than an improvement. Go through it and
+see if anything is required to make the browser or HoloML work better
+and not just an enhancement that can be done later or on a fork. We can
+remove the other milestones if we are done. From this point on we can
+just work off GitHub issue bugs and enhancements. What do you think?
+```
+
+## 203 — 2026-10-10 · Claude Opus 5.5, high effort
+
+Approves the three steps proposed after prompt 202: milestone 29 taken
+off the roadmap (no more milestones; work continues from GitHub
+issues), issues opened for full screen and pointer lock, the screen
+reader and input method check, and the smaller gaps, and new wording in
+AGENTS.md for the rules tied to milestones. Also asks that prompts no
+longer be recorded unless asked: this is the log's last entry made by
+default.
+
+```text
+Agreed, go ahead with all three.
+Also update AGENTS.md to not record any more prompts unless requested
+to do so.
 ```
