@@ -4,7 +4,7 @@ The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-10-09 (milestones 1 to 27 accepted, milestone 27,
 free camera and room navigation, on 2026-10-09, prompt 196; the next
 is 28, lift to 3D, its plan approved 2026-10-09 (prompt 198), its
-build not yet; the fixes of 2026-10-09 below;
+build approved (prompt 199) and under way; the fixes of 2026-10-09 below;
 the review's last items in TODO.md, "The review's last items". The
 roadmap is in TODO.md).
 
@@ -731,11 +731,10 @@ to this repository for rules and the prompt log.
    `MILESTONE=mN pnpm screenshots`, add them to docs/progress.md, take
    the previous desktop set out of the tree, and refresh the README's
    four with `pnpm screenshots:readme` (AGENTS.md, Working agreement).
-8. Next: milestone 28, lift to 3D (images and 3D models on 2D pages
-   become objects). Push first
-   (rule 11), check Electron's security releases (rule 13), then draft
-   its plan and questions in TODO.md for the owner's approval; nothing
-   is built before the plan and then the build are approved.
+8. Now: milestone 28, lift to 3D (images and 3D models on 2D pages
+   become objects), on the branch `m28-lift-to-3d`: plan approved
+   (prompt 198) and build approved (prompt 199); its tasks and checks
+   LT1 to LT10 are in TODO.md.
 
 ## Not done yet, on purpose
 

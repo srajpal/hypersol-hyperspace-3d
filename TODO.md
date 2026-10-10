@@ -5873,7 +5873,7 @@ so the room's limits and keys are its own.
 
 Status: Current. Plan approved (2026-10-09, prompt 198) with the
 recommended answers to Q1 to Q5, Q3 a's new kind of request (a lifted
-model's file) with it; build not yet approved. Drafted in prompt 197. Rule 13 check done (ARCHITECTURE.md section 3: 44.7.0 is
+model's file) with it; build approved (prompt 199). Drafted in prompt 197. Rule 13 check done (ARCHITECTURE.md section 3: 44.7.0 is
 still the newest stable release).
 
 Goal: pictures and 3D models on ordinary web pages become objects in
