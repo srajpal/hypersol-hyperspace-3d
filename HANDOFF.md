@@ -3,7 +3,8 @@
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-10-09 (milestones 1 to 27 accepted, milestone 27,
 free camera and room navigation, on 2026-10-09, prompt 196; the next
-is 28, lift to 3D, not yet planned; the fixes of 2026-10-09 below;
+is 28, lift to 3D, its plan approved 2026-10-09 (prompt 198), its
+build not yet; the fixes of 2026-10-09 below;
 the review's last items in TODO.md, "The review's last items". The
 roadmap is in TODO.md).
 
