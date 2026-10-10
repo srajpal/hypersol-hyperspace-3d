@@ -376,7 +376,10 @@ describe('LT6: looking at them', () => {
     await pressInShell(h, 'K', ['control', 'shift']);
     await pressInShell(h, 'Left');
     await pressInShell(h, 'Left');
-    const moved = await waitFor('seen from elsewhere', () => lifted(h), (l) => Math.abs(byName(l, 'Magenta clip').box!.x - before.x) > 20);
+    // Once the camera has arrived (two turns of 5 degrees), the object is seen from elsewhere: how far it moves on
+    // screen depends on the window's size (19 pixels in GitHub's smaller Windows window), so any move counts.
+    await waitFor('the camera turned', () => shellCall(h, 'look'), (x) => x.away && x.goal.yaw < -0.17 && !x.moving);
+    const moved = await waitFor('seen from elsewhere', () => lifted(h), (l) => Math.abs(byName(l, 'Magenta clip').box!.x - before.x) >= 5);
     expect(byName(moved, 'Magenta clip').box!.width).toBeGreaterThan(0);
     await pressInShell(h, 'Escape');
     await waitFor('back at the desk', () => lifted(h), (l) => Math.abs(byName(l, 'Magenta clip').box!.x - before.x) < 3);

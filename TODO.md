@@ -6123,7 +6123,19 @@ None. Three.js (installed) has the glTF loader the viewer uses already.
   Android SDK); not installed on the tablet (lifting is left out there).
 - The screenshots (m28, 78; milestone 27's set out of the tree, its
   links at commit 55a5d0c) and the README's four pictures, looked at.
-- Not checked yet: the automatic builds of the pull request.
+- The automatic builds of pull request #73 (prompt 200): every part
+  passed but Windows part 1, where two of these checks failed in
+  GitHub's smaller window (about 1008 by 705 inside, against 1264 by 761
+  here): LT2's right-click on the small picture landed outside the page,
+  as the fixture's row of pictures was wider than the page once the arc
+  took its room; and LT6's free-camera check asked the object to move
+  more than 20 pixels on screen, where it moves 19 in that window. The
+  lifting was right in both (the arc does not cover the page at that
+  size: the page ends at x 772, the objects begin at 806). The row now
+  wraps where the page is narrow, and the check waits for the camera to
+  arrive and counts any move. All 25 pass here in a 1024 by 768 window
+  (a change to the harness for that run only, not kept), and at the
+  usual size with the graphics card and in software.
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
