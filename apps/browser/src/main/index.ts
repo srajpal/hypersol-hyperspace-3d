@@ -7,6 +7,8 @@ import {
   CAPTURE_KEYS_CHANNEL,
   CAPTURE_TAB_CHANNEL,
   CLOSE_READY_CHANNEL,
+  LIFT_CAPTURE_CHANNEL,
+  LIFT_MODEL_CHANNEL,
   OPEN_FILE_CHANNEL,
   PRIVATE_PARTITION,
   SHELL_COMMAND_CHANNEL,
@@ -38,6 +40,8 @@ import { confirmLeave } from './leave-page';
 import { afterShellCrash, SHELL_FAILED_MESSAGE, SHELL_FAILED_TITLE, START_FAILED_TITLE, startFailedMessage } from './start-up';
 import { shellOnly } from './ipc';
 import { HolomlPages } from './holoml';
+import { LIFT_TARGET_CHANNEL } from '../shared/lift';
+import { LIFT_LIMITS, captureArea, fetchModel, modelRequest, zoomedArea } from './lift';
 import { HOLOML_DROP_CHANNEL, LOCAL_SCHEME, VIEWER_SCHEME } from '../shared/holoml-page';
 import { StorageService } from './storage/service';
 import { inProcess, WorkerHistory } from './storage/history-backend';
@@ -105,6 +109,8 @@ let holoml: HolomlPages | null = null;
 let capturingKeys = false;
 /** The person's own shortcut keys, from settings. */
 const shortcutKeys = () => storage?.settingsFile.settings.shortcuts ?? {};
+/** What each page's preload found to lift where it was last right-clicked (milestone 28), by web contents id. */
+const liftTargets = new Map<number, { item: unknown; at: number }>();
 /** The private tabs' in-memory session. */
 let privateSession: Session | null = null;
 
@@ -414,6 +420,7 @@ if (!app.requestSingleInstanceLock()) {
     tabHistory?.track(contents);
     const guestId = contents.id;
     contents.once('destroyed', () => {
+      liftTargets.delete(guestId);
       holoml?.forget(guestId);
       signIns?.forget(contents);
     });
@@ -456,6 +463,12 @@ if (!app.requestSingleInstanceLock()) {
         return win === null || win.isDestroyed() ? true : confirmLeave((box) => dialog.showMessageBoxSync(win, box));
       },
       fetchFavicon: (url, init) => (privacy ? privacy.fetchFavicon(contents, url, init) : contents.session.fetch(url, init)),
+      // Milestone 28: what the page's preload found to lift where it was right-clicked, just before the menu.
+      takeLiftTarget: () => {
+        const target = liftTargets.get(guestId);
+        liftTargets.delete(guestId);
+        return target && Date.now() - target.at < 2000 ? target.item : null;
+      },
     });
   });
 
@@ -559,6 +572,73 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.on(CAPTURE_KEYS_CHANNEL, (event, on: unknown) => {
       if (mainWindow && event.sender === mainWindow.webContents) capturingKeys = on === true;
     });
+
+    // Lifting into the room (milestone 28, main/lift.ts). What can be lifted where a page was right-clicked,
+    // from its preload in the top frame, sent and answered at once, so the menu that follows can offer it.
+    ipcMain.on(LIFT_TARGET_CHANNEL, (event, item: unknown) => {
+      const page = event.sender;
+      if (page.getType() === 'webview' && event.senderFrame !== null && event.senderFrame === page.mainFrame && item !== null) {
+        liftTargets.set(page.id, { item, at: Date.now() });
+      } else {
+        liftTargets.delete(page.id);
+      }
+      event.returnValue = true;
+    });
+    // A web page the asking shell hosts, not a HoloML page (its scene is 3D already); or null.
+    const liftPage = (event: Electron.IpcMainInvokeEvent, id: unknown): WebContents | null => {
+      if (typeof id !== 'number') return null;
+      const guest = webContents.fromId(id);
+      if (!guest || guest.isDestroyed() || guest.getType() !== 'webview' || guest.hostWebContents !== event.sender) return null;
+      return holoml?.isDocument(guest.id, guest.getURL()) ? null : guest;
+    };
+    // A picture (Q1 a): one rectangle of the page, captured as it is drawn. Nothing is fetched.
+    handleFromShell(
+      LIFT_CAPTURE_CHANNEL,
+      async (event, request: unknown) => {
+        const r = request as { webContentsId?: unknown; area?: unknown } | null;
+        const guest = liftPage(event, r?.webContentsId);
+        const area = captureArea(r?.area);
+        if (!guest || !area) return null;
+        const rect = zoomedArea(area, guest.getZoomFactor());
+        let result = 'none';
+        try {
+          let image = await guest.capturePage(rect);
+          if (image.isEmpty()) return null;
+          const size = image.getSize();
+          const side = Math.max(size.width, size.height);
+          if (side > LIFT_LIMITS.captureSide) {
+            image = image.resize({ width: Math.round((size.width * LIFT_LIMITS.captureSide) / side), quality: 'best' });
+          }
+          result = 'ok';
+          return new Uint8Array(image.toPNG());
+        } catch {
+          return null;
+        } finally {
+          if (!guest.isDestroyed()) testLog?.lifts.push({ kind: 'capture', url: guest.getURL(), area: rect, result });
+        }
+      },
+      null,
+    );
+    // A model (Q3 a): from the page's own site, through its session after the shield, within the viewer's limits.
+    handleFromShell(
+      LIFT_MODEL_CHANNEL,
+      async (event, request: unknown) => {
+        const r = modelRequest(request);
+        const guest = r ? liftPage(event, r.webContentsId) : null;
+        if (!r || !guest) return { ok: false, reason: 'it cannot be lifted from this page' };
+        const pageUrl = guest.getURL();
+        const result = await fetchModel(pageUrl, r.url, (url, init) =>
+          guest.isDestroyed()
+            ? Promise.reject(new Error('The page has closed'))
+            : privacy
+              ? privacy.fetchForTab(guest, url, init, 'xhr')
+              : guest.session.fetch(url, init),
+        );
+        testLog?.lifts.push({ kind: 'model', url: r.url, result: result.ok ? 'ok' : result.reason });
+        return result;
+      },
+      { ok: false, reason: 'Not allowed' },
+    );
 
     // Tab snapshots for the cards: only for a web page the asking shell hosts.
     handleFromShell(CAPTURE_TAB_CHANNEL, async (event, id: unknown) => {

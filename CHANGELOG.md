@@ -261,6 +261,19 @@
   decoders were looked for in the dev server's own folder, and the
   transcoder's host page at a place nothing served). Built copies of
   the browser were not affected.
+- Lifting into the room (milestone 28): pictures, videos, drawings, and
+  3D models on a web page can stand in the room, in an arc on the right
+  of the page. Right-click one and choose "Lift into the room", or lift
+  everything in view with the top bar's new Lift button or Ctrl+Shift+U
+  (changeable), up to 12 from a page. A picture rises out of the page,
+  captured as the page shows it (nothing is fetched); a 3D model (a
+  `<model-viewer>` or `<model>` element, or a link to a .glb or .gltf
+  file) is fetched from the page's own site only, within the HoloML
+  viewer's limits, and read in a part of the browser that cannot reach
+  the network. Hover names one; drag or the arrows turn it; a click or
+  Enter brings it nearer; its close button or Delete puts it back. They
+  go with their page and are never saved. Not on HoloML pages, or
+  without WebGL 2; not on the Android app yet.
 
 After a review of both repositories on 2026-09-30 (the ids in brackets
 are the review's):

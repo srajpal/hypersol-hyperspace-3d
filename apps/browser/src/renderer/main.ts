@@ -117,6 +117,35 @@ function testHooks() {
       camera: room.cameraPose,
       noticeShown: document.querySelector('hs-look-notice')!.open,
     }),
+    // Milestone 28: what has been lifted into the room (every tab's), whether the arc takes room beside the page,
+    // and a lifted picture's pixels as captured: the colour at each of its four quarters' middles, read the way
+    // up the page has it (rows run from the bottom on its surface in the room).
+    lifted: () => ({ objects: room.lifted?.list() ?? [], rail: room.lifted?.rail ?? false, reason: app.lifting.reason() }),
+    // What the page in front says can be lifted now: everything in view, or what is at a point of its view.
+    liftable: (at?: { x: number; y: number }) => app.focusedView?.liftQuery(at) ?? Promise.resolve([]),
+    liftedPicture: (tabId: number, itemId: number) => {
+      const bitmap = room.lifted?.picture(tabId, itemId);
+      if (!bitmap) return null;
+      const c = document.createElement('canvas');
+      c.width = bitmap.width;
+      c.height = bitmap.height;
+      const g = c.getContext('2d')!;
+      g.translate(0, c.height);
+      g.scale(1, -1);
+      g.drawImage(bitmap, 0, 0);
+      const at = (fx: number, fy: number) => [...g.getImageData(Math.floor(c.width * fx), Math.floor(c.height * fy), 1, 1).data.slice(0, 3)];
+      return {
+        width: bitmap.width,
+        height: bitmap.height,
+        topLeft: at(0.25, 0.25),
+        topRight: at(0.75, 0.25),
+        bottomLeft: at(0.25, 0.75),
+        bottomRight: at(0.75, 0.75),
+        middle: at(0.5, 0.5),
+        // The whole picture, for a failure's message or a look by hand.
+        url: c.toDataURL('image/png'),
+      };
+    },
     parallaxPaused: () => room.parallax.paused,
     pointerLog: () => room.pointerLog,
     projectPagePoint: (u: number, v: number) => room.projectPagePoint(u, v),

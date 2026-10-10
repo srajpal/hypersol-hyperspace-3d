@@ -5,7 +5,7 @@ Moved here from the README on 2026-09-26 (owner, prompt 47).
 
 
 Screenshots from each finished milestone. Only the newest sets are
-kept in [docs/screenshots](screenshots) (milestone 27's, the newest of
+kept in [docs/screenshots](screenshots) (milestone 28's, the newest of
 the desktop, and milestone 24's, from the tablet); the older ones are
 shown from the repository as it was on 2026-10-07 (commit
 [64de0da](https://github.com/srajpal/hypersol-hyperspace-3d/tree/64de0da067ade4d27a8b28e9e76d4d208aa9ebad/docs/screenshots),
@@ -13,8 +13,10 @@ for milestone 22 commit
 [fdc318f](https://github.com/srajpal/hypersol-hyperspace-3d/tree/fdc318f74d0baab1b7d362fc3aa1f791e7cdef16/docs/screenshots/m22),
 for milestone 25 commit
 [8fc1484](https://github.com/srajpal/hypersol-hyperspace-3d/tree/8fc14842d7bab690822d4a83244537051cc13734/docs/screenshots/m25),
-and for milestone 26 commit
-[9b36abf](https://github.com/srajpal/hypersol-hyperspace-3d/tree/9b36abf685b520b3624e7424603ce5906c5aeca6/docs/screenshots/m26)),
+for milestone 26 commit
+[9b36abf](https://github.com/srajpal/hypersol-hyperspace-3d/tree/9b36abf685b520b3624e7424603ce5906c5aeca6/docs/screenshots/m26),
+and for milestone 27 commit
+[55a5d0c](https://github.com/srajpal/hypersol-hyperspace-3d/tree/55a5d0c7e391210474d735c932cdc7a8eb2ec0a2/docs/screenshots/m27)),
 so a copy of the repository does not carry every set (the review of
 2026-09-30, H6; owner, prompt 160). The roadmap and the current
 milestone's tasks and checks are in [TODO.md](../TODO.md).
@@ -354,8 +356,23 @@ notice says how, and Escape or "Back to the desk" brings the camera
 back, with the page exactly where it was. While away the page takes no
 clicks or keys.
 
-![Looking around the room in Nebula: the camera to the right of the desk and above it, the tab cards in their arc on the left, the floor, and the notice at the top with the keys and Back to the desk](screenshots/m27/79-looking-around.jpg)
+![Looking around the room in Nebula: the camera to the right of the desk and above it, the tab cards in their arc on the left, the floor, and the notice at the top with the keys and Back to the desk](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/55a5d0c7e391210474d735c932cdc7a8eb2ec0a2/docs/screenshots/m27/79-looking-around.jpg)
 
-![Looking around in Daylight: the page seen from the left and above, its desk and the cards beside it](screenshots/m27/80-daylight-looking-around.jpg)
+![Looking around in Daylight: the page seen from the left and above, its desk and the cards beside it](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/55a5d0c7e391210474d735c932cdc7a8eb2ec0a2/docs/screenshots/m27/80-daylight-looking-around.jpg)
 
-![Back at the desk: the page where it was, and the top bar's Look around button beside the layers view's](screenshots/m27/81-back-at-the-desk.png)
+![Back at the desk: the page where it was, and the top bar's Look around button beside the layers view's](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/55a5d0c7e391210474d735c932cdc7a8eb2ec0a2/docs/screenshots/m27/81-back-at-the-desk.png)
+
+**Milestone 28: lifting into the room** (built 2026-10-09, waiting for
+acceptance). Pictures, videos, drawings, and 3D models on a web page
+can stand in the room, in an arc on the right of the page: right-click
+one and choose "Lift into the room", or lift everything in view with the
+top bar's new Lift button (Ctrl+Shift+U). A picture rises out of the
+page as the page shows it; a model is fetched from the page's own site
+and read where it cannot reach the network. Hover names one, a drag
+turns it, a click brings it nearer, and its close button puts it back.
+
+![The sample page with its four pictures lifted: framed, in an arc on the right of the page, the page narrower to make room](screenshots/m28/82-lifted-pictures.jpg)
+
+![A made-up shop page: a 3D shoe brought nearer in front of the page and turned to show its side, the other shoe and three pictures in the arc](screenshots/m28/83-lifted-shoe-nearer.jpg)
+
+![Daylight, looking around from the left of the desk: the two shoes and the three pictures stand beside the page, seen from the side](screenshots/m28/84-daylight-lifted-from-the-side.jpg)

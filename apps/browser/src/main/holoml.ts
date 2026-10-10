@@ -79,6 +79,29 @@ export const KTX2_HOST_CSP = [
 /** The transcoder's host page: it only loads its script. */
 const KTX2_HOST_PAGE = '<!doctype html><meta charset="utf-8"><title>KTX2 picture decoder</title><script type="module" src="assets/ktx2-host.js"></script>';
 
+/**
+ * The content policy of the decoding frame for lifted models (milestone
+ * 28, viewer/lift-host.ts): a page of the viewer's address that the shell
+ * frames, sandboxed. As the KTX2 host's, it runs only the viewer's scripts
+ * (its KTX2 transcoder evaluates code, in its workers) and reads only the
+ * viewer's files and what it makes itself: no network at all. Only the
+ * shell may frame it (a built shell is a file; a development run's comes
+ * from the dev server on this computer).
+ */
+export const LIFT_HOST_CSP = [
+  "default-src 'none'",
+  `script-src ${VIEWER_SCHEME}: blob: 'unsafe-eval' 'wasm-unsafe-eval'`,
+  "worker-src blob:",
+  `connect-src ${VIEWER_SCHEME}: blob: data:`,
+  "img-src blob: data:",
+  "frame-ancestors file: http://localhost:* http://127.0.0.1:*",
+  "base-uri 'none'",
+  "form-action 'none'",
+].join('; ');
+
+/** The lifted models' decoding frame: it only loads its script. */
+const LIFT_HOST_PAGE = '<!doctype html><meta charset="utf-8"><title>Model decoder</title><script type="module" src="assets/lift-host.js"></script>';
+
 type Headers = Record<string, string | string[]>;
 
 export interface ResponseInfo {
@@ -271,6 +294,10 @@ export class HolomlPages {
     if (pathname === '/ktx2-host.html') {
       return new Response(KTX2_HOST_PAGE, { headers: { 'content-type': 'text/html; charset=utf-8', 'content-security-policy': KTX2_HOST_CSP, 'cache-control': 'no-cache' } });
     }
+    // The decoding frame for lifted models (milestone 28), framed by the shell.
+    if (pathname === '/lift-host.html') {
+      return new Response(LIFT_HOST_PAGE, { headers: { 'content-type': 'text/html; charset=utf-8', 'content-security-policy': LIFT_HOST_CSP, 'cache-control': 'no-cache' } });
+    }
     const headers = {
       'content-type': 'text/javascript; charset=utf-8',
       'access-control-allow-origin': '*',
@@ -292,7 +319,9 @@ export class HolomlPages {
           ? source(viewerSource)
           : pathname === '/assets/ktx2-host.js'
             ? source(join(dirname(viewerSource), 'ktx2-host.ts'))
-            : pathname;
+            : pathname === '/assets/lift-host.js'
+              ? source(join(dirname(viewerSource), 'lift-host.ts'))
+              : pathname;
       const res = await net.fetch(new URL(path + search, devServer).href);
       const type = res.headers.get('content-type') ?? '';
       // Scripts, and (milestone 25) the decoders' WebAssembly.

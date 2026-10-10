@@ -42,9 +42,13 @@ export default defineConfig({
           // The KTX2 transcoder's host (milestone 25): framed by HoloML pages, as
           // hypersol-viewer://app/ktx2-host.html, which loads assets/ktx2-host.js.
           'ktx2-host': resolve(__dirname, 'src/viewer/ktx2-host.ts'),
+          // The decoding frame for lifted models (milestone 28): framed by the shell, as
+          // hypersol-viewer://app/lift-host.html, which loads assets/lift-host.js.
+          'lift-host': resolve(__dirname, 'src/viewer/lift-host.ts'),
         },
         output: {
-          entryFileNames: (chunk) => (chunk.name === 'viewer' ? 'assets/viewer.js' : chunk.name === 'ktx2-host' ? 'assets/ktx2-host.js' : 'assets/[name]-[hash].js'),
+          entryFileNames: (chunk) =>
+            chunk.name === 'viewer' || chunk.name === 'ktx2-host' || chunk.name === 'lift-host' ? `assets/${chunk.name}.js` : 'assets/[name]-[hash].js',
         },
       },
     },

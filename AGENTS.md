@@ -164,7 +164,7 @@ date given and grow with each milestone; TODO.md has the latest.
   prompt 161; `engines` asks for 24 or newer since prompt 164); pnpm
   12.4.1, pinned in package.json.
 - Install: `pnpm install --frozen-lockfile`
-- Unit: `pnpm test` (Vitest; 565 tests passed on 2026-10-09;
+- Unit: `pnpm test` (Vitest; 589 tests passed on 2026-10-09;
   each test may take up to 20 seconds, vitest.config.ts)
 - HyperSpace 3D for Android (milestone 24; first run 2026-10-05): after
   `pnpm build` and `pnpm --filter @hypersol/android build:web`, in
@@ -181,10 +181,12 @@ date given and grow with each milestone; TODO.md has the latest.
   a promise nobody awaits or catches is an error, since the review of
   2026-09-30)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about twenty-five minutes; 421 checks in 31 files: in the
-  full run of 2026-10-09, milestone 27, 418 passed on this computer,
-  and of the three that failed two passed run again and C9's frame rate
-  is to be run again; TODO.md has the details). On
+  against it (about twenty-five to thirty minutes; 446 checks in 32
+  files: in the full run of 2026-10-09, milestone 28, 438 passed on this
+  computer; five that use the system clipboard failed while it was out
+  of use for every program and pass on Linux, one was added after that
+  run's build and passes, L9 passed run again, and C9's frame rate is
+  to be run again; TODO.md has the details). On
   this computer vitest's report leaves out what passing checks log (the
   load times, frame rates, and memory); `pnpm test:e2e
   --reporter=verbose` shows it, as the automatic builds do. Needs
@@ -563,8 +565,25 @@ milestone; the current milestone's checks are defined in TODO.md):
   screen readers, no frames while still, and the frame rate while
   moving (logged in software, and skipped). FC10 is every earlier
   milestone's checks.
-- Later milestones add: lift to 3D (28) and polish (29). No installers
-  (dropped, prompt 172).
+- Milestone 28 checks LT1 to LT10 (TODO.md): lifting into the room.
+  The pure parts are unit tests beside the code (shared/lift.test.ts,
+  shared/lifted-shape.test.ts, main/lift.test.ts, and the menu's and
+  the decoding frame's policy in main/context-menu.test.ts and
+  main/holoml.test.ts); tests/e2e/m28.e2e.ts (same command, in part 1)
+  has finding pictures and models (LT1), a picture lifted from the
+  right-click menu with the page's own pixels and no request (LT2),
+  everything in view up to 12 by the button and the shortcut (LT3),
+  models embedded and linked, compressed ones among them, and the ones
+  refused, with only the page's own site asked (LT4), the decoding
+  frame that reaches no network (LT5), hover, turning, nearer, the free
+  camera, and putting back (LT6), their life with their page, a private
+  tab, sleep, and a restart, with nothing in the profile (LT7), HoloML
+  pages, no WebGL 2, reduced motion, economy mode, and the layers view
+  off (LT8), and the keyboard and screen readers (LT9); fixture pages
+  and models in tests/fixtures/lift (made by its make.mjs). LT10 is
+  every earlier milestone's checks.
+- Later milestones add: polish (29). No installers (dropped, prompt
+  172).
 
 Rules for tests: a failing test is reported, not deleted. A test is
 changed only when the requirement it checks has changed, and the doc that

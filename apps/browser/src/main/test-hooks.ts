@@ -59,6 +59,12 @@ export interface TestLog {
    * closed without a choice, and nothing set is the same.
    */
   nextFile?: string | null;
+  /**
+   * Lifting into the room (milestone 28): each picture captured (the page's
+   * address and the rectangle, in the page's own pixels) and each model
+   * asked for (its address, and how it ended: 'ok' or the reason).
+   */
+  lifts: { kind: 'capture' | 'model'; url: string; area?: { x: number; y: number; width: number; height: number }; result: string }[];
 }
 
 declare global {
@@ -66,7 +72,7 @@ declare global {
 }
 
 export function installTestHooks(): TestLog {
-  const log: TestLog = { attaches: [], requests: [], heldRequests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave', refusedPermissions: [], layersSettled: {}, faviconEnds: [], captures: [] };
+  const log: TestLog = { attaches: [], requests: [], heldRequests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave', refusedPermissions: [], layersSettled: {}, faviconEnds: [], captures: [], lifts: [] };
   globalThis.__hypersolTest = log;
   // log.requests is filled by the privacy shield's request listener
   // (main/privacy/index.ts): Electron allows one listener per session.

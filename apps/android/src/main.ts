@@ -27,6 +27,7 @@ const NOT_YET: readonly string[] = [
   'instruments',
   'layers',
   'look-around',
+  'lift',
   'star',
   'private-tab',
   'open-file',
@@ -58,6 +59,8 @@ const room = new Room(document.getElementById('room')!, theme, {
   economyFullResolution: true,
   // Looking around the room is the desktop's for now (milestone 27, owner, prompt 192, Q4 a).
   lookAround: false,
+  // So is lifting pictures and models into the room (milestone 28, owner, prompt 198, Q5 a).
+  lift: false,
 });
 // The tablet draws the room lighter: at most 30 frames a second, no glow; at
 // the display's own resolution, as half of it blurred the cards (prompt 160).

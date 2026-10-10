@@ -298,8 +298,9 @@ describe('M6 and M7: Settings and shortcuts', () => {
       // 23 since milestone 14 added Ctrl+O, "Open a HoloML file" (owner, prompt 65, Q3 a);
       // 24 since milestone 17 added Ctrl+Shift+E, "HoloML examples" (owner, prompt 86, Q2 a);
       // 25 since the text view of a HoloML page, Ctrl+Shift+V, joined the table (review of 2026-09-30, St4);
-      // 26 since milestone 27 added Ctrl+Shift+K, "Look around the room" (owner, prompt 192).
-      expect(await h.shell.locator(SET('set-key-row')).count()).toBe(26);
+      // 26 since milestone 27 added Ctrl+Shift+K, "Look around the room" (owner, prompt 192);
+      // 27 since milestone 28 added Ctrl+Shift+U, "Lift what is in view into the room" (owner, prompt 198).
+      expect(await h.shell.locator(SET('set-key-row')).count()).toBe(27);
       // Remap "Reopen closed tab" to Ctrl+Alt+R.
       await h.shell.click(SET('set-key-change-reopen-tab'));
       await waitFor('waiting for keys', () => h.shell.locator(SET('set-key-waiting')).isVisible(), (v) => v);

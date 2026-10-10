@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Lift: pictures</title>
+    <style>
+      body { margin: 0; padding: 24px; font-family: sans-serif; background: #fff; }
+      .row { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; margin-bottom: 24px; }
+      #quadrants { width: 240px; height: 160px; image-rendering: pixelated; }
+      #drawing, #clip { width: 200px; height: 120px; }
+      #tiny { width: 30px; height: 30px; }
+      #below { margin-top: 2400px; width: 200px; height: 120px; }
+    </style>
+  </head>
+  <body>
+    <!-- Milestone 28 (tests/e2e/m28.e2e.ts): a picture, a drawing, a video, a picture too small to lift, and one
+         far below the view. Everything is local; the video plays the drawing of a canvas, so there is no file. The row
+         wraps where the page is narrow (GitHub's Windows machines have a smaller screen), so all of it is in view. -->
+    <h1>Pictures to lift</h1>
+    <div class="row">
+      <img id="quadrants" src="quadrants.png" alt="Four coloured quarters" />
+      <canvas id="drawing" width="200" height="120" aria-label="Green drawing"></canvas>
+      <video id="clip" width="200" height="120" muted autoplay playsinline title="Magenta clip"></video>
+      <img id="tiny" src="tiny.png" alt="Too small" />
+    </div>
+    <p>Some text that is not a picture.</p>
+    <img id="below" src="quadrants.png" alt="Far below" />
+    <script>
+      const d = document.getElementById('drawing').getContext('2d');
+      d.fillStyle = '#20c040';
+      d.fillRect(0, 0, 200, 120);
+      const source = document.createElement('canvas');
+      source.width = 200;
+      source.height = 120;
+      const s = source.getContext('2d');
+      s.fillStyle = '#e020e0';
+      s.fillRect(0, 0, 200, 120);
+      const video = document.getElementById('clip');
+      video.srcObject = source.captureStream(10);
+      // A frame now and then, so the stream has pictures to show.
+      setInterval(() => s.fillRect(0, 0, 200, 120), 100);
+    </script>
+  </body>
+</html>

@@ -3,6 +3,8 @@ import {
   CAPTURE_KEYS_CHANNEL,
   CAPTURE_TAB_CHANNEL,
   CLOSE_READY_CHANNEL,
+  LIFT_CAPTURE_CHANNEL,
+  LIFT_MODEL_CHANNEL,
   OPEN_FILE_CHANNEL,
   SHELL_COMMAND_CHANNEL,
   type ShellBridge,
@@ -20,7 +22,8 @@ import { TABS_CHANNEL } from '../shared/tabs';
 /**
  * The narrow bridge the 3D shell sees: read-only facts, commands from the
  * main process (shortcuts, new tabs, favicons, data changes, shield
- * counts), and requests: a snapshot of one of its own tabs, saved-data requests, and
+ * counts), and requests: a snapshot of one of its own tabs, a picture or a
+ * model of one to lift into the room (milestone 28), saved-data requests, and
  * privacy requests, which the main process checks one by one
  * (shared/data.ts, shared/privacy.ts).
  */
@@ -39,6 +42,12 @@ const bridge: ShellBridge = {
   },
   captureTab(webContentsId) {
     return ipcRenderer.invoke(CAPTURE_TAB_CHANNEL, webContentsId) as Promise<string | null>;
+  },
+  liftCapture(webContentsId, area) {
+    return ipcRenderer.invoke(LIFT_CAPTURE_CHANNEL, { webContentsId, area }) as Promise<Uint8Array | null>;
+  },
+  liftModel(webContentsId, url) {
+    return ipcRenderer.invoke(LIFT_MODEL_CHANNEL, { webContentsId, url }) as ReturnType<ShellBridge['liftModel']>;
   },
   data(request) {
     return ipcRenderer.invoke(DATA_CHANNEL, request);

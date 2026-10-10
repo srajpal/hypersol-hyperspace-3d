@@ -678,3 +678,57 @@ it("captures milestone 27's screens", async () => {
     await server.close();
   }
 }, 300_000);
+
+/** Milestone 28: pictures and 3D models lifted into the room, a shoe brought nearer, and the arc seen from the side in Daylight. */
+it("captures milestone 28's screens", async () => {
+  if (!milestone || !/^m\d+$/.test(milestone)) throw new Error('Set MILESTONE, for example MILESTONE=m28 pnpm screenshots');
+  const server = await startFixtureServer();
+  const h = await launch(server.url('readme/field-notes.html'));
+  /** Everything lifted from the page in front has come and stands still. */
+  const still = (count: number) =>
+    waitFor('lifted and still', () => shellCall(h, 'lifted'), (l) => l.objects.length === count && l.objects.every((o) => o.state === 'ready' && !o.moving), 60_000);
+  try {
+    await waitForPage(h, 'field-notes');
+    // The large picture at the top, then the three cards further down: lifted as each comes into view.
+    await h.shell.click('hs-toolbar [data-testid="lift"]');
+    await still(1);
+    await inPage(h, 'document.querySelector(".week").scrollIntoView()', 'field-notes');
+    await waitFor('the cards in view', () => inPage<number>(h, 'scrollY', 'field-notes'), (y) => y > 200);
+    await sleep(500);
+    await h.shell.click('hs-toolbar [data-testid="lift"]');
+    await still(4);
+    await h.shell.evaluate(() => document.querySelector('hs-notice')!.hide());
+    await settled(h);
+    await capture(h, '82-lifted-pictures', true);
+
+    // A shop page with two shoes in 3D: lifted, the first brought nearer and turned to show its side.
+    await navigateTo(h, server.url('lift/showcase.html'));
+    await waitForPage(h, 'lift/showcase');
+    await h.shell.click('hs-toolbar [data-testid="lift"]');
+    await still(5);
+    await h.shell.evaluate(() => document.querySelector('hs-notice')!.hide());
+    await h.shell.locator('[data-testid="lifted-object"]').first().focus();
+    await h.shell.keyboard.press('Enter');
+    for (const key of ['ArrowLeft', 'ArrowLeft', 'ArrowLeft', 'ArrowUp']) await h.shell.keyboard.press(key);
+    await waitFor('nearer', () => shellCall(h, 'lifted'), (l) => l.objects[0]!.near && !l.objects[0]!.moving);
+    await h.shell.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    await settled(h);
+    await capture(h, '83-lifted-shoe-nearer', true);
+    await h.shell.locator('[data-testid="lifted-object"]').first().focus();
+    await h.shell.keyboard.press('Escape');
+    await h.shell.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+
+    // Daylight, looking at the arc from the left of the desk.
+    await h.shell.click('hs-theme-button [data-testid="theme"]');
+    await waitFor('Daylight', () => h.shell.evaluate(() => document.documentElement.style.colorScheme), (s) => s === 'light');
+    await pressInShell(h, 'K', ['control', 'shift']);
+    for (let i = 0; i < 4; i++) await pressInShell(h, 'Left');
+    for (let i = 0; i < 2; i++) await pressInShell(h, 'Up');
+    await waitFor('there', () => shellCall(h, 'look'), (l) => l.goal.yaw !== 0 && !l.moving);
+    await settled(h);
+    await capture(h, '84-daylight-lifted-from-the-side', true);
+  } finally {
+    await h.close();
+    await server.close();
+  }
+}, 300_000);

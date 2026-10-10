@@ -64,12 +64,13 @@ away, and compressed models. Milestone 26 adds
 privacy and data tools: HTTPS-only browsing, per-site storage, and
 bookmark import and export. Milestone 27 lets you look around the room:
 leave the desk by dragging on the room, with the keys, or with a button,
-and come back to the page exactly as it was.
+and come back to the page exactly as it was. Milestone 28 (built,
+waiting for the owner's acceptance) lifts a page's pictures and 3D
+models into the room, to stand beside the page and turn in your hands.
 On 2026-09-30 both repositories were reviewed and the findings fixed,
 the security ones first ([CHANGELOG.md](CHANGELOG.md), Unreleased),
 except those [TODO.md](TODO.md) lists with the reason.
-Then lift to 3D and polish; no installers
-(owner, 2026-10-08). See [Progress](#progress),
+Then polish; no installers (owner, 2026-10-08). See [Progress](#progress),
 [TODO.md](TODO.md), and [Project documents](#project-documents).
 
 ## The story
@@ -144,6 +145,12 @@ An archived copy of the 2001 site is available through the
   arrows and W, A, S, D, or press the top bar's button (Ctrl+Shift+K) to
   leave the desk; Escape brings you back, with the page as sharp as
   before.
+- Lifting into the room (milestone 28): right-click a picture, a video,
+  or a 3D model on a page and choose "Lift into the room", or lift
+  everything in view with the top bar's Lift button (Ctrl+Shift+U). They
+  stand beside the page; turn one, bring it nearer, or put it back. A
+  picture is taken as the page shows it; a model is fetched only from
+  the page's own site, and read where it cannot reach the network.
 - Privacy on by default: ad and tracker blocking with a shield, encrypted
   DNS, private tabs, and no telemetry. Pages load over HTTPS only,
   with a warning before any site is used over plain HTTP (milestone 26).
@@ -285,6 +292,7 @@ Milestone 25 adds HoloML 0.3: names, languages, and far and
 compressed models. Milestone 26 adds privacy and data tools:
 HTTPS-only browsing, clearing one site's data, and bookmark files.
 Milestone 27 adds looking around the room, and back to the desk.
+Milestone 28 lifts pictures and 3D models from pages into the room.
 See [docs/progress.md](docs/progress.md) for each milestone with
 screenshots, and [TODO.md](TODO.md) for the roadmap.
 

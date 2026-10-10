@@ -2146,3 +2146,41 @@ the room) after pull request #71 merged.
 ```text
 #71 merged, milestone 27 accepted.
 ```
+
+## 197 — 2026-10-09 · Claude Opus 5.5, high effort
+
+```text
+#72 merged, start milestone 28.
+```
+
+## 198 — 2026-10-09 · Claude Opus 5.5, high effort
+
+Answers milestone 28's plan (lift to 3D) with the recommended answers:
+Q1 a, a lifted picture's pixels captured from the page as it is drawn
+(no new request); Q2 a, "Lift into the room" in the right-click menu,
+and a top bar button and a shortcut that lift everything in view (up
+to 12); Q3 a, 3D models in this milestone, fetched only when lifted, by
+the main process through the page's own session after the shield, from
+the page's own site only, within the HoloML viewer's limits, and
+decoded in a sandboxed frame (the new kind of request this needs is
+approved with it); Q4 a, lifted objects last as long as their page and
+are never saved; Q5 a, the Android app unchanged. Approves the plan.
+
+```text
+Use the recommendations, approve the plan.
+```
+
+## 199 — 2026-10-09 · Claude Opus 5.5, high effort
+
+Approves the build of milestone 28 (lift to 3D), as planned with the
+answers of prompt 198.
+
+```text
+Build approved, go ahead.
+```
+
+## 200 — 2026-10-10 · Claude Opus 5.5, high effort
+
+```text
+#73 has errors.
+```

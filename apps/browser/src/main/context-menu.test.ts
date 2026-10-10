@@ -49,4 +49,17 @@ describe('contextMenuEntries', () => {
     expect(labels(entries)).toEqual(['Cut', 'Copy', 'Paste', 'Select all']);
     expect(entries.map((e) => ('enabled' in e ? e.enabled : null))).toEqual([false, false, true, true]);
   });
+
+  it('offers lifting first where the page found something to lift (milestone 28), and on a HoloML page says why not', () => {
+    expect(labels(contextMenuEntries(params({}), nav, 'offer'))).toEqual(['Lift into the room', '---', 'Back', 'Forward', 'Reload']);
+    expect(labels(contextMenuEntries(params({ linkURL: 'https://example.com/chair.glb' }), nav, 'offer'))).toEqual([
+      'Lift into the room',
+      '---',
+      'Open link in new tab',
+      'Copy link address',
+    ]);
+    const holoml = contextMenuEntries(params({}), nav, 'holoml');
+    expect(holoml[0]).toEqual({ action: 'lift', label: 'Lift into the room (not on HoloML pages: the scene is 3D already)', enabled: false });
+    expect(labels(contextMenuEntries(params({}), nav, null))).toEqual(['Back', 'Forward', 'Reload']);
+  });
 });

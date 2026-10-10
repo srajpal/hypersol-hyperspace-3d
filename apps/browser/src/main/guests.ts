@@ -1,6 +1,6 @@
 import { clipboard, Menu, nativeImage, type MenuItemConstructorOptions, type WebContents } from 'electron';
 import type { ShellCommand, ShortcutName } from '../shared/commands';
-import { contextMenuEntries, type MenuAction } from './context-menu';
+import { contextMenuEntries, type MenuAction, type MenuLift } from './context-menu';
 import { FaviconLoader, type FetchFn } from './favicon';
 import { decidePopup, GESTURE_EVENTS } from './popups';
 import { decidePageNavigation } from './security';
@@ -28,6 +28,12 @@ export interface GuestDeps {
   confirmLeave(url: string): boolean;
   /** Fetches the page's favicon: shown to the privacy shield first, like the page's own requests (main/privacy). */
   fetchFavicon: FetchFn;
+  /**
+   * What the page's preload found that can be lifted where the page was
+   * just right-clicked (milestone 28, main/lift.ts), taken once; null for
+   * nothing.
+   */
+  takeLiftTarget?(): unknown;
 }
 
 /**
@@ -118,11 +124,21 @@ export function wireGuest(guest: WebContents, deps: GuestDeps): void {
 
   guest.on('context-menu', (_event, params) => {
     const history = guest.navigationHistory;
-    const entries = contextMenuEntries(params, {
-      canGoBack: history.canGoBack(),
-      canGoForward: history.canGoForward(),
-    });
-    const run = (action: MenuAction) => runMenuAction(guest, action, params.linkURL, deps);
+    // Lifting (milestone 28): offered where the page's preload found something to lift; a HoloML page's
+    // picture lifts nothing, and the entry says why.
+    const target = deps.takeLiftTarget?.() ?? null;
+    const holoml = deps.holomlPage?.() ?? false;
+    const lift: MenuLift = holoml ? (params.mediaType === 'none' ? null : 'holoml') : target !== null ? 'offer' : null;
+    const entries = contextMenuEntries(
+      params,
+      {
+        canGoBack: history.canGoBack(),
+        canGoForward: history.canGoForward(),
+      },
+      lift,
+    );
+    const run = (action: MenuAction) =>
+      action === 'lift' ? deps.send({ type: 'lift', webContentsId: guest.id, item: target }) : runMenuAction(guest, action, params.linkURL, deps);
     const template: MenuItemConstructorOptions[] = entries.map((e) =>
       'separator' in e
         ? { type: 'separator' }
@@ -170,7 +186,7 @@ export function wireGuest(guest: WebContents, deps: GuestDeps): void {
   guest.once('destroyed', () => favicons.cancel());
 }
 
-function runMenuAction(guest: WebContents, action: MenuAction, linkURL: string, deps: GuestDeps): void {
+function runMenuAction(guest: WebContents, action: Exclude<MenuAction, 'lift'>, linkURL: string, deps: GuestDeps): void {
   switch (action) {
     case 'open-link-new-tab':
       deps.send({ type: 'open-tab', url: linkURL, background: true, openerWebContentsId: guest.id });

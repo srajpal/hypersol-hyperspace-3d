@@ -29,6 +29,7 @@ import type { HsDownloads } from './hud/downloads';
 import { stepZoom } from './zoom';
 import type { DownloadInfo } from '../shared/downloads';
 import { InstrumentsController } from './instruments';
+import { LiftController } from './lift';
 import { applyThemeCss } from './themes/apply';
 import type { LayersState } from '../shared/layers';
 import type { HsToolbar, MenuAction } from './hud/toolbar';
@@ -145,6 +146,8 @@ export class App {
   theme: Theme;
   private readonly systemDark = window.matchMedia('(prefers-color-scheme: dark)');
   readonly instruments: InstrumentsController;
+  /** Lifting pictures and models into the room (milestone 28). */
+  readonly lifting: LiftController;
   /** Test runs only: ignore prepare-close, to test the main process's timeout. */
   testIgnorePrepareClose = false;
   private settings: Settings = defaults();
@@ -213,6 +216,18 @@ export class App {
       },
     });
     this.wireLook();
+    this.lifting = new LiftController({
+      bridge: options.bridge,
+      room: this.room,
+      notice: options.notice,
+      focused: () => {
+        const view = this.focusedView;
+        return view ? { tabId: this.store.focusedId, view } : null;
+      },
+      view: (tabId) => this.views.get(tabId),
+      tabOf: (id) => this.tabForWebContents(id),
+      changed: () => this.updateToolbar(),
+    });
     this.store.subscribe(() => this.sync());
     // A closed tab can be reopened (milestone 10): not private ones, nor start tabs.
     this.store.onClosed = (tab, index) => {
@@ -800,6 +815,11 @@ export class App {
         this.updateFill();
         this.updateToolbar();
       },
+      // What was lifted from a page goes with it (milestone 28, Q4 a).
+      onPageGone: () => {
+        this.room.lifted?.clearTab(id);
+        if (id === this.store.focusedId) this.updateToolbar();
+      },
       },
       tab.private,
       tab.restoreFrom,
@@ -1085,6 +1105,7 @@ export class App {
     t.access = this.tab(tab.id).access;
     t.muted = tab.muted;
     t.canReopen = this.closedTabs.size > 0;
+    t.liftReason = this.lifting.reason();
   }
 
   // ---- Permission prompts, password offers, notices (milestone 9) ----------
@@ -1394,6 +1415,7 @@ export class App {
     t.addEventListener('hs-zoom', (e) => void this.zoom((e as CustomEvent<1 | -1 | 0>).detail));
     t.addEventListener('hs-instruments', () => void this.saveSettings({ instruments: !this.settings.instruments }));
     t.addEventListener('hs-layers', () => void this.toggleLayers());
+    t.addEventListener('hs-lift', () => void this.lifting.liftInView());
     t.addEventListener('hs-stop', () => this.stop());
     t.addEventListener('hs-text-view', () => {
       const view = this.focusedView;
@@ -1524,6 +1546,9 @@ export class App {
       case 'filters-changed':
         if (this.openPanelName === 'settings') void this.options.settingsPanel.loadPrivacy();
         break;
+      case 'lift':
+        void this.lifting.liftClicked(command.webContentsId, command.item);
+        break;
       case 'prepare-close':
         if (this.testIgnorePrepareClose) break;
         void this.saveSessionNow().finally(() => this.options.bridge.closeReady());
@@ -1593,6 +1618,9 @@ export class App {
         break;
       case 'layers':
         void this.toggleLayers();
+        break;
+      case 'lift':
+        void this.lifting.liftInView();
         break;
       case 'look-around':
         this.toggleLook();

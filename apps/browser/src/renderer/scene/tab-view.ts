@@ -3,6 +3,7 @@ import type { WebviewTag } from 'electron';
 import { BLOCKED_CARD, CRASHED_CARD, DNS_BLOCKED_CARD, HTTPS_ONLY_CARD, describeLoadError, isLookupFailure, type LoadErrorCard } from '../load-errors';
 import { PRIVATE_PARTITION, RESTORE_BLANK } from '../../shared/commands';
 import { LAYERS_CHANNEL, PAGE_IMAGES_CHANNEL, parseImageReport, type LayersState, type PageImage } from '../../shared/layers';
+import { LIFT_ANSWER_CHANNEL, LIFT_QUERY_CHANNEL, parseLiftAnswer, type LiftItem } from '../../shared/lift';
 import { PAGE_STATE_CHANNEL, parsePageState } from '../../shared/page-state';
 import { HOLOML_COMMAND_CHANNEL, HOLOML_SHOWN_CHANNEL, HOLOML_STATE_CHANNEL } from '../../shared/holoml-page';
 import { StartPanel, type StartData } from './start-panel';
@@ -43,7 +44,16 @@ export interface TabViewEvents {
   restoreHistory?(from: number, into: number): Promise<boolean>;
   /** The page became, or stopped being, a HoloML page (milestone 14). */
   onHoloml?(): void;
+  /**
+   * The page this tab showed is gone (milestone 28): another document, a
+   * new address in the same one, sleep, or a crash. What was lifted from it
+   * goes with it (Q4 a).
+   */
+  onPageGone?(): void;
 }
+
+/** How long the page's preload has to say what can be lifted (milestone 28). */
+const LIFT_ANSWER_MS = 2000;
 
 /**
  * What one tab shows: the start panel until the tab loads an address,
@@ -66,6 +76,10 @@ export class TabView implements PagePanel, RoomView {
   /** The address of the document the page last loaded (not one still on its way, or one that failed). */
   private committed = '';
   private pageImages: PageImage[] = [];
+  /** Lifting (milestone 28): questions to the page's preload waiting for its answer, by number; and which page this is. */
+  private liftSeq = 0;
+  private readonly liftWaiting = new Map<number, (items: LiftItem[]) => void>();
+  private pageGeneration = 0;
   private currentStatus: PageStatus;
   private w = 0;
   private h = 0;
@@ -270,6 +284,7 @@ export class TabView implements PagePanel, RoomView {
     this.pageImages = [];
     this.shimmer.removeAttribute('data-visible');
     this.asleepFrom = { url, from };
+    this.pageGone();
     return true;
   }
 
@@ -314,6 +329,45 @@ export class TabView implements PagePanel, RoomView {
   /** The page's images in view, as its preload last reported them (milestone 5). */
   get images(): PageImage[] {
     return this.pageImages.map((i) => ({ ...i }));
+  }
+
+  /** Which page the tab shows: a new number for each (milestone 28). */
+  get pageSeq(): number {
+    return this.pageGeneration;
+  }
+
+  /** The page is gone: what waits on it hears nothing more, and what was lifted from it goes. */
+  private pageGone(): void {
+    this.pageGeneration += 1;
+    for (const answer of this.liftWaiting.values()) answer([]);
+    this.liftWaiting.clear();
+    this.events.onPageGone?.();
+  }
+
+  /**
+   * What can be lifted from the page (milestone 28), as its preload finds
+   * it now: everything in view, or what is at one point of the view. Empty
+   * for a page without one (a HoloML page, the start panel) or that does
+   * not answer in time.
+   */
+  liftQuery(at?: { x: number; y: number }): Promise<LiftItem[]> {
+    const wv = this.webview;
+    if (!wv || !this.ready || this.isHoloml) return Promise.resolve([]);
+    const seq = ++this.liftSeq;
+    return new Promise((resolve) => {
+      const timer = window.setTimeout(() => {
+        this.liftWaiting.delete(seq);
+        resolve([]);
+      }, LIFT_ANSWER_MS);
+      this.liftWaiting.set(seq, (items) => {
+        window.clearTimeout(timer);
+        resolve(items);
+      });
+      wv.send(LIFT_QUERY_CHANNEL, at ? { seq, at } : { seq }).catch(() => {
+        this.liftWaiting.get(seq)?.([]);
+        this.liftWaiting.delete(seq);
+      });
+    });
   }
 
   /** The page's zoom factor (1 is 100%). */
@@ -534,6 +588,15 @@ export class TabView implements PagePanel, RoomView {
       if (r.finalUpdate !== false) this.events.onFound?.({ matches: r.matches ?? 0, active: r.activeMatchOrdinal ?? 0 });
     });
     wv.addEventListener('ipc-message', (e) => {
+      if (e.channel === LIFT_ANSWER_CHANNEL) {
+        const answer = parseLiftAnswer(e.args[0]);
+        const waiting = answer ? this.liftWaiting.get(answer.seq) : undefined;
+        if (answer && waiting) {
+          this.liftWaiting.delete(answer.seq);
+          waiting(answer.items);
+        }
+        return;
+      }
       if (e.channel === HOLOML_SHOWN_CHANNEL) {
         this.holomlUrl = typeof e.args[0] === 'string' ? withoutHash(e.args[0]) : null;
         this.holomlBusy = false;
@@ -595,12 +658,16 @@ export class TabView implements PagePanel, RoomView {
       this.capturingMedia = false;
       const wasHoloml = this.isHoloml;
       this.committed = e.url;
+      this.pageGone();
       this.emit({ ...this.currentStatus, url: e.url });
       if (wasHoloml !== this.isHoloml) this.events.onHoloml?.();
       navState();
     });
     wv.addEventListener('did-navigate-in-page', (e) => {
       if (e.isMainFrame) {
+        // A new address in the same document (a page that changes its address as it goes) is another page; a
+        // jump to a place in it (#name) is not.
+        if (withoutHash(e.url) !== withoutHash(this.committed)) this.pageGone();
         this.committed = e.url;
         this.emit({ ...this.currentStatus, url: e.url });
       }
@@ -647,6 +714,7 @@ export class TabView implements PagePanel, RoomView {
       this.events.onSettled();
     });
     wv.addEventListener('render-process-gone', () => {
+      this.pageGone();
       this.shimmer.removeAttribute('data-visible');
       this.showError(CRASHED_CARD, this.currentStatus.url);
       this.emit({ ...this.currentStatus, state: 'crashed', message: CRASHED_CARD.title });

@@ -5,9 +5,11 @@ usage counts. This page lists everything it keeps on your computer and
 everything it sends over the network. It is updated whenever that
 changes (AGENTS.md rule 9).
 
-Status: as of 2026-10-08 (milestone 26): ad and tracker blocking,
+Status: as of 2026-10-09 (milestone 28): ad and tracker blocking,
 encrypted DNS, and HTTPS-only are on by default. The layers view
-and the instrument panel send nothing anywhere.
+and the instrument panel send nothing anywhere. Lifting a picture into
+the room fetches nothing; lifting a 3D model fetches its file from the
+page's own site (see below).
 
 ## Blocked by default
 
@@ -148,8 +150,13 @@ recorded until it can be, and the Library says so.
 Kept in memory only, never on disk:
 - the shield's per-page lists of what was blocked, forgotten with the
   page or tab;
-- the positions of the images on the page in front (for a later 3D
-  feature), forgotten with the page or tab;
+- the positions of the images and 3D models on the page in front,
+  forgotten with the page or tab;
+- pictures and 3D models you lift into the room (milestone 28): a
+  picture is captured from the page as it shows it, a model is the file
+  it names; both are forgotten when that page goes (you leave it, its
+  tab sleeps or closes), a private tab's the same, and never written to
+  disk;
 - the instrument panel's readouts for each tab: its last 300 requests
   and console messages, and up to 300 requests still waiting for an
   answer (beyond that the oldest waiting one is no longer followed),
@@ -275,6 +282,17 @@ the list updates can be turned off:
   clicks and keys on the page, nothing else. Its sounds play only after your first click or key on the page,
   and the tab's mute applies. The instrument panel's Scene part reads
   the scene from the page in memory only, and keeps nothing.
+- A 3D model you lift into the room (milestone 28), only when you lift
+  it ("Lift into the room" in the right-click menu, the Lift button, or
+  Ctrl+Shift+U), and only from the site of the page that shows or links
+  it: its file and the files it names on that site, through that page's
+  own session, after the shield, so the shield and encrypted DNS apply
+  as for the page's own requests. A file it names on another site is not
+  fetched (the model is shown without it), and a model on another site
+  is not lifted. Each file at most 32 MB, all of a model's at most
+  128 MB, given up after 30 seconds. The model is read in a part of the
+  browser that cannot reach the network at all. A picture you lift is
+  not fetched: it is captured from the page as it shows it.
 - HoloML's examples: the start panel's "Try HoloML" links (milestones 16
   and 17) and the HoloML examples section (the menu, or Ctrl+Shift+E)
   open the example sites HoloML publishes with GitHub Pages at
