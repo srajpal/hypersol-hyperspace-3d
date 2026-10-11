@@ -3,7 +3,8 @@
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-10-10 (milestones 1 to 28 accepted, milestone 28,
 lift to 3D, on 2026-10-10, prompt 201; no more milestones (prompt 203):
-work continues from GitHub issues; the fixes of 2026-10-09 below;
+work continues from GitHub issues, the first of them #75, full screen
+and pointer lock, accepted 2026-10-10; the fixes of 2026-10-09 below;
 the review's last items in TODO.md, "The review's last items". The
 roadmap is in TODO.md).
 
@@ -71,6 +72,9 @@ state; this is a summary.
   203): no more milestones; work continues from GitHub issues. The installers (30 and 31) were dropped in prompt 172:
   the project stays source only, and a fork may package its own build
   (CONTRIBUTING.md, "Making your own build").
+- Since the milestones, GitHub issues: #75, full screen and pointer lock
+  for pages with the browser's own notice (accepted 2026-10-10, pull
+  request #83).
 - The logo direction is chosen (concept 4d in
   docs/branding/logo-concepts/); there are no app icons yet (the
   installers that would have brought them were dropped, prompt 172).
@@ -79,13 +83,34 @@ state; this is a summary.
   HyperSpace 3D Authors" and "The HoloML Authors" (AUTHORS files).
 
 Two repositories, kept as sibling folders (never one inside the other).
-Both main branches are up to date: milestone 26 is merged here (#63,
-2026-10-08), and HoloML 0.3 in holoml (#39, released as v0.3.0 with
-#40):
+Both main branches are up to date: issue #75 is merged here (#83,
+2026-10-10), and HoloML 0.3's second edition in holoml (#44, tagged
+v0.3.1; then #45, no more milestones):
 
 - Browser: https://github.com/srajpal/hypersol-hyperspace-3d (renamed
   from hypersol-websurfer-3d; GitHub redirects the old address)
 - Language: https://github.com/srajpal/holoml
+
+## GitHub issue #75, full screen and pointer lock (2026-10-10)
+
+Accepted 2026-10-10. Plan and build approved with the recommended
+answers to Q1 to Q5, on the branch `issue-75-fullscreen`, merged as #83
+with every automatic build passed. TODO.md, "Issue #75", has the plan,
+the decisions made while building, and the results.
+
+- A page may go full screen (the whole screen) and hold the pointer
+  after a real click, with no question: shared/fullscreen.ts (the rules
+  and the notice's words) and main/permissions.ts.
+- Escape always leaves, seen by the main process before the page, and
+  so do a tab switch, closing the tab, and leaving the page; afterwards
+  the window, the page, and the camera are as before
+  (main/fullscreen.ts; mendWindow puts the window's bounds back on
+  Linux). Pointer lock is reported by preload/fullscreen.ts.
+- The notice, the browser's own, in the top layer over the page:
+  renderer/hud/hold-notice.ts, for 4 seconds and again at the top edge.
+- Checks FS1 to FS8 in tests/e2e/issue-75.e2e.ts; FS5 (pointer lock)
+  needs `HYPERSOL_TEST_SHOW=1` and is skipped in hidden windows.
+- The Android app is unchanged (Q5).
 
 ## Milestone 28, lift to 3D (2026-10-09 and 10, prompts 197 to 201)
 
@@ -109,9 +134,9 @@ made while building, and the results.
   menu, the Lift button, and Ctrl+Shift+U to capture, fetch, and decoding.
 - Checks LT1 to LT9 in tests/e2e/m28.e2e.ts (fixtures in
   tests/fixtures/lift, made by make.mjs); LT10 is the full run.
-- Still to run again on this computer: the five checks that use the
-  system clipboard (it was out of use for every program on 2026-10-09;
-  they pass on Linux and in the automatic builds), and C9's frame rate.
+- Run again since: the five checks that use the system clipboard
+  passed in the full run of 2026-10-10 (issue #75); C9's frame rate is
+  issue #82.
 - How to resume: from the GitHub issues (below, "How to resume").
 
 ## Milestone 27, free camera and room navigation (2026-10-09, prompts 191 to 196)
@@ -224,7 +249,7 @@ and the results so far.
   takes them out of the page's JavaScript (viewer/guard.ts; TODO.md,
   "After milestone 25").
 
-## Milestone 24, HyperSpace 3D for Android (2026-10-05 to 2026-10-07, prompts 152 to 160)
+## Milestone 24, HyperSpace 3D for Android (2026-10-05 to 2026-10-07, prompts 152 to 161)
 
 Merged into main (pull request #53). The owner checked everything on the
 tablet (prompt 160); the one fault, blurred tab cards, is fixed (the
@@ -267,7 +292,7 @@ plan, the decisions made while building, and the results so far.
   pages were served from this computer over USB (`adb reverse`) by a
   small server in the session's scratch folder, not the repository.
 
-## Milestone 23, HoloML for VS Code, accepted (2026-10-03, prompt 146)
+## Milestone 23, HoloML for VS Code, accepted (2026-10-05, prompt 153)
 
 A VS Code extension for HoloML, in the holoml repository's
 packages/vscode, planned 2026-10-02 (the recommended answers to Q1 to
@@ -639,7 +664,7 @@ site in the built app). The owner accepted the milestone (prompt
 122). The AGENTS.md wording for the README's pictures is approved and
 in (prompt 119). For an owner decision later: ARCHITECTURE.md section
 10, item 4 (large scenes: shaders compiled on the page's main thread,
-every model a Tab stop).
+every model a Tab stop; resolved after milestone 25, prompt 172).
 
 Worth knowing:
 
@@ -673,10 +698,12 @@ Worth knowing:
 1. AGENTS.md (the rules; CLAUDE.md imports it)
 2. BRIEF.md (what is being built and for whom)
 3. ARCHITECTURE.md (how, and what is still open)
-4. TODO.md (the roadmap, and the current milestone's tasks and checks)
+4. TODO.md (milestones 1 to 28 and the GitHub issues worked since:
+   each one's tasks, checks, and results)
 5. README.md and CONTRIBUTING.md (the public face, and how to build and
    test)
-6. PROMPTS.md (every owner prompt, lightly edited, in order)
+6. PROMPTS.md (the owner's prompts up to 203, lightly edited, in
+   order; later ones only when the owner asks)
 
 The holoml repository has its own README.md and AGENTS.md, which defer
 to this repository for rules and the prompt log.
@@ -723,7 +750,7 @@ to this repository for rules and the prompt log.
 - Versions: 0.9.0 is the source-only developer preview; no installers
   are planned (prompt 172).
 
-## Open items (need an owner decision when their milestone comes)
+## Open items (need an owner decision)
 
 - Product gaps noted in the 2026-09-24 review and not yet scheduled:
   onboarding, and a touch equivalent for closing tabs on the desktop
@@ -734,29 +761,31 @@ to this repository for rules and the prompt log.
   published sites and specification) on 2026-10-09 (prompt 186). The
   documents' review of prompt 185 is merged (#65 here, holoml #41;
   prompt 187).
-  Proposed, not placed in a milestone: a run of the frame-rate
-  and load-time budgets on a machine with a graphics card in the
-  automatic builds (TODO.md, after the roadmap).
+  A run of the frame-rate and load-time budgets on a machine with a
+  graphics card in the automatic builds is now GitHub issue #80.
 
 ## How to resume
 
-1. Log the owner's prompt in PROMPTS.md before any work (AGENTS.md,
+1. Record a prompt in PROMPTS.md only when the owner asks (AGENTS.md,
    Prompt log): read the last heading and use the next number.
-2. Do only what the prompt approves (AGENTS.md rule 2). Tick tasks and
-   record check results in TODO.md as they actually run.
+2. Do only what the owner has approved for the issue (AGENTS.md rule
+   2). Tick tasks and record check results in TODO.md as they actually
+   run.
 3. Any new package needs approval first (rule 4).
 4. Update README.md, ARCHITECTURE.md, TODO.md, and this file whenever a
    decision or the project state changes. The Testing section of
    AGENTS.md lists only commands that have actually run.
-5. Commit after each completed change. Push before and after each
-   milestone, otherwise only when the owner asks; remind them when five
-   or more commits are waiting.
+5. Commit after each completed change. Push when an issue's work is
+   ready for its pull request, and when the owner asks (rule 11); remind
+   them when five or more commits are waiting.
 6. One active session per working tree. A second session works in the
    other folder or waits.
-7. At the end of each milestone, save screenshots with
-   `MILESTONE=mN pnpm screenshots`, add them to docs/progress.md, take
-   the previous desktop set out of the tree, and refresh the README's
-   four with `pnpm screenshots:readme` (AGENTS.md, Working agreement).
+7. When an issue's change shows on screen, update the screenshots it
+   changes in the newest set, docs/screenshots/m28 (`MILESTONE=m28 pnpm
+   screenshots` makes the whole set again), and docs/progress.md where
+   it shows them; refresh the README's four with `pnpm
+   screenshots:readme` when the change shows in them (AGENTS.md,
+   Working agreement).
 8. Next: the GitHub issues of both repositories (prompt 203: no more
    milestones). Done: #75, full screen and pointer lock (accepted
    2026-10-10, pull request #83; TODO.md, "Issue #75", has its plan,
@@ -766,12 +795,17 @@ to this repository for rules and the prompt log.
    sleep and then look), #80 (the budgets with a graphics card in the
    automatic builds), #81 (macOS), #82 (C9 and L9 on the owner's
    computer; I8 and m17's development-run check to watch too), and #84
-   (the browser's own full screen, F11).
+   (the browser's own full screen, F11). In holoml, open on 2026-10-10:
+   enhancements #46 to #52 (forms and richer controls, reusable
+   components and styles, object descriptions and states, pointer and
+   drag events, more of the scene API, adaptive detail and loading
+   feedback, rich media and screen layout).
    One issue at a time, approved by the owner first (AGENTS.md rule 2);
    check Electron's security releases at least monthly and before any
    tag (rule 13; last checked 2026-10-10, 44.7.0). Prompts are recorded
    only when the owner asks. The three advisories of 2026-10-09 are
-   published, and the merged branches deleted (2026-10-10).
+   published, and the merged branches deleted (2026-10-10) but for
+   `issue-75-fullscreen`, merged as #83, still on GitHub.
 
 ## Not done yet, on purpose
 

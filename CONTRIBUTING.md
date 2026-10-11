@@ -46,21 +46,25 @@ fails on file paths over Windows' 260-character limit.
 | `pnpm lint` | ESLint |
 | `pnpm typecheck` | TypeScript, every package |
 | `pnpm test` | Unit tests (Vitest), next to the code as `*.test.ts` |
-| `pnpm test:e2e` | Builds the app and drives it with Playwright (about twenty minutes). Its windows open off screen and never take focus; set `HYPERSOL_TEST_SHOW=1` to watch. On Linux without a desktop: `xvfb-run -a pnpm test:e2e` |
+| `pnpm test:e2e` | Builds the app and drives it with Playwright (about twenty-five to thirty minutes). Its windows open off screen and never take focus; set `HYPERSOL_TEST_SHOW=1` to watch. On Linux without a desktop: `xvfb-run -a pnpm test:e2e` |
 | `pnpm test:linux` | With Docker, on any computer: all of the above on Linux, as GitHub's Linux machines run them (Ubuntu 24.04, 4 processors, 16 GB, no graphics card), in a container with a fresh copy of the repository. `pnpm test:linux tests/e2e/m1.e2e.ts` runs chosen end-to-end files |
 
-Every pull request, and every push to main, runs all of these on
-Windows and Linux in GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)),
+Every pull request, and every push to main, runs all of these but
+`pnpm test:linux` on Windows and Linux in GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)),
 the end-to-end checks in four parts side by side on each system
 (`HYPERSOL_E2E_PART=1` to `4`; see vitest.e2e.config.ts). A change to
 documents only (the `*.md` files at the top and `docs/`) skips them.
+The same builds also run lint, the type check, and the unit tests on
+Node 26, and build and test the Android app.
 Please make sure they pass before asking for a review.
 
 Where things are: the app in `apps/browser` (main process, preloads, the
 3D shell, and the HoloML viewer), shared 3D maths in `packages/scene-core`, the themes in
 `packages/themes`, a copy of HoloML's parser and checker in
 `packages/holoml` (change HoloML in its own repository, tag it, and run
-`pnpm holoml:sync`), end-to-end tests and their fixture pages in `tests/`.
+`pnpm holoml:sync`), HyperSpace 3D for Android in `apps/android` (its
+own [README](apps/android/README.md)), end-to-end tests and their
+fixture pages in `tests/`.
 [ARCHITECTURE.md](ARCHITECTURE.md) explains the design, and
 [TODO.md](TODO.md) the roadmap and every check.
 
@@ -78,7 +82,7 @@ Where things are: the app in `apps/browser` (main process, preloads, the
 - AI agents working in this repository follow [AGENTS.md](AGENTS.md).
 - `main` is protected: it cannot be force-pushed or deleted, and a pull
   request is merged once its "All checks" job passes (Windows and Linux,
-  each in four parts).
+  each in four parts, Node 26, and Android).
 
 ## Making your own build
 

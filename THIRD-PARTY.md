@@ -7,9 +7,10 @@ used only for building and testing (TypeScript, Vite, Vitest, Playwright,
 ESLint, and the like) are not part of the app and are listed in the
 package files.
 
-Checked 2026-09-30: the Runtime table against the installed packages
+Checked 2026-10-10: the Runtime table against the installed packages
 (each one's package.json version and licence field) and pnpm-lock.yaml,
-and the test fixtures against each example's own models/CREDITS.md. The
+the Android table against its Gradle build, and the test fixtures
+against each example's own models/CREDITS.md. The
 filter lists' licences are as recorded on 2026-09-26 (their sources were
 not read again), and the pictures in `docs/` were not gone through
 again.
@@ -20,18 +21,32 @@ again.
 |---|---|---|---|
 | [Electron](https://www.electronjs.org/) | 44.7.0 | MIT; it includes Chromium, Node.js, and V8 under their own licences (BSD-3-Clause and others), listed in Electron's `LICENSES.chromium.html` | The browser engine and the app shell |
 | [Three.js](https://threejs.org/) | 0.186.1 | MIT | The 3D room, and the HoloML viewer (with the loaders and controls from its examples) |
-| The decoders of compressed glTF files, as three.js carries them in its examples (examples/jsm/libs): [Draco](https://github.com/google/draco)'s glTF decoder (draco/gltf), the [Basis Universal](https://github.com/BinomialLLC/basis_universal) transcoder (basis), and [meshoptimizer](https://github.com/zeux/meshoptimizer)'s decoder (meshopt_decoder.module.js) | as in three.js 0.186.1 | Apache-2.0 (Draco, Google; Basis Universal, Binomial), MIT (meshoptimizer, Arseny Kapoulkine) | Reading HoloML models whose geometry or pictures are compressed (milestone 25) |
+| The decoders of compressed glTF files, as three.js carries them in its examples (examples/jsm/libs): [Draco](https://github.com/google/draco)'s glTF decoder (draco/gltf), the [Basis Universal](https://github.com/BinomialLLC/basis_universal) transcoder (basis), and [meshoptimizer](https://github.com/zeux/meshoptimizer)'s decoder (meshopt_decoder.module.js); for KTX2 pictures, [KTX-Parse](https://github.com/donmccurdy/KTX-Parse) (ktx-parse.module.js) and [zstddec](https://github.com/donmccurdy/zstddec) (zstddec.module.js, which carries the [Zstandard](https://github.com/facebook/zstd) decompressor, compiled) | as in three.js 0.186.1 | Apache-2.0 (Draco, Google; Basis Universal, Binomial), MIT (meshoptimizer, Arseny Kapoulkine; KTX-Parse and zstddec, Don McCurdy), BSD-3-Clause (Zstandard, Meta Platforms) | Reading HoloML models whose geometry or pictures are compressed (milestone 25) |
 | [Lit](https://lit.dev/) (lit and lit-html 3.3.3, lit-element 4.2.2, @lit/reactive-element 2.1.2, @lit-labs/ssr-dom-shim 1.6.0) | 3.3.3 | BSD-3-Clause | The top bar, panels, and other controls |
 | [Ghostery adblocker](https://github.com/ghostery/adblocker) (@ghostery/adblocker, -electron, -electron-preload, -content, and -extended-selectors, all 2.18.2; @ghostery/url-parser 1.3.1) | 2.18.2 | MPL-2.0 | Ad and tracker blocking, element hiding |
 | @remusao/guess-url-type, small, and trie (2.1.0); smaz, smaz-compress, and smaz-decompress (2.2.0); all used by the adblocker | 2.1.0 to 2.2.0 | MPL-2.0 | Parts of the adblocker |
 | [tldts](https://github.com/remusao/tldts) (tldts-experimental, tldts-core) | 7.4.15 | MIT | Site names for the adblocker |
 | @types/trusted-types | 2.0.7 | MIT | Type definitions used by Lit |
-| [HoloML](https://github.com/srajpal/holoml) parser and checker, and its scene API in Web IDL (packages/holoml, copied from the repository; the tag or branch and commit are in its SOURCE.json) | 0.3 (its first edition, 2026-10-07; HoloML's own packages are at 0.2.2 until 0.3 is tagged) | Apache-2.0, The HoloML Authors | Reading and checking HoloML pages |
+| [HoloML](https://github.com/srajpal/holoml) parser and checker, and its scene API in Web IDL (packages/holoml, copied from the repository; the tag or branch and commit are in its SOURCE.json) | 0.3.1 (HoloML 0.3, second edition, 2026-10-09; tag v0.3.1) | Apache-2.0, The HoloML Authors | Reading and checking HoloML pages |
 
 The Mozilla Public License 2.0 applies file by file: the adblocker's
 files stay under MPL-2.0 and their source is available from the link
 above; using them does not change the licence of HyperSpace 3D's own
 code.
+
+## Android app
+
+HyperSpace 3D for Android (apps/android, milestone 24) carries the same
+web parts as the desktop app (the room's page with Three.js and Lit,
+and the HoloML viewer with its decoders and the HoloML copy, from the
+table above), and these libraries of its own, from its Gradle build
+(apps/android/app/build.gradle.kts):
+
+| Project | Version | Licence | Used for |
+|---|---|---|---|
+| [AndroidX Core KTX](https://developer.android.com/jetpack/androidx/releases/core) (androidx.core:core-ktx), with the AndroidX libraries it brings | 1.17.0 | Apache-2.0 | Android's basic helpers |
+| [AndroidX WebKit](https://developer.android.com/jetpack/androidx/releases/webkit) (androidx.webkit:webkit) | 1.14.0 | Apache-2.0 | The pages' WebViews |
+| [Kotlin](https://kotlinlang.org/) standard library | as the Android Gradle Plugin brings | Apache-2.0 | The app's language |
 
 ## Test fixtures
 
@@ -160,9 +175,15 @@ HoloML's examples (tests/fixtures/holoml, copied by `pnpm holoml:sync`):
   © 2017 Cesium, and a picture of "Chronograph Watch" (its
   carbon-fibre normal map), © 2025 Darmstadt Graphics Group GmbH, all
   under CC BY 4.0, as its CREDITS.md says.
-- Some checks use Blockworld's blocks in pages of their own
-  (walls.holoml, shadows.holoml, textures.holoml, choice.holoml, and
-  environment.holoml).
+- Some checks use Blockworld's blocks in pages of their own (in
+  tests/fixtures/holoml: walls, shadows, textures, choice, environment,
+  environment-large, actions, caustics, places, plan, water, and
+  review-134-ambient, -gravity, -hidden, -lights, and -needs, each a
+  .holoml page).
+- The lifting checks (tests/fixtures/lift, milestone 28) show the
+  sneaker store's shoe (shoe-midnight.glb and shoe-ember.glb, CC BY 4.0,
+  credited as above) on showcase.html, and Blockworld's gem (CC0) on
+  models.html, from the copies above.
 
 ## Filter lists
 
@@ -193,7 +214,12 @@ Details, sources, and checksums: [apps/browser/resources/filters/NOTICE.md](apps
 
 The app uses the system's own fonts. The images in `docs/` are made for
 this project, except the 2001 to 2003 HyperSol concept screen in
-`docs/history/`, shown as history.
+`docs/history/`, shown as history, and what the screenshots show of
+HoloML's examples: the progress screenshots in docs/screenshots/m28
+and the README's pictures show the examples credited above, among them
+the sneaker store's shoe (58, 59, and 83, the lifted shoe; CC BY 4.0)
+and the ocean tunnel's fish (61 to 63; CC BY 4.0, and the barramundi
+CC0).
 
 The HoloML examples section shows a picture of each example
 (apps/browser/src/renderer/examples/), taken in HyperSpace 3D by `pnpm

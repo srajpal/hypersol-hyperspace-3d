@@ -4,7 +4,8 @@ Product: HyperSol HyperSpace 3D (renamed from HyperSol WebSurfer 3D on
 2026-09-26; see "Rename" at the end).
 
 Status key: **Done**; **Current** (plan approved, build not yet
-approved); **Later** (listed, not approved to build).
+approved); **Later** (listed, not approved to build); **Removed**
+(taken off the roadmap).
 Run and test steps are "not checked yet" until they have actually run.
 Plan approved 2026-09-24.
 
@@ -41,7 +42,7 @@ Plan approved 2026-09-24.
 | 27 | Free camera and room navigation | Move freely around the room | Done (accepted 2026-10-09, prompt 196; moved before the installers, prompt 129; numbered 27 since 2026-10-05) |
 | 28 | Lift to 3D | Images and 3D models on 2D pages become objects | Done (accepted 2026-10-10, prompt 201; numbered 28 since 2026-10-05) |
 | 29 | Polish | Custom font, sound design, theme editor, motion tuning. (review, 2026-09-30) A notice of the browser's own for full screen and pointer lock, saying so and how to leave (both are refused until then); the shell checked with a screen reader, and with an input method | Removed (prompt 203): its two needed items are GitHub issues #75 and #76; the rest is polish for later or a fork |
-| — | Further out | HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS, and Android phones (Android tablets are milestone 24) | Later |
+| — | Further out | More HoloML scripting, extensions, sync, theme marketplace, Tor or VPN, VR, iOS, and Android phones (Android tablets are milestone 24) | Later |
 
 Milestones 1 to 11 built the browser. On 2026-09-26 (prompts 54 to 58)
 the owner chose to release it as source for developers first (milestone
@@ -147,9 +148,10 @@ design, a theme editor, motion tuning).
   writing docs/privacy.md, three-letter pieces of a deleted visit left
   in the history search index, was closed the same day: schema 5 sets
   the index's own secure-delete; scrub.test.ts checks it.)
-- Proposed, not placed in a milestone (for the owner to place): a run
-  of the frame-rate and load-time budgets on a machine with a graphics
-  card in the automatic builds. Today GitHub's machines draw in
+- Proposed, not placed in a milestone (for the owner to place; since
+  prompt 203 GitHub issue #80): a run of the frame-rate and load-time
+  budgets on a machine with a graphics card in the automatic builds.
+  Today GitHub's machines draw in
   software, so the budgets are only logged there, and no build anywhere
   but the owner's computer can notice the browser getting slower.
 
@@ -4433,7 +4435,8 @@ finished documents.
   milestone 21), with a last job, "All checks", that passes only when
   every part has; no check is dropped or changed. Each part selects its
   files on this computer (`vitest list`); not checked yet on GitHub,
-  which needs a push. The review's findings, and what else would
+  which needs a push (since: run in four parts on GitHub for every pull
+  request). The review's findings, and what else would
   shorten the builds (each needing the owner's decision), are in
   REVIEW-2026-09-30.md, not committed, as it lists weaknesses not yet
   fixed.
@@ -6158,7 +6161,8 @@ None. Three.js (installed) has the glTF loader the viewer uses already.
   that, every part passed; #73 merged, and the owner accepted the
   milestone (prompt 201). Still to be run again on this computer: the
   five clipboard checks (once its clipboard works), and C9; L9 is
-  watched.
+  watched. Since: the clipboard checks passed in the full run of
+  2026-10-10 (issue #75); C9 and L9 are issue #82.
 
 ## Issue #75: full screen and pointer lock
 
@@ -6338,7 +6342,8 @@ so and how to leave, where no page can hide it.
   review-134-main, and issue-75 run again, all pass but C9.
 - On Linux (`pnpm test:linux`): issue-75, review-134-main, and m1 pass,
   FS5 skipped (with the mending of the window's size above).
-- Not checked yet: the automatic builds of the pull request.
+- The automatic builds of pull request #83: every part passed; #83
+  merged, closing #75, and the owner accepted the issue (2026-10-10).
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 

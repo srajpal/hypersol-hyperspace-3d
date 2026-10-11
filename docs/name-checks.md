@@ -26,11 +26,10 @@ lawyer are worth it before any commercial use.
   other fields.
 - The extension: `.holo` is not unique. Operating systems and browsers
   should not rely on the extension alone: a HoloML page is identified by
-  its media type when served over the web (to be defined in the HoloML
-  spec, milestone 13) and by its root element when opened from disk.
-  The owner chose `.holoml`, which nothing else uses and which matches
-  the name (prompt 63); the media type is `model/vnd.holoml` (HoloML
-  SPEC.md, section 2).
+  its media type when served over the web and by its root element when
+  opened from disk. The owner chose `.holoml`, which nothing else uses
+  and which matches the name (prompt 63); the media type is
+  `model/vnd.holoml` (HoloML SPEC.md, section 4, "Files").
 
 ## Sources
 

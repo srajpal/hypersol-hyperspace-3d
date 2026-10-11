@@ -1,6 +1,7 @@
 # HyperSol HyperSpace 3D: progress
 
-What each finished milestone added, with screenshots of the main screens.
+What each finished milestone added, with screenshots of the main screens,
+and the GitHub issues worked since the last of them.
 Moved here from the README on 2026-09-26 (owner, prompt 47).
 
 
@@ -18,8 +19,8 @@ for milestone 26 commit
 and for milestone 27 commit
 [55a5d0c](https://github.com/srajpal/hypersol-hyperspace-3d/tree/55a5d0c7e391210474d735c932cdc7a8eb2ec0a2/docs/screenshots/m27)),
 so a copy of the repository does not carry every set (the review of
-2026-09-30, H6; owner, prompt 160). The roadmap and the current
-milestone's tasks and checks are in [TODO.md](../TODO.md).
+2026-09-30, H6; owner, prompt 160). The roadmap, and each milestone's
+and issue's tasks, checks, and results, are in [TODO.md](../TODO.md).
 
 **Milestone 1: a live page in the 3D room.** A real website on a tilted
 panel, clicks and typing working.
@@ -273,7 +274,7 @@ them, and the nearest come to eat; click a fish to read about it.
 
 ![Feeding: flakes falling from the surface, two mackerel at them, and more fish coming](https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/64de0da067ade4d27a8b28e9e76d4d208aa9ebad/docs/screenshots/m21/63-aquarium-feeding.png)
 
-**Milestone 22: HoloML's documentation** (built 2026-09-29).
+**Milestone 22: HoloML's documentation** (accepted 2026-10-07).
 HoloML documented to recognised standards: its specification in the
 form of W3C specifications, with its grammar in ABNF and RELAX NG and
 its scene API in Web IDL, and guides organised as tutorials, how-to
@@ -375,3 +376,12 @@ turns it, a click brings it nearer, and its close button puts it back.
 ![A made-up shop page: a 3D shoe brought nearer in front of the page and turned to show its side, the other shoe and three pictures in the arc](screenshots/m28/83-lifted-shoe-nearer.jpg)
 
 ![Daylight, looking around from the left of the desk: the two shoes and the three pictures stand beside the page, seen from the side](screenshots/m28/84-daylight-lifted-from-the-side.jpg)
+
+**GitHub issue #75: full screen and pointer lock** (accepted
+2026-10-10). No more milestones are planned (prompt 203); the work
+comes from GitHub issues. A page may now fill the screen (a video
+player's or a game's full-screen button) and hold the mouse pointer,
+after a click on it, with the browser's own notice over the page ("…
+is full screen. Press Esc to leave."), shown again at the top edge. Escape
+always leaves, whatever the page does; so does switching or closing the
+tab. No screenshots were made for it.

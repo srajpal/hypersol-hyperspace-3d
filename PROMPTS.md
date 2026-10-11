@@ -20,8 +20,10 @@ How this record is kept:
   prompt 61). The notes are not part of the prompt.
 - Each entry gives the date, the AI model, and the effort level the tool
   was set to. Images and pasted output are summarised in a line.
-- From 2026-09-24 to 2026-09-26 two agent sessions sometimes ran side by
-  side; the numbering follows the order the prompts were given. Until
+- From 2026-09-24 to 2026-09-28 two agent sessions sometimes ran side by
+  side; the numbering follows the order the prompts were given, except
+  106 to 110 (2026-09-27, from a second session), numbered after 103 to
+  105 when its branch was merged on 2026-09-28. Until
   2026-09-26 the log was kept word for word, with token counts and
   session tags; the owner then asked for this edited form (prompt 57).
 
