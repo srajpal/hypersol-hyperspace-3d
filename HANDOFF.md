@@ -757,22 +757,21 @@ to this repository for rules and the prompt log.
    `MILESTONE=mN pnpm screenshots`, add them to docs/progress.md, take
    the previous desktop set out of the tree, and refresh the README's
    four with `pnpm screenshots:readme` (AGENTS.md, Working agreement).
-8. Now: issue #75, full screen and pointer lock, built on the branch
-   `issue-75-fullscreen`, waiting for the owner's acceptance (TODO.md,
-   "Issue #75", has its plan, decisions, and results). Next: the other
-   GitHub issues of both repositories (prompt 203: no more
-   milestones). Open on 2026-10-10: issues #75 (full screen and pointer lock, with a notice of the
-   browser's own), #76 (the interface checked with a screen reader and an
-   input method), #77 (soft text on the tilted page), #78 (a dropped
-   .holoml file), #79 (checks that sleep and then look), #80 (the budgets
-   with a graphics card in the automatic builds), #81 (macOS), and #82 (C9
-   and L9 on the owner's computer).
+8. Next: the GitHub issues of both repositories (prompt 203: no more
+   milestones). Done: #75, full screen and pointer lock (accepted
+   2026-10-10, pull request #83; TODO.md, "Issue #75", has its plan,
+   decisions, and results). Open on 2026-10-10: #76 (the interface
+   checked with a screen reader and an input method), #77 (soft text on
+   the tilted page), #78 (a dropped .holoml file), #79 (checks that
+   sleep and then look), #80 (the budgets with a graphics card in the
+   automatic builds), #81 (macOS), #82 (C9 and L9 on the owner's
+   computer; I8 and m17's development-run check to watch too), and #84
+   (the browser's own full screen, F11).
    One issue at a time, approved by the owner first (AGENTS.md rule 2);
    check Electron's security releases at least monthly and before any
-   tag (rule 13). Prompts are recorded only when the owner asks. Also
-   the owner's: three draft advisories to publish (private tabs, the
-   Library's passwords; fixed 2026-10-09), and merged branches on
-   GitHub to delete.
+   tag (rule 13; last checked 2026-10-10, 44.7.0). Prompts are recorded
+   only when the owner asks. The three advisories of 2026-10-09 are
+   published, and the merged branches deleted (2026-10-10).
 
 ## Not done yet, on purpose
 
