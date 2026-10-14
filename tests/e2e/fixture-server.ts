@@ -34,6 +34,8 @@ const TYPES: Record<string, string> = {
   '.svg': 'image/svg+xml',
   // Compressed models (milestone 25): a KTX2 picture.
   '.ktx2': 'image/ktx2',
+  // The HoloML viewer for ordinary browsers (issue #91): the decoders' WebAssembly.
+  '.wasm': 'application/wasm',
 };
 
 /** A solid-colour 16×16 PNG, built here so the fixture has no binary file. */
@@ -622,7 +624,8 @@ function handler(req: IncomingMessage, res: ServerResponse, c: Counters): void {
   }
   readFile(file).then(
     (body) => {
-      res.writeHead(200, { 'content-type': TYPES[extname(file)]!, 'cache-control': 'no-store', 'content-length': String(body.length) });
+      // Any site may read a fixture (issue #91: the viewer's host page fetches a page of another site), as GitHub Pages allows.
+      res.writeHead(200, { 'content-type': TYPES[extname(file)]!, 'cache-control': 'no-store', 'content-length': String(body.length), 'access-control-allow-origin': '*' });
       res.end(body);
     },
     () => res.writeHead(404).end(),

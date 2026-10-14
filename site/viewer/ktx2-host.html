@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!--
+      The KTX2 transcoder's page (apps/browser/src/viewer/ktx2-host.ts), as the
+      browser serves it (main/holoml.ts, KTX2_HOST_PAGE and KTX2_HOST_CSP): the
+      viewer frames it, sandboxed, and the Basis transcoder evaluates code in
+      its workers here, so the HoloML page itself stays without that. It runs
+      only its own script, reads only the viewer's files, and holds nothing
+      of any page. Scheme sources rather than 'self', as the frame is of no
+      origin the page shares.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src https: http://127.0.0.1:* http://localhost:* blob: 'unsafe-eval' 'wasm-unsafe-eval'; worker-src blob:; connect-src https: http://127.0.0.1:* http://localhost:* blob: data:; base-uri 'none'; form-action 'none'"
+    />
+    <title>KTX2 picture decoder</title>
+    <script type="module" src="assets/ktx2-host.js"></script>
+  </head>
+  <body></body>
+</html>

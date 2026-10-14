@@ -877,6 +877,38 @@ export async function moveUntil(h: Harness, p: Point, what: string, done: () => 
 }
 
 /**
+ * Drags the pointer from one screen point to another until the drag's
+ * effect shows, as moveUntil moves: on GitHub's Linux machines a drag's
+ * presses and moves can be lost as a click can (issue #30; m14's P3,
+ * 2026-10-14, issue #91's builds). A lost drag has no effect, so dragging
+ * again is safe, and a check that reads the view right after a drag
+ * reads it before the drag has arrived (issue #79), so the effect is
+ * waited for. Each retry is logged.
+ */
+export async function dragUntil(h: Harness, from: Point, to: Point, what: string, done: () => Promise<boolean>): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    await h.shell.mouse.move(from.x, from.y);
+    await h.shell.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(true)))));
+    await h.shell.mouse.down();
+    await h.shell.mouse.move(to.x, to.y, { steps: 8 });
+    await h.shell.mouse.up();
+    try {
+      await waitFor(
+        `${what} (drag ${attempt} of 3 from ${Math.round(from.x)},${Math.round(from.y)} to ${Math.round(to.x)},${Math.round(to.y)})`,
+        done,
+        (v) => v,
+        attempt < 3 ? 4000 : 15_000,
+      );
+      return;
+    } catch (e) {
+      if (e instanceof AppGone || attempt >= 3) throw e;
+      await retried(h, 'drags');
+      console.warn(`[harness] ${what}: the drag did not reach the page; dragging again (attempt ${attempt + 1})`);
+    }
+  }
+}
+
+/**
  * Input the harness sent again because the first had no effect (GitHub
  * issue #30, not yet explained), counted by kind. Each is logged where it
  * happens; one line at the end of each file gives the count, so a run's
@@ -886,7 +918,7 @@ const retries = new Map<string, number>();
 /** What the app drew with when input was first sent again: the software renderer's name, or a graphics card. */
 let retriedWith: string | null = null;
 
-async function retried(h: Harness, kind: 'clicks' | 'pointer moves' | 'presses after a resize'): Promise<void> {
+async function retried(h: Harness, kind: 'clicks' | 'pointer moves' | 'drags' | 'presses after a resize'): Promise<void> {
   retries.set(kind, (retries.get(kind) ?? 0) + 1);
   retriedWith ??= await softwareRenderer(h).then((name) => (name ? `drawing in software (${name})` : 'drawing with a graphics card'), () => null);
 }

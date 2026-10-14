@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--
+      The HoloML viewer for ordinary browsers (the promotion plan's step 4,
+      GitHub issue #91): HyperSpace 3D's own viewer, on a plain page. Give it
+      a HoloML page's address: /viewer/?page=https://example.org/room.holoml
+
+      The content policy stands in for the browser's (apps/browser/src/main/holoml.ts,
+      HOLOML_CSP), as GitHub Pages sets no headers: scripts run only from this
+      site's own origin (so a page of this site, such as HoloML's examples,
+      runs its scripts, and a page of another site shows without them); models,
+      pictures, and sounds load from any https address, or a local http one;
+      WebAssembly for the decoders; the KTX2 transcoder's page may be framed.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; worker-src blob:; connect-src 'self' https: http://127.0.0.1:* http://localhost:* data: blob:; img-src 'self' https: http://127.0.0.1:* http://localhost:* data: blob:; media-src 'self' https: http://127.0.0.1:* http://localhost:* data: blob:; frame-src 'self'; style-src 'unsafe-inline'; base-uri 'self' https: http://127.0.0.1:* http://localhost:*; form-action 'none'"
+    />
+    <title>HoloML viewer</title>
+    <!-- No icon yet, and no request for one. -->
+    <link rel="icon" href="data:," />
+    <style>
+      /* The viewer expects this of its host (apps/browser/src/preload/holoml.ts). */
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0f1e; color: #e8ecf8; font: 15px/1.5 system-ui, "Segoe UI", sans-serif; }
+      body > pre { display: none; }
+      /* The bar over the scene: the page's title and the viewer's two commands. */
+      #bar { position: fixed; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; gap: 12px; padding: 6px 12px; background: rgba(7, 9, 15, 0.82); border-bottom: 1px solid rgba(127, 216, 255, 0.25); }
+      #bar[hidden] { display: none; }
+      #bar a { color: #7fd8ff; text-decoration: none; }
+      #bar a:hover, #bar a:focus-visible { text-decoration: underline; }
+      #bar .brand { font-weight: 600; }
+      #title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      #bar button { font: inherit; color: #e8ecf8; background: #151a2a; border: 1px solid rgba(127, 216, 255, 0.4); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+      #bar button[aria-pressed="true"] { background: #7fd8ff; color: #07090f; }
+      #bar button[hidden] { display: none; }
+      #bar button:focus-visible, #bar a:focus-visible { outline: 2px solid #ff7ad9; outline-offset: 2px; }
+      #notice { position: fixed; left: 12px; bottom: 12px; max-width: 36rem; z-index: 10; padding: 8px 12px; background: rgba(7, 9, 15, 0.82); border: 1px solid rgba(255, 122, 217, 0.5); border-radius: 6px; }
+      #notice[hidden] { display: none; }
+      /* The text view scrolls; the bar's height is left free at the top. */
+      html[data-text-view="true"] body { padding-top: 44px; box-sizing: border-box; }
+      /* A page not shown: what to do instead. */
+      #note { display: grid; place-items: center; min-height: 100%; }
+      #note[hidden] { display: none; }
+      #note > div { max-width: 36rem; padding: 2rem 1.25rem; }
+      #note h1 { color: #7fd8ff; font-weight: 600; font-size: 24px; margin: 0 0 0.75rem; }
+      #note a { color: #7fd8ff; }
+      #note code { background: #151a2a; padding: 0.1em 0.35em; border-radius: 4px; word-break: break-all; }
+    </style>
+  </head>
+  <body>
+    <header id="bar" hidden>
+      <a class="brand" href="https://github.com/srajpal/hypersol-hyperspace-3d">HyperSpace 3D</a>
+      <span id="title"></span>
+      <button id="text-view" type="button" aria-pressed="false" title="Ctrl+Shift+V">Text view</button>
+      <button id="stop" type="button" hidden title="Esc">Stop</button>
+      <a href="https://srajpal.github.io/holoml/">HoloML</a>
+    </header>
+    <div id="notice" role="status" hidden></div>
+    <main id="note">
+      <div>
+        <h1 id="note-title">HoloML viewer</h1>
+        <p id="note-text">Loading…</p>
+        <p id="note-help" hidden>
+          Give it a HoloML page's address: <code>?page=https://example.org/room.holoml</code>. The page may be on any
+          site that allows cross-origin reads, or served from this computer. This is the viewer of
+          <a href="https://github.com/srajpal/hypersol-hyperspace-3d">HyperSpace 3D</a>, an open-source 3D browser,
+          on a plain page; the <a href="https://srajpal.github.io/holoml/">HoloML examples</a> open here with one click.
+        </p>
+      </div>
+    </main>
+    <script type="module" src="host.js"></script>
+  </body>
+</html>

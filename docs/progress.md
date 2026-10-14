@@ -385,3 +385,14 @@ after a click on it, with the browser's own notice over the page ("…
 is full screen. Press Esc to leave."), shown again at the top edge. Escape
 always leaves, whatever the page does; so does switching or closing the
 tab. No screenshots were made for it.
+
+**GitHub issue #91: the HoloML viewer for ordinary browsers** (the
+promotion plan's step 4, 2026-10-14). The browser's own HoloML viewer
+on a plain web page, published from this repository's new site at
+https://srajpal.github.io/hypersol-hyperspace-3d/viewer/: `?page=`
+followed by a HoloML page's https address opens it in Chrome, Firefox,
+or Safari, with a thin bar for the page's title, the text view, and
+Stop. A page's scripts run only when the page is on that site itself,
+so the HoloML examples work in full there, and a page of another site
+shows without its scripts. Nothing on the browser's screen changes, so
+the screenshots are as they were.

@@ -6389,6 +6389,170 @@ was full screen. Whether the tab closed is not in the log.
   software m19 9 (2 skipped), m20 9 (1), m21 8 (3), the budgets skipped
   as before.
 
+## Issue #91: the HoloML viewer for ordinary browsers (promotion plan, step 4)
+
+Status: built, in its pull request (2026-10-14). The plan below was
+approved by the owner on 2026-10-14 with the recommended answers to Q1
+to Q6 (Q4 not met as decided; see below). holoml's half,
+the links from its site and examples, is holoml issue #55, after this.
+
+### What there is today
+
+A HoloML page needs HyperSpace 3D, which needs a build from source, so
+nobody can open an example by link. The viewer is one built bundle
+(apps/browser/out/renderer/assets: viewer.js, the chunks it imports,
+and the decoders' WebAssembly, with the KTX2 transcoder in a framed
+page of its own under a looser policy), and every path in it is
+relative to viewer.js. The desktop's page preload and HyperSpace 3D
+for Android host it the same way: the page's text in a hidden `pre`,
+the viewer's script added, one message answered with a port (the
+private line), over which the host sends stop, the text view, behind,
+or in front, and hears busy, drawn, the text view, and the
+description. The test hooks exist only when a preload marks the
+script element. What a page may load comes from "the page's own
+site", read from the document's base address, with the browser's
+content policy enforcing the same.
+
+### How it works
+
+- `site/`, the folder step 9 chose for the landing page, holds the
+  site: `site/build.mjs` copies the viewer's files that its two entry
+  files reach (viewer.js and ktx2-host.js, the chunks they import, and
+  the WebAssembly they name; not the shell's bundle, not lift-host.js)
+  into `_site/viewer/assets/`, with the host page (`viewer/index.html`
+  and `host.js`), the transcoder's page (`viewer/ktx2-host.html`), and
+  a short home page until step 9. `pnpm site:build` builds the app
+  first. The folder is emptied only when the builder made it.
+- The host page takes `?page=` with an https address (or an http one
+  on this computer, for a page served locally), fetches it with no
+  credentials, reads at most 2 MB (the viewer's own limit of text),
+  and refuses anything else with a plain message and the help text; a
+  redirect is followed, and where it ends up must pass the same rule
+  (a review comment on the pull request, CodeRabbit), as that address
+  becomes the base of what the page names.
+  Then it sets a `base` element to the page's address, puts the text
+  in the `pre`, loads the viewer, answers the line, and shows a thin
+  bar: the page's title (from the scene's facts once drawn), Text
+  view (Ctrl+Shift+V), Stop while loading (Esc), and links to
+  HyperSpace 3D and HoloML. Its state is on the `html` element's data
+  attributes (state: loading, drawn, refused; busy; text view) for
+  styles and checks. It sends nothing anywhere and keeps nothing.
+- The content policy, in a `meta` tag (GitHub Pages sets no headers):
+  scripts from the site's own origin only, with `wasm-unsafe-eval`;
+  fetches, pictures, and sounds from any https address or a local http
+  one; the transcoder's page framed from the site. So a page on
+  srajpal.github.io (the examples) runs its scripts, and a page of
+  another site shows with its models (if that site allows cross-origin
+  reads) and without its scripts: a `securitypolicyviolation` for a
+  script puts a line at the bottom saying so. The transcoder's page
+  uses scheme sources, as its sandboxed frame has no origin to call
+  'self'.
+- Without WebGL 2 the viewer's own card says the page cannot be drawn
+  ("This computer can't draw 3D scenes", as in the browser, P11), and
+  the host's line at the bottom says why. The text view planned for
+  Q4 turned out to need the scene, which the viewer builds only once
+  it can draw (HolomlView makes its renderer first, and the outline
+  after), so offering it without WebGL 2 is a change to the viewer,
+  which waits for the owner's own approval (and would serve the
+  browser the same).
+- One change in the viewer itself (decoders.ts): the KTX2 transcoder's
+  workers run in the transcoder's framed page wherever the page's
+  content policy forbids evaluating code (a probe, `new Function('')`,
+  refused by the policy), not only where the viewer comes from another
+  address than the page, which had been the desktop's own case. On the
+  web host the viewer and the page share an origin, so three.js's own
+  workers ran and were refused by the policy, and a KTX2 picture never
+  arrived (found by WV6). The desktop (another address) and Android
+  (no policy) are as before.
+- `.github/workflows/pages.yml` publishes `_site/` from main after
+  lint, the type check, and the unit tests pass, with the actions
+  pinned as in ci.yml; the end-to-end checks run in ci.yml on the same
+  push. The owner turns Pages on once (Settings, Pages, source GitHub
+  Actions); the site is then https://srajpal.github.io/hypersol-hyperspace-3d/
+  and the viewer https://srajpal.github.io/hypersol-hyperspace-3d/viewer/.
+
+### Decisions (the owner, 2026-10-14, the recommended answers)
+
+- Q1, other sites' scripts: not run in this version; a page of another
+  site renders without them, and the host says so. A sandboxed frame
+  of no origin, which could run them safely, can come later.
+- Q2, where the viewer lives: the browser repository's own Pages site,
+  built from the code that makes it; holoml links to it. Not a bundle
+  downloaded by holoml's workflow.
+- Q3, which addresses: any https address, and http on this computer.
+- Q4, without WebGL 2: the text view with a note. Not done as decided:
+  see "How it works" above; for now the viewer's card and the host's
+  line, and the text view waits for a viewer change of its own.
+- Q5, the automatic checks: a plain Electron window (Chromium without
+  the browser's preloads, hooks, or sessions), no new package.
+  Firefox and Safari by hand, Safari on the owner's Mac.
+- Q6, the look: the Nebula colours and the examples' fallback pages'
+  style.
+
+### Tasks
+
+- [x] site/build.mjs, site/index.html, site/viewer/index.html,
+      host.js, and ktx2-host.html; `pnpm site:build`; `_site/` and the
+      checks' copy ignored
+- [x] .github/workflows/pages.yml
+- [x] The fixture server answers `.wasm`, and lets any site read a
+      fixture (CORS), as GitHub Pages does
+- [x] tests/e2e/web-viewer.e2e.ts (WV1 to WV8), in part 1
+- [x] Documents: README, ARCHITECTURE.md, docs/privacy.md, AGENTS.md
+      (Testing), CHANGELOG.md, HANDOFF.md, docs/progress.md
+- [ ] The pull request (open), and Pages turned on by the owner
+- [ ] holoml #55: the links from the examples, the README, and the
+      docs index, and a how-to page
+
+### Checks (named WV, for the web viewer)
+
+| # | Check | Pass when |
+|---|---|---|
+| WV1 | The showroom | Opened through the host page from the site, it draws (the scene's facts: its title, its entries, no error, no problem), the bar shows its title, and nothing is fetched beyond the site's files and the page's |
+| WV2 | A page of the site | Its script runs (the fixture's probe on the page's window), fetched from the page's own address |
+| WV3 | A page of another site | It draws with its models, its script is never requested, and the line at the bottom says it was not run |
+| WV4 | Refused | No page, a non-address, a site over plain http, and a file are refused with the help text and no request; a page that is not there says its status; one over 2 MB is refused |
+| WV5 | The text view and Stop | Text view and Ctrl+Shift+V switch the text view (the bar's button pressed); Stop and Escape stop a page still loading |
+| WV6 | Compressed models | Draco, meshopt, and KTX2 models draw, the transcoder's page framed from the site under its own policy |
+| WV7 | Without WebGL 2 | The viewer's card says the page cannot be drawn, the host's line says why, and the bar stays |
+| WV8 | The site as built | The home page, the host, the transcoder's page, the viewer and its decoders; not the shell's bundle nor lift-host.js; the home page links to the host |
+
+The published site, in Chrome, Firefox, and Safari, is checked by
+hand (the checks stay on this computer).
+
+### Results so far (Windows 11, 2026-10-14)
+
+- tests/e2e/web-viewer.e2e.ts: WV1 to WV8 pass, 9 checks, in 8 seconds
+  (the plain window needs no second launch). On the way: WV6 found the
+  transcoder's frame unused on the web (the viewer change above), and
+  WV7 found that the app's no-WebGL switch is a web preference of its
+  tabs, so the plain window gets the same preference, not a second
+  app; the first run failed on the fixture server answering 404 for
+  the host's folder address (the check names index.html), and WV1 on
+  the browser's own start tab's requests (form.html and its icon, now
+  left out of the count).
+- tests/e2e/m25.e2e.ts (compressed models through the transcoder's own
+  host, in the browser): 18 pass, with the graphics card, after the
+  viewer change.
+- Unit tests: 594 pass; lint and the type check are clean (`_site/` is
+  ignored by both git and lint).
+- Looked at in the app's own browser pane, served from this computer:
+  the showroom draws under the bar with its title, Text view switches
+  to the outline and back, and the compressed models drew once the
+  viewer change was in.
+- The site is 12 files, 3.6 MB (three.js is 1.3 MB of it).
+- The pull request's automatic builds (#106): every part passed but
+  Linux part 2, on m14's P3, a file this change does not touch: the
+  orbit check's mouse drag was not seen by the scene (the lost input of
+  issue #30), and the check read the view right after the drag rather
+  than waiting for it (issue #79's kind). Both of m14's drags now go
+  through a new harness helper, dragUntil, which waits for the drag's
+  effect and drags again if nothing arrived, as clickUntil and
+  moveUntil do; the retry is counted and logged like theirs. The web
+  viewer's own checks passed in both part 1 jobs.
+- Not checked yet: the published site (Pages off until the owner turns
+  it on), and Firefox and Safari.
+
 ## The promotion plan (2026-10-14)
 
 On 2026-10-14 the owner asked for a review of the README and the
