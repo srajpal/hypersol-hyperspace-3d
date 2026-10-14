@@ -6382,6 +6382,70 @@ was full screen. Whether the tab closed is not in the log.
   and m21's tabTo look the same way; issue #79 covers checks of that
   kind.
 
+## The promotion plan (2026-10-14)
+
+On 2026-10-14 the owner asked for a review of the README and the
+documents of both repositories, and then for ways to promote the
+browser and HoloML, both free and open source. The review found the
+documents in step with the code and with each other (versions, test
+counts, dates, the issue lists, and 137 web links checked), with one
+gap: a commit pushed to `issue-87-fullscreen-close` after pull request
+#88 was merged (the harness's tabStep and tabToText, with AGENTS.md's
+and this file's wording) had never reached main; pull request #89
+carries it. The owner approved this plan as ordered, with four
+decisions: a portable zip from the automatic builds (not source only
+as decided on 2026-10-08); macOS may have a runner in the builds, and
+the owner has a Mac to try the browser on; the landing page in a new
+`site/` folder, as holoml has; and the agent explains how the npm,
+Open VSX, and Marketplace accounts are made, for the owner to create.
+
+The order follows dependencies: first the gap, then making the work
+tryable by link (every post afterwards sends people somewhere, and
+there is nowhere to click today), then the launch posts with
+everything ready on the same day. The HoloML language steps (14 to 18)
+depend only on the owner's accounts and can run beside the rest. Each
+step is a GitHub issue, worked one at a time with the owner's approval
+first (AGENTS.md rule 2); a larger one has its plan first. Sizes: S is
+a session of an hour or two, M a day, L several days. "Owner" marks
+what only the owner does: accounts, settings, posting, and publishing;
+the agent never posts or publishes on the owner's behalf.
+
+| Step | What | Issue | Who | Size | After |
+|---|---|---|---|---|---|
+| 1 | Merge the stray commit (tabStep and tabToText) and pull main in both repos | PR #89 | Agent | S | |
+| 2 | Click by hand the three links that refused the scripted check (two trademark pages in docs/name-checks.md, the Academy's ACES page in holoml's SPEC.md) | none | Owner | minutes | |
+| 3 | Words: the README's history says every example now declares HoloML 0.3; holoml's README and docs index samples as 0.3 pages | #90; holoml #54 | Agent | S | |
+| 4 | The HoloML viewer for ordinary browsers: the built bundle published to the holoml site, and a host page there that opens a `.holoml` address, so the seven examples open by link | #91; holoml #55 | Agent | L, plan first | |
+| 5 | Release 0.10.0, a developer preview: the rule 13 check, the filter lists and README screenshots refreshed, the changelog, version bumps, the tag, release notes for a newcomer, and a portable zip for each system from the automatic builds (an Electron packager: approval under rule 4 first) | #92 | Agent prepares; owner approves and tags | M | 4, 7 |
+| 6 | A one-minute video and a ten-second GIF, scripted with the test harness: Harbour Loft, lifting into the room, looking around; the GIF at the top of both READMEs | #93 | Agent makes; owner reviews | M | |
+| 7 | macOS: a job in the automatic builds (lint, types, unit tests, the build), and a run of the regression list on the owner's Mac; closes #81 | #94 | Agent, then owner's Mac | S + a run | |
+| 8 | Repository settings: the browser repo's homepage URL, Discussions on, social preview images, topics, "good first issue" labels, both repos pinned | #95 | Agent prepares; owner applies | S | 9 |
+| 9 | A landing page for the browser on GitHub Pages, in a `site/` folder: screenshots, the GIF and video, the story, the examples, the build steps; no analytics | #96 | Agent | M | 4, 6 |
+| 10 | Entries for awesome-electron, awesome-threejs, awesome-webgl, and the Electron apps list (which needs an app icon) | #97 | Agent drafts; owner submits | S | 4 to 6 |
+| 11 | The long-form article, docs/story.md: 2001, the 25-year gap, 203 published prompts, the 3D web, what is next | #98 | Agent drafts; owner posts | M | 4, 6 |
+| 12 | The launch kit, docs/launch/: Show HN, a FAQ, posts for six subreddits, the Three.js forum, Mastodon and Bluesky; posted by the owner on one day | #99 | Agent drafts; owner posts | M | 4 to 9 |
+| 13 | A Buildwright case study and talk proposals (FOSDEM's open web devroom, JSNation, a meetup) | #100 | Agent drafts; owner submits | S | 12 |
+| 14 | @holoml/parser and @holoml/schema on npm: package fields, READMEs, a publish workflow with provenance; the `holoml` organisation and the first publish are the owner's | holoml #56 | Agent prepares; owner publishes | M | |
+| 15 | The VS Code extension on Open VSX and the Marketplace: publisher fields, an icon, a publish step; the publishers and the first publish are the owner's | holoml #57 | Agent prepares; owner publishes | M | |
+| 16 | A playground on the holoml site: markup on the left, the scene on the right, the checker's problems as you type | holoml #58 | Agent | M | 4 |
+| 17 | A comparison page: A-Frame, X3D and X3DOM, model-viewer, USDZ, glTF, and the W3C Declarative 3D history | holoml #59 | Agent | S | |
+| 18 | Introductions to the W3C Immersive Web Community Group and the Khronos glTF community | holoml #60 | Agent drafts; owner posts | S | 4 |
+| 19 | A cadence: a devlog post per merged issue, an announcement per release, a monthly look at traffic and stars, written into HANDOFF.md | #101 | Owner, with drafts | ongoing | 12 |
+
+Accounts the owner makes (step 14 and 15), as explained on
+2026-10-14: an npm account with two-factor sign-in and an organisation
+named `holoml` (the `@holoml/` scope belongs to whoever owns that name;
+free for public packages); for the Marketplace, a Microsoft account, an
+Azure DevOps organisation, a personal access token with the
+Marketplace's Manage scope, and a publisher at
+marketplace.visualstudio.com/manage; for Open VSX, a sign-in with
+GitHub at open-vsx.org, an Eclipse Foundation account with the same
+email and its publisher agreement signed, and an access token from the
+user settings there. Each first publish is by hand from the owner's
+computer; the workflows take over after.
+
+Results: none yet. Step 1's pull request is open (2026-10-14).
+
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
 Five new issues (#66 to #68 here, #42 and #43 in holoml) and three
