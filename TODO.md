@@ -6451,7 +6451,16 @@ email and its publisher agreement signed, and an access token from the
 user settings there. Each first publish is by hand from the owner's
 computer; the workflows take over after.
 
-Results: none yet. Step 1's pull request is open (2026-10-14).
+Results:
+
+- Step 1 done (2026-10-14): pull request #89 merged by the owner, and
+  main pulled in both repositories. In its automatic builds the Linux
+  part 3 job missed once, on U5 (m18's slider): the harness's click on
+  the slider never reached the page, three times, drawing in software
+  (the lost clicks of issue #30; the file the commit does not touch,
+  and m19 and m20 passed in the same job); the job passed when run
+  again. The miss is of the kind issue #79 covers. The plan's record,
+  pull request #102, merged the same day.
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
