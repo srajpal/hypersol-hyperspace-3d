@@ -264,9 +264,13 @@ by AI coding agents directed by prompts. To follow it:
 No more milestones are planned: since 2026-10-10 the work is the
 [GitHub issues](https://github.com/srajpal/hypersol-hyperspace-3d/issues),
 bugs and enhancements, one at a time (installers were dropped on
-2026-10-08: anyone may fork the repository and make one). Ideas for
-later: phones, and VR. The roadmap that was, milestones 1 to 28, is in
-[TODO.md](TODO.md).
+2026-10-08: anyone may fork the repository and make one). The issues
+being worked first, since 2026-10-14, make the project easier to try
+and to find: a HoloML viewer for ordinary browsers, a 0.10.0 preview
+with a portable zip, a video, macOS, a landing page, and HoloML's
+packages on npm (the plan is in [TODO.md](TODO.md), "The promotion
+plan"). Ideas for later: phones, and VR. The roadmap that was,
+milestones 1 to 28, is in [TODO.md](TODO.md).
 
 ## Progress
 

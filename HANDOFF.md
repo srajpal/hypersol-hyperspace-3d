@@ -1,12 +1,14 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-10 (milestones 1 to 28 accepted, milestone 28,
-lift to 3D, on 2026-10-10, prompt 201; no more milestones (prompt 203):
-work continues from GitHub issues, the first of them #75, full screen
-and pointer lock, accepted 2026-10-10; the fixes of 2026-10-09 below;
-the review's last items in TODO.md, "The review's last items". The
-roadmap is in TODO.md).
+Last updated 2026-10-14 (the promotion plan approved, TODO.md, "The
+promotion plan (2026-10-14)": 19 steps, each a GitHub issue, #90 to
+#101 here and #54 to #60 in holoml; milestones 1 to 28 accepted,
+milestone 28, lift to 3D, on 2026-10-10, prompt 201; no more
+milestones (prompt 203): work continues from GitHub issues, the first
+of them #75, full screen and pointer lock, accepted 2026-10-10; the
+fixes of 2026-10-09 below; the review's last items in TODO.md, "The
+review's last items". The roadmap is in TODO.md).
 
 ## Where things stand
 
@@ -803,6 +805,18 @@ to this repository for rules and the prompt log.
    components and styles, object descriptions and states, pointer and
    drag events, more of the scene API, adaptive detail and loading
    feedback, rich media and screen layout).
+   Since 2026-10-14 the work in order is the promotion plan (TODO.md,
+   "The promotion plan (2026-10-14)"; approved by the owner, with its
+   four decisions recorded there): 19 steps, each a GitHub issue (#90
+   to #101 here, holoml #54 to #60), from merging the stray commit of
+   the tabStep helpers (pull request #89, step 1) through a HoloML
+   viewer for ordinary browsers (#91, holoml #55), release 0.10.0 with
+   a portable zip (#92), a video (#93), macOS (#94), the repository
+   settings and a landing page (#95, #96), the article and the launch
+   kit (#98, #99), to npm and the extension registries (holoml #56,
+   #57). The documents review of 2026-10-14 found everything else in
+   step; the other open issues above wait behind the plan unless the
+   owner says otherwise.
    One issue at a time, approved by the owner first (AGENTS.md rule 2);
    check Electron's security releases at least monthly and before any
    tag (rule 13; last checked 2026-10-10, 44.7.0). Prompts are recorded
