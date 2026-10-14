@@ -21,6 +21,8 @@ import {
   shellCall,
   sleep,
   softwareRenderer,
+  tabStep,
+  tabToText,
   waitFor,
   waitForPage,
   type Harness,
@@ -240,11 +242,8 @@ const focusedText = (h: Harness, page: string) => inPage<string>(h, 'document.ac
 const view = (h: Harness, page: string) => holo<{ mode: string; position: Vec; target: Vec }>(h, 'window.__holoml.view()', page);
 const near = (a: Vec, b: Vec, d = 0.05) => a.every((v, i) => Math.abs(v - b[i]!) <= d);
 
-/** Tab through the page's outline until an item with this text has the keyboard. */
-async function tabTo(h: Harness, page: string, text: string): Promise<void> {
-  for (let i = 0; i < 30 && (await focusedText(h, page)) !== text; i++) await pressInPage(h, 'Tab', [], page);
-  expect(await focusedText(h, page)).toBe(text);
-}
+/** Tab through the page's outline until an item with this text has the keyboard, one press at a time (harness, tabToText). */
+const tabTo = (h: Harness, page: string, text: string) => tabToText(h, page, text, { max: 30 });
 
 describe('V2 to V4: panels, click actions, and places', () => {
   let h: Harness;
@@ -836,8 +835,8 @@ describe('V8 to V10: Harbour Loft', () => {
     // Tab: the places, the panels, the links, the doors, and the lamps, all before the walls, windows, and furniture (the models prepare.mjs writes).
     const stops: string[] = [];
     for (let i = 0; i < 80 && stops.at(-1) !== 'Desk lamp'; i++) {
-      await pressInPage(h, 'Tab', [], LOFT);
-      await sleep(60);
+      // Each press seen to move the keyboard before the next is looked at (harness, tabStep).
+      await tabStep(h, LOFT);
       stops.push(await focusedText(h, LOFT));
     }
     const wanted = ['Go to: Hall', 'Go to: Kitchen', 'Go to: By the door to the terrace', 'Book a viewing', 'About this tour', 'Up to the roof terrace', 'Study door', 'Bathroom door', 'Bedroom door', 'Hall light', 'Kitchen lights', 'Bathroom light', 'Living room lamp', 'Bedside lamp, left', 'Bedside lamp, right', 'Desk lamp'];
@@ -851,7 +850,7 @@ describe('V8 to V10: Harbour Loft', () => {
     console.log(`V9: every place, panel, link, door, and lamp within ${stops.length} Tab stops, before the walls and furniture`);
 
     // "Go to: Kitchen", with Enter.
-    for (let i = 0; i < 80 && (await focusedText(h, LOFT)) !== 'Go to: Kitchen'; i++) await pressInPage(h, 'Tab', ['shift'], LOFT);
+    await tabToText(h, LOFT, 'Go to: Kitchen', { max: 80, shift: true });
     await press(h, LOFT, 'Enter');
     await waitFor('in the kitchen', places, (p) => p.current === 'kitchen');
     // A door and a lamp: Enter runs them, Space undoes them.
@@ -866,7 +865,7 @@ describe('V8 to V10: Harbour Loft', () => {
 
     // The Light choice, after the page's outline (where every model is a stop): onward with Tab, and the arrow keys pick the evening.
     let more = 0;
-    for (; more < 250 && (await focusedRadio()) === null; more++) await pressInPage(h, 'Tab', [], LOFT);
+    for (; more < 250 && (await focusedRadio()) === null; more++) await tabStep(h, LOFT);
     expect(await focusedRadio()).toBe('day');
     console.log(`V9: the Light choice after ${more} more Tab stops`);
     await pressInPage(h, 'Right', [], LOFT);

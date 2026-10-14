@@ -20,6 +20,7 @@ import {
   shellCall,
   sleep,
   softwareRenderer,
+  tabToText,
   waitFor,
   waitForPage,
   type Harness,
@@ -358,32 +359,8 @@ describe('W6 to W10: the sneaker store', () => {
     (await holo<{ trigger: string | null; pressed: string | null }[]>(h, 'window.__holoml.actions()', SHOE)).find((a) => a.trigger === trigger)!;
   const flip = async () => (await holo<{ rotation: Vec }>(h, 'window.__holoml.object("flip")', SHOE)).rotation[0];
   const point = async (page: string, id: string) => (await holo<Point | null>(h, `window.__holoml.point(${JSON.stringify(id)})`, page))!;
-  const focusedText = (page: string) => inPage<string>(h, 'document.activeElement?.textContent ?? ""', page);
-  /** Which element has the keyboard: a number the page keeps for it (0 for none), as items may share their text. */
-  const focusedElement = (page: string) =>
-    inPage<number>(
-      h,
-      '(() => { const e = document.activeElement; if (!e || e === document.body) return 0; return (e.__tabMark ??= (window.__tabNext = (window.__tabNext ?? 0) + 1)); })()',
-      page,
-    );
-  /**
-   * Tab through the page's outline until an item with this text has the
-   * keyboard. Each Tab is seen to move the keyboard before the next is
-   * pressed: looking before a press had arrived pressed again, and could
-   * go past the item (once in GitHub's Linux build).
-   */
-  async function tabTo(page: string, text: string): Promise<void> {
-    let presses = 0;
-    let last = await focusedText(page);
-    while (last !== text && presses < 40) {
-      const before = await focusedElement(page);
-      await pressInPage(h, 'Tab', [], page);
-      presses++;
-      await waitFor(`Tab ${presses} toward ${JSON.stringify(text)} moving the keyboard`, () => focusedElement(page), (e) => e !== before, 5000);
-      last = await focusedText(page);
-    }
-    expect(last, `Tab did not reach ${JSON.stringify(text)}: pressed ${presses} times, the keyboard last on ${JSON.stringify(last)}`).toBe(text);
-  }
+  /** Tab through the page's outline until an item with this text has the keyboard, one press at a time (harness, tabToText). */
+  const tabTo = (page: string, text: string) => tabToText(h, page, text);
   /** Walks with a key held until the walker stops (the same place while the page drew new frames) or the time is up. */
   async function walkUntilStopped(keyCode: string, maxMs: number): Promise<Vec> {
     await key(h, STORE, keyCode, 'keyDown');
@@ -642,8 +619,7 @@ describe('W6 to W10: the sneaker store', () => {
     await waitFor('midnight, from the keyboard', shoeMap, (m) => m === 'own');
     expect(await choice('colour')).toBe('midnight');
     // The checkout page from the keyboard: back to its link, then its button.
-    for (let i = 0; i < 40 && (await focusedText(SHOE)) !== 'Checkout'; i++) await pressInPage(h, 'Tab', ['shift'], SHOE);
-    expect(await focusedText(SHOE)).toBe('Checkout');
+    await tabToText(h, SHOE, 'Checkout', { shift: true });
     await press(h, SHOE, 'Enter');
     await waitForPage(h, CHECKOUT);
     await inPage(h, "(document.getElementById('place').focus(), true)", CHECKOUT);

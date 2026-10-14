@@ -6378,9 +6378,16 @@ was full screen. Whether the tab closed is not in the log.
   each press is seen to move the keyboard (to another element: items
   may share their text) before the next, and a failure says how many
   presses and where the keyboard was. m20 passes here (10 checks with
-  the graphics card; in software 9, and 1 skipped, as before). m19's
-  and m21's tabTo look the same way; issue #79 covers checks of that
-  kind.
+  the graphics card; in software 9, and 1 skipped, as before).
+- Then (owner, 2026-10-10) the same for m19 and m21, with the helpers
+  in the harness (tests/e2e/harness.ts: tabStep, one press seen to move
+  the keyboard; tabToText, until an item with a text has it): m19's,
+  m20's, and m21's tabTo, the Shift+Tab walks back in m19 (to "Go to:
+  Kitchen") and m20 (to "Checkout"), and in m19 V9's list of Tab stops
+  (it slept 60 ms after each press) and its walk to the Light choice.
+  Here: m19 11, m20 10, m21 11 passed with the graphics card; in
+  software m19 9 (2 skipped), m20 9 (1), m21 8 (3), the budgets skipped
+  as before.
 
 ## The promotion plan (2026-10-14)
 

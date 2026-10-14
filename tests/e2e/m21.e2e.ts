@@ -7,7 +7,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
-import { clickAt, inPage, launch, pressInPage, pressInShell, project, sceneWait, shellCall, sleep, softwareRenderer, waitFor, waitForPage, type Harness, type Point } from './harness';
+import { clickAt, inPage, launch, pressInPage, pressInShell, project, sceneWait, shellCall, sleep, softwareRenderer, tabToText, waitFor, waitForPage, type Harness, type Point } from './harness';
 
 let server: FixtureServer;
 
@@ -378,22 +378,13 @@ describe('X5 to X9: the aquarium', () => {
   const plays = async (id: string) => (await holo<{ id: string | null; plays: number }[]>(h, 'window.__holoml.sounds()', TANK_PAGE)).find((s) => s.id === id)!.plays;
   /** Every fish's place, by its id. */
   const fishAt = async () => Object.fromEntries(await inPage<[string, Vec][]>(h, `${JSON.stringify(ids)}.map((id) => [id, holoml.find(id).position])`, TANK_PAGE)) as Record<string, Vec>;
-  const focusedText = () => inPage<string>(h, 'document.activeElement?.textContent ?? ""', TANK_PAGE);
   /**
    * Tab through the page's outline until an item with this text has the
-   * keyboard. When it never does, the failure says which text was looked
-   * for, how many times Tab was pressed, and what had the keyboard last.
+   * keyboard, one press at a time (harness, tabToText). When it never
+   * does, the failure says which text was looked for, how many times Tab
+   * was pressed, and what had the keyboard last.
    */
-  async function tabTo(text: string): Promise<void> {
-    let presses = 0;
-    let last = await focusedText();
-    while (last !== text && presses < 90) {
-      await pressInPage(h, 'Tab', [], TANK_PAGE);
-      presses++;
-      last = await focusedText();
-    }
-    expect(last, `Tab did not reach ${JSON.stringify(text)} in the outline: Tab was pressed ${presses} times, and the keyboard was last on ${JSON.stringify(last)}`).toBe(text);
-  }
+  const tabTo = (text: string) => tabToText(h, TANK_PAGE, text, { max: 90 });
   /** Walks with a key held until the walker stops (the same place while the page drew new frames) or the time is up. */
   async function walkUntilStopped(keyCode: string, maxMs: number): Promise<Vec> {
     await key(h, TANK_PAGE, keyCode, 'keyDown');

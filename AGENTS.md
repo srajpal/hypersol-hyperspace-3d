@@ -260,9 +260,12 @@ date given and grow with each issue; TODO.md has the latest.
   loaded page's picture on its card, and a second and a half without a
   frame). A check that something does not happen looks once caughtUp
   returns (the app has dealt with everything the page had sent it), not
-  after a sleep, which proves nothing on a slow machine. A check that
-  clicks the permission prompt or an action of the download notice
-  waits for `[data-armed]` on it: both take no click for their first
+  after a sleep, which proves nothing on a slow machine. Tab through a
+  page one press at a time (tabStep and tabToText): each press is seen
+  to move the keyboard before the next is looked at, as a look that
+  comes before the press has arrived leads to another press that can go
+  past the item (#88). A check that clicks the permission prompt or an
+  action of the download notice waits for `[data-armed]` on it: both take no click for their first
   half second. A wait stops at once, with AppGone, when the app's
   process has ended.
 - Linux on this computer, the way GitHub's Linux machines run the

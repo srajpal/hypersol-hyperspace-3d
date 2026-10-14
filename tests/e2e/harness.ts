@@ -1047,6 +1047,52 @@ export async function pressInPage(
   done('sent');
 }
 
+/** Which element in a page has the keyboard: a number the page keeps for it (0 for none), as items may share their text. */
+export function focusedElement(h: Harness, page: PageRef): Promise<number> {
+  return inPage<number>(
+    h,
+    '(() => { const e = document.activeElement; if (!e || e === document.body) return 0; return (e.__tabMark ??= (window.__tabNext = (window.__tabNext ?? 0) + 1)); })()',
+    page,
+  );
+}
+
+/** The text of what has the keyboard in a page. */
+export function focusedText(h: Harness, page: PageRef): Promise<string> {
+  return inPage<string>(h, 'document.activeElement?.textContent ?? ""', page);
+}
+
+/**
+ * Presses Tab (or Shift+Tab) in a page and waits until the keyboard has
+ * moved to another element. A look straight after a press can come
+ * before the press has arrived, and a loop that then presses again goes
+ * past items (m20's W9, once in GitHub's Linux build, #88).
+ */
+export async function tabStep(h: Harness, page: PageRef, shift = false, timeoutMs = 5000): Promise<void> {
+  const before = await focusedElement(h, page);
+  await pressInPage(h, 'Tab', shift ? ['shift'] : [], page);
+  await waitFor(`${shift ? 'Shift+Tab' : 'Tab'} moving the keyboard`, () => focusedElement(h, page), (e) => e !== before, timeoutMs);
+}
+
+/**
+ * Tab (or Shift+Tab) through a page, one press at a time (tabStep),
+ * until an element with this text has the keyboard; when it never does,
+ * the failure says how many times Tab was pressed and what had the
+ * keyboard last.
+ */
+export async function tabToText(h: Harness, page: PageRef, text: string, options: { max?: number; shift?: boolean } = {}): Promise<void> {
+  const { max = 40, shift = false } = options;
+  let presses = 0;
+  let last = await focusedText(h, page);
+  while (last !== text && presses < max) {
+    await tabStep(h, page, shift);
+    presses++;
+    last = await focusedText(h, page);
+  }
+  if (last !== text) {
+    throw new Error(`${shift ? 'Shift+Tab' : 'Tab'} did not reach ${JSON.stringify(text)}: pressed ${presses} times, the keyboard last on ${JSON.stringify(last)}`);
+  }
+}
+
 /**
  * Presses a key in the shell window through Electron's input path, which
  * is where the main process sees browser shortcuts. Playwright's keyboard
