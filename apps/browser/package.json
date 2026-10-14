@@ -20,9 +20,9 @@
     "filters:update": "node scripts/filters-update.mjs"
   },
   "devDependencies": {
-    "@ghostery/adblocker": "2.18.2",
-    "@ghostery/adblocker-electron": "2.18.2",
-    "@ghostery/adblocker-electron-preload": "2.18.2",
+    "@ghostery/adblocker": "2.20.1",
+    "@ghostery/adblocker-electron": "2.20.1",
+    "@ghostery/adblocker-electron-preload": "2.20.1",
     "@hypersol/holoml": "workspace:*",
     "@hypersol/scene-core": "workspace:*",
     "@hypersol/themes": "workspace:*",
@@ -31,6 +31,6 @@
     "electron-vite": "^5.0.0",
     "lit": "^3.3.3",
     "three": "^0.186.1",
-    "vite": "^7.3.6"
+    "vite": "^7.3.7"
   }
 }
