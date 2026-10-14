@@ -60,7 +60,8 @@ through with 30 fish swimming over and around you, and completes HoloML
 Milestone 23 adds HoloML for VS Code, and milestone 24 HyperSpace 3D for
 Android, on a tablet. Milestone 25 adds HoloML 0.3: names
 for models, the language and direction of text, lighter models far
-away, and compressed models. Milestone 26 adds
+away, and compressed models; every example has since moved to 0.3, the
+version to write today. Milestone 26 adds
 privacy and data tools: HTTPS-only browsing, per-site storage, and
 bookmark import and export. Milestone 27 lets you look around the room:
 leave the desk by dragging on the room, with the keys, or with a button,
@@ -340,7 +341,8 @@ HoloML examples (the menu, or Ctrl+Shift+E): the showroom (milestone 16),
 Blockworld (milestone 17), the sofa studio (milestone 18), Harbour
 Loft (milestone 19), the sneaker store (milestone 20), the ocean
 tunnel (milestone 21), and Words in a room, signs in three languages
-(milestone 25). They come from the holoml repository,
+(milestone 25). Each is written in HoloML 0.3 now, whatever version
+its milestone added. They come from the holoml repository,
 https://github.com/srajpal/holoml, which publishes each with GitHub
 Pages:
 https://srajpal.github.io/holoml/showroom/,
