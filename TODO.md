@@ -6461,6 +6461,12 @@ Results:
   and m19 and m20 passed in the same job); the job passed when run
   again. The miss is of the kind issue #79 covers. The plan's record,
   pull request #102, merged the same day.
+- Step 3 done (2026-10-14): the README's history says every example
+  has since moved to HoloML 0.3, the version to write today (pull
+  request #104, closing #90), and holoml's README and documentation
+  index samples say `version="0.3"` (holoml pull request #61, closing
+  #54; its 885 tests passed). Words only. Step 2, the three links
+  clicked by hand, is the owner's.
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
