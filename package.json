@@ -21,7 +21,8 @@
     "screenshots:readme": "pnpm build && vitest run --config vitest.readme.config.ts",
     "screenshots:examples": "pnpm build && vitest run --config vitest.examples.config.ts",
     "filters:update": "pnpm --filter @hypersol/browser filters:update",
-    "holoml:sync": "node packages/holoml/sync.mjs"
+    "holoml:sync": "node packages/holoml/sync.mjs",
+    "site:build": "pnpm build && node site/build.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.19.1",

@@ -279,6 +279,22 @@
   a click or key on the page. The browser says so in a notice of its own
   over the page, naming the site, and Escape always leaves; a page cannot
   stop it. Before, both were refused.
+- The HoloML viewer for ordinary browsers (GitHub issue #91, the
+  promotion plan's step 4): the repository's new site, built by `pnpm
+  site:build` from `site/` and published by GitHub Pages at
+  https://srajpal.github.io/hypersol-hyperspace-3d/, carries the
+  browser's own HoloML viewer on a plain page, /viewer/?page= followed
+  by a page's https address, so a HoloML page opens in Chrome, Firefox,
+  or Safari by link. The browser's content policy stands on the page:
+  a page's scripts run only when the page is on the site itself (the
+  HoloML examples do), a page of another site shows without them and
+  the page says so, and without WebGL 2 the page says it cannot be
+  drawn. The page sends nothing anywhere and keeps nothing. One change
+  in the viewer itself: on a page whose content policy forbids
+  evaluating code, the KTX2 transcoder's workers run in the
+  transcoder's own framed page, as they do on the desktop (before, only
+  when the viewer came from another address than the page); nothing
+  changes for the browser or the Android app.
 - Fixed (GitHub issues #17 to #19 and #22, 2026-09-27): a sleeping tab
   no longer loses what was typed in a frame of the same site, in a
   shadow root, or in a form whose submit the page stopped (#17); a tab

@@ -3,7 +3,9 @@
 The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-10-14 (the promotion plan approved, TODO.md, "The
 promotion plan (2026-10-14)": 19 steps, each a GitHub issue, #90 to
-#101 here and #54 to #60 in holoml; milestones 1 to 28 accepted,
+#101 here and #54 to #60 in holoml; steps 1 and 3 done, step 4, the
+HoloML viewer for ordinary browsers, built here and in its pull
+request (TODO.md, "Issue #91"); milestones 1 to 28 accepted,
 milestone 28, lift to 3D, on 2026-10-10, prompt 201; no more
 milestones (prompt 203): work continues from GitHub issues, the first
 of them #75, full screen and pointer lock, accepted 2026-10-10; the
@@ -818,7 +820,14 @@ to this repository for rules and the prompt log.
    kit (#98, #99), to npm and the extension registries (holoml #56,
    #57). The documents review of 2026-10-14 found everything else in
    step; the other open issues above wait behind the plan unless the
-   owner says otherwise.
+   owner says otherwise. Step 4's browser half (#91) is built: `site/`
+   (the builder, the host page, the transcoder's page, a home page),
+   pages.yml, and tests/e2e/web-viewer.e2e.ts (WV1 to WV8; TODO.md,
+   "Issue #91", has the plan, the decisions, and the results). After
+   its pull request merges, the owner turns Pages on for this
+   repository (Settings, Pages, source GitHub Actions), and holoml #55
+   adds the links from the examples, the README, the docs index, and
+   a how-to page.
    One issue at a time, approved by the owner first (AGENTS.md rule 2);
    check Electron's security releases at least monthly and before any
    tag (rule 13; last checked 2026-10-10, 44.7.0). Prompts are recorded

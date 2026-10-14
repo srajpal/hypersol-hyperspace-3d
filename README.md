@@ -354,6 +354,18 @@ https://srajpal.github.io/holoml/aquarium/, and
 https://srajpal.github.io/holoml/words/. The browser asks nothing of
 those sites until you choose one.
 
+**In any browser.** The viewer is also published on a plain web page,
+https://srajpal.github.io/hypersol-hyperspace-3d/viewer/, so a HoloML
+page opens in Chrome, Firefox, or Safari by link: `viewer/?page=`
+followed by the page's https address (the HoloML examples link to it).
+It is the same viewer, with the browser's content policy on the page:
+a page's scripts run only when the page is on that site itself, so the
+examples work in full and a page of another site shows without its
+scripts. Without WebGL 2 it says the page cannot be drawn. The site is built
+from this repository by `pnpm site:build` (site/build.mjs) and
+published by a workflow after the checks pass (GitHub issue #91, the
+promotion plan's step 4).
+
 ## Project documents
 
 | File | What it is |
@@ -454,7 +466,9 @@ Its windows stay
 off screen and never take focus, so you can keep working; set
 `HYPERSOL_TEST_SHOW=1` to watch instead. With Docker, `pnpm test:linux`
 runs them all on Linux, as GitHub's Linux machines do. Current results
-are in TODO.md.
+are in TODO.md. `pnpm site:build` builds the app and then the
+repository's site (the HoloML viewer for ordinary browsers) into
+`_site/`.
 
 ## Contributing
 

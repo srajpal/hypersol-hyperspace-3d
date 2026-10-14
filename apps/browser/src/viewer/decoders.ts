@@ -34,6 +34,16 @@ const VIEWER_FILES = import.meta.env.DEV ? `${here.protocol}//${here.host}/` : n
  */
 const KTX2_HOST = import.meta.env.DEV ? `${here.protocol}//${here.host}/ktx2-host.html` : new URL('../ktx2-host.html', import.meta.url).href;
 
+/** Whether this page's content policy lets code be evaluated from text, as the Basis transcoder's workers do (a probe that evaluates nothing). */
+function evalAllowed(): boolean {
+  try {
+    new Function('');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export interface Decoders {
   draco: DRACOLoader;
   ktx2: KTX2Loader;
@@ -60,8 +70,9 @@ export function makeDecoders(renderer: WebGLRenderer, counted: (url: string) => 
   const ktx2 = new KTX2Loader(manager).setWorkerLimit(2).detectSupport(renderer);
   // On the desktop the viewer comes from its own address, and a HoloML page's content policy does not let the
   // Basis transcoder evaluate code: its workers run in the transcoder's host instead (ktx2-host.ts; owner, prompt
-  // 170). Where the viewer is served from the page's own site (Android), three.js's own workers do.
-  if (here.origin !== location.origin) {
+  // 170). Where the viewer is served from the page's own site (Android), three.js's own workers do; but on a
+  // page whose policy forbids evaluating code (the viewer on the web, issue #91), the host's workers again.
+  if (here.origin !== location.origin || !evalAllowed()) {
     const remote = remoteWorkers(KTX2_HOST);
     const init = ktx2.init.bind(ktx2);
     const loader = ktx2 as unknown as { workerConfig: unknown; transcoderBinary: ArrayBuffer };

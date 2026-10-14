@@ -607,6 +607,21 @@ milestone's checks are defined in TODO.md):
   hidden test windows never take it, so it is reported as skipped unless
   HYPERSOL_TEST_SHOW=1. The rules are unit tests (shared/fullscreen.test.ts,
   and main/permissions.test.ts).
+- GitHub issue #91 checks WV1 to WV8 (TODO.md, "Issue #91"; same
+  command, tests/e2e/web-viewer.e2e.ts, in part 1): the HoloML viewer
+  for ordinary browsers, the site's host page. The file builds the site
+  into tests/fixtures/web-viewer/ (site/build.mjs; ignored, removed
+  after) and opens its host page in a plain Electron window of its own
+  partition, off every display, with none of the browser's preloads or
+  hooks: the showroom draws and nothing is fetched beyond the site and
+  the page; a page of the site runs its script; a page of another site
+  (a second fixture server) shows without its script and says so; what
+  is refused (no page, a non-address, plain http, a file, a 404, over
+  2 MB); the text view and Stop by the bar and the keyboard; compressed
+  models through the transcoder's page; the viewer's card without WebGL
+  2 (the window's `webgl` preference off, as the app's tabs are); and
+  the site's files. The published site in Chrome, Firefox, and
+  Safari is checked by hand. `pnpm site:build` builds the site itself.
 - No more milestones (prompt 203): polish (29) was taken off the
   roadmap, and installers before it (prompt 172). A fix for a GitHub
   issue adds its checks to the file of the part it changes, or to a
