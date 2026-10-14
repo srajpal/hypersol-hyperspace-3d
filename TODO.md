@@ -6538,9 +6538,17 @@ hand (the checks stay on this computer).
   to the outline and back, and the compressed models drew once the
   viewer change was in.
 - The site is 12 files, 3.6 MB (three.js is 1.3 MB of it).
+- The pull request's automatic builds (#106): every part passed but
+  Linux part 2, on m14's P3, a file this change does not touch: the
+  orbit check's mouse drag was not seen by the scene (the lost input of
+  issue #30), and the check read the view right after the drag rather
+  than waiting for it (issue #79's kind). Both of m14's drags now go
+  through a new harness helper, dragUntil, which waits for the drag's
+  effect and drags again if nothing arrived, as clickUntil and
+  moveUntil do; the retry is counted and logged like theirs. The web
+  viewer's own checks passed in both part 1 jobs.
 - Not checked yet: the published site (Pages off until the owner turns
-  it on), Firefox and Safari, and the automatic builds (the pull
-  request's).
+  it on), and Firefox and Safari.
 
 ## The promotion plan (2026-10-14)
 

@@ -12,6 +12,7 @@ import {
   caughtUp,
   clickAt,
   clickUntil,
+  dragUntil,
   focusedTab,
   inPage,
   launch,
@@ -219,13 +220,10 @@ describe('P1, P2, P3, P5, P7, P10: a still scene', () => {
     await pressInPage(h, 'Plus', [], PAGE);
     const closer = await waitFor('closer', () => holo<View>(h, 'window.__holoml.view()', PAGE), (v) => distance(v.position, v.target) < radius - 0.1);
     expect(distance(closer.position, closer.target)).toBeLessThan(radius);
-    // A mouse drag goes around; the wheel comes closer.
+    // A mouse drag goes around (waited for, and sent again if it was lost: issue #79); the wheel comes closer.
     const a = await project(h, 300, 300);
     const b = await project(h, 450, 300);
-    await h.shell.mouse.move(a.x, a.y);
-    await h.shell.mouse.down();
-    await h.shell.mouse.move(b.x, b.y, { steps: 8 });
-    await h.shell.mouse.up();
+    await dragUntil(h, a, b, 'dragged around', async () => Math.abs((await holo<View>(h, 'window.__holoml.view()', PAGE)).position[0] - closer.position[0]) >= 0.005);
     const dragged = await holo<View>(h, 'window.__holoml.view()', PAGE);
     expect(dragged.position[0]).not.toBeCloseTo(closer.position[0], 2);
     await h.shell.mouse.wheel(0, -400);
@@ -304,10 +302,7 @@ describe('P3 walk, P5 animation, P10 drawing only while moving', () => {
     expect(aside.position[0]).toBeGreaterThan(walked.position[0] + 0.2);
     const a = await project(h, 300, 300);
     const b = await project(h, 420, 300);
-    await h.shell.mouse.move(a.x, a.y);
-    await h.shell.mouse.down();
-    await h.shell.mouse.move(b.x, b.y, { steps: 8 });
-    await h.shell.mouse.up();
+    await dragUntil(h, a, b, 'looked around by a drag', async () => Math.abs((await holo<View>(h, 'window.__holoml.view()', PAGE)).target[0] - aside.target[0]) >= 0.005);
     const looked = await holo<View>(h, 'window.__holoml.view()', PAGE);
     expect(looked.position).toEqual(aside.position);
     expect(looked.target[0]).not.toBeCloseTo(aside.target[0], 2);

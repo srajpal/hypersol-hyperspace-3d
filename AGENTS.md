@@ -264,7 +264,10 @@ date given and grow with each issue; TODO.md has the latest.
   page one press at a time (tabStep and tabToText): each press is seen
   to move the keyboard before the next is looked at, as a look that
   comes before the press has arrived leads to another press that can go
-  past the item (#88). A check that clicks the permission prompt or an
+  past the item (#88). A drag whose effect a check reads goes through
+  dragUntil, which waits for the effect and drags again if nothing
+  arrived, as clickUntil and moveUntil do (m14's P3, in #106's builds).
+  A check that clicks the permission prompt or an
   action of the download notice waits for `[data-armed]` on it: both take no click for their first
   half second. A wait stops at once, with AppGone, when the app's
   process has ended.
