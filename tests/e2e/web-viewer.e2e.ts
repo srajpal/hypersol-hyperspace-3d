@@ -13,7 +13,7 @@ import { rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FIXTURES_DIR, startFixtureServer, type FixtureServer } from './fixture-server';
-import { launch, sleep, waitFor, type Harness } from './harness';
+import { launch, waitFor, type Harness } from './harness';
 
 const SITE_DIR = join(FIXTURES_DIR, 'web-viewer');
 
@@ -100,14 +100,15 @@ async function keyInPlain(app: Harness, id: number, keyCode: string, modifiers: 
   );
 }
 
-/** A click on an element of the plain window, by its centre. */
-async function clickInPlain(app: Harness, id: number, selector: string): Promise<void> {
-  const r = await inPlain<{ x: number; y: number } | null>(
+/** A click on one of the bar's buttons in the plain window, by its id and centre (the centres are read with one fixed expression, so no value is built into code). */
+async function clickInPlain(app: Harness, id: number, button: string): Promise<void> {
+  const centres = await inPlain<Record<string, { x: number; y: number }>>(
     app,
     id,
-    `(() => { const r = document.querySelector(${JSON.stringify(selector)})?.getBoundingClientRect(); return r ? { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) } : null; })()`,
+    "Object.fromEntries([...document.querySelectorAll('#bar button')].filter((b) => !b.hidden).map((b) => { const r = b.getBoundingClientRect(); return [b.id, { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }]; }))",
   );
-  if (!r) throw new Error(`Nothing to click at ${selector}`);
+  const r = centres[button];
+  if (!r) throw new Error(`No button "${button}" to click; the bar shows ${Object.keys(centres).join(', ') || 'none'}`);
   await app.app.evaluate(
     ({ BrowserWindow }, { id, x, y }) => {
       const wc = BrowserWindow.fromId(id)!.webContents;
@@ -227,7 +228,7 @@ describe('WV5 and WV6: the text view, Stop, and the keyboard', () => {
     try {
       await waitFor('busy', () => inPlain<string | undefined>(h, id, 'document.documentElement.dataset.busy'), (v) => v === 'true', 30_000);
       expect(await inPlain<boolean>(h, id, "document.getElementById('stop').hidden")).toBe(false);
-      await clickInPlain(h, id, '#text-view');
+      await clickInPlain(h, id, 'text-view');
       await waitFor('the text view', () => inPlain<boolean>(h, id, "document.body.classList.contains('holoml-text-view')"), (v) => v === true);
       expect(await inPlain<string>(h, id, "document.getElementById('text-view').getAttribute('aria-pressed')")).toBe('true');
       await keyInPlain(h, id, 'V', ['control', 'shift']);
@@ -241,7 +242,7 @@ describe('WV5 and WV6: the text view, Stop, and the keyboard', () => {
     const again = await openPlain(h, host(server.url('holoml/slow.holoml')));
     try {
       await waitFor('busy again', () => inPlain<string | undefined>(h, again, 'document.documentElement.dataset.busy'), (v) => v === 'true', 30_000);
-      await clickInPlain(h, again, '#stop');
+      await clickInPlain(h, again, 'stop');
       await waitFor('stopped by the button', () => inPlain<string | undefined>(h, again, 'document.documentElement.dataset.busy'), (v) => v === 'false', 15_000);
     } finally {
       await closePlain(h, again);
@@ -292,9 +293,13 @@ describe('WV8: the site as built', () => {
     expect(assets.some((f) => f.endsWith('.wasm')), 'the decoders').toBe(true);
     expect(assets).not.toContain('lift-host.js');
     expect(assets.filter((f) => f.startsWith('index-'))).toEqual([]);
-    // The home page reaches the host, and both carry a content policy.
-    const home = await inPlain<string>(h, await openPlain(h, server.url('web-viewer/index.html')), "document.querySelector('a[href=\"viewer/\"]')?.textContent ?? ''");
-    expect(home).toMatch(/viewer/i);
-    await sleep(0);
+    // The home page reaches the host.
+    const id = await openPlain(h, server.url('web-viewer/index.html'));
+    try {
+      const home = await inPlain<string>(h, id, "document.querySelector('a[href=\"viewer/\"]')?.textContent ?? ''");
+      expect(home).toMatch(/viewer/i);
+    } finally {
+      await closePlain(h, id);
+    }
   });
 });

@@ -6426,7 +6426,10 @@ content policy enforcing the same.
 - The host page takes `?page=` with an https address (or an http one
   on this computer, for a page served locally), fetches it with no
   credentials, reads at most 2 MB (the viewer's own limit of text),
-  and refuses anything else with a plain message and the help text.
+  and refuses anything else with a plain message and the help text; a
+  redirect is followed, and where it ends up must pass the same rule
+  (a review comment on the pull request, CodeRabbit), as that address
+  becomes the base of what the page names.
   Then it sets a `base` element to the page's address, puts the text
   in the `pre`, loads the viewer, answers the line, and shows a thin
   bar: the page's title (from the scene's facts once drawn), Text

@@ -127,6 +127,8 @@ async function main() {
     return refuse('Not fetched', `${url.href} could not be fetched: the site may be down, or may not allow another site's page to read it (CORS).`);
   }
   if (!response.ok) return refuse('Not fetched', `${url.href} answered ${response.status}.`);
+  // A redirect keeps to the same rules: the page is read from where it ended up, and that address is the base of what it names.
+  if (response.url && !allowed(new URL(response.url))) return refuse('Not shown', `${url.href} led to ${response.url}, which is not fetched: only an https address, or an http one on this computer.`);
   const bytes = await readUpTo(response, TEXT_LIMIT);
   if (bytes === null) return refuse('Too large', `${url.href} is larger than 2 MB, the most a HoloML page may be.`);
   const text = new TextDecoder().decode(bytes);
