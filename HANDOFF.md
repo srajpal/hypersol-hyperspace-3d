@@ -809,7 +809,9 @@ to this repository for rules and the prompt log.
    "The promotion plan (2026-10-14)"; approved by the owner, with its
    four decisions recorded there): 19 steps, each a GitHub issue (#90
    to #101 here, holoml #54 to #60), from merging the stray commit of
-   the tabStep helpers (pull request #89, step 1) through a HoloML
+   the tabStep helpers (pull request #89, step 1, done 2026-10-14; a
+   Linux part 3 miss on U5's lost click passed when run again, the
+   results line in TODO.md) through a HoloML
    viewer for ordinary browsers (#91, holoml #55), release 0.10.0 with
    a portable zip (#92), a video (#93), macOS (#94), the repository
    settings and a landing page (#95, #96), the article and the launch
