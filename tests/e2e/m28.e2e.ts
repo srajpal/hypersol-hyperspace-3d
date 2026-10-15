@@ -197,7 +197,9 @@ describe('LT2: lifting a picture from the right-click menu', () => {
     }
     // Captured, not fetched: the picture was not asked for again, and no request was made.
     expect(server.hits.get('/lift/quadrants.png') ?? 0).toBe(hits);
-    expect((await mainLog(h, 'requests')).slice(requests)).toEqual([]);
+    // A miss says which address was fetched (GitHub's Windows machine, issue #94's builds, 2026-10-15).
+    const since = (await mainLog(h, 'requests')).slice(requests);
+    expect(since, `fetched since the lift: ${since.join(', ')}`).toEqual([]);
     const captures = (await mainLog(h, 'lifts')).filter((x) => x.kind === 'capture');
     expect(captures).toHaveLength(1);
     expect(captures[0]!.result).toBe('ok');
