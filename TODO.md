@@ -6778,7 +6778,7 @@ run changes). The run's numbers and each miss's error are under "Issue
       (the budgets unchanged)
 - [x] The documents' macOS sentences (README, CONTRIBUTING.md,
       AGENTS.md's Testing, ARCHITECTURE.md section 11)
-- [ ] The whole `pnpm test:e2e` once on the Mac, its summary recorded
+- [x] The whole `pnpm test:e2e` once on the Mac, its summary recorded
 - [ ] The pull request that closes #111
 
 ### What was found, by group
@@ -6977,6 +6977,33 @@ run changes). The run's numbers and each miss's error are under "Issue
     misses again the viewer's shaders would be compiled while the page
     loads rather than after it is ready (scene.ts, compileAsync), not
     the budget widened.
+- The whole run on the Mac (2026-10-15, `pnpm test:e2e
+  --reporter=verbose`, 22 minutes, with the groups' changes in): 456
+  of 463 passed, 1 skipped (FS5, hidden windows), 6 failed, in 3 of
+  34 files, 1 input retry in the whole run (m28, a click). The
+  budgets, with the graphics card: C9 29.8 frames a second (group 5's
+  measure); the ocean tunnel ready in 715 ms and drawn in 1030 ms (X5
+  passes), 60.0 frames a second (X9); looking around 59.0 (FC9);
+  Harbour Loft ready in 1006 ms, the sneaker store in 494 ms, the sofa
+  studio in 659 ms. The six: C9 (group 5), FS2's second and FS6's
+  first (group 3's two), and three not seen before: FS1 (the window
+  never entered full screen for the page's first request in that app,
+  though the page said it had; it passed in five of seven runs of the
+  file today, so entering a Space is itself intermittent on this
+  Mac), and I8 and I9 (m7): a page's DevTools crashed the main
+  process on opening (I8; the crash report says EXC_BREAKPOINT, in
+  V8 or Node by its frames), and the next check's app showed no
+  window in 30 seconds (I9, once; it passed alone after). I8 is
+  intermittent on this Mac: run alone with the same code three times
+  it crashed twice and passed once, and it crashed with the app's
+  main process as it was before the day, with the test window wholly
+  on screen rather than at its corner, and with the harness's key
+  presses sent in one call rather than two, each tried in turn, while
+  it passed once with the day-before harness and once with one-call
+  presses, so none of those is the cause. It passed in the owner's
+  run. Not among the 17: to be filed as its own issue (a crash of
+  Electron's main process when a page's DevTools open, on macOS,
+  intermittent), and left out of this one.
 
 ## The promotion plan (2026-10-14)
 
