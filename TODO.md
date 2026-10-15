@@ -6661,11 +6661,64 @@ only, and no Mac has run it.
   against 169); part 1, 297 of 326, the same 24 as the second run.
   So the list for the owner's Mac (MC3) is part 2's three and part
   1's 24 above.
-- On the owner's Mac (2026-10-15, begun): `pnpm test` first failed in
-  the six SQLite files with "No such built-in module: node:sqlite",
-  as the Mac's Node was older than 22.13 (the project asks for 24;
-  .nvmrc), with the other 64 files, 534 tests, passing; Node 24 being
-  installed. The rest of MC3 follows.
+- MC3, the owner's Mac (2026-10-14 and 2026-10-15; an iMac Pro on
+  Intel, an AMD Radeon Pro Vega 56, a 2560 by 1440 display, an older
+  macOS that Homebrew builds from source for): `pnpm test` first
+  failed in the six SQLite files with "No such built-in module:
+  node:sqlite", as the Mac's Node was older than 22.13 (the project
+  asks for 24; .nvmrc), with the other 64 files, 534 tests, passing;
+  Homebrew's node@24 failed compiling OpenSSL there, and nvm's Node
+  24.22.0 worked (corepack then brought pnpm back). With Node 24: 594
+  unit tests (592, 2 skipped), lint, and the type check pass. The
+  end-to-end checks (`pnpm test:e2e --reporter=verbose`, 30 minutes,
+  the log kept by the owner): 445 of 463 passed, 1 skipped, 17 failed,
+  in 10 of 34 files, with 1 input retry in the whole run (m28, a
+  click). The budgets, checked with the graphics card: Blockworld 410
+  ms and 39.0 frames a second, the showroom and the sofa studio within
+  budget (660 ms), Harbour Loft 1260 ms, the sneaker store 458 ms,
+  the ocean tunnel 59.5 frames a second, looking around 59.4, economy
+  mode 24.1, the page process 100 MB then 128 MB after ten visits (R5
+  passes there, against 259 on GitHub's machine). The 17, grouped:
+  - Full screen, six checks (M1, FS2 twice, FS6 twice, and closing a
+    tab in full screen): entering worked and the notice came, and the
+    next key sent to the page, Escape, never returned ("STILL GOING
+    ON when the check ended"); closing the tab left the window full
+    screen at 2560 by 1440. macOS makes full screen a Space with a
+    transition, during which the page takes no input the harness
+    sends; whether Escape leaves when a person presses it is the
+    owner's to say (the look by eye).
+  - The camera and microphone, two checks (K6 to K8, and issue #18's
+    capture): both stopped right after the microphone prompt, at
+    their 60-second limit, as a macOS system dialog for the microphone
+    would hold them (Chromium asks macOS once per app, even with the
+    stand-in devices); the owner can say whether one appeared.
+  - The checks' own Ctrl words, four checks: M7 expects the label
+    "Ctrl+Alt+R" and macOS shows Cmd; LT9's lift button tooltip the
+    same; St4's page reports the keys it sees by ctrlKey, so Cmd+Shift+V
+    reached it as "shift+v"; LT9's object buttons (Delete puts back).
+    Check-side: the expectations take the system's word for Mod.
+  - macOS's own ways, four checks: C1, the window overlaps a display
+    (macOS keeps every window on screen, so "off every display" cannot
+    hold there; it stayed unfocused); D7, the window's place after a
+    restart (x 1600 where 1280 was asked: macOS moved it); D8, the
+    right-click menu has four items where two are expected (macOS's
+    own additions to Electron's menu, to be seen); the lifted
+    picture's pixels (a Retina display draws at two device pixels per
+    point, and the check reads one).
+  - Two budgets: C9, 30.8 frames a second against 50 while the camera
+    follows the pointer (issue #82 on Windows too; on macOS an
+    unfocused window may be drawn at half rate); and X5, the aquarium
+    ready in 687 ms but drawn in 8411 ms against 5 s (its shaders
+    compile slowly through Metal on the first frame; X9 then draws it
+    at 59.5).
+  Against GitHub's macOS machine: the real Mac passes the eleven
+  window-size checks (the top bar's hit tests, M3, G6, Y7b, the
+  resize with the context lost), I8 (DevTools), and the launch that
+  showed no window; it adds the two camera checks and the two
+  budgets. R3's 20-second limit and R5 pass on it.
+- Not done yet of MC3: the look by eye (the room, Cmd keys, the
+  system's dark mode, the Keychain, HoloML pages, full screen on a
+  video with Escape), and the owner's word on a microphone dialog.
 
 ## The promotion plan (2026-10-14)
 

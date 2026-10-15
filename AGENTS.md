@@ -171,8 +171,9 @@ How to run (from the repo root; first recorded 2026-09-24 on Windows 11
 after they ran; on Windows and Linux in GitHub Actions since 2026-09-26,
 see .github/workflows/ci.yml; on macOS there since 2026-10-15: lint,
 types, unit tests, and the build required, the end-to-end checks an
-experiment "All checks" does not wait for, issue #94; no Mac in hand
-yet). Counts are as of the
+experiment "All checks" does not wait for, issue #94; on the owner's
+Mac, 2026-10-15, the unit tests pass and 445 of 463 end-to-end checks
+do, the 17 misses listed in TODO.md, "Issue #94"). Counts are as of the
 date given and grow with each issue; TODO.md has the latest.
 - Toolchain: Node 24 (the Node inside Electron 44; the automatic
   builds run it, and Node 26 for lint, types, and unit tests; owner,

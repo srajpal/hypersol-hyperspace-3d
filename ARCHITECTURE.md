@@ -1082,8 +1082,12 @@ device" (counted as software drawing, by the harness and the viewer),
 shows Cmd in labels, and makes full screen a Space, so checks written
 against Windows and Linux fail there; the harness maps a check's Ctrl
 to Cmd (and Alt+arrow to Cmd+[ and ]) on macOS, and TODO.md ("Issue
-#94") lists what is left, to be settled with a Mac in hand. No Mac in
-hand has run the browser yet.
+#94") lists what is left. On the owner's Mac (an iMac Pro with a
+graphics card, 2026-10-15) the unit tests pass and 445 of 463
+end-to-end checks do, the budgets met; the 17 misses (full screen's
+transition, the microphone's system dialog, labels with Cmd, windows
+kept on screen, a Retina display's pixels, two budgets) are listed
+there.
 - Toolchain: Node 24 or newer; pnpm 12.4.1 (pinned)
 - Install: `pnpm install --frozen-lockfile`
 - Develop: `pnpm dev` (starts the Electron app with live reload, using a

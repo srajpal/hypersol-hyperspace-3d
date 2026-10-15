@@ -832,8 +832,13 @@ to this repository for rules and the prompt log.
    automatic builds, lint, types, unit tests, and the build required
    and the end-to-end checks an experiment "All checks" does not wait
    for, with the harness mapping a check's Ctrl to Cmd there; TODO.md
-   ("Issue #94") has the two runs' results, the misses grouped, and
-   what needs the owner's Mac (MC3, then #81 closed).
+   ("Issue #94") has the runs' results, the misses grouped, and MC3,
+   the owner's Mac: the unit tests pass and 445 of 463 end-to-end
+   checks do (2026-10-15), with 17 misses grouped there (full screen,
+   the microphone's system dialog, the checks' Ctrl words, macOS's own
+   ways with windows and menus, two budgets); the look by eye, and
+   whether #81 closes and the 17 get an issue of their own, are the
+   owner's next word.
    One issue at a time, approved by the owner first (AGENTS.md rule 2);
    check Electron's security releases at least monthly and before any
    tag (rule 13; last checked 2026-10-10, 44.7.0). Prompts are recorded
