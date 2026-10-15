@@ -4,8 +4,9 @@ The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-10-14 (the promotion plan approved, TODO.md, "The
 promotion plan (2026-10-14)": 19 steps, each a GitHub issue, #90 to
 #101 here and #54 to #60 in holoml; steps 1 and 3 done, step 4, the
-HoloML viewer for ordinary browsers, built here and in its pull
-request (TODO.md, "Issue #91"); milestones 1 to 28 accepted,
+HoloML viewer for ordinary browsers, merged here (#106) and in its
+holoml pull request (#64), Pages still to be turned on (TODO.md,
+"Issue #91"); milestones 1 to 28 accepted,
 milestone 28, lift to 3D, on 2026-10-10, prompt 201; no more
 milestones (prompt 203): work continues from GitHub issues, the first
 of them #75, full screen and pointer lock, accepted 2026-10-10; the
@@ -821,14 +822,21 @@ to this repository for rules and the prompt log.
    kit (#98, #99), to npm and the extension registries (holoml #56,
    #57). The documents review of 2026-10-14 found everything else in
    step; the other open issues above wait behind the plan unless the
-   owner says otherwise. Step 4's browser half (#91) is built: `site/`
-   (the builder, the host page, the transcoder's page, a home page),
-   pages.yml, and tests/e2e/web-viewer.e2e.ts (WV1 to WV8; TODO.md,
-   "Issue #91", has the plan, the decisions, and the results). After
-   its pull request merges, the owner turns Pages on for this
-   repository (Settings, Pages, source GitHub Actions), and holoml #55
-   adds the links from the examples, the README, the docs index, and
-   a how-to page. Step 7 (#94, pull request #110): macOS is in the
+   owner says otherwise. Step 4's browser half (#91) is merged (pull
+   request #106, 2026-10-14): `site/` (the builder, the host page, the
+   transcoder's page, a home page), pages.yml, one viewer change (the
+   KTX2 transcoder's frame wherever the page's policy forbids
+   evaluating code), and tests/e2e/web-viewer.e2e.ts (WV1 to WV8;
+   TODO.md, "Issue #91", has the plan, the decisions, and the results;
+   Q4's text view without WebGL 2 needs a viewer change and waits for
+   the owner's word). holoml's half, "Open it here" on the examples'
+   pages, the README, and the docs home page, with a how-to guide, is
+   holoml pull request #64 (#55). Still the owner's: turn Pages on for
+   this repository (Settings, Pages, source GitHub Actions); the
+   viewer's address answers 404 until then, and Firefox and Safari are
+   then checked by hand. The browser's copies of the examples
+   (pnpm holoml:sync) can be refreshed from holoml's next tag.
+   Step 7 (#94, pull request #110): macOS is in the
    automatic builds, lint, types, unit tests, and the build required
    and the end-to-end checks an experiment "All checks" does not wait
    for, with the harness mapping a check's Ctrl to Cmd there; TODO.md
