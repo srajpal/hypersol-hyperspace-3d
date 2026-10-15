@@ -1072,7 +1072,18 @@ the room in milestone 28.)
 
 Checked on Windows 11, 2026-09-24 and since; on Windows and Linux in the
 automatic builds since 2026-09-26; on Linux in a container on this
-computer (`pnpm test:linux`) since 2026-09-28. macOS not checked yet.
+computer (`pnpm test:linux`) since 2026-09-28; on macOS in the
+automatic builds since 2026-10-15 (issue #94): lint, the type check,
+the unit tests, and the build are required there, and the end-to-end
+checks run as an experiment "All checks" does not wait for. GitHub's
+macOS machine has a 1024 by 768 display with a menu bar and a Dock,
+keeps every window on screen, draws through Apple's "paravirtual
+device" (counted as software drawing, by the harness and the viewer),
+shows Cmd in labels, and makes full screen a Space, so checks written
+against Windows and Linux fail there; the harness maps a check's Ctrl
+to Cmd (and Alt+arrow to Cmd+[ and ]) on macOS, and TODO.md ("Issue
+#94") lists what is left, to be settled with a Mac in hand. No Mac in
+hand has run the browser yet.
 - Toolchain: Node 24 or newer; pnpm 12.4.1 (pinned)
 - Install: `pnpm install --frozen-lockfile`
 - Develop: `pnpm dev` (starts the Electron app with live reload, using a

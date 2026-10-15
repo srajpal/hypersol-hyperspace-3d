@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, type FixtureServer } from './fixture-server';
 import {
+  MOD_KEY,
   clickAt,
   clickUntil,
   focusedTab,
@@ -449,7 +450,7 @@ describe('R6, R7, R8: keyboard, screen readers, and motion', () => {
     // The shell has heard: the button shows the 3D view again.
     await waitFor('the button released', () => h.shell.locator('hs-toolbar [data-testid="text-view"]').getAttribute('aria-pressed'), (v) => v === 'false');
     await h.shell.locator('hs-toolbar [data-testid="text-view"]').focus();
-    await h.shell.keyboard.press('Control+Shift+V');
+    await h.shell.keyboard.press(`${MOD_KEY}+Shift+V`);
     await waitFor('text again, from the shell', () => holo<boolean>(h, 'window.__holoml.textView', PAGE), (v) => v === true);
     await h.shell.click('hs-toolbar [data-testid="text-view"]');
     await waitFor('3D again', () => holo<boolean>(h, 'window.__holoml.textView', PAGE), (v) => v === false);

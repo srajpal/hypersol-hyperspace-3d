@@ -34,8 +34,10 @@ electron package. Development runs keep their data in the `userData/`
 folder of the repository, never in your normal browser profile.
 
 Checked for development on Windows 11, and on Windows and Linux (Ubuntu)
-by GitHub Actions for every pull request and every push to main; macOS
-is untested. On Windows, keep
+by GitHub Actions for every pull request and every push to main; on
+macOS the builds run lint, the type check, the unit tests, and the
+build, and the end-to-end checks as an experiment (not required; TODO.md,
+"Issue #94"); no Mac in hand has run the browser yet. On Windows, keep
 the clone in a short folder path (such as `C:\dev\hyperspace`): pnpm
 fails on file paths over Windows' 260-character limit.
 

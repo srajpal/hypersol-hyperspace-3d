@@ -6600,9 +6600,51 @@ only, and no Mac has run it.
 | MC3 | The owner's Mac | By hand, as #81 lists: install, `pnpm test`, `pnpm test:e2e`, and a look at the room, the shortcuts (Cmd for Ctrl), the system's dark mode, the keychain for saved passwords, HoloML pages, and the web viewer in Safari; what differs recorded here |
 | MC4 | Regression | Windows and Linux as before |
 
-### Results so far
+### Results so far (GitHub's macOS machine, 2026-10-14 and 2026-10-15)
 
-Not checked yet.
+- MC1 passes: install, lint, the type check, 594 unit tests (592, with
+  2 skipped there as everywhere), and the build, on macOS.
+- MC2, the first run (macOS in the matrix like Windows and Linux),
+  parts 3 and 4 before the run was replaced: 35 of 46 passed; the 11
+  misses had two causes. A check's Ctrl did nothing (Cmd+T, Cmd+F,
+  Cmd+Shift+V, and Back as Cmd+[), fixed in the harness (modKeys,
+  MOD_KEY). And the machine's renderer, "ANGLE (Apple, ANGLE Metal
+  Renderer: Apple Paravirtual device, Unspecified Version)", was not
+  on the software list, so the budgets were checked (the aquarium
+  ready in 6.5 s against 5) rather than logged; fixed in the harness
+  and in the viewer's own list (scene.ts), as the device is a virtual
+  machine's stand-in with no graphics card behind it.
+- MC2, the second run, all four parts: part 2, 82 of 91 passed, 4
+  failed (V6, the software-drawing check, and U9 and X2 in parts 3 and
+  4: the viewer's own list, fixed above; R5, the page process's memory
+  after ten visits, 250 MB against 180 allowed, macOS's accounting; R8,
+  Playwright's own keyboard pressing Control+Shift+V, now MOD_KEY);
+  part 3, 29 of 35 passed, 1 failed (U9); part 4, 7 of 11 passed, 1
+  failed (X2); part 1, 297 of 326 passed, 24 failed. Part 1's misses,
+  grouped: the window's content size never reached 1280 by 800 or
+  1024 by 700 (the machine's display is 1024 by 768 with a menu bar
+  and a Dock, and macOS keeps a window on screen; eleven checks: the
+  top bar's hit tests, M3, G6, Y7b, the context-lost resize, the
+  window's size after a restart); the test window overlapping a
+  display (C1: macOS allows no window off every display); full screen
+  (FS1, FS2 twice, FS6, and the HoloML page's script, five checks at
+  their 60-second limit: macOS makes full screen a Space, slowly in a
+  virtual machine); the shortcuts' labels and remapping (M7 and the
+  text view's shortcut expect "Ctrl+Alt+R" and Ctrl keys; macOS shows
+  Cmd); the context menu (four items where two are expected: macOS's
+  own); the clipboard (copies a link address); the lift button's
+  tooltip (Cmd); a lifted picture's pixels (software); I8, DevTools;
+  and one launch where no window appeared in 30 seconds.
+- Decision (the agent, 2026-10-15, for the owner to confirm): macOS
+  stays in the builds with what MC1 needs, required; the end-to-end
+  checks on macOS run as an experiment that "All checks" does not wait
+  for (continue-on-error), reported in every build, until each miss is
+  settled with a Mac in hand (MC3), as whether the app or the check is
+  wrong on macOS (full screen, the menu, the window's size) cannot be
+  judged from a log. Nothing is skipped on Windows or Linux.
+- Linux part 1 in the second run: one miss, the tilt check's "field
+  focused" (a lost click, issue #30's kind), to be run again.
+- Not checked yet: MC3, the owner's Mac.
 
 ## The promotion plan (2026-10-14)
 

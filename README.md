@@ -30,8 +30,10 @@ copies: HoloML's examples (Harbour Loft's furniture, textures, and
 harbour from Poly Haven, CC0; Blockworld's blocks from Kenney, CC0) and
 a made-up sample page.*
 
-For Windows and Linux (checked by automatic tests on both); macOS is
-untested (GitHub issue #81). Apache 2.0. No telemetry.
+For Windows and Linux (checked by automatic tests on both); on macOS
+it builds and passes its unit tests in the automatic builds, and its
+end-to-end checks run there as an experiment, but no Mac in hand has
+run it yet (GitHub issues #94 and #81). Apache 2.0. No telemetry.
 
 **Status (2026-10-10): experimental.** Released: the
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
@@ -407,8 +409,12 @@ steps in [apps/android/README.md](apps/android/README.md).
 
 A developer preview (0.9.0): no installers, so build and run it from
 source. Checked on Windows 11 here, and on Windows and Linux (Ubuntu) by
-GitHub Actions for every pull request and every push to main; macOS is
-untested.
+GitHub Actions for every pull request and every push to main; on macOS
+the same builds run lint, the type check, the unit tests, and the build
+(required), and the end-to-end checks as an experiment that does not
+block a merge, since GitHub's macOS machine (a small display, windows
+kept on screen) fails checks written against Windows and Linux; TODO.md
+("Issue #94") lists them. No Mac in hand has run the browser yet.
 [CONTRIBUTING.md](CONTRIBUTING.md) has the full setup, including Linux.
 
 You need Node 24 or newer and pnpm 12.4.1. The pnpm version is pinned

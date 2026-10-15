@@ -828,7 +828,12 @@ to this repository for rules and the prompt log.
    its pull request merges, the owner turns Pages on for this
    repository (Settings, Pages, source GitHub Actions), and holoml #55
    adds the links from the examples, the README, the docs index, and
-   a how-to page.
+   a how-to page. Step 7 (#94, pull request #110): macOS is in the
+   automatic builds, lint, types, unit tests, and the build required
+   and the end-to-end checks an experiment "All checks" does not wait
+   for, with the harness mapping a check's Ctrl to Cmd there; TODO.md
+   ("Issue #94") has the two runs' results, the misses grouped, and
+   what needs the owner's Mac (MC3, then #81 closed).
    One issue at a time, approved by the owner first (AGENTS.md rule 2);
    check Electron's security releases at least monthly and before any
    tag (rule 13; last checked 2026-10-10, 44.7.0). Prompts are recorded
