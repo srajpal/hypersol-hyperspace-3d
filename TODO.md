@@ -6553,6 +6553,57 @@ hand (the checks stay on this computer).
 - Not checked yet: the published site (Pages off until the owner turns
   it on), and Firefox and Safari.
 
+## Issue #94: macOS in the automatic builds, and a run on the owner's Mac (promotion plan, step 7)
+
+Status: building (2026-10-14; the owner said "move on" after step 4,
+and step 7 was the recommended next). The first question on Hacker
+News will be macOS, which is untested (#81): the browser is source
+only, and no Mac has run it.
+
+### How it works
+
+- macOS joins the automatic builds' matrix (`macos-latest`, GitHub's
+  machines, free for a public repository) with the same four parts as
+  Windows and Linux: part 1 with lint, the type check, and the unit
+  tests, then the end-to-end checks of each part. "All checks" waits
+  for it like the rest, so a pull request needs macOS green too. Its
+  machines are slower, so the part's time limit is 45 minutes there.
+- GitHub's macOS machines have no graphics card, as its Linux ones:
+  the harness gives Chromium the same switch to draw WebGL with its
+  own software renderer (graphicsSwitches), so the frame-rate and
+  load-time budgets are logged and skipped there, as on Linux.
+- What macOS has that Linux had to be given: a display, and the
+  system's Keychain for the password checks (Electron's safeStorage
+  uses it). openssl is LibreSSL's, which has `req -x509 -addext`.
+- What may differ, to be found by the first run: the app's own
+  behaviour on macOS (the app menu, closing the last window keeping
+  the app running, Cmd for Ctrl in shortcuts; main/index.ts), which
+  the checks were written against Windows and Linux for.
+
+### Tasks
+
+- [x] macOS in ci.yml's matrix, with its own end-to-end step and a
+      longer time limit; the harness's software-drawing switch on macOS
+- [ ] The first run read, and what differs fixed or recorded
+- [ ] Documents: README, CONTRIBUTING.md, AGENTS.md (Testing),
+      ARCHITECTURE.md section 11 and the parts that speak of macOS,
+      ci.yml's header, HANDOFF.md
+- [ ] The owner's run on their Mac (see MC3), and #81 closed with what
+      was found
+
+### Checks (named MC, for macOS in the builds)
+
+| # | Check | Pass when |
+|---|---|---|
+| MC1 | The build | On GitHub's macOS machine: install, lint, the type check, the unit tests, and the build pass |
+| MC2 | The end-to-end checks | Every part passes on macOS, the budgets logged and skipped as on Linux; a check that cannot pass on a machine without a graphics card or a focus is skipped, as on Linux and in hidden windows |
+| MC3 | The owner's Mac | By hand, as #81 lists: install, `pnpm test`, `pnpm test:e2e`, and a look at the room, the shortcuts (Cmd for Ctrl), the system's dark mode, the keychain for saved passwords, HoloML pages, and the web viewer in Safari; what differs recorded here |
+| MC4 | Regression | Windows and Linux as before |
+
+### Results so far
+
+Not checked yet.
+
 ## The promotion plan (2026-10-14)
 
 On 2026-10-14 the owner asked for a review of the README and the

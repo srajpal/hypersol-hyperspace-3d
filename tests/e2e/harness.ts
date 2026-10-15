@@ -102,12 +102,13 @@ export const SOFTWARE = process.env['HYPERSOL_TEST_SOFTWARE'] === '1';
  * without a graphics card (GitHub's) offer only a software GL, which
  * Chromium blocks for WebGL 2, so the room and HoloML scenes cannot start;
  * this lets Chromium draw WebGL with its own software renderer instead.
- * With a graphics card it changes nothing (milestone 12).
+ * With a graphics card it changes nothing (milestone 12). GitHub's macOS
+ * machines have no graphics card either (issue #94), so they get the same.
  */
 export function graphicsSwitches(opts: { noWebGL?: boolean } = {}): string[] {
   if (opts.noWebGL) return ['--test-no-webgl'];
   if (SOFTWARE) return ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
-  return process.platform === 'linux' ? ['--enable-unsafe-swiftshader'] : [];
+  return process.platform === 'linux' || process.platform === 'darwin' ? ['--enable-unsafe-swiftshader'] : [];
 }
 
 /**

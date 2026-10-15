@@ -1,9 +1,9 @@
-# Builds and tests every push and pull request on Windows and Linux
-# (milestone 12, GitHub issue #5; approved by the owner, prompt 56, C a),
+# Builds and tests every push and pull request on Windows, Linux, and
+# macOS (milestone 12, GitHub issue #5; approved by the owner, prompt 56,
+# C a; macOS from issue #94, the promotion plan's step 7, 2026-10-14),
 # except one that changes documents only (the *.md files at the top and
 # the docs folder, which no check reads): its parts are skipped and "All
-# checks" passes at once (owner, prompt 135).
-# macOS is not built (no macOS release is planned, prompt 172). Each system runs the
+# checks" passes at once (owner, prompt 135). Each system runs the
 # end-to-end checks in four parts side by side, so a build takes as long
 # as its longest part (two parts from milestone 21, owner, prompt 122,
 # Q7 a; four from prompt 134): parts 2 to 4 are the HoloML files listed
@@ -68,11 +68,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [windows-latest, ubuntu-latest, macos-latest]
         part: [1, 2, 3, 4]
     runs-on: ${{ matrix.os }}
-    # The longest part (part 4 on Linux) takes about 18 minutes.
-    timeout-minutes: 30
+    # The longest part (part 4 on Linux) takes about 18 minutes; macOS's
+    # machines are slower, and get longer.
+    timeout-minutes: ${{ matrix.os == 'macos-latest' && 45 || 30 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -121,6 +122,14 @@ jobs:
 
       - name: End-to-end checks (Windows)
         if: runner.os == 'Windows'
+        env:
+          HYPERSOL_E2E_PART: ${{ matrix.part }}
+        run: pnpm test:e2e
+
+      # macOS's machines have a display and the system's Keychain; openssl
+      # is LibreSSL's there, which has what the certificate checks use.
+      - name: End-to-end checks (macOS)
+        if: runner.os == 'macOS'
         env:
           HYPERSOL_E2E_PART: ${{ matrix.part }}
         run: pnpm test:e2e
