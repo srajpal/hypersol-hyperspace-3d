@@ -288,6 +288,11 @@ function createWindow(): void {
       if (process.platform === 'darwin') {
         const { x, y } = offScreenPosition();
         win.setPosition(x, y);
+        // And after full screen (a Space there), which macOS leaves with the window wholly on screen now and then:
+        // to its corner again.
+        win.on('leave-full-screen', () => {
+          if (!win.isDestroyed()) win.setPosition(x, y);
+        });
       }
     }
     else if (opening.maximized) win.maximize();

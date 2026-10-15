@@ -255,6 +255,21 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
     // card hover (found 2026-09-25 as the cause of occasional C3 and D4
     // failures). Test input comes in through Chromium and is unaffected.
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setIgnoreMouseEvents(true));
+    // macOS makes full screen a Space, with a transition (fullScreenSettled): the window's own events say when it is over.
+    if (process.platform === 'darwin') {
+      await app.evaluate(({ BrowserWindow }) => {
+        const win = BrowserWindow.getAllWindows()[0];
+        const g = globalThis as { __hsFullScreen?: { native: boolean } };
+        if (!win || g.__hsFullScreen) return;
+        g.__hsFullScreen = { native: win.isFullScreen() };
+        win.on('enter-full-screen', () => {
+          g.__hsFullScreen!.native = true;
+        });
+        win.on('leave-full-screen', () => {
+          g.__hsFullScreen!.native = false;
+        });
+      });
+    }
     // The window must be showing before input is sent. In the background it
     // never takes focus (test input does not need it); when shown for
     // watching, wait for it to come to the front as a person's would.
@@ -1094,6 +1109,34 @@ export const MOD_KEY = process.platform === 'darwin' ? 'Meta' : 'Control';
 /** The word the app writes for that modifier in a label or a hint (shared/shortcuts.ts, describeCombo): "Cmd" on macOS, "Ctrl" elsewhere (issue #111). */
 export const MOD_WORD = process.platform === 'darwin' ? 'Cmd' : 'Ctrl';
 
+/**
+ * macOS makes full screen a Space, entered and left with a transition of
+ * about half a second, during which the window says it is full screen
+ * (or not) before its enter-full-screen (leave-full-screen) event has
+ * come. A key sent to a page then can hang the main process for good:
+ * Escape's keyDown starts the leaving, and its keyUp, sent at once, never
+ * returns (issue #111, found on the owner's Mac; a keyUp sent once the
+ * transition is over is fine). So on macOS every key press waits for the
+ * transition to be over before each half of the press, and a check that
+ * enters or leaves full screen waits for it too (issue-75.e2e.ts). On
+ * Windows and Linux there is no transition and nothing waits.
+ */
+export async function fullScreenSettled(h: Harness, timeoutMs = 10_000): Promise<void> {
+  if (process.platform !== 'darwin') return;
+  await waitFor(
+    "the full-screen transition over (the window's event)",
+    () =>
+      h.app.evaluate(({ BrowserWindow }) => {
+        const win = BrowserWindow.getAllWindows()[0];
+        const g = globalThis as { __hsFullScreen?: { native: boolean } };
+        if (!win || win.isDestroyed() || !g.__hsFullScreen) return true;
+        return win.isFullScreen() === g.__hsFullScreen.native;
+      }),
+    (over) => over,
+    timeoutMs,
+  );
+}
+
 export async function pressInPage(
   h: Harness,
   keyCode: string,
@@ -1103,22 +1146,35 @@ export async function pressInPage(
   const target = page ?? (await focusedPage(h));
   ({ keyCode, modifiers } = modKeys(keyCode, modifiers));
   const done = step(`pressing ${[...modifiers, keyCode].join('+')} in page ${JSON.stringify(target)}`);
-  await h.app.evaluate(
-    ({ webContents }, { keyCode, modifiers, target }) => {
-      const guest = webContents
-        .getAllWebContents()
-        .filter(
-          (w) =>
-            w.getType() === 'webview' &&
-            (typeof target === 'string' ? w.getURL().includes(target) : w.id === target.id),
-        )
-        .pop();
-      if (!guest) throw new Error('No web page to press keys in');
-      guest.sendInputEvent({ type: 'keyDown', keyCode, modifiers });
-      guest.sendInputEvent({ type: 'keyUp', keyCode, modifiers });
-    },
-    { keyCode, modifiers, target },
-  );
+  const send = (which: 'keyDown' | 'keyUp' | 'both') =>
+    h.app.evaluate(
+      ({ webContents }, { keyCode, modifiers, target, which }) => {
+        const guest = webContents
+          .getAllWebContents()
+          .filter(
+            (w) =>
+              w.getType() === 'webview' &&
+              (typeof target === 'string' ? w.getURL().includes(target) : w.id === target.id),
+          )
+          .pop();
+        // The keyDown may have closed the page (Ctrl+W): its keyUp then has nowhere to go.
+        if (!guest) {
+          if (which === 'keyUp') return;
+          throw new Error('No web page to press keys in');
+        }
+        if (which !== 'keyUp') guest.sendInputEvent({ type: 'keyDown', keyCode, modifiers });
+        if (which !== 'keyDown') guest.sendInputEvent({ type: 'keyUp', keyCode, modifiers });
+      },
+      { keyCode, modifiers, target, which },
+    );
+  if (process.platform === 'darwin') {
+    await fullScreenSettled(h);
+    await send('keyDown');
+    await fullScreenSettled(h);
+    await send('keyUp');
+  } else {
+    await send('both');
+  }
   done('sent');
 }
 
@@ -1180,14 +1236,24 @@ export async function pressInShell(
 ): Promise<void> {
   ({ keyCode, modifiers } = modKeys(keyCode, modifiers));
   const done = step(`pressing ${[...modifiers, keyCode].join('+')} in the shell`);
-  await h.app.evaluate(
-    ({ BrowserWindow }, { keyCode, modifiers }) => {
-      const wc = BrowserWindow.getAllWindows()[0]!.webContents;
-      wc.sendInputEvent({ type: 'keyDown', keyCode, modifiers });
-      wc.sendInputEvent({ type: 'keyUp', keyCode, modifiers });
-    },
-    { keyCode, modifiers },
-  );
+  const send = (which: 'keyDown' | 'keyUp' | 'both') =>
+    h.app.evaluate(
+      ({ BrowserWindow }, { keyCode, modifiers, which }) => {
+        const wc = BrowserWindow.getAllWindows()[0]!.webContents;
+        if (which !== 'keyUp') wc.sendInputEvent({ type: 'keyDown', keyCode, modifiers });
+        if (which !== 'keyDown') wc.sendInputEvent({ type: 'keyUp', keyCode, modifiers });
+      },
+      { keyCode, modifiers, which },
+    );
+  // On macOS each half of the press waits for a full-screen transition to be over (fullScreenSettled).
+  if (process.platform === 'darwin') {
+    await fullScreenSettled(h);
+    await send('keyDown');
+    await fullScreenSettled(h);
+    await send('keyUp');
+  } else {
+    await send('both');
+  }
   done('sent');
 }
 

@@ -24,6 +24,15 @@ import { LEAVE_SCRIPT, LEAVE_WORLD, POINTER_LOCK_CHANNEL, TOP_EDGE_EVERY_MS, TOP
  *   size, until the window's bounds were set again (found by check FS2 in
  *   `pnpm test:linux`). The size is checked after leaving and, if it is
  *   wrong, the bounds are set again.
+ * - The page after full screen on macOS, where full screen is a Space
+ *   with a transition: the page's exit takes the window out of the Space,
+ *   but the exit itself never completes in the page (its promise stays
+ *   pending, document.fullscreenElement stays set, no fullscreenchange),
+ *   so the page would keep its full-screen state in an ordinary window.
+ *   A second exit, once the window has left, completes. So on macOS the
+ *   page is looked at after the window's leave-full-screen event and
+ *   taken out again if it still says it is full (issue #111, found on the
+ *   owner's Mac; Windows and Linux leave in one step).
  */
 export class FullScreen {
   /** By page; kept weakly, so a page that is gone takes its state with it (no listener of its own on each page). */
@@ -70,6 +79,7 @@ export class FullScreen {
       this.state(page).full = false;
       this.send(page, { type: 'page-fullscreen', webContentsId: id, on: false });
       for (const ms of [300, 1200]) setTimeout(() => void this.mendWindow(page), ms);
+      if (process.platform === 'darwin') this.mendPageOnceLeft(page);
     });
     page.on('before-input-event', (event, input) => {
       if (!escapeLeaves(input, this.holds(page))) return;
@@ -117,6 +127,30 @@ export class FullScreen {
     const bounds = win.getBounds();
     win.setBounds({ ...bounds, width: bounds.width - 1 });
     win.setBounds(bounds);
+  }
+
+  /**
+   * macOS: once the window has left its full-screen Space (its
+   * leave-full-screen event; at once if it is not in one), the page is
+   * taken out again if its document still says it is full. Looked at once
+   * more a second later, in case the first look came mid-transition.
+   */
+  private mendPageOnceLeft(page: WebContents): void {
+    const shell = page.isDestroyed() ? null : page.hostWebContents;
+    const win = shell && !shell.isDestroyed() ? BrowserWindow.fromWebContents(shell) : null;
+    const mend = () => void this.mendPage(page);
+    if (win && !win.isDestroyed() && win.isFullScreen()) win.once('leave-full-screen', () => setTimeout(mend, 50));
+    else setTimeout(mend, 50);
+    setTimeout(mend, 1500);
+  }
+
+  /** The page's document out of full screen if it still says it is in (macOS, after the window has left). */
+  private async mendPage(page: WebContents): Promise<void> {
+    if (page.isDestroyed()) return;
+    const still = (await page
+      .executeJavaScriptInIsolatedWorld(LEAVE_WORLD, [{ code: 'document.fullscreenElement !== null' }], true)
+      .catch(() => false)) as boolean;
+    if (still && !page.isDestroyed()) this.leave(page);
   }
 
   /** Takes a page out of full screen and gives the pointer back. */

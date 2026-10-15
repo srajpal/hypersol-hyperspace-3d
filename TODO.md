@@ -6769,7 +6769,9 @@ run changes). The run's numbers and each miss's error are under "Issue
 - [x] Group 1: the checks' own Ctrl words (M7, LT9 twice, St4)
 - [x] Group 2: macOS's own ways (C1, D7, D8, the lifted picture's
       pixels)
-- [ ] Group 3: full screen (M1, FS2 twice, FS6 twice, closing a tab)
+- [x] Group 3: full screen (M1, FS2 twice, FS6 twice, closing a tab):
+      four of the six pass; the two left are recorded below, for the
+      owner's decision
 - [ ] Group 4: the camera and microphone (K6 to K8, issue #18's
       capture)
 - [ ] Group 5: the two budgets (C9, X5), measured, with a proposal
@@ -6835,6 +6837,78 @@ run changes). The run's numbers and each miss's error are under "Issue
     stopped (group 1). Nothing changed.
   - Each file run alone on the Mac after the changes: m1 every check
     but C9 (group 5), m2 43 of 43, review-134-features every check.
+- Group 3, full screen (2026-10-15), found with throwaway checks on
+  the Mac, each a fresh app on tests/fixtures/fullscreen.html:
+  - The hang. macOS makes full screen a Space, entered and left with a
+    transition of about half a second; the window says it is full
+    screen (or not) at once, and its enter-full-screen
+    (leave-full-screen) event comes when the transition is over. A key
+    sent to the page then hangs the main process for good: Escape's
+    keyDown starts the leaving, and its keyUp, sent at once (or 100 ms
+    later), never returns, and nothing the harness asks the app after
+    that is answered, so the check runs out its 60 seconds and the
+    app's process is left behind (two such processes from the owner's
+    run were still alive the next day, one on fullscreen.html, one on
+    fullscreen.holoml). A keyUp sent once the window's leave-full-screen
+    event has come is fine, as is Escape to the shell's own page, and
+    the app only acts on the keyDown (shared/fullscreen.ts,
+    escapeLeaves). The harness's fault: on macOS every key press
+    (pressInPage, pressInShell) now waits for the transition to be over
+    before each half of the press (fullScreenSettled, which tracks the
+    window's two events from launch), and the full-screen checks wait
+    for it when entering and leaving (goFull, outOfFull). Not one key
+    hangs since. Windows and Linux have no transition and nothing
+    waits. Also the owner's question: the harness need not wait for
+    enter-full-screen before the first key as such; it is the leaving
+    that hangs, and the wait covers both.
+  - The page after leaving. The app's way out (Escape seen in the main
+    process, document.exitFullscreen run in a world of its own) takes
+    the window out of the Space, but the exit never completes in the
+    page: its promise stays pending, document.fullscreenElement stays
+    set, no fullscreenchange comes, in hidden windows and in shown ones
+    alike, so a page would keep its full-screen state in an ordinary
+    window. A second exit asked once the window has left does
+    complete. The app's fault for a person on a Mac: after the window's
+    leave-full-screen event the main process looks at the page and
+    takes it out again if it still says it is full (main/fullscreen.ts,
+    mendPageOnceLeft and mendPage; a look again 1.5 s later), on macOS
+    only. M1 (review-134-main) and FS2's Escape check pass since, with
+    the page's "out" event seen.
+  - The window after leaving. macOS puts the window back wholly on
+    screen as it leaves the Space, and now and then leaves it there
+    (at x 1280, y 640 here) rather than at its frame from before; the
+    test window's path moves it to its corner again on the window's
+    leave-full-screen event (main/index.ts), so "the window back where
+    it was" holds to the pixel, and the window stays out of the way.
+    Closing a tab in full screen passes since: the tab closes and the
+    window comes back (issue #87's reading does not show on the Mac).
+  - What is left, two checks, the same in three runs in a row (fs
+    runs 4, 5, and 9): FS2's second check (the page's own way out, a
+    new tab, and leaving the page) and FS6's first (a private tab, a
+    lifted picture). After a Space is left the page inside keeps the
+    window's width instead of its panel's (innerWidth 1280 where the
+    panel is 1006 with the lift rail, 1226 without; before full screen
+    they agree), and a second full-screen request on that page never
+    enters (no fullscreenchange, the window stays as it is), while the
+    browser's own page is the window's size again. Two mends were
+    tried and taken out again: the window's bounds nudged after every
+    leaving (the Linux mend, mendWindow, made unconditional on macOS)
+    stopped the next full screen from entering at all (two runs); the
+    page's box made a pixel narrower for a frame and its own again
+    (the shell, tab-view.ts) changed nothing. So on this Mac
+    (macOS 15.8.1, Electron 44.7.0) a page that has been full screen
+    once is left a width that is not its box's, which no check can
+    pass over. Not settled: whether this is Electron's (likely: the
+    page's size comes from Chromium's visual properties, which the
+    Space transition seems to leave stale) or something the app can
+    still mend, and how the two checks should stand on macOS
+    meanwhile: the owner's call (the options: a skip on macOS naming
+    this, with an issue of their own; or more time on a mend).
+  - Not done: the owner's look by eye (Escape on a video page, and
+    closing the tab), as this session cannot press keys (macOS refuses
+    osascript assistive access); a page for it is ready, served on
+    this computer at http://127.0.0.1:8765/video.html (the scratchpad)
+    for a `pnpm dev` run.
 
 ## The promotion plan (2026-10-14)
 

@@ -16,6 +16,7 @@ import {
   clickUntil,
   describeMissedClick,
   focusedPage,
+  fullScreenSettled,
   inPage,
   launch,
   mainLog,
@@ -73,6 +74,8 @@ async function goFull(h: Harness, page = 'fullscreen.html'): Promise<void> {
   );
   await waitFor('the window full screen', () => windowState(h), (w) => w.full);
   await waitFor('the notice', () => notice(h), (n) => n.open && n.holding.some((x) => x.full));
+  // macOS: the Space transition over before anything is sent (issue #111).
+  await fullScreenSettled(h);
 }
 
 /**
@@ -83,6 +86,7 @@ async function goFull(h: Harness, page = 'fullscreen.html'): Promise<void> {
 async function outOfFull(h: Harness, what: string): Promise<void> {
   const was = windowBefore;
   await waitFor(`${what}: the window back where it was`, () => windowState(h), (w) => !w.full && (was === null || JSON.stringify(w.bounds) === JSON.stringify(was)));
+  await fullScreenSettled(h);
   await waitFor(`${what}: nothing held`, () => notice(h), (n) => n.holding.length === 0);
   await waitFor(
     `${what}: laid out again`,
