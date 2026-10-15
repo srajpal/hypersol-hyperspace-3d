@@ -7038,6 +7038,20 @@ run changes). The run's numbers and each miss's error are under "Issue
   run. Not among the 17: to be filed as its own issue (a crash of
   Electron's main process when a page's DevTools open, on macOS,
   intermittent), and left out of this one.
+- The whole run again, after group 3's mend (2026-10-15, the display
+  held awake with `caffeinate -d`, 22 minutes): 459 of 463 passed, 1
+  skipped (FS5), 3 failed: C9 (group 5's measure, 29.8), and E2 twice
+  (m3, the Library's search once typing pauses: the sixth search came
+  after 199.9 ms against the 200 asked, a clock's rounding, and the
+  check after it was left waiting; the file run alone passes 22 of 22,
+  and E2 passed in every other run of the day; not macOS's). Every
+  full-screen check passed, I8 passed, and R5 passed (130 MB after ten
+  visits; it had missed once in the run before, 139.8 MB against
+  135.5, macOS's accounting). The budgets as before: the ocean tunnel
+  drawn in 1063 ms and 60.0 frames a second, looking around 59.2,
+  Harbour Loft 2063 ms, the sneaker store 508 ms, the sofa studio 680
+  ms. So on this Mac what stands is C9's measure (a proposal, group 5)
+  and the intermittent DevTools crash (its own issue).
 
 ## The promotion plan (2026-10-14)
 
