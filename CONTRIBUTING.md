@@ -44,7 +44,10 @@ sets out to compile it, and allow "Electron" the microphone when
 macOS asks during the first `pnpm test:e2e` (the checks that capture
 audio use a stand-in device, but macOS asks once per binary all the
 same; its dialog waits for you, and the two checks run out their time
-if nobody answers). On Windows, keep
+if nobody answers), and keep the display awake during a run
+(`caffeinate -d pnpm test:e2e`): with it asleep, or the screen locked,
+macOS makes no full screen, and the full-screen checks miss. On
+Windows, keep
 the clone in a short folder path (such as `C:\dev\hyperspace`): pnpm
 fails on file paths over Windows' 260-character limit.
 

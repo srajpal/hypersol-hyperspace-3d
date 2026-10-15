@@ -177,7 +177,9 @@ a few: the 17 misses of the first run are settled one by one in
 TODO.md, "Issue #111", where what is left stands). On a Mac the first
 run asks, through macOS's own dialog, to allow "Electron" the
 microphone: allow it, or the two checks that capture audio run out
-their time (issue #111). Counts are as of the
+their time; and a run there keeps the display awake (`caffeinate -d
+pnpm test:e2e`), as macOS makes no full screen with the display asleep
+or the screen locked (issue #111). Counts are as of the
 date given and grow with each issue; TODO.md has the latest.
 - Toolchain: Node 24 (the Node inside Electron 44; the automatic
   builds run it, and Node 26 for lint, types, and unit tests; owner,

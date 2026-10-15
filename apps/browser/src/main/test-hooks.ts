@@ -67,6 +67,8 @@ export interface TestLog {
   lifts: { kind: 'capture' | 'model'; url: string; area?: { x: number; y: number; width: number; height: number }; result: string }[];
   /** GitHub issue #75: each time the pointer reached the top of the screen in full screen and the shell was told (the y the page saw). */
   fullscreenEdges: number[];
+  /** macOS: each look at the shell's document and the page's after full screen (main/fullscreen.ts, mendPage; issue #111). */
+  fullscreenMends: { at: number; page: number; shellFull: boolean; pageFull: boolean; shellAsked: boolean; pageAsked: boolean }[];
 }
 
 declare global {
@@ -74,7 +76,7 @@ declare global {
 }
 
 export function installTestHooks(): TestLog {
-  const log: TestLog = { attaches: [], requests: [], heldRequests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave', refusedPermissions: [], layersSettled: {}, faviconEnds: [], captures: [], lifts: [], fullscreenEdges: [] };
+  const log: TestLog = { attaches: [], requests: [], heldRequests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave', refusedPermissions: [], layersSettled: {}, faviconEnds: [], captures: [], lifts: [], fullscreenEdges: [], fullscreenMends: [] };
   globalThis.__hypersolTest = log;
   // log.requests is filled by the privacy shield's request listener
   // (main/privacy/index.ts): Electron allows one listener per session.

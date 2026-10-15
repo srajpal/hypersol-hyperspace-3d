@@ -6770,8 +6770,8 @@ run changes). The run's numbers and each miss's error are under "Issue
 - [x] Group 2: macOS's own ways (C1, D7, D8, the lifted picture's
       pixels)
 - [x] Group 3: full screen (M1, FS2 twice, FS6 twice, closing a tab):
-      four of the six pass; the two left are recorded below, for the
-      owner's decision
+      all six pass since the mend of 2026-10-15 (the owner's word: more
+      time on a mend rather than a skip)
 - [x] Group 4: the camera and microphone (K6 to K8, issue #18's
       capture)
 - [x] Group 5: the two budgets (C9, X5), measured, with a proposal
@@ -6883,28 +6883,62 @@ run changes). The run's numbers and each miss's error are under "Issue
     it was" holds to the pixel, and the window stays out of the way.
     Closing a tab in full screen passes since: the tab closes and the
     window comes back (issue #87's reading does not show on the Mac).
-  - What is left, two checks, the same in three runs in a row (fs
-    runs 4, 5, and 9): FS2's second check (the page's own way out, a
-    new tab, and leaving the page) and FS6's first (a private tab, a
-    lifted picture). After a Space is left the page inside keeps the
-    window's width instead of its panel's (innerWidth 1280 where the
-    panel is 1006 with the lift rail, 1226 without; before full screen
-    they agree), and a second full-screen request on that page never
-    enters (no fullscreenchange, the window stays as it is), while the
-    browser's own page is the window's size again. Two mends were
-    tried and taken out again: the window's bounds nudged after every
-    leaving (the Linux mend, mendWindow, made unconditional on macOS)
-    stopped the next full screen from entering at all (two runs); the
-    page's box made a pixel narrower for a frame and its own again
-    (the shell, tab-view.ts) changed nothing. So on this Mac
-    (macOS 15.8.1, Electron 44.7.0) a page that has been full screen
-    once is left a width that is not its box's, which no check can
-    pass over. Not settled: whether this is Electron's (likely: the
-    page's size comes from Chromium's visual properties, which the
-    Space transition seems to leave stale) or something the app can
-    still mend, and how the two checks should stand on macOS
-    meanwhile: the owner's call (the options: a skip on macOS naming
-    this, with an issue of their own; or more time on a mend).
+  - The two that were left (FS2's second check and FS6's first), the
+    page keeping the window's width after a Space and a second request
+    on it never entering: mended (the owner, 2026-10-15: more time on a
+    mend rather than a skip). Found, with throwaway checks and the
+    checks' own failure values (which now say what they measured, and
+    list the main process's looks, testLog.fullscreenMends):
+    - Electron puts the shell's own webview element into the shell
+      document's full screen for a page's. After the Space exit that
+      element stayed full, which held the page at the window's width
+      (innerWidth 1280 where the panel was 1006 or 1226; the shell's
+      own exit asked then completed at once, and the width came back),
+      and a page's next request never entered because the shell
+      document was full already. So the main process takes the shell
+      document out too, once the window has left (mendPage).
+    - The look must come only once the window's bounds have held still
+      (the window's leave-full-screen event came while the window was
+      still on its way back, at x 1280 half a second after it, and an
+      exit asked then was ignored, and so was every one after it); only
+      while no page holds full screen and the window is out (a look
+      that fell into another tab's entry, before the app's own event
+      had come, asked the shell out and broke that entry); and only
+      once: a second look a second and a half later, meant for a look
+      that came mid-transition, fell into the next round (a new tab's
+      or the private tab's) and broke it, and after leaving a page
+      (loadURL while full) it found the shell's element full again and
+      its exits ignored. With the look held until the window holds
+      still, one look has done the work in every log.
+    - The check's own capture: FS1 read a pixel of the notice with
+      capturePage of a 1 by 1 rectangle of the window's page while
+      full screen, after which the shell's page was 1440 by 1440 at
+      its next full screen (the window itself 2560 by 1440), and the
+      page with it; a capture of the whole page, or Playwright's
+      screenshot, leaves no such mark. FS1 now captures the whole page
+      and reads the pixel from it. Nothing in the app captures the
+      shell's page.
+    - The checks' leaving wait (outOfFull) also sees the shell
+      document out with a frame drawn, as a request that comes while
+      that exit settles was left half done; their entering wait
+      (goFull) sees the page laid out for the screen.
+    - The Mac itself: with the display asleep, or the screen locked,
+      macOS makes no full-screen Space at all (the window said it was
+      full screen and never was: every full-screen check missed at
+      once in four runs, and FS1 once in the whole run of the day).
+      A run on a Mac keeps the display awake (`caffeinate -d` around
+      it; the documents say so).
+    - Two slips of the mend's first form, found by the whole run and
+      taken out: a `destroyed` listener on each page (an eleventh on a
+      WebContents, which Node warns about and C1 and issue #12's check
+      count as a console error), and the test window's return to its
+      corner, which ran on the window's leave-full-screen event and was
+      undone by macOS's own late move (the HoloML page's Escape found
+      the window at x 1280, y 640); the return now waits for the window
+      to hold still, as the mend does.
+    - issue-75.e2e.ts and review-134-main.e2e.ts run together after the
+      mend: 26 of 27 pass with FS5 skipped (hidden windows), in three
+      runs in a row, and again with m1 and m6 after the two slips.
   - Not done: the owner's look by eye (Escape on a video page, and
     closing the tab), as this session cannot press keys (macOS refuses
     osascript assistive access); a page for it is ready, served on

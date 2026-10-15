@@ -288,10 +288,22 @@ function createWindow(): void {
       if (process.platform === 'darwin') {
         const { x, y } = offScreenPosition();
         win.setPosition(x, y);
-        // And after full screen (a Space there), which macOS leaves with the window wholly on screen now and then:
-        // to its corner again.
+        // And after full screen (a Space there), which macOS leaves with the window wholly on screen now and then,
+        // moving it once more after its own leave-full-screen event: to its corner again once it holds still.
         win.on('leave-full-screen', () => {
-          if (!win.isDestroyed()) win.setPosition(x, y);
+          let last = '';
+          let stillFor = 0;
+          const started = Date.now();
+          const tick = () => {
+            if (win.isDestroyed() || win.isFullScreen()) return;
+            const now = JSON.stringify(win.getBounds());
+            stillFor = now === last ? stillFor + 100 : 0;
+            last = now;
+            if (stillFor >= 300 || Date.now() - started > 3000) win.setPosition(x, y);
+            else setTimeout(tick, 100);
+          };
+          win.setPosition(x, y);
+          setTimeout(tick, 100);
         });
       }
     }
@@ -758,7 +770,7 @@ if (!app.requestSingleInstanceLock()) {
 
     // Full screen and pointer lock (GitHub issue #75): what each page holds, Escape, and the shell's request to
     // take one of its pages out of both (a tab switch, a closing tab).
-    const full = new FullScreen(sendToHost, testLog ? (y) => testLog?.fullscreenEdges.push(y) : undefined);
+    const full = new FullScreen(sendToHost, testLog ? (y) => testLog?.fullscreenEdges.push(y) : undefined, testLog ? (m) => testLog?.fullscreenMends.push(m) : undefined);
     fullScreen = full;
     handleFromShell(LEAVE_FULLSCREEN_CHANNEL, (event, id: unknown) => {
       const page = typeof id === 'number' ? webContents.fromId(id) : undefined;

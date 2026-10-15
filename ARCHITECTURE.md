@@ -1092,8 +1092,11 @@ a link's text on a right-click, so the menu offers Copy; macOS makes
 full screen a Space with a transition, during which a key sent to the
 page hangs the main process (the harness now waits for the window's
 own events), and after which the page's exit never completes on its
-own (the main process takes the page out again once the window has
-left) and the page keeps the window's width (open); a page's first
+own, and the shell's own webview element, which Electron puts into
+the shell document's full screen for a page's, stays full too, holding
+the page at the window's width (the main process takes both out again
+once the window has left and holds still, main/fullscreen.ts); a
+page's first
 audio capture asks macOS for the microphone once per binary, even
 with the stand-in device, which the checks now say; and two measures
 (C9's pointer loop, the ocean tunnel's first draw) are recorded with

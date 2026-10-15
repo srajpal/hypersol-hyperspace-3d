@@ -74,8 +74,23 @@ async function goFull(h: Harness, page = 'fullscreen.html'): Promise<void> {
   );
   await waitFor('the window full screen', () => windowState(h), (w) => w.full);
   await waitFor('the notice', () => notice(h), (n) => n.open && n.holding.some((x) => x.full));
-  // macOS: the Space transition over before anything is sent (issue #111).
+  // macOS: the Space transition over before anything is sent (issue #111), and the page laid out for the screen
+  // (the shell's document holds the page's element full, Electron's way for a webview, and the page is the
+  // screen's width): a key sent the instant the transition ends is not acted on.
   await fullScreenSettled(h);
+  if (process.platform === 'darwin') {
+    await waitFor(
+      'the page laid out for the screen',
+      async () => ({
+        shell: await h.shell.evaluate(() => document.fullscreenElement?.tagName.toLowerCase() ?? null),
+        page: await inPage<number>(h, 'window.innerWidth', page),
+        screen: (await windowState(h)).content.width,
+        more: await inPage(h, '({ h: innerHeight, el: document.fullscreenElement && document.fullscreenElement.id, events: window.__fixture ? window.__fixture.events : null })', page),
+        mends: await mainLog(h, 'fullscreenMends'),
+      }),
+      (r) => r.shell === 'webview' && r.page === r.screen,
+    );
+  }
 }
 
 /**
@@ -88,6 +103,17 @@ async function outOfFull(h: Harness, what: string): Promise<void> {
   await waitFor(`${what}: the window back where it was`, () => windowState(h), (w) => !w.full && (was === null || JSON.stringify(w.bounds) === JSON.stringify(was)));
   await fullScreenSettled(h);
   await waitFor(`${what}: nothing held`, () => notice(h), (n) => n.holding.length === 0);
+  // macOS: the browser's own page out of its full screen too (its webview element was full for the page's), and a
+  // frame drawn since, before the next thing is asked: a request that comes while that exit settles is left
+  // half done (the page at a wrong size, issue #111).
+  if (process.platform === 'darwin') {
+    await waitFor(
+      `${what}: the browser's own page out`,
+      async () => ({ out: await h.shell.evaluate(() => new Promise<boolean>((r) => requestAnimationFrame(() => r(document.fullscreenElement === null)))), mends: await mainLog(h, 'fullscreenMends'), window: await windowState(h) }),
+      (r) => r.out,
+    );
+  }
+  // A miss says what was measured (issue #111).
   await waitFor(
     `${what}: laid out again`,
     async () => {
@@ -95,14 +121,15 @@ async function outOfFull(h: Harness, what: string): Promise<void> {
       const inner = await h.shell.evaluate(() => [window.innerWidth, window.innerHeight]);
       // The browser's own page is as large as its window (on Linux it was once left at 1 by 1: main/fullscreen.ts).
       const { content } = await windowState(h);
-      if (Math.abs(inner[0]! - content.width) > 2 || Math.abs(inner[1]! - content.height) > 2) return false;
+      const shellSized = Math.abs(inner[0]! - content.width) <= 2 && Math.abs(inner[1]! - content.height) <= 2;
       // A tab with the start panel has no web page to measure.
       const page = await focusedPage(h)
         .then((p) => inPage<number>(h, 'window.innerWidth', p))
         .catch(() => null);
-      return layout.viewportWidth === inner[0] && layout.viewportHeight === inner[1] && (page === null || Math.abs(page - layout.panelWidth) <= 1);
+      const ok = shellSized && layout.viewportWidth === inner[0] && layout.viewportHeight === inner[1] && (page === null || Math.abs(page - layout.panelWidth) <= 1);
+      return { ok, inner, content: [content.width, content.height], viewport: [layout.viewportWidth, layout.viewportHeight], panel: layout.panelWidth, page, shell: await h.shell.evaluate(() => document.fullscreenElement?.tagName.toLowerCase() ?? null), mends: await mainLog(h, 'fullscreenMends') };
     },
-    (ok) => ok,
+    (r) => r.ok,
   );
   await settled(h);
 }
@@ -142,9 +169,15 @@ describe('FS1 to FS4: full screen', () => {
       const r = e.getBoundingClientRect();
       return { x: Math.round(r.left + 10), y: Math.round(r.top + r.height / 2) };
     });
+    // The whole page is captured and the pixel read from it: a capture of a rectangle while the window is full
+    // screen on macOS leaves the browser's own page at a wrong size at its next full screen (issue #111).
     const pixel = await h.app.evaluate(async ({ BrowserWindow }, p) => {
-      const image = await BrowserWindow.getAllWindows()[0]!.webContents.capturePage({ x: p.x, y: p.y, width: 1, height: 1 });
-      return [...image.toBitmap().subarray(0, 3)];
+      const image = await BrowserWindow.getAllWindows()[0]!.webContents.capturePage();
+      const { width } = image.getSize();
+      const scale = width / BrowserWindow.getAllWindows()[0]!.getContentBounds().width;
+      const bitmap = image.toBitmap();
+      const i = (Math.round(p.y * scale) * width + Math.round(p.x * scale)) * 4;
+      return [...bitmap.subarray(i, i + 3)];
     }, at);
     // The page's box is #2050c0 (a bitmap is blue, green, red).
     expect(Math.abs(pixel[0]! - 0xc0) + Math.abs(pixel[1]! - 0x50) + Math.abs(pixel[2]! - 0x20), JSON.stringify(pixel)).toBeGreaterThan(40);
