@@ -7052,6 +7052,21 @@ run changes). The run's numbers and each miss's error are under "Issue
   Harbour Loft 2063 ms, the sneaker store 508 ms, the sofa studio 680
   ms. So on this Mac what stands is C9's measure (a proposal, group 5)
   and the intermittent DevTools crash (its own issue).
+- Pull request #114's builds (2026-10-15): Windows and Linux pass,
+  "All checks" passes, and the macOS experiment misses 13 in part 1
+  and 1 in part 2 on GitHub's small virtual Mac: the ten of its 1024 by
+  768 display (the window never reaches the asked size: the top bar's
+  hit tests, G6, Y7b, D7, the resize with the context lost), the
+  launch that shows no window, I8's crash, R5's memory (233 MB
+  against 168 there), all as #94 recorded, and one of this issue's:
+  FS6's first check at 60 seconds, Escape's keyUp hung after all. On
+  that slower Mac the window had not begun leaving by the time
+  fullScreenSettled looked after the keyDown, so it found nothing to
+  wait for, and the keyUp landed in the transition. The harness now
+  waits, after Escape's keyDown in full screen, until the window has
+  left (escapeLeft, up to 10 s) before the keyUp. On the owner's Mac
+  issue-75, review-134-main, and m7 run together after it: 37 of 38
+  pass, FS5 skipped.
 
 ## The promotion plan (2026-10-14)
 

@@ -1165,6 +1165,30 @@ export async function noteMicrophoneAccess(h: Harness, check: string): Promise<v
   );
 }
 
+/**
+ * macOS: after Escape's keyDown in full screen, the window has left (its
+ * leave-full-screen event has come) before the keyUp is sent. On a slow
+ * Mac (GitHub's) the leaving had not begun by the time fullScreenSettled
+ * looked, so it found nothing to wait for and the keyUp landed in the
+ * transition, and hung (issue #111, pull request #114's builds). A page
+ * that keeps the screen after Escape is none of the app's: the wait
+ * gives up after 10 s and the keyUp goes anyway.
+ */
+async function escapeLeft(h: Harness, keyCode: string, wasFull: boolean): Promise<void> {
+  if (process.platform !== 'darwin' || keyCode !== 'Escape' || !wasFull) return;
+  await waitFor(
+    'the window out of full screen after Escape',
+    () =>
+      h.app.evaluate(({ BrowserWindow }) => {
+        const win = BrowserWindow.getAllWindows()[0];
+        const g = globalThis as { __hsFullScreen?: { native: boolean } };
+        return !win || win.isDestroyed() || (!win.isFullScreen() && g.__hsFullScreen?.native === false);
+      }),
+    (out) => out,
+    10_000,
+  ).catch(() => undefined);
+}
+
 export async function pressInPage(
   h: Harness,
   keyCode: string,
@@ -1197,7 +1221,9 @@ export async function pressInPage(
     );
   if (process.platform === 'darwin') {
     await fullScreenSettled(h);
+    const wasFull = await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isFullScreen() ?? false);
     await send('keyDown');
+    await escapeLeft(h, keyCode, wasFull);
     await fullScreenSettled(h);
     await send('keyUp');
   } else {
@@ -1276,7 +1302,9 @@ export async function pressInShell(
   // On macOS each half of the press waits for a full-screen transition to be over (fullScreenSettled).
   if (process.platform === 'darwin') {
     await fullScreenSettled(h);
+    const wasFull = await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isFullScreen() ?? false);
     await send('keyDown');
+    await escapeLeft(h, keyCode, wasFull);
     await fullScreenSettled(h);
     await send('keyUp');
   } else {
