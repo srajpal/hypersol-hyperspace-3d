@@ -6391,7 +6391,9 @@ was full screen. Whether the tab closed is not in the log.
 
 ## Issue #91: the HoloML viewer for ordinary browsers (promotion plan, step 4)
 
-Status: built, in its pull request (2026-10-14). The plan below was
+Status: the browser's half merged (pull request #106, 2026-10-14,
+closing #91); holoml's half in its pull request (holoml #64, closing
+#55); Pages still to be turned on by the owner. The plan below was
 approved by the owner on 2026-10-14 with the recommended answers to Q1
 to Q6 (Q4 not met as decided; see below). holoml's half,
 the links from its site and examples, is holoml issue #55, after this.
@@ -6500,9 +6502,17 @@ content policy enforcing the same.
 - [x] tests/e2e/web-viewer.e2e.ts (WV1 to WV8), in part 1
 - [x] Documents: README, ARCHITECTURE.md, docs/privacy.md, AGENTS.md
       (Testing), CHANGELOG.md, HANDOFF.md, docs/progress.md
-- [ ] The pull request (open), and Pages turned on by the owner
-- [ ] holoml #55: the links from the examples, the README, and the
-      docs index, and a how-to page
+- [x] The pull request, #106, merged 2026-10-14 (its review's three
+      points fixed: a redirect's address, the test's code, a window
+      left open; its one failed job, m14's P3 drag on Linux, fixed
+      with the harness's dragUntil)
+- [ ] Pages turned on by the owner (Settings, Pages, source GitHub
+      Actions); the site answers 404 until then, and the Pages
+      workflow's first run waits on it
+- [x] holoml #55: "Open it here" on each example's front page, the
+      README, and the docs home page; the how-to guide "Show a HoloML
+      page in an ordinary browser"; holoml pull request #64 (886 tests
+      pass there)
 
 ### Checks (named WV, for the web viewer)
 
@@ -6625,6 +6635,10 @@ Results:
   and m19 and m20 passed in the same job); the job passed when run
   again. The miss is of the kind issue #79 covers. The plan's record,
   pull request #102, merged the same day.
+- Step 4 (2026-10-14): the browser's half merged, pull request #106
+  (the plan, decisions, and results in "Issue #91" above; Q4's text
+  view without WebGL 2 waits for a viewer change of its own); holoml's
+  half in holoml pull request #64. Pages is the owner's to turn on.
 - Step 3 done (2026-10-14): the README's history says every example
   has since moved to HoloML 0.3, the version to write today (pull
   request #104, closing #90), and holoml's README and documentation
