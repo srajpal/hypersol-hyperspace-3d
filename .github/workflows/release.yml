@@ -36,6 +36,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: ${{ github.event.inputs.tag || github.ref }}
       - id: tag
         env:
           INPUT_TAG: ${{ github.event.inputs.tag }}
@@ -43,13 +44,25 @@ jobs:
         run: |
           tag="${INPUT_TAG:-$REF_NAME}"
           echo "tag=$tag" | tee -a "$GITHUB_OUTPUT"
-      # The notes: the changelog's section for this version, after a line on the zips.
+      # The tag names the version the checked-out package has (a dispatch
+      # with a mistyped tag would otherwise draft one version with another's
+      # files), and a release the owner has published is never made a draft
+      # again by a run after it: the run stops instead.
       - name: The draft, with the changelog's section as its notes
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
           version="${TAG#v}"
+          packaged=$(node -p "require('./apps/browser/package.json').version")
+          if [ "$version" != "$packaged" ]; then
+            echo "The tag $TAG names version $version, but apps/browser/package.json says $packaged." >&2
+            exit 1
+          fi
+          if gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null | grep -q false; then
+            echo "The release $TAG is already published; this run changes nothing of it." >&2
+            exit 1
+          fi
           {
             echo "A developer preview, as a portable zip for Windows, Linux, and macOS: unzip it and start HyperSpace3D (HyperSpace 3D.app on a Mac). Nothing is signed: Windows SmartScreen says the app is unrecognised (More info, then Run anyway), and macOS Gatekeeper refuses it until it is allowed in System Settings, Privacy & Security, or with \`xattr -dr com.apple.quarantine \"HyperSpace 3D.app\"\`. The SHA-256 of each zip is beside it. Or build it from source: CONTRIBUTING.md."
             echo
@@ -62,7 +75,8 @@ jobs:
           if gh release view "$TAG" > /dev/null 2>&1; then
             gh release edit "$TAG" --draft --prerelease --title "$version — developer preview" --notes-file notes.md
           else
-            gh release create "$TAG" --draft --prerelease --title "$version — developer preview" --notes-file notes.md
+            # --verify-tag: the tag must exist already; gh never makes one here.
+            gh release create "$TAG" --verify-tag --draft --prerelease --title "$version — developer preview" --notes-file notes.md
           fi
 
   package:

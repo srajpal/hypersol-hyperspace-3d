@@ -13,7 +13,7 @@
 // profile (AGENTS.md rule 1). On Linux without a desktop, run it under
 // xvfb-run.
 import { _electron as electron } from 'playwright';
-import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,11 +22,15 @@ const here = dirname(fileURLToPath(import.meta.url));
 const RELEASE = resolve(here, '../../../release');
 const EXECUTABLE = 'HyperSpace3D';
 
-/** The packaged app's binary for this system, in release/. */
+/** The packaged app's binary for this system and processor, in release/, and of this build's version (an older package left there is not it). */
 function findApp() {
-  const folders = readdirSync(RELEASE).filter((f) => f.startsWith('HyperSpace 3D-') && f.includes(process.platform));
-  if (folders.length === 0) throw new Error(`No packaged app in ${RELEASE}: run pnpm package first`);
-  const dir = join(RELEASE, folders[0]);
+  const version = JSON.parse(readFileSync(resolve(here, '../package.json'), 'utf8')).version;
+  const folder = `HyperSpace 3D-${process.platform}-${process.arch}`;
+  const dir = join(RELEASE, folder);
+  if (!existsSync(dir)) throw new Error(`No packaged app at ${dir}: run pnpm package first`);
+  const app = process.platform === 'darwin' ? join(dir, 'HyperSpace 3D.app', 'Contents', 'Resources', 'app') : join(dir, 'resources', 'app');
+  const packaged = JSON.parse(readFileSync(join(app, 'package.json'), 'utf8')).version;
+  if (packaged !== version) throw new Error(`The packaged app at ${dir} is version ${packaged}, not this build's ${version}: run pnpm package again`);
   const binary =
     process.platform === 'win32'
       ? join(dir, `${EXECUTABLE}.exe`)

@@ -37,11 +37,14 @@ TODO.md under "Issue #94" (full screen, the camera's system dialog,
 and macOS's own ways with windows and menus; GitHub issues #94 and
 #81). Apache 2.0. No telemetry.
 
-**Status (2026-10-15): experimental.** Released: the
+**Status (2026-10-15): experimental.** The newest version is the
 [0.9.1 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1),
 a pre-release, as a portable zip for Windows, Linux, and macOS (unzip
-it and start it; nothing is signed, so Windows and macOS ask once) and
-as source. There are no installers, and none are planned: a fork may
+it and start it; nothing is signed, so Windows SmartScreen asks once
+and macOS Gatekeeper refuses it until it is allowed, as the release
+notes describe) and as source; its tag and draft release follow the
+merge of its pull request, and the owner publishes the draft. There
+are no installers, and none are planned: a fork may
 make one of its own (see [CONTRIBUTING.md](CONTRIBUTING.md), "Making
 your own build", which describes the zip). The
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0)
@@ -414,8 +417,9 @@ steps in [apps/android/README.md](apps/android/README.md).
 A developer preview (0.9.1): a portable zip for each system on the
 [releases page](https://github.com/srajpal/hypersol-hyperspace-3d/releases)
 (unzip it and start HyperSpace3D, or HyperSpace 3D.app on a Mac;
-nothing is signed, so Windows SmartScreen and macOS Gatekeeper ask
-once, and the release notes say how to answer), or build and run it
+nothing is signed: Windows SmartScreen asks once, and macOS Gatekeeper
+refuses the app until it is allowed in System Settings or its
+quarantine mark is removed, as the release notes describe), or build and run it
 from source as below. Checked on Windows 11 here, and on Windows and Linux (Ubuntu) by
 GitHub Actions for every pull request and every push to main; on macOS
 the same builds run lint, the type check, the unit tests, and the build

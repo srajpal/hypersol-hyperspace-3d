@@ -6839,7 +6839,7 @@ packager was set up, and no icon.
 |---|---|---|
 | RL1 | The package | `pnpm package` makes a zip for this system that unzips to a folder whose app starts |
 | RL2 | The smoke check | The packaged app opens its window with the browser's title and the room's canvas, on Windows, Linux, and both macOS processors, in the release workflow |
-| RL3 | What is inside | The app's folder holds `out/` and `resources/` as plain files, and the licence files beside the app; nothing of the sources or node_modules; no test hooks (D12's check of a packaged app) |
+| RL3 | What is inside | The app's folder holds `out/` and `resources/` as plain files, the licence files beside the app, and in node_modules only the shield's page script and what it depends on; nothing of the sources; no test hooks (D12's check of a packaged app) |
 | RL4 | The version | About shows 0.9.1; m2's check and the screenshot agree |
 | RL5 | The draft | The workflow's draft release for the tag carries four zips and their checksums, and the notes |
 | RL6 | The icon | The window and the taskbar show the cube on Windows and Linux; the app bundle on macOS |
