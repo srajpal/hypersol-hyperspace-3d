@@ -6643,8 +6643,22 @@ only, and no Mac has run it.
   wrong on macOS (full screen, the menu, the window's size) cannot be
   judged from a log. Nothing is skipped on Windows or Linux.
 - Linux part 1 in the second run: one miss, the tilt check's "field
-  focused" (a lost click, issue #30's kind), to be run again.
-- Not checked yet: MC3, the owner's Mac.
+  focused" (a lost click, issue #30's kind); it passed in the third.
+- The third run (2026-10-15, with the required job and the
+  experiment): "All checks" passes; the required macOS job passes
+  (lint, types, 594 unit tests, the build); Windows and Linux every
+  part. The experiment: macOS parts 3 and 4 pass in full (the
+  viewer's list); part 2, 84 of 91, 3 misses (R3's page of 10,000
+  elements not ready within 20 s on the virtual machine, the
+  responsiveness check that depends on it, and R5's memory, 259 MB
+  against 169); part 1, 297 of 326, the same 24 as the second run.
+  So the list for the owner's Mac (MC3) is part 2's three and part
+  1's 24 above.
+- On the owner's Mac (2026-10-15, begun): `pnpm test` first failed in
+  the six SQLite files with "No such built-in module: node:sqlite",
+  as the Mac's Node was older than 22.13 (the project asks for 24;
+  .nvmrc), with the other 64 files, 534 tests, passing; Node 24 being
+  installed. The rest of MC3 follows.
 
 ## The promotion plan (2026-10-14)
 
