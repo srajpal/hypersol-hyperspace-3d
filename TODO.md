@@ -6562,8 +6562,10 @@ hand (the checks stay on this computer).
 
 ## Issue #94: macOS in the automatic builds, and a run on the owner's Mac (promotion plan, step 7)
 
-Status: building (2026-10-14; the owner said "move on" after step 4,
-and step 7 was the recommended next). The first question on Hacker
+Status: built, in pull request #110 (2026-10-15); #81 closed, and the
+17 checks a Mac in hand misses are issue #111. (Begun 2026-10-14: the
+owner said "move on" after step 4, and step 7 was the recommended
+next.) The first question on Hacker
 News will be macOS, which is untested (#81): the browser is source
 only, and no Mac has run it.
 
@@ -6591,12 +6593,14 @@ only, and no Mac has run it.
 
 - [x] macOS in ci.yml's matrix, with its own end-to-end step and a
       longer time limit; the harness's software-drawing switch on macOS
-- [ ] The first run read, and what differs fixed or recorded
-- [ ] Documents: README, CONTRIBUTING.md, AGENTS.md (Testing),
+- [x] The first run read, and what differs fixed or recorded (three
+      runs; the harness's Ctrl as Cmd, the software list, the
+      experiment)
+- [x] Documents: README, CONTRIBUTING.md, AGENTS.md (Testing),
       ARCHITECTURE.md section 11 and the parts that speak of macOS,
       ci.yml's header, HANDOFF.md
-- [ ] The owner's run on their Mac (see MC3), and #81 closed with what
-      was found
+- [x] The owner's run on their Mac (see MC3), and #81 closed with what
+      was found; the 17 misses are issue #111
 
 ### Checks (named MC, for macOS in the builds)
 
@@ -6716,9 +6720,12 @@ only, and no Mac has run it.
   resize with the context lost), I8 (DevTools), and the launch that
   showed no window; it adds the two camera checks and the two
   budgets. R3's 20-second limit and R5 pass on it.
-- Not done yet of MC3: the look by eye (the room, Cmd keys, the
-  system's dark mode, the Keychain, HoloML pages, full screen on a
-  video with Escape), and the owner's word on a microphone dialog.
+- The owner's word (2026-10-15): #81 closed with this record, and the
+  17 misses filed as issue #111, grouped as above, to be settled on a
+  Mac one by one. Not done yet of MC3: the look by eye (the room, Cmd
+  keys, the system's dark mode, the Keychain, HoloML pages, full
+  screen on a video with Escape), and the owner's word on a
+  microphone dialog; both go to #111.
 
 ## The promotion plan (2026-10-14)
 

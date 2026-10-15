@@ -836,9 +836,9 @@ to this repository for rules and the prompt log.
    the owner's Mac: the unit tests pass and 445 of 463 end-to-end
    checks do (2026-10-15), with 17 misses grouped there (full screen,
    the microphone's system dialog, the checks' Ctrl words, macOS's own
-   ways with windows and menus, two budgets); the look by eye, and
-   whether #81 closes and the 17 get an issue of their own, are the
-   owner's next word.
+   ways with windows and menus, two budgets): #81 is closed with that
+   record, and the 17 are issue #111, to be settled on a Mac one by
+   one; the look by eye and the microphone dialog's answer go there.
    One issue at a time, approved by the owner first (AGENTS.md rule 2);
    check Electron's security releases at least monthly and before any
    tag (rule 13; last checked 2026-10-10, 44.7.0). Prompts are recorded
