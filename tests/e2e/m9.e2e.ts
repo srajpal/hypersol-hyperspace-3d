@@ -20,6 +20,7 @@ import {
   launch,
   mainLog,
   navigateTo,
+  noteMicrophoneAccess,
   newFolder,
   newProfile as freshProfile,
   pressInShell,
@@ -342,7 +343,8 @@ describe('K6 to K8: site permissions', () => {
       await waitFor('marker', () => shellCall(h, 'accessOf', tabId), (k) => k.includes('camera'));
       expect(await h.shell.locator(BAR('access-marker')).isVisible()).toBe(true);
 
-      // Allow this time.
+      // Allow this time. (On a Mac the first audio capture also asks macOS, once per binary: noted.)
+      await noteMicrophoneAccess(h, 'K6');
       answer = inPage<string>(h, 'microphone()', page);
       p = await waitFor('microphone prompt', prompt, (x) => x !== null);
       expect(p!.kinds).toEqual(['microphone']);

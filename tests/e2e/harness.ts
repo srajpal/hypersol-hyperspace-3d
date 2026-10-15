@@ -1137,6 +1137,34 @@ export async function fullScreenSettled(h: Harness, timeoutMs = 10_000): Promise
   );
 }
 
+/**
+ * macOS's own answer on the microphone or camera for the app's binary
+ * (System Settings > Privacy & Security): 'granted', 'denied',
+ * 'not-determined', or 'restricted'; 'granted' on Windows and Linux,
+ * which have no such answer. With the stand-in devices a page's first
+ * audio capture still asks macOS, once per binary, with a dialog that
+ * waits for a person; the camera's stand-in asks nothing (issue #111).
+ * A check that captures audio says so before it starts, so a miss at its
+ * time limit, or a refusal, is explained.
+ */
+export async function systemMediaAccess(h: Harness, kind: 'microphone' | 'camera'): Promise<string> {
+  if (process.platform !== 'darwin') return 'granted';
+  return h.app.evaluate(({ systemPreferences }, kind) => systemPreferences.getMediaAccessStatus(kind), kind);
+}
+
+/** Logs macOS's answer on the microphone when it is not "granted", for the checks that capture audio (issue #111). */
+export async function noteMicrophoneAccess(h: Harness, check: string): Promise<void> {
+  const status = await systemMediaAccess(h, 'microphone');
+  if (status === 'granted') return;
+  console.log(
+    `${check}: macOS's answer on the microphone for the app's binary is "${status}"; ${
+      status === 'not-determined'
+        ? 'its dialog will ask, and waits for a person: allow Electron the microphone (the pages get the stand-in tone), or this check runs out its time'
+        : 'allow Electron the microphone in System Settings > Privacy & Security, or this check fails'
+    }`,
+  );
+}
+
 export async function pressInPage(
   h: Harness,
   keyCode: string,

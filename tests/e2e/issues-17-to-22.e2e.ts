@@ -14,6 +14,7 @@ import {
   inPage,
   launch,
   navigateTo,
+  noteMicrophoneAccess,
   newProfile,
   pressInShell,
   screenPointOf,
@@ -115,6 +116,7 @@ describe('issue #18: live capture keeps a tab awake', () => {
       expect(await started).toBe('live');
       const microphone = await openTab(h, 'media.html?microphone');
       page = await focusedPage(h);
+      await noteMicrophoneAccess(h, 'issue #18');
       started = inPage<string>(h, 'navigator.mediaDevices.getUserMedia({ audio: true }).then((s) => { window.keep = s; return "live"; }, (e) => e.name)', page);
       await allow(h);
       expect(await started).toBe('live');

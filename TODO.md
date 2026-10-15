@@ -6772,7 +6772,7 @@ run changes). The run's numbers and each miss's error are under "Issue
 - [x] Group 3: full screen (M1, FS2 twice, FS6 twice, closing a tab):
       four of the six pass; the two left are recorded below, for the
       owner's decision
-- [ ] Group 4: the camera and microphone (K6 to K8, issue #18's
+- [x] Group 4: the camera and microphone (K6 to K8, issue #18's
       capture)
 - [ ] Group 5: the two budgets (C9, X5), measured, with a proposal
 - [ ] The documents' macOS sentences (README, CONTRIBUTING.md,
@@ -6909,6 +6909,33 @@ run changes). The run's numbers and each miss's error are under "Issue
     osascript assistive access); a page for it is ready, served on
     this computer at http://127.0.0.1:8765/video.html (the scratchpad)
     for a `pnpm dev` run.
+- Group 4, the camera and microphone (2026-10-15): macOS's own
+  dialog, for the microphone only. Before the first run of the day,
+  Electron's own reading of the Mac's answer for the app's binary
+  (systemPreferences.getMediaAccessStatus, bundle com.github.Electron)
+  was "not determined" for both the microphone and the camera. K6 to
+  K8 run alone then passed in 31 seconds, within its limit, and after
+  it the microphone's answer read "granted" while the camera's still
+  read "not determined": so with the stand-in devices
+  (--use-fake-device-for-media-stream) a page's first audio capture
+  still asks macOS once per binary, with the system's dialog, which
+  waits for a person (it was answered at the keyboard during that
+  run; a screenshot taken 4 seconds into the check's microphone step
+  showed no dialog, so it had been answered by then), and the camera's
+  stand-in asks nothing. In the owner's full run nobody answered
+  within the 60 seconds, so K6 to K8 and issue #18's check, which
+  capture audio, ran out their time right after the microphone prompt,
+  as recorded. Not the app's fault, and not the checks': the system's
+  way. What the run does: the two checks now say, before capturing
+  audio, what the Mac's answer is when it is not "granted" (harness,
+  systemMediaAccess and noteMicrophoneAccess): "not determined", the
+  dialog will ask and must be allowed, or the check runs out its time;
+  "denied", allow Electron the microphone in System Settings > Privacy
+  & Security. Nothing can answer the dialog for the person, and no
+  switch of Chromium's avoids it. The documents say to allow it once
+  on a Mac. The answer is kept by macOS for the binary's bundle id, so
+  a new Electron version keeps it. Windows and Linux read "granted"
+  and log nothing.
 
 ## The promotion plan (2026-10-14)
 
