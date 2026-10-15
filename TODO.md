@@ -6737,6 +6737,70 @@ only, and no Mac has run it.
   screen on a video with Escape), and the owner's word on a
   microphone dialog; both go to #111.
 
+## Issue #111: the 17 checks on a Mac
+
+Status: building (2026-10-15, the owner's prompt after #94's MC3: the
+17 end-to-end checks a Mac in hand misses, grouped there in five
+parts, each to be settled as the app's fault or the check's on the
+owner's Mac and fixed accordingly; nothing that only Windows or Linux
+run changes). The run's numbers and each miss's error are under "Issue
+#94", MC3.
+
+### How it is worked
+
+- The rule for every miss: the check's file is run alone on the Mac
+  (`npx vitest run --config vitest.e2e.config.ts tests/e2e/<file>
+  --reporter=verbose`), and the same thing tried by hand, to say
+  whether the app or the check is wrong on macOS. A check written
+  against Windows and Linux that expects Ctrl in a label, or a window
+  off every display, is the check's fault, and its expectation takes
+  macOS's way (the harness already maps a check's Ctrl to Cmd: modKeys
+  and MOD_KEY in tests/e2e/harness.ts). Behaviour that is wrong for a
+  person on a Mac is the app's fault, and the app is fixed. No check or
+  budget is weakened, and none is skipped on macOS unless it truly
+  cannot hold there, saying why in the check.
+- The groups, in order, one commit each: (1) the checks' own Ctrl
+  words; (2) macOS's own ways; (3) full screen; (4) the camera and
+  microphone; (5) the two budgets, measured, with a proposal rather
+  than a changed budget.
+
+### Tasks
+
+- [x] Group 1: the checks' own Ctrl words (M7, LT9 twice, St4)
+- [ ] Group 2: macOS's own ways (C1, D7, D8, the lifted picture's
+      pixels)
+- [ ] Group 3: full screen (M1, FS2 twice, FS6 twice, closing a tab)
+- [ ] Group 4: the camera and microphone (K6 to K8, issue #18's
+      capture)
+- [ ] Group 5: the two budgets (C9, X5), measured, with a proposal
+- [ ] The documents' macOS sentences (README, CONTRIBUTING.md,
+      AGENTS.md's Testing, ARCHITECTURE.md section 11)
+- [ ] The whole `pnpm test:e2e` once on the Mac, its summary recorded
+- [ ] The pull request that closes #111
+
+### What was found, by group
+
+- Group 1, the checks' own Ctrl words (2026-10-15): all four are the
+  checks' fault. The app writes a shortcut in the system's word for the
+  modifier (shared/shortcuts.ts, describeCombo: "Cmd" on macOS, "Ctrl"
+  elsewhere), which is right for a person on a Mac. M7 (m11) expected
+  the menu's "Ctrl+Alt+R" and the Mac showed "Cmd+Alt+R"; LT9's first
+  check (m28) expected the lift button's hint with "Ctrl" or "⌘" and the
+  Mac showed "Cmd+Shift+U", and its second check missed only because
+  the first had stopped before lifting (nothing was in the room to find
+  by name: the "Four coloured quarters, lifted picture" that #111 lists
+  under the Retina display is this button's name, not LT2's pixels);
+  St4 (review-134-features) reported the keys a page saw by ctrlKey,
+  and a check's Ctrl is Cmd on macOS (modKeys), which a page sees as
+  metaKey, so Cmd+Shift+V reached it as "shift+v". The harness gains
+  MOD_WORD ("Cmd" on macOS, "Ctrl" elsewhere, beside MOD_KEY), which
+  the three labels now use, and St4's listener reads the command
+  modifier by the system (metaKey on macOS), still written "ctrl+" so
+  the expectations hold on every system. Each file run alone on the
+  Mac after the change: m11 8 of 8, m28 25 of 25,
+  review-134-features every check but D7 (group 2). Windows and Linux
+  see the same words as before.
+
 ## The promotion plan (2026-10-14)
 
 On 2026-10-14 the owner asked for a review of the README and the

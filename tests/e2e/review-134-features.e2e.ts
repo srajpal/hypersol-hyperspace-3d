@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { BASIC_LONG_REALM, BASIC_REALM, BASIC_SIGN_IN, startFixtureServer, type FixtureServer } from './fixture-server';
 import {
   MOD_KEY,
+  MOD_WORD,
   caughtUp,
   closeFocusedTab,
   cycleToTab,
@@ -348,12 +349,14 @@ describe('D7: the window\'s size and place are remembered', () => {
 
 describe('St4: the text view\'s keys are a shortcut like the others', () => {
   const PAGE = 'still.holoml';
-  const CTRL = process.platform === 'darwin' ? 'Cmd' : 'Ctrl';
   const textView = (h: Harness) => inPage<boolean | null>(h, 'window.__holoml ? window.__holoml.textView : null', PAGE);
   const hint = (h: Harness) => h.shell.locator(BAR('text-view')).getAttribute('title');
-  /** The keys the page itself was given (a shortcut's keys never reach it). */
+  /**
+   * The keys the page itself was given (a shortcut's keys never reach it), with the command modifier written
+   * "ctrl+" whichever key it is: a check's Ctrl is Cmd on macOS (modKeys), which a page sees as metaKey (issue #111).
+   */
   const listen = (h: Harness, page: string) =>
-    inPage(h, `window.__keys = []; addEventListener('keydown', (e) => window.__keys.push((e.ctrlKey ? 'ctrl+' : '') + (e.altKey ? 'alt+' : '') + (e.shiftKey ? 'shift+' : '') + e.key.toLowerCase()), true); true`, page);
+    inPage(h, `window.__keys = []; addEventListener('keydown', (e) => window.__keys.push((${process.platform === 'darwin' ? 'e.metaKey' : 'e.ctrlKey'} ? 'ctrl+' : '') + (e.altKey ? 'alt+' : '') + (e.shiftKey ? 'shift+' : '') + e.key.toLowerCase()), true); true`, page);
   const heard = (h: Harness, page: string) => inPage<string[]>(h, 'window.__keys', page);
   const inAddress = (h: Harness) =>
     h.shell.evaluate(() => {
@@ -369,7 +372,7 @@ describe('St4: the text view\'s keys are a shortcut like the others', () => {
       await waitFor('the scene ready', () => inPage<boolean>(h, 'window.__holoml ? window.__holoml.ready : false', PAGE), (r) => r === true, 20_000);
       await listen(h, PAGE);
       // The default keys: the button's hint names them, and in the page they switch the view once.
-      expect(await hint(h)).toBe(`Text view: the scene as a plain page (${CTRL}+Shift+V)`);
+      expect(await hint(h)).toBe(`Text view: the scene as a plain page (${MOD_WORD}+Shift+V)`);
       await pressInPage(h, 'V', ['control', 'shift'], PAGE);
       await waitFor('the text view', () => textView(h), (v) => v === true);
       await waitFor('the button pressed', () => h.shell.locator(BAR('text-view')).getAttribute('aria-pressed'), (v) => v === 'true');
@@ -401,7 +404,7 @@ describe('St4: the text view\'s keys are a shortcut like the others', () => {
       // Its old keys are free for another action now; while it had them they were refused (unit tests).
       await h.shell.press(SET('set-search'), 'Escape');
       await waitFor('Settings closed', () => shellCall(h, 'openPanel'), (p) => p === null);
-      await waitFor('the hint follows', () => hint(h), (t) => t === `Text view: the scene as a plain page (${CTRL}+Alt+Y)`);
+      await waitFor('the hint follows', () => hint(h), (t) => t === `Text view: the scene as a plain page (${MOD_WORD}+Alt+Y)`);
 
       // The old keys do nothing now: they reach the page like any other keys, and once a
       // later shortcut has done its work (keys pressed in a page are dealt with in order)

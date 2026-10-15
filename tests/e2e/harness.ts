@@ -1091,6 +1091,9 @@ export function modKeys(keyCode: string, modifiers: Modifier[]): { keyCode: stri
 /** The same command modifier for Playwright's own keyboard (a Ctrl-click is a Cmd-click on macOS). */
 export const MOD_KEY = process.platform === 'darwin' ? 'Meta' : 'Control';
 
+/** The word the app writes for that modifier in a label or a hint (shared/shortcuts.ts, describeCombo): "Cmd" on macOS, "Ctrl" elsewhere (issue #111). */
+export const MOD_WORD = process.platform === 'darwin' ? 'Cmd' : 'Ctrl';
+
 export async function pressInPage(
   h: Harness,
   keyCode: string,
