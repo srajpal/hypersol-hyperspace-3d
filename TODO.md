@@ -6348,7 +6348,14 @@ so and how to leave, where no page can hide it.
 ## Issue #87: closing a tab in full screen (open)
 
 Status: open; the check made clearer (owner, 2026-10-10: a better
-check first, a fix once the cause is known). FS2's check that closing
+check first, a fix once the cause is known). Seen again on
+2026-10-15, on GitHub's Linux machine this time (pull request #110's
+builds, part 1): the clearer check says which half failed, and it is
+the window: the page was gone (the tab closed), and the window was
+still full screen 15 seconds later, at its off-screen place, 1280 by
+800. So the first reading (the page gone before its leaving script
+ran) is the one the evidence now supports, on Linux as on Windows.
+FS2's check that closing
 a tab in full screen leaves failed once, in the Windows build of #86
 (part 1; its run again passed): the window was still in full screen 15
 seconds after Ctrl+W, which was pressed 2 ms after the window said it
