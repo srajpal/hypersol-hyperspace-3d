@@ -9,6 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureServer, startHttpsFixtureServer, type FixtureServer } from './fixture-server';
 import {
   ADDRESS,
+  MOD_KEY,
   APP_DIR,
   clickAt,
   clickUntil,
@@ -304,11 +305,11 @@ describe('D5 new-window links', () => {
     await focusedWhere(h, 'opener focused', (t) => t.id === opener!.id);
     await waitForPage(h, 'new-window');
     const p = await screenPointOf(h, '#plain', 'new-window');
-    await h.shell.keyboard.down('Control');
+    await h.shell.keyboard.down(MOD_KEY);
     try {
       await clickUntil(h, p, 'a tab behind', async () => (await tabs(h)).length === 3);
     } finally {
-      await h.shell.keyboard.up('Control');
+      await h.shell.keyboard.up(MOD_KEY);
     }
     await tabCount(h, 3);
     const all = await tabs(h);
