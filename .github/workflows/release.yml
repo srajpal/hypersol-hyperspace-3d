@@ -1,0 +1,124 @@
+# The release (GitHub issue #92, the promotion plan's step 5): on a tag
+# v<version>, a draft release for the tag, then a portable zip from each
+# system (Windows x64, Linux x64, macOS on Apple silicon, macOS on Intel),
+# made by `pnpm package` (apps/browser/scripts/package.mjs), checked by
+# the smoke check (`pnpm package:smoke`: the packaged app starts, with
+# its title and its room), and attached to the draft with its SHA-256.
+# The owner reads the draft and publishes it (the owner, 2026-10-15, Q4).
+# Nothing is signed (Q5): the notes say what Windows SmartScreen and
+# macOS Gatekeeper will say. The actions are pinned to commits, as in
+# ci.yml; the uploads use the repository's own token through gh.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'The tag to release (for example v0.9.1), already pushed'
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  draft:
+    name: The draft release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: tag
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          tag="${INPUT_TAG:-$REF_NAME}"
+          echo "tag=$tag" | tee -a "$GITHUB_OUTPUT"
+      # The notes: the changelog's section for this version, after a line on the zips.
+      - name: The draft, with the changelog's section as its notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          version="${TAG#v}"
+          {
+            echo "A developer preview, as a portable zip for Windows, Linux, and macOS: unzip it and start HyperSpace3D (HyperSpace 3D.app on a Mac). Nothing is signed: Windows SmartScreen says the app is unrecognised (More info, then Run anyway), and macOS Gatekeeper refuses it until it is allowed in System Settings, Privacy & Security, or with \`xattr -dr com.apple.quarantine \"HyperSpace 3D.app\"\`. The SHA-256 of each zip is beside it. Or build it from source: CONTRIBUTING.md."
+            echo
+            awk -v v="$version" '
+              $0 ~ "^## " v " " { on = 1; next }
+              on && /^## / { exit }
+              on { print }
+            ' CHANGELOG.md
+          } > notes.md
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release edit "$TAG" --draft --prerelease --title "$version — developer preview" --notes-file notes.md
+          else
+            gh release create "$TAG" --draft --prerelease --title "$version — developer preview" --notes-file notes.md
+          fi
+
+  package:
+    name: ${{ matrix.name }}
+    needs: draft
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: Windows x64
+          - os: ubuntu-latest
+            name: Linux x64
+          - os: macos-latest
+            name: macOS on Apple silicon
+          - os: macos-15-intel
+            name: macOS on Intel
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ needs.draft.outputs.tag }}
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Package
+        run: pnpm package
+
+      - name: Prepare Linux for Electron
+        if: runner.os == 'Linux'
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+
+      - name: Smoke check (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" pnpm package:smoke
+
+      - name: Smoke check
+        if: runner.os != 'Linux'
+        run: pnpm package:smoke
+
+      - name: Upload to the draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.draft.outputs.tag }}
+        shell: bash
+        run: gh release upload "$TAG" release/*.zip release/*.sha256 --clobber

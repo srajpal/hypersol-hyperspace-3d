@@ -396,3 +396,11 @@ Stop. A page's scripts run only when the page is on that site itself,
 so the HoloML examples work in full there, and a page of another site
 shows without its scripts. Nothing on the browser's screen changes, so
 the screenshots are as they were.
+
+**0.9.1, a developer preview as a portable zip** (the promotion plan's
+step 5, GitHub issue #92, 2026-10-15). Everything since 0.9.0, released:
+a zip for Windows, Linux, and macOS on each processor, unzipped and
+started, nothing signed, made by `pnpm package` and a release workflow
+that drafts the release for the owner to publish. The app has its icon
+now, the logo chosen in prompt 46, on the window and the taskbar; the
+About panel's picture in the newest set shows the version.

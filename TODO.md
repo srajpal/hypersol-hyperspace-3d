@@ -6737,6 +6737,144 @@ only, and no Mac has run it.
   screen on a video with Escape), and the owner's word on a
   microphone dialog; both go to #111.
 
+## Issue #92: release 0.9.1, a developer preview with a portable zip (promotion plan, step 5)
+
+Status: building (2026-10-15). The plan was approved by the owner on
+2026-10-15 with the recommended answers to Q1, Q2, Q4, Q5, and Q7, and
+two of their own: the version is 0.9.1, not 0.10.0 (1.0.0 is kept for
+a commercial release, if there is ever one); and the app's icon is the
+logo chosen in prompt 46 (docs/branding/logo-concepts, concept 4d: a
+cube with "NOW IN" on one face and a big "3D" on the other, over the
+neon grid), the wordless cube at the small sizes as the concept's
+notes planned, not Electron's own icon (Q6).
+
+### What there is today
+
+0.9.0 was a tag and a GitHub release marked pre-release, source only,
+with notes for a newcomer and no assets; everything since (milestones
+13 to 28, issues #75 and #91) is in the changelog's Unreleased section.
+The version is in four package files (the root, apps/browser,
+packages/scene-core, packages/themes), the About panel reads it from
+the app, and two checks name it (m2's About, the screenshots' About
+picture). CONTRIBUTING.md's "Making your own build" says what a
+packaged build needs: `out/**` and `resources/filters/**` inside the
+app's folder (the shield reads the lists from app.getAppPath()),
+`out/main` unpacked for its two worker threads, the licence files
+beside the app, test mode off once packaged. The built main process
+requires only Node's modules, Electron, and its own chunks (every
+package is bundled: electron-vite externalises declared
+`dependencies`, and there are none), but one package is reached by
+name at run time: the blocker resolves the shield's page script,
+@ghostery/adblocker-electron-preload, to register it as a preload
+(found by the smoke check, which saw no window until it was there). No
+packager was set up, and no icon.
+
+### How it works
+
+- Electron 44.7.2 (rule 13; ARCHITECTURE.md section 3).
+- The icon: `apps/browser/scripts/icons.mjs` renders the concept's
+  SVG with Electron itself (as the concept pictures were made with
+  headless Chrome) into PNGs at 16 to 1024 pixels, the wordless cube
+  below 128, and writes `resources/icons/icon.ico` (Windows),
+  `icon.icns` (macOS), and `icon.png` (Linux, and the window's icon)
+  with two small encoders of its own, as both formats hold PNGs; no
+  new package. The main process gives the window the icon on Windows
+  and Linux (macOS takes the app bundle's).
+- `pnpm package` (`apps/browser/scripts/package.mjs`): copies what a
+  package needs into a staging folder (package.json with the name,
+  product name, version, and main; `out/`; `resources/`; LICENSE,
+  NOTICE, THIRD-PARTY.md; and the shield's page script with what it
+  depends on, in node_modules), runs @electron/packager on it for this
+  system and processor, the app as plain files (no asar: the main
+  process reaches its preloads, the shell, and the viewer by paths
+  beside itself, and its worker threads and the filter lists must be
+  files; the first try, an asar with only `out/main` and the lists
+  unpacked, never showed a window, as the smoke check found), the
+  icon set, then zips the folder
+  (`HyperSpace3D-<version>-<system>-<processor>.zip`) and writes its
+  SHA-256 beside it, in `release/`. The browser's data stays in the
+  profile folder it uses today: "portable" means no installer.
+- `pnpm package:smoke` (`scripts/smoke.mjs`): Playwright starts the
+  packaged app itself, without test hooks, waits for its window, and
+  checks the title and that the room's canvas is there; on Linux
+  under a virtual display.
+- `.github/workflows/release.yml`, on a tag `v*`: a first job makes a
+  draft release for the tag (the notes from CHANGELOG.md's section),
+  then a matrix (Windows x64, Linux x64, macOS on Apple silicon,
+  macOS on Intel) installs, builds, packages, smoke-checks, and
+  uploads its zip and checksum to the draft; the owner reads the
+  draft and publishes it. Unsigned: the notes say what Windows
+  SmartScreen and macOS Gatekeeper will say and how to get past them.
+- Before the tag: `pnpm filters:update`, `pnpm screenshots:readme`,
+  the examples' copies checked against holoml's current tag.
+- Version 0.9.1 in the four package files and the two checks; the
+  changelog's Unreleased becomes "0.9.1 — developer preview"; README's
+  status paragraph, docs/progress.md, SECURITY.md, CONTRIBUTING.md
+  (the packaging section describes `pnpm package`), ARCHITECTURE.md,
+  docs/privacy.md (a packaged app reaches no network the source does
+  not), and HANDOFF.md follow.
+
+### Decisions (the owner, 2026-10-15)
+
+- Q1 the packager: @electron/packager, the plain one. Q2 the zips:
+  Windows x64, Linux x64, macOS on Apple silicon and on Intel. Q3 the
+  version: 0.9.1 (the owner; 1.0.0 is for a commercial release). Q4
+  publishing: a draft from the tag, published by the owner. Q5
+  unsigned, with the warnings written plainly. Q6 the icon: concept
+  4d (the owner). Q7 the profile stays where it is.
+
+### Tasks
+
+- [ ] Electron 44.7.2, and the rule 13 record
+- [ ] The icon files from concept 4d, and the window's icon
+- [ ] @electron/packager, `pnpm package`, `pnpm package:smoke`
+- [ ] Version 0.9.1, the changelog, the refreshes, the documents
+- [ ] release.yml
+- [ ] The pull request; then the tag, the draft, and the owner's
+      publishing
+
+### Checks (named RL, for the release)
+
+| # | Check | Pass when |
+|---|---|---|
+| RL1 | The package | `pnpm package` makes a zip for this system that unzips to a folder whose app starts |
+| RL2 | The smoke check | The packaged app opens its window with the browser's title and the room's canvas, on Windows, Linux, and both macOS processors, in the release workflow |
+| RL3 | What is inside | The app's folder holds `out/` and `resources/` as plain files, and the licence files beside the app; nothing of the sources or node_modules; no test hooks (D12's check of a packaged app) |
+| RL4 | The version | About shows 0.9.1; m2's check and the screenshot agree |
+| RL5 | The draft | The workflow's draft release for the tag carries four zips and their checksums, and the notes |
+| RL6 | The icon | The window and the taskbar show the cube on Windows and Linux; the app bundle on macOS |
+| RL7 | Regression | Every check, the unit tests, and the automatic builds |
+
+### Results so far (Windows 11, 2026-10-15)
+
+- Electron 44.7.2 installed; @electron/packager 20.3.0 added.
+- The icons: `pnpm --filter @hypersol/browser icons` wrote 16 to 1024
+  px, icon.ico (76 KB), icon.icns (504 KB), icon.png, and logo.png;
+  looked at: the words at 256, the bare cube at 48.
+- RL1: `pnpm package` makes `HyperSpace3D-0.9.1-windows-x64.zip`,
+  156 MB, in about a minute after the build, with its SHA-256. Two
+  tries before it started: an asar with only `out/main` and the lists
+  unpacked broke the main process's paths to its preloads and the
+  shell (plain files now), and the blocker reaches the shield's page
+  script by name at run time (copied into node_modules now).
+- RL2: `pnpm package:smoke` starts the packaged app with a throwaway
+  profile: title "HyperSpace 3D", the room's canvas there.
+- RL4: m2's D11 passes with 0.9.1.
+- The refreshes: `pnpm filters:update` fetched the 13 lists again (the
+  same 6,760,817 bytes; starter.json's record updated); the examples'
+  copies are at holoml's v0.3.1, its newest tag (holoml's six commits
+  since are documents and the "Open it here" links, untagged); the
+  README's four screenshots remade (`pnpm screenshots:readme`, as at
+  each release), and the m28 set remade for its About picture, now
+  `39-about.png` (0.9.1, Electron 44.7.2); the set's other pictures
+  changed only in their encoding and were put back.
+- RL3: the app's folder holds out/, resources/, node_modules with the
+  three Ghostery packages, package.json, and the licence files beside
+  the exe; nothing of the sources.
+- Not checked yet: RL2 on the other systems and RL5, the release
+  workflow (the tag is the owner's); RL4 after the screenshots; RL6 by
+  eye after the merge.
+
 ## The promotion plan (2026-10-14)
 
 On 2026-10-14 the owner asked for a review of the README and the
@@ -6771,7 +6909,7 @@ the agent never posts or publishes on the owner's behalf.
 | 2 | Click by hand the three links that refused the scripted check (two trademark pages in docs/name-checks.md, the Academy's ACES page in holoml's SPEC.md) | none | Owner | minutes | |
 | 3 | Words: the README's history says every example now declares HoloML 0.3; holoml's README and docs index samples as 0.3 pages | #90; holoml #54 | Agent | S | |
 | 4 | The HoloML viewer for ordinary browsers: the built bundle published to the holoml site, and a host page there that opens a `.holoml` address, so the seven examples open by link | #91; holoml #55 | Agent | L, plan first | |
-| 5 | Release 0.10.0, a developer preview: the rule 13 check, the filter lists and README screenshots refreshed, the changelog, version bumps, the tag, release notes for a newcomer, and a portable zip for each system from the automatic builds (an Electron packager: approval under rule 4 first) | #92 | Agent prepares; owner approves and tags | M | 4, 7 |
+| 5 | Release 0.9.1 (0.10.0 when the plan was approved; the owner chose 0.9.1 on 2026-10-15, keeping 1.0.0 for a commercial release), a developer preview: the rule 13 check, the filter lists and README screenshots refreshed, the changelog, version bumps, the tag, release notes for a newcomer, and a portable zip for each system from the automatic builds (an Electron packager: approval under rule 4 first) | #92 | Agent prepares; owner approves and tags | M | 4, 7 |
 | 6 | A one-minute video and a ten-second GIF, scripted with the test harness: Harbour Loft, lifting into the room, looking around; the GIF at the top of both READMEs | #93 | Agent makes; owner reviews | M | |
 | 7 | macOS: a job in the automatic builds (lint, types, unit tests, the build), and a run of the regression list on the owner's Mac; closes #81 | #94 | Agent, then owner's Mac | S + a run | |
 | 8 | Repository settings: the browser repo's homepage URL, Discussions on, social preview images, topics, "good first issue" labels, both repos pinned | #95 | Agent prepares; owner applies | S | 9 |

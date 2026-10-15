@@ -92,31 +92,44 @@ fixture pages in `tests/`.
 ## Making your own build
 
 The project publishes no installers, and plans none (owner,
-2026-10-08): it is source for developers. Under the Apache 2.0 licence
-anyone may fork it and make an installable build of their own. No
-packaging tool is set up here, and packaging has not been checked in
-this repository; what a packaged build needs:
+2026-10-08): each release is a portable zip per system (since 0.9.1,
+2026-10-15; GitHub issue #92), unzipped and started, nothing signed,
+plus the source. `pnpm package` makes that zip for the system it runs
+on (apps/browser/scripts/package.mjs; `pnpm build` first):
 
-- Package `apps/browser`, after `pnpm build`: its `main` is
-  `out/main/index.js`. Electron's own packagers (Electron Forge, or
-  electron-builder) can do it.
-- Include `out/**` and `resources/filters/**`. The privacy shield's
-  starter filter lists are read from inside the app's folder
-  (`app.getAppPath()/resources/filters`, apps/browser/src/main/index.ts),
-  so keep them there rather than among a packager's extra resources.
-  Nothing else under `apps/browser` is needed when the app runs.
-- The filter lists and the history search run in worker threads from
-  `out/main`. If your packager's archive (asar) keeps them from
-  starting, leave `out/main` unpacked.
-- Ship `LICENSE`, `NOTICE`, and `THIRD-PARTY.md` from the repository's
-  top, and `resources/filters/GPL-3.0.txt` with its `NOTICE.md`, beside
-  the app: Apache 2.0 asks for the NOTICE file, the filter lists are
-  under the GPL, and THIRD-PARTY.md credits the example sites' models
-  and pictures. The About panel names the Apache licence only.
-- Test mode and the tests' hooks are off in a packaged app (they need
-  `app.isPackaged` to be false), as are DevTools for the shell.
-- There are no app icons yet (docs/branding has the logo's concepts),
-  so Electron's own icon is used until you add some.
+- A staging folder, `release/stage/`, gets only what the app needs at
+  run time: a package.json with the name, product name, version, and
+  `main` (`out/main/index.js`), `out/`, `resources/`, and LICENSE,
+  NOTICE, and THIRD-PARTY.md. Every package is bundled into `out/` but
+  one: the shield's page script (@ghostery/adblocker-electron-preload),
+  which the blocker reaches by name at run time, is copied into the
+  folder's node_modules with what it depends on.
+- @electron/packager packs it as plain files, no asar: the main process
+  finds its preloads, the shell, and the viewer by paths beside itself,
+  its worker threads for the filter lists and the history search start
+  from files, and the shield reads the lists from
+  `app.getAppPath()/resources/filters` (an asar with only some folders
+  unpacked breaks those paths). It sets the icon
+  (`resources/icons`, made from the logo by `pnpm --filter
+  @hypersol/browser icons`), and copies the licence files beside the
+  app: Apache 2.0 asks for the NOTICE file, the filter lists are under
+  the GPL (their text and notice are inside, under resources/filters),
+  and THIRD-PARTY.md credits the example sites' models and pictures.
+- The folder is zipped as `HyperSpace3D-<version>-<system>-<processor>.zip`
+  in `release/`, with its SHA-256 beside it.
+- `pnpm package:smoke` starts the packaged app with a throwaway
+  profile and checks its window's title and the room's canvas: test
+  mode and the tests' hooks are off in a packaged app (they need
+  `app.isPackaged` to be false), as are DevTools for the shell, so
+  this is the one check a packaged app gets.
+- A release: the tag `v<version>` pushed starts
+  .github/workflows/release.yml, which makes a draft release with the
+  changelog's section as its notes, packages on Windows, Linux, and
+  macOS (Apple silicon and Intel), smoke-checks each, and attaches the
+  zips and checksums; the owner reads the draft and publishes it.
+
+Under the Apache 2.0 licence anyone may fork the repository and make an
+installable build of their own from the same staging folder.
 
 ## Licence of contributions
 
