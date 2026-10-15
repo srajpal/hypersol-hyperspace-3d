@@ -6774,8 +6774,9 @@ run changes). The run's numbers and each miss's error are under "Issue
       owner's decision
 - [x] Group 4: the camera and microphone (K6 to K8, issue #18's
       capture)
-- [ ] Group 5: the two budgets (C9, X5), measured, with a proposal
-- [ ] The documents' macOS sentences (README, CONTRIBUTING.md,
+- [x] Group 5: the two budgets (C9, X5), measured, with a proposal
+      (the budgets unchanged)
+- [x] The documents' macOS sentences (README, CONTRIBUTING.md,
       AGENTS.md's Testing, ARCHITECTURE.md section 11)
 - [ ] The whole `pnpm test:e2e` once on the Mac, its summary recorded
 - [ ] The pull request that closes #111
@@ -6936,6 +6937,46 @@ run changes). The run's numbers and each miss's error are under "Issue
   on a Mac. The answer is kept by macOS for the binary's bundle id, so
   a new Electron version keeps it. Windows and Linux read "granted"
   and log nothing.
+- Group 5, the two budgets (2026-10-15), measured, the budgets
+  unchanged:
+  - C9, about 60 frames a second while the camera follows the pointer
+    (at least 50): 29.6 and 29.6 in two runs with the window hidden,
+    28.5 and 29.7 with it shown and focused (HYPERSOL_TEST_SHOW=1), so
+    the unfocused window is not the cause; the Mac is on mains power,
+    economy mode is off, and the room draws at the display's two
+    device pixels a point (2560 by 1544). The room itself draws at 60
+    on this Mac: looking around measured 59.4 in the owner's run (FC9)
+    and the ocean tunnel 59.5 (X9). A throwaway check counted what the
+    check's own loop delivers here: 17 calls of Playwright's
+    mouse.move with 4 steps in the second, 68 events, of which the
+    shell's page saw 11.5 pointer moves a second (Chromium coalesces
+    them), and the room drew 29.8 frames: each step waits for the
+    renderer's answer, which on macOS comes a frame later, so the loop
+    itself paces the room at about half the display's rate (issue #82
+    saw 32 to 45 on Windows with the same loop). Proposal, for the
+    owner: the check keeps its budget and measures the room's own
+    rate, driving the pointer through Electron's input path at a fixed
+    60 moves a second without waiting for each (sendInputEvent, as the
+    full-screen checks move the pointer), or with the free camera
+    turning (FC9's way), rather than through Playwright's acknowledged
+    moves; on Windows and Linux the same change would settle #82's
+    misses. Until then C9's rate on this Mac is a measure of the loop,
+    not of the room, and the check misses.
+  - X5, the ocean tunnel ready and drawn within 5 s: a throwaway check
+    today, each a fresh profile, measured ready in 684 ms and drawn in
+    769 ms cold (the first visit ever on this profile), 856 ms on a
+    second visit in the same app, and 1018 ms in a new app on the same
+    profile (Chromium's shader cache on disk), through "ANGLE (AMD,
+    ANGLE Metal Renderer: AMD Radeon Pro Vega 56)"; X5 run alone (the
+    aquarium's whole file, 7 checks, all pass): ready in 707 ms, drawn
+    in 794 ms. The 8411 ms of the owner's run did not reproduce; that
+    run had two of the full-screen checks' apps left alive and drawing
+    (the hang, group 3), which the fix removes. Proposal: the budget
+    stays; the full run at the end of this issue says whether the
+    first draw through Metal holds within it on a quiet Mac, and if it
+    misses again the viewer's shaders would be compiled while the page
+    loads rather than after it is ready (scene.ts, compileAsync), not
+    the budget widened.
 
 ## The promotion plan (2026-10-14)
 
