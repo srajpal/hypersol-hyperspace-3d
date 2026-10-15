@@ -6348,7 +6348,14 @@ so and how to leave, where no page can hide it.
 ## Issue #87: closing a tab in full screen (open)
 
 Status: open; the check made clearer (owner, 2026-10-10: a better
-check first, a fix once the cause is known). FS2's check that closing
+check first, a fix once the cause is known). Seen again on
+2026-10-15, on GitHub's Linux machine this time (pull request #110's
+builds, part 1): the clearer check says which half failed, and it is
+the window: the page was gone (the tab closed), and the window was
+still full screen 15 seconds later, at its off-screen place, 1280 by
+800. So the first reading (the page gone before its leaving script
+ran) is the one the evidence now supports, on Linux as on Windows.
+FS2's check that closing
 a tab in full screen leaves failed once, in the Windows build of #86
 (part 1; its run again passed): the window was still in full screen 15
 seconds after Ctrl+W, which was pressed 2 ms after the window said it
@@ -6562,6 +6569,173 @@ hand (the checks stay on this computer).
   viewer's own checks passed in both part 1 jobs.
 - Not checked yet: the published site (Pages off until the owner turns
   it on), and Firefox and Safari.
+
+## Issue #94: macOS in the automatic builds, and a run on the owner's Mac (promotion plan, step 7)
+
+Status: built, in pull request #110 (2026-10-15); #81 closed, and the
+17 checks a Mac in hand misses are issue #111. (Begun 2026-10-14: the
+owner said "move on" after step 4, and step 7 was the recommended
+next.) The first question on Hacker
+News will be macOS, which is untested (#81): the browser is source
+only, and no Mac has run it.
+
+### How it works
+
+- macOS joins the automatic builds' matrix (`macos-latest`, GitHub's
+  machines, free for a public repository) with the same four parts as
+  Windows and Linux: part 1 with lint, the type check, and the unit
+  tests, then the end-to-end checks of each part. "All checks" waits
+  for it like the rest, so a pull request needs macOS green too. Its
+  machines are slower, so the part's time limit is 45 minutes there.
+- GitHub's macOS machines have no graphics card, as its Linux ones:
+  the harness gives Chromium the same switch to draw WebGL with its
+  own software renderer (graphicsSwitches), so the frame-rate and
+  load-time budgets are logged and skipped there, as on Linux.
+- What macOS has that Linux had to be given: a display, and the
+  system's Keychain for the password checks (Electron's safeStorage
+  uses it). openssl is LibreSSL's, which has `req -x509 -addext`.
+- What may differ, to be found by the first run: the app's own
+  behaviour on macOS (the app menu, closing the last window keeping
+  the app running, Cmd for Ctrl in shortcuts; main/index.ts), which
+  the checks were written against Windows and Linux for.
+
+### Tasks
+
+- [x] macOS in ci.yml's matrix, with its own end-to-end step and a
+      longer time limit; the harness's software-drawing switch on macOS
+- [x] The first run read, and what differs fixed or recorded (three
+      runs; the harness's Ctrl as Cmd, the software list, the
+      experiment)
+- [x] Documents: README, CONTRIBUTING.md, AGENTS.md (Testing),
+      ARCHITECTURE.md section 11 and the parts that speak of macOS,
+      ci.yml's header, HANDOFF.md
+- [x] The owner's run on their Mac (see MC3), and #81 closed with what
+      was found; the 17 misses are issue #111
+
+### Checks (named MC, for macOS in the builds)
+
+| # | Check | Pass when |
+|---|---|---|
+| MC1 | The build | On GitHub's macOS machine: install, lint, the type check, the unit tests, and the build pass |
+| MC2 | The end-to-end checks | Every part passes on macOS, the budgets logged and skipped as on Linux; a check that cannot pass on a machine without a graphics card or a focus is skipped, as on Linux and in hidden windows |
+| MC3 | The owner's Mac | By hand, as #81 lists: install, `pnpm test`, `pnpm test:e2e`, and a look at the room, the shortcuts (Cmd for Ctrl), the system's dark mode, the keychain for saved passwords, HoloML pages, and the web viewer in Safari; what differs recorded here |
+| MC4 | Regression | Windows and Linux as before |
+
+### Results so far (GitHub's macOS machine, 2026-10-14 and 2026-10-15)
+
+- MC1 passes: install, lint, the type check, 594 unit tests (592, with
+  2 skipped there as everywhere), and the build, on macOS.
+- MC2, the first run (macOS in the matrix like Windows and Linux),
+  parts 3 and 4 before the run was replaced: 35 of 46 passed; the 11
+  misses had two causes. A check's Ctrl did nothing (Cmd+T, Cmd+F,
+  Cmd+Shift+V, and Back as Cmd+[), fixed in the harness (modKeys,
+  MOD_KEY). And the machine's renderer, "ANGLE (Apple, ANGLE Metal
+  Renderer: Apple Paravirtual device, Unspecified Version)", was not
+  on the software list, so the budgets were checked (the aquarium
+  ready in 6.5 s against 5) rather than logged; fixed in the harness
+  and in the viewer's own list (scene.ts), as the device is a virtual
+  machine's stand-in with no graphics card behind it.
+- MC2, the second run, all four parts: part 2, 82 of 91 passed, 4
+  failed (V6, the software-drawing check, and U9 and X2 in parts 3 and
+  4: the viewer's own list, fixed above; R5, the page process's memory
+  after ten visits, 250 MB against 180 allowed, macOS's accounting; R8,
+  Playwright's own keyboard pressing Control+Shift+V, now MOD_KEY);
+  part 3, 29 of 35 passed, 1 failed (U9); part 4, 7 of 11 passed, 1
+  failed (X2); part 1, 297 of 326 passed, 24 failed. Part 1's misses,
+  grouped: the window's content size never reached 1280 by 800 or
+  1024 by 700 (the machine's display is 1024 by 768 with a menu bar
+  and a Dock, and macOS keeps a window on screen; eleven checks: the
+  top bar's hit tests, M3, G6, Y7b, the context-lost resize, the
+  window's size after a restart); the test window overlapping a
+  display (C1: macOS allows no window off every display); full screen
+  (FS1, FS2 twice, FS6, and the HoloML page's script, five checks at
+  their 60-second limit: macOS makes full screen a Space, slowly in a
+  virtual machine); the shortcuts' labels and remapping (M7 and the
+  text view's shortcut expect "Ctrl+Alt+R" and Ctrl keys; macOS shows
+  Cmd); the context menu (four items where two are expected: macOS's
+  own); the clipboard (copies a link address); the lift button's
+  tooltip (Cmd); a lifted picture's pixels (software); I8, DevTools;
+  and one launch where no window appeared in 30 seconds.
+- Decision (the agent, 2026-10-15, for the owner to confirm): macOS
+  stays in the builds with what MC1 needs, required; the end-to-end
+  checks on macOS run as an experiment that "All checks" does not wait
+  for (continue-on-error), reported in every build, until each miss is
+  settled with a Mac in hand (MC3), as whether the app or the check is
+  wrong on macOS (full screen, the menu, the window's size) cannot be
+  judged from a log. Nothing is skipped on Windows or Linux.
+- Linux part 1 in the second run: one miss, the tilt check's "field
+  focused" (a lost click, issue #30's kind); it passed in the third.
+- The third run (2026-10-15, with the required job and the
+  experiment): "All checks" passes; the required macOS job passes
+  (lint, types, 594 unit tests, the build); Windows and Linux every
+  part. The experiment: macOS parts 3 and 4 pass in full (the
+  viewer's list); part 2, 84 of 91, 3 misses (R3's page of 10,000
+  elements not ready within 20 s on the virtual machine, the
+  responsiveness check that depends on it, and R5's memory, 259 MB
+  against 169); part 1, 297 of 326, the same 24 as the second run.
+  So the list for the owner's Mac (MC3) is part 2's three and part
+  1's 24 above.
+- MC3, the owner's Mac (2026-10-14 and 2026-10-15; an iMac Pro on
+  Intel, an AMD Radeon Pro Vega 56, a 2560 by 1440 display, an older
+  macOS that Homebrew builds from source for): `pnpm test` first
+  failed in the six SQLite files with "No such built-in module:
+  node:sqlite", as the Mac's Node was older than 22.13 (the project
+  asks for 24; .nvmrc), with the other 64 files, 534 tests, passing;
+  Homebrew's node@24 failed compiling OpenSSL there, and nvm's Node
+  24.22.0 worked (corepack then brought pnpm back). With Node 24: 594
+  unit tests (592, 2 skipped), lint, and the type check pass. The
+  end-to-end checks (`pnpm test:e2e --reporter=verbose`, 30 minutes,
+  the log kept by the owner): 445 of 463 passed, 1 skipped, 17 failed,
+  in 10 of 34 files, with 1 input retry in the whole run (m28, a
+  click). The budgets, checked with the graphics card: Blockworld 410
+  ms and 39.0 frames a second, the showroom and the sofa studio within
+  budget (660 ms), Harbour Loft 1260 ms, the sneaker store 458 ms,
+  the ocean tunnel 59.5 frames a second, looking around 59.4, economy
+  mode 24.1, the page process 100 MB then 128 MB after ten visits (R5
+  passes there, against 259 on GitHub's machine). The 17, grouped:
+  - Full screen, six checks (M1, FS2 twice, FS6 twice, and closing a
+    tab in full screen): entering worked and the notice came, and the
+    next key sent to the page, Escape, never returned ("STILL GOING
+    ON when the check ended"); closing the tab left the window full
+    screen at 2560 by 1440. macOS makes full screen a Space with a
+    transition, during which the page takes no input the harness
+    sends; whether Escape leaves when a person presses it is the
+    owner's to say (the look by eye).
+  - The camera and microphone, two checks (K6 to K8, and issue #18's
+    capture): both stopped right after the microphone prompt, at
+    their 60-second limit, as a macOS system dialog for the microphone
+    would hold them (Chromium asks macOS once per app, even with the
+    stand-in devices); the owner can say whether one appeared.
+  - The checks' own Ctrl words, four checks: M7 expects the label
+    "Ctrl+Alt+R" and macOS shows Cmd; LT9's lift button tooltip the
+    same; St4's page reports the keys it sees by ctrlKey, so Cmd+Shift+V
+    reached it as "shift+v"; LT9's object buttons (Delete puts back).
+    Check-side: the expectations take the system's word for Mod.
+  - macOS's own ways, four checks: C1, the window overlaps a display
+    (macOS keeps every window on screen, so "off every display" cannot
+    hold there; it stayed unfocused); D7, the window's place after a
+    restart (x 1600 where 1280 was asked: macOS moved it); D8, the
+    right-click menu has four items where two are expected (macOS's
+    own additions to Electron's menu, to be seen); the lifted
+    picture's pixels (a Retina display draws at two device pixels per
+    point, and the check reads one).
+  - Two budgets: C9, 30.8 frames a second against 50 while the camera
+    follows the pointer (issue #82 on Windows too; on macOS an
+    unfocused window may be drawn at half rate); and X5, the aquarium
+    ready in 687 ms but drawn in 8411 ms against 5 s (its shaders
+    compile slowly through Metal on the first frame; X9 then draws it
+    at 59.5).
+  Against GitHub's macOS machine: the real Mac passes the eleven
+  window-size checks (the top bar's hit tests, M3, G6, Y7b, the
+  resize with the context lost), I8 (DevTools), and the launch that
+  showed no window; it adds the two camera checks and the two
+  budgets. R3's 20-second limit and R5 pass on it.
+- The owner's word (2026-10-15): #81 closed with this record, and the
+  17 misses filed as issue #111, grouped as above, to be settled on a
+  Mac one by one. Not done yet of MC3: the look by eye (the room, Cmd
+  keys, the system's dark mode, the Keychain, HoloML pages, full
+  screen on a video with Escape), and the owner's word on a
+  microphone dialog; both go to #111.
 
 ## The promotion plan (2026-10-14)
 

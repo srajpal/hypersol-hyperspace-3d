@@ -102,12 +102,13 @@ export const SOFTWARE = process.env['HYPERSOL_TEST_SOFTWARE'] === '1';
  * without a graphics card (GitHub's) offer only a software GL, which
  * Chromium blocks for WebGL 2, so the room and HoloML scenes cannot start;
  * this lets Chromium draw WebGL with its own software renderer instead.
- * With a graphics card it changes nothing (milestone 12).
+ * With a graphics card it changes nothing (milestone 12). GitHub's macOS
+ * machines have no graphics card either (issue #94), so they get the same.
  */
 export function graphicsSwitches(opts: { noWebGL?: boolean } = {}): string[] {
   if (opts.noWebGL) return ['--test-no-webgl'];
   if (SOFTWARE) return ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
-  return process.platform === 'linux' ? ['--enable-unsafe-swiftshader'] : [];
+  return process.platform === 'linux' || process.platform === 'darwin' ? ['--enable-unsafe-swiftshader'] : [];
 }
 
 /**
@@ -180,6 +181,9 @@ async function closeApp(app: ElectronApplication, proc: ChildProcess): Promise<v
     proc.kill('SIGKILL');
   }
 }
+
+/** Whether this file's log has said what the machine draws with. */
+let rendererLogged = false;
 
 /** Launches the built app with a throwaway profile and test hooks on. An empty start address opens a start tab. */
 export async function launch(startUrl: string, opts: LaunchOptions = {}): Promise<Harness> {
@@ -269,6 +273,17 @@ export async function launch(startUrl: string, opts: LaunchOptions = {}): Promis
         await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.focus());
         await waitFor('the app window to have focus', focused, (f) => f, 7000);
       }
+    }
+    // Once per file: what this machine draws with, so a run's log says so on every system (issue #94).
+    if (!rendererLogged) {
+      rendererLogged = true;
+      await shell
+        .evaluate(() => {
+          const gl = document.createElement('canvas').getContext('webgl2');
+          const info = gl?.getExtension('WEBGL_debug_renderer_info');
+          return gl && info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : 'no WebGL 2';
+        })
+        .then((name) => console.log(`[harness] drawing with: ${name} (${process.platform})`), () => undefined);
     }
     return {
       app,
@@ -944,8 +959,10 @@ export async function softwareRenderer(h: Harness): Promise<string | null> {
     const info = gl?.getExtension('WEBGL_debug_renderer_info');
     return gl && info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : '';
   });
-  return /swiftshader|llvmpipe|softpipe|basic render|warp/i.test(name) ? name : null;
+  // GitHub's macOS machines draw through a virtual device with no graphics card behind it (issue #94).
+  return /swiftshader|llvmpipe|softpipe|basic render|warp|paravirtual|apple software/i.test(name) ? name : null;
 }
+
 
 /** Resizes the window's content area and waits for the page to follow. */
 export async function setContentSize(h: Harness, width: number, height: number): Promise<void> {
@@ -1052,13 +1069,36 @@ export async function typeInPage(h: Harness, text: string, page: PageRef = ''): 
 }
 
 /** Presses a key, with modifiers, inside a web page (see typeInPage). */
+type Modifier = 'control' | 'shift' | 'alt' | 'meta';
+
+/**
+ * A check's "control" means the command modifier of the system the app
+ * runs on: Ctrl on Windows and Linux, Cmd on macOS ("Mod" in the
+ * shortcuts table, shared/shortcuts.ts, and Chromium's own editing keys),
+ * so the checks say Ctrl once and hold on every system (issue #94).
+ * Ctrl+Tab and Ctrl+Shift+Tab stay Ctrl on macOS, as the table keeps
+ * them (Cmd+Tab is the app switcher there).
+ */
+export function modKeys(keyCode: string, modifiers: Modifier[]): { keyCode: string; modifiers: Modifier[] } {
+  if (process.platform !== 'darwin' || keyCode === 'Tab') return { keyCode, modifiers };
+  // Back and Forward are Alt+arrow on Windows and Linux, and Cmd+[ and Cmd+] on macOS (the table's `mac` keys).
+  if (modifiers.length === 1 && modifiers[0] === 'alt' && (keyCode === 'Left' || keyCode === 'Right')) {
+    return { keyCode: keyCode === 'Left' ? '[' : ']', modifiers: ['meta'] };
+  }
+  return { keyCode, modifiers: modifiers.map((m) => (m === 'control' ? 'meta' : m)) };
+}
+
+/** The same command modifier for Playwright's own keyboard (a Ctrl-click is a Cmd-click on macOS). */
+export const MOD_KEY = process.platform === 'darwin' ? 'Meta' : 'Control';
+
 export async function pressInPage(
   h: Harness,
   keyCode: string,
-  modifiers: ('control' | 'shift' | 'alt' | 'meta')[] = [],
+  modifiers: Modifier[] = [],
   page?: PageRef,
 ): Promise<void> {
   const target = page ?? (await focusedPage(h));
+  ({ keyCode, modifiers } = modKeys(keyCode, modifiers));
   const done = step(`pressing ${[...modifiers, keyCode].join('+')} in page ${JSON.stringify(target)}`);
   await h.app.evaluate(
     ({ webContents }, { keyCode, modifiers, target }) => {
@@ -1133,8 +1173,9 @@ export async function tabToText(h: Harness, page: PageRef, text: string, options
 export async function pressInShell(
   h: Harness,
   keyCode: string,
-  modifiers: ('control' | 'shift' | 'alt' | 'meta')[] = [],
+  modifiers: Modifier[] = [],
 ): Promise<void> {
+  ({ keyCode, modifiers } = modKeys(keyCode, modifiers));
   const done = step(`pressing ${[...modifiers, keyCode].join('+')} in the shell`);
   await h.app.evaluate(
     ({ BrowserWindow }, { keyCode, modifiers }) => {

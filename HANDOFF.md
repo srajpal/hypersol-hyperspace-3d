@@ -836,6 +836,17 @@ to this repository for rules and the prompt log.
    viewer's address answers 404 until then, and Firefox and Safari are
    then checked by hand. The browser's copies of the examples
    (pnpm holoml:sync) can be refreshed from holoml's next tag.
+   Step 7 (#94, pull request #110): macOS is in the
+   automatic builds, lint, types, unit tests, and the build required
+   and the end-to-end checks an experiment "All checks" does not wait
+   for, with the harness mapping a check's Ctrl to Cmd there; TODO.md
+   ("Issue #94") has the runs' results, the misses grouped, and MC3,
+   the owner's Mac: the unit tests pass and 445 of 463 end-to-end
+   checks do (2026-10-15), with 17 misses grouped there (full screen,
+   the microphone's system dialog, the checks' Ctrl words, macOS's own
+   ways with windows and menus, two budgets): #81 is closed with that
+   record, and the 17 are issue #111, to be settled on a Mac one by
+   one; the look by eye and the microphone dialog's answer go there.
    One issue at a time, approved by the owner first (AGENTS.md rule 2);
    check Electron's security releases at least monthly and before any
    tag (rule 13; last checked 2026-10-10, 44.7.0). Prompts are recorded

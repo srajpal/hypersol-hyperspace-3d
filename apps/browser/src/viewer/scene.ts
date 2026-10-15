@@ -4534,7 +4534,9 @@ function softwareDrawing(): string | null {
   const info = gl.getExtension('WEBGL_debug_renderer_info');
   const name = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : '';
   gl.getExtension('WEBGL_lose_context')?.loseContext();
-  return /swiftshader|llvmpipe|softpipe|basic render|warp/i.test(name) ? name : null;
+  // Apple's "paravirtual device" is a virtual machine's stand-in for a graphics card (GitHub's macOS machines,
+  // issue #94): no faster than software, and treated as it (the test harness's list is the same).
+  return /swiftshader|llvmpipe|softpipe|basic render|warp|paravirtual|apple software/i.test(name) ? name : null;
 }
 
 /** Where a model that could not be loaded would be: a small red wire box. */

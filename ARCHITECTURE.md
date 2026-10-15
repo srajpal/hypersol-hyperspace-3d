@@ -1072,7 +1072,22 @@ the room in milestone 28.)
 
 Checked on Windows 11, 2026-09-24 and since; on Windows and Linux in the
 automatic builds since 2026-09-26; on Linux in a container on this
-computer (`pnpm test:linux`) since 2026-09-28. macOS not checked yet.
+computer (`pnpm test:linux`) since 2026-09-28; on macOS in the
+automatic builds since 2026-10-15 (issue #94): lint, the type check,
+the unit tests, and the build are required there, and the end-to-end
+checks run as an experiment "All checks" does not wait for. GitHub's
+macOS machine has a 1024 by 768 display with a menu bar and a Dock,
+keeps every window on screen, draws through Apple's "paravirtual
+device" (counted as software drawing, by the harness and the viewer),
+shows Cmd in labels, and makes full screen a Space, so checks written
+against Windows and Linux fail there; the harness maps a check's Ctrl
+to Cmd (and Alt+arrow to Cmd+[ and ]) on macOS, and TODO.md ("Issue
+#94") lists what is left. On the owner's Mac (an iMac Pro with a
+graphics card, 2026-10-15) the unit tests pass and 445 of 463
+end-to-end checks do, the budgets met; the 17 misses (full screen's
+transition, the microphone's system dialog, labels with Cmd, windows
+kept on screen, a Retina display's pixels, two budgets) are listed
+there.
 - Toolchain: Node 24 or newer; pnpm 12.4.1 (pinned)
 - Install: `pnpm install --frozen-lockfile`
 - Develop: `pnpm dev` (starts the Electron app with live reload, using a
@@ -1090,7 +1105,8 @@ computer (`pnpm test:linux`) since 2026-09-28. macOS not checked yet.
 - Linux, as GitHub's machines run it: `pnpm test:linux` (needs Docker)
 
 The automatic builds (.github/workflows/ci.yml) run for every pull
-request and every push to main, on Windows and Linux. Each system runs
+request and every push to main, on Windows, Linux, and macOS. Windows
+and Linux run
 the end-to-end checks in four parts side by side, so a build takes as
 long as its longest part (vitest.e2e.config.ts, HYPERSOL_E2E_PART):
 part 2 is milestones 14 to 17's files and the viewer's checks from the
@@ -1098,11 +1114,16 @@ review, part 3 milestones 18 to 20's, part 4 milestone 21's (the ocean
 tunnel, the slowest drawn in software), and part 1 everything else,
 with lint, the type check, and the unit tests; a new file is in part 1
 until it is given a part, and a part number that does not exist stops
-the run. Two more jobs run beside them: "Node 26" (lint, the type check,
-and the unit tests on Node 26) and "Android" (the Android app built and
-its unit tests run, on Linux). The test and Android jobs may each take
-30 minutes. A last job, "All checks", passes only when every part, Node
-26, and Android have; the rule on main names it alone. A change to
+the run. Three more jobs run beside them: "macOS" (lint, the type
+check, the unit tests, and the build on GitHub's macOS machine; issue
+#94), "Node 26" (lint, the type check, and the unit tests on Node 26),
+and "Android" (the Android app built and its unit tests run, on
+Linux); and macOS's four end-to-end parts run as an experiment,
+reported but not required, until their misses are settled with a Mac
+in hand. The test and Android jobs may each take
+30 minutes. A last job, "All checks", passes only when every part,
+macOS, Node 26, and Android have; the rule on main names it alone. No
+job pushes, so no checkout keeps the token. A change to
 documents only (the `*.md` files at the top and the docs folder, which
 no check reads) skips the parts, and "All checks" passes at once. The
 actions are named by commit, and Dependabot proposes updates to them
