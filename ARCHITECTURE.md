@@ -1179,7 +1179,10 @@ environment itself. Its switches:
   (milestone 26);
 - `HYPERSOL_TEST_BACKGROUND=1` (set by the test harness unless
   HYPERSOL_TEST_SHOW=1): the window opens off screen, without focus or a
-  taskbar button, and Chromium keeps drawing it;
+  taskbar button, and Chromium keeps drawing it (on macOS, which keeps a
+  corner of every window on a display and moves a window shown beyond
+  that back on screen, it is moved past the bottom right corner once
+  shown, and only that corner shows; issue #111);
 - `HYPERSOL_TEST_KEEP_RUNNING=1`: the app keeps running when its last
   window closes, as on macOS, so quitting can be tested on any platform.
 

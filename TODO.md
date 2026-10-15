@@ -6767,7 +6767,7 @@ run changes). The run's numbers and each miss's error are under "Issue
 ### Tasks
 
 - [x] Group 1: the checks' own Ctrl words (M7, LT9 twice, St4)
-- [ ] Group 2: macOS's own ways (C1, D7, D8, the lifted picture's
+- [x] Group 2: macOS's own ways (C1, D7, D8, the lifted picture's
       pixels)
 - [ ] Group 3: full screen (M1, FS2 twice, FS6 twice, closing a tab)
 - [ ] Group 4: the camera and microphone (K6 to K8, issue #18's
@@ -6800,6 +6800,41 @@ run changes). The run's numbers and each miss's error are under "Issue
   Mac after the change: m11 8 of 8, m28 25 of 25,
   review-134-features every check but D7 (group 2). Windows and Linux
   see the same words as before.
+- Group 2, macOS's own ways (2026-10-15):
+  - C1 and D7 have one cause, found with a small Electron script on the
+    Mac: macOS allows no window off every display. It keeps a corner of
+    every window's title bar reachable, about 40 pixels across and 100
+    down, and a window shown beyond that (the test window asks for
+    x 200 past the right edge) is moved back wholly on screen at the
+    show, where its place then depends on its width (a 1280-wide window
+    lands at x 1280 on the 2560-wide display, a 960-wide one at 1600:
+    D7's miss, whose check expected the test window's place to be the
+    same at each launch). A position set after the window is shown is
+    kept up to that corner (x 2520). The app's fault, in its test-only
+    path (main/index.ts, offScreenPosition): on macOS the test window
+    is asked for the bottom right, past both edges, once shown, so only
+    that corner shows (40 by 97 pixels on this display), the window
+    draws as before (60 frames a second there, measured), and its place
+    no longer depends on its size. C1's check takes macOS's way: never
+    focused, as everywhere, and on macOS on a display by no more than
+    64 by 128 pixels (a corner), off every display elsewhere. D7's
+    check is unchanged and passes. Windows and Linux place the window
+    as before.
+  - D8, the right-click menu on a link: four entries where two were
+    expected, the two more being a separator and "Copy". A throwaway
+    check read the page's selection after the click: on macOS Chromium
+    selects a link's text on a right-click ("Go to page B"; a heading's
+    text is not selected), as other Mac browsers do, so the app's menu
+    offers Copy for it, which is the system's way and right for a
+    person on a Mac. The check's fault: on macOS it expects the two
+    entries, a separator, and Copy.
+  - The lifted picture's pixels on a Retina display: not a miss. LT2's
+    pixel check passed on the Mac (the picture's four quarters read as
+    captured); the "Four coloured quarters, lifted picture" in the run's
+    log was LT9's button name, missing because LT9's first check had
+    stopped (group 1). Nothing changed.
+  - Each file run alone on the Mac after the changes: m1 every check
+    but C9 (group 5), m2 43 of 43, review-134-features every check.
 
 ## The promotion plan (2026-10-14)
 

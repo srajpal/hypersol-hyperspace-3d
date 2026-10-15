@@ -179,7 +179,13 @@ function applyWindowTheme(): void {
 /** A spot to the right of every display, for background test windows. */
 function offScreenPosition(): { x: number; y: number } {
   const right = Math.max(...screen.getAllDisplays().map((d) => d.bounds.x + d.bounds.width));
-  return { x: right + 200, y: 0 };
+  if (process.platform !== 'darwin') return { x: right + 200, y: 0 };
+  // macOS keeps a corner of every window's title bar on a display (about 40 pixels across and 100 down), and
+  // moves a window shown beyond that back wholly on screen; a position set after the window is shown is kept
+  // up to that corner. So on macOS the test window is asked for the bottom right, past both edges, once shown
+  // (issue #111, C1): only its corner shows, at the edge of the display, and it draws as before.
+  const bottom = Math.max(...screen.getAllDisplays().map((d) => d.bounds.y + d.bounds.height));
+  return { x: right + 200, y: bottom + 200 };
 }
 
 /**
@@ -276,7 +282,14 @@ function createWindow(): void {
   // Background test windows appear without taking focus. A window that
   // was left maximised opens maximised.
   win.once('ready-to-show', () => {
-    if (options.testBackground) win.showInactive();
+    if (options.testBackground) {
+      win.showInactive();
+      // macOS moved it on screen at the show; asked again now, it keeps only the corner (offScreenPosition).
+      if (process.platform === 'darwin') {
+        const { x, y } = offScreenPosition();
+        win.setPosition(x, y);
+      }
+    }
     else if (opening.maximized) win.maximize();
     else win.show();
   });

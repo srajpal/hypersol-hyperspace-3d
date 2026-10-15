@@ -230,7 +230,9 @@ date given and grow with each issue; TODO.md has the latest.
   way. To watch a run in normal windows, set HYPERSOL_TEST_SHOW=1 (for
   example `HYPERSOL_TEST_SHOW=1 pnpm test:e2e`); then leave the machine
   alone while it runs. Check C1 confirms background windows are off
-  every display and unfocused.
+  every display and unfocused; on macOS, which keeps a corner of every
+  window's title bar on a display, the test window shows only that
+  corner, about 40 by 100 pixels at the bottom right (issue #111).
 - GitHub's Linux machines have no graphics card and draw in software
   (the review of 2026-09-30 found that its Windows machines draw in
   software too). To

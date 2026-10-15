@@ -434,7 +434,10 @@ describe('D8 right-click menu', () => {
   });
 
   it('copies a link address', async () => {
-    expect(await rightClick('#go')).toEqual(['Open link in new tab', 'Copy link address']);
+    // On macOS a right-click selects the link's text (Chromium's way there, as in other Mac browsers), so the
+    // menu also offers Copy for it, after a separator (issue #111).
+    const forTheLink = ['Open link in new tab', 'Copy link address'];
+    expect(await rightClick('#go')).toEqual(process.platform === 'darwin' ? [...forTheLink, '---', 'Copy'] : forTheLink);
     await choose('Copy link address');
     expect(await h.app.evaluate(({ clipboard }) => clipboard.readText())).toBe(server.url('link-b.html'));
   });
