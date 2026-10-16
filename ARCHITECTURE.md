@@ -1075,7 +1075,8 @@ automatic builds since 2026-09-26; on Linux in a container on this
 computer (`pnpm test:linux`) since 2026-09-28; on macOS in the
 automatic builds since 2026-10-15 (issue #94): lint, the type check,
 the unit tests, and the build are required there, and the end-to-end
-checks run as an experiment "All checks" does not wait for. GitHub's
+checks run as an experiment "All checks" does not wait for, on main
+and when started by hand, not on pull requests (2026-10-16). GitHub's
 macOS machine has a 1024 by 768 display with a menu bar and a Dock,
 keeps every window on screen, draws through Apple's "paravirtual
 device" (counted as software drawing, by the harness and the viewer),
@@ -1119,7 +1120,7 @@ check, the unit tests, and the build on GitHub's macOS machine; issue
 #94), "Node 26" (lint, the type check, and the unit tests on Node 26),
 and "Android" (the Android app built and its unit tests run, on
 Linux); and macOS's four end-to-end parts run as an experiment,
-reported but not required, until their misses are settled with a Mac
+reported but not required, on main and by hand only, until their misses are settled with a Mac
 in hand. The test and Android jobs may each take
 30 minutes. A last job, "All checks", passes only when every part,
 macOS, Node 26, and Android have; the rule on main names it alone. No
