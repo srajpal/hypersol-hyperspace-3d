@@ -30,60 +30,67 @@ copies: HoloML's examples (Harbour Loft's furniture, textures, and
 harbour from Poly Haven, CC0; Blockworld's blocks from Kenney, CC0) and
 a made-up sample page.*
 
-For Windows and Linux (checked by automatic tests on both); on macOS
-it builds and passes its unit tests in the automatic builds, and on a
-Mac in hand its end-to-end checks pass but two (TODO.md, "Issue
-#111": a frame-rate measure, and a DevTools crash seen now and then;
-GitHub issues #94, #81, and #111). Apache 2.0. No telemetry.
+## Download
+
+**[HyperSpace 3D 0.9.1](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1)**,
+a developer preview, as a portable zip: take the one for your
+computer, unzip it anywhere, and start it. Nothing to install, nothing
+to sign in to, and no update check: a newer version is a newer zip on
+the [releases page](https://github.com/srajpal/hypersol-hyperspace-3d/releases).
+
+| Your computer | Download | Size |
+|---|---|---|
+| Windows 10 or 11, x64 | [HyperSpace3D-0.9.1-windows-x64.zip](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.1/HyperSpace3D-0.9.1-windows-x64.zip) | 156 MB |
+| macOS, Apple silicon (M1 and later) | [HyperSpace3D-0.9.1-macos-arm64.zip](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.1/HyperSpace3D-0.9.1-macos-arm64.zip) | 130 MB |
+| macOS, Intel | [HyperSpace3D-0.9.1-macos-x64.zip](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.1/HyperSpace3D-0.9.1-macos-x64.zip) | 134 MB |
+| Linux, x64 | [HyperSpace3D-0.9.1-linux-x64.zip](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.1/HyperSpace3D-0.9.1-linux-x64.zip) | 123 MB |
+
+Starting it the first time (nothing is signed, so each system asks
+once):
+
+- **Windows:** start `HyperSpace3D.exe` in the unzipped folder.
+  SmartScreen says the app is unrecognised: choose *More info*, then
+  *Run anyway*.
+- **macOS:** keep `HyperSpace 3D.app` where it is or drag it to
+  Applications. Gatekeeper refuses to open it: go to System Settings,
+  Privacy & Security, and choose *Open Anyway* under the message about
+  it; or clear the mark in Terminal with
+  `xattr -dr com.apple.quarantine "HyperSpace 3D.app"`.
+- **Linux:** start `./HyperSpace3D` in the unzipped folder. On Ubuntu
+  24.04 and other systems that restrict user namespaces, it stops at
+  once with a message about `chrome-sandbox`: give that helper its
+  rights first, in the unzipped folder, with
+  `sudo chown root:root chrome-sandbox && sudo chmod 4755 chrome-sandbox`.
+
+Beside each zip on the releases page is its SHA-256 in a `.sha256`
+file: check a download with `certutil -hashfile <the zip> SHA256` on
+Windows, `shasum -a 256 <the zip>` on macOS, or `sha256sum -c <the
+.sha256 file>` on Linux. The browser keeps its data in your system's
+usual profile folder and sends nothing anywhere
+([docs/privacy.md](docs/privacy.md)). It is a developer preview, not
+yet for everyday browsing: the status paragraph below says where it
+stands, and [Building and running](#building-and-running) how to run
+it from source instead.
 
 **Status (2026-10-16): experimental.** The newest version is the
 [0.9.1 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1),
-a pre-release, as a portable zip for Windows, Linux, and macOS (unzip
-it and start it; nothing is signed, so Windows SmartScreen asks once
-and macOS Gatekeeper refuses it until it is allowed, as the release
-notes describe) and as source, published 2026-10-16. There
-are no installers, and none are planned: a fork may
-make one of its own (see [CONTRIBUTING.md](CONTRIBUTING.md), "Making
-your own build", which describes the zip). The
+a pre-release published 2026-10-16 as a portable zip for Windows,
+Linux, and macOS ([Download](#download) above) and as source; the
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0)
-of 2026-09-26 was source only. Since then, HoloML 0.1 has
-been written down in its own repository (milestone 13), and this browser
-shows HoloML pages (milestones 14 to 21; all of it in 0.9.1), with limits for heavy scenes,
-keyboard and screen-reader access, a scene inspector, and a HoloML car showroom to try from the
-start panel. Milestone 17 adds Blockworld, a small block game written in
-the first part of HoloML 0.2 (scripts, sound, walls and gravity), and a
-HoloML examples section. Milestone 18 adds walking and turning speeds a
-page can set, sliders on the screen (Blockworld's Speed slider), and the
-sofa studio, a shop page with shadows, textured fabrics, and choices
-that change the sofa in place. Milestone 19 adds text panels, doors and
-lamps that work with a click, places to go to, a sky, a floor plan, and
-Harbour Loft, a flat by a harbour to tour. Milestone 20 adds groups of
-models that load only while you are near them, with lighter stand-ins
-until then, and the sneaker store, one shoe in ten colourways to walk
-among, turn over, and add to a cart. Milestone 21 adds water, sounds
-that come from a place, and the ocean tunnel, an aquarium to walk
-through with 30 fish swimming over and around you, and completes HoloML
-0.2. Milestone 22 documents HoloML: its specification, guides, and site.
-Milestone 23 adds HoloML for VS Code, and milestone 24 HyperSpace 3D for
-Android, on a tablet. Milestone 25 adds HoloML 0.3: names
-for models, the language and direction of text, lighter models far
-away, and compressed models; every example has since moved to 0.3, the
-version to write today. Milestone 26 adds
-privacy and data tools: HTTPS-only browsing, per-site storage, and
-bookmark import and export. Milestone 27 lets you look around the room:
-leave the desk by dragging on the room, with the keys, or with a button,
-and come back to the page exactly as it was. Milestone 28 lifts a
-page's pictures and 3D models into the room, to stand beside the page
-and turn in your hands. Since then the work comes from GitHub issues:
-the first, #75, lets a page go full screen and hold the pointer, with
-the browser's own notice.
-On 2026-09-30 both repositories were reviewed and the findings fixed,
-the security ones first ([CHANGELOG.md](CHANGELOG.md), Unreleased),
-except those [TODO.md](TODO.md) lists with the reason.
-No more milestones are planned: work continues from the
+of 2026-09-26 was source only. Windows and Linux are checked by the
+automatic tests on every change; macOS builds and passes its unit
+tests there, and a Mac in hand passes the end-to-end checks but two
+(TODO.md, "Issue #111"). Apache 2.0. No telemetry. There are no
+installers, and none are planned (owner, 2026-10-08): a fork may make
+one of its own ([CONTRIBUTING.md](CONTRIBUTING.md), "Making your own
+build"). Everything since 0.9.0, from HoloML pages to lifting a page's
+pictures and models into the room, is in 0.9.1:
+[What it does](#what-it-does) lists it, [Progress](#progress) tells it
+milestone by milestone with screenshots, and
+[CHANGELOG.md](CHANGELOG.md) release by release. No more milestones
+are planned: the work continues from the
 [GitHub issues](https://github.com/srajpal/hypersol-hyperspace-3d/issues)
-(owner, 2026-10-10); no installers (owner, 2026-10-08). See [Progress](#progress),
-[TODO.md](TODO.md), and [Project documents](#project-documents).
+(owner, 2026-10-10); see [What comes next](#what-comes-next).
 
 ## The story
 
@@ -154,12 +161,12 @@ An archived copy of the 2001 site is available through the
 - A layers view that lifts a page's sections and pictures to different
   depths.
 - Full screen for video players and games, with the browser's own
-  notice and Escape to leave (GitHub issue #75).
-- Looking around the room (milestone 27): drag on the room, use the
+  notice and Escape to leave.
+- Looking around the room: drag on the room, use the
   arrows and W, A, S, D, or press the top bar's button (Ctrl+Shift+K) to
   leave the desk; Escape brings you back, with the page as sharp as
   before.
-- Lifting into the room (milestone 28): right-click a picture, a video,
+- Lifting into the room: right-click a picture, a video,
   or a 3D model on a page and choose "Lift into the room", or lift
   everything in view with the top bar's Lift button (Ctrl+Shift+U). They
   stand beside the page; turn one, bring it nearer, or put it back. A
@@ -167,8 +174,8 @@ An archived copy of the 2001 site is available through the
   the page's own site, and read where it cannot reach the network.
 - Privacy on by default: ad and tracker blocking with a shield, encrypted
   DNS, private tabs, and no telemetry. Pages load over HTTPS only,
-  with a warning before any site is used over plain HTTP (milestone 26).
-- Your data in your hands (milestone 26): one site's cookies and stored
+  with a warning before any site is used over plain HTTP.
+- Your data in your hands: one site's cookies and stored
   data seen and cleared in the Library's Sites tab, and bookmarks
   imported from another browser's bookmark file, after a preview, and
   exported to one.
@@ -181,39 +188,26 @@ An archived copy of the 2001 site is available through the
   day), an instrument panel with live readouts, zoom, find in page,
   downloads, printing, remappable shortcuts, and an economy mode with
   sleeping tabs.
-- HoloML pages: fully 3D sites you orbit or walk around (milestone 14),
+- HoloML pages: fully 3D sites you orbit or walk around,
   with limits that keep a heavy scene from exhausting memory, Tab and
   screen-reader access to a scene's links and named things, a text view,
-  reduced motion, and a Scene part in the instrument panel (milestone 15).
-- A HoloML showroom to try, linked from the start panel: five cars in a
-  hall, each to walk around in three colours (milestone 16).
-- HoloML 0.2 pages (milestone 17): scripts from the page's own site,
-  sound after the first click or key, text on the screen, walls and
-  gravity for walking, and animated lights; Blockworld, a small block
-  game, shows them. A HoloML examples section (Ctrl+Shift+E) lists every
-  example with a picture, and links to the HoloML repository.
-  Milestone 18: a page sets how fast the viewer walks and turns, and
-  can put sliders on the screen for its script (Blockworld's Speed
-  slider); shadows, a material's own pictures (fabric, wood), choices
-  on the screen that change a material in place, and light from a
-  panorama of the surroundings, shown by the sofa studio. Milestone 19:
-  text of more than one line on a board in the scene, doors and lamps
-  that work with a click (and from the keyboard), places to go to, a
-  fade between a site's pages, a sky, and a floor plan, shown by
-  Harbour Loft. Milestone 20: groups of models that load only while the
-  viewer is near and are let go (their memory released) when the viewer
-  walks away, with a lighter stand-in in each model's place until then,
-  shown by the sneaker store. Milestone 21: water that things are seen
-  through, fading into its colour with distance, with the light from its
-  waves moving over what is in it; sounds that come from a place,
-  quieter with distance and from their side; and a model's animation
-  speed for scripts, shown by the ocean tunnel, an aquarium.
-- HoloML 0.3 pages (milestone 25): names for models and
-  groups that screen readers say, text in any language and direction
-  (Arabic and Hebrew right to left; Words in a room shows them), a
-  lighter model for far away (the ocean tunnel's fish), compressed
-  models (the sneaker store's shoes), and a page's description in its
-  tab's tooltip.
+  reduced motion, and a Scene part in the instrument panel.
+- Seven HoloML example sites to try, from a new tab's Try HoloML or
+  the HoloML examples section (Ctrl+Shift+E): a car showroom,
+  Blockworld (a small block game), the sofa studio, Harbour Loft, the
+  sneaker store, the ocean tunnel, and Words in a room ([HoloML](#holoml)
+  below links to each).
+- What a HoloML 0.2 or 0.3 page can do, each shown by one of those
+  sites: scripts from the page's own site, sound after the first click
+  or key, text on the screen and on boards in the scene, walls and
+  gravity, its own walking and turning speeds, sliders and choices on
+  the screen, shadows, textured materials, and light from a panorama,
+  doors and lamps that work with a click, places to go to, a fade
+  between a site's pages, a sky, a floor plan, groups of models that
+  load only while you are near, water, sounds that come from a place,
+  names for models that screen readers say, text in any language and
+  direction, a lighter model for far away, compressed models, and a
+  page's description in its tab's tooltip.
 - Mouse and keyboard throughout; touch for scenes.
 
 ## Built with the Buildwright approach
@@ -274,10 +268,11 @@ No more milestones are planned: since 2026-10-10 the work is the
 bugs and enhancements, one at a time (installers were dropped on
 2026-10-08: anyone may fork the repository and make one). The issues
 being worked first, since 2026-10-14, make the project easier to try
-and to find: a HoloML viewer for ordinary browsers, a 0.9.1 preview
-with a portable zip, a video, macOS, a landing page, and HoloML's
-packages on npm (the plan is in [TODO.md](TODO.md), "The promotion
-plan"). Ideas for later: phones, and VR. The roadmap that was,
+and to find (the plan is in [TODO.md](TODO.md), "The promotion
+plan"): done so far, a HoloML viewer for ordinary browsers, macOS in
+the automatic builds, and the 0.9.1 preview with its portable zip;
+still to come, a video, a landing page, the launch posts, and HoloML's
+packages on npm and its extension in the editors' registries. Ideas for later: phones, and VR. The roadmap that was,
 milestones 1 to 28, is in [TODO.md](TODO.md).
 
 ## Progress
@@ -324,15 +319,13 @@ HoloML is the 3D markup language developed alongside the browser, in its
 own repository so it stays independent and reusable:
 [github.com/srajpal/holoml](https://github.com/srajpal/holoml).
 Versions 0.1, 0.2, and 0.3 are written down there (SPEC.md), with a
-parser, a checker, and sample pages; 0.2 grew with the example sites and
-is released as [v0.2.0](https://github.com/srajpal/holoml/releases/tag/v0.2.0)
-(its third edition as
-[v0.2.2](https://github.com/srajpal/holoml/releases/tag/v0.2.2)), and
-0.3 (milestone 25) as
-[v0.3.0](https://github.com/srajpal/holoml/releases/tag/v0.3.0) (its
-second edition as
-[v0.3.1](https://github.com/srajpal/holoml/releases/tag/v0.3.1)); each is a pre-release, as HoloML is experimental (one renderer so far, and until
-1.0 a later version may change what an earlier one has).
+parser, a checker, and sample pages. The version to write today is
+0.3, released as
+[v0.3.1](https://github.com/srajpal/holoml/releases/tag/v0.3.1); its
+[releases](https://github.com/srajpal/holoml/releases) hold 0.2 as
+well (v0.2.0 to v0.2.2). Each is a pre-release, as HoloML is
+experimental: one renderer so far, and until 1.0 a later version may
+change what an earlier one has.
 Its documentation, the specification with tutorials, how-to guides,
 reference pages, and explanation, is published at
 https://srajpal.github.io/holoml/ (milestone 22), and the HoloML
@@ -344,22 +337,26 @@ pictures, and triangles have limits (milestone 15); what crosses one is
 left out and marked, and a notice says why.
 
 To try one, open a new tab and choose one under Try HoloML, or open the
-HoloML examples (the menu, or Ctrl+Shift+E): the showroom (milestone 16),
-Blockworld (milestone 17), the sofa studio (milestone 18), Harbour
-Loft (milestone 19), the sneaker store (milestone 20), the ocean
-tunnel (milestone 21), and Words in a room, signs in three languages
-(milestone 25). Each is written in HoloML 0.3 now, whatever version
-its milestone added. They come from the holoml repository,
-https://github.com/srajpal/holoml, which publishes each with GitHub
-Pages:
-https://srajpal.github.io/holoml/showroom/,
-https://srajpal.github.io/holoml/blockworld/,
-https://srajpal.github.io/holoml/sofa-studio/,
-https://srajpal.github.io/holoml/harbour-loft/,
-https://srajpal.github.io/holoml/sneaker-store/,
-https://srajpal.github.io/holoml/aquarium/, and
-https://srajpal.github.io/holoml/words/. The browser asks nothing of
-those sites until you choose one.
+HoloML examples (the menu, or Ctrl+Shift+E). Each is written in HoloML
+0.3 now, whatever version first showed it, and comes from the holoml
+repository, which publishes it with GitHub Pages; the browser asks
+nothing of those sites until you choose one:
+
+- [The showroom](https://srajpal.github.io/holoml/showroom/): five
+  cars in a hall, each to walk around in three colours.
+- [Blockworld](https://srajpal.github.io/holoml/blockworld/): a small
+  block game; break and place blocks, and find five gems.
+- [The sofa studio](https://srajpal.github.io/holoml/sofa-studio/): a
+  shop page with shadows, textured fabrics, and choices that change
+  the sofa in place.
+- [Harbour Loft](https://srajpal.github.io/holoml/harbour-loft/): a
+  flat by the harbour to tour, with doors, lamps, and a roof terrace.
+- [The sneaker store](https://srajpal.github.io/holoml/sneaker-store/):
+  one shoe in ten colourways to walk among and turn over.
+- [The ocean tunnel](https://srajpal.github.io/holoml/aquarium/): an
+  aquarium to walk through, with 30 fish.
+- [Words in a room](https://srajpal.github.io/holoml/words/): signs in
+  three languages, two of them right to left.
 
 **In any browser.** The viewer is also published on a plain web page,
 https://srajpal.github.io/hypersol-hyperspace-3d/viewer/, so a HoloML
@@ -412,29 +409,20 @@ pages still work without the room, and a notice says so.
 The Android app, for a tablet (milestone 24), has its own
 steps in [apps/android/README.md](apps/android/README.md).
 
-A developer preview (0.9.1): a portable zip for each system on the
-[releases page](https://github.com/srajpal/hypersol-hyperspace-3d/releases)
-(unzip it and start HyperSpace3D, or HyperSpace 3D.app on a Mac;
-nothing is signed: Windows SmartScreen asks once, and macOS Gatekeeper
-refuses the app until it is allowed in System Settings or its
-quarantine mark is removed, as the release notes describe), or build and run it
-from source as below. Checked on Windows 11 here, and on Windows and Linux (Ubuntu) by
-GitHub Actions for every pull request and every push to main; on macOS
-the same builds run lint, the type check, the unit tests, and the build
-(required), and the end-to-end checks as an experiment that does not
-block a merge (on main and by hand, not on pull requests), since GitHub's macOS machine (a small display, windows
-kept on screen) fails checks written against Windows and Linux; TODO.md
-("Issue #94") lists them. On a Mac in hand (an iMac Pro, 2026-10-15)
-the unit tests pass and the end-to-end checks do but a few, settled
-one by one under "Issue #111" in TODO.md (the checks' own Windows
-words and ways fixed; the app's full screen on macOS mended; the
-microphone's system dialog to be allowed once for "Electron" on a
-Mac's first run; two measures left as proposals). A run on a Mac
-keeps the display awake (`caffeinate -d pnpm test:e2e`): with it
-asleep, or the screen locked, macOS makes no full screen. A Mac needs Node 24
-from nvm or the installer from nodejs.org where Homebrew would build
-it from source.
-[CONTRIBUTING.md](CONTRIBUTING.md) has the full setup, including Linux.
+The portable zip of 0.9.1 is under [Download](#download) above; this
+section is running from source. Checked on Windows 11 here, and on
+Windows and Linux (Ubuntu) by GitHub Actions for every pull request
+and every push to main; on macOS the same builds run lint, the type
+check, the unit tests, and the build (required), and the end-to-end
+checks as an experiment that does not block a merge, since GitHub's
+macOS machine (a small display, windows kept on screen) fails checks
+written against Windows and Linux (TODO.md, "Issue #94"). A Mac in
+hand (an iMac Pro, 2026-10-15) passes the unit tests, and the
+end-to-end checks but a few, settled one by one under "Issue #111"
+there. [CONTRIBUTING.md](CONTRIBUTING.md) has the full setup,
+including Linux and a Mac's own notes (Node 24 from nvm rather than
+Homebrew, the microphone dialog on the first run, and the display
+kept awake with `caffeinate` for a test run).
 
 You need Node 24 or newer and pnpm 12.4.1. The pnpm version is pinned
 in package.json (`packageManager`), so pnpm, or `corepack enable`, uses

@@ -6920,7 +6920,23 @@ packager was set up, and no icon.
   linux-x64 128,871,825, macos-x64 140,091,594, macos-arm64
   136,395,419, and the changelog's 0.9.1 section as its notes, under
   the title "0.9.1 — developer preview", a pre-release. The owner had
-  it published the same day (`gh release edit v0.9.1 --draft=false`).
+  it published the same day (`gh release edit v0.9.1 --draft=false`),
+  and then asked for a Download section in the README (pull request
+  #116): the four zips by link with their sizes, how each system
+  starts an unsigned app (SmartScreen; Gatekeeper's Open Anyway or
+  the quarantine mark cleared; Linux's `chrome-sandbox` made setuid
+  root where user namespaces are restricted, as the automatic builds
+  turn that restriction off), and the checksums; its links and sizes
+  are the release's and change with each one. With it, at the owner's
+  word, the README read through and tidied: the status paragraph
+  short again (AGENTS.md asks for a short one; the milestone history
+  it had grown stays in Progress and docs/progress.md), "What it
+  does" without milestone numbers and with the HoloML features in two
+  bullets, the seven examples as a linked list under "HoloML", "What
+  comes next" saying what the plan has done, and "Building and
+  running" pointing at Download and at CONTRIBUTING.md for a Mac's
+  notes; nothing added that was not so, every link and anchor
+  checked.
 - Not checked yet: RL6 by eye on Windows and Linux (the window and
   the taskbar), and the published zips unzipped and started by hand
   on a Mac and on Linux; the workflow's smoke check is what they have.

@@ -867,7 +867,14 @@ to this repository for rules and the prompt log.
    published zips unzipped and started on a Mac and on Linux. The next
    release repeats this: the changelog's section, the version in both
    package.json files, m2's D11 and the About screenshot, the rule 13
-   check, then the tag.
+   check, then the tag, and after the publish the README's Download
+   section (added 2026-10-16, after the publish, at the owner's
+   request: the four zips by link with their sizes, how each system
+   starts an unsigned app, and the checksums), whose links and sizes
+   name the version; the README was read through and tidied with it
+   (the status paragraph short, "What it does" without milestone
+   numbers, the examples as a list), TODO.md, "Issue #92", has the
+   list.
    One issue at a time, approved by the owner first (AGENTS.md rule 2);
    check Electron's security releases at least monthly and before any
    tag (rule 13; last checked 2026-10-15, 44.7.2, before the 0.9.1 tag). Prompts are recorded
