@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { BASIC_LONG_REALM, BASIC_REALM, BASIC_SIGN_IN, startFixtureServer, type FixtureServer } from './fixture-server';
 import {
+  MOD_KEY,
   caughtUp,
   closeFocusedTab,
   cycleToTab,
@@ -414,10 +415,10 @@ describe('St4: the text view\'s keys are a shortcut like the others', () => {
       await pressInPage(h, 'Y', ['control', 'alt'], PAGE);
       await waitFor('the text view, by the new keys', () => textView(h), (v) => v === true);
       await h.shell.locator(BAR('text-view')).focus();
-      await h.shell.keyboard.press('Control+Alt+Y');
+      await h.shell.keyboard.press(`${MOD_KEY}+Alt+Y`);
       await waitFor('3D again, by the new keys in the shell', () => textView(h), (v) => v === false);
       // In the shell too the old keys are no shortcut any more.
-      await h.shell.keyboard.press('Control+Shift+V');
+      await h.shell.keyboard.press(`${MOD_KEY}+Shift+V`);
       await caughtUp(h, PAGE);
       expect(await textView(h)).toBe(false);
     } finally {

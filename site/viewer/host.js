@@ -166,7 +166,8 @@ async function main() {
   stopButton.addEventListener('click', () => send('stop'));
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && root.dataset.busy === 'true') send('stop');
-    if (e.key.toLowerCase() === 'v' && e.ctrlKey && e.shiftKey && !e.altKey) {
+    // Ctrl+Shift+V, or Cmd+Shift+V on a Mac, as in HyperSpace 3D ("Mod" in its shortcuts table).
+    if (e.key.toLowerCase() === 'v' && (e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey) {
       e.preventDefault();
       send(root.dataset.textView === 'true' ? 'text-view-off' : 'text-view-on');
     }

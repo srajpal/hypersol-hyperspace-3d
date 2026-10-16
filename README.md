@@ -30,8 +30,12 @@ copies: HoloML's examples (Harbour Loft's furniture, textures, and
 harbour from Poly Haven, CC0; Blockworld's blocks from Kenney, CC0) and
 a made-up sample page.*
 
-For Windows and Linux (checked by automatic tests on both); macOS is
-untested (GitHub issue #81). Apache 2.0. No telemetry.
+For Windows and Linux (checked by automatic tests on both); on macOS
+it builds and passes its unit tests in the automatic builds, and on a
+Mac in hand 445 of its 463 end-to-end checks pass, the rest listed in
+TODO.md under "Issue #94" (full screen, the camera's system dialog,
+and macOS's own ways with windows and menus; GitHub issues #94 and
+#81). Apache 2.0. No telemetry.
 
 **Status (2026-10-10): experimental.** Released: the
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
@@ -407,8 +411,15 @@ steps in [apps/android/README.md](apps/android/README.md).
 
 A developer preview (0.9.0): no installers, so build and run it from
 source. Checked on Windows 11 here, and on Windows and Linux (Ubuntu) by
-GitHub Actions for every pull request and every push to main; macOS is
-untested.
+GitHub Actions for every pull request and every push to main; on macOS
+the same builds run lint, the type check, the unit tests, and the build
+(required), and the end-to-end checks as an experiment that does not
+block a merge, since GitHub's macOS machine (a small display, windows
+kept on screen) fails checks written against Windows and Linux; TODO.md
+("Issue #94") lists them. On a Mac in hand (an iMac Pro, 2026-10-15)
+the unit tests pass and 445 of 463 end-to-end checks do; the 17 that
+do not are listed there too. A Mac needs Node 24 from nvm or the
+installer from nodejs.org where Homebrew would build it from source.
 [CONTRIBUTING.md](CONTRIBUTING.md) has the full setup, including Linux.
 
 You need Node 24 or newer and pnpm 12.4.1. The pnpm version is pinned
