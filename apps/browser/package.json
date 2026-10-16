@@ -18,7 +18,8 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "filters:update": "node scripts/filters-update.mjs",
-    "icons": "electron scripts/icons.mjs"
+    "icons": "electron scripts/icons.mjs",
+    "social-previews": "electron scripts/social-previews.mjs"
   },
   "devDependencies": {
     "@ghostery/adblocker": "2.20.1",
