@@ -17,6 +17,7 @@ import {
   navigateTo,
   newProfile as freshProfile,
   pressInPage,
+  MOD_WORD,
   pressInShell,
   project,
   settingsTo,
@@ -316,9 +317,9 @@ describe('M6 and M7: Settings and shortcuts', () => {
       expect((saved(profile)['shortcuts'] as Record<string, string>)['find']).toBeUndefined();
       await h.shell.press(SET('set-search'), 'Escape');
       await waitFor('closed', () => shellCall(h, 'openPanel'), (p) => p === null);
-      // The menu shows the new keys.
+      // The menu shows the new keys, in the system's word for the modifier ("Cmd+Alt+R" on macOS, issue #111).
       await h.shell.click(BAR('menu'));
-      expect(await h.shell.locator(BAR('menu-reopen-tab')).textContent()).toContain('Ctrl+Alt+R');
+      expect(await h.shell.locator(BAR('menu-reopen-tab')).textContent()).toContain(`${MOD_WORD}+Alt+R`);
       await pressInShell(h, 'Escape');
 
       // The new keys work from the page after a restart; the old ones do nothing.

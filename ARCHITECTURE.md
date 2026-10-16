@@ -218,7 +218,7 @@ in beta (45.0.0-beta.3).
 | Page depth layering | A layers view (milestone 5): the page preload lifts the page's top-level sections and its images into separate depths. Bounded work (GitHub issue #11): pinned elements are found once, in 6 ms slices, then kept current from the page's changes (a restyle near a layer rechecks that element's whole subtree, and any change to what is pinned chooses the layers again, PR #16 review); at most 400 section candidates (a longer list is a feed, not sections) and 2000 images are looked at, and only changes that can affect the choice lead to choosing again. The page's own transforms and animations, including ones added after an element was lifted, release it (issue #9); scrolling inside boxes re-measures the layers in them and refreshes the image report (issue #14). Each lifted element gets its own CSS perspective transform around one shared vanishing point, which follows the room's parallax; styles go in through webFrame.insertCSS. Elements that are fixed or sticky or contain such parts, and elements the page already transforms or animates, are skipped; at most 24 sections and 24 images | Interactive, no copying: clicks and typing land where they appear. No ancestor gains a transform, so the page's pinned parts stay pinned (a transform on the body would unpin them). The page's 3D cannot share the room's 3D space, so the view happens inside the page panel. |
 | Layers view on or off | On by default (owner, prompt 31). Settings: "Open pages in the layers view" (global); switching the view on a page (button in the top bar, Ctrl/Cmd+Shift+L) is remembered for its site and wins over the global switch; Settings clears the site choices | Owner decision Q2. A switch applies to the tab in front at once, and to other tabs on their next page load. |
 | Shell and page messages | The shell sends the layers state with the webview's own send; the page preload reports image rectangles with sendToHost; both checked (shared/layers.ts) | The main process is not needed, and the page's own scripts cannot see either message. |
-| Ad/tracker blocking | @ghostery/adblocker-electron 2.18.2 (MPL-2.0; with @ghostery/adblocker and its page script, installed 2026-09-26). The app owns the session's request listener and asks the package's engine about each web page request; the package's page script (run from preload/page.ts) does element hiding | Open source, uBlock-compatible lists, built for Electron. The package has no allow-once or per-site switch, so the app's own listener adds "open anyway", pausing a site, and per-tab counts. Asked about (main/privacy/shield.ts): every request a web page (a webview tab) makes, WebSocket connections (lasting two-way connections a page opens to a server; `ws:` and `wss:` addresses) among them; requests that no tab made, such as a service worker's (a script a site leaves running in the background, apart from any tab), asked about with the address they name as their referrer as the page, and a blocked one counted for every tab showing a page of the referrer's site, as a worker serves all of them and does not say which it worked for; and a tab's favicon, which the main process fetches for the card: the shield is asked before it is fetched, and a listed one is not fetched and is counted; and (milestone 28) a 3D model the person lifts into the room and the files it names, which the main process fetches through the page's session, asked about as the page's own requests of that kind. Not asked about: the shell's own requests and its developer tools', and the app's own while they are under way (list updates, the DNS check, a favicon the shield has passed: main/privacy/own-requests.ts). Until the review of 2026-09-30, WebSockets, requests without a tab, and favicons passed unseen. |
+| Ad/tracker blocking | @ghostery/adblocker-electron 2.20.1 (MPL-2.0; with @ghostery/adblocker and its page script, installed 2026-09-26; 2.20.1 since 2026-10-16, #107). The app owns the session's request listener and asks the package's engine about each web page request; the package's page script (run from preload/page.ts) does element hiding | Open source, uBlock-compatible lists, built for Electron. The package has no allow-once or per-site switch, so the app's own listener adds "open anyway", pausing a site, and per-tab counts. Asked about (main/privacy/shield.ts): every request a web page (a webview tab) makes, WebSocket connections (lasting two-way connections a page opens to a server; `ws:` and `wss:` addresses) among them; requests that no tab made, such as a service worker's (a script a site leaves running in the background, apart from any tab), asked about with the address they name as their referrer as the page, and a blocked one counted for every tab showing a page of the referrer's site, as a worker serves all of them and does not say which it worked for; and a tab's favicon, which the main process fetches for the card: the shield is asked before it is fetched, and a listed one is not fetched and is counted; and (milestone 28) a 3D model the person lifts into the room and the files it names, which the main process fetches through the page's session, asked about as the page's own requests of that kind. Not asked about: the shell's own requests and its developer tools', and the app's own while they are under way (list updates, the DNS check, a favicon the shield has passed: main/privacy/own-requests.ts). Until the review of 2026-09-30, WebSockets, requests without a tab, and favicons passed unseen. |
 | Lists | Ads and trackers (EasyList, EasyPrivacy, uBlock Origin's lists, Peter Lowe's), from Ghostery's copies on GitHub; named in resources/filters/lists.json and docs/privacy.md | Owner decision 2026-09-26 (prompt 29, Q1 a). |
 | First start | A starter copy of the lists is included in the app (resources/filters/starter.bin, rebuilt by `pnpm filters:update`); a saved copy from the last refresh is used when present and valid | Pages are protected from the first one (Q2 a). Lists without a stated licence (Peter Lowe's) are download-only. |
 | Filter-list updates | Fetched once a day through Electron's net.fetch (Chromium's network stack, so encrypted DNS applies), on by default, switchable in Settings, plus "Update now"; parsed in a worker thread; a failure keeps the lists in use and retries after an hour. An update downloads the lists' text only (rules about addresses and page elements). The blocker's page scripts (uBlock Origin's "resources", which the blocker runs inside web pages) come with the app, inside the starter copy, and change only when `pnpm filters:update` rebuilds it before a release: before each build the starter copy is checked against its SHA-256 recorded in starter.json (SHA-256: a checksum, a short fingerprint of a file's exact contents), and the scripts inside it against theirs; a saved copy built with any other scripts is not used (main/privacy/filters-build.ts, filters.ts) | Keeps blocking current without holding up the main process (parsing takes about 0.8 s). Until the review of 2026-09-30 an update also downloaded the scripts, from a branch of another project that can change at any time, and ran them in every page within a day. |
@@ -1094,10 +1094,23 @@ against Windows and Linux fail there; the harness maps a check's Ctrl
 to Cmd (and Alt+arrow to Cmd+[ and ]) on macOS, and TODO.md ("Issue
 #94") lists what is left. On the owner's Mac (an iMac Pro with a
 graphics card, 2026-10-15) the unit tests pass and 445 of 463
-end-to-end checks do, the budgets met; the 17 misses (full screen's
-transition, the microphone's system dialog, labels with Cmd, windows
-kept on screen, a Retina display's pixels, two budgets) are listed
-there.
+end-to-end checks did in the first run; its 17 misses were settled
+one by one (issue #111; TODO.md, "Issue #111"): the checks' own Ctrl
+words take the system's (Cmd); macOS keeps a corner of every window
+on a display, so the test window shows only that corner, and selects
+a link's text on a right-click, so the menu offers Copy; macOS makes
+full screen a Space with a transition, during which a key sent to the
+page hangs the main process (the harness now waits for the window's
+own events), and after which the page's exit never completes on its
+own, and the shell's own webview element, which Electron puts into
+the shell document's full screen for a page's, stays full too, holding
+the page at the window's width (the main process takes both out again
+once the window has left and holds still, main/fullscreen.ts); a
+page's first
+audio capture asks macOS for the microphone once per binary, even
+with the stand-in device, which the checks now say; and two measures
+(C9's pointer loop, the ocean tunnel's first draw) are recorded with
+proposals, the budgets unchanged.
 - Toolchain: Node 24 or newer; pnpm 12.4.1 (pinned)
 - Install: `pnpm install --frozen-lockfile`
 - Develop: `pnpm dev` (starts the Electron app with live reload, using a
@@ -1193,7 +1206,10 @@ environment itself. Its switches:
   (milestone 26);
 - `HYPERSOL_TEST_BACKGROUND=1` (set by the test harness unless
   HYPERSOL_TEST_SHOW=1): the window opens off screen, without focus or a
-  taskbar button, and Chromium keeps drawing it;
+  taskbar button, and Chromium keeps drawing it (on macOS, which keeps a
+  corner of every window on a display and moves a window shown beyond
+  that back on screen, it is moved past the bottom right corner once
+  shown, and only that corner shows; issue #111);
 - `HYPERSOL_TEST_KEEP_RUNNING=1`: the app keeps running when its last
   window closes, as on macOS, so quitting can be tested on any platform.
 
