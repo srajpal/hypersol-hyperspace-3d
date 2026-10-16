@@ -1,9 +1,11 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-14 (the promotion plan approved, TODO.md, "The
+Last updated 2026-10-15 (the promotion plan approved, TODO.md, "The
 promotion plan (2026-10-14)": 19 steps, each a GitHub issue, #90 to
-#101 here and #54 to #60 in holoml; steps 1 and 3 done, step 4, the
+#101 here and #54 to #60 in holoml; steps 1, 3, and 7 done (macOS in
+the automatic builds, #110, and the owner's Mac run, issue #111 for
+what it misses), step 4, the
 HoloML viewer for ordinary browsers, merged here (#106) and in its
 holoml pull request (#64), Pages still to be turned on (TODO.md,
 "Issue #91"); milestones 1 to 28 accepted,
@@ -836,7 +838,7 @@ to this repository for rules and the prompt log.
    viewer's address answers 404 until then, and Firefox and Safari are
    then checked by hand. The browser's copies of the examples
    (pnpm holoml:sync) can be refreshed from holoml's next tag.
-   Step 7 (#94, pull request #110): macOS is in the
+   Step 7 (#94, pull request #110, merged 2026-10-15): macOS is in the
    automatic builds, lint, types, unit tests, and the build required
    and the end-to-end checks an experiment "All checks" does not wait
    for, with the harness mapping a check's Ctrl to Cmd there; TODO.md
