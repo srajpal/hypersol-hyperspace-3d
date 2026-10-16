@@ -413,7 +413,7 @@ source. Checked on Windows 11 here, and on Windows and Linux (Ubuntu) by
 GitHub Actions for every pull request and every push to main; on macOS
 the same builds run lint, the type check, the unit tests, and the build
 (required), and the end-to-end checks as an experiment that does not
-block a merge, since GitHub's macOS machine (a small display, windows
+block a merge (on main and by hand, not on pull requests), since GitHub's macOS machine (a small display, windows
 kept on screen) fails checks written against Windows and Linux; TODO.md
 ("Issue #94") lists them. On a Mac in hand (an iMac Pro, 2026-10-15)
 the unit tests pass and the end-to-end checks do but a few, settled

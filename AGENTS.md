@@ -171,7 +171,9 @@ How to run (from the repo root; first recorded 2026-09-24 on Windows 11
 after they ran; on Windows and Linux in GitHub Actions since 2026-09-26,
 see .github/workflows/ci.yml; on macOS there since 2026-10-15: lint,
 types, unit tests, and the build required, the end-to-end checks an
-experiment "All checks" does not wait for, issue #94; on the owner's
+experiment "All checks" does not wait for, issue #94, run on main and
+when started by hand (`gh workflow run CI --ref <branch>`), not on
+pull requests since 2026-10-16; on the owner's
 Mac, 2026-10-15, the unit tests pass and the end-to-end checks do but
 a few: the 17 misses of the first run are settled one by one in
 TODO.md, "Issue #111", where what is left stands). On a Mac the first
