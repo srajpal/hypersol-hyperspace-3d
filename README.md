@@ -32,10 +32,9 @@ a made-up sample page.*
 
 For Windows and Linux (checked by automatic tests on both); on macOS
 it builds and passes its unit tests in the automatic builds, and on a
-Mac in hand 445 of its 463 end-to-end checks pass, the rest listed in
-TODO.md under "Issue #94" (full screen, the camera's system dialog,
-and macOS's own ways with windows and menus; GitHub issues #94 and
-#81). Apache 2.0. No telemetry.
+Mac in hand its end-to-end checks pass but two (TODO.md, "Issue
+#111": a frame-rate measure, and a DevTools crash seen now and then;
+GitHub issues #94, #81, and #111). Apache 2.0. No telemetry.
 
 **Status (2026-10-10): experimental.** Released: the
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
@@ -417,9 +416,15 @@ the same builds run lint, the type check, the unit tests, and the build
 block a merge (on main and by hand, not on pull requests), since GitHub's macOS machine (a small display, windows
 kept on screen) fails checks written against Windows and Linux; TODO.md
 ("Issue #94") lists them. On a Mac in hand (an iMac Pro, 2026-10-15)
-the unit tests pass and 445 of 463 end-to-end checks do; the 17 that
-do not are listed there too. A Mac needs Node 24 from nvm or the
-installer from nodejs.org where Homebrew would build it from source.
+the unit tests pass and the end-to-end checks do but a few, settled
+one by one under "Issue #111" in TODO.md (the checks' own Windows
+words and ways fixed; the app's full screen on macOS mended; the
+microphone's system dialog to be allowed once for "Electron" on a
+Mac's first run; two measures left as proposals). A run on a Mac
+keeps the display awake (`caffeinate -d pnpm test:e2e`): with it
+asleep, or the screen locked, macOS makes no full screen. A Mac needs Node 24
+from nvm or the installer from nodejs.org where Homebrew would build
+it from source.
 [CONTRIBUTING.md](CONTRIBUTING.md) has the full setup, including Linux.
 
 You need Node 24 or newer and pnpm 12.4.1. The pnpm version is pinned

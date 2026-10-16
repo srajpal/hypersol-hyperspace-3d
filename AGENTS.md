@@ -174,8 +174,14 @@ types, unit tests, and the build required, the end-to-end checks an
 experiment "All checks" does not wait for, issue #94, run on main and
 when started by hand (`gh workflow run CI --ref <branch>`), not on
 pull requests since 2026-10-16; on the owner's
-Mac, 2026-10-15, the unit tests pass and 445 of 463 end-to-end checks
-do, the 17 misses listed in TODO.md, "Issue #94"). Counts are as of the
+Mac, 2026-10-15, the unit tests pass and the end-to-end checks do but
+a few: the 17 misses of the first run are settled one by one in
+TODO.md, "Issue #111", where what is left stands). On a Mac the first
+run asks, through macOS's own dialog, to allow "Electron" the
+microphone: allow it, or the two checks that capture audio run out
+their time; and a run there keeps the display awake (`caffeinate -d
+pnpm test:e2e`), as macOS makes no full screen with the display asleep
+or the screen locked (issue #111). Counts are as of the
 date given and grow with each issue; TODO.md has the latest.
 - Toolchain: Node 24 (the Node inside Electron 44; the automatic
   builds run it, and Node 26 for lint, types, and unit tests; owner,
@@ -232,7 +238,9 @@ date given and grow with each issue; TODO.md has the latest.
   way. To watch a run in normal windows, set HYPERSOL_TEST_SHOW=1 (for
   example `HYPERSOL_TEST_SHOW=1 pnpm test:e2e`); then leave the machine
   alone while it runs. Check C1 confirms background windows are off
-  every display and unfocused.
+  every display and unfocused; on macOS, which keeps a corner of every
+  window's title bar on a display, the test window shows only that
+  corner, about 40 by 100 pixels at the bottom right (issue #111).
 - GitHub's Linux machines have no graphics card and draw in software
   (the review of 2026-09-30 found that its Windows machines draw in
   software too). To
