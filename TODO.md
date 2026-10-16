@@ -7274,8 +7274,10 @@ run changes). The run's numbers and each miss's error are under "Issue
 
 ## Issue #95: repository settings (promotion plan, step 8)
 
-Status: prepared (2026-10-16); the settings are the owner's to apply.
-The owner asked for step 8 on 2026-10-16, prepared for them to apply.
+Status: done (2026-10-16): the owner applied steps 2 to 5 the same
+day, as the table says (the results below); step 1, Pages, is still
+to be turned on, and the homepage answers 404 until it is. The owner
+asked for step 8 on 2026-10-16, prepared for them to apply.
 Settings, labels, uploads, and pins are the owner's (AGENTS.md rules 3
 and 4: nothing is published or changed outside the repository by the
 agent), so this section holds the values decided, the two pictures
@@ -7400,8 +7402,23 @@ is shorter.
 - The script written and run twice (the second after the two touches
   above): both pictures 1280 by 640 PNG, 708 KB (the browser's) and
   570 KB (holoml's), looked at. Lint clean with the script.
-- The settings, labels, uploads, and pins: not applied yet (the
-  owner's).
+- Applied by the owner, 2026-10-16, and read back with `gh` the same
+  day: the browser repository's homepage is
+  https://srajpal.github.io/hypersol-hyperspace-3d/, Discussions on,
+  the wiki and Projects off, and the topics 3d, browser, electron,
+  privacy, threejs, typescript, webgl, holoml, 3d-web,
+  agentic-coding, claude-code, and web-browser; holoml's Discussions
+  on, the wiki and Projects off, and the topics 3d, gltf, holoml,
+  markup-language, specification, typescript, webgl, 3d-web,
+  agentic-coding, claude-code, and web-standards; both repositories
+  show their own social preview (uploaded by hand from the pull
+  request branches); #84 and #78 carry "good first issue" and "help
+  wanted", #77, #76, #80, holoml #47, and holoml #48 "help wanted";
+  and the profile pins six repositories, holoml and the browser among
+  them (with four others of the owner's; the order is the owner's).
+- Not done yet: Pages for the browser repository (step 1; the
+  homepage and the viewer's address answer 404 until it is on, and
+  pages.yml fails on main for the same reason).
 
 ## The promotion plan (2026-10-14)
 
