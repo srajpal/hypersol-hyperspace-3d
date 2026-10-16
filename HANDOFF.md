@@ -1,9 +1,11 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-15 (the promotion plan approved, TODO.md, "The
+Last updated 2026-10-16 (the promotion plan approved, TODO.md, "The
 promotion plan (2026-10-14)": 19 steps, each a GitHub issue, #90 to
-#101 here and #54 to #60 in holoml; steps 1, 3, and 7 done (macOS in
+#101 here and #54 to #60 in holoml; steps 1, 3, 5, and 7 done (release
+0.9.1 published 2026-10-16 as a portable zip for Windows, Linux, and
+macOS, #113; macOS in
 the automatic builds, #110, and the owner's Mac run, issue #111 for
 what it misses), step 4, the
 HoloML viewer for ordinary browsers, merged here (#106) and in its
@@ -849,18 +851,33 @@ to this repository for rules and the prompt log.
    ways with windows and menus, two budgets): #81 is closed with that
    record, and the 17 are issue #111, to be settled on a Mac one by
    one; the look by eye and the microphone dialog's answer go there.
-   Step 5 (#92): release 0.9.1 as a portable zip, in its pull request
-   (TODO.md, "Issue #92": the plan, the owner's answers, the results):
-   Electron 44.7.2, the icon from the logo of prompt 46, `pnpm
-   package` and `pnpm package:smoke`, release.yml (a tag `v0.9.1`
-   makes a draft release with four zips; the owner publishes it), the
-   version 0.9.1 everywhere, the changelog's section, the filter lists
-   and the screenshots refreshed. After the merge: the owner pushes
-   the tag, reads the draft, and publishes; then RL6, the icon by eye,
-   and the Mac's zip tried by hand.
+   Step 5 (#92) done: release 0.9.1 as a portable zip (pull request
+   #113, merged 2026-10-16; TODO.md, "Issue #92": the plan, the
+   owner's answers, the results): Electron 44.7.2, the icon from the
+   logo of prompt 46, `pnpm package` and `pnpm package:smoke`,
+   release.yml (a tag `v*` makes a draft release with four zips and
+   their checksums; the owner publishes it), the version 0.9.1
+   everywhere, the changelog's section, the filter lists and the
+   screenshots refreshed. The tag `v0.9.1` went on main at 6b3e213
+   the same day, the workflow drafted the release in under three
+   minutes with every smoke check passing, and the draft was
+   published as a pre-release
+   (https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1).
+   Still by hand: RL6, the icon by eye on Windows and Linux, and the
+   published zips unzipped and started on a Mac and on Linux. The next
+   release repeats this: the changelog's section, the version in both
+   package.json files, m2's D11 and the About screenshot, the rule 13
+   check, then the tag, and after the publish the README's Download
+   section (added 2026-10-16, after the publish, at the owner's
+   request: the four zips by link with their sizes, how each system
+   starts an unsigned app, and the checksums), whose links and sizes
+   name the version; the README was read through and tidied with it
+   (the status paragraph short, "What it does" without milestone
+   numbers, the examples as a list), TODO.md, "Issue #92", has the
+   list.
    One issue at a time, approved by the owner first (AGENTS.md rule 2);
    check Electron's security releases at least monthly and before any
-   tag (rule 13; last checked 2026-10-10, 44.7.0). Prompts are recorded
+   tag (rule 13; last checked 2026-10-15, 44.7.2, before the 0.9.1 tag). Prompts are recorded
    only when the owner asks. The three advisories of 2026-10-09 are
    published, and the merged branches deleted (2026-10-10) but for
    `issue-75-fullscreen`, merged as #83, still on GitHub.
