@@ -36,8 +36,9 @@ folder of the repository, never in your normal browser profile.
 Checked for development on Windows 11, and on Windows and Linux (Ubuntu)
 by GitHub Actions for every pull request and every push to main; on
 macOS the builds run lint, the type check, the unit tests, and the
-build, and the end-to-end checks as an experiment (not required; TODO.md,
-"Issue #94"); on a Mac in hand the unit tests pass and 445 of 463
+build, and the end-to-end checks as an experiment (not required, and
+run on main or by hand rather than on pull requests; TODO.md, "Issue
+#94"); on a Mac in hand the unit tests pass and 445 of 463
 end-to-end checks do (2026-10-15; the rest are listed there). On a
 Mac, take Node 24 from nvm or nodejs.org's installer if Homebrew sets
 out to compile it. On Windows, keep
