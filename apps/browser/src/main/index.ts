@@ -251,6 +251,9 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     title: 'HyperSpace 3D',
+    // The window's and the taskbar's icon (issue #92; the logo of prompt 46, resources/icons, made by
+    // scripts/icons.mjs); macOS takes the app bundle's icon instead.
+    ...(process.platform === 'darwin' ? {} : { icon: join(app.getAppPath(), 'resources', 'icons', process.platform === 'win32' ? 'icon.ico' : 'icon.png') }),
     backgroundColor: windowTheme(storage?.settingsFile.settings.theme ?? 'nebula').colors.backgroundBottom,
     autoHideMenuBar: true,
     webPreferences: {

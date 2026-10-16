@@ -36,15 +36,20 @@ Mac in hand its end-to-end checks pass but two (TODO.md, "Issue
 #111": a frame-rate measure, and a DevTools crash seen now and then;
 GitHub issues #94, #81, and #111). Apache 2.0. No telemetry.
 
-**Status (2026-10-10): experimental.** Released: the
-[0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0),
-a pre-release, as source for developers. There are no installers,
-and none are planned: the project stays a repository of source, and a
-fork may make an installable build of its own (see
-[CONTRIBUTING.md](CONTRIBUTING.md), "Making your own build"). Since then, HoloML 0.1 has
+**Status (2026-10-15): experimental.** The newest version is the
+[0.9.1 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1),
+a pre-release, as a portable zip for Windows, Linux, and macOS (unzip
+it and start it; nothing is signed, so Windows SmartScreen asks once
+and macOS Gatekeeper refuses it until it is allowed, as the release
+notes describe) and as source; its tag and draft release follow the
+merge of its pull request, and the owner publishes the draft. There
+are no installers, and none are planned: a fork may
+make one of its own (see [CONTRIBUTING.md](CONTRIBUTING.md), "Making
+your own build", which describes the zip). The
+[0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0)
+of 2026-09-26 was source only. Since then, HoloML 0.1 has
 been written down in its own repository (milestone 13), and this browser
-shows HoloML pages (milestones 14 to 21; like everything since 0.9.0,
-accepted but not yet in a release), with limits for heavy scenes,
+shows HoloML pages (milestones 14 to 21; all of it in 0.9.1), with limits for heavy scenes,
 keyboard and screen-reader access, a scene inspector, and a HoloML car showroom to try from the
 start panel. Milestone 17 adds Blockworld, a small block game written in
 the first part of HoloML 0.2 (scripts, sound, walls and gravity), and a
@@ -270,7 +275,7 @@ No more milestones are planned: since 2026-10-10 the work is the
 bugs and enhancements, one at a time (installers were dropped on
 2026-10-08: anyone may fork the repository and make one). The issues
 being worked first, since 2026-10-14, make the project easier to try
-and to find: a HoloML viewer for ordinary browsers, a 0.10.0 preview
+and to find: a HoloML viewer for ordinary browsers, a 0.9.1 preview
 with a portable zip, a video, macOS, a landing page, and HoloML's
 packages on npm (the plan is in [TODO.md](TODO.md), "The promotion
 plan"). Ideas for later: phones, and VR. The roadmap that was,
@@ -408,8 +413,13 @@ pages still work without the room, and a notice says so.
 The Android app, for a tablet (milestone 24), has its own
 steps in [apps/android/README.md](apps/android/README.md).
 
-A developer preview (0.9.0): no installers, so build and run it from
-source. Checked on Windows 11 here, and on Windows and Linux (Ubuntu) by
+A developer preview (0.9.1): a portable zip for each system on the
+[releases page](https://github.com/srajpal/hypersol-hyperspace-3d/releases)
+(unzip it and start HyperSpace3D, or HyperSpace 3D.app on a Mac;
+nothing is signed: Windows SmartScreen asks once, and macOS Gatekeeper
+refuses the app until it is allowed in System Settings or its
+quarantine mark is removed, as the release notes describe), or build and run it
+from source as below. Checked on Windows 11 here, and on Windows and Linux (Ubuntu) by
 GitHub Actions for every pull request and every push to main; on macOS
 the same builds run lint, the type check, the unit tests, and the build
 (required), and the end-to-end checks as an experiment that does not

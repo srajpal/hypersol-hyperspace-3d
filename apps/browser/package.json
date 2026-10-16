@@ -1,7 +1,7 @@
 {
   "name": "@hypersol/browser",
   "productName": "HyperSol HyperSpace 3D",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "private": true,
   "description": "HyperSol HyperSpace 3D, the Electron app.",
   "license": "Apache-2.0",
@@ -17,7 +17,8 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "filters:update": "node scripts/filters-update.mjs"
+    "filters:update": "node scripts/filters-update.mjs",
+    "icons": "electron scripts/icons.mjs"
   },
   "devDependencies": {
     "@ghostery/adblocker": "2.20.1",
@@ -27,7 +28,7 @@
     "@hypersol/scene-core": "workspace:*",
     "@hypersol/themes": "workspace:*",
     "@types/three": "^0.186.0",
-    "electron": "^44.7.0",
+    "electron": "^44.7.2",
     "electron-vite": "^5.0.0",
     "lit": "^3.3.3",
     "three": "^0.186.1",

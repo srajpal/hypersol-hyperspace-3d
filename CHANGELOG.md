@@ -1,7 +1,23 @@
 # Changelog
 
-## Unreleased
+## 0.9.1 — developer preview (2026-10-15)
 
+Everything accepted since 0.9.0: milestones 13 to 28, the review of
+2026-09-30, and the GitHub issues worked since, listed below. New with
+the release itself:
+
+- A portable zip for Windows, Linux, and macOS (Apple silicon and
+  Intel), made by `pnpm package` and the release workflow (GitHub issue
+  #92, the promotion plan's step 5): unzip it and start it; nothing is
+  signed, and the release notes say what Windows SmartScreen and macOS
+  Gatekeeper will ask. The browser's data stays in its usual profile
+  folder. 0.9.0 was source only.
+- The app's icon: the logo chosen in prompt 46 (a cube with "NOW IN
+  3D", over the neon grid), on the window, the taskbar, and the app
+  bundle; the bare cube at the small sizes.
+- macOS in the automatic builds (issue #94): lint, the type check, the
+  unit tests, and the build; a Mac in hand runs it (issue #111 lists
+  what its checks still miss there).
 - HoloML pages (milestone 14): a `.holoml` address shows its 3D scene
   across the window, with models, material changes, lights, labels,
   links, animation, and orbit or walk movement by mouse, keyboard, and
@@ -178,7 +194,7 @@
   and a lighter drawing, on Android's own WebView; installed by hand.
   The tab cards are drawn at the display's own resolution (they were
   blurred at first, prompt 160).
-- Built on Electron 44.7.0, with its backported Chromium, V8, ANGLE,
+- Built on Electron 44.7.2, with its backported Chromium, V8, ANGLE,
   Dawn, Skia, and WebRTC fixes, and 44.6.0's fix for find in page
   hanging on a page with a frame (rule 13; prompt 162).
 - HoloML 0.3 (milestone 25): names for models and groups (`label`),

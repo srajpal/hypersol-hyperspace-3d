@@ -289,7 +289,7 @@ it('captures the main screens', async () => {
     await h.shell.click('hs-toolbar [data-testid="menu"]');
     await h.shell.click('hs-toolbar [data-testid="menu-about"]');
     await waitFor('about', () => h.shell.locator('hs-about [data-testid="about"]').isVisible(), (v) => v);
-    await capture(h, '39-about-0.9.0');
+    await capture(h, '39-about');
     await pressInShell(h, 'Escape');
   } finally {
     await h.close();

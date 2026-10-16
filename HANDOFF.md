@@ -818,7 +818,7 @@ to this repository for rules and the prompt log.
    Linux part 3 miss on U5's lost click passed when run again, the
    results line in TODO.md; step 3, the words on HoloML 0.3, done the
    same day, #104 and holoml #61) through a HoloML
-   viewer for ordinary browsers (#91, holoml #55), release 0.10.0 with
+   viewer for ordinary browsers (#91, holoml #55), release 0.9.1 with
    a portable zip (#92), a video (#93), macOS (#94), the repository
    settings and a landing page (#95, #96), the article and the launch
    kit (#98, #99), to npm and the extension registries (holoml #56,
@@ -849,6 +849,15 @@ to this repository for rules and the prompt log.
    ways with windows and menus, two budgets): #81 is closed with that
    record, and the 17 are issue #111, to be settled on a Mac one by
    one; the look by eye and the microphone dialog's answer go there.
+   Step 5 (#92): release 0.9.1 as a portable zip, in its pull request
+   (TODO.md, "Issue #92": the plan, the owner's answers, the results):
+   Electron 44.7.2, the icon from the logo of prompt 46, `pnpm
+   package` and `pnpm package:smoke`, release.yml (a tag `v0.9.1`
+   makes a draft release with four zips; the owner publishes it), the
+   version 0.9.1 everywhere, the changelog's section, the filter lists
+   and the screenshots refreshed. After the merge: the owner pushes
+   the tag, reads the draft, and publishes; then RL6, the icon by eye,
+   and the Mac's zip tried by hand.
    One issue at a time, approved by the owner first (AGENTS.md rule 2);
    check Electron's security releases at least monthly and before any
    tag (rule 13; last checked 2026-10-10, 44.7.0). Prompts are recorded

@@ -359,3 +359,11 @@ has no analytics, keeps nothing (no storage, no cookies), and sends
 nothing anywhere but to the addresses the page names. GitHub Pages
 serves it, and GitHub's own server logs apply to it as to any page
 there.
+
+## The packaged app
+
+The zip of a release (since 0.9.1; `pnpm package`) is the same program
+as the source: it reaches no network the source does not, carries the
+same starter filter lists, keeps its data in the same profile folder,
+and has no update check of its own. A newer version is a newer zip on
+the releases page.

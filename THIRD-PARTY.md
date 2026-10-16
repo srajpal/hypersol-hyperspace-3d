@@ -19,11 +19,11 @@ again.
 
 | Project | Version | Licence | Used for |
 |---|---|---|---|
-| [Electron](https://www.electronjs.org/) | 44.7.0 | MIT; it includes Chromium, Node.js, and V8 under their own licences (BSD-3-Clause and others), listed in Electron's `LICENSES.chromium.html` | The browser engine and the app shell |
+| [Electron](https://www.electronjs.org/) | 44.7.2 | MIT; it includes Chromium, Node.js, and V8 under their own licences (BSD-3-Clause and others), listed in Electron's `LICENSES.chromium.html` | The browser engine and the app shell |
 | [Three.js](https://threejs.org/) | 0.186.1 | MIT | The 3D room, and the HoloML viewer (with the loaders and controls from its examples) |
 | The decoders of compressed glTF files, as three.js carries them in its examples (examples/jsm/libs): [Draco](https://github.com/google/draco)'s glTF decoder (draco/gltf), the [Basis Universal](https://github.com/BinomialLLC/basis_universal) transcoder (basis), and [meshoptimizer](https://github.com/zeux/meshoptimizer)'s decoder (meshopt_decoder.module.js); for KTX2 pictures, [KTX-Parse](https://github.com/donmccurdy/KTX-Parse) (ktx-parse.module.js) and [zstddec](https://github.com/donmccurdy/zstddec) (zstddec.module.js, which carries the [Zstandard](https://github.com/facebook/zstd) decompressor, compiled) | as in three.js 0.186.1 | Apache-2.0 (Draco, Google; Basis Universal, Binomial), MIT (meshoptimizer, Arseny Kapoulkine; KTX-Parse and zstddec, Don McCurdy), BSD-3-Clause (Zstandard, Meta Platforms) | Reading HoloML models whose geometry or pictures are compressed (milestone 25) |
 | [Lit](https://lit.dev/) (lit and lit-html 3.3.3, lit-element 4.2.2, @lit/reactive-element 2.1.2, @lit-labs/ssr-dom-shim 1.6.0) | 3.3.3 | BSD-3-Clause | The top bar, panels, and other controls |
-| [Ghostery adblocker](https://github.com/ghostery/adblocker) (@ghostery/adblocker, -electron, -electron-preload, -content, and -extended-selectors, all 2.18.2; @ghostery/url-parser 1.3.1) | 2.18.2 | MPL-2.0 | Ad and tracker blocking, element hiding |
+| [Ghostery adblocker](https://github.com/ghostery/adblocker) (@ghostery/adblocker, -electron, -electron-preload, -content, and -extended-selectors, all 2.20.1; @ghostery/url-parser 1.3.1) | 2.20.1 | MPL-2.0 | Ad and tracker blocking, element hiding |
 | @remusao/guess-url-type, small, and trie (2.1.0); smaz, smaz-compress, and smaz-decompress (2.2.0); all used by the adblocker | 2.1.0 to 2.2.0 | MPL-2.0 | Parts of the adblocker |
 | [tldts](https://github.com/remusao/tldts) (tldts-experimental, tldts-core) | 7.4.15 | MIT | Site names for the adblocker |
 | @types/trusted-types | 2.0.7 | MIT | Type definitions used by Lit |
