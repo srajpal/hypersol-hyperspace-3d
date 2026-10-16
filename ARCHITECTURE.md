@@ -1094,10 +1094,23 @@ against Windows and Linux fail there; the harness maps a check's Ctrl
 to Cmd (and Alt+arrow to Cmd+[ and ]) on macOS, and TODO.md ("Issue
 #94") lists what is left. On the owner's Mac (an iMac Pro with a
 graphics card, 2026-10-15) the unit tests pass and 445 of 463
-end-to-end checks do, the budgets met; the 17 misses (full screen's
-transition, the microphone's system dialog, labels with Cmd, windows
-kept on screen, a Retina display's pixels, two budgets) are listed
-there.
+end-to-end checks did in the first run; its 17 misses were settled
+one by one (issue #111; TODO.md, "Issue #111"): the checks' own Ctrl
+words take the system's (Cmd); macOS keeps a corner of every window
+on a display, so the test window shows only that corner, and selects
+a link's text on a right-click, so the menu offers Copy; macOS makes
+full screen a Space with a transition, during which a key sent to the
+page hangs the main process (the harness now waits for the window's
+own events), and after which the page's exit never completes on its
+own, and the shell's own webview element, which Electron puts into
+the shell document's full screen for a page's, stays full too, holding
+the page at the window's width (the main process takes both out again
+once the window has left and holds still, main/fullscreen.ts); a
+page's first
+audio capture asks macOS for the microphone once per binary, even
+with the stand-in device, which the checks now say; and two measures
+(C9's pointer loop, the ocean tunnel's first draw) are recorded with
+proposals, the budgets unchanged.
 - Toolchain: Node 24 or newer; pnpm 12.4.1 (pinned)
 - Install: `pnpm install --frozen-lockfile`
 - Develop: `pnpm dev` (starts the Electron app with live reload, using a
@@ -1193,7 +1206,10 @@ environment itself. Its switches:
   (milestone 26);
 - `HYPERSOL_TEST_BACKGROUND=1` (set by the test harness unless
   HYPERSOL_TEST_SHOW=1): the window opens off screen, without focus or a
-  taskbar button, and Chromium keeps drawing it;
+  taskbar button, and Chromium keeps drawing it (on macOS, which keeps a
+  corner of every window on a display and moves a window shown beyond
+  that back on screen, it is moved past the bottom right corner once
+  shown, and only that corner shows; issue #111);
 - `HYPERSOL_TEST_KEEP_RUNNING=1`: the app keeps running when its last
   window closes, as on macOS, so quitting can be tested on any platform.
 

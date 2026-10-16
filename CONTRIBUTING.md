@@ -38,10 +38,17 @@ by GitHub Actions for every pull request and every push to main; on
 macOS the builds run lint, the type check, the unit tests, and the
 build, and the end-to-end checks as an experiment (not required, and
 run on main or by hand rather than on pull requests; TODO.md, "Issue
-#94"); on a Mac in hand the unit tests pass and 445 of 463
-end-to-end checks do (2026-10-15; the rest are listed there). On a
-Mac, take Node 24 from nvm or nodejs.org's installer if Homebrew sets
-out to compile it. On Windows, keep
+#94"); on a Mac in hand the unit tests pass and the end-to-end
+checks do but a few (2026-10-15; TODO.md, "Issue #111", has each). On
+a Mac, take Node 24 from nvm or nodejs.org's installer if Homebrew
+sets out to compile it, and allow "Electron" the microphone when
+macOS asks during the first `pnpm test:e2e` (the checks that capture
+audio use a stand-in device, but macOS asks once per binary all the
+same; its dialog waits for you, and the two checks run out their time
+if nobody answers), and keep the display awake during a run
+(`caffeinate -d pnpm test:e2e`): with it asleep, or the screen locked,
+macOS makes no full screen, and the full-screen checks miss. On
+Windows, keep
 the clone in a short folder path (such as `C:\dev\hyperspace`): pnpm
 fails on file paths over Windows' 260-character limit.
 

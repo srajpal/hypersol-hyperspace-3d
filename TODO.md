@@ -6885,6 +6885,337 @@ packager was set up, and no icon.
   workflow (the tag is the owner's); RL4 after the screenshots; RL6 by
   eye after the merge.
 
+## Issue #111: the 17 checks on a Mac
+
+Status: building (2026-10-15, the owner's prompt after #94's MC3: the
+17 end-to-end checks a Mac in hand misses, grouped there in five
+parts, each to be settled as the app's fault or the check's on the
+owner's Mac and fixed accordingly; nothing that only Windows or Linux
+run changes). The run's numbers and each miss's error are under "Issue
+#94", MC3.
+
+### How it is worked
+
+- The rule for every miss: the check's file is run alone on the Mac
+  (`npx vitest run --config vitest.e2e.config.ts tests/e2e/<file>
+  --reporter=verbose`), and the same thing tried by hand, to say
+  whether the app or the check is wrong on macOS. A check written
+  against Windows and Linux that expects Ctrl in a label, or a window
+  off every display, is the check's fault, and its expectation takes
+  macOS's way (the harness already maps a check's Ctrl to Cmd: modKeys
+  and MOD_KEY in tests/e2e/harness.ts). Behaviour that is wrong for a
+  person on a Mac is the app's fault, and the app is fixed. No check or
+  budget is weakened, and none is skipped on macOS unless it truly
+  cannot hold there, saying why in the check.
+- The groups, in order, one commit each: (1) the checks' own Ctrl
+  words; (2) macOS's own ways; (3) full screen; (4) the camera and
+  microphone; (5) the two budgets, measured, with a proposal rather
+  than a changed budget.
+
+### Tasks
+
+- [x] Group 1: the checks' own Ctrl words (M7, LT9 twice, St4)
+- [x] Group 2: macOS's own ways (C1, D7, D8, the lifted picture's
+      pixels)
+- [x] Group 3: full screen (M1, FS2 twice, FS6 twice, closing a tab):
+      all six pass since the mend of 2026-10-15 (the owner's word: more
+      time on a mend rather than a skip)
+- [x] Group 4: the camera and microphone (K6 to K8, issue #18's
+      capture)
+- [x] Group 5: the two budgets (C9, X5), measured, with a proposal
+      (the budgets unchanged)
+- [x] The documents' macOS sentences (README, CONTRIBUTING.md,
+      AGENTS.md's Testing, ARCHITECTURE.md section 11)
+- [x] The whole `pnpm test:e2e` once on the Mac, its summary recorded
+- [ ] The pull request that closes #111
+
+### What was found, by group
+
+- Group 1, the checks' own Ctrl words (2026-10-15): all four are the
+  checks' fault. The app writes a shortcut in the system's word for the
+  modifier (shared/shortcuts.ts, describeCombo: "Cmd" on macOS, "Ctrl"
+  elsewhere), which is right for a person on a Mac. M7 (m11) expected
+  the menu's "Ctrl+Alt+R" and the Mac showed "Cmd+Alt+R"; LT9's first
+  check (m28) expected the lift button's hint with "Ctrl" or "⌘" and the
+  Mac showed "Cmd+Shift+U", and its second check missed only because
+  the first had stopped before lifting (nothing was in the room to find
+  by name: the "Four coloured quarters, lifted picture" that #111 lists
+  under the Retina display is this button's name, not LT2's pixels);
+  St4 (review-134-features) reported the keys a page saw by ctrlKey,
+  and a check's Ctrl is Cmd on macOS (modKeys), which a page sees as
+  metaKey, so Cmd+Shift+V reached it as "shift+v". The harness gains
+  MOD_WORD ("Cmd" on macOS, "Ctrl" elsewhere, beside MOD_KEY), which
+  the three labels now use, and St4's listener reads the command
+  modifier by the system (metaKey on macOS), still written "ctrl+" so
+  the expectations hold on every system. Each file run alone on the
+  Mac after the change: m11 8 of 8, m28 25 of 25,
+  review-134-features every check but D7 (group 2). Windows and Linux
+  see the same words as before.
+- Group 2, macOS's own ways (2026-10-15):
+  - C1 and D7 have one cause, found with a small Electron script on the
+    Mac: macOS allows no window off every display. It keeps a corner of
+    every window's title bar reachable, about 40 pixels across and 100
+    down, and a window shown beyond that (the test window asks for
+    x 200 past the right edge) is moved back wholly on screen at the
+    show, where its place then depends on its width (a 1280-wide window
+    lands at x 1280 on the 2560-wide display, a 960-wide one at 1600:
+    D7's miss, whose check expected the test window's place to be the
+    same at each launch). A position set after the window is shown is
+    kept up to that corner (x 2520). The app's fault, in its test-only
+    path (main/index.ts, offScreenPosition): on macOS the test window
+    is asked for the bottom right, past both edges, once shown, so only
+    that corner shows (40 by 97 pixels on this display), the window
+    draws as before (60 frames a second there, measured), and its place
+    no longer depends on its size. C1's check takes macOS's way: never
+    focused, as everywhere, and on macOS on a display by no more than
+    64 by 128 pixels (a corner), off every display elsewhere. D7's
+    check is unchanged and passes. Windows and Linux place the window
+    as before.
+  - D8, the right-click menu on a link: four entries where two were
+    expected, the two more being a separator and "Copy". A throwaway
+    check read the page's selection after the click: on macOS Chromium
+    selects a link's text on a right-click ("Go to page B"; a heading's
+    text is not selected), as other Mac browsers do, so the app's menu
+    offers Copy for it, which is the system's way and right for a
+    person on a Mac. The check's fault: on macOS it expects the two
+    entries, a separator, and Copy.
+  - The lifted picture's pixels on a Retina display: not a miss. LT2's
+    pixel check passed on the Mac (the picture's four quarters read as
+    captured); the "Four coloured quarters, lifted picture" in the run's
+    log was LT9's button name, missing because LT9's first check had
+    stopped (group 1). Nothing changed.
+  - Each file run alone on the Mac after the changes: m1 every check
+    but C9 (group 5), m2 43 of 43, review-134-features every check.
+- Group 3, full screen (2026-10-15), found with throwaway checks on
+  the Mac, each a fresh app on tests/fixtures/fullscreen.html:
+  - The hang. macOS makes full screen a Space, entered and left with a
+    transition of about half a second; the window says it is full
+    screen (or not) at once, and its enter-full-screen
+    (leave-full-screen) event comes when the transition is over. A key
+    sent to the page then hangs the main process for good: Escape's
+    keyDown starts the leaving, and its keyUp, sent at once (or 100 ms
+    later), never returns, and nothing the harness asks the app after
+    that is answered, so the check runs out its 60 seconds and the
+    app's process is left behind (two such processes from the owner's
+    run were still alive the next day, one on fullscreen.html, one on
+    fullscreen.holoml). A keyUp sent once the window's leave-full-screen
+    event has come is fine, as is Escape to the shell's own page, and
+    the app only acts on the keyDown (shared/fullscreen.ts,
+    escapeLeaves). The harness's fault: on macOS every key press
+    (pressInPage, pressInShell) now waits for the transition to be over
+    before each half of the press (fullScreenSettled, which tracks the
+    window's two events from launch), and the full-screen checks wait
+    for it when entering and leaving (goFull, outOfFull). Not one key
+    hangs since. Windows and Linux have no transition and nothing
+    waits. Also the owner's question: the harness need not wait for
+    enter-full-screen before the first key as such; it is the leaving
+    that hangs, and the wait covers both.
+  - The page after leaving. The app's way out (Escape seen in the main
+    process, document.exitFullscreen run in a world of its own) takes
+    the window out of the Space, but the exit never completes in the
+    page: its promise stays pending, document.fullscreenElement stays
+    set, no fullscreenchange comes, in hidden windows and in shown ones
+    alike, so a page would keep its full-screen state in an ordinary
+    window. A second exit asked once the window has left does
+    complete. The app's fault for a person on a Mac: after the window's
+    leave-full-screen event the main process looks at the page and
+    takes it out again if it still says it is full (main/fullscreen.ts,
+    mendPageOnceLeft and mendPage; a look again 1.5 s later), on macOS
+    only. M1 (review-134-main) and FS2's Escape check pass since, with
+    the page's "out" event seen.
+  - The window after leaving. macOS puts the window back wholly on
+    screen as it leaves the Space, and now and then leaves it there
+    (at x 1280, y 640 here) rather than at its frame from before; the
+    test window's path moves it to its corner again on the window's
+    leave-full-screen event (main/index.ts), so "the window back where
+    it was" holds to the pixel, and the window stays out of the way.
+    Closing a tab in full screen passes since: the tab closes and the
+    window comes back (issue #87's reading does not show on the Mac).
+  - The two that were left (FS2's second check and FS6's first), the
+    page keeping the window's width after a Space and a second request
+    on it never entering: mended (the owner, 2026-10-15: more time on a
+    mend rather than a skip). Found, with throwaway checks and the
+    checks' own failure values (which now say what they measured, and
+    list the main process's looks, testLog.fullscreenMends):
+    - Electron puts the shell's own webview element into the shell
+      document's full screen for a page's. After the Space exit that
+      element stayed full, which held the page at the window's width
+      (innerWidth 1280 where the panel was 1006 or 1226; the shell's
+      own exit asked then completed at once, and the width came back),
+      and a page's next request never entered because the shell
+      document was full already. So the main process takes the shell
+      document out too, once the window has left (mendPage).
+    - The look must come only once the window's bounds have held still
+      (the window's leave-full-screen event came while the window was
+      still on its way back, at x 1280 half a second after it, and an
+      exit asked then was ignored, and so was every one after it); only
+      while no page holds full screen and the window is out (a look
+      that fell into another tab's entry, before the app's own event
+      had come, asked the shell out and broke that entry); and only
+      once: a second look a second and a half later, meant for a look
+      that came mid-transition, fell into the next round (a new tab's
+      or the private tab's) and broke it, and after leaving a page
+      (loadURL while full) it found the shell's element full again and
+      its exits ignored. With the look held until the window holds
+      still, one look has done the work in every log.
+    - The check's own capture: FS1 read a pixel of the notice with
+      capturePage of a 1 by 1 rectangle of the window's page while
+      full screen, after which the shell's page was 1440 by 1440 at
+      its next full screen (the window itself 2560 by 1440), and the
+      page with it; a capture of the whole page, or Playwright's
+      screenshot, leaves no such mark. FS1 now captures the whole page
+      and reads the pixel from it. Nothing in the app captures the
+      shell's page.
+    - The checks' leaving wait (outOfFull) also sees the shell
+      document out with a frame drawn, as a request that comes while
+      that exit settles was left half done; their entering wait
+      (goFull) sees the page laid out for the screen.
+    - The Mac itself: with the display asleep, or the screen locked,
+      macOS makes no full-screen Space at all (the window said it was
+      full screen and never was: every full-screen check missed at
+      once in four runs, and FS1 once in the whole run of the day).
+      A run on a Mac keeps the display awake (`caffeinate -d` around
+      it; the documents say so).
+    - Two slips of the mend's first form, found by the whole run and
+      taken out: a `destroyed` listener on each page (an eleventh on a
+      WebContents, which Node warns about and C1 and issue #12's check
+      count as a console error), and the test window's return to its
+      corner, which ran on the window's leave-full-screen event and was
+      undone by macOS's own late move (the HoloML page's Escape found
+      the window at x 1280, y 640); the return now waits for the window
+      to hold still, as the mend does.
+    - issue-75.e2e.ts and review-134-main.e2e.ts run together after the
+      mend: 26 of 27 pass with FS5 skipped (hidden windows), in three
+      runs in a row, and again with m1 and m6 after the two slips.
+  - Not done: the owner's look by eye (Escape on a video page, and
+    closing the tab), as this session cannot press keys (macOS refuses
+    osascript assistive access); a page for it is ready, served on
+    this computer at http://127.0.0.1:8765/video.html (the scratchpad)
+    for a `pnpm dev` run.
+- Group 4, the camera and microphone (2026-10-15): macOS's own
+  dialog, for the microphone only. Before the first run of the day,
+  Electron's own reading of the Mac's answer for the app's binary
+  (systemPreferences.getMediaAccessStatus, bundle com.github.Electron)
+  was "not determined" for both the microphone and the camera. K6 to
+  K8 run alone then passed in 31 seconds, within its limit, and after
+  it the microphone's answer read "granted" while the camera's still
+  read "not determined": so with the stand-in devices
+  (--use-fake-device-for-media-stream) a page's first audio capture
+  still asks macOS once per binary, with the system's dialog, which
+  waits for a person (it was answered at the keyboard during that
+  run; a screenshot taken 4 seconds into the check's microphone step
+  showed no dialog, so it had been answered by then), and the camera's
+  stand-in asks nothing. In the owner's full run nobody answered
+  within the 60 seconds, so K6 to K8 and issue #18's check, which
+  capture audio, ran out their time right after the microphone prompt,
+  as recorded. Not the app's fault, and not the checks': the system's
+  way. What the run does: the two checks now say, before capturing
+  audio, what the Mac's answer is when it is not "granted" (harness,
+  systemMediaAccess and noteMicrophoneAccess): "not determined", the
+  dialog will ask and must be allowed, or the check runs out its time;
+  "denied", allow Electron the microphone in System Settings > Privacy
+  & Security. Nothing can answer the dialog for the person, and no
+  switch of Chromium's avoids it. The documents say to allow it once
+  on a Mac. The answer is kept by macOS for the binary's bundle id, so
+  a new Electron version keeps it. Windows and Linux read "granted"
+  and log nothing.
+- Group 5, the two budgets (2026-10-15), measured, the budgets
+  unchanged:
+  - C9, about 60 frames a second while the camera follows the pointer
+    (at least 50): 29.6 and 29.6 in two runs with the window hidden,
+    28.5 and 29.7 with it shown and focused (HYPERSOL_TEST_SHOW=1), so
+    the unfocused window is not the cause; the Mac is on mains power,
+    economy mode is off, and the room draws at the display's two
+    device pixels a point (2560 by 1544). The room itself draws at 60
+    on this Mac: looking around measured 59.4 in the owner's run (FC9)
+    and the ocean tunnel 59.5 (X9). A throwaway check counted what the
+    check's own loop delivers here: 17 calls of Playwright's
+    mouse.move with 4 steps in the second, 68 events, of which the
+    shell's page saw 11.5 pointer moves a second (Chromium coalesces
+    them), and the room drew 29.8 frames: each step waits for the
+    renderer's answer, which on macOS comes a frame later, so the loop
+    itself paces the room at about half the display's rate (issue #82
+    saw 32 to 45 on Windows with the same loop). Proposal, for the
+    owner: the check keeps its budget and measures the room's own
+    rate, driving the pointer through Electron's input path at a fixed
+    60 moves a second without waiting for each (sendInputEvent, as the
+    full-screen checks move the pointer), or with the free camera
+    turning (FC9's way), rather than through Playwright's acknowledged
+    moves; on Windows and Linux the same change would settle #82's
+    misses. Until then C9's rate on this Mac is a measure of the loop,
+    not of the room, and the check misses.
+  - X5, the ocean tunnel ready and drawn within 5 s: a throwaway check
+    today, each a fresh profile, measured ready in 684 ms and drawn in
+    769 ms cold (the first visit ever on this profile), 856 ms on a
+    second visit in the same app, and 1018 ms in a new app on the same
+    profile (Chromium's shader cache on disk), through "ANGLE (AMD,
+    ANGLE Metal Renderer: AMD Radeon Pro Vega 56)"; X5 run alone (the
+    aquarium's whole file, 7 checks, all pass): ready in 707 ms, drawn
+    in 794 ms. The 8411 ms of the owner's run did not reproduce; that
+    run had two of the full-screen checks' apps left alive and drawing
+    (the hang, group 3), which the fix removes. Proposal: the budget
+    stays; the full run at the end of this issue says whether the
+    first draw through Metal holds within it on a quiet Mac, and if it
+    misses again the viewer's shaders would be compiled while the page
+    loads rather than after it is ready (scene.ts, compileAsync), not
+    the budget widened.
+- The whole run on the Mac (2026-10-15, `pnpm test:e2e
+  --reporter=verbose`, 22 minutes, with the groups' changes in): 456
+  of 463 passed, 1 skipped (FS5, hidden windows), 6 failed, in 3 of
+  34 files, 1 input retry in the whole run (m28, a click). The
+  budgets, with the graphics card: C9 29.8 frames a second (group 5's
+  measure); the ocean tunnel ready in 715 ms and drawn in 1030 ms (X5
+  passes), 60.0 frames a second (X9); looking around 59.0 (FC9);
+  Harbour Loft ready in 1006 ms, the sneaker store in 494 ms, the sofa
+  studio in 659 ms. The six: C9 (group 5), FS2's second and FS6's
+  first (group 3's two), and three not seen before: FS1 (the window
+  never entered full screen for the page's first request in that app,
+  though the page said it had; it passed in five of seven runs of the
+  file today, so entering a Space is itself intermittent on this
+  Mac), and I8 and I9 (m7): a page's DevTools crashed the main
+  process on opening (I8; the crash report says EXC_BREAKPOINT, in
+  V8 or Node by its frames), and the next check's app showed no
+  window in 30 seconds (I9, once; it passed alone after). I8 is
+  intermittent on this Mac: run alone with the same code three times
+  it crashed twice and passed once, and it crashed with the app's
+  main process as it was before the day, with the test window wholly
+  on screen rather than at its corner, and with the harness's key
+  presses sent in one call rather than two, each tried in turn, while
+  it passed once with the day-before harness and once with one-call
+  presses, so none of those is the cause. It passed in the owner's
+  run. Not among the 17: to be filed as its own issue (a crash of
+  Electron's main process when a page's DevTools open, on macOS,
+  intermittent), and left out of this one.
+- The whole run again, after group 3's mend (2026-10-15, the display
+  held awake with `caffeinate -d`, 22 minutes): 459 of 463 passed, 1
+  skipped (FS5), 3 failed: C9 (group 5's measure, 29.8), and E2 twice
+  (m3, the Library's search once typing pauses: the sixth search came
+  after 199.9 ms against the 200 asked, a clock's rounding, and the
+  check after it was left waiting; the file run alone passes 22 of 22,
+  and E2 passed in every other run of the day; not macOS's). Every
+  full-screen check passed, I8 passed, and R5 passed (130 MB after ten
+  visits; it had missed once in the run before, 139.8 MB against
+  135.5, macOS's accounting). The budgets as before: the ocean tunnel
+  drawn in 1063 ms and 60.0 frames a second, looking around 59.2,
+  Harbour Loft 2063 ms, the sneaker store 508 ms, the sofa studio 680
+  ms. So on this Mac what stands is C9's measure (a proposal, group 5)
+  and the intermittent DevTools crash (its own issue).
+- Pull request #114's builds (2026-10-15): Windows and Linux pass,
+  "All checks" passes, and the macOS experiment misses 13 in part 1
+  and 1 in part 2 on GitHub's small virtual Mac: the ten of its 1024 by
+  768 display (the window never reaches the asked size: the top bar's
+  hit tests, G6, Y7b, D7, the resize with the context lost), the
+  launch that shows no window, I8's crash, R5's memory (233 MB
+  against 168 there), all as #94 recorded, and one of this issue's:
+  FS6's first check at 60 seconds, Escape's keyUp hung after all. On
+  that slower Mac the window had not begun leaving by the time
+  fullScreenSettled looked after the keyDown, so it found nothing to
+  wait for, and the keyUp landed in the transition. The harness now
+  waits, after Escape's keyDown in full screen, until the window has
+  left (escapeLeft, up to 10 s) before the keyUp. On the owner's Mac
+  issue-75, review-134-main, and m7 run together after it: 37 of 38
+  pass, FS5 skipped.
+
 ## The promotion plan (2026-10-14)
 
 On 2026-10-14 the owner asked for a review of the README and the

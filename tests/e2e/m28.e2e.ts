@@ -21,6 +21,7 @@ import {
   mainLog,
   navigateTo,
   newProfile,
+  MOD_WORD,
   pressInShell,
   project,
   sceneWait,
@@ -611,7 +612,8 @@ describe('LT9: the keyboard and screen readers', () => {
 
   it('the button has a name; the shortcut lifts, and the notice says what', async () => {
     expect(await h.shell.locator(LIFT).getAttribute('aria-label')).toBe('Lift into the room');
-    expect(await h.shell.locator(LIFT).getAttribute('title')).toMatch(/^Lift the pictures and 3D models in view into the room \((Ctrl|⌘)\+Shift\+U\)$/);
+    // The hint names the keys in the system's word for the modifier ("Cmd+Shift+U" on macOS, issue #111).
+    expect(await h.shell.locator(LIFT).getAttribute('title')).toBe(`Lift the pictures and 3D models in view into the room (${MOD_WORD}+Shift+U)`);
     await pressInShell(h, 'U', ['control', 'shift']);
     await still(h, 'lifted', 3);
     expect((await notice(h))?.text).toBe('Lifted into the room: 3 things.');

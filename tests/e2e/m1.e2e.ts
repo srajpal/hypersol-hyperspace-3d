@@ -139,12 +139,29 @@ describe('C1 app launches', () => {
     const where = await h.app.evaluate(({ BrowserWindow, screen }) => {
       const win = BrowserWindow.getAllWindows()[0]!;
       const b = win.getBounds();
-      const overlaps = screen
-        .getAllDisplays()
-        .some((d) => b.x < d.bounds.x + d.bounds.width && b.x + b.width > d.bounds.x && b.y < d.bounds.y + d.bounds.height && b.y + b.height > d.bounds.y);
-      return { overlaps, focused: win.isFocused() };
+      // How much of the window is on any display: the widest and the tallest overlap.
+      let across = 0;
+      let down = 0;
+      for (const { bounds: d } of screen.getAllDisplays()) {
+        const w = Math.min(b.x + b.width, d.x + d.width) - Math.max(b.x, d.x);
+        const ht = Math.min(b.y + b.height, d.y + d.height) - Math.max(b.y, d.y);
+        if (w > 0 && ht > 0) {
+          across = Math.max(across, w);
+          down = Math.max(down, ht);
+        }
+      }
+      return { overlaps: across > 0, across, down, focused: win.isFocused(), bounds: b };
     });
-    expect(where).toEqual({ overlaps: false, focused: false });
+    expect(where.focused).toBe(false);
+    if (process.platform === 'darwin') {
+      // macOS allows no window off every display: it keeps a corner of the title bar reachable, about 40 pixels
+      // across and 100 down (issue #111). The test window shows that corner at the bottom right, and no more.
+      expect(where.overlaps, JSON.stringify(where)).toBe(true);
+      expect(where.across, JSON.stringify(where)).toBeLessThanOrEqual(64);
+      expect(where.down, JSON.stringify(where)).toBeLessThanOrEqual(128);
+    } else {
+      expect(where.overlaps, JSON.stringify(where)).toBe(false);
+    }
   });
 
   it('uses the same theme value for CSS and 3D colours', async () => {
