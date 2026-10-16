@@ -6572,8 +6572,9 @@ hand (the checks stay on this computer).
 
 ## Issue #94: macOS in the automatic builds, and a run on the owner's Mac (promotion plan, step 7)
 
-Status: built, in pull request #110 (2026-10-15); #81 closed, and the
-17 checks a Mac in hand misses are issue #111. (Begun 2026-10-14: the
+Status: done; pull request #110 merged 2026-10-15, closing #94; #81
+closed, and the 17 checks a Mac in hand misses are issue #111, for a
+session on the Mac. (Begun 2026-10-14: the
 owner said "move on" after step 4, and step 7 was the recommended
 next.) The first question on Hacker
 News will be macOS, which is untested (#81): the browser is source
@@ -6736,6 +6737,15 @@ only, and no Mac has run it.
   keys, the system's dark mode, the Keychain, HoloML pages, full
   screen on a video with Escape), and the owner's word on a
   microphone dialog; both go to #111.
+- The experiment off pull requests (the owner, 2026-10-16): GitHub's
+  small Mac failed some of its four parts on every pull request (the
+  1024 by 768 display, R5's memory, the window that never shows), so
+  each request carried a red cross though "All checks" passed. The
+  macOS end-to-end parts now run on pushes to main and when started by
+  hand (`gh workflow run CI --ref <branch>`, which reports on that
+  branch's pull request, as #111's work needs); lint, the type check,
+  the unit tests, and the build stay required on macOS for every pull
+  request.
 
 ## Issue #92: release 0.9.1, a developer preview with a portable zip (promotion plan, step 5)
 
@@ -6947,6 +6957,17 @@ Results:
   and m19 and m20 passed in the same job); the job passed when run
   again. The miss is of the kind issue #79 covers. The plan's record,
   pull request #102, merged the same day.
+- Step 7 done (2026-10-15): macOS is in the automatic builds (pull
+  request #110, closing #94): lint, the type check, the unit tests,
+  and the build required, and the end-to-end checks an experiment
+  "All checks" does not wait for, as GitHub's macOS machine fails
+  checks written against Windows and Linux; the harness maps a
+  check's Ctrl to Cmd there, and the viewer and the harness count
+  Apple's virtual device as software drawing. The owner's Mac ran
+  the browser (MC3): 594 unit tests and 445 of 463 end-to-end checks
+  pass with the budgets met; #81 is closed with the record, and the
+  17 misses are issue #111, for a session on the Mac. "Issue #94"
+  above has the runs, the decisions, and the results.
 - Step 4 (2026-10-14): the browser's half merged, pull request #106
   (the plan, decisions, and results in "Issue #91" above; Q4's text
   view without WebGL 2 waits for a viewer change of its own); holoml's
