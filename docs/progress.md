@@ -401,7 +401,7 @@ the screenshots are as they were.
 step 5, GitHub issue #92, 2026-10-15). Everything since 0.9.0, as a
 zip for Windows, Linux, and macOS on each processor, unzipped and
 started, nothing signed, made by `pnpm package` and a release workflow
-that drafts the release on the tag, which the owner pushes after the
-merge and publishes after a look. The app has its icon
+that drafts the release on the tag; published 2026-10-16, the day
+after the merge. The app has its icon
 now, the logo chosen in prompt 46, on the window and the taskbar; the
 About panel's picture in the newest set shows the version.

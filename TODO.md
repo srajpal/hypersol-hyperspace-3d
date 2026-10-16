@@ -6749,7 +6749,11 @@ only, and no Mac has run it.
 
 ## Issue #92: release 0.9.1, a developer preview with a portable zip (promotion plan, step 5)
 
-Status: building (2026-10-15). The plan was approved by the owner on
+Status: done (2026-10-16: pull request #113 merged by the owner, the
+tag `v0.9.1` pushed, the release workflow's draft published as a
+pre-release at
+https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1;
+the results below). The plan was approved by the owner on
 2026-10-15 with the recommended answers to Q1, Q2, Q4, Q5, and Q7, and
 two of their own: the version is 0.9.1, not 0.10.0 (1.0.0 is kept for
 a commercial release, if there is ever one); and the app's icon is the
@@ -6898,9 +6902,28 @@ packager was set up, and no icon.
 - RL3: the app's folder holds out/, resources/, node_modules with the
   three Ghostery packages, package.json, and the licence files beside
   the exe; nothing of the sources.
-- Not checked yet: RL2 on the other systems and RL5, the release
-  workflow (the tag is the owner's); RL4 after the screenshots; RL6 by
-  eye after the merge.
+- RL7: #113's automatic builds passed at its last commit (457e38b, the
+  merge of main; a run at the commit before was cancelled by the next
+  push); the unit tests, lint, and the type check here, and the Mac's
+  run above.
+- RL4 after the screenshots: m2's D11 passed in those builds with
+  0.9.1, and the About picture of the newest set (39-about.png) shows
+  it.
+- RL5 and RL2 on every system (2026-10-16, after the merge): the tag
+  `v0.9.1`, pushed at 6b3e213 (main after #113 and #108), ran
+  release.yml once: the draft in 8 seconds, then Windows x64 in 2
+  minutes, Linux x64 in 69 seconds, macOS on Intel in 106 seconds, and
+  macOS on Apple silicon in 75 seconds, each packaging and passing the
+  smoke check (the window with the browser's title and the room's
+  canvas), the whole run in under three minutes. The draft carried
+  four zips and their checksums: windows-x64 163,727,456 bytes,
+  linux-x64 128,871,825, macos-x64 140,091,594, macos-arm64
+  136,395,419, and the changelog's 0.9.1 section as its notes, under
+  the title "0.9.1 — developer preview", a pre-release. The owner had
+  it published the same day (`gh release edit v0.9.1 --draft=false`).
+- Not checked yet: RL6 by eye on Windows and Linux (the window and
+  the taskbar), and the published zips unzipped and started by hand
+  on a Mac and on Linux; the workflow's smoke check is what they have.
 
 ## Issue #111: the 17 checks on a Mac
 
@@ -7305,6 +7328,18 @@ Results:
   and m19 and m20 passed in the same job); the job passed when run
   again. The miss is of the kind issue #79 covers. The plan's record,
   pull request #102, merged the same day.
+- Step 5 done (2026-10-16): release 0.9.1, a developer preview as a
+  portable zip for Windows, Linux, and macOS on each processor (pull
+  request #113, closing #92, merged by the owner; the tag `v0.9.1`
+  pushed on main at 6b3e213; the release workflow drafted the release
+  with the four zips, their checksums, and the changelog's section in
+  under three minutes, every smoke check passing, and the owner had the
+  draft published as a pre-release the same day:
+  https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1).
+  Electron 44.7.2 (the rule 13 check of 2026-10-15), the icon from
+  the logo of prompt 46, the filter lists and the screenshots
+  refreshed. "Issue #92" above has the plan, the owner's answers, and
+  the results, with what is still to be looked at by eye.
 - Step 7 done (2026-10-15): macOS is in the automatic builds (pull
   request #110, closing #94): lint, the type check, the unit tests,
   and the build required, and the end-to-end checks an experiment

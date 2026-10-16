@@ -36,13 +36,12 @@ Mac in hand its end-to-end checks pass but two (TODO.md, "Issue
 #111": a frame-rate measure, and a DevTools crash seen now and then;
 GitHub issues #94, #81, and #111). Apache 2.0. No telemetry.
 
-**Status (2026-10-15): experimental.** The newest version is the
+**Status (2026-10-16): experimental.** The newest version is the
 [0.9.1 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1),
 a pre-release, as a portable zip for Windows, Linux, and macOS (unzip
 it and start it; nothing is signed, so Windows SmartScreen asks once
 and macOS Gatekeeper refuses it until it is allowed, as the release
-notes describe) and as source; its tag and draft release follow the
-merge of its pull request, and the owner publishes the draft. There
+notes describe) and as source, published 2026-10-16. There
 are no installers, and none are planned: a fork may
 make one of its own (see [CONTRIBUTING.md](CONTRIBUTING.md), "Making
 your own build", which describes the zip). The
