@@ -6737,6 +6737,15 @@ only, and no Mac has run it.
   keys, the system's dark mode, the Keychain, HoloML pages, full
   screen on a video with Escape), and the owner's word on a
   microphone dialog; both go to #111.
+- The experiment off pull requests (the owner, 2026-10-16): GitHub's
+  small Mac failed some of its four parts on every pull request (the
+  1024 by 768 display, R5's memory, the window that never shows), so
+  each request carried a red cross though "All checks" passed. The
+  macOS end-to-end parts now run on pushes to main and when started by
+  hand (`gh workflow run CI --ref <branch>`, which reports on that
+  branch's pull request, as #111's work needs); lint, the type check,
+  the unit tests, and the build stay required on macOS for every pull
+  request.
 
 ## The promotion plan (2026-10-14)
 
