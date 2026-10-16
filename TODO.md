@@ -6878,6 +6878,23 @@ packager was set up, and no icon.
   each release), and the m28 set remade for its About picture, now
   `39-about.png` (0.9.1, Electron 44.7.2); the set's other pictures
   changed only in their encoding and were put back.
+- Main merged in (2026-10-16), after #114 (issue #111, macOS), #115
+  (the macOS experiment off pull requests), and #107 (the minor and
+  patch updates) were merged: the starter copy is now #107's, rebuilt
+  for @ghostery/adblocker 2.20.1 from the same 13 lists and page
+  scripts (built 2026-10-16), in place of this branch's refresh of
+  2026-10-15, which 2.20.1 could not read; the lockfile keeps
+  @electron/packager and Electron 44.7.2 with #107's updates; and
+  THIRD-PARTY.md and ARCHITECTURE.md name Electron 44.7.2 and the
+  adblocker 2.20.1. After the merge, on the owner's Mac (an Intel
+  iMac Pro): 592 unit tests pass (2 skipped), lint and types clean;
+  RL1, `pnpm package` made `HyperSpace3D-0.9.1-macos-x64.zip`, 134.0
+  MB, with its SHA-256; RL3, the app's node_modules holds the three
+  Ghostery packages at 2.20.1; RL6 in part, the bundle's
+  `Contents/Resources/electron.icns` is the cube's icon.icns byte for
+  byte (the packager keeps Electron's file name, and its warning about
+  a missing `.icon` is Apple's newer Icon Composer format, which is
+  optional). Not run: RL2's smoke check, which shows a window.
 - RL3: the app's folder holds out/, resources/, node_modules with the
   three Ghostery packages, package.json, and the licence files beside
   the exe; nothing of the sources.
