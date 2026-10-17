@@ -365,8 +365,15 @@ followed by the page's https address (the HoloML examples link to it).
 It is the same viewer, with the browser's content policy on the page:
 a page's scripts run only when the page is on that site itself, so the
 examples work in full and a page of another site shows without its
-scripts. Without WebGL 2 it says the page cannot be drawn. The site is built
-from this repository by `pnpm site:build` (site/build.mjs) and
+scripts. Without WebGL 2 it says the page cannot be drawn. The site's
+home page, https://srajpal.github.io/hypersol-hyperspace-3d/, is the
+browser's landing page (issue #96, the promotion plan's step 9): the
+four screenshots, the story, the seven examples opening in the viewer,
+the downloads for each system, and the licence, with no script, no
+analytics, and nothing fetched from elsewhere. The site is built
+from this repository by `pnpm site:build` (site/build.mjs; the
+landing page's download links take the version from
+apps/browser/package.json) and
 published by a workflow after the checks pass (GitHub issue #91, the
 promotion plan's step 4).
 

@@ -10,7 +10,8 @@ the automatic builds, #110, and the owner's Mac run, issue #111 for
 what it misses), step 4, the
 HoloML viewer for ordinary browsers, merged here (#106) and in its
 holoml pull request (#64), Pages still to be turned on (TODO.md,
-"Issue #91"); milestones 1 to 28 accepted,
+"Issue #91"), step 8's settings applied (#95), and step 9's landing
+page built (#96, 2026-10-17; TODO.md, "Issue #96"); milestones 1 to 28 accepted,
 milestone 28, lift to 3D, on 2026-10-10, prompt 201; no more
 milestones (prompt 203): work continues from GitHub issues, the first
 of them #75, full screen and pointer lock, accepted 2026-10-10; the
@@ -840,6 +841,17 @@ to this repository for rules and the prompt log.
    viewer's address answers 404 until then, and Firefox and Safari are
    then checked by hand. The browser's copies of the examples
    (pnpm holoml:sync) can be refreshed from holoml's next tag.
+   Step 9 (#96), the landing page, built 2026-10-17 in its pull
+   request (TODO.md, "Issue #96": the plan, the owner's answers, all
+   recommended, the checks LP1 to LP6, and the results): site/
+   index.html and style.css at the site's root in place of step 4's
+   stub, the build script copying the pictures and writing the
+   version into the download links, site/site.test.ts in `pnpm test`
+   (and `tsc -p site` in the type check), WV8 extended; step 6's GIF
+   and video have their marked place in it. Pages must be on for it
+   to answer (the owner turns it on; the deploy step says "Ensure
+   GitHub Pages has been enabled" until then), and the owner then
+   looks at it in Chrome, Firefox, and Safari (LP6).
    Step 8 (#95) done 2026-10-16 (TODO.md, "Issue #95": the values,
    the two pictures, the owner's steps, and what was set): in both
    repositories Discussions are on, the wiki and Projects off, the

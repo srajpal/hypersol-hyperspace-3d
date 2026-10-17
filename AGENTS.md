@@ -650,6 +650,18 @@ milestone's checks are defined in TODO.md):
   2 (the window's `webgl` preference off, as the app's tabs are); and
   the site's files. The published site in Chrome, Firefox, and
   Safari is checked by hand. `pnpm site:build` builds the site itself.
+- GitHub issue #96 checks LP1 to LP6 (TODO.md, "Issue #96"): the
+  browser's landing page at the site's root. site/site.test.ts, in
+  `pnpm test`, builds the page alone (`node site/build.mjs --page
+  <folder>`, no app build needed) and reads it back: the files and
+  the pictures, the version in the download links (one per zip of
+  the release), every link to a file of the site, every picture's
+  text and size, the seven examples opening in the viewer page, no
+  script and nothing loaded from elsewhere, the content security
+  policy, the headings, the skip link, and every colour pair of the
+  stylesheet at WCAG 2.2 AA (LP1 to LP4); WV8 finds the page beside
+  the viewer (LP5); the published page in Chrome, Firefox, Safari,
+  and from the keyboard is checked by hand (LP6).
 - No more milestones (prompt 203): polish (29) was taken off the
   roadmap, and installers before it (prompt 172). A fix for a GitHub
   issue adds its checks to the file of the part it changes, or to a

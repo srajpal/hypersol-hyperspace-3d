@@ -3,31 +3,178 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; form-action 'none'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; img-src 'self'; form-action 'none'; base-uri 'none'" />
+    <meta name="description" content="HyperSol HyperSpace 3D: an open-source desktop web browser with a 3D interface, for Windows, macOS, and Linux. Ordinary websites in a 3D room, and fully 3D sites written in HoloML." />
     <title>HyperSol HyperSpace 3D</title>
-    <link rel="icon" href="data:," />
-    <style>
-      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #07090f; color: #e8ecf8; font: 17px/1.55 system-ui, "Segoe UI", sans-serif; }
-      main { max-width: 36rem; padding: 2rem 1.25rem; }
-      h1 { color: #7fd8ff; font-weight: 600; margin: 0 0 0.75rem; }
-      a { color: #7fd8ff; }
-      code { background: #151a2a; padding: 0.1em 0.35em; border-radius: 4px; }
-    </style>
+    <link rel="icon" href="pictures/icon.png" type="image/png" />
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <main>
-      <h1>HyperSol HyperSpace 3D</h1>
-      <p>
-        An experimental open-source desktop web browser with a 3D interface, and the home of HoloML pages in the
-        browser. The project lives at
-        <a href="https://github.com/srajpal/hypersol-hyperspace-3d">github.com/srajpal/hypersol-hyperspace-3d</a>;
-        this page will grow into its landing page.
-      </p>
-      <p>
-        <a href="viewer/">The HoloML viewer for ordinary browsers</a> shows a HoloML page on a plain web page:
-        <code>viewer/?page=</code> followed by the page's address. The
-        <a href="https://srajpal.github.io/holoml/">HoloML examples</a> open in it with one click.
-      </p>
+    <a class="skip" href="#main">Skip to the content</a>
+    <header class="top">
+      <img class="logo" src="pictures/logo.png" alt="" width="512" height="512" />
+      <div>
+        <h1>HyperSol HyperSpace 3D</h1>
+        <p class="lead">
+          An open-source desktop web browser with a 3D interface. Ordinary websites float as panels in a 3D room, page
+          sections lift into layered depth, and fully 3D sites written in <a href="#holoml">HoloML</a> open as places
+          you walk through. Free, Apache 2.0, no telemetry. A developer preview: experimental, not yet for everyday
+          browsing.
+        </p>
+        <p class="buttons">
+          <a class="button" href="#download">Download {{version}}</a>
+          <a class="button" href="https://github.com/srajpal/hypersol-hyperspace-3d">The code on GitHub</a>
+          <a class="button" href="viewer/?page=https://srajpal.github.io/holoml/showroom/index.holoml">Try HoloML in your browser</a>
+        </p>
+      </div>
+    </header>
+
+    <main id="main">
+      <section id="pictures" aria-labelledby="pictures-h">
+        <h2 id="pictures-h">What it looks like</h2>
+        <div class="grid">
+          <figure>
+            <img src="pictures/readme.png" width="1264" height="761" alt="HyperSpace 3D showing HoloML's Harbour Loft: a loft's living room by day, boats in the harbour through tall steel windows, a floor plan in the corner, and four tabs as cards on the left" />
+            <figcaption><b>3D websites.</b> Harbour Loft, written in HoloML: walk through a loft by the harbour, open its doors, switch its lamps on, and go up to the roof terrace.</figcaption>
+          </figure>
+          <figure>
+            <img src="pictures/readme-game.png" width="1264" height="761" alt="Blockworld, a small block game written in HoloML: an island of grass blocks and trees, seen from above one corner" loading="lazy" />
+            <figcaption><b>Games, too.</b> Blockworld: walk, break and place blocks, and find five gems, with the mouse or the keyboard alone.</figcaption>
+          </figure>
+          <figure>
+            <img src="pictures/readme-layers.png" width="1264" height="761" alt="An ordinary web page on a tilted panel in the light Daylight theme, its sections and picture lifted into layers" loading="lazy" />
+            <figcaption><b>Ordinary websites, in depth.</b> Any page on a tilted panel, its sections and pictures lifted into layers; tabs as cards; a dark and a light theme.</figcaption>
+          </figure>
+          <figure>
+            <img src="pictures/readme-instruments.png" width="1264" height="761" alt="The same page beside the instrument panel: gauges for load, requests, and memory, the console, and the network list" loading="lazy" />
+            <figcaption><b>An instrument panel.</b> The page's load, requests, and blocked trackers, the browser's own gauges, the console, and the network.</figcaption>
+          </figure>
+        </div>
+        <p class="note">
+          The pictures are of the newest version, from pages served locally: HoloML's examples (Harbour Loft's
+          furniture, textures, and harbour from Poly Haven, CC0; Blockworld's blocks from Kenney, CC0) and a made-up
+          sample page.
+        </p>
+      </section>
+
+      <section id="moving" aria-labelledby="moving-h">
+        <h2 id="moving-h">In motion</h2>
+        <!-- The promotion plan's step 6 (GitHub issue #93) puts the ten-second GIF and the one-minute video here. -->
+        <p>
+          A short GIF and a one-minute video of the browser in use, Harbour Loft, lifting a page's pictures into the
+          room, and looking around, are on their way. Until then, the pictures above, and the
+          <a href="#holoml">examples below</a>, which open in any browser.
+        </p>
+      </section>
+
+      <section id="story" aria-labelledby="story-h">
+        <h2 id="story-h">The story</h2>
+        <p>
+          In early 2001 two computer engineering students who had met at Florida Atlantic University, Sunny Rajpal and
+          Mauricio Sadicoff, formed HyperSol, a small Florida software company with a plain mission: build
+          high-quality software that makes people's time on a computer more productive and more fun. Its first product
+          was a web browser, HyperSol WebSurfer, born when they needed features no other browser would allow, starting
+          with control over the pop-up windows of 2001. Version 1.0.0 shipped on March 5, 2001, free, with themes that
+          changed the whole browsing environment, automatic page refresh, and a full HTML editor inside the browser.
+        </p>
+        <p>
+          Behind the shipped features sat a bigger idea: a browser where the web itself is not flat, sites rendered in
+          three dimensions, a browser you look into, not at. Between 2001 and 2003 that idea became the concept for
+          HyperSol's next step, HyperSpace 3D. An early concept screen survives, a blue cube tilted toward the viewer
+          over a loading bar. It stayed a concept of its time, with no claim that it shipped as a product: the hardware,
+          the graphics APIs, and the open web platform were not ready.
+        </p>
+        <figure class="concept">
+          <img src="pictures/concept-2001-2003.jpg" width="640" height="480" alt="The early HyperSpace 3D concept screen: a blue 3D cube, a loading bar, and the 2001 to 2003 HyperSol copyright line" loading="lazy" />
+          <figcaption>The HyperSpace 3D concept screen, 2001 to 2003, as it was.</figcaption>
+        </figure>
+        <p>
+          Twenty-five years later they are. HyperSol HyperSpace 3D marks the 25th anniversary of HyperSol's formation
+          by finally building that idea, in the open, for everyone, built through agentic coding: AI coding agents
+          directed by one person who kept the scope, the decisions, the review, and the acceptance, with every prompt
+          published. HyperSol the company no longer exists; this is a personal project that honours it, not a
+          commercial product. The whole of it, from the first prompt, is in
+          <a href="https://github.com/srajpal/hypersol-hyperspace-3d#the-story">the repository's README</a>.
+        </p>
+      </section>
+
+      <section id="holoml" aria-labelledby="holoml-h">
+        <h2 id="holoml-h">HoloML: fully 3D websites</h2>
+        <p>
+          HoloML is a markup language for 3D websites, written the way a page is and kept in
+          <a href="https://github.com/srajpal/holoml">its own repository</a>, with its specification, a parser and a
+          checker, and an extension for VS Code; its documentation is at
+          <a href="https://srajpal.github.io/holoml/">srajpal.github.io/holoml</a>. HyperSpace 3D shows a HoloML page
+          across the whole window, to orbit or walk around. Seven example sites show what a page can do; each opens
+          here in any browser with WebGL 2, through <a href="viewer/">the viewer on a plain page</a>, or in HyperSpace 3D
+          from its start panel.
+        </p>
+        <ul class="examples">
+          <li><a href="viewer/?page=https://srajpal.github.io/holoml/showroom/index.holoml">The showroom</a>: five cars in a hall, each to walk around in three colours. <a class="site" href="https://srajpal.github.io/holoml/showroom/">Its site</a></li>
+          <li><a href="viewer/?page=https://srajpal.github.io/holoml/blockworld/index.holoml">Blockworld</a>: a small block game; break and place blocks, and find five gems. <a class="site" href="https://srajpal.github.io/holoml/blockworld/">Its site</a></li>
+          <li><a href="viewer/?page=https://srajpal.github.io/holoml/sofa-studio/index.holoml">The sofa studio</a>: a shop page with shadows, textured fabrics, and choices that change the sofa in place. <a class="site" href="https://srajpal.github.io/holoml/sofa-studio/">Its site</a></li>
+          <li><a href="viewer/?page=https://srajpal.github.io/holoml/harbour-loft/index.holoml">Harbour Loft</a>: a flat by the harbour to tour, with doors, lamps, and a roof terrace. <a class="site" href="https://srajpal.github.io/holoml/harbour-loft/">Its site</a></li>
+          <li><a href="viewer/?page=https://srajpal.github.io/holoml/sneaker-store/index.holoml">The sneaker store</a>: one shoe in ten colourways to walk among and turn over. <a class="site" href="https://srajpal.github.io/holoml/sneaker-store/">Its site</a></li>
+          <li><a href="viewer/?page=https://srajpal.github.io/holoml/aquarium/index.holoml">The ocean tunnel</a>: an aquarium to walk through, with 30 fish. <a class="site" href="https://srajpal.github.io/holoml/aquarium/">Its site</a></li>
+          <li><a href="viewer/?page=https://srajpal.github.io/holoml/words/index.holoml">Words in a room</a>: signs in three languages, two of them right to left. <a class="site" href="https://srajpal.github.io/holoml/words/">Its site</a></li>
+        </ul>
+        <p class="note">
+          The viewer fetches an example only when you open it, and runs a page's scripts only when the page is on this
+          site; the examples live on holoml's site, so Blockworld's game and the aquarium's fish, which need their
+          scripts, play in full in HyperSpace 3D itself.
+        </p>
+      </section>
+
+      <section id="download" aria-labelledby="download-h">
+        <h2 id="download-h">Running it</h2>
+        <p>
+          Version {{version}}, a developer preview, as a portable zip: take the one for your computer, unzip it
+          anywhere, and start it. Nothing to install, nothing to sign in to, and no update check. Nothing is signed, so
+          each system asks once the first time: Windows SmartScreen (More info, then Run anyway), macOS Gatekeeper
+          (System Settings, Privacy &amp; Security, Open Anyway), and on Linux where user namespaces are restricted the
+          <code>chrome-sandbox</code> helper is given its rights first; <a href="https://github.com/srajpal/hypersol-hyperspace-3d#download">the README's Download section</a>
+          has each step and the checksums.
+        </p>
+        <ul class="downloads">
+          <li><a href="https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v{{version}}/HyperSpace3D-{{version}}-windows-x64.zip">Windows 10 or 11, x64</a></li>
+          <li><a href="https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v{{version}}/HyperSpace3D-{{version}}-macos-arm64.zip">macOS, Apple silicon</a></li>
+          <li><a href="https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v{{version}}/HyperSpace3D-{{version}}-macos-x64.zip">macOS, Intel</a></li>
+          <li><a href="https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v{{version}}/HyperSpace3D-{{version}}-linux-x64.zip">Linux, x64</a></li>
+        </ul>
+        <p>
+          Or build it from source with Node 24 or newer and pnpm (the version is pinned in the repository):
+        </p>
+<pre tabindex="0"><code>git clone https://github.com/srajpal/hypersol-hyperspace-3d.git
+cd hypersol-hyperspace-3d
+pnpm install --frozen-lockfile
+pnpm dev</code></pre>
+        <p>
+          <a href="https://github.com/srajpal/hypersol-hyperspace-3d/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> has
+          the full setup, the tests, and how to make your own zip. Every release is on
+          <a href="https://github.com/srajpal/hypersol-hyperspace-3d/releases">the releases page</a>.
+        </p>
+      </section>
+
+      <section id="about" aria-labelledby="about-h">
+        <h2 id="about-h">Licence and privacy</h2>
+        <p>
+          Copyright 2026 The HyperSpace 3D Authors, under the
+          <a href="https://github.com/srajpal/hypersol-hyperspace-3d/blob/main/LICENSE">Apache License 2.0</a>; the parts
+          from other projects keep their own licences
+          (<a href="https://github.com/srajpal/hypersol-hyperspace-3d/blob/main/THIRD-PARTY.md">THIRD-PARTY.md</a>).
+          The browser blocks ads and trackers, uses encrypted DNS, loads pages over HTTPS only, and sends nothing about
+          you anywhere; <a href="https://github.com/srajpal/hypersol-hyperspace-3d/blob/main/docs/privacy.md">docs/privacy.md</a>
+          lists everything it stores and sends. This page has no analytics and fetches nothing but its own files.
+        </p>
+        <p class="documents">
+          <a href="https://github.com/srajpal/hypersol-hyperspace-3d#readme">README</a> ·
+          <a href="https://github.com/srajpal/hypersol-hyperspace-3d/blob/main/CHANGELOG.md">Changelog</a> ·
+          <a href="https://github.com/srajpal/hypersol-hyperspace-3d/blob/main/docs/progress.md">Progress, with screenshots</a> ·
+          <a href="https://github.com/srajpal/hypersol-hyperspace-3d/blob/main/PROMPTS.md">The prompts that built it</a> ·
+          <a href="https://github.com/srajpal/hypersol-hyperspace-3d/issues">Issues</a> ·
+          <a href="https://github.com/srajpal/hypersol-hyperspace-3d/discussions">Discussions</a>
+        </p>
+      </section>
     </main>
   </body>
 </html>

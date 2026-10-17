@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- The repository's site has a landing page at its root,
+  https://srajpal.github.io/hypersol-hyperspace-3d/ (GitHub issue
+  #96, the promotion plan's step 9): the four screenshots, the story,
+  the seven HoloML examples opening in the viewer, the downloads for
+  each system, and the licence; no script, no analytics. Not part of
+  the app: the zip is unchanged.
+
 ## 0.9.1 — developer preview (2026-10-15)
 
 Everything accepted since 0.9.0: milestones 13 to 28, the review of

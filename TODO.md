@@ -7420,6 +7420,107 @@ is shorter.
   homepage and the viewer's address answer 404 until it is on, and
   pages.yml fails on main for the same reason).
 
+## Issue #96: a landing page for the browser (promotion plan, step 9)
+
+Status: building (2026-10-17). The owner asked for step 9 on 2026-10-16
+and approved the plan with the recommended answers on 2026-10-17
+(Q1 a, Q2 a, Q3 a, Q4 a, Q5 a). Pages was still off that day (the
+deploy step fails with "Ensure GitHub Pages has been enabled"); the
+owner turns it on, and the page then answers at the repository's
+homepage, https://srajpal.github.io/hypersol-hyperspace-3d/.
+
+### The plan
+
+One page at the root of the Pages site, in place of the stub that
+step 4 left (site/index.html), beside the viewer at /viewer/: plain
+HTML and one stylesheet (site/style.css), no script, no font or
+anything else fetched from elsewhere, no analytics, with a content
+security policy in a `meta` tag as the stub had (`default-src
+'none'`, pictures and styles from the site itself). In order: the
+name, the logo, one sentence, and three buttons (Download 0.9.1, one
+link per system; the repository; "Try HoloML in your browser", the
+showroom in the viewer page); the README's four screenshots with
+their captions; a place for step 6's GIF and video, which says they
+are on their way until then; the story in three paragraphs condensed
+from the README, with the 2001 concept picture; the seven HoloML
+examples, each opening in the viewer page in any browser, with the
+holoml site's address beside; running it (the zip in two lines, the
+three commands to build from source); and the licence, the privacy
+line, and the documents.
+
+The decisions, 2026-10-17 (the owner: all recommended):
+
+- Q1 a: built now with the screenshots and a marked place for step
+  6's GIF and video, rather than waiting for step 6.
+- Q2 a: holoml's site style (light and dark following the system,
+  the system's fonts, the same colour tokens, which its test checks
+  at WCAG 2.2 AA), so the two sites read as one family; not the
+  Nebula dark of the app and the social preview.
+- Q3 a: one download link per system, written at build time from
+  the version in apps/browser/package.json, as GitHub's "latest
+  release" address skips pre-releases; between a version bump on
+  main and its tag the links point at a release that is not there
+  yet, which the release's own order (merge, tag, publish) keeps to
+  a day.
+- Q4 a: three paragraphs of the story with the concept picture; not
+  one paragraph and a link.
+- Q5 a: holoml's site is left as it is; the landing page links to it.
+
+Build: site/build.mjs copies the page, the stylesheet, and the
+pictures (docs/screenshots/readme*.png, the concept picture from
+docs/history, the logo from apps/browser/resources/icons) into the
+site, writing the version into the page's download links; `node
+site/build.mjs --page <folder>` builds the page alone, without the
+viewer, for the unit test; `pnpm site:build` builds everything, and
+pages.yml publishes it from main.
+
+### Checks
+
+| Check | What | Pass when |
+|---|---|---|
+| LP1 | The page as built | site/site.test.ts builds the page alone into a folder of its own: index.html, style.css, and the six pictures are there; the version in the download links is apps/browser/package.json's, and each link names a zip of the release workflow's four |
+| LP2 | Links and pictures | Every link to a file of the site holds; every picture has its text, width, and height; the examples' seven links open the viewer page with each example's address, and the holoml site's address stands beside each |
+| LP3 | Nothing fetched, nothing run | The page has no script and no element that loads from another site (no font, picture, style, or frame but the site's own); the content security policy meta is there |
+| LP4 | Access | One `h1`, headings in order with no level skipped, a skip link to the main part, `lang` on the page, and the focus ring and every colour pair of the stylesheet at WCAG 2.2 AA, light and dark, measured as holoml's site test measures them |
+| LP5 | The site as built with the viewer | WV8 (tests/e2e/web-viewer.e2e.ts) finds the page, the stylesheet, and the pictures beside the viewer's files, and the page's download link carries the version |
+| LP6 | Published | By hand after the merge and Pages: the page at the homepage address in Chrome, Firefox, and Safari, the keyboard through it, light and dark, and a phone's width |
+
+### Tasks
+
+- [x] T1 site/index.html, the page, and site/style.css.
+- [x] T2 site/build.mjs: the page, the stylesheet, the pictures, the
+      version; `--page` for the page alone.
+- [x] T3 site/site.test.ts (LP1 to LP4), in `pnpm test` and the type
+      check (site/tsconfig.json, `tsc -p site`); WV8 extended (LP5).
+- [x] T4 The page looked at in the browser, light and dark, narrow.
+- [x] T5 Documents: README ("In any browser" says where the page is),
+      ARCHITECTURE.md's site row, AGENTS.md's testing list, docs/
+      privacy.md, CHANGELOG.md, HANDOFF.md.
+- [x] T6 Lint, types, unit tests, the web-viewer file; the pull
+      request (#118).
+
+### Results so far (Windows 11, 2026-10-17)
+
+- LP1 to LP4: site/site.test.ts, 9 checks, pass (1.1 s); the page
+  builds alone in under a second with version 0.9.1 and the four
+  download links.
+- T4: the page served from its built folder and looked at in the
+  app's browser pane: dark and light (the system's scheme), the
+  desktop width and a phone's (375 px: one column, the buttons
+  stacked, no sideways scroll), the four pictures, the concept
+  picture, the examples, the downloads, the commands, and the
+  licence; no console errors.
+- Lint and the type check clean (the site's test under its own
+  tsconfig, as lint's project service needs one near the file).
+- LP5: the web-viewer file after `pnpm build`, WV1 to WV8, 9 of 9
+  pass (WV8 finds the page, the stylesheet, and the pictures beside
+  the viewer, and the page's first button reads "Download 0.9.1"
+  with four download links).
+- The unit tests as a whole: 603 pass in 71 files (the 9 new ones
+  among them), 22 s; `pnpm typecheck` clean with the site's project.
+- Not checked yet: LP6 (the published page, by hand, once Pages is
+  on and the pull request merged).
+
 ## The promotion plan (2026-10-14)
 
 On 2026-10-14 the owner asked for a review of the README and the

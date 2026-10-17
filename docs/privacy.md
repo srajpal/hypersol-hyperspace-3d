@@ -358,7 +358,10 @@ runs a page's scripts only when the page is on that site itself. It
 has no analytics, keeps nothing (no storage, no cookies), and sends
 nothing anywhere but to the addresses the page names. GitHub Pages
 serves it, and GitHub's own server logs apply to it as to any page
-there.
+there. The site's home page, the browser's landing page (issue #96),
+is a plain page too: no script, no analytics, and nothing fetched but
+its own files; its links lead to GitHub, to holoml's site, and to the
+viewer.
 
 ## The packaged app
 

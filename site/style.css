@@ -1,0 +1,264 @@
+/*
+ * The landing page (the promotion plan's step 9, GitHub issue #96): a
+ * plain page, light and dark, with the system's own fonts, so that
+ * nothing is fetched from other sites. The colour tokens are holoml's
+ * site's (its site/style.css), so the two sites read as one family;
+ * every pair meets WCAG 2.2 AA (4.5:1 for text, 3:1 for the focus ring
+ * and borders that matter), and site/site.test.ts checks them.
+ */
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --surface: #f4f6f9;
+  --fg: #1b1e24;
+  --muted: #4d5566;
+  --link: #0a58a8;
+  --visited: #6a3d9a;
+  --border: #8a93a3;
+  --rule: #d9dee6;
+  --focus: #0a58a8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111418;
+    --surface: #1b2028;
+    --fg: #e7e9ee;
+    --muted: #aab2c0;
+    --link: #8ec3ff;
+    --visited: #c9a6f5;
+    --border: #6b7486;
+    --rule: #2c323d;
+    --focus: #8ec3ff;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 1.0625rem/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+a {
+  color: var(--link);
+  text-underline-offset: 0.15em;
+}
+
+a:visited {
+  color: var(--visited);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.skip {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  padding: 0.5rem 1rem;
+  background: var(--bg);
+  color: var(--link);
+  border: 2px solid var(--focus);
+  z-index: 10;
+}
+
+.skip:focus {
+  top: 0.5rem;
+}
+
+/* The top: the logo, the name, one paragraph, and the buttons. */
+.top {
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+}
+
+/* The header's two parts share one row where the window is wide enough. */
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 2rem;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.top > div {
+  flex: 1 1 24rem;
+}
+
+.logo {
+  width: 11rem;
+  height: 11rem;
+  flex: 0 0 auto;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2.2rem;
+  line-height: 1.15;
+}
+
+.lead {
+  margin: 0;
+  font-size: 1.15rem;
+  max-width: 44rem;
+}
+
+.buttons {
+  margin: 1.25rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.button {
+  display: inline-block;
+  padding: 0.55rem 1rem;
+  border: 2px solid var(--link);
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.button:visited {
+  color: var(--link);
+}
+
+.button:first-child {
+  background: var(--link);
+  color: var(--bg);
+}
+
+main {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1rem 1rem 3rem;
+}
+
+section {
+  margin: 2.5rem 0;
+}
+
+h2 {
+  font-size: 1.6rem;
+  line-height: 1.25;
+  margin: 0 0 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+p {
+  margin: 0 0 1rem;
+  max-width: 50rem;
+}
+
+.note {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* The four pictures, two by two; one column on a narrow screen. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem 1.5rem;
+  margin: 0 0 1rem;
+}
+
+@media (max-width: 44rem) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+figure {
+  margin: 0;
+}
+
+figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+figcaption {
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.concept {
+  max-width: 24rem;
+  margin: 0 0 1rem;
+}
+
+ul {
+  padding-left: 1.25rem;
+}
+
+li {
+  margin: 0 0 0.5rem;
+}
+
+.examples .site {
+  white-space: nowrap;
+}
+
+.downloads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.25rem;
+}
+
+.downloads a {
+  display: inline-block;
+  padding: 0.5rem 0.9rem;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+pre {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  margin: 0 0 1rem;
+}
+
+code {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, 'SF Mono', Menlo, monospace;
+  font-size: 0.95em;
+}
+
+p code {
+  background: var(--surface);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+.documents {
+  color: var(--muted);
+}
