@@ -58,9 +58,12 @@ function browserPage() {
 </body></html>`;
 }
 
+/** The four examples' pictures from holoml's site, in the order of the row. */
+const HOLOML_PICTURES = ['harbour-loft', 'showroom', 'aquarium', 'blockworld'].map((n) => join(HOLOML, 'site/pictures', `${n}.jpg`));
+
 /** HoloML: the name and the words above a row of four examples. */
 function holomlPage() {
-  const pictures = ['harbour-loft', 'showroom', 'aquarium', 'blockworld'].map((n) => url(join(HOLOML, 'site/pictures', `${n}.jpg`)));
+  const pictures = HOLOML_PICTURES.map(url);
   return `<!doctype html><html><head><meta charset="utf-8"><style>${STYLE}</style></head><body>
   <div class="shade" style="background: radial-gradient(ellipse at 20% 0%, rgba(57,230,255,0.22), transparent 55%), radial-gradient(ellipse at 90% 20%, rgba(255,79,216,0.2), transparent 50%)"></div>
   <div class="words" style="left: 72px; top: 0; height: ${HEIGHT * 0.6875}px; width: 1136px">
@@ -86,10 +89,10 @@ async function open(file) {
   return win;
 }
 
-/** The page's PNG, once every picture is decoded and two frames drawn. */
+/** The page's PNG, once every picture is decoded and two frames drawn; a picture that cannot be decoded fails the run, as a preview without it would be wrong. */
 async function capture(win) {
   await win.webContents.executeJavaScript(
-    `Promise.all([...document.images].map((i) => i.decode().catch(() => undefined))).then(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(true)))))`,
+    `Promise.all([...document.images].map((i) => i.decode().catch(() => { throw new Error('a picture did not load: ' + i.src); }))).then(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(true)))))`,
     true,
   );
   const image = await win.webContents.capturePage({ x: 0, y: 0, width: WIDTH, height: HEIGHT });
@@ -98,10 +101,12 @@ async function capture(win) {
 
 app.whenReady().then(async () => {
   const stage = mkdtempSync(join(tmpdir(), 'hyperspace3d-social-'));
+  // app.exit ends the process at once, so the staging folder is removed first, in the finally below, and the status kept until then.
+  let status = 0;
   try {
     const jobs = [{ page: browserPage(), out: join(ROOT, 'docs/branding/social-preview.png') }];
-    if (existsSync(join(HOLOML, 'site/pictures/harbour-loft.jpg'))) jobs.push({ page: holomlPage(), out: join(HOLOML, 'docs/branding/social-preview.png') });
-    else console.log(`holoml is not beside this repository (${HOLOML}): its picture is not made`);
+    if (HOLOML_PICTURES.every((f) => existsSync(f))) jobs.push({ page: holomlPage(), out: join(HOLOML, 'docs/branding/social-preview.png') });
+    else console.log(`holoml is not beside this repository with its site's pictures (${HOLOML}): its picture is not made`);
     const windows = [];
     try {
       for (const [i, job] of jobs.entries()) {
@@ -117,11 +122,11 @@ app.whenReady().then(async () => {
     } finally {
       for (const win of windows) win.destroy();
     }
-    app.exit(0);
   } catch (e) {
     console.error(e);
-    app.exit(1);
+    status = 1;
   } finally {
     rmSync(stage, { recursive: true, force: true });
   }
+  app.exit(status);
 });
