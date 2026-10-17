@@ -7433,12 +7433,16 @@ is shorter.
 
 ## Issue #96: a landing page for the browser (promotion plan, step 9)
 
-Status: building (2026-10-17). The owner asked for step 9 on 2026-10-16
-and approved the plan with the recommended answers on 2026-10-17
-(Q1 a, Q2 a, Q3 a, Q4 a, Q5 a). Pages was still off that day (the
-deploy step fails with "Ensure GitHub Pages has been enabled"); the
-owner turns it on, and the page then answers at the repository's
-homepage, https://srajpal.github.io/hypersol-hyperspace-3d/.
+Status: done (2026-10-17: pull request #118 merged by the owner, the
+pages workflow published the page, and it answers at the
+repository's homepage, https://srajpal.github.io/hypersol-hyperspace-3d/;
+LP6, the look in Chrome, Firefox, and Safari, is the owner's, below).
+The owner asked for step 9 on 2026-10-16 and approved the plan with
+the recommended answers on 2026-10-17 (Q1 a, Q2 a, Q3 a, Q4 a, Q5 a).
+Pages was off until that day (the deploy step failed with "Ensure
+GitHub Pages has been enabled"; the owner set the source to GitHub
+Actions on 2026-10-17, and the stub home page and the viewer went up
+first).
 
 ### The plan
 
@@ -7529,8 +7533,16 @@ pages.yml publishes it from main.
   with four download links).
 - The unit tests as a whole: 603 pass in 71 files (the 9 new ones
   among them), 22 s; `pnpm typecheck` clean with the site's project.
-- Not checked yet: LP6 (the published page, by hand, once Pages is
-  on and the pull request merged).
+- LP6 in part (2026-10-17, after the merge): the pages run of #118's
+  merge passed in four minutes, and the published page answers with
+  its title, "Download 0.9.1", the stylesheet, the pictures, and the
+  viewer beside it (200 each); opened in the app's browser pane
+  (Chromium) with no console errors. #117's and #118's builds each
+  missed intermittently on checks the changes do not touch (m14 P4's
+  label link; m6 H6's field click and m28 LT2's favicon count, the
+  last fixed by #119), passing when run again; issue #79 has them.
+- Not checked yet: LP6's look in Firefox and Safari, and from the
+  keyboard, by the owner.
 
 ## The promotion plan (2026-10-14)
 
@@ -7604,6 +7616,22 @@ Results:
   and m19 and m20 passed in the same job); the job passed when run
   again. The miss is of the kind issue #79 covers. The plan's record,
   pull request #102, merged the same day.
+- Step 9 done (2026-10-17): the landing page at the site's root,
+  https://srajpal.github.io/hypersol-hyperspace-3d/ (pull request
+  #118, closing #96): the four screenshots, a place for step 6's GIF
+  and video, the story, the seven examples opening in the viewer, the
+  downloads with the version written at build time, and the licence;
+  site/site.test.ts checks it as built. "Issue #96" above has the
+  plan, the owner's answers, and the results; Firefox, Safari, and
+  the keyboard by eye are the owner's.
+- Step 8 done (2026-10-16): the repository settings (pull request
+  #117, closing #95): Pages on with GitHub Actions as the source
+  (2026-10-17), the homepage, Discussions on and the wiki and
+  Projects off in both repositories, the topics, the social previews
+  drawn by `pnpm --filter @hypersol/browser social-previews` and
+  uploaded by hand, "good first issue" and "help wanted" on the
+  issues that fit, and both repositories pinned on the owner's
+  profile; "Issue #95" above has what was set.
 - Step 5 done (2026-10-16): release 0.9.1, a developer preview as a
   portable zip for Windows, Linux, and macOS on each processor (pull
   request #113, closing #92, merged by the owner; the tag `v0.9.1`
