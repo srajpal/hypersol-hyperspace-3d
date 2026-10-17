@@ -20,6 +20,7 @@
     "screenshots": "pnpm build && vitest run --config vitest.shots.config.ts",
     "screenshots:readme": "pnpm build && vitest run --config vitest.readme.config.ts",
     "screenshots:examples": "pnpm build && vitest run --config vitest.examples.config.ts",
+    "screenshots:video": "pnpm build && vitest run --config vitest.video.config.ts && node tests/screenshots/video-encode.mjs",
     "filters:update": "pnpm --filter @hypersol/browser filters:update",
     "holoml:sync": "node packages/holoml/sync.mjs",
     "site:build": "pnpm build && node site/build.mjs",

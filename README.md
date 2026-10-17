@@ -30,6 +30,16 @@ copies: HoloML's examples (Harbour Loft's furniture, textures, and
 harbour from Poly Haven, CC0; Blockworld's blocks from Kenney, CC0) and
 a made-up sample page.*
 
+![Nine seconds of Harbour Loft in HyperSpace 3D: through the door in the brick wall, up to the roof terrace, and the harbour full of boats](docs/video/hyperspace-3d.gif)
+
+*Harbour Loft, up to the roof terrace. A
+[one-minute tour](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.1/hyperspace-3d-0.9.1.webm)
+(WebM, 27 MB: the room and its tabs, Harbour Loft's doors and lamps,
+pictures and a shoe lifted off a page, and looking around the room)
+is attached to the 0.9.1 release; both are made by `pnpm
+screenshots:video` from the local copies, no network
+([docs/video](docs/video/README.md)).*
+
 ## Download
 
 **[HyperSpace 3D 0.9.1](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1)**,

@@ -340,6 +340,16 @@ milestone's checks are defined in TODO.md):
 - The HoloML examples' pictures: `pnpm screenshots:examples` (from the
   local copies, no network; first run 2026-09-27). They are part of the
   browser: run it when an example changes, before `pnpm screenshots`.
+- The video and the GIF: `pnpm screenshots:video` (issue #93, the
+  promotion plan's step 6; first run 2026-10-17 on Windows 11) records
+  the takes from the local copies with tests/screenshots/
+  video.capture.ts (the graphics card is needed; drawn in software it
+  refuses) and encodes `_video/hyperspace-3d-<version>.webm` (not
+  committed; attached to the release) and docs/video/hyperspace-3d.gif
+  (committed, at the top of both READMEs and on the landing page) with
+  Playwright's own ffmpeg and tests/screenshots/gif.mjs, whose unit
+  test (gif.test.ts, VG6) is in `pnpm test`. Run it when a change
+  shows in them, and look at the cut; the owner reviews it.
 - Filter lists: `pnpm filters:update` rebuilds the starter copy from the
   internet (run before a release; first run 2026-09-26). It is the only
   place the blocker's page scripts are fetched, and it records the

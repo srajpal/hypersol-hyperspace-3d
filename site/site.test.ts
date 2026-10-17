@@ -44,7 +44,8 @@ describe('LP1: the page as built', () => {
   it('holds the page, the stylesheet, and the pictures the page names', () => {
     for (const file of ['index.html', 'style.css', '.nojekyll']) expect(existsSync(join(out, file)), file).toBe(true);
     const named = tags('img').map((t) => attribute(t, 'src') ?? '');
-    expect(named.length).toBeGreaterThanOrEqual(6);
+    expect(named.length).toBeGreaterThanOrEqual(7);
+    expect(named).toContain('pictures/hyperspace-3d.gif'); // the GIF of the promotion plan's step 6 (issue #93)
     for (const src of named) {
       expect(src, 'a picture of the site').toMatch(/^pictures\/[\w.-]+$/);
       expect(existsSync(join(out, src)), src).toBe(true);
@@ -110,6 +111,8 @@ describe('LP3: nothing fetched, nothing run', () => {
     expect(tags('video')).toEqual([]);
     expect(tags('audio')).toEqual([]);
     for (const link of tags('link')) expect(attribute(link, 'href'), link).toMatch(/^(style\.css|pictures\/[\w.-]+)$/);
+    // The video is linked, not embedded: nothing plays or loads from elsewhere.
+    expect(tags('a').map((t) => attribute(t, 'href'))).toContain('https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.1/hyperspace-3d-0.9.1.webm');
     for (const tag of [...tags('img'), ...tags('source')]) expect(attribute(tag, 'src') ?? '', tag).toMatch(/^pictures\//);
     expect(css).not.toMatch(/url\(|@import/);
     expect(html).not.toMatch(/\son[a-z]+="/);
