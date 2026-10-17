@@ -9,7 +9,7 @@
  * page is what any browser gets. Firefox and Safari are checked by hand.
  */
 import { execFileSync } from 'node:child_process';
-import { rmSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FIXTURES_DIR, startFixtureServer, type FixtureServer } from './fixture-server';
@@ -286,18 +286,21 @@ describe('WV7: without WebGL 2', () => {
 describe('WV8: the site as built', () => {
   it('holds the home page, the host, the transcoder page, the viewer and its decoders, and not the shell', async () => {
     const { readdirSync, existsSync } = await import('node:fs');
-    for (const file of ['index.html', '.nojekyll', 'viewer/index.html', 'viewer/host.js', 'viewer/ktx2-host.html', 'viewer/assets/viewer.js', 'viewer/assets/ktx2-host.js']) {
+    for (const file of ['index.html', 'style.css', 'pictures/readme.png', 'pictures/logo.png', '.nojekyll', 'viewer/index.html', 'viewer/host.js', 'viewer/ktx2-host.html', 'viewer/assets/viewer.js', 'viewer/assets/ktx2-host.js']) {
       expect(existsSync(join(SITE_DIR, file)), file).toBe(true);
     }
     const assets = readdirSync(join(SITE_DIR, 'viewer/assets'));
     expect(assets.some((f) => f.endsWith('.wasm')), 'the decoders').toBe(true);
     expect(assets).not.toContain('lift-host.js');
     expect(assets.filter((f) => f.startsWith('index-'))).toEqual([]);
-    // The home page reaches the host.
+    // The landing page (issue #96, LP5) reaches the host, and its download link carries the version.
     const id = await openPlain(h, server.url('web-viewer/index.html'));
     try {
       const home = await inPlain<string>(h, id, "document.querySelector('a[href=\"viewer/\"]')?.textContent ?? ''");
       expect(home).toMatch(/viewer/i);
+      const { version } = JSON.parse(readFileSync(join(FIXTURES_DIR, '../../apps/browser/package.json'), 'utf8')) as { version: string };
+      expect(await inPlain<string>(h, id, "document.querySelector('a.button')?.textContent ?? ''")).toBe(`Download ${version}`);
+      expect(await inPlain<number>(h, id, "document.querySelectorAll('.downloads a').length")).toBe(4);
     } finally {
       await closePlain(h, id);
     }
