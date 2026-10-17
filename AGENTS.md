@@ -194,7 +194,11 @@ date given and grow with each issue; TODO.md has the latest.
   profile and checks its window; the release workflow runs both on
   each system for a tag. `pnpm --filter @hypersol/browser icons`
   remakes the icons from the logo (committed; run it when the logo
-  changes).
+  changes), and `pnpm --filter @hypersol/browser social-previews` the
+  two repositories' social preview pictures (docs/branding/
+  social-preview.png here and in holoml beside this repository;
+  committed; run it when the logo, the README's first screenshot, or
+  the words change; issue #95).
 - Unit: `pnpm test` (Vitest; 594 tests passed on 2026-10-10;
   each test may take up to 20 seconds, vitest.config.ts)
 - HyperSpace 3D for Android (milestone 24; first run 2026-10-05): after

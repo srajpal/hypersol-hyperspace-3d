@@ -840,6 +840,18 @@ to this repository for rules and the prompt log.
    viewer's address answers 404 until then, and Firefox and Safari are
    then checked by hand. The browser's copies of the examples
    (pnpm holoml:sync) can be refreshed from holoml's next tag.
+   Step 8 (#95) done 2026-10-16 (TODO.md, "Issue #95": the values,
+   the two pictures, the owner's steps, and what was set): in both
+   repositories Discussions are on, the wiki and Projects off, the
+   topics added (3d-web, agentic-coding, claude-code, and web-browser
+   here, web-standards in holoml), and each shows its own social
+   preview (docs/branding/social-preview.png, drawn by `pnpm --filter
+   @hypersol/browser social-previews`); the browser's homepage is
+   https://srajpal.github.io/hypersol-hyperspace-3d/; #84 and #78
+   carry "good first issue" and "help wanted", #77, #76, #80, holoml
+   #47, and #48 "help wanted"; both repositories are pinned on the
+   owner's profile. Pages is still to be turned on (the homepage and
+   the viewer answer 404 until then).
    Step 7 (#94, pull request #110, merged 2026-10-15): macOS is in the
    automatic builds, lint, types, unit tests, and the build required
    and the end-to-end checks an experiment "All checks" does not wait

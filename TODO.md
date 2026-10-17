@@ -7272,6 +7272,154 @@ run changes). The run's numbers and each miss's error are under "Issue
   issue-75, review-134-main, and m7 run together after it: 37 of 38
   pass, FS5 skipped.
 
+## Issue #95: repository settings (promotion plan, step 8)
+
+Status: done (2026-10-16): the owner applied steps 2 to 5 the same
+day, as the table says (the results below); step 1, Pages, is still
+to be turned on, and the homepage answers 404 until it is. The owner
+asked for step 8 on 2026-10-16, prepared for them to apply.
+Settings, labels, uploads, and pins are the owner's (AGENTS.md rules 3
+and 4: nothing is published or changed outside the repository by the
+agent), so this section holds the values decided, the two pictures
+made, and the steps in order; HANDOFF.md records what was set once it
+is.
+
+### What there is today (2026-10-16)
+
+- The browser repository: a description (HyperSol HyperSpace 3D: an
+  experimental open-source desktop web browser with a 3D interface,
+  built with Electron; it also reads HoloML), no homepage, eight
+  topics (3d, browser, electron, privacy, threejs, typescript, webgl,
+  holoml), Discussions off, the wiki and Projects on (both unused),
+  GitHub's own generated social preview (the repository's name and
+  numbers), the default labels plus accessibility, security,
+  performance, reliability, architecture, dx, testing, and
+  Dependabot's three; "good first issue" and "help wanted" exist and
+  are on nothing. GitHub Pages is not on yet (step 4 left it to the
+  owner), so https://srajpal.github.io/hypersol-hyperspace-3d/
+  answers 404.
+- holoml: a description (HoloML: an experimental open markup language
+  for fully 3D websites; the specification, a parser and checker,
+  conformance samples, and example sites), the homepage
+  https://srajpal.github.io/holoml/, seven topics (3d, gltf, holoml,
+  markup-language, specification, typescript, webgl), Discussions
+  off, the wiki and Projects on, the generated social preview, the
+  default labels plus accessibility and Dependabot's three.
+- The owner's profile pins no repository.
+
+### The values
+
+| Setting | The browser repository | holoml | Why |
+|---|---|---|---|
+| Homepage | https://srajpal.github.io/hypersol-hyperspace-3d/ (once Pages is on; the site's home page today, the landing page of step 9 at the same address later) | as it is | One address to click from the repository's header; the landing page takes it over without a change |
+| Description | as it is | as it is | Both say what the thing is in one sentence already |
+| Topics added | web-browser, 3d-web, agentic-coding, claude-code | 3d-web, web-standards, agentic-coding, claude-code | The issue's four, and holoml's two; the agentic-coding pair on both, as the story is the same (the README's "Built with the Buildwright approach"); GitHub allows 20 |
+| Discussions | on | on | A place for questions that are not bugs; the launch posts (step 12) can point there |
+| Wiki, Projects | off | off | Both empty; the documents are in the repository, and a wiki tab that opens on nothing looks abandoned |
+| Social preview | docs/branding/social-preview.png | docs/branding/social-preview.png | 1280 by 640, what GitHub, Slack, Mastodon, Bluesky, and the rest show for a link; uploaded by hand, as GitHub has no API for it |
+| Pins | both repositories, the browser first | | The profile's six pins are what a visitor sees first |
+| Labels | "good first issue" and "help wanted" on #84 (the browser's own full screen, F11: a contained feature on #75's full-screen work) and #78 (a dropped .holoml file: confirm a real drop); "help wanted" on #77 (soft text on the tilted page: rendering experience), #76 (a screen reader and an input method: hands and tools), and #80 (the budgets on a machine with a graphics card) | "help wanted" on #47 (reusable components and styles) and #48 (object descriptions and states): design proposals where a second view helps; none is a first issue, as each changes the language | What a newcomer can take, and what needs hands or expertise the project lacks; CONTRIBUTING.md says how |
+
+Not done, on purpose: no new accounts, services, or analytics
+(AGENTS.md rule 3); no sponsorship button, no code of conduct file
+beyond CONTRIBUTING.md, and no issue templates, each a decision of its
+own if wanted.
+
+### The pictures
+
+`pnpm --filter @hypersol/browser social-previews`
+(apps/browser/scripts/social-previews.mjs) draws both with Electron,
+as the icons are made (icons.mjs), from a page of the script's own, so
+the fonts are this computer's (Segoe UI on Windows); the files are
+committed, so no build renders them:
+
+- docs/branding/social-preview.png (the browser): the logo (concept
+  4d, with its words) at the left, "HyperSol HyperSpace 3D" and two
+  lines of words beside it (an open-source desktop browser with a 3D
+  interface; free, Apache 2.0, Windows, macOS, and Linux, no
+  telemetry), over the README's first screenshot, Harbour Loft in the
+  room, shaded dark at the left and the top so the words read.
+- holoml's docs/branding/social-preview.png (made when holoml is
+  beside this repository): "HoloML" and two lines (a markup language
+  for fully 3D websites, written the way a page is; an open
+  specification, a parser and a checker, seven example sites, Apache
+  2.0 and CC BY 4.0) on the Nebula blue with a glow of the logo's cyan
+  and pink, over a row of four of the examples' pictures from holoml's
+  site (Harbour Loft, the showroom, the ocean tunnel, Blockworld).
+
+Looked at, 2026-10-16: both read at full size and at a third (the
+size of a link card); the first draft's title ran into Harbour Loft's
+floor plan at the top right, so the screenshot sits lower and the top
+is shaded; HoloML's tagline left one word on a line of its own, so it
+is shorter.
+
+### The owner's steps, in order
+
+1. Turn Pages on for the browser repository (Settings, Pages, Build
+   and deployment, Source: GitHub Actions), then run the pages
+   workflow once (`gh workflow run pages.yml --ref main`, or push to
+   main) and open https://srajpal.github.io/hypersol-hyperspace-3d/
+   and its viewer/ (step 4's leftover; the homepage below points
+   there).
+2. The settings by command, from either repository's folder (each
+   line is one change; `gh` is signed in as the owner):
+
+   ```bash
+   gh repo edit srajpal/hypersol-hyperspace-3d --homepage https://srajpal.github.io/hypersol-hyperspace-3d/ --enable-discussions --enable-wiki=false --enable-projects=false --add-topic web-browser,3d-web,agentic-coding,claude-code
+   ```
+
+   ```bash
+   gh repo edit srajpal/holoml --enable-discussions --enable-wiki=false --enable-projects=false --add-topic 3d-web,web-standards,agentic-coding,claude-code
+   ```
+
+3. The labels:
+
+   ```bash
+   gh issue edit 84 78 -R srajpal/hypersol-hyperspace-3d --add-label "good first issue,help wanted"
+   ```
+
+   ```bash
+   gh issue edit 77 76 80 -R srajpal/hypersol-hyperspace-3d --add-label "help wanted"
+   ```
+
+   ```bash
+   gh issue edit 47 48 -R srajpal/holoml --add-label "help wanted"
+   ```
+
+4. The social previews, by hand, after this issue's pull requests are
+   merged: each repository's Settings, General, Social preview, Edit,
+   Upload an image, with docs/branding/social-preview.png from the
+   repository (the file on this computer, or saved from GitHub); then
+   paste the repository's address into a Slack or Mastodon message
+   box, or a GitHub Discussions post, to see the card.
+5. The pins: the profile page https://github.com/srajpal, "Customize
+   your pins", tick hypersol-hyperspace-3d and holoml, in that order.
+6. Then tell the agent what was set (or what was changed from the
+   table), for HANDOFF.md's record, and close #95.
+
+### Results so far (Windows 11, 2026-10-16)
+
+- The script written and run twice (the second after the two touches
+  above): both pictures 1280 by 640 PNG, 708 KB (the browser's) and
+  570 KB (holoml's), looked at. Lint clean with the script.
+- Applied by the owner, 2026-10-16, and read back with `gh` the same
+  day: the browser repository's homepage is
+  https://srajpal.github.io/hypersol-hyperspace-3d/, Discussions on,
+  the wiki and Projects off, and the topics 3d, browser, electron,
+  privacy, threejs, typescript, webgl, holoml, 3d-web,
+  agentic-coding, claude-code, and web-browser; holoml's Discussions
+  on, the wiki and Projects off, and the topics 3d, gltf, holoml,
+  markup-language, specification, typescript, webgl, 3d-web,
+  agentic-coding, claude-code, and web-standards; both repositories
+  show their own social preview (uploaded by hand from the pull
+  request branches); #84 and #78 carry "good first issue" and "help
+  wanted", #77, #76, #80, holoml #47, and holoml #48 "help wanted";
+  and the profile pins six repositories, holoml and the browser among
+  them (with four others of the owner's; the order is the owner's).
+- Not done yet: Pages for the browser repository (step 1; the
+  homepage and the viewer's address answer 404 until it is on, and
+  pages.yml fails on main for the same reason).
+
 ## The promotion plan (2026-10-14)
 
 On 2026-10-14 the owner asked for a review of the README and the
