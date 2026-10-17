@@ -31,6 +31,7 @@ export const PICTURES = {
   'readme-layers.png': 'docs/screenshots/readme-layers.png',
   'readme-instruments.png': 'docs/screenshots/readme-instruments.png',
   'concept-2001-2003.jpg': 'docs/history/hyperspace-3d-concept-2001-2003.jpg',
+  'hyperspace-3d.gif': 'docs/video/hyperspace-3d.gif',
   'logo.png': 'apps/browser/resources/icons/logo.png',
   'icon.png': 'apps/browser/resources/icons/icon-64.png',
 };

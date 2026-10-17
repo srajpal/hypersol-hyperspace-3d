@@ -46,4 +46,5 @@ tests/fixtures/holoml-site/
 
 # The site for GitHub Pages (site/build.mjs), and its copy for the end-to-end checks
 _site/
+_video/
 tests/fixtures/web-viewer/

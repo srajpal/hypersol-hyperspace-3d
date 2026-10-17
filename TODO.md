@@ -7544,6 +7544,139 @@ pages.yml publishes it from main.
 - Not checked yet: LP6's look in Firefox and Safari, and from the
   keyboard, by the owner.
 
+## Issue #93: a one-minute video and a ten-second GIF (promotion plan, step 6)
+
+Status: building (2026-10-17). The owner asked for step 6 on 2026-10-17
+("Step 6 and then step 10") and approved the plan the same day with
+the recommended answers (Q1 a, Q2 a, Q3 a, Q4 a, Q5 a).
+
+### The plan
+
+A script, `pnpm screenshots:video`, built on the screenshot harness
+(tests/screenshots/video.capture.ts): it starts the built app on this
+computer (the one with the graphics card: drawn in software the scenes
+look wrong, so the script refuses to run that way), with the window's
+content at 1280 by 720, serving the local copies in tests/fixtures (no
+network), and drives the scenes with the harness's keys and clicks
+timed by the scene's own clock. While each take runs, the main process
+captures the window every 1/30 s with `capturePage` (JPEG, kept in
+memory and written to `_video/frames/` after the take, with each
+frame's time). Then tests/screenshots/video-encode.mjs holds the
+frames to 30 a second (each output frame the latest captured at its
+time) and pipes them to Playwright's own ffmpeg, which is already
+installed with the browser's tests and encodes VP8 in WebM
+(`_video/hyperspace-3d-<version>.webm`, 1280 by 720); the GIF take's
+frames go through the same ffmpeg to PNG at 10 a second and 720
+pixels wide, and a GIF encoder of the script's own
+(tests/screenshots/gif.mjs: a palette by median cut, each frame only
+the rectangle that changed, LZW, the loop extension) writes
+docs/video/hyperspace-3d.gif. Two title cards, plain pages captured
+the same way and held, open and close the video; no sound.
+
+The cut, about 60 s: the title card (6 s); the room with four tabs as
+cards and the page on the tilted panel, switching tabs (8 s); Harbour
+Loft, walking in from the hall, the study door opened and walked
+through, the hall lamp switched on, then from the door to the terrace
+up to the roof terrace and a look around it (about 20 s; the last ten,
+from the terrace door, are the GIF); a web page's pictures lifted into
+the room, then a shop page's shoes lifted, one brought nearer and
+turned (14 s); looking around the room and Escape back to the page
+(8 s); the closing card with the landing page's address (4 s).
+
+The decisions, 2026-10-17 (the owner: all recommended):
+
+- Q1 a: a GIF encoder of the script's own, as the icon script has its
+  own ICO and ICNS encoders; no new software (Playwright's ffmpeg has
+  no GIF encoder, no palette filters, and no `fps` filter, so the
+  output rate is set with `-r`).
+- Q2 a: WebM with VP8, what the installed ffmpeg makes; it plays in
+  Chrome, Firefox, Edge, and Safari 14.1 and later, and GitHub takes
+  it as an attachment. Not MP4, which would need a full ffmpeg.
+- Q3 a: the video is not committed: the owner attaches it to the 0.9.1
+  release (`gh release upload v0.9.1 _video/hyperspace-3d-0.9.1.webm`)
+  and adds a line to the release notes; the landing page and the
+  README link that address; YouTube is the owner's whenever they
+  wish. The GIF is committed (docs/video/hyperspace-3d.gif, under 5
+  MB), as both READMEs show it; holoml's README shows it by its raw
+  address in this repository, so the file is kept once.
+- Q4 a: the GIF is the Harbour Loft walk from the terrace door up to
+  the roof terrace.
+- Q5 a: two title cards, silent.
+
+Where the GIF goes: this README under the four screenshots and their
+caption (the README still opens with the four, as AGENTS.md's working
+agreement says; the owner may move it above them, with that sentence
+changed), holoml's README after its opening paragraph, and the landing
+page's "In motion" section, which also links the video on the release.
+
+### Checks
+
+| Check | What | Pass when |
+|---|---|---|
+| VG1 | The run | `pnpm screenshots:video` on this computer makes `_video/hyperspace-3d-<version>.webm` and docs/video/hyperspace-3d.gif in one run, refuses to run drawn in software, and fetches nothing beyond 127.0.0.1 |
+| VG2 | The video | 1280 by 720, 30 frames a second, 55 to 65 s, VP8 in WebM, plays in Chrome, Firefox, and Safari (the last by the owner) |
+| VG3 | The GIF | Under 5 MB, 720 wide, about 10 s at 10 frames a second, loops; GitHub shows it in both READMEs |
+| VG4 | The cut | Every scene of the plan is there, in order, with nothing of the setup between takes (tab switches, page loads, the viewer stood somewhere) in the picture; the owner reviews the cut |
+| VG5 | The pages | This README, holoml's README, and the landing page show the GIF, and the landing page and the README link the video; site/site.test.ts still passes with the GIF among the pictures |
+| VG6 | The encoders | Unit tests for gif.mjs: a PNG decoded back to its pixels, a GIF of two frames read back by its structure (the header, the palette, the frames' rectangles, the loop block) |
+
+### Tasks
+
+- [x] T1 tests/screenshots/video.capture.ts, vitest.video.config.ts,
+      the `screenshots:video` script; `_video/` ignored.
+- [x] T2 tests/screenshots/video-encode.mjs (the frames held to 30 a
+      second into ffmpeg; the GIF take to PNG and into the encoder).
+- [x] T3 tests/screenshots/gif.mjs (PNG decoding, median cut, LZW, the
+      GIF) with its unit test.
+- [x] T4 The run here, the frames looked at, the cut tuned.
+- [x] T5 The GIF in both READMEs and the landing page; the video
+      linked; documents (README, AGENTS.md's commands, ARCHITECTURE.md,
+      CHANGELOG.md, HANDOFF.md, docs/video/README.md).
+- [x] T6 Lint, types, unit tests, site.test.ts; the pull request
+      (#121). Still the owner's: the review of the cut, the upload to
+      the release, and the release notes' line.
+
+### Results so far (Windows 11, 2026-10-17)
+
+- VG1: `pnpm screenshots:video` runs through here (the build, then
+  about 70 s of takes, then the encoding) and writes
+  `_video/hyperspace-3d-0.9.1.webm` and docs/video/hyperspace-3d.gif;
+  the capture manages about 22 frames a second per take (a
+  `capturePage` and a JPEG each), held to 30 in the video; the
+  refusal in software is written, not tried here (this computer draws
+  with its graphics card). Nothing is fetched beyond 127.0.0.1: the
+  harness blocks every other host, as in every run.
+- VG2: 1280 by 720, 1745 frames, 58.2 s at 30 a second, VP8 in WebM,
+  26.9 MB at 6 Mbit/s. Playlists: Chrome by the owner (not yet),
+  Firefox and Safari by the owner (not yet).
+- VG3: 720 by 406, 91 frames, 9.1 s at 10 a second, 3.41 MB, loops
+  (the NETSCAPE2.0 block, read back by gif.test.ts); GitHub's showing
+  of it in the READMEs waits for the merge.
+- VG4: the frames looked at take by take (the first cut's hall walk
+  ended against a door, its lamp take showed a bare wall, and its
+  terrace turn swept across the stair house's sign; each was retuned:
+  the walk now crosses the living room and kitchen to the harbour
+  windows, the lamp take stands back to show the pendant and its
+  switch, and the terrace's turns stay on the water). Nothing of the
+  setup between takes is in the picture, as the capture runs only
+  inside a take. The owner's review: not yet.
+- VG5: the GIF is under the README's four screenshots with the video's
+  link, after holoml's opening paragraph (its pull request), and in
+  the landing page's "In motion" section with the video linked;
+  site/site.test.ts asks for it among the pictures and for the video's
+  link, 9 of 9 pass.
+- VG6: gif.test.ts, 4 checks, pass: a PNG with every filter type
+  decoded back to its pixels; a GIF of three frames read back (256
+  colours, looping, the first frame whole, the second only the
+  rectangle that changed, the third one pixel), and LZW streams of 300
+  and 20,000 indices decoded back.
+- T6: lint and the type check clean (the site's and the tests'
+  projects; gif.mjs typed by gif.d.mts); the unit tests 607 pass in 72
+  files (gif.test.ts and site.test.ts among them).
+- Not checked yet: the owner's review of the cut; the video played in
+  Chrome, Firefox, and Safari; the upload to the release and its
+  notes' line.
+
 ## The promotion plan (2026-10-14)
 
 On 2026-10-14 the owner asked for a review of the README and the

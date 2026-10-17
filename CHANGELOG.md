@@ -8,6 +8,11 @@
   the seven HoloML examples opening in the viewer, the downloads for
   each system, and the licence; no script, no analytics. Not part of
   the app: the zip is unchanged.
+- A one-minute video and a nine-second GIF of the browser in use
+  (GitHub issue #93, the promotion plan's step 6), made by `pnpm
+  screenshots:video` from the local copies: the GIF, Harbour Loft up
+  to its roof terrace, at the top of both READMEs and on the landing
+  page; the video attached to the 0.9.1 release. Not part of the app.
 
 ## 0.9.1 — developer preview (2026-10-15)
 

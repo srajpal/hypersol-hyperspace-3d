@@ -842,6 +842,18 @@ to this repository for rules and the prompt log.
    viewer's address answers 404 until then, and Firefox and Safari are
    then checked by hand. The browser's copies of the examples
    (pnpm holoml:sync) can be refreshed from holoml's next tag.
+   Step 6 (#93), the video and the GIF, built 2026-10-17 in its pull
+   request (TODO.md, "Issue #93": the plan, the owner's answers, all
+   recommended, the cut, the checks VG1 to VG6, and the results):
+   `pnpm screenshots:video` (tests/screenshots/video.capture.ts,
+   video-encode.mjs, gif.mjs with gif.test.ts) makes
+   `_video/hyperspace-3d-<version>.webm` (not committed) and
+   docs/video/hyperspace-3d.gif (committed; in both READMEs and on the
+   landing page). After the merge the owner attaches the video to the
+   0.9.1 release (`gh release upload v0.9.1
+   _video/hyperspace-3d-0.9.1.webm`), adds a line to its notes, and
+   reviews the cut; holoml's README shows the GIF by its raw address
+   (holoml's pull request).
    Step 9 (#96), the landing page, done 2026-10-17 (pull request
    #118 merged, the page published at
    https://srajpal.github.io/hypersol-hyperspace-3d/; TODO.md, "Issue
