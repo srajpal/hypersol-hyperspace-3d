@@ -842,6 +842,14 @@ to this repository for rules and the prompt log.
    viewer's address answers 404 until then, and Firefox and Safari are
    then checked by hand. The browser's copies of the examples
    (pnpm holoml:sync) can be refreshed from holoml's next tag.
+   Step 10 (#97), the entries for the curated lists, prepared
+   2026-10-17 in docs/launch/lists.md (TODO.md, "Issue #97"): the
+   electron/apps file and icon in docs/launch/electron-apps/, ready to
+   send; awesome-threejs (a proposed "Applications" sub-section, the
+   browser and HoloML) and awesome-webgl (HoloML among the engines)
+   ready to send; awesome-electron waits for 100 stars and 30 days.
+   The owner sends each from their own account; where each went goes
+   here.
    Step 6 (#93), the video and the GIF, built 2026-10-17 in its pull
    request (TODO.md, "Issue #93": the plan, the owner's answers, all
    recommended, the cut, the checks VG1 to VG6, and the results):

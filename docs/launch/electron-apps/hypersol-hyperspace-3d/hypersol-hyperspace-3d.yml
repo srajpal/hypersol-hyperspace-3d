@@ -1,0 +1,26 @@
+name: HyperSol HyperSpace 3D
+description: 'Web browser with a 3D interface: ordinary websites in a 3D room, and fully 3D sites written in HoloML.'
+website: 'https://srajpal.github.io/hypersol-hyperspace-3d/'
+repository: 'https://github.com/srajpal/hypersol-hyperspace-3d'
+keywords:
+  - browser
+  - 3d
+  - webgl
+  - threejs
+  - holoml
+  - privacy
+license: Apache-2.0
+category: Productivity
+screenshots:
+  - imageUrl: 'https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/main/docs/screenshots/readme.png'
+    caption: 'Harbour Loft, a 3D website written in HoloML, with tabs as cards on the left'
+    imageLink: 'https://srajpal.github.io/hypersol-hyperspace-3d/'
+  - imageUrl: 'https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/main/docs/screenshots/readme-layers.png'
+    caption: 'An ordinary web page on a tilted panel, its sections and pictures lifted into layers'
+    imageLink: 'https://srajpal.github.io/hypersol-hyperspace-3d/'
+  - imageUrl: 'https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/main/docs/screenshots/readme-game.png'
+    caption: 'Blockworld, a small block game written in HoloML'
+    imageLink: 'https://srajpal.github.io/hypersol-hyperspace-3d/'
+  - imageUrl: 'https://raw.githubusercontent.com/srajpal/hypersol-hyperspace-3d/main/docs/screenshots/readme-instruments.png'
+    caption: 'The instrument panel beside a page: load, requests, blocked trackers, the console, and the network'
+    imageLink: 'https://srajpal.github.io/hypersol-hyperspace-3d/'
