@@ -6163,6 +6163,17 @@ None. Three.js (installed) has the glTF loader the viewer uses already.
   five clipboard checks (once its clipboard works), and C9; L9 is
   watched. Since: the clipboard checks passed in the full run of
   2026-10-10 (issue #75); C9 and L9 are issue #82.
+- LT2's "nothing is fetched" (2026-10-17, issue #79): the check now
+  leaves the page's own favicon request out of what counts since the
+  lift, as WV1 does for the start tab's (tests/e2e/web-viewer.e2e.ts).
+  On GitHub's Windows machine that request, which belongs to the page's
+  load, reached the main process's log after the lift's mark twice
+  (issue #94's builds, 2026-10-15; pull request #118's second run,
+  2026-10-17; issue #79's comments of 2026-10-16 and 2026-10-17), and
+  the lift itself had asked for nothing both times: the picture's own
+  address was not fetched again. Every other request still fails the
+  check. Run here with the change (`pnpm test:e2e m28`, with the
+  graphics card): 25 of 25 pass.
 
 ## Issue #75: full screen and pointer lock
 

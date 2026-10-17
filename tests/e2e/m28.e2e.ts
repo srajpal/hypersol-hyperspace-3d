@@ -199,7 +199,12 @@ describe('LT2: lifting a picture from the right-click menu', () => {
     // Captured, not fetched: the picture was not asked for again, and no request was made.
     expect(server.hits.get('/lift/quadrants.png') ?? 0).toBe(hits);
     // A miss says which address was fetched (GitHub's Windows machine, issue #94's builds, 2026-10-15).
-    const since = (await mainLog(h, 'requests')).slice(requests);
+    // The page's own favicon request belongs to the page's load, not to the lift, yet on GitHub's
+    // Windows machine it has reached the main process's log after the mark taken above, twice
+    // (issue #94's builds, 2026-10-15; pull request #118's second run, 2026-10-17; issue #79). It is
+    // left out, as WV1 leaves the start tab's favicon out (web-viewer.e2e.ts); every other request counts.
+    const favicon = new URL('/favicon.ico', server.url('lift/pictures.html')).href;
+    const since = (await mainLog(h, 'requests')).slice(requests).filter((u) => u !== favicon);
     expect(since, `fetched since the lift: ${since.join(', ')}`).toEqual([]);
     const captures = (await mainLog(h, 'lifts')).filter((x) => x.kind === 'capture');
     expect(captures).toHaveLength(1);
