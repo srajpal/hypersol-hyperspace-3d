@@ -7677,6 +7677,52 @@ page's "In motion" section, which also links the video on the release.
   Chrome, Firefox, and Safari; the upload to the release and its
   notes' line.
 
+## Issue #97: entries for the curated lists (promotion plan, step 10)
+
+Status: prepared (2026-10-17); the submissions are the owner's. The
+owner asked for step 10 on 2026-10-17, after step 6. docs/launch/
+lists.md holds, for each of the four lists, its rules as read from its
+contributing file that day, whether the project qualifies today, the
+entry in the list's own format, where it goes, and the pull request's
+title and text; docs/launch/electron-apps/hypersol-hyperspace-3d/
+holds the YAML file and the icon that electron/apps takes.
+
+What the rules said, and what follows:
+
+- electron/apps (the official list behind electronjs.org/apps): a YAML
+  file and a PNG icon of at least 256 pixels, the app at least 20 days
+  old, open source with a README, a screenshot, and a binary; the
+  description without "Electron", "A", or "An". The project qualifies
+  (22 days; the 0.9.1 zips; the 1024-pixel icon). Ready now:
+  category Productivity, as the Min browser's entry; the README's four
+  screenshots by their raw addresses.
+- sindresorhus/awesome-electron: at least 30 days old and at least 100
+  stars, one pull request per suggestion. The repository is 22 days
+  old with 0 stars, so this waits for the stars (the launch posts of
+  step 12 work toward them); the entry and the text are drafted for
+  then.
+- AxiomeCG/awesome-threejs: "really awesome", the author credited, the
+  repository link preferred, a new category proposed when none fits.
+  None holds applications, so the pull request proposes
+  "Applications" under "Demonstrations" with two entries, the browser
+  and HoloML. Ready now.
+- sjfricke/awesome-webgl: one pull request per suggestion, the
+  libraries section alphabetical, descriptions ending with a period.
+  The fit is HoloML (its viewer draws with WebGL 2 in any browser),
+  under "Libraries" > "Others" among the engines; the desktop browser
+  is not a WebGL library. Ready now.
+
+The owner submits each from their own account (AGENTS.md rules 3 and
+4: the agent publishes nothing); where each went, and its outcome, goes
+in HANDOFF.md and here.
+
+### Results so far
+
+- The rules read on 2026-10-17 from each list's contributing file and
+  README, by their raw addresses; the four screenshots' raw addresses
+  answer 200. Not done yet: the three pull requests that qualify
+  today (the owner's), awesome-electron's once the stars allow.
+
 ## The promotion plan (2026-10-14)
 
 On 2026-10-14 the owner asked for a review of the README and the
