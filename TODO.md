@@ -6954,7 +6954,8 @@ packager was set up, and no icon.
 
 ## Issue #111: the 17 checks on a Mac
 
-Status: building (2026-10-15, the owner's prompt after #94's MC3: the
+Status: done (2026-10-16: pull request #114 merged, closing #111;
+built from 2026-10-15, the owner's prompt after #94's MC3: the
 17 end-to-end checks a Mac in hand misses, grouped there in five
 parts, each to be settled as the app's fault or the check's on the
 owner's Mac and fixed accordingly; nothing that only Windows or Linux
@@ -6994,7 +6995,7 @@ run changes). The run's numbers and each miss's error are under "Issue
 - [x] The documents' macOS sentences (README, CONTRIBUTING.md,
       AGENTS.md's Testing, ARCHITECTURE.md section 11)
 - [x] The whole `pnpm test:e2e` once on the Mac, its summary recorded
-- [ ] The pull request that closes #111
+- [x] The pull request that closes #111 (#114, merged 2026-10-16)
 
 ### What was found, by group
 
@@ -7286,8 +7287,9 @@ run changes). The run's numbers and each miss's error are under "Issue
 ## Issue #95: repository settings (promotion plan, step 8)
 
 Status: done (2026-10-16): the owner applied steps 2 to 5 the same
-day, as the table says (the results below); step 1, Pages, is still
-to be turned on, and the homepage answers 404 until it is. The owner
+day, as the table says (the results below); step 1, Pages, followed
+on 2026-10-17 (GitHub Actions as the source), and the homepage
+answers. The owner
 asked for step 8 on 2026-10-16, prepared for them to apply.
 Settings, labels, uploads, and pins are the owner's (AGENTS.md rules 3
 and 4: nothing is published or changed outside the repository by the
@@ -7546,7 +7548,9 @@ pages.yml publishes it from main.
 
 ## Issue #93: a one-minute video and a ten-second GIF (promotion plan, step 6)
 
-Status: building (2026-10-17). The owner asked for step 6 on 2026-10-17
+Status: done (2026-10-17: pull request #121 merged, closing #93; the
+owner's review of the cut, the upload to the release, and holoml #66
+still to come). The owner asked for step 6 on 2026-10-17
 ("Step 6 and then step 10") and approved the plan the same day with
 the recommended answers (Q1 a, Q2 a, Q3 a, Q4 a, Q5 a).
 
@@ -7679,7 +7683,8 @@ page's "In motion" section, which also links the video on the release.
 
 ## Issue #97: entries for the curated lists (promotion plan, step 10)
 
-Status: prepared (2026-10-17); the submissions are the owner's. The
+Status: prepared (2026-10-17; pull request #122 merged 2026-10-18);
+the submissions are the owner's. The
 owner asked for step 10 on 2026-10-17, after step 6. docs/launch/
 lists.md holds, for each of the four lists, its rules as read from its
 contributing file that day, whether the project qualifies today, the
@@ -7787,6 +7792,31 @@ computer; the workflows take over after.
 
 Results:
 
+- The way on (the owner, 2026-10-19, after a review of both
+  repositories): two waves. First the blockers, which are the
+  owner's: the video attached to the 0.9.1 release (the README's and
+  the landing page's links to it answer 404 until then), holoml #66
+  merged, the checks by eye (the landing page and the viewer in
+  Firefox and Safari and from the keyboard, RL6's icon, the zips on a
+  Mac and on Linux), step 2's three links, and the three lists' pull
+  requests; beside them, step 11 (#98) and step 12 (#99) drafted for
+  the owner's edits and step 16 (holoml #58) planned ("holoml #58:
+  the playground" above). Then the playground, and npm (step 14) if the owner's
+  accounts are ready, before launch day; the launch (step 12) with
+  the video's clips; and steps 13, 17, and 18 the week after.
+  Electron's security releases are checked again on launch day (rule
+  13; last 2026-10-15). Seen in the review: the web viewer shows a
+  dark screen for about ten seconds before Harbour Loft's first frame
+  (holoml #51, loading feedback, is the issue for it).
+- Step 10 prepared (2026-10-17, pull request #122, merged 2026-10-18):
+  docs/launch/lists.md and the electron/apps folder; "Issue #97"
+  above. The submissions are the owner's.
+- Step 6 done (2026-10-17, pull request #121, closing #93): `pnpm
+  screenshots:video`, the 58-second video (not committed) and the
+  nine-second GIF in this README and the landing page; "Issue #93"
+  above. Still the owner's: the review of the cut, the upload to the
+  release with a line in its notes, and holoml #66 (the GIF in
+  holoml's README).
 - Step 1 done (2026-10-14): pull request #89 merged by the owner, and
   main pulled in both repositories. In its automatic builds the Linux
   part 3 job missed once, on U5 (m18's slider): the harness's click on

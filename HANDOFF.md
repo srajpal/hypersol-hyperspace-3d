@@ -1,18 +1,19 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-16 (the promotion plan approved, TODO.md, "The
+Last updated 2026-10-19 (the promotion plan approved, TODO.md, "The
 promotion plan (2026-10-14)": 19 steps, each a GitHub issue, #90 to
-#101 here and #54 to #60 in holoml; steps 1, 3, 5, and 7 done (release
+#101 here and #54 to #60 in holoml; steps 1 and 3 to 10 done: release
 0.9.1 published 2026-10-16 as a portable zip for Windows, Linux, and
-macOS, #113; macOS in
-the automatic builds, #110, and the owner's Mac run, issue #111 for
-what it misses), step 4, the
-HoloML viewer for ordinary browsers, merged here (#106) and in its
-holoml pull request (#64), Pages still to be turned on (TODO.md,
-"Issue #91"; Pages on since 2026-10-17), step 8's settings applied
-(#95), and step 9's landing page published (#96, 2026-10-17; TODO.md,
-"Issue #96"); milestones 1 to 28 accepted,
+macOS (#113); macOS in the automatic builds (#110) and the owner's
+Mac's 17 misses settled (#114, closing #111); the HoloML viewer for
+ordinary browsers (#106, holoml #64), Pages on since 2026-10-17; the
+repository settings (#117); the landing page (#118); the video and the
+GIF (#121; the video still to be attached to the release, and holoml
+#66, its README's GIF, to be merged); the curated lists' entries
+drafted (#122, for the owner to send). On 2026-10-19 the owner chose
+two waves: the records tidied, steps 11 and 12 drafted, and step 16,
+the playground, planned to land before launch day; milestones 1 to 28 accepted,
 milestone 28, lift to 3D, on 2026-10-10, prompt 201; no more
 milestones (prompt 203): work continues from GitHub issues, the first
 of them #75, full screen and pointer lock, accepted 2026-10-10; the
@@ -837,10 +838,10 @@ to this repository for rules and the prompt log.
    Q4's text view without WebGL 2 needs a viewer change and waits for
    the owner's word). holoml's half, "Open it here" on the examples'
    pages, the README, and the docs home page, with a how-to guide, is
-   holoml pull request #64 (#55). Still the owner's: turn Pages on for
-   this repository (Settings, Pages, source GitHub Actions); the
-   viewer's address answers 404 until then, and Firefox and Safari are
-   then checked by hand. The browser's copies of the examples
+   holoml pull request #64 (#55), merged. Pages is on for this
+   repository since 2026-10-17 (source GitHub Actions), and the
+   viewer's address answers; Firefox and Safari are the owner's to
+   check by hand. The browser's copies of the examples
    (pnpm holoml:sync) can be refreshed from holoml's next tag.
    Step 10 (#97), the entries for the curated lists, prepared
    2026-10-17 in docs/launch/lists.md (TODO.md, "Issue #97"): the
@@ -850,8 +851,8 @@ to this repository for rules and the prompt log.
    ready to send; awesome-electron waits for 100 stars and 30 days.
    The owner sends each from their own account; where each went goes
    here.
-   Step 6 (#93), the video and the GIF, built 2026-10-17 in its pull
-   request (TODO.md, "Issue #93": the plan, the owner's answers, all
+   Step 6 (#93), the video and the GIF, built 2026-10-17 and merged
+   (pull request #121; TODO.md, "Issue #93": the plan, the owner's answers, all
    recommended, the cut, the checks VG1 to VG6, and the results):
    `pnpm screenshots:video` (tests/screenshots/video.capture.ts,
    video-encode.mjs, gif.mjs with gif.test.ts) makes
@@ -861,7 +862,9 @@ to this repository for rules and the prompt log.
    0.9.1 release (`gh release upload v0.9.1
    _video/hyperspace-3d-0.9.1.webm`), adds a line to its notes, and
    reviews the cut; holoml's README shows the GIF by its raw address
-   (holoml's pull request).
+   (holoml pull request #66, open, its checks passed). Until the video
+   is attached, the README's and the landing page's links to it answer
+   404 (checked 2026-10-19).
    Step 9 (#96), the landing page, done 2026-10-17 (pull request
    #118 merged, the page published at
    https://srajpal.github.io/hypersol-hyperspace-3d/; TODO.md, "Issue
@@ -875,10 +878,17 @@ to this repository for rules and the prompt log.
    and video have their marked place in it. Pages is on since
    2026-10-17 (GitHub Actions as the source), so pages.yml publishes
    from main after lint, the type check, and the unit tests.
-   Next in the plan: step 6, the video and the GIF (#93), which fills
-   the landing page's marked place and the top of both READMEs; steps
-   10 to 13 (the lists, the article, the launch kit, the case study)
-   and holoml's 14 to 18 can follow or run beside it.
+   Next in the plan (the owner, 2026-10-19: two waves): first the
+   blockers that are the owner's (the video attached to the release,
+   holoml #66 merged, the checks by eye, step 2's three links, the
+   three lists' pull requests), with step 11, the article (#98,
+   docs/story.md), and step 12, the launch kit (#99, docs/launch/),
+   drafted for the owner's edits, and step 16, the playground (holoml
+   #58), planned (TODO.md, "holoml #58"); the playground, and npm if
+   the owner's accounts are ready (step 14), land before launch day;
+   then the launch (step 12) with the video's clips, and steps 13, 17,
+   and 18 the week after. Electron's security releases are checked
+   again on launch day (rule 13).
    Step 8 (#95) done 2026-10-16 (TODO.md, "Issue #95": the values,
    the two pictures, the owner's steps, and what was set): in both
    repositories Discussions are on, the wiki and Projects off, the
@@ -889,8 +899,7 @@ to this repository for rules and the prompt log.
    https://srajpal.github.io/hypersol-hyperspace-3d/; #84 and #78
    carry "good first issue" and "help wanted", #77, #76, #80, holoml
    #47, and #48 "help wanted"; both repositories are pinned on the
-   owner's profile. Pages is still to be turned on (the homepage and
-   the viewer answer 404 until then).
+   owner's profile. Pages is on since 2026-10-17.
    Step 7 (#94, pull request #110, merged 2026-10-15): macOS is in the
    automatic builds, lint, types, unit tests, and the build required
    and the end-to-end checks an experiment "All checks" does not wait
@@ -900,8 +909,9 @@ to this repository for rules and the prompt log.
    checks do (2026-10-15), with 17 misses grouped there (full screen,
    the microphone's system dialog, the checks' Ctrl words, macOS's own
    ways with windows and menus, two budgets): #81 is closed with that
-   record, and the 17 are issue #111, to be settled on a Mac one by
-   one; the look by eye and the microphone dialog's answer go there.
+   record, and the 17 were issue #111, settled on the Mac one group at
+   a time (pull request #114, merged 2026-10-16; TODO.md, "Issue
+   #111").
    Step 5 (#92) done: release 0.9.1 as a portable zip (pull request
    #113, merged 2026-10-16; TODO.md, "Issue #92": the plan, the
    owner's answers, the results): Electron 44.7.2, the icon from the
