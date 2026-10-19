@@ -7758,6 +7758,173 @@ in them were checked against the code, the documents, and the
 published addresses on 2026-10-19. `<ARTICLE>` and `<PLAYGROUND>` mark
 the addresses that do not exist yet.
 
+## holoml #58: the playground (promotion plan, step 16)
+
+Status: plan, for the owner's approval (2026-10-19). Nothing is built
+yet. The owner asked for this plan on 2026-10-19, for the playground
+to land before launch day ("The promotion plan", results: two waves).
+
+### What there is today
+
+- The checker runs in a plain browser as it is: @holoml/parser's
+  `parse(text)` (packages/parser/src/index.ts) has no dependencies and
+  throws a `HoloParseError` with `code`, `detail`, and `position`
+  (line, column, offset; from 1, columns in UTF-16 units) at the first
+  syntax mistake; @holoml/schema's `check(doc)` returns every
+  `Problem` (`code`, `message`, `line`, `column`) in document order.
+  Neither uses a Node API, but both are TypeScript sources that import
+  each other by `.ts` names, and holoml's root has no bundler (esbuild
+  is a development package of packages/vscode only).
+- holoml's site (site/build.mjs, `pnpm site:build`) is Markdown pages
+  and the example sites, with one script (site/code.js), no content
+  policy, and site/site.test.ts (links, pages, nothing from another
+  site, headings and the skip link, contrast of style.css's colour
+  pairs). The examples' "Open it here" links (holoml #64) open the
+  browser repository's viewer by its `?page=` address.
+- The viewer on the web (this repository's site/viewer, "Issue #91")
+  takes a page only by `?page=<https address>`: host.js fetches it, up
+  to 2 MB, puts its text in the document with a `<base>` of its
+  address, and loads the viewer, which reads the text once (main.ts,
+  `start`); there is no way to give it text, and no way to draw a
+  changed page but loading it again. Its problems from `check()` go to
+  the console only; a syntax mistake shows a card with its line and
+  column. Scripts run only from the page's own site.
+- Both sites are on one origin, `https://srajpal.github.io`: a page of
+  holoml's site may frame the viewer and talk to it, and the
+  examples' models are fetched from that same origin.
+- The README's sample page names `models/coupe.glb` and
+  `coupe.holoml`, which are not on the site; the showroom's models are
+  (examples/showroom/models).
+
+### How it would work (proposed)
+
+A page at `https://srajpal.github.io/holoml/playground/` on holoml's
+site, linked from the site's home page, the README, and every
+example's page:
+
+- **The editor**, on the left: a plain `<textarea>` with a column of
+  line numbers beside it, in the site's own fonts and colours; no
+  editor library (Q2). Tab moves the keyboard on, as everywhere on the
+  site; Ctrl+] and Ctrl+[ indent and outdent the lines chosen.
+- **The problems**, under the editor, as you type (a quarter of a
+  second after the last key): the parse error, or every `check()`
+  problem, each with its line, column, and code, as a list that a
+  click or Enter takes the caret to; the count read out to screen
+  readers (`aria-live="polite"`), and each problem's line marked in
+  the numbers' column. "No problems" when there are none.
+- **The scene**, on the right: the viewer in a frame, given the
+  editor's text and a base address by a message from the playground
+  (the change below), drawn again when the text has had no problems
+  for a second, and at once with Ctrl+Enter or the Run button; a
+  switch turns drawing as you type off for heavy pages (Q3). While a
+  page has a problem, the last scene that had none stays, dimmed, with
+  a line saying so.
+- **The presets**, a menu over the editor: "A first page" (the
+  README's sample, made to name one of the showroom's models, with the
+  showroom's folder as its base), and the seven examples, each read
+  from the site with its own folder as the base, so its models,
+  pictures, and scripts load as they do on the example itself.
+  Choosing one asks first if the text was changed.
+- **Nothing is sent anywhere.** The playground fetches only the
+  presets, from its own site; the viewer fetches only what the page
+  names, from the base's site. The text is kept in the tab's session
+  storage, so a reload does not lose it, and nowhere else.
+- **Small screens:** the editor above the scene. **Without WebGL 2:**
+  the problems still work, and the scene's place says the page cannot
+  be drawn in this browser.
+
+The change to the viewer (this repository, site/viewer/host.js): with
+`?from=parent` in place of `?page=`, the host takes the page from its
+parent frame instead of fetching it: one message
+`{holomlPlayground: 1, text, base}`, accepted only from
+`window.parent`, only when the message's origin is the host's own,
+with `base` an https address on that origin, and the text at most 2
+MB, the same limit as a fetched page. Everything after is as today:
+the `<base>`, the text in the document, the viewer's own checks, and
+scripts only from the base's site. To draw a changed page the
+playground loads the frame again (the viewer reads its page once;
+making it read a second page in place is a larger change to the
+viewer, not proposed). The models come from the browser's cache on
+the second draw, so a redraw costs the scene's building, not the
+network.
+
+The checker in the browser (holoml): the site's build writes the
+parser's and the checker's sources as plain JavaScript modules into
+the site's `playground/` folder with Node's own type stripping
+(`stripTypeScriptTypes` from `node:module`, in Node 24), their `.ts`
+imports renamed `.js`: no new software (Q1). Tried on 2026-10-19 with Node
+24.21.0: the parser's source strips cleanly, with Node's warning that
+the function is experimental (holoml's Pages workflow runs Node 24
+too). A unit test checks that the written modules give the same results as the sources for every
+conformance sample.
+
+### Questions
+
+- **Q1. The checker's JavaScript.** (a) Node's own type stripping in
+  site/build.mjs, as above: nothing new. (b) esbuild, already a
+  development package of packages/vscode, added to holoml's root: it
+  bundles into one file, but it is a package in a new place (AGENTS.md
+  rule 4). Recommended: a.
+- **Q2. The editor.** (a) A textarea with line numbers and the
+  problems list; no colours in the text. (b) CodeMirror 6: colours,
+  bracket matching, and marks under mistakes; about 150 KB and new
+  software (rule 4). (c) The textarea now, and colours by an overlay
+  later, as an issue of its own. Recommended: a, then c.
+- **Q3. Drawing as you type.** (a) After a second without problems and
+  without keys, with a switch to turn it off, and Ctrl+Enter or Run at
+  any time. (b) Only by Ctrl+Enter or Run. Recommended: a; how long
+  Harbour Loft takes to draw again from the cache is measured in PG4.
+- **Q4. Sharing a page by link.** (a) Not in this issue. (b) A Share
+  button that puts the text in the address's fragment (after `#`,
+  never sent to a server), so a link opens the playground with that
+  page. A shared page can name scripts on srajpal.github.io only, as
+  any page there can, but it would run them in a frame its parent
+  page can reach, for whoever opens the link: that deserves its own
+  look. Recommended: a, and a separate issue for b.
+- **Q5. Where the checks live.** (a) holoml's site.test.ts for the
+  page as built (links, nothing from another site, headings, the skip
+  link, contrast) and a unit test for the written modules; this
+  repository's web-viewer.e2e.ts for the viewer's new way in and for
+  the playground itself, built from the holoml folder beside this one
+  (as the screenshots of the documentation are), in a plain Electron
+  window as WV1 to WV8 are. (b) A browser runner in holoml
+  (Playwright): new software there. Recommended: a.
+
+### Tasks (with the recommended answers)
+
+1. This repository: host.js's `?from=parent` and its rules, documented
+   (ARCHITECTURE.md, docs/privacy.md's "The viewer on the web");
+   checks PG1 and PG2.
+2. holoml: site/playground/ (the page, its script, its styles from the
+   site's tokens), the build writing the checker's modules, the
+   presets, links from the site's home, the README, and the examples'
+   pages; a how-to guide, "Try a page in the playground"; site.test.ts
+   and the modules' unit test.
+3. This repository: PG3 to PG8 in web-viewer.e2e.ts, using the holoml
+   folder's built site.
+4. Both repositories' documents (the READMEs, the CHANGELOGs,
+   HANDOFF.md, this section's results); the landing page links the
+   playground.
+5. Two pull requests, this repository's first, so the viewer's way in
+   is published before the playground uses it.
+
+### Checks (named PG, for the playground)
+
+| Check | What | Pass when |
+|---|---|---|
+| PG1 | The viewer's way in | With `?from=parent`, a same-origin parent's message draws the page with its base; a message from another origin, from another frame, without a base, with a base on another origin or over http, or over 2 MB is refused with the host's card, and nothing is fetched for it |
+| PG2 | As before | `?page=` behaves as WV1 to WV8 say (they pass unchanged) |
+| PG3 | Problems as you type | A page with a syntax mistake shows the one error with its line and column; a page with problems lists each, in order, with line, column, and code, matching the checker run on the same text; a click or Enter on one puts the caret there |
+| PG4 | The scene | The first page draws; an edit that changes a colour draws again after the pause and by Ctrl+Enter (the time logged); a page with a problem keeps the last scene, marked; the switch stops drawing as you type |
+| PG5 | The presets | Each of the seven examples loads as a preset and draws with its models, as on its own page (Harbour Loft's script and doors among them); a changed text is not replaced without asking |
+| PG6 | Nothing sent | Every request in a session (presets, edits, redraws) goes to the site (the fixture server in the checks); none carries the text |
+| PG7 | Keyboard and screen readers | Everything is reached and used from the keyboard; Tab leaves the editor; the problems' count is announced; the colours pass site.test.ts's contrast check |
+| PG8 | Without WebGL 2 | The problems work; the scene's place says the page cannot be drawn here |
+
+### Size
+
+M: about a day for both pull requests, with the checks.
+
 ## The promotion plan (2026-10-14)
 
 On 2026-10-14 the owner asked for a review of the README and the
