@@ -280,8 +280,9 @@ bugs and enhancements, one at a time (installers were dropped on
 being worked first, since 2026-10-14, make the project easier to try
 and to find (the plan is in [TODO.md](TODO.md), "The promotion
 plan"): done so far, a HoloML viewer for ordinary browsers, macOS in
-the automatic builds, and the 0.9.1 preview with its portable zip;
-still to come, a video, a landing page, the launch posts, and HoloML's
+the automatic builds, the 0.9.1 preview with its portable zip, a
+video, and a [landing page](https://srajpal.github.io/hypersol-hyperspace-3d/);
+still to come, a HoloML playground, the launch posts, and HoloML's
 packages on npm and its extension in the editors' registries. Ideas for later: phones, and VR. The roadmap that was,
 milestones 1 to 28, is in [TODO.md](TODO.md).
 

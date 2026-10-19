@@ -6954,7 +6954,8 @@ packager was set up, and no icon.
 
 ## Issue #111: the 17 checks on a Mac
 
-Status: building (2026-10-15, the owner's prompt after #94's MC3: the
+Status: done (2026-10-16: pull request #114 merged, closing #111;
+built from 2026-10-15, the owner's prompt after #94's MC3: the
 17 end-to-end checks a Mac in hand misses, grouped there in five
 parts, each to be settled as the app's fault or the check's on the
 owner's Mac and fixed accordingly; nothing that only Windows or Linux
@@ -6994,7 +6995,7 @@ run changes). The run's numbers and each miss's error are under "Issue
 - [x] The documents' macOS sentences (README, CONTRIBUTING.md,
       AGENTS.md's Testing, ARCHITECTURE.md section 11)
 - [x] The whole `pnpm test:e2e` once on the Mac, its summary recorded
-- [ ] The pull request that closes #111
+- [x] The pull request that closes #111 (#114, merged 2026-10-16)
 
 ### What was found, by group
 
@@ -7286,8 +7287,9 @@ run changes). The run's numbers and each miss's error are under "Issue
 ## Issue #95: repository settings (promotion plan, step 8)
 
 Status: done (2026-10-16): the owner applied steps 2 to 5 the same
-day, as the table says (the results below); step 1, Pages, is still
-to be turned on, and the homepage answers 404 until it is. The owner
+day, as the table says (the results below); step 1, Pages, followed
+on 2026-10-17 (GitHub Actions as the source), and the homepage
+answers. The owner
 asked for step 8 on 2026-10-16, prepared for them to apply.
 Settings, labels, uploads, and pins are the owner's (AGENTS.md rules 3
 and 4: nothing is published or changed outside the repository by the
@@ -7546,7 +7548,9 @@ pages.yml publishes it from main.
 
 ## Issue #93: a one-minute video and a ten-second GIF (promotion plan, step 6)
 
-Status: building (2026-10-17). The owner asked for step 6 on 2026-10-17
+Status: done (2026-10-17: pull request #121 merged, closing #93; the
+owner's review of the cut, the upload to the release, and holoml #66
+still to come). The owner asked for step 6 on 2026-10-17
 ("Step 6 and then step 10") and approved the plan the same day with
 the recommended answers (Q1 a, Q2 a, Q3 a, Q4 a, Q5 a).
 
@@ -7679,7 +7683,8 @@ page's "In motion" section, which also links the video on the release.
 
 ## Issue #97: entries for the curated lists (promotion plan, step 10)
 
-Status: prepared (2026-10-17); the submissions are the owner's. The
+Status: prepared (2026-10-17; pull request #122 merged 2026-10-18);
+the submissions are the owner's. The
 owner asked for step 10 on 2026-10-17, after step 6. docs/launch/
 lists.md holds, for each of the four lists, its rules as read from its
 contributing file that day, whether the project qualifies today, the
@@ -7722,6 +7727,203 @@ in HANDOFF.md and here.
   README, by their raw addresses; the four screenshots' raw addresses
   answer 200. Not done yet: the three pull requests that qualify
   today (the owner's), awesome-electron's once the stars allow.
+
+## Issue #98: the long-form article (promotion plan, step 11)
+
+Status: drafted (2026-10-19), for the owner's edits; the owner posts
+it. The owner asked for it on 2026-10-19 (the two waves, "The
+promotion plan", results). docs/story.md: the 2001 story and the
+concept screen, the 25-year gap, how 203 published prompts built the
+browser and HoloML in 17 days under the five moves, what the agents
+got wrong and which checks caught it (the WebRTC rule Chromium
+ignores, the review and the advisories, checks that looked too early,
+drawing in software, the Mac's 17, what only a person saw), HoloML's
+README sample, a link that opens Harbour Loft in any browser, and what
+is next. Three title choices at the top; two places marked for the
+owner's own words (the company's end, and how much of the code the
+owner read); a table of where every number comes from (as of
+2026-10-19), and the pictures' raw addresses for dev.to.
+
+## Issue #99: the launch kit (promotion plan, step 12)
+
+Status: drafted (2026-10-19), for the owner's edits; the owner posts
+every piece. docs/launch/: README.md (the checklist before the day,
+the order on the day, and after), show-hn.md (three titles, the link,
+the first comment, the questions to expect), faq.md (eleven answers),
+reddit.md (six subreddits, each written for its readers, their rules
+to be read on the day), threejs-forum.md (a Showcase post), and
+social.md (the four clips with their alt text, and a five-post thread
+for Mastodon and Bluesky, each post under 300 characters). The facts
+in them were checked against the code, the documents, and the
+published addresses on 2026-10-19. `<ARTICLE>` and `<PLAYGROUND>` mark
+the addresses that do not exist yet.
+
+## holoml #58: the playground (promotion plan, step 16)
+
+Status: plan, for the owner's approval (2026-10-19). Nothing is built
+yet. The owner asked for this plan on 2026-10-19, for the playground
+to land before launch day ("The promotion plan", results: two waves).
+
+### What there is today
+
+- The checker runs in a plain browser as it is: @holoml/parser's
+  `parse(text)` (packages/parser/src/index.ts) has no dependencies and
+  throws a `HoloParseError` with `code`, `detail`, and `position`
+  (line, column, offset; from 1, columns in UTF-16 units) at the first
+  syntax mistake; @holoml/schema's `check(doc)` returns every
+  `Problem` (`code`, `message`, `line`, `column`) in document order.
+  Neither uses a Node API, but both are TypeScript sources that import
+  each other by `.ts` names, and holoml's root has no bundler (esbuild
+  is a development package of packages/vscode only).
+- holoml's site (site/build.mjs, `pnpm site:build`) is Markdown pages
+  and the example sites, with one script (site/code.js), no content
+  policy, and site/site.test.ts (links, pages, nothing from another
+  site, headings and the skip link, contrast of style.css's colour
+  pairs). The examples' "Open it here" links (holoml #64) open the
+  browser repository's viewer by its `?page=` address.
+- The viewer on the web (this repository's site/viewer, "Issue #91")
+  takes a page only by `?page=<https address>`: host.js fetches it, up
+  to 2 MB, puts its text in the document with a `<base>` of its
+  address, and loads the viewer, which reads the text once (main.ts,
+  `start`); there is no way to give it text, and no way to draw a
+  changed page but loading it again. Its problems from `check()` go to
+  the console only; a syntax mistake shows a card with its line and
+  column. Scripts run only from the page's own site.
+- Both sites are on one origin, `https://srajpal.github.io`: a page of
+  holoml's site may frame the viewer and talk to it, and the
+  examples' models are fetched from that same origin.
+- The README's sample page names `models/coupe.glb` and
+  `coupe.holoml`, which are not on the site; the showroom's models are
+  (examples/showroom/models).
+
+### How it would work (proposed)
+
+A page at `https://srajpal.github.io/holoml/playground/` on holoml's
+site, linked from the site's home page, the README, and every
+example's page:
+
+- **The editor**, on the left: a plain `<textarea>` with a column of
+  line numbers beside it, in the site's own fonts and colours; no
+  editor library (Q2). Tab moves the keyboard on, as everywhere on the
+  site; Ctrl+] and Ctrl+[ indent and outdent the lines chosen.
+- **The problems**, under the editor, as you type (a quarter of a
+  second after the last key): the parse error, or every `check()`
+  problem, each with its line, column, and code, as a list that a
+  click or Enter takes the caret to; the count read out to screen
+  readers (`aria-live="polite"`), and each problem's line marked in
+  the numbers' column. "No problems" when there are none.
+- **The scene**, on the right: the viewer in a frame, given the
+  editor's text and a base address by a message from the playground
+  (the change below), drawn again when the text has had no problems
+  for a second, and at once with Ctrl+Enter or the Run button; a
+  switch turns drawing as you type off for heavy pages (Q3). While a
+  page has a problem, the last scene that had none stays, dimmed, with
+  a line saying so.
+- **The presets**, a menu over the editor: "A first page" (the
+  README's sample, made to name one of the showroom's models, with the
+  showroom's folder as its base), and the seven examples, each read
+  from the site with its own folder as the base, so its models,
+  pictures, and scripts load as they do on the example itself.
+  Choosing one asks first if the text was changed.
+- **Nothing is sent anywhere.** The playground fetches only the
+  presets, from its own site; the viewer fetches only what the page
+  names, from the base's site. The text is kept in the tab's session
+  storage, so a reload does not lose it, and nowhere else.
+- **Small screens:** the editor above the scene. **Without WebGL 2:**
+  the problems still work, and the scene's place says the page cannot
+  be drawn in this browser.
+
+The change to the viewer (this repository, site/viewer/host.js): with
+`?from=parent` in place of `?page=`, the host takes the page from its
+parent frame instead of fetching it: one message
+`{holomlPlayground: 1, text, base}`, accepted only from
+`window.parent`, only when the message's origin is the host's own,
+with `base` an https address on that origin, and the text at most 2
+MB, the same limit as a fetched page. Everything after is as today:
+the `<base>`, the text in the document, the viewer's own checks, and
+scripts only from the base's site. To draw a changed page the
+playground loads the frame again (the viewer reads its page once;
+making it read a second page in place is a larger change to the
+viewer, not proposed). The models come from the browser's cache on
+the second draw, so a redraw costs the scene's building, not the
+network.
+
+The checker in the browser (holoml): the site's build writes the
+parser's and the checker's sources as plain JavaScript modules into
+the site's `playground/` folder with Node's own type stripping
+(`stripTypeScriptTypes` from `node:module`, in Node 24), their `.ts`
+imports renamed `.js`: no new software (Q1). Tried on 2026-10-19 with Node
+24.21.0: the parser's source strips cleanly, with Node's warning that
+the function is experimental (holoml's Pages workflow runs Node 24
+too). A unit test checks that the written modules give the same results as the sources for every
+conformance sample.
+
+### Questions
+
+- **Q1. The checker's JavaScript.** (a) Node's own type stripping in
+  site/build.mjs, as above: nothing new. (b) esbuild, already a
+  development package of packages/vscode, added to holoml's root: it
+  bundles into one file, but it is a package in a new place (AGENTS.md
+  rule 4). Recommended: a.
+- **Q2. The editor.** (a) A textarea with line numbers and the
+  problems list; no colours in the text. (b) CodeMirror 6: colours,
+  bracket matching, and marks under mistakes; about 150 KB and new
+  software (rule 4). (c) The textarea now, and colours by an overlay
+  later, as an issue of its own. Recommended: a, then c.
+- **Q3. Drawing as you type.** (a) After a second without problems and
+  without keys, with a switch to turn it off, and Ctrl+Enter or Run at
+  any time. (b) Only by Ctrl+Enter or Run. Recommended: a; how long
+  Harbour Loft takes to draw again from the cache is measured in PG4.
+- **Q4. Sharing a page by link.** (a) Not in this issue. (b) A Share
+  button that puts the text in the address's fragment (after `#`,
+  never sent to a server), so a link opens the playground with that
+  page. A shared page can name scripts on srajpal.github.io only, as
+  any page there can, but it would run them in a frame its parent
+  page can reach, for whoever opens the link: that deserves its own
+  look. Recommended: a, and a separate issue for b.
+- **Q5. Where the checks live.** (a) holoml's site.test.ts for the
+  page as built (links, nothing from another site, headings, the skip
+  link, contrast) and a unit test for the written modules; this
+  repository's web-viewer.e2e.ts for the viewer's new way in and for
+  the playground itself, built from the holoml folder beside this one
+  (as the screenshots of the documentation are), in a plain Electron
+  window as WV1 to WV8 are. (b) A browser runner in holoml
+  (Playwright): new software there. Recommended: a.
+
+### Tasks (with the recommended answers)
+
+1. This repository: host.js's `?from=parent` and its rules, documented
+   (ARCHITECTURE.md, docs/privacy.md's "The viewer on the web");
+   checks PG1 and PG2.
+2. holoml: site/playground/ (the page, its script, its styles from the
+   site's tokens), the build writing the checker's modules, the
+   presets, links from the site's home, the README, and the examples'
+   pages; a how-to guide, "Try a page in the playground"; site.test.ts
+   and the modules' unit test.
+3. This repository: PG3 to PG8 in web-viewer.e2e.ts, using the holoml
+   folder's built site.
+4. Both repositories' documents (the READMEs, the CHANGELOGs,
+   HANDOFF.md, this section's results); the landing page links the
+   playground.
+5. Two pull requests, this repository's first, so the viewer's way in
+   is published before the playground uses it.
+
+### Checks (named PG, for the playground)
+
+| Check | What | Pass when |
+|---|---|---|
+| PG1 | The viewer's way in | With `?from=parent`, a same-origin parent's message draws the page with its base; a message from another origin, from another frame, without a base, with a base on another origin or over http, or over 2 MB is refused with the host's card, and nothing is fetched for it |
+| PG2 | As before | `?page=` behaves as WV1 to WV8 say (they pass unchanged) |
+| PG3 | Problems as you type | A page with a syntax mistake shows the one error with its line and column; a page with problems lists each, in order, with line, column, and code, matching the checker run on the same text; a click or Enter on one puts the caret there |
+| PG4 | The scene | The first page draws; an edit that changes a colour draws again after the pause and by Ctrl+Enter (the time logged); a page with a problem keeps the last scene, marked; the switch stops drawing as you type |
+| PG5 | The presets | Each of the seven examples loads as a preset and draws with its models, as on its own page (Harbour Loft's script and doors among them); a changed text is not replaced without asking |
+| PG6 | Nothing sent | Every request in a session (presets, edits, redraws) goes to the site (the fixture server in the checks); none carries the text |
+| PG7 | Keyboard and screen readers | Everything is reached and used from the keyboard; Tab leaves the editor; the problems' count is announced; the colours pass site.test.ts's contrast check |
+| PG8 | Without WebGL 2 | The problems work; the scene's place says the page cannot be drawn here |
+
+### Size
+
+M: about a day for both pull requests, with the checks.
 
 ## The promotion plan (2026-10-14)
 
@@ -7787,6 +7989,31 @@ computer; the workflows take over after.
 
 Results:
 
+- The way on (the owner, 2026-10-19, after a review of both
+  repositories): two waves. First the blockers, which are the
+  owner's: the video attached to the 0.9.1 release (the README's and
+  the landing page's links to it answer 404 until then), holoml #66
+  merged, the checks by eye (the landing page and the viewer in
+  Firefox and Safari and from the keyboard, RL6's icon, the zips on a
+  Mac and on Linux), step 2's three links, and the three lists' pull
+  requests; beside them, step 11 (#98) and step 12 (#99) drafted for
+  the owner's edits and step 16 (holoml #58) planned ("holoml #58:
+  the playground" above). Then the playground, and npm (step 14) if the owner's
+  accounts are ready, before launch day; the launch (step 12) with
+  the video's clips; and steps 13, 17, and 18 the week after.
+  Electron's security releases are checked again on launch day (rule
+  13; last 2026-10-15). Seen in the review: the web viewer shows a
+  dark screen for about ten seconds before Harbour Loft's first frame
+  (holoml #51, loading feedback, is the issue for it).
+- Step 10 prepared (2026-10-17, pull request #122, merged 2026-10-18):
+  docs/launch/lists.md and the electron/apps folder; "Issue #97"
+  above. The submissions are the owner's.
+- Step 6 done (2026-10-17, pull request #121, closing #93): `pnpm
+  screenshots:video`, the 58-second video (not committed) and the
+  nine-second GIF in this README and the landing page; "Issue #93"
+  above. Still the owner's: the review of the cut, the upload to the
+  release with a line in its notes, and holoml #66 (the GIF in
+  holoml's README).
 - Step 1 done (2026-10-14): pull request #89 merged by the owner, and
   main pulled in both repositories. In its automatic builds the Linux
   part 3 job missed once, on U5 (m18's slider): the harness's click on
