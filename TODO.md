@@ -7760,7 +7760,9 @@ the addresses that do not exist yet.
 
 ## holoml #58: the playground (promotion plan, step 16)
 
-Status: building (2026-10-19). The owner asked for this plan on
+Status: built (2026-10-19), in two pull requests for the owner's
+review: #124 here (the viewer's way in, PG1 to PG8) and holoml #67
+(the playground). The owner asked for this plan on
 2026-10-19, for the playground to land before launch day ("The
 promotion plan", results: two waves), and approved it the same day
 with the recommended answers (Q1 a, Q2 a, Q3 a, Q4 a, Q5 a), the
@@ -7934,6 +7936,43 @@ M: about a day for both pull requests, with the checks.
   and AGENTS.md's Testing say so. PG1 (three checks in
   tests/e2e/web-viewer.e2e.ts, with tests/fixtures/viewer-parent.html)
   and PG2 pass: the file's 12 checks, 12 passed, after `pnpm build`.
+  Pull request #124, stacked on #123.
+- Task 2 (holoml, branch `issue-58-playground`, pull request holoml
+  #67): site/playground/ (the
+  page, playground.js, playground.css, first.holoml: the README's
+  sample made to name the showroom's Quellis), the builder writing it
+  into the site's frame with its content policy, the checker's three
+  modules (checkerModule, Node's own type stripping), the presets from
+  the examples' titles, and a Playground entry in every page's bar;
+  links from the docs home (the paragraph, and "Edit it in the
+  playground" for each example), the guides' index, the README, and
+  each example's front page; the guide "Try a page in the playground".
+  site.test.ts: the playground as built (four checks), the Y6 checks
+  over it too, and the checker's modules answering as the sources do
+  for 125 conformance samples, every example page, and the first page
+  (three checks). holoml: 895 tests pass, lint and the type check
+  clean. The builder's links within the site keep a query now (the
+  presets' `?preset=`), checking the file without it.
+- Task 3 (this repository): PG3 to PG8 in web-viewer.e2e.ts, using the
+  holoml folder beside this one, built into tests/fixtures/pg/: the
+  file's 18 checks, 18 passed (2026-10-19, Windows 11, with the
+  graphics card). PG4 logged the first page drawn again 1283 ms after
+  an edit (the pause is 1 s); PG5 drew all seven presets in 12 s.
+  Tried by hand in the browser pane too, both sites served side by
+  side: the first page, a mistake marked and the scene dimmed, the
+  colour changed and drawn again, and Harbour Loft as a preset with its
+  script.
+- Task 4: the landing page links the playground, and its note on the
+  examples' scripts is corrected (they run in the viewer, as both
+  sites are on srajpal.github.io); the README too.
+- Found while building, not part of this issue: in the viewer on the
+  web, a link to another HoloML page (the showroom's cars, the
+  sneaker store's shoes) leads to the `.holoml` file itself, which
+  GitHub Pages sends as `application/octet-stream`, a download, since
+  the viewer follows a link with `location.assign`; in the playground,
+  such a click leaves the scene the same way. The fix belongs to the
+  viewer on the web (following a link to a HoloML page through the
+  host's `?page=`), for the owner's approval.
 
 ## The promotion plan (2026-10-14)
 

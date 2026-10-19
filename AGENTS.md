@@ -665,7 +665,14 @@ milestone's checks are defined in TODO.md):
   (tests/fixtures/viewer-parent.html) with `?from=parent` draws the
   page its parent gives it; one offered by another site, another
   frame, without a base, with a base elsewhere, or over 2 MB is
-  refused with nothing fetched; and WV1 to WV8 pass unchanged.
+  refused with nothing fetched; and WV1 to WV8 pass unchanged. PG3
+  to PG8 check the playground itself, built from the holoml folder
+  beside this one with its examples into tests/fixtures/pg/ (ignored,
+  removed after) beside this site's build, on one origin: the problems
+  as you type against the checker, drawing after an edit and by
+  Ctrl+Enter, the scene kept through a problem, the switch, the seven
+  presets, nothing sent, the keyboard, and no WebGL 2. Without the
+  holoml folder (GitHub's machines) they are skipped, and say so.
 - GitHub issue #96 checks LP1 to LP6 (TODO.md, "Issue #96"): the
   browser's landing page at the site's root. site/site.test.ts, in
   `pnpm test`, builds the page alone (`node site/build.mjs --page

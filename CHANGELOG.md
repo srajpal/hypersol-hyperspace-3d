@@ -18,6 +18,9 @@
   playground): one message with the text and its address, from the
   parent and the site's own origin only, at most 2 MB. Not part of the
   app.
+- The landing page links HoloML's new playground, and its note on the
+  examples' scripts says what is so: they run in the viewer on the
+  web, as both sites are on srajpal.github.io.
 
 ## 0.9.1 — developer preview (2026-10-15)
 
