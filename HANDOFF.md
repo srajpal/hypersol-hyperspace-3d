@@ -889,6 +889,14 @@ to this repository for rules and the prompt log.
    then the launch (step 12) with the video's clips, and steps 13, 17,
    and 18 the week after. Electron's security releases are checked
    again on launch day (rule 13).
+   The playground (holoml #58), approved 2026-10-19 with the
+   recommended answers, is built in two pull requests: #124 here (the
+   viewer's `?from=parent` and checks PG1 to PG8; PG3 to PG8 need the
+   holoml folder beside this one and are skipped without it) and
+   holoml #67 (the page); merge #123, then #124, then holoml #67.
+   Found then, for the owner: in the viewer on the web a link to
+   another HoloML page leads to the `.holoml` file, which GitHub Pages
+   sends as a download (TODO.md, "holoml #58", results).
    Step 8 (#95) done 2026-10-16 (TODO.md, "Issue #95": the values,
    the two pictures, the owner's steps, and what was set): in both
    repositories Discussions are on, the wiki and Projects off, the
