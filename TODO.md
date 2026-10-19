@@ -7728,6 +7728,36 @@ in HANDOFF.md and here.
   answer 200. Not done yet: the three pull requests that qualify
   today (the owner's), awesome-electron's once the stars allow.
 
+## Issue #98: the long-form article (promotion plan, step 11)
+
+Status: drafted (2026-10-19), for the owner's edits; the owner posts
+it. The owner asked for it on 2026-10-19 (the two waves, "The
+promotion plan", results). docs/story.md: the 2001 story and the
+concept screen, the 25-year gap, how 203 published prompts built the
+browser and HoloML in 17 days under the five moves, what the agents
+got wrong and which checks caught it (the WebRTC rule Chromium
+ignores, the review and the advisories, checks that looked too early,
+drawing in software, the Mac's 17, what only a person saw), HoloML's
+README sample, a link that opens Harbour Loft in any browser, and what
+is next. Three title choices at the top; two places marked for the
+owner's own words (the company's end, and how much of the code the
+owner read); a table of where every number comes from (as of
+2026-10-19), and the pictures' raw addresses for dev.to.
+
+## Issue #99: the launch kit (promotion plan, step 12)
+
+Status: drafted (2026-10-19), for the owner's edits; the owner posts
+every piece. docs/launch/: README.md (the checklist before the day,
+the order on the day, and after), show-hn.md (three titles, the link,
+the first comment, the questions to expect), faq.md (eleven answers),
+reddit.md (six subreddits, each written for its readers, their rules
+to be read on the day), threejs-forum.md (a Showcase post), and
+social.md (the four clips with their alt text, and a five-post thread
+for Mastodon and Bluesky, each post under 300 characters). The facts
+in them were checked against the code, the documents, and the
+published addresses on 2026-10-19. `<ARTICLE>` and `<PLAYGROUND>` mark
+the addresses that do not exist yet.
+
 ## The promotion plan (2026-10-14)
 
 On 2026-10-14 the owner asked for a review of the README and the
