@@ -7974,9 +7974,11 @@ M: about a day for both pull requests, with the checks.
   viewer on the web (following a link to a HoloML page through the
   host's `?page=`), for the owner's approval.
 
-## Links between HoloML pages in the viewer on the web (plan)
+## Issue #125: links between HoloML pages in the viewer on the web
 
-Status: planned (2026-10-19), for the owner's approval; nothing built.
+Status: built (2026-10-19), for the owner's review; approved the same
+day with the recommended answers (Q1 a, Q2 a, Q3 a, Q4 a, Q5 a), and
+the agent filed GitHub issue #125 for it.
 Found while building the playground (above). It matters for the
 launch: the showroom is about choosing a car, and on the web each car
 is a download.
@@ -8118,6 +8120,43 @@ In tests/e2e/web-viewer.e2e.ts unless said otherwise.
 ### Size
 
 S: about half a day, with the checks, and the small holoml change.
+
+### Results (Windows 11, 2026-10-19)
+
+- Task 1: apps/browser/src/viewer/links.ts (`linkAddress`,
+  `toAnotherPage`, `cameFromAnotherPage`; `isHolomlPage` and
+  `sameDocument` moved there from scene.ts) and links.test.ts (7
+  checks); scene.ts reads the mark once, as the view is built, beside
+  the page's base, and uses it for the scene's click, the outline's
+  `a`, Ctrl+click and the middle button, the fade, and the fade in;
+  host.js sets `data-holoml-host="web"` before it adds the viewer.
+- Task 2 (holoml, branch `issue-125-web-links`, stacked on holoml #67):
+  shoe.js reads `document.baseURI`, and so does Blockworld's game.js
+  for `?seed=` and `?hour=` (the same fault, found while there; one
+  line, for the owner to keep or drop); the fake scene of the examples'
+  script tests gives a `document.baseURI`, and a new check holds the
+  shoe to it with `location` set to the viewer's (it fails on the old
+  shoe.js). in-a-browser.md and playground.md say how links behave;
+  the CHANGELOG. holoml: 893 tests passed and 3 skipped, lint and the
+  type check clean; one file did not run, the VS Code package's
+  (packages/vscode/src/package.test.ts, untouched), whose esbuild
+  could not start from the deep scratch folder the branch was checked
+  out in (Windows' path length). The copy here: `pnpm holoml:sync --examples
+  24bc7d1` (the examples' front pages come along, with holoml main's
+  "Open it here" and playground links).
+- Task 3: WL1 to WL8 in web-viewer.e2e.ts, in plain windows of their
+  own partition with one test-only preload,
+  tests/e2e/web-viewer-hooks.cjs, that marks the viewer's script as
+  the browser's test runs do, so the viewer gives its test hooks (where
+  a link is, the fade, the places, the choices); WV1 to WV8 and PG1
+  to PG8 run without it. All eight pass; with the host's mark taken
+  out, WL1, WL2, WL3, WL4, WL6, and WL7 fail (the Quellis not opened,
+  the outline's links to the files, the frame staying on its page), as
+  they should. WL9: the unit tests, 612 passed and 2 skipped; lint and
+  the type check clean; after `pnpm build`, web-viewer.e2e.ts, m14,
+  m19, and m20 together: 60 passed and 6 skipped (PG3 to PG8, which
+  need the holoml folder beside the checkout, absent beside this
+  worktree), with the graphics card.
 
 ## The promotion plan (2026-10-14)
 

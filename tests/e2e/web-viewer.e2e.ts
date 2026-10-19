@@ -9,7 +9,8 @@
  * page is what any browser gets. Firefox and Safari are checked by hand.
  * PG1 and PG2 (TODO.md, "holoml #58: the playground") check the viewer's
  * second way in, a page given by the frame's parent, as the playground
- * gives it (tests/fixtures/viewer-parent.html).
+ * gives it (tests/fixtures/viewer-parent.html). WL1 to WL8 (TODO.md,
+ * "Issue #125") follow links between HoloML pages there.
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, rmSync } from 'node:fs';
@@ -43,10 +44,17 @@ afterAll(async () => {
 /** The host page on the site, for a page's address (by its file: the fixture server does not map a folder to its index). */
 const host = (page: string | null, on: FixtureServer = server) => `${on.url('web-viewer/viewer/index.html')}${page === null ? '' : `?page=${encodeURIComponent(page)}`}`;
 
-/** Opens an address in a plain window (no preload, its own partition), off every display, and gives its id; `noWebGL` is the window without WebGL, as the app's tabs are switched off (main/security.ts). */
-async function openPlain(app: Harness, url: string, noWebGL = false): Promise<number> {
+/** The preload of WL1 to WL8's windows: the viewer's test hooks, as in the browser's test runs (web-viewer-hooks.cjs). */
+const HOOKS = join(FIXTURES_DIR, '../e2e/web-viewer-hooks.cjs');
+
+/**
+ * Opens an address in a plain window (no preload, its own partition), off every display, and gives its id; `noWebGL` is the
+ * window without WebGL, as the app's tabs are switched off (main/security.ts); `hooks`, a partition of its own with the
+ * preload that gives the viewer's test hooks (WL1 to WL8).
+ */
+async function openPlain(app: Harness, url: string, noWebGL = false, hooks = false): Promise<number> {
   return app.app.evaluate(
-    async ({ BrowserWindow, screen }, { url, noWebGL }) => {
+    async ({ BrowserWindow, screen }, { url, noWebGL, preload }) => {
       const right = Math.max(...screen.getAllDisplays().map((d) => d.bounds.x + d.bounds.width));
       const w = new BrowserWindow({
         x: right + 200,
@@ -56,7 +64,15 @@ async function openPlain(app: Harness, url: string, noWebGL = false): Promise<nu
         show: true,
         focusable: false,
         skipTaskbar: true,
-        webPreferences: { partition: 'web-viewer-check', sandbox: true, contextIsolation: true, nodeIntegration: false, backgroundThrottling: false, webgl: !noWebGL },
+        webPreferences: {
+          partition: preload ? 'web-viewer-hooks' : 'web-viewer-check',
+          sandbox: true,
+          contextIsolation: true,
+          nodeIntegration: false,
+          backgroundThrottling: false,
+          webgl: !noWebGL,
+          ...(preload ? { preload } : {}),
+        },
       });
       // A load that fails is said so (the harness blocks every host but 127.0.0.1).
       await w.loadURL(url).catch((e: unknown) => {
@@ -64,7 +80,7 @@ async function openPlain(app: Harness, url: string, noWebGL = false): Promise<nu
       });
       return w.id;
     },
-    { url, noWebGL },
+    { url, noWebGL, preload: hooks ? HOOKS : null },
   );
 }
 
@@ -590,6 +606,260 @@ describe.skipIf(!HAS_HOLOML)('PG3 to PG8: the playground (holoml #58)', () => {
       expect(await inPlain<boolean>(h, id, "document.getElementById('pg-run').disabled")).toBe(true);
       await type(id, (await editorText(id)).replace('scale="1.8"', 'scale="big"'));
       await waitFor('the problem', () => count(id), (t) => t === '1 problem.', 10_000);
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+});
+
+/** The address the plain window shows. */
+const urlOf = (id: number) => h.app.evaluate(({ BrowserWindow }, { id }) => BrowserWindow.fromId(id)!.webContents.getURL(), { id });
+/** The page the host shows by its address (its `?page=`), or null. */
+const pageOf = (url: string) => new URL(url).searchParams.get('page');
+
+/**
+ * What the plain windows download, and the windows a page asks to open,
+ * recorded in the main process: nothing is saved, and no window opens (so
+ * nothing comes onto the display during a run).
+ */
+async function recordLeaving(id: number): Promise<void> {
+  await h.app.evaluate(
+    ({ BrowserWindow, session }, { id }) => {
+      const g = globalThis as { __wlDownloads?: string[]; __wlOpened?: string[] };
+      if (!g.__wlDownloads) {
+        g.__wlDownloads = [];
+        session.fromPartition('web-viewer-hooks').on('will-download', (e, item) => {
+          g.__wlDownloads!.push(item.getURL());
+          e.preventDefault();
+        });
+      }
+      g.__wlOpened ??= [];
+      BrowserWindow.fromId(id)!.webContents.setWindowOpenHandler(({ url }) => {
+        g.__wlOpened!.push(url);
+        return { action: 'deny' };
+      });
+    },
+    { id },
+  );
+}
+const downloads = () => h.app.evaluate(() => [...((globalThis as { __wlDownloads?: string[] }).__wlDownloads ?? [])]);
+const opened = () => h.app.evaluate(() => [...((globalThis as { __wlOpened?: string[] }).__wlOpened ?? [])]);
+
+/** Where the scene's link to an address ending so is on the window (or the thing `thing` inside it), checked to be that link. */
+async function linkPoint(id: number, ending: string, thing?: string): Promise<{ x: number; y: number; href: string }> {
+  const links = await inPlain<string[]>(h, id, 'window.__holoml.links()');
+  const i = links.findIndex((l) => l.endsWith(ending));
+  expect(i, `a link to …${ending} among ${links.join(', ')}`).toBeGreaterThanOrEqual(0);
+  const p = (await waitFor(`the link to …${ending} in view`, () => inPlain<{ x: number; y: number } | null>(h, id, `window.__holoml.point(${thing === undefined ? i : JSON.stringify(thing)})`), (v) => v !== null))!;
+  expect(await inPlain<string | null>(h, id, `window.__holoml.linkAt(${p.x}, ${p.y})`), 'the link at its own centre').toBe(links[i]);
+  return { x: p.x, y: p.y, href: links[i]! };
+}
+
+/** A left click (Ctrl+click with `control`) in the plain window, again until `done` (a click can be lost while the window draws its first frames). */
+async function clickLinkUntil(id: number, p: { x: number; y: number }, what: string, done: () => Promise<boolean>, modifiers: 'control'[] = []): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    await h.app.evaluate(
+      ({ BrowserWindow }, { id, x, y, modifiers }) => {
+        const wc = BrowserWindow.fromId(id)!.webContents;
+        wc.sendInputEvent({ type: 'mouseMove', x, y, modifiers });
+        wc.sendInputEvent({ type: 'mouseDown', x, y, button: 'left', clickCount: 1, modifiers });
+        wc.sendInputEvent({ type: 'mouseUp', x, y, button: 'left', clickCount: 1, modifiers });
+      },
+      { id, x: Math.round(p.x), y: Math.round(p.y), modifiers },
+    );
+    try {
+      await waitFor(`${what} (click ${attempt} of 3)`, done, (v) => v, attempt < 3 ? 5000 : 20_000);
+      return;
+    } catch (e) {
+      if (attempt >= 3) throw new Error(`${e instanceof Error ? e.message : String(e)}; the window shows ${await describePlain(h, id)}; downloads: ${JSON.stringify(await downloads())}`);
+    }
+  }
+}
+
+interface Fade {
+  opacity: number;
+  arriving: boolean;
+  log: { to: number }[];
+}
+
+/** The page arrived through the fade: dark at once, clear again once drawn. */
+async function fadedIn(id: number): Promise<void> {
+  const f = (await waitFor('the fade in', () => inPlain<Fade | null>(h, id, 'window.__holoml.fade()'), (v) => v !== null && !v.arriving && v.opacity === 0 && v.log.length >= 2))!;
+  expect(f.log[0]!.to, 'dark at first').toBe(1);
+  expect(f.log.at(-1)!.to, 'then clear').toBe(0);
+}
+
+describe('WL1 to WL8: links between HoloML pages (issue #125)', () => {
+  const SHOWROOM = () => server.url('holoml/showroom/index.holoml');
+  const QUELLIS = () => server.url('holoml/showroom/quellis.holoml');
+  const HOST = () => server.url('web-viewer/viewer/index.html');
+  const title = (id: number) => inPlain<string>(h, id, "document.getElementById('title').textContent");
+
+  it('WL1 a click on a link to another HoloML page opens it in the viewer, through the fade, and nothing is downloaded; WL3 Back and Forward', async () => {
+    const id = await openPlain(h, host(SHOWROOM()), false, true);
+    try {
+      await recordLeaving(id);
+      await drawn(id, 'the showroom');
+      const p = await linkPoint(id, '/showroom/quellis.holoml');
+      await clickLinkUntil(id, p, 'the Quellis', async () => pageOf(await urlOf(id)) === QUELLIS());
+      const url = new URL(await urlOf(id));
+      expect(`${url.origin}${url.pathname}`).toBe(HOST());
+      const f = await drawn(id, 'the Quellis');
+      expect(f.title).toBe('Quellis in red · HoloML showroom');
+      expect(await title(id)).toBe('Quellis in red · HoloML showroom');
+      await fadedIn(id);
+      expect(await downloads()).toEqual([]);
+      // WL3: Back returns to the showroom, and Forward to the Quellis.
+      await inPlain(h, id, 'history.back()');
+      await waitFor('back to the showroom', async () => pageOf(await urlOf(id)), (v) => v === SHOWROOM());
+      expect((await drawn(id, 'the showroom again')).title).toBe('HoloML showroom');
+      await inPlain(h, id, 'history.forward()');
+      await waitFor('forward to the Quellis', async () => pageOf(await urlOf(id)), (v) => v === QUELLIS());
+      expect((await drawn(id, 'the Quellis again')).title).toBe('Quellis in red · HoloML showroom');
+      expect(await downloads()).toEqual([]);
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
+  it("WL2 the outline's links lead where the scene's do, in the text view too, and Enter on one follows it", async () => {
+    const id = await openPlain(h, host(SHOWROOM()), false, true);
+    try {
+      await recordLeaving(id);
+      await drawn(id, 'the showroom');
+      const hrefs = await inPlain<string[]>(h, id, "[...document.querySelectorAll('#holoml-outline a')].map((a) => a.href)");
+      expect(hrefs.length).toBe(6);
+      for (const href of hrefs) {
+        const url = new URL(href);
+        expect(`${url.origin}${url.pathname}`, href).toBe(HOST());
+        expect(pageOf(href), href).toMatch(/\/holoml\/showroom\/[a-z]+\.holoml$/);
+      }
+      // The text view shows the same links.
+      await keyInPlain(h, id, 'V', ['control', 'shift']);
+      await waitFor('the text view', () => inPlain<boolean>(h, id, "document.body.classList.contains('holoml-text-view')"), (v) => v === true);
+      expect(await inPlain<string[]>(h, id, "[...document.querySelectorAll('#holoml-outline a')].filter((a) => a.getClientRects().length > 0).map((a) => a.href)")).toEqual(hrefs);
+      await keyInPlain(h, id, 'V', ['control', 'shift']);
+      await waitFor('3D again', () => inPlain<boolean>(h, id, "document.body.classList.contains('holoml-text-view')"), (v) => v === false);
+      await inPlain(h, id, "document.querySelector('#holoml-outline a[href*=\"quellis.holoml\"]').focus()");
+      expect(await inPlain<string>(h, id, 'document.activeElement?.textContent ?? ""')).toMatch(/Quellis/);
+      await keyInPlain(h, id, 'Return');
+      await waitFor('the Quellis by Enter', async () => pageOf(await urlOf(id)), (v) => v === QUELLIS());
+      expect((await drawn(id, 'the Quellis')).title).toBe('Quellis in red · HoloML showroom');
+      await fadedIn(id);
+      expect(await downloads()).toEqual([]);
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
+  it("WL3 a link to a place on another page arrives at that place (Harbour Loft's terrace to the terrace door)", async () => {
+    const id = await openPlain(h, host(server.url('holoml/harbour-loft/terrace.holoml')), false, true);
+    try {
+      await recordLeaving(id);
+      await drawn(id, 'the terrace');
+      // Facing the stair house's door, as m19's tour does.
+      await inPlain(h, id, '(holoml.viewer.position = [-3.6, 1.6, 0.4], holoml.viewer.lookAt([-3.6, 1.1, -1]), true)');
+      const p = await linkPoint(id, '/harbour-loft/index.holoml#terrace-door', 'flat-door');
+      await clickLinkUntil(id, p, 'the loft', async () => pageOf(await urlOf(id)) === server.url('holoml/harbour-loft/index.holoml#terrace-door'));
+      expect((await drawn(id, 'the loft')).title).toBe('Harbour Loft');
+      await waitFor('at the terrace door', () => inPlain<{ current: string | null }>(h, id, 'window.__holoml.places()'), (v) => v.current === 'terrace-door');
+      expect(new URL(await urlOf(id)).hash).toBe('#terrace-door');
+      expect(await downloads()).toEqual([]);
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
+  it('WL4 a link to a place on the page itself moves there without leaving the document, and Back returns', async () => {
+    const PLACES = server.url('holoml/places.holoml');
+    const id = await openPlain(h, host(PLACES), false, true);
+    try {
+      await recordLeaving(id);
+      await drawn(id, 'the places');
+      await inPlain(h, id, 'window.__stayed = true');
+      const p = await linkPoint(id, '/places.holoml#kitchen');
+      await clickLinkUntil(id, p, 'the kitchen', async () => (await inPlain<{ current: string | null }>(h, id, 'window.__holoml.places()')).current === 'kitchen');
+      expect(await inPlain<boolean | undefined>(h, id, 'window.__stayed'), 'the same document').toBe(true);
+      const url = new URL(await urlOf(id));
+      expect(pageOf(url.href)).toBe(PLACES);
+      expect(url.hash).toBe('#kitchen');
+      await inPlain(h, id, 'history.back()');
+      await waitFor('back in the hall', () => inPlain<{ current: string | null }>(h, id, 'window.__holoml.places()'), (v) => v.current === 'hall');
+      expect(await inPlain<boolean | undefined>(h, id, 'window.__stayed')).toBe(true);
+      expect(await downloads()).toEqual([]);
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
+  it('WL5 a link to an ordinary page goes to that page (the sofa studio to its cart)', async () => {
+    const id = await openPlain(h, host(server.url('holoml/sofa-studio/index.holoml')), false, true);
+    try {
+      await recordLeaving(id);
+      await drawn(id, 'the sofa studio');
+      expect(await inPlain<string>(h, id, "document.querySelector('#holoml-outline a[href$=\"cart.html\"]')?.href ?? ''")).toBe(server.url('holoml/sofa-studio/cart.html'));
+      const p = await linkPoint(id, '/sofa-studio/cart.html');
+      await clickLinkUntil(id, p, 'the cart', async () => (await urlOf(id)) === server.url('holoml/sofa-studio/cart.html'));
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
+  it("WL6 Ctrl+click opens the viewer's address for the page, not the file, and the scene stays", async () => {
+    const id = await openPlain(h, host(SHOWROOM()), false, true);
+    try {
+      await recordLeaving(id);
+      await drawn(id, 'the showroom');
+      const before = (await opened()).length;
+      const p = await linkPoint(id, '/showroom/quellis.holoml');
+      await clickLinkUntil(id, p, 'a new window asked for', async () => (await opened()).length > before, ['control']);
+      const asked = (await opened()).slice(before);
+      expect(asked.length).toBe(1);
+      const url = new URL(asked[0]!);
+      expect(`${url.origin}${url.pathname}`).toBe(HOST());
+      expect(pageOf(url.href)).toBe(QUELLIS());
+      expect(pageOf(await urlOf(id))).toBe(SHOWROOM());
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
+  it("WL7 in the playground's frame, a link to another HoloML page opens it in the frame by ?page=", async () => {
+    const id = await openPlain(h, server.url('viewer-parent.html'), false, true);
+    const inFrame = <T>(expression: string) =>
+      h.app.evaluate(
+        ({ BrowserWindow }, { id, expression, viewer }) => {
+          const frame = BrowserWindow.fromId(id)!.webContents.mainFrame.framesInSubtree.find((f) => f.url.startsWith(viewer));
+          if (!frame) throw new Error('No viewer frame in the window');
+          return frame.executeJavaScript(expression, true) as Promise<unknown>;
+        },
+        { id, expression, viewer: HOST() },
+      ) as Promise<T>;
+    try {
+      await recordLeaving(id);
+      await inPlain(h, id, `frameViewer(${JSON.stringify(`${HOST()}?from=parent`)})`);
+      await waitFor('ready heard', () => inPlain<{ state: string }[]>(h, id, 'heard'), (v) => v.some((m) => m.state === 'ready'), 20_000);
+      const text = readFileSync(join(FIXTURES_DIR, 'holoml/showroom/index.holoml'), 'utf8');
+      await inPlain(h, id, `offer(${JSON.stringify({ holomlPlayground: 1, text, base: SHOWROOM() })})`);
+      await waitFor('drawn in the frame', () => inFrame<string | undefined>('document.documentElement.dataset.state'), (s) => s === 'drawn', 45_000);
+      // From the keyboard: the outline's link, focused, and Enter.
+      await inFrame("document.querySelector('#holoml-outline a[href*=\"quellis.holoml\"]').focus()");
+      await keyInPlain(h, id, 'Return');
+      await waitFor('the Quellis in the frame', () => inFrame<string>('location.href'), (u) => pageOf(u) === QUELLIS());
+      await waitFor('the Quellis drawn', () => inFrame<string | undefined>('document.documentElement.dataset.state'), (s) => s === 'drawn', 45_000);
+      expect(await inFrame<string>("document.getElementById('title').textContent")).toBe('Quellis in red · HoloML showroom');
+      expect(await urlOf(id), 'the parent page stays').toBe(server.url('viewer-parent.html'));
+      expect(await downloads()).toEqual([]);
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
+  it("WL8 the shoe opens in the colour its address asks for, as the page's script reads the page's own address", async () => {
+    const id = await openPlain(h, host(server.url('holoml/sneaker-store/shoe.holoml?colour=ember')), false, true);
+    try {
+      await drawn(id, 'the shoe');
+      await waitFor('the colour asked for', () => inPlain<{ id: string | null; value: string }[]>(h, id, 'window.__holoml.choices()'), (c) => c.find((x) => x.id === 'colour')?.value === 'ember');
     } finally {
       await closePlain(h, id);
     }

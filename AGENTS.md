@@ -685,6 +685,19 @@ milestone's checks are defined in TODO.md):
   stylesheet at WCAG 2.2 AA (LP1 to LP4); WV8 finds the page beside
   the viewer (LP5); the published page in Chrome, Firefox, Safari,
   and from the keyboard is checked by hand (LP6).
+- GitHub issue #125 checks WL1 to WL9 (TODO.md, "Issue #125"; same
+  command, tests/e2e/web-viewer.e2e.ts, in part 1): in the viewer on
+  the web, a click, or Enter on the outline's link, opens another
+  HoloML page in the viewer by `?page=` with its title and the fade,
+  and nothing is downloaded; Back and Forward; a place on another page
+  and on the page itself; an ordinary page; Ctrl+click; the
+  playground's frame; and the shoe's colour from its own address.
+  Their plain windows, in a partition of their own, have one test-only
+  preload, tests/e2e/web-viewer-hooks.cjs, which marks the viewer's
+  script as the browser's test runs do, for the viewer's test hooks. The
+  rule for the address is a unit test (viewer/links.test.ts), and
+  m14's P4, m19's places, and m20's shoe page check that the desktop
+  follows links as before (WL9).
 - No more milestones (prompt 203): polish (29) was taken off the
   roadmap, and installers before it (prompt 172). A fix for a GitHub
   issue adds its checks to the file of the part it changes, or to a

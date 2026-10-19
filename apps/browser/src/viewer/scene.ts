@@ -100,6 +100,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { check, CLICKABLE, HoloParseError, parse, type ElementNode, type HoloNode } from '@hypersol/holoml';
 import { Budget, LeftOut, LIMITS, Unreadable, Unsupported, type Claim, type LoadedFiles } from './budget';
 import { keptByControl, orbitControls, TURN_SPEED, walkControls, WALK_SPEED, type ViewControls } from './controls';
+import { cameFromAnotherPage, linkAddress, toAnotherPage, type Here } from './links';
 import { InstancePool, canInstance, centreOf, countTriangles, isShown, worldBox, type Template } from './instances';
 import { disposeDecoders, makeDecoders, type Decoders } from './decoders';
 import { direction, mark, own as ownLanguage, UNSTATED, type Language } from './language';
@@ -483,6 +484,13 @@ export class HolomlView {
   private readonly raycaster = new Raycaster();
   private readonly base = document.baseURI;
   private readonly origin = new URL(document.baseURI).origin;
+  /**
+   * On a plain page, whose host opens a HoloML page by its own address with
+   * `?page=` (site/viewer/host.js; issue #125). The host marks the document
+   * before it adds the viewer, so this is read before any script of the
+   * page exists.
+   */
+  private readonly onTheWeb = document.documentElement.dataset['holomlHost'] === 'web';
   private readonly textColor: string;
   readonly budget = new Budget();
   readonly entries: Entry[] = [];
@@ -761,7 +769,7 @@ export class HolomlView {
       window.addEventListener('hashchange', () => this.goTo(this.placeNamed(addressName()) ?? this.viewpoints[0]!));
     }
     // Arriving from another HoloML page of the same site: the scene fades in once drawn (a cut with reduced motion).
-    if (this.since('0.2') && !this.reducedMotion.matches && arrivedFromHolomlPage()) {
+    if (this.since('0.2') && !this.reducedMotion.matches && arrivedFromHolomlPage(this.here())) {
       this.arriving = true;
       void this.setFade(1, 0);
       window.setTimeout(() => this.arrive(), ARRIVAL_WAIT_MS);
@@ -3105,7 +3113,8 @@ export class HolomlView {
 
   private addLink(href: string, object: Object3D, el: ElementNode): HTMLElement {
     const anchor = document.createElement('a');
-    anchor.href = href;
+    // Where the link opens, so Enter, the browser's own middle-click and "Copy link", and the text view agree (issue #125).
+    anchor.href = linkAddress(href, this.here());
     const words: string[] = [];
     const collect = (n: HoloNode) => {
       if (n.type !== 'element') return;
@@ -3446,25 +3455,25 @@ export class HolomlView {
     return new Promise((resolve) => window.setTimeout(resolve, ms));
   }
 
-  /** Whether following a link fades: to another HoloML page of the same site, from a 0.2 page, without reduced motion. */
-  private fadesTo(href: string): boolean {
-    if (!this.since('0.2') || this.reducedMotion.matches) return false;
-    try {
-      const to = new URL(href);
-      return to.origin === location.origin && isHolomlPage(to) && !sameDocument(to, new URL(location.href));
-    } catch {
-      return false;
-    }
+  /** Where the viewer runs, for its links: on the web the page's address is its `<base>`, not the document's. */
+  private here(): Here {
+    return { document: location.href, page: this.onTheWeb ? document.baseURI : location.href, web: this.onTheWeb };
   }
 
-  /** Follows a link: to another HoloML page of the same site through a fade, else at once. */
+  /** Whether following a link fades: to another HoloML page of the same site, from a 0.2 page, without reduced motion. */
+  private fadesTo(href: string): boolean {
+    return this.since('0.2') && !this.reducedMotion.matches && toAnotherPage(href, this.here());
+  }
+
+  /** Follows a link: to another HoloML page of the same site through a fade, else at once; on the web, a HoloML page in the viewer (issue #125). */
   private follow(href: string): void {
+    const to = linkAddress(href, this.here());
     if (!this.fadesTo(href)) {
-      location.assign(href);
+      location.assign(to);
       return;
     }
     void this.setFade(1, FADE_OUT_MS).then(() => {
-      location.assign(href);
+      location.assign(to);
       // Still here a while later (the page did not go): clear again.
       window.setTimeout(() => void this.setFade(0, FADE_IN_MS), 5000);
     });
@@ -3739,7 +3748,7 @@ export class HolomlView {
       if (trigger) this.runTrigger(trigger);
       const link = this.linkAt(e.clientX, e.clientY);
       if (!link) return;
-      if (e.button === 1 || e.ctrlKey || e.metaKey) window.open(link.href, '_blank');
+      if (e.button === 1 || e.ctrlKey || e.metaKey) window.open(linkAddress(link.href, this.here()), '_blank');
       else if (e.button === 0) this.follow(link.href);
     });
     canvas.addEventListener('auxclick', (e) => e.preventDefault());
@@ -4370,26 +4379,11 @@ function placeName(vp: ElementNode): string {
   return collapse(attr(vp, 'label') ?? '') || attr(vp, 'id') || 'viewpoint';
 }
 
-/** A HoloML page, by its address. */
-function isHolomlPage(url: URL): boolean {
-  return /\.holoml$/i.test(url.pathname);
-}
-
-/** Two addresses of one document (they differ at most after #). */
-function sameDocument(a: URL, b: URL): boolean {
-  return a.origin === b.origin && a.pathname === b.pathname && a.search === b.search;
-}
-
 /** This page was opened from another HoloML page of the same site, by following a link (not Back, Forward, or reloading). */
-function arrivedFromHolomlPage(): boolean {
+function arrivedFromHolomlPage(here: Here): boolean {
   const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
   if (nav && nav.type !== 'navigate') return false;
-  try {
-    const from = new URL(document.referrer);
-    return from.origin === location.origin && isHolomlPage(from) && !sameDocument(from, new URL(location.href));
-  } catch {
-    return false;
-  }
+  return cameFromAnotherPage(document.referrer, here);
 }
 
 /** Draws a label's words into its sprite (again, when a script changes them). */
