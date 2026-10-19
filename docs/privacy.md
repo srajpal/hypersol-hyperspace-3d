@@ -354,7 +354,10 @@ at https://srajpal.github.io/hypersol-hyperspace-3d/viewer/, is a
 plain page, not the app: it fetches the HoloML page named in its
 address, with no credentials, and what that page names (its models,
 pictures, and sounds) from the page's own site or any https site; it
-runs a page's scripts only when the page is on that site itself. It
+runs a page's scripts only when the page is on that site itself. With
+`?from=parent` (HoloML's playground) it fetches no page: the page that
+frames it, on the same site, hands it the text, and the page's models
+are then fetched as above. It
 has no analytics, keeps nothing (no storage, no cookies), and sends
 nothing anywhere but to the addresses the page names. GitHub Pages
 serves it, and GitHub's own server logs apply to it as to any page

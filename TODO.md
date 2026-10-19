@@ -7760,9 +7760,11 @@ the addresses that do not exist yet.
 
 ## holoml #58: the playground (promotion plan, step 16)
 
-Status: plan, for the owner's approval (2026-10-19). Nothing is built
-yet. The owner asked for this plan on 2026-10-19, for the playground
-to land before launch day ("The promotion plan", results: two waves).
+Status: building (2026-10-19). The owner asked for this plan on
+2026-10-19, for the playground to land before launch day ("The
+promotion plan", results: two waves), and approved it the same day
+with the recommended answers (Q1 a, Q2 a, Q3 a, Q4 a, Q5 a), the
+viewer's change in this repository first.
 
 ### What there is today
 
@@ -7924,6 +7926,14 @@ conformance sample.
 ### Size
 
 M: about a day for both pull requests, with the checks.
+
+### Results so far (Windows 11, 2026-10-19)
+
+- Task 1 (this repository): site/viewer/host.js takes `?from=parent`
+  as the plan says; ARCHITECTURE.md, docs/privacy.md, the CHANGELOG,
+  and AGENTS.md's Testing say so. PG1 (three checks in
+  tests/e2e/web-viewer.e2e.ts, with tests/fixtures/viewer-parent.html)
+  and PG2 pass: the file's 12 checks, 12 passed, after `pnpm build`.
 
 ## The promotion plan (2026-10-14)
 

@@ -7,6 +7,9 @@
  * Chromium with none of the browser's preloads, hooks, or sessions (a
  * partition of its own), off every display like the test windows, so the
  * page is what any browser gets. Firefox and Safari are checked by hand.
+ * PG1 and PG2 (TODO.md, "holoml #58: the playground") check the viewer's
+ * second way in, a page given by the frame's parent, as the playground
+ * gives it (tests/fixtures/viewer-parent.html).
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync, rmSync } from 'node:fs';
@@ -277,6 +280,94 @@ describe('WV7: without WebGL 2', () => {
       });
       expect(await inPlain<string>(h, id, "document.getElementById('notice').textContent")).toMatch(/no WebGL 2/);
       expect(await inPlain<boolean>(h, id, "document.getElementById('bar').hidden")).toBe(false);
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+});
+
+/** Runs an expression in the viewer's frame of a plain window (the frame whose address asks for its page from its parent). */
+async function inViewerFrame<T>(app: Harness, id: number, expression: string): Promise<T> {
+  return app.app.evaluate(
+    ({ BrowserWindow }, { id, expression }) => {
+      const w = BrowserWindow.fromId(id);
+      if (!w) throw new Error(`No window ${id}`);
+      const frame = w.webContents.mainFrame.framesInSubtree.find((f) => f.url.includes('from=parent'));
+      if (!frame) throw new Error('No viewer frame in the window');
+      return frame.executeJavaScript(expression, true);
+    },
+    { id, expression },
+  ) as Promise<T>;
+}
+
+describe("PG1 and PG2: the viewer takes a page from its parent (holoml #58, the playground)", () => {
+  const SHOWROOM = readFileSync(join(FIXTURES_DIR, 'holoml/showroom/index.holoml'), 'utf8');
+  const frameState = (id: number) => inViewerFrame<string | undefined>(h, id, 'document.documentElement.dataset.state');
+  const frameNote = (id: number) => inViewerFrame<string>(h, id, "document.getElementById('note-title').textContent + ': ' + document.getElementById('note-text').textContent");
+
+  /** A parent page on a server, framing the viewer of this site with ?from=parent, waiting until the viewer listens. */
+  async function parentWithViewer(on: FixtureServer): Promise<number> {
+    const id = await openPlain(h, on.url('viewer-parent.html'));
+    await inPlain(h, id, `frameViewer(${JSON.stringify(`${server.url('web-viewer/viewer/index.html')}?from=parent`)})`);
+    await waitFor('the viewer waiting for its page', () => frameNote(id), (t) => t.includes('Waiting for the page'), 20_000);
+    return id;
+  }
+
+  it("PG1 a page given by the parent on the viewer's own site draws, with its base, and the parent hears how it went", async () => {
+    const before = new Map(server.hits);
+    const id = await parentWithViewer(server);
+    try {
+      await waitFor('ready heard', () => inPlain<{ state: string }[]>(h, id, 'heard'), (v) => v.some((m) => m.state === 'ready'));
+      await inPlain(h, id, `offer(${JSON.stringify({ holomlPlayground: 1, text: SHOWROOM, base: server.url('holoml/showroom/index.holoml') })})`);
+      await waitFor('drawn', () => frameState(id), (s) => s === 'drawn' || s === 'refused', 45_000);
+      expect(await frameState(id), await frameNote(id)).toBe('drawn');
+      const f = await inViewerFrame<Facts>(h, id, 'window.__holoml.scene()');
+      expect(f.error).toBeNull();
+      expect(f.problems).toEqual([]);
+      expect(f.title).toBe('HoloML showroom');
+      expect(f.entryCount).toBeGreaterThan(5);
+      const heard = await inPlain<{ state: string; origin: string }[]>(h, id, 'heard');
+      expect(heard.map((m) => m.state)).toEqual(['ready', 'drawn']);
+      for (const m of heard) expect(m.origin).toBe(new URL(server.url('')).origin);
+      // The page's own text is never fetched: only its models, from beside its base.
+      const got = hitsSince(server, before).filter((p) => p !== '/form.html' && p !== '/favicon.ico');
+      expect(got).not.toContain('/holoml/showroom/index.holoml');
+      expect(got.some((p) => p.startsWith('/holoml/showroom/models/'))).toBe(true);
+      for (const path of got) expect(path).toMatch(/^\/(viewer-parent\.html|web-viewer\/|holoml\/showroom\/)/);
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
+  it('PG1 a page offered by another site, by another frame, without a base, with a base elsewhere, or over 2 MB is refused, and nothing is fetched for it', async () => {
+    const refusedFrom = async (on: FixtureServer, send: string, expected: RegExp) => {
+      const before = new Map(server.hits);
+      const id = await parentWithViewer(on);
+      try {
+        await inPlain(h, id, send);
+        await waitFor(`refused: ${send.slice(0, 60)}`, () => frameState(id), (s) => s === 'refused', 15_000);
+        expect(await frameNote(id)).toMatch(expected);
+        const got = hitsSince(server, before).filter((p) => p !== '/form.html' && p !== '/favicon.ico');
+        for (const path of got) expect(path, 'nothing fetched for a refused page').toMatch(/^\/(viewer-parent\.html|web-viewer\/viewer\/(index\.html|host\.js))/);
+      } finally {
+        await closePlain(h, id);
+      }
+    };
+    const base = server.url('holoml/showroom/index.holoml');
+    // A parent of another site: the viewer's "ready" goes to its own origin only, so that parent never hears it; what it sends anyway is refused.
+    await refusedFrom(other, `offer(${JSON.stringify({ holomlPlayground: 1, text: SHOWROOM, base })})`, /offered by another site/);
+    await refusedFrom(server, `offerFromSibling(${JSON.stringify({ holomlPlayground: 1, text: SHOWROOM, base })})`, /a frame other than/);
+    await refusedFrom(server, `offer(${JSON.stringify({ holomlPlayground: 1, text: SHOWROOM })})`, /without its text or its address/);
+    await refusedFrom(server, `offer(${JSON.stringify({ holomlPlayground: 1, text: SHOWROOM, base: other.url('holoml/showroom/index.holoml') })})`, /must be on this site/);
+    await refusedFrom(server, `offer(${JSON.stringify({ holomlPlayground: 1, text: SHOWROOM, base: 'http://shop.test/room.holoml' })})`, /must be on this site/);
+    await refusedFrom(server, `offer({ holomlPlayground: 1, text: 'x'.repeat(2 * 1024 * 1024 + 1), base: ${JSON.stringify(base)} })`, /larger than 2 MB/);
+  });
+
+  it('PG1 the address alone, with no page framing it, says where its page comes from', async () => {
+    const id = await openPlain(h, `${server.url('web-viewer/viewer/index.html')}?from=parent`);
+    try {
+      await waitFor('refused', () => state(id), (s) => s === 'refused', 15_000);
+      expect(await noteText(id)).toMatch(/takes its page from the page that frames it/);
     } finally {
       await closePlain(h, id);
     }
