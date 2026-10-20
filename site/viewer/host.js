@@ -12,6 +12,13 @@
 // The <base> element gives the viewer the page's own address, so the page's
 // relative paths resolve as in the browser, and "the page's own site" is
 // the page's; the policy then lets scripts run only from this site's origin.
+//
+// With ?from=parent in place of ?page= (HoloML's playground, holoml #58),
+// the page is not fetched: the frame's parent gives it, once, by a message
+// {holomlPlayground: 1, text, base}, taken only from the parent, only from
+// this host's own origin, with a base on that origin, and no more than the
+// same 2 MB. The host asks for it with {holomlViewer: 'ready'} to its own
+// origin, and tells the parent 'drawn' or 'refused' after.
 
 const VIEWER = new URL('assets/viewer.js', import.meta.url).href;
 /** No more of a page is read than the viewer's own limit of text (SPEC.md, the limits; 2 MB). */
@@ -29,6 +36,15 @@ const noteTitle = document.getElementById('note-title');
 const noteText = document.getElementById('note-text');
 const noteHelp = document.getElementById('note-help');
 
+const params = new URLSearchParams(location.search);
+/** The page comes from the parent frame (the playground), not from an address. */
+const FROM_PARENT = params.get('from') === 'parent';
+
+/** Tells the parent frame, when it gave the page, how it went; only to this host's own origin. */
+function tellParent(state, detail) {
+  if (FROM_PARENT && window.parent !== window) window.parent.postMessage({ holomlViewer: state, detail }, location.origin);
+}
+
 /** Shows why the page is not shown, with the help text. */
 function refuse(title, text) {
   noteTitle.textContent = title;
@@ -36,6 +52,7 @@ function refuse(title, text) {
   noteHelp.hidden = false;
   note.hidden = false;
   root.dataset.state = 'refused';
+  tellParent('refused', `${title}: ${text}`);
 }
 
 /** A line at the bottom of the scene, for the viewer's host to say something. */
@@ -71,6 +88,7 @@ function heard(e) {
     root.dataset.state = 'drawn';
     const facts = window.__holoml?.scene?.();
     if (facts && typeof facts.title === 'string' && facts.title) titleEl.textContent = facts.title;
+    tellParent('drawn');
   }
   if (typeof data.description === 'string') titleEl.title = data.description.slice(0, 500);
 }
@@ -108,8 +126,9 @@ async function readUpTo(response, limit) {
   return bytes;
 }
 
-async function main() {
-  const page = new URLSearchParams(location.search).get('page');
+/** The page by its address: fetched, within the rules; null when refused. */
+async function fetched() {
+  const page = params.get('page');
   if (page === null || page.trim() === '') return refuse('HoloML viewer', 'No page was given.');
   let url;
   try {
@@ -131,14 +150,48 @@ async function main() {
   if (response.url && !allowed(new URL(response.url))) return refuse('Not shown', `${url.href} led to ${response.url}, which is not fetched: only an https address, or an http one on this computer.`);
   const bytes = await readUpTo(response, TEXT_LIMIT);
   if (bytes === null) return refuse('Too large', `${url.href} is larger than 2 MB, the most a HoloML page may be.`);
-  const text = new TextDecoder().decode(bytes);
+  return { text: new TextDecoder().decode(bytes), base: response.url || url.href, hash: url.hash };
+}
+
+/** The page from the parent frame (the playground): its one message, within the rules; null when refused. */
+function given() {
+  if (window.parent === window) return refuse('HoloML viewer', 'This address takes its page from the page that frames it, and none does.');
+  noteText.textContent = 'Waiting for the page…';
+  return new Promise((resolve) => {
+    function offered(e) {
+      const data = e.data;
+      if (typeof data !== 'object' || data === null || data.holomlPlayground !== 1) return;
+      window.removeEventListener('message', offered);
+      if (e.source !== window.parent) return resolve(refuse('Not shown', 'A page was offered by a frame other than the one this viewer is in.'));
+      if (e.origin !== location.origin) return resolve(refuse('Not shown', `A page was offered by another site (${e.origin}); only a page of this site may give one.`));
+      if (typeof data.text !== 'string' || typeof data.base !== 'string') return resolve(refuse('Not shown', 'The page was offered without its text or its address.'));
+      let base;
+      try {
+        base = new URL(data.base);
+      } catch {
+        return resolve(refuse('Not shown', `"${data.base}" is not a web address.`));
+      }
+      if (!allowed(base) || base.origin !== location.origin) return resolve(refuse('Not shown', `A page's address must be on this site (${location.origin}); not ${base.origin}.`));
+      if (new TextEncoder().encode(data.text).byteLength > TEXT_LIMIT) return resolve(refuse('Too large', 'The page is larger than 2 MB, the most a HoloML page may be.'));
+      titleEl.textContent = base.href;
+      resolve({ text: data.text, base: base.href, hash: '' });
+    }
+    window.addEventListener('message', offered);
+    tellParent('ready');
+  });
+}
+
+async function main() {
+  const page = FROM_PARENT ? await given() : await fetched();
+  if (!page) return;
+  const { text } = page;
 
   // The page is in: its address is the base of everything it names, and its
   // text waits in the document for the viewer, as in the browser.
   const base = document.createElement('base');
-  base.href = response.url || url.href;
+  base.href = page.base;
   document.head.append(base);
-  if (url.hash && !location.hash) history.replaceState(null, '', `${location.pathname}${location.search}${url.hash}`);
+  if (page.hash && !location.hash) history.replaceState(null, '', `${location.pathname}${location.search}${page.hash}`);
   const pre = document.createElement('pre');
   pre.textContent = text;
   document.body.append(pre);

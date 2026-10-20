@@ -7,11 +7,15 @@
  * Chromium with none of the browser's preloads, hooks, or sessions (a
  * partition of its own), off every display like the test windows, so the
  * page is what any browser gets. Firefox and Safari are checked by hand.
+ * PG1 and PG2 (TODO.md, "holoml #58: the playground") check the viewer's
+ * second way in, a page given by the frame's parent, as the playground
+ * gives it (tests/fixtures/viewer-parent.html).
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { check, parse } from '../../packages/holoml/src/index';
 import { FIXTURES_DIR, startFixtureServer, type FixtureServer } from './fixture-server';
 import { launch, waitFor, type Harness } from './harness';
 
@@ -277,6 +281,315 @@ describe('WV7: without WebGL 2', () => {
       });
       expect(await inPlain<string>(h, id, "document.getElementById('notice').textContent")).toMatch(/no WebGL 2/);
       expect(await inPlain<boolean>(h, id, "document.getElementById('bar').hidden")).toBe(false);
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+});
+
+/** Runs an expression in the viewer's frame of a plain window (the frame whose address asks for its page from its parent). */
+async function inViewerFrame<T>(app: Harness, id: number, expression: string): Promise<T> {
+  return app.app.evaluate(
+    ({ BrowserWindow }, { id, expression }) => {
+      const w = BrowserWindow.fromId(id);
+      if (!w) throw new Error(`No window ${id}`);
+      const frame = w.webContents.mainFrame.framesInSubtree.find((f) => f.url.includes('from=parent'));
+      if (!frame) throw new Error('No viewer frame in the window');
+      return frame.executeJavaScript(expression, true);
+    },
+    { id, expression },
+  ) as Promise<T>;
+}
+
+describe("PG1 and PG2: the viewer takes a page from its parent (holoml #58, the playground)", () => {
+  const SHOWROOM = readFileSync(join(FIXTURES_DIR, 'holoml/showroom/index.holoml'), 'utf8');
+  const frameState = (id: number) => inViewerFrame<string | undefined>(h, id, 'document.documentElement.dataset.state');
+  const frameNote = (id: number) => inViewerFrame<string>(h, id, "document.getElementById('note-title').textContent + ': ' + document.getElementById('note-text').textContent");
+
+  /** A parent page on a server, framing the viewer of this site with ?from=parent, waiting until the viewer listens. */
+  async function parentWithViewer(on: FixtureServer): Promise<number> {
+    const id = await openPlain(h, on.url('viewer-parent.html'));
+    await inPlain(h, id, `frameViewer(${JSON.stringify(`${server.url('web-viewer/viewer/index.html')}?from=parent`)})`);
+    await waitFor('the viewer waiting for its page', () => frameNote(id), (t) => t.includes('Waiting for the page'), 20_000);
+    return id;
+  }
+
+  it("PG1 a page given by the parent on the viewer's own site draws, with its base, and the parent hears how it went", async () => {
+    const before = new Map(server.hits);
+    const id = await parentWithViewer(server);
+    try {
+      await waitFor('ready heard', () => inPlain<{ state: string }[]>(h, id, 'heard'), (v) => v.some((m) => m.state === 'ready'));
+      await inPlain(h, id, `offer(${JSON.stringify({ holomlPlayground: 1, text: SHOWROOM, base: server.url('holoml/showroom/index.holoml') })})`);
+      await waitFor('drawn', () => frameState(id), (s) => s === 'drawn' || s === 'refused', 45_000);
+      expect(await frameState(id), await frameNote(id)).toBe('drawn');
+      const f = await inViewerFrame<Facts>(h, id, 'window.__holoml.scene()');
+      expect(f.error).toBeNull();
+      expect(f.problems).toEqual([]);
+      expect(f.title).toBe('HoloML showroom');
+      expect(f.entryCount).toBeGreaterThan(5);
+      const heard = await inPlain<{ state: string; origin: string }[]>(h, id, 'heard');
+      expect(heard.map((m) => m.state)).toEqual(['ready', 'drawn']);
+      for (const m of heard) expect(m.origin).toBe(new URL(server.url('')).origin);
+      // The page's own text is never fetched: only its models, from beside its base.
+      const got = hitsSince(server, before).filter((p) => p !== '/form.html' && p !== '/favicon.ico');
+      expect(got).not.toContain('/holoml/showroom/index.holoml');
+      expect(got.some((p) => p.startsWith('/holoml/showroom/models/'))).toBe(true);
+      for (const path of got) expect(path).toMatch(/^\/(viewer-parent\.html|web-viewer\/|holoml\/showroom\/)/);
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
+  it('PG1 a page offered by another site, by another frame, without a base, with a base elsewhere, or over 2 MB is refused, and nothing is fetched for it', async () => {
+    const refusedFrom = async (on: FixtureServer, send: string, expected: RegExp) => {
+      const before = new Map(server.hits);
+      const id = await parentWithViewer(on);
+      try {
+        await inPlain(h, id, send);
+        await waitFor(`refused: ${send.slice(0, 60)}`, () => frameState(id), (s) => s === 'refused', 15_000);
+        expect(await frameNote(id)).toMatch(expected);
+        const got = hitsSince(server, before).filter((p) => p !== '/form.html' && p !== '/favicon.ico');
+        for (const path of got) expect(path, 'nothing fetched for a refused page').toMatch(/^\/(viewer-parent\.html|web-viewer\/viewer\/(index\.html|host\.js))/);
+      } finally {
+        await closePlain(h, id);
+      }
+    };
+    const base = server.url('holoml/showroom/index.holoml');
+    // A parent of another site: the viewer's "ready" goes to its own origin only, so that parent never hears it; what it sends anyway is refused.
+    await refusedFrom(other, `offer(${JSON.stringify({ holomlPlayground: 1, text: SHOWROOM, base })})`, /offered by another site/);
+    await refusedFrom(server, `offerFromSibling(${JSON.stringify({ holomlPlayground: 1, text: SHOWROOM, base })})`, /a frame other than/);
+    await refusedFrom(server, `offer(${JSON.stringify({ holomlPlayground: 1, text: SHOWROOM })})`, /without its text or its address/);
+    await refusedFrom(server, `offer(${JSON.stringify({ holomlPlayground: 1, text: SHOWROOM, base: other.url('holoml/showroom/index.holoml') })})`, /must be on this site/);
+    await refusedFrom(server, `offer(${JSON.stringify({ holomlPlayground: 1, text: SHOWROOM, base: 'http://shop.test/room.holoml' })})`, /must be on this site/);
+    await refusedFrom(server, `offer({ holomlPlayground: 1, text: 'x'.repeat(2 * 1024 * 1024 + 1), base: ${JSON.stringify(base)} })`, /larger than 2 MB/);
+  });
+
+  it('PG1 the address alone, with no page framing it, says where its page comes from', async () => {
+    const id = await openPlain(h, `${server.url('web-viewer/viewer/index.html')}?from=parent`);
+    try {
+      await waitFor('refused', () => state(id), (s) => s === 'refused', 15_000);
+      expect(await noteText(id)).toMatch(/takes its page from the page that frames it/);
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+});
+
+/**
+ * PG3 to PG8 (holoml #58): HoloML's playground, from the holoml folder
+ * beside this repository (as the documentation's screenshots are made),
+ * built with its examples into tests/fixtures/pg/holoml/ beside this
+ * site's build in tests/fixtures/pg/hypersol-hyperspace-3d/, so the two
+ * share one origin as they do on srajpal.github.io. Without that folder
+ * (GitHub's machines check out this repository alone) the checks are
+ * skipped, and say so.
+ */
+const HOLOML_DIR = join(FIXTURES_DIR, '../../../holoml');
+const HAS_HOLOML = existsSync(join(HOLOML_DIR, 'site/playground/playground.js'));
+if (!HAS_HOLOML) console.log(`PG3 to PG8 skipped: no holoml folder with the playground beside this repository (${HOLOML_DIR}).`);
+
+describe.skipIf(!HAS_HOLOML)('PG3 to PG8: the playground (holoml #58)', () => {
+  const PG_DIR = join(FIXTURES_DIR, 'pg');
+  const playground = (query = '') => `${server.url('pg/holoml/playground/index.html')}${query}`;
+  const frameState = (id: number) => inViewerFrame<string | undefined>(h, id, 'document.documentElement.dataset.state').catch(() => undefined);
+  const count = (id: number) => inPlain<string>(h, id, "document.getElementById('pg-count').textContent");
+  const problems = (id: number) => inPlain<{ line: number; column: number; text: string }[]>(h, id, "[...document.querySelectorAll('#pg-problems .pg-problem')].map((b) => ({ line: Number(b.dataset.line), column: Number(b.dataset.column), text: b.textContent }))");
+  /** Puts a text in the editor, as typing would (an input event). */
+  const type = (id: number, value: string) => inPlain(h, id, `(() => { const t = document.getElementById('pg-text'); t.value = ${JSON.stringify(value)}; t.dispatchEvent(new Event('input')); })()`);
+  const editorText = (id: number) => inPlain<string>(h, id, "document.getElementById('pg-text').value");
+  /** Marks the viewer frame's current page, so that a new draw (the frame loaded again) can be told from the last. */
+  const mark = (id: number) => inViewerFrame(h, id, 'window.__pgMark = true');
+  const marked = (id: number) => inViewerFrame<boolean>(h, id, 'window.__pgMark === true').catch(() => false);
+
+  async function drawnAgain(id: number, what: string, ms = 60_000): Promise<number> {
+    const t0 = Date.now();
+    await waitFor(`${what}: drawn again`, async () => ((await marked(id)) ? 'old' : await frameState(id)), (s) => s === 'drawn' || s === 'refused', ms);
+    expect(await frameState(id), what).toBe('drawn');
+    return Date.now() - t0;
+  }
+
+  beforeAll(() => {
+    rmSync(PG_DIR, { recursive: true, force: true });
+    execFileSync(process.execPath, [join(FIXTURES_DIR, '../../site/build.mjs'), join(PG_DIR, 'hypersol-hyperspace-3d')], { stdio: 'inherit' });
+    execFileSync(process.execPath, [join(HOLOML_DIR, 'site/build.mjs'), join(PG_DIR, 'holoml')], { stdio: 'inherit', cwd: HOLOML_DIR });
+  }, 180_000);
+
+  afterAll(() => {
+    rmSync(PG_DIR, { recursive: true, force: true });
+  });
+
+  it('PG3 lists the one syntax mistake, or every problem, as the checker does, and a problem puts the caret at its place', async () => {
+    const id = await openPlain(h, playground());
+    try {
+      await waitFor('the first page', () => count(id), (t) => t === 'No problems.', 20_000);
+      const first = await editorText(id);
+      const broken = first.replace('<head>', '<head>\n    <title>Not closed');
+      await type(id, broken);
+      await waitFor('the syntax mistake', () => count(id), (t) => t.startsWith('A mistake in the syntax'), 10_000);
+      const syntax = await problems(id);
+      let thrown: { position?: { line: number; column: number }; code?: string } = {};
+      try {
+        parse(broken);
+      } catch (e) {
+        thrown = e as typeof thrown;
+      }
+      expect(syntax).toHaveLength(1);
+      expect([syntax[0]!.line, syntax[0]!.column]).toEqual([thrown.position!.line, thrown.position!.column]);
+      expect(syntax[0]!.text).toContain(thrown.code!);
+
+      const wrong = first.replace('<light type="ambient"', '<light type="glow"').replace('scale="1.8"', 'scale="big"');
+      await type(id, wrong);
+      await waitFor('the problems', () => count(id), (t) => /^\d+ problems\.$/.test(t), 10_000);
+      const listed = await problems(id);
+      const expected = check(parse(wrong));
+      expect(listed.map((p) => [p.line, p.column])).toEqual(expected.map((p) => [p.line, p.column]));
+      for (const [i, p] of expected.entries()) expect(listed[i]!.text).toContain(p.code);
+      // The problem's line is marked beside the text.
+      expect(await inPlain<string[]>(h, id, "[...document.querySelectorAll('#pg-lines .pg-marked')].map((s) => s.textContent.trim())")).toEqual([...new Set(expected.map((p) => String(p.line)))]);
+      // A click on the second problem puts the caret at its line and column.
+      await inPlain(h, id, "document.querySelectorAll('#pg-problems .pg-problem')[1].click()");
+      const at = await inPlain<number>(h, id, 'document.getElementById(\'pg-text\').selectionStart');
+      const lines = wrong.split('\n');
+      const offset = lines.slice(0, expected[1]!.line - 1).reduce((n, l) => n + l.length + 1, 0) + expected[1]!.column - 1;
+      expect(at).toBe(offset);
+      expect(await inPlain<string>(h, id, 'document.activeElement.id')).toBe('pg-text');
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
+  it('PG4 draws the first page, again after an edit and by Ctrl+Enter, keeps the last scene through a problem, and the switch stops drawing as you type', async () => {
+    const id = await openPlain(h, playground());
+    try {
+      await waitFor('the first page drawn', () => frameState(id), (s) => s === 'drawn', 60_000);
+      const first = await editorText(id);
+      await mark(id);
+      await type(id, first.replace('#c0182a', '#2a6fc0'));
+      const ms = await drawnAgain(id, 'after the colour changed');
+      console.log(`PG4: the first page drawn again ${ms} ms after the edit (the pause is 1 s)`);
+      expect(await inViewerFrame<string>(h, id, "document.querySelector('body > pre')?.textContent ?? ''").catch(() => '')).toBe('');
+      // A problem: the scene stays, marked, and is not drawn again.
+      await mark(id);
+      await type(id, first.replace('<light type="ambient"', '<light type="glow"'));
+      await waitFor('the problem', () => count(id), (t) => t === '1 problem.', 10_000);
+      expect(await inPlain<boolean>(h, id, "document.querySelector('.pg-scene').classList.contains('pg-stale')")).toBe(true);
+      expect(await inPlain<string>(h, id, "document.getElementById('pg-note').textContent")).toMatch(/last version without one/);
+      // Drawing as you type off: a good edit is checked but not drawn; Ctrl+Enter draws it.
+      await inPlain(h, id, "document.getElementById('pg-live').click()");
+      await type(id, first.replace('#c0182a', '#3aa56f'));
+      await waitFor('checked', () => count(id), (t) => t === 'No problems.', 10_000);
+      // A draw would come 1 s after this check; look 2 s after, once the checker has answered.
+      await new Promise((r) => setTimeout(r, 2000));
+      expect(await marked(id), 'not drawn with the switch off').toBe(true);
+      await inPlain(h, id, "document.getElementById('pg-text').focus()");
+      await keyInPlain(h, id, 'Enter', ['control']);
+      await drawnAgain(id, 'by Ctrl+Enter');
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
+  it('PG5 each example loads as a preset and draws with its files; a changed text is not replaced without asking', async () => {
+    const examples = await (async () => {
+      const id = await openPlain(h, playground());
+      try {
+        return await inPlain<string[]>(h, id, "[...document.querySelectorAll('#pg-preset option')].map((o) => o.value).filter((v) => v !== 'first')");
+      } finally {
+        await closePlain(h, id);
+      }
+    })();
+    expect(examples.sort()).toEqual(['aquarium', 'blockworld', 'harbour-loft', 'showroom', 'sneaker-store', 'sofa-studio', 'words']);
+    for (const name of examples) {
+      const before = new Map(server.hits);
+      const id = await openPlain(h, playground(`?preset=${name}`));
+      try {
+        await waitFor(`${name} drawn`, () => frameState(id), (s) => s === 'drawn' || s === 'refused', 120_000);
+        expect(await frameState(id), name).toBe('drawn');
+        expect(await editorText(id), name).toBe(readFileSync(join(HOLOML_DIR, 'examples', name, 'index.holoml'), 'utf8'));
+        const got = hitsSince(server, before);
+        if (name !== 'words') expect(got.some((p) => p.startsWith(`/pg/holoml/${name}/`) && !p.endsWith('/index.holoml')), `${name}'s own files`).toBe(true);
+        if (name === 'harbour-loft') {
+          expect(got).toContain('/pg/holoml/harbour-loft/loft.js');
+          expect(await inViewerFrame<string>(h, id, "document.getElementById('notice').textContent")).toBe('');
+        }
+      } finally {
+        await closePlain(h, id);
+      }
+    }
+    const id = await openPlain(h, playground());
+    try {
+      await waitFor('the first page', () => count(id), (t) => t === 'No problems.', 20_000);
+      await type(id, `${await editorText(id)}\n<!-- mine -->`);
+      await inPlain(h, id, "window.confirm = (m) => { window.__asked = m; return false; }; const s = document.getElementById('pg-preset'); s.value = 'showroom'; s.dispatchEvent(new Event('change'))");
+      expect(await inPlain<string>(h, id, 'window.__asked')).toMatch(/Replace your changes/);
+      expect(await editorText(id)).toContain('<!-- mine -->');
+      expect(await inPlain<string>(h, id, "document.getElementById('pg-preset').value")).toBe('first');
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
+  it('PG6 sends nothing anywhere: every request is to the site, and none carries the text', async () => {
+    const before = new Map(server.hits);
+    const otherBefore = new Map(other.hits);
+    const id = await openPlain(h, playground());
+    try {
+      await waitFor('the first page drawn', () => frameState(id), (s) => s === 'drawn', 60_000);
+      await mark(id);
+      await type(id, (await editorText(id)).replace('The Quellis', 'Zq9-secret-words'));
+      await drawnAgain(id, 'after an edit');
+      const got = hitsSince(server, before).filter((p) => p !== '/form.html' && p !== '/favicon.ico');
+      expect(got.length).toBeGreaterThan(3);
+      for (const path of got) {
+        expect(path, 'only the two sites').toMatch(/^\/pg\/(holoml|hypersol-hyperspace-3d)\//);
+        expect(path).not.toContain('Zq9');
+      }
+      expect(hitsSince(other, otherBefore)).toEqual([]);
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
+  it('PG7 the keyboard: Tab leaves the text, Ctrl+] and Ctrl+[ indent and outdent, Enter on a problem goes to it', async () => {
+    const id = await openPlain(h, playground());
+    try {
+      await waitFor('the first page', () => count(id), (t) => t === 'No problems.', 20_000);
+      await inPlain(h, id, "(() => { const t = document.getElementById('pg-text'); t.focus(); t.setSelectionRange(0, 0); })()");
+      const before = await editorText(id);
+      await keyInPlain(h, id, ']', ['control']);
+      await waitFor('indented', () => editorText(id), (t) => t === `  ${before}`, 5_000);
+      await keyInPlain(h, id, '[', ['control']);
+      await waitFor('outdented', () => editorText(id), (t) => t === before, 5_000);
+      await keyInPlain(h, id, 'Tab');
+      await waitFor('Tab leaves the text', () => inPlain<string>(h, id, 'document.activeElement.id'), (v) => v !== 'pg-text', 5_000);
+      expect(await editorText(id), 'Tab typed nothing').toBe(before);
+      // A problem, reached and chosen from the keyboard.
+      await type(id, before.replace('scale="1.8"', 'scale="big"'));
+      await waitFor('the problem', () => count(id), (t) => t === '1 problem.', 10_000);
+      await inPlain(h, id, "document.querySelector('#pg-problems .pg-problem').focus()");
+      // A button acts on Enter with the typed character, as a real key press brings it (HANDOFF.md, m19's press).
+      await h.app.evaluate(({ BrowserWindow }, { id }) => {
+        const wc = BrowserWindow.fromId(id)!.webContents;
+        wc.sendInputEvent({ type: 'keyDown', keyCode: 'Enter' });
+        wc.sendInputEvent({ type: 'char', keyCode: '\r' });
+        wc.sendInputEvent({ type: 'keyUp', keyCode: 'Enter' });
+      }, { id });
+      await waitFor('back in the text', () => inPlain<string>(h, id, 'document.activeElement.id'), (v) => v === 'pg-text', 5_000);
+      expect(await inPlain<string>(h, id, "document.getElementById('pg-count').getAttribute('role')")).toBe('status');
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
+  it('PG8 without WebGL 2: the problems work, and the scene says it cannot be drawn here', async () => {
+    const id = await openPlain(h, playground(), true);
+    try {
+      await waitFor('the first page', () => count(id), (t) => t === 'No problems.', 20_000);
+      expect(await inPlain<string>(h, id, "document.getElementById('pg-note').textContent")).toMatch(/cannot draw 3D scenes/);
+      expect(await inPlain<number>(h, id, "document.querySelectorAll('#pg-frame iframe').length")).toBe(0);
+      expect(await inPlain<boolean>(h, id, "document.getElementById('pg-run').disabled")).toBe(true);
+      await type(id, (await editorText(id)).replace('scale="1.8"', 'scale="big"'));
+      await waitFor('the problem', () => count(id), (t) => t === '1 problem.', 10_000);
     } finally {
       await closePlain(h, id);
     }

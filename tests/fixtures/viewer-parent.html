@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>A page that frames the viewer</title>
+  </head>
+  <body>
+    <!--
+      For checks PG1 and PG2 (TODO.md, "holoml #58: the playground"): a page
+      that frames the HoloML viewer's host with ?from=parent and gives it a
+      page by a message, as HoloML's playground does. Served from this
+      server (the viewer's own origin) or from the second server (another
+      site). It records what the viewer tells it.
+    -->
+    <script>
+      window.heard = [];
+      addEventListener('message', (e) => {
+        if (e.data && typeof e.data.holomlViewer === 'string') heard.push({ state: e.data.holomlViewer, origin: e.origin, detail: e.data.detail ?? null });
+      });
+      const viewer = () => document.getElementById('viewer').contentWindow;
+      window.frameViewer = (src) =>
+        new Promise((resolve) => {
+          const f = document.createElement('iframe');
+          f.id = 'viewer';
+          f.src = src;
+          f.width = 800;
+          f.height = 500;
+          f.onload = () => resolve(true);
+          document.body.append(f);
+        });
+      window.offer = (message) => viewer().postMessage(message, '*');
+      // The same message, sent from a second frame of this page rather than from the viewer's parent.
+      window.offerFromSibling = (message) => {
+        const b = document.createElement('iframe');
+        document.body.append(b);
+        b.contentWindow.Function('w', 'm', 'w.postMessage(m, "*")')(viewer(), message);
+      };
+    </script>
+  </body>
+</html>

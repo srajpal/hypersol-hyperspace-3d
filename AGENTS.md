@@ -660,6 +660,19 @@ milestone's checks are defined in TODO.md):
   2 (the window's `webgl` preference off, as the app's tabs are); and
   the site's files. The published site in Chrome, Firefox, and
   Safari is checked by hand. `pnpm site:build` builds the site itself.
+  The same file has holoml #58's PG1 and PG2 (TODO.md, "holoml #58:
+  the playground"): the viewer framed by a page of the site
+  (tests/fixtures/viewer-parent.html) with `?from=parent` draws the
+  page its parent gives it; one offered by another site, another
+  frame, without a base, with a base elsewhere, or over 2 MB is
+  refused with nothing fetched; and WV1 to WV8 pass unchanged. PG3
+  to PG8 check the playground itself, built from the holoml folder
+  beside this one with its examples into tests/fixtures/pg/ (ignored,
+  removed after) beside this site's build, on one origin: the problems
+  as you type against the checker, drawing after an edit and by
+  Ctrl+Enter, the scene kept through a problem, the switch, the seven
+  presets, nothing sent, the keyboard, and no WebGL 2. Without the
+  holoml folder (GitHub's machines) they are skipped, and say so.
 - GitHub issue #96 checks LP1 to LP6 (TODO.md, "Issue #96"): the
   browser's landing page at the site's root. site/site.test.ts, in
   `pnpm test`, builds the page alone (`node site/build.mjs --page

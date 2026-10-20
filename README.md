@@ -340,7 +340,10 @@ change what an earlier one has.
 Its documentation, the specification with tutorials, how-to guides,
 reference pages, and explanation, is published at
 https://srajpal.github.io/holoml/ (milestone 22), and the HoloML
-examples section links to the specification there.
+examples section links to the specification there. The site's
+[playground](https://srajpal.github.io/holoml/playground/) has a
+page's text beside its scene, checked as you type, drawn by this
+browser's viewer (holoml #58).
 HoloML files use the extension `.holoml`. This browser
 shows HoloML pages (milestone 14): open a `.holoml` address, or a file
 with Ctrl+O, and walk or orbit around the scene. A page's size, models,

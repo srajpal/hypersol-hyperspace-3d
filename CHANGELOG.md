@@ -13,6 +13,14 @@
   screenshots:video` from the local copies: the GIF, Harbour Loft up
   to its roof terrace, at the top of both READMEs and on the landing
   page; the video attached to the 0.9.1 release. Not part of the app.
+- The viewer on the web takes a page from the page that frames it, on
+  its own site, with `?from=parent` (holoml #58, for HoloML's
+  playground): one message with the text and its address, from the
+  parent and the site's own origin only, at most 2 MB. Not part of the
+  app.
+- The landing page links HoloML's new playground, and its note on the
+  examples' scripts says what is so: they run in the viewer on the
+  web, as both sites are on srajpal.github.io.
 
 ## 0.9.1 — developer preview (2026-10-15)
 

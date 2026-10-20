@@ -48,3 +48,4 @@ tests/fixtures/holoml-site/
 _site/
 _video/
 tests/fixtures/web-viewer/
+tests/fixtures/pg/
