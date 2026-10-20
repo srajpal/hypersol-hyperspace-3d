@@ -16,7 +16,10 @@ zips now attested. New with it:
   statement, signed through GitHub's Sigstore service, that the zip
   was built by this repository's release workflow from the release's
   tag. Check one with `gh attestation verify <the zip> -R
-  srajpal/hypersol-hyperspace-3d`. It is not code signing: Windows
+  srajpal/hypersol-hyperspace-3d --signer-workflow
+  srajpal/hypersol-hyperspace-3d/.github/workflows/release.yml --source-ref
+  refs/tags/v0.9.2` (the README's Download section has it). It is not
+  code signing: Windows
   SmartScreen and macOS Gatekeeper still ask once.
 
 And since 0.9.1, in the viewer on the web and on the project's sites (the app itself behaves as in 0.9.1):

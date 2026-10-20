@@ -8199,8 +8199,16 @@ and asked for the version to be raised so that they show: release
   (a token for Sigstore's signing certificate) and `attestations:
   write` beside `contents: write`; the draft job keeps the workflow's
   `contents: write` alone. The draft's notes say how to check a zip.
+  An attestation names the run's own ref and commit, so the draft job
+  stops a run whose ref is not `refs/tags/<tag>` (a run by hand from
+  main with a tag typed in would build the tag and attest main; the
+  review of #128): a run by hand starts from the tag itself.
 - Checking a zip: `gh attestation verify <the zip> -R
-  srajpal/hypersol-hyperspace-3d` (the README's Download section, the
+  srajpal/hypersol-hyperspace-3d --signer-workflow
+  srajpal/hypersol-hyperspace-3d/.github/workflows/release.yml --source-ref
+  refs/tags/<tag>`, naming the workflow and the tag so that an
+  attestation from another workflow or ref of the repository does not
+  pass (the review of #128) (the README's Download section, the
   release notes, and docs/launch/faq.md), and the repository's
   attestations page,
   https://github.com/srajpal/hypersol-hyperspace-3d/attestations. It
@@ -8229,7 +8237,7 @@ and asked for the version to be raised so that they show: release
 |---|---|---|
 | AT1 | The workflow | release.yml reads as YAML, its new action is pinned by commit, and the package job asks only `contents`, `id-token`, and `attestations` |
 | AT2 | The release | The v0.9.2 tag's run attests all four zips; the repository's attestations page lists them |
-| AT3 | Verifying | `gh attestation verify` passes on each downloaded zip, as the README writes it, and fails on a changed copy |
+| AT3 | Verifying | `gh attestation verify` with `--signer-workflow` and `--source-ref` passes on each downloaded zip, as the README writes it, and fails on a changed copy and with another tag named |
 | AT4 | Immutable | Once published, 0.9.2 shows as immutable; the owner confirms the setting |
 | RL4 | The version | About shows 0.9.2 with Electron 44.9.2; m2's D11 passes |
 
