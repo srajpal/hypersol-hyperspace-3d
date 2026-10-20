@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 0.9.2 — developer preview (2026-10-20)
+
+A security update of the 0.9.1 developer preview, with the release's
+zips now attested. New with it:
+
+- Electron 44.9.2, from 44.7.2 (AGENTS.md rule 13, checked 2026-10-20):
+  Chromium 152.0.7977.167 with fixes backported from Chromium and V8; a
+  window opened by a link takes its opener's session and
+  `webPreferences`; `setCertificateVerifyProc` no longer misses a
+  request made beside a host's first; and Node 24.22.0.
+- Each zip has a build provenance attestation (GitHub issue #127): a
+  statement, signed through GitHub's Sigstore service, that the zip
+  was built by this repository's release workflow from the release's
+  tag. Check one with `gh attestation verify <the zip> -R
+  srajpal/hypersol-hyperspace-3d`. It is not code signing: Windows
+  SmartScreen and macOS Gatekeeper still ask once.
+
+And since 0.9.1, in the viewer on the web and on the project's sites (the app itself behaves as in 0.9.1):
+
 - The repository's site has a landing page at its root,
   https://srajpal.github.io/hypersol-hyperspace-3d/ (GitHub issue
   #96, the promotion plan's step 9): the four screenshots, the story,

@@ -75,7 +75,15 @@ once):
 Beside each zip on the releases page is its SHA-256 in a `.sha256`
 file: check a download with `certutil -hashfile <the zip> SHA256` on
 Windows, `shasum -a 256 <the zip>` on macOS, or `sha256sum -c <the
-.sha256 file>` on Linux. The browser keeps its data in your system's
+.sha256 file>` on Linux. From 0.9.2 on, each zip also has a build
+provenance attestation, a statement signed through GitHub that it was
+built by this repository's release workflow from the release's tag:
+check one with [GitHub's CLI](https://cli.github.com/),
+`gh attestation verify <the zip> -R srajpal/hypersol-hyperspace-3d`,
+or see them all on the repository's
+[attestations page](https://github.com/srajpal/hypersol-hyperspace-3d/attestations).
+It shows where a zip came from; it is not code signing, so Windows and
+macOS still ask once (issue #127). The browser keeps its data in your system's
 usual profile folder and sends nothing anywhere
 ([docs/privacy.md](docs/privacy.md)). It is a developer preview, not
 yet for everyday browsing: the status paragraph below says where it

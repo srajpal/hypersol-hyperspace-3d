@@ -1,7 +1,7 @@
 {
   "name": "@hypersol/browser",
   "productName": "HyperSol HyperSpace 3D",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "private": true,
   "description": "HyperSol HyperSpace 3D, the Electron app.",
   "license": "Apache-2.0",
@@ -29,7 +29,7 @@
     "@hypersol/scene-core": "workspace:*",
     "@hypersol/themes": "workspace:*",
     "@types/three": "^0.186.0",
-    "electron": "^44.7.2",
+    "electron": "^44.9.2",
     "electron-vite": "^5.0.0",
     "lit": "^3.3.3",
     "three": "^0.186.1",

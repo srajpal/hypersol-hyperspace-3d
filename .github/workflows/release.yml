@@ -8,6 +8,11 @@
 # Nothing is signed (Q5): the notes say what Windows SmartScreen and
 # macOS Gatekeeper will say. The actions are pinned to commits, as in
 # ci.yml; the uploads use the repository's own token through gh.
+# Each zip gets a build provenance attestation (GitHub issue #127): a
+# statement, signed through GitHub's Sigstore service, that the zip was
+# made by this workflow from the tag's commit; anyone can check it with
+# `gh attestation verify <zip> -R srajpal/hypersol-hyperspace-3d`. It is
+# not code signing: SmartScreen and Gatekeeper still ask once.
 name: Release
 
 on:
@@ -64,7 +69,7 @@ jobs:
             exit 1
           fi
           {
-            echo "A developer preview, as a portable zip for Windows, Linux, and macOS: unzip it and start HyperSpace3D (HyperSpace 3D.app on a Mac). Nothing is signed: Windows SmartScreen says the app is unrecognised (More info, then Run anyway), and macOS Gatekeeper refuses it until it is allowed in System Settings, Privacy & Security, or with \`xattr -dr com.apple.quarantine \"HyperSpace 3D.app\"\`. The SHA-256 of each zip is beside it. Or build it from source: CONTRIBUTING.md."
+            echo "A developer preview, as a portable zip for Windows, Linux, and macOS: unzip it and start HyperSpace3D (HyperSpace 3D.app on a Mac). Nothing is signed: Windows SmartScreen says the app is unrecognised (More info, then Run anyway), and macOS Gatekeeper refuses it until it is allowed in System Settings, Privacy & Security, or with \`xattr -dr com.apple.quarantine \"HyperSpace 3D.app\"\`. The SHA-256 of each zip is beside it, and each zip has a build provenance attestation: \`gh attestation verify <the zip> -R srajpal/hypersol-hyperspace-3d\` shows it was built by this repository's release workflow from this tag. Or build it from source: CONTRIBUTING.md."
             echo
             awk -v v="$version" '
               $0 ~ "^## " v " " { on = 1; next }
@@ -96,6 +101,12 @@ jobs:
             name: macOS on Intel
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    # The upload, and the attestation (issue #127): a token for Sigstore's
+    # signing certificate, and the right to record the attestation.
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -129,6 +140,11 @@ jobs:
       - name: Smoke check
         if: runner.os != 'Linux'
         run: pnpm package:smoke
+
+      - name: Attest the zip's build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: release/*.zip
 
       - name: Upload to the draft
         env:
