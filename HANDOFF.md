@@ -896,7 +896,10 @@ to this repository for rules and the prompt log.
    picture. Then the owner's: merge, the tag `v0.9.2` on main at once
    (the landing page's download links name 0.9.2 from the merge),
    publish the draft, turn on immutable releases (Settings, General,
-   Releases); the agent then checks AT2 to AT4 and updates the
+   Releases); a release run started by hand starts from the tag itself
+   ("Use workflow from" the tag), as release.yml now stops a run from
+   any other ref so that the zips' attestations name the tag; the agent
+   then checks AT2 to AT4 and updates the
    README's Download section and status paragraph (TODO.md, "Issue
    #127").
    The playground (holoml #58), approved 2026-10-19 with the

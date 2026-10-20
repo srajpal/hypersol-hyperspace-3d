@@ -78,9 +78,9 @@ Windows, `shasum -a 256 <the zip>` on macOS, or `sha256sum -c <the
 .sha256 file>` on Linux. From 0.9.2 on, each zip also has a build
 provenance attestation, a statement signed through GitHub that it was
 built by this repository's release workflow from the release's tag.
-Check one with [GitHub's CLI](https://cli.github.com/), naming the
-workflow and the tag so that nothing else of the repository passes
-(here for 0.9.2's Windows zip):
+Once 0.9.2 is published, check its Windows zip with
+[GitHub's CLI](https://cli.github.com/), naming the workflow and the
+tag so that nothing else of the repository passes:
 
 ```bash
 gh attestation verify HyperSpace3D-0.9.2-windows-x64.zip -R srajpal/hypersol-hyperspace-3d --signer-workflow srajpal/hypersol-hyperspace-3d/.github/workflows/release.yml --source-ref refs/tags/v0.9.2
@@ -88,8 +88,9 @@ gh attestation verify HyperSpace3D-0.9.2-windows-x64.zip -R srajpal/hypersol-hyp
 
 or see them all on the repository's
 [attestations page](https://github.com/srajpal/hypersol-hyperspace-3d/attestations).
-It shows where a zip came from; it is not code signing, so Windows and
-macOS still ask once (issue #127). The browser keeps its data in your system's
+It shows where a zip came from, not that it is safe or free of faults,
+and it is not code signing, so Windows and macOS still ask once (issue
+#127). The browser keeps its data in your system's
 usual profile folder and sends nothing anywhere
 ([docs/privacy.md](docs/privacy.md)). It is a developer preview, not
 yet for everyday browsing: the status paragraph below says where it

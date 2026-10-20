@@ -77,6 +77,9 @@ GitHub, that proves it came from that workflow and that commit:
 --signer-workflow srajpal/hypersol-hyperspace-3d/.github/workflows/release.yml --source-ref
 refs/tags/v0.9.2` checks it (the README's Download section has the
 line to copy), and the repository's attestations page lists them all.
+It binds the zip's exact bytes to that build; it does not say the
+source or the zip is safe or free of faults, and it is not code
+signing.
 **[Before posting: true once 0.9.2 is tagged and published (issue
 #127); until then, leave this out.]**
 
