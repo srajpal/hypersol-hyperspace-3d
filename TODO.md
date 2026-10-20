@@ -8157,6 +8157,30 @@ S: about half a day, with the checks, and the small holoml change.
   m19, and m20 together: 60 passed and 6 skipped (PG3 to PG8, which
   need the holoml folder beside the checkout, absent beside this
   worktree), with the graphics card.
+- The pull request's first automatic build (run 39338359765, at
+  af51235, 2026-10-19): Windows (all four parts), macOS, Android, and
+  Node 26 passed; two Linux parts failed, each on a check that looked
+  too early or waited on something that could hang, not on the fix.
+  Both reproduced with `pnpm test:linux` (Docker, drawn in software).
+  - WL7 (part 1) ran out its 60 s: the frame did open the Quellis (a
+    look 3 s after Enter found it there), but the check read the
+    frame's address by running script in the frame while it was
+    leaving for the next page, and on Linux that call never answered,
+    so the wait, which awaits each look, never reached its own 15 s
+    limit. Now the frame's address is read from the main process
+    (`frame.url`), and every look into the frame gives up after 5 s,
+    so a wait asks again.
+  - V3 (m19, part 3) read the door's action at once after pressing
+    Enter with reduced motion, before the press had necessarily
+    arrived, and saw the last press's state. #126 does not touch what
+    V3 checks (click actions run by `runTrigger`; #126 changed only
+    how links are followed). The check now waits until the page's
+    script has heard the press (a trigger's actions run before its
+    click is sent), then asserts the same: the action at its end and
+    not running. No earlier miss of V3 is recorded here.
+  - After the two changes, `pnpm test:linux` on WL7 and V3 three
+    times: 2 passed each time; on Windows, web-viewer.e2e.ts and m19
+    together: 31 passed and 6 skipped (PG3 to PG8).
 
 ## The promotion plan (2026-10-14)
 

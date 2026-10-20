@@ -826,15 +826,25 @@ describe('WL1 to WL8: links between HoloML pages (issue #125)', () => {
 
   it("WL7 in the playground's frame, a link to another HoloML page opens it in the frame by ?page=", async () => {
     const id = await openPlain(h, server.url('viewer-parent.html'), false, true);
+    // Each look into the frame has a time limit: one that meets the frame as it leaves for the next page may never
+    // answer (seen on Linux, drawn in software), and a wait asks again rather than hang until the check's own limit.
     const inFrame = <T>(expression: string) =>
       h.app.evaluate(
         ({ BrowserWindow }, { id, expression, viewer }) => {
           const frame = BrowserWindow.fromId(id)!.webContents.mainFrame.framesInSubtree.find((f) => f.url.startsWith(viewer));
           if (!frame) throw new Error('No viewer frame in the window');
-          return frame.executeJavaScript(expression, true) as Promise<unknown>;
+          return Promise.race([
+            frame.executeJavaScript(expression, true) as Promise<unknown>,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('The viewer frame did not answer within 5 s')), 5000)),
+          ]);
         },
         { id, expression, viewer: HOST() },
       ) as Promise<T>;
+    const frameUrl = () =>
+      h.app.evaluate(({ BrowserWindow }, { id, viewer }) => BrowserWindow.fromId(id)!.webContents.mainFrame.framesInSubtree.find((f) => f.url.startsWith(viewer))?.url ?? null, {
+        id,
+        viewer: HOST(),
+      });
     try {
       await recordLeaving(id);
       await inPlain(h, id, `frameViewer(${JSON.stringify(`${HOST()}?from=parent`)})`);
@@ -842,10 +852,17 @@ describe('WL1 to WL8: links between HoloML pages (issue #125)', () => {
       const text = readFileSync(join(FIXTURES_DIR, 'holoml/showroom/index.holoml'), 'utf8');
       await inPlain(h, id, `offer(${JSON.stringify({ holomlPlayground: 1, text, base: SHOWROOM() })})`);
       await waitFor('drawn in the frame', () => inFrame<string | undefined>('document.documentElement.dataset.state'), (s) => s === 'drawn', 45_000);
-      // From the keyboard: the outline's link, focused, and Enter.
+      // From the keyboard: the outline's link, focused, and Enter, once the frame is seen to have the keyboard on it.
+      await inPlain(h, id, "document.getElementById('viewer').focus()");
       await inFrame("document.querySelector('#holoml-outline a[href*=\"quellis.holoml\"]').focus()");
+      await waitFor(
+        'the keyboard on the link in the frame',
+        () => inFrame<{ frame: boolean; text: string }>("({ frame: document.hasFocus(), text: document.activeElement?.textContent ?? '' })"),
+        (v) => v.frame && v.text.includes('Quellis'),
+      );
       await keyInPlain(h, id, 'Return');
-      await waitFor('the Quellis in the frame', () => inFrame<string>('location.href'), (u) => pageOf(u) === QUELLIS());
+      // The frame's address as the main process has it: running script in a frame that is leaving can hang (Linux, #126's build).
+      await waitFor('the Quellis in the frame', frameUrl, (u) => u !== null && pageOf(u) === QUELLIS());
       await waitFor('the Quellis drawn', () => inFrame<string | undefined>('document.documentElement.dataset.state'), (s) => s === 'drawn', 45_000);
       expect(await inFrame<string>("document.getElementById('title').textContent")).toBe('Quellis in red · HoloML showroom');
       expect(await urlOf(id), 'the parent page stays').toBe(server.url('viewer-parent.html'));
