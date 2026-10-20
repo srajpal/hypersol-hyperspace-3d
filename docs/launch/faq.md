@@ -70,13 +70,15 @@ a personal project, so Windows and macOS ask once before starting it
 (the README's Download section shows how). Each zip has its SHA-256
 beside it on the release, and the zips are built by GitHub Actions
 from the tagged commit (`.github/workflows/release.yml`), so anyone can
-see how they were made, or build their own from source. Since 0.9.2
+see how they were made, or build their own from source. From 0.9.2 on
 each zip also has a build provenance attestation, signed through
 GitHub, that proves it came from that workflow and that commit:
 `gh attestation verify <the zip> -R srajpal/hypersol-hyperspace-3d
 --signer-workflow srajpal/hypersol-hyperspace-3d/.github/workflows/release.yml --source-ref
 refs/tags/v0.9.2` checks it (the README's Download section has the
 line to copy), and the repository's attestations page lists them all.
+**[Before posting: true once 0.9.2 is tagged and published (issue
+#127); until then, leave this out.]**
 
 ## What does it send, and to whom?
 
