@@ -896,7 +896,13 @@ to this repository for rules and the prompt log.
    holoml #67 (the page); merge #123, then #124, then holoml #67.
    Found then, for the owner: in the viewer on the web a link to
    another HoloML page leads to the `.holoml` file, which GitHub Pages
-   sends as a download (TODO.md, "holoml #58", results).
+   sends as a download (TODO.md, "holoml #58", results). Fixed in
+   issue #125 (approved 2026-10-19 with the recommended answers; the
+   agent filed the issue): the viewer opens such a link in itself by
+   `?page=`; a pull request here, stacked on #124, and one in holoml
+   (the shoe's and Blockworld's scripts read `document.baseURI`, and
+   the guides), stacked on holoml #67; the examples' copy here is from
+   that holoml commit until it is merged.
    Step 8 (#95) done 2026-10-16 (TODO.md, "Issue #95": the values,
    the two pictures, the owner's steps, and what was set): in both
    repositories Discussions are on, the wiki and Projects off, the

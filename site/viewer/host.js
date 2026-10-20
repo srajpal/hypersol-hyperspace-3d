@@ -19,6 +19,11 @@
 // this host's own origin, with a base on that origin, and no more than the
 // same 2 MB. The host asks for it with {holomlViewer: 'ready'} to its own
 // origin, and tells the parent 'drawn' or 'refused' after.
+//
+// The host marks the document (data-holoml-host="web") before it adds the
+// viewer, so a link to another HoloML page opens here, at this host's own
+// address with ?page=, not at the .holoml file, which a site may send as a
+// download (issue #125); in the playground's frame too.
 
 const VIEWER = new URL('assets/viewer.js', import.meta.url).href;
 /** No more of a page is read than the viewer's own limit of text (SPEC.md, the limits; 2 MB). */
@@ -226,6 +231,8 @@ async function main() {
     }
   });
 
+  // Read by the viewer as it starts: links to HoloML pages open here, by ?page= (issue #125).
+  root.dataset.holomlHost = 'web';
   const script = document.createElement('script');
   script.type = 'module';
   script.src = VIEWER;

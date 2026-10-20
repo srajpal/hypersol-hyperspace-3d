@@ -373,7 +373,11 @@ describe('V2 to V4: panels, click actions, and places', () => {
     await reducedMotion(h, true);
     try {
       await waitFor('reduced motion', () => holo<boolean>(h, 'holoml.reducedMotion', PAGE), (v) => v === true);
+      // Read once the press has arrived (the script hears it as a click, after the action has run), not before:
+      // on a slow machine an early look sees the last press's state (#126's Linux build).
+      const heard = (await clicks()).length;
       await press(h, PAGE, 'Enter');
+      await waitFor('the press heard', async () => (await clicks()).length, (n) => n > heard);
       const a = await action('door');
       expect(a.animations[0]).toMatchObject({ progress: 1, running: false });
       await waitFor('open at once', hinge, (r) => Math.abs(r - 90) < 0.01, 1000);

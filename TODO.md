@@ -7974,6 +7974,214 @@ M: about a day for both pull requests, with the checks.
   viewer on the web (following a link to a HoloML page through the
   host's `?page=`), for the owner's approval.
 
+## Issue #125: links between HoloML pages in the viewer on the web
+
+Status: built (2026-10-19), for the owner's review; approved the same
+day with the recommended answers (Q1 a, Q2 a, Q3 a, Q4 a, Q5 a), and
+the agent filed GitHub issue #125 for it.
+Found while building the playground (above). It matters for the
+launch: the showroom is about choosing a car, and on the web each car
+is a download.
+
+### What there is today
+
+- The viewer follows a link with `location.assign(href)`
+  (apps/browser/src/viewer/scene.ts, `follow`), through a fade when
+  the link is to another HoloML page of the same site (`fadesTo`: by
+  `isHolomlPage`, a path ending in `.holoml`); a middle-click or
+  Ctrl+click opens it with `window.open`. The outline's links (Tab and
+  Enter, screen readers, the text view) are `<a>` elements whose
+  `href` is the link's own address. A page that arrives through the
+  fade fades in (`arrivedFromHolomlPage`, by `document.referrer`).
+- In HyperSpace 3D and the Android app the next `.holoml` address is a
+  HoloML page, so this works. On the web (site/viewer, issue #91) the
+  document is the host's page, `…/viewer/?page=<address>`, with a
+  `<base>` of the page's address: the link's address is the `.holoml`
+  file itself, which GitHub Pages sends as
+  `application/octet-stream`, so the browser downloads it (checked
+  2026-10-19 with `curl -sI` on the showroom's quellis.holoml). The
+  text view's links point at the files too.
+- The same happens to a link to a place on the page itself (`#name`):
+  `fadesTo` and `sameDocument` compare with `location`, the host's
+  address, not the page's, so it too leads to the file. "Go to" in the
+  outline works, as it sets `location.hash`.
+- The fade in never happens on the web: the referrer is the host's
+  address, not a `.holoml` one.
+- The sneaker store's shoe page reads the colour asked for from
+  `location.search` (shoe.js); on the web that is the host's
+  `?page=…`, so a shoe would open in its first colour even once the
+  link opens it.
+- In the playground's frame (`?from=parent`, holoml #58) such a link
+  leaves the scene for the file the same way (holoml's
+  docs/how-to/playground.md says so).
+
+### How it would work (proposed)
+
+- The host (site/viewer/host.js) marks the document as the viewer on
+  a plain page before it adds the viewer's script, with an attribute
+  on `<html>` (`data-holoml-host="web"`), which the viewer reads once
+  as it starts, before any script of the page runs (Q1).
+- With the mark, a link to a HoloML page (`isHolomlPage`, an https
+  address or an http one on this computer, as the host fetches) opens
+  at the host's own address with `?page=<the link's absolute
+  address>`, its `#name` kept inside the page's address, so the host
+  goes to that place as it does today. The fade, out and in, is kept
+  for a page of the same site as the page (compared with the page's
+  address, `document.baseURI`, not the host's); the fade in reads the
+  page's address from the referrer's `?page=` (Q2).
+- A link to a place on the same page (`#name`) sets `location.hash`,
+  as "Go to" does: no navigation, Back returns.
+- The outline's `<a>` for such a link has the host's `?page=` address
+  as its `href`, so Enter, a middle-click, Ctrl+click, "Copy link",
+  the text view, and screen readers all lead to the viewer, not the
+  file; the scene's middle-click and Ctrl+click open the same address.
+- Back and Forward work as on any site: each page is an entry in the
+  history, which the host fetches again (from the cache).
+- A link to an ordinary page (the sofa studio's cart.html, the
+  booking and checkout pages, GitHub) goes there as today.
+- In the playground's frame a HoloML link opens that page in the frame
+  by `?page=` (Q3).
+- Without the mark nothing changes: HyperSpace 3D and the Android app
+  follow links exactly as today.
+- The rule for the address is a small pure function (a new
+  apps/browser/src/viewer/links.ts, with its unit test), so the
+  desktop's behaviour and the web's are each checked beside the code.
+- Nothing new is fetched or sent: the next page is fetched by the host
+  under the same rules as the first (docs/privacy.md, "The viewer on
+  the web", says so in a line).
+
+### Questions
+
+- **Q1. How the viewer knows it is on a plain page.** (a) An attribute
+  on `<html>` set by host.js before the viewer's script is added, read
+  once at the start (as the test mark is). (b) A message over the
+  private line: the line exists only after the viewer asks for it, and
+  the links are built before it may arrive, so they would have to be
+  rebuilt. Recommended: a.
+- **Q2. Which HoloML links open in the viewer.** (a) A HoloML page of
+  any site the host would fetch (https, or http on this computer): the
+  alternative is a download, and a page of another site shows as the
+  host shows any (without its scripts, or with the host's card if its
+  site refuses cross-origin reads); the fade only within the page's
+  own site. (b) Only the page's own site; others leave for the file as
+  today. Recommended: a.
+- **Q3. In the playground's frame.** (a) The page opens in the frame by
+  `?page=`, leaving the editor's text as it is (the frame then shows a
+  different page from the editor until Run draws the text again;
+  playground.md says so). (b) The frame tells the playground, which
+  offers to load that page into the editor: a change to holoml's
+  playground and the host's messages, better as its own issue.
+  Recommended: a now, and b only if wanted later.
+- **Q4. The shoe's colour.** (a) In holoml, the sneaker store's
+  shoe.js reads its page's address from `document.baseURI` (the
+  page's own address in every host), with the copy here refreshed by
+  `pnpm holoml:sync`; holoml's in-a-browser guide says a script reads
+  its page's address that way. (b) Leave it: on the web a shoe opens
+  in its first colour. Recommended: a, as a small pull request in
+  holoml beside this one.
+- **Q5. A GitHub issue.** (a) The agent files one in this repository
+  ("The viewer on the web: a link to another HoloML page downloads the
+  file"), and the pull request closes it; the checks take their names
+  from it. (b) No issue: the pull request alone, the checks named WL.
+  Recommended: a (filing it is publishing, so only with the owner's
+  yes).
+
+### Tasks (with the recommended answers)
+
+1. This repository: links.ts and its unit test; scene.ts's `follow`,
+   `fadesTo`, the outline's links, the middle-click, and the fade in
+   using it; main.ts reading the mark; host.js setting it.
+2. holoml (Q4 a): shoe.js by `document.baseURI`; in-a-browser.md (links
+   open in the viewer; a script reads its page's address from
+   `document.baseURI`); playground.md (a link opens the page in the
+   frame); its CHANGELOG. Then `pnpm holoml:sync` here.
+3. The checks below; m14, m19, and m20's link checks run unchanged.
+4. Documents: ARCHITECTURE.md (the viewer on the web), docs/privacy.md,
+   the CHANGELOG, AGENTS.md's Testing list, HANDOFF.md, and this
+   section's results.
+5. A pull request here (and holoml's beside it) for the owner.
+
+### Checks (named WL, for web links)
+
+In tests/e2e/web-viewer.e2e.ts unless said otherwise.
+
+| Check | What | Pass when |
+|---|---|---|
+| WL1 | A click on a link to another HoloML page | In the showroom, a click on the Quellis opens quellis.holoml in the viewer: the address is the host's `?page=` with its address, the bar shows its title, the scene is drawn, nothing is downloaded, and the fade goes out and comes in |
+| WL2 | The keyboard and the outline | Tab to the same link and Enter does the same; the outline's link's `href` is the host's `?page=` address, in the text view too |
+| WL3 | Back, Forward, and places | Back returns to the showroom drawn, Forward to the Quellis; the link from Harbour Loft's terrace page to `index.holoml#terrace-door` arrives at that place |
+| WL4 | A place on the same page | A link to `#name` on the page moves the viewer there without leaving the document, and Back returns (a fixture page) |
+| WL5 | An ordinary page | The sofa studio's link to cart.html goes to cart.html itself |
+| WL6 | Middle-click and Ctrl+click | They open the host's `?page=` address in a new window, not the file |
+| WL7 | The playground's frame | A HoloML link in the framed page opens that page in the frame by `?page=` |
+| WL8 | The shoe's colour (Q4 a) | The store's link to `shoe.holoml?colour=ember` opens the shoe in that colour, on the web and in HyperSpace 3D |
+| WL9 | The desktop unchanged | links.ts's unit test for an unmarked document; m14's P4, m19's places and Back, and m20's shoe page pass unchanged |
+
+### Size
+
+S: about half a day, with the checks, and the small holoml change.
+
+### Results (Windows 11, 2026-10-19)
+
+- Task 1: apps/browser/src/viewer/links.ts (`linkAddress`,
+  `toAnotherPage`, `cameFromAnotherPage`; `isHolomlPage` and
+  `sameDocument` moved there from scene.ts) and links.test.ts (7
+  checks); scene.ts reads the mark once, as the view is built, beside
+  the page's base, and uses it for the scene's click, the outline's
+  `a`, Ctrl+click and the middle button, the fade, and the fade in;
+  host.js sets `data-holoml-host="web"` before it adds the viewer.
+- Task 2 (holoml, branch `issue-125-web-links`, stacked on holoml #67):
+  shoe.js reads `document.baseURI`, and so does Blockworld's game.js
+  for `?seed=` and `?hour=` (the same fault, found while there; one
+  line, for the owner to keep or drop); the fake scene of the examples'
+  script tests gives a `document.baseURI`, and a new check holds the
+  shoe to it with `location` set to the viewer's (it fails on the old
+  shoe.js). in-a-browser.md and playground.md say how links behave;
+  the CHANGELOG. holoml: 893 tests passed and 3 skipped, lint and the
+  type check clean; one file did not run, the VS Code package's
+  (packages/vscode/src/package.test.ts, untouched), whose esbuild
+  could not start from the deep scratch folder the branch was checked
+  out in (Windows' path length). The copy here: `pnpm holoml:sync --examples
+  24bc7d1` (the examples' front pages come along, with holoml main's
+  "Open it here" and playground links).
+- Task 3: WL1 to WL8 in web-viewer.e2e.ts, in plain windows of their
+  own partition with one test-only preload,
+  tests/e2e/web-viewer-hooks.cjs, that marks the viewer's script as
+  the browser's test runs do, so the viewer gives its test hooks (where
+  a link is, the fade, the places, the choices); WV1 to WV8 and PG1
+  to PG8 run without it. All eight pass; with the host's mark taken
+  out, WL1, WL2, WL3, WL4, WL6, and WL7 fail (the Quellis not opened,
+  the outline's links to the files, the frame staying on its page), as
+  they should. WL9: the unit tests, 612 passed and 2 skipped; lint and
+  the type check clean; after `pnpm build`, web-viewer.e2e.ts, m14,
+  m19, and m20 together: 60 passed and 6 skipped (PG3 to PG8, which
+  need the holoml folder beside the checkout, absent beside this
+  worktree), with the graphics card.
+- The pull request's first automatic build (run 39338359765, at
+  af51235, 2026-10-19): Windows (all four parts), macOS, Android, and
+  Node 26 passed; two Linux parts failed, each on a check that looked
+  too early or waited on something that could hang, not on the fix.
+  Both reproduced with `pnpm test:linux` (Docker, drawn in software).
+  - WL7 (part 1) ran out its 60 s: the frame did open the Quellis (a
+    look 3 s after Enter found it there), but the check read the
+    frame's address by running script in the frame while it was
+    leaving for the next page, and on Linux that call never answered,
+    so the wait, which awaits each look, never reached its own 15 s
+    limit. Now the frame's address is read from the main process
+    (`frame.url`), and every look into the frame gives up after 5 s,
+    so a wait asks again.
+  - V3 (m19, part 3) read the door's action at once after pressing
+    Enter with reduced motion, before the press had necessarily
+    arrived, and saw the last press's state. #126 does not touch what
+    V3 checks (click actions run by `runTrigger`; #126 changed only
+    how links are followed). The check now waits until the page's
+    script has heard the press (a trigger's actions run before its
+    click is sent), then asserts the same: the action at its end and
+    not running. No earlier miss of V3 is recorded here.
+  - After the two changes, `pnpm test:linux` on WL7 and V3 three
+    times: 2 passed each time; on Windows, web-viewer.e2e.ts and m19
+    together: 31 passed and 6 skipped (PG3 to PG8).
+
 ## The promotion plan (2026-10-14)
 
 On 2026-10-14 the owner asked for a review of the README and the

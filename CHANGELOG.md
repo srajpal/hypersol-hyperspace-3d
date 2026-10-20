@@ -18,6 +18,13 @@
   playground): one message with the text and its address, from the
   parent and the site's own origin only, at most 2 MB. Not part of the
   app.
+- The viewer on the web opens a link to another HoloML page in the
+  viewer, by its `?page=` address, through the fade: the showroom's
+  cars, the sneaker store's shoes, and Harbour Loft's terrace and back
+  no longer download the `.holoml` file (GitHub issue #125). A link to
+  a place on the same page moves there, and Back returns; in the
+  playground's frame the next page opens in the frame. HyperSpace 3D
+  and the Android app follow links as before.
 - The landing page links HoloML's new playground, and its note on the
   examples' scripts says what is so: they run in the viewer on the
   web, as both sites are on srajpal.github.io.
