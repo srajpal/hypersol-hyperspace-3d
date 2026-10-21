@@ -8185,8 +8185,9 @@ S: about half a day, with the checks, and the small holoml change.
 ## Issue #127: attested release zips, and release 0.9.2
 
 Status: released (2026-10-20): the owner merged #128, tagged
-`v0.9.2`, and published it; AT2 and AT3 pass, AT4 does not (see "After
-the publish"). The owner approved on 2026-10-20 build
+`v0.9.2`, and published it; AT2 and AT3 pass, AT4 does not for 0.9.2
+(the setting was off at its publish; on since, for the next release;
+see "After the publish"). The owner approved on 2026-10-20 build
 provenance attestations for the release zips and immutable releases,
 and asked for the version to be raised so that they show: release
 0.9.2, a security update of 0.9.1, with the attestations its first.
@@ -8309,10 +8310,12 @@ tags and publishes 0.9.2. 0.9.1's zips stay as they are.
   `"enabled": false` after the publish. GitHub's documentation says
   "immutability will only apply to future releases", so turning it on
   now covers the next release, not 0.9.2. The zips are still checked
-  by their attestations, which a changed file fails (AT3). For the
-  owner: turn the setting on (Settings, General, Releases, "Enable
-  release immutability"), and AT4 is checked again with the next
-  release.
+  by their attestations, which a changed file fails (AT3). The owner
+  turned the setting on the same evening (Settings, General, Releases,
+  "Enable release immutability"; the API then read `"enabled": true`)
+  and chose to leave 0.9.2 as it is rather than delete and publish it
+  again. AT4 is checked again with the next release, which should then
+  show as immutable.
 
 ### The README's Download section for 0.9.2, with a badge per zip (plan, 2026-10-20)
 

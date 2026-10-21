@@ -910,8 +910,9 @@ to this repository for rules and the prompt log.
    service) linked to the zip's own attestation page. AT4 does not
    pass: the repository's immutable-releases setting read as off after
    the publish, and GitHub applies it only to releases published once
-   it is on, so 0.9.2 is not immutable (TODO.md, "Issue #127", what is
-   left).
+   it is on, so 0.9.2 is not immutable. The owner turned the setting
+   on that evening and left 0.9.2 as it is; AT4 is checked again with
+   the next release (TODO.md, "Issue #127", "After the publish").
    The playground (holoml #58), approved 2026-10-19 with the
    recommended answers, is built in two pull requests: #124 here (the
    viewer's `?from=parent` and checks PG1 to PG8; PG3 to PG8 need the
