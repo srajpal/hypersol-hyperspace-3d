@@ -1,7 +1,14 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-20.
+Last updated 2026-10-21.
+
+- Open now, for a session on the owner's Mac (2026-10-21): GitHub
+  issue #133, pull request #137 (branch issue-133-blocker-scripts),
+  where a YouTube video restarts over and over on the Mac and plays
+  through on Windows; and FS10 failing on the Mac (branch
+  review-204-fixes). The steps are in TODO.md, "Issue #133", "On the
+  owner's Mac". Do not merge #137 before them.
 
 - Release 0.9.2 is published (2026-10-20, issue #127): Electron
   44.9.2, and each zip with a build provenance attestation. The

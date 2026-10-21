@@ -8803,6 +8803,76 @@ skipped (FS5), 35 files; `pnpm test` 620 passed. Not yet run: the
 owner's Mac (where YouTube "did not work"; what failed there is not
 known: the page's partial breakage is the likely reason).
 
+### On the owner's Mac (handoff, 2026-10-21)
+
+For a Claude Code session started on the owner's Mac, in this
+repository with holoml beside it. Read AGENTS.md first; the rules hold
+(one issue at a time, the owner approves, nothing merged, results
+recorded here as they ran). Two things are open.
+
+**1. YouTube restarts over and over on the Mac (issue #133, PR #137).**
+The owner ran `pnpm dev` on branch issue-133-blocker-scripts: a video
+"is just restarting over and over again". On Windows the same branch
+plays a video through (70 s and more, no restart, no warning). What is
+known:
+
+- Never judge YouTube from a Playwright-driven run (the end-to-end
+  harness, or any probe that uses it): Playwright makes
+  `navigator.webdriver` true, and YouTube then stops every video after
+  about 40 seconds with "Something went wrong. Refresh or try again
+  later.", in a bare Electron window too. A bare Electron window
+  without it plays on.
+- The probe tests/probes/youtube.mjs runs the built app as a person
+  would (no automation; youtube-watch.mjs is loaded into its main
+  process by NODE_OPTIONS=--import), off screen, with a throwaway
+  profile, and prints the video's time every 2 s, how often it went
+  back, YouTube's player state and message, the page's console errors,
+  and anything else the main process printed. It needs the network
+  (one YouTube video, approved for this issue) and `pnpm build` first.
+- #137 makes the lists' page scripts run before the page's own code
+  (before, all of them ran after the page's load, and three of
+  YouTube's four that declare `class JSONPath` failed). So YouTube's
+  rules now act, and one that no longer fits YouTube could make the
+  player start again. The other possibility is a Mac-only cause.
+
+Steps, recording each result here:
+
+1. `git fetch origin && git checkout issue-133-blocker-scripts && pnpm
+   install --frozen-lockfile && pnpm build`, then `node
+   tests/probes/youtube.mjs --seconds=90`. Expect the restart: the times
+   go back, and the counts of `loadstart` and `emptied` grow.
+2. `node tests/probes/youtube.mjs --seconds=90 --empty-lists` (the
+   blocker with no rules). If it plays through, the lists' rules cause
+   the restart; if not, the cause is elsewhere.
+3. The same two on main (`git checkout main && pnpm build`): did main
+   restart too? (The owner's first report, on review-204-fixes, which
+   has main's blocker, said only "YouTube did not work".)
+4. If the rules cause it: find the one. The scripts for a YouTube page
+   come from the starter lists (`FiltersEngine.deserialize` of
+   apps/browser/resources/filters/starter.bin, then
+   `getCosmeticsFilters` for www.youtube.com, as in this section's
+   finding; thirty scripts on 2026-10-21); a profile with a list of
+   some of them (tests/e2e/issue-133.e2e.ts, profileWith, shows how)
+   narrows it. Then propose to the owner what to do: for example,
+   leave YouTube's page scripts out, or keep a rule from the lists
+   out, with a check that needs no network.
+5. If it is the Mac alone: say so with what the probe printed, and
+   ask the owner before going further.
+
+**2. FS10 fails on the Mac (issue #87's check, issue-75.e2e.ts).** In
+the person's own full screen, a page's click on its full-screen button
+did not bring its full screen in the check, though by hand on the Mac
+(the green button, a video's full screen, Esc, the green button again)
+all four steps worked (owner, 2026-10-21). So the check is likely at
+fault, not the browser. Branch review-204-fixes has one commit past
+what #132 merged (ed72b1b): the report of a click that does not bring
+full screen now has the page's own log (a refused request and its
+reason), which document is full, and the looks at the window. Run
+`caffeinate -d pnpm test:e2e tests/e2e/issue-75.e2e.ts -t FS10
+--reporter=verbose` on that branch (allow "Electron" the microphone if
+macOS asks), read the report, and propose the fix to the check in a
+pull request of its own from main, with ed72b1b in it.
+
 ## The review of 2026-10-21 (prompt 204)
 
 Asked in prompt 204: a finding of 2026-10-07 handed back (the content

@@ -165,6 +165,9 @@ Where tests live:
   the Android app's Kotlin unit tests (JUnit) in
   apps/android/app/src/test.
 - End-to-end tests in tests/e2e (Playwright driving the Electron app).
+- Probes run by hand, never in a check run, in tests/probes: issue
+  #133's YouTube probe (it needs the network, and runs the app with no
+  automation, as Playwright's makes YouTube stop a video).
 - Test fixture pages in tests/fixtures, served from 127.0.0.1.
 - HoloML conformance fixtures in the holoml repo under conformance/.
 
