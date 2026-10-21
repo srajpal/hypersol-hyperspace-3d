@@ -97,7 +97,7 @@ import { touchScreen } from './touch';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneModel } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { check, CLICKABLE, HoloParseError, parse, type ElementNode, type HoloNode } from '@hypersol/holoml';
+import { check, CLICKABLE, HoloParseError, parse, type ElementNode, type HoloDocument, type HoloNode } from '@hypersol/holoml';
 import { Budget, LeftOut, LIMITS, Unreadable, Unsupported, type Claim, type LoadedFiles } from './budget';
 import { keptByControl, orbitControls, TURN_SPEED, walkControls, WALK_SPEED, type ViewControls } from './controls';
 import { cameFromAnotherPage, linkAddress, toAnotherPage, type Here } from './links';
@@ -3805,20 +3805,34 @@ export class HolomlView {
    * problem is left out, and the console says why.
    */
   addMarkup(markup: string, parent: Entry | null): Entry[] {
-    const wrapped = `<holoml version="${this.version}"><scene>\n${markup}\n</scene></holoml>`;
-    let doc;
-    try {
-      doc = parse(wrapped);
-    } catch (e) {
-      if (e instanceof HoloParseError) {
-        console.warn(`HoloML: holoml.add: ${e.detail} (line ${e.position.line - 1}, column ${e.position.column}).`);
-        return [];
+    // The markup runs from line 2 to `last`. Elements of the page it names (an animation's target, a click
+    // action's trigger) follow it as stand-ins, so the checker knows they are there and what they are (review of
+    // 2026-10-21: an animation of an element already in the page was left out as naming no element). What the
+    // checker finds in the stand-ins themselves is not the markup's.
+    const last = 1 + markup.split('\n').length;
+    const read = (standIns: string): HoloDocument | null => {
+      const scene = this.sceneId === null ? '<scene>' : `<scene id="${escapeValue(this.sceneId)}">`;
+      try {
+        return parse(`<holoml version="${this.version}">${scene}\n${markup}\n${standIns}</scene></holoml>`);
+      } catch (e) {
+        if (e instanceof HoloParseError) {
+          console.warn(`HoloML: holoml.add: ${e.detail} (line ${e.position.line - 1}, column ${e.position.column}).`);
+          return null;
+        }
+        throw e;
       }
-      throw e;
+    };
+    let doc = read('');
+    if (!doc) return [];
+    const named = namesIn(doc.root);
+    const standIns = [...named.used].filter((id) => !named.defined.has(id) && this.entryById.has(id)).map((id) => standIn(this.entryById.get(id)!.el));
+    if (standIns.length > 0) {
+      doc = read(standIns.join('\n') + '\n');
+      if (!doc) return [];
     }
     const scene = doc.root.children.find((c): c is ElementNode => c.type === 'element' && c.name === 'scene')!;
-    const tops = scene.children.filter((c): c is ElementNode => c.type === 'element');
-    const problems = check(doc).filter((p) => p.line > 1);
+    const tops = scene.children.filter((c): c is ElementNode => c.type === 'element' && c.start.line <= last);
+    const problems = check(doc).filter((p) => p.line > 1 && p.line <= last);
     const after = (p: { line: number; column: number }, s: { line: number; column: number }) => p.line > s.line || (p.line === s.line && p.column >= s.column);
     const added: Entry[] = [];
     const animates: ElementNode[] = [];
@@ -4362,6 +4376,32 @@ function leftOutOfAdd(el: ElementNode): string | null {
 /** An id reference ("#door") as the id itself. */
 function idOf(ref: string | null | undefined): string {
   return trimSpace(ref ?? '').replace(/^#/, '');
+}
+
+/** The ids a tree of elements gives, and the ids its targets and triggers name (holoml.add). */
+function namesIn(root: ElementNode): { defined: Set<string>; used: Set<string> } {
+  const defined = new Set<string>();
+  const used = new Set<string>();
+  const walk = (el: ElementNode) => {
+    for (const a of el.attributes) {
+      if (a.value === null) continue;
+      if (a.name === 'id') defined.add(trimSpace(a.value));
+      else if (a.name === 'target' || a.name === 'trigger') used.add(idOf(a.value));
+    }
+    for (const c of el.children) if (c.type === 'element') walk(c);
+  };
+  walk(root);
+  return { defined, used };
+}
+
+/** An element of the page written again, its attributes without its contents: what the checker needs of it. */
+function standIn(el: ElementNode): string {
+  const attrs = el.attributes.map((a) => (a.value === null ? ` ${a.name}` : ` ${a.name}="${escapeValue(a.value)}"`)).join('');
+  return `<${el.name}${attrs} />`;
+}
+
+function escapeValue(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 /** The place the page's address names after #, if any. */

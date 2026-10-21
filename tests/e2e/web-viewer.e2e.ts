@@ -416,6 +416,12 @@ describe.skipIf(!HAS_HOLOML)('PG3 to PG8: the playground (holoml #58)', () => {
   /** Marks the viewer frame's current page, so that a new draw (the frame loaded again) can be told from the last. */
   const mark = (id: number) => inViewerFrame(h, id, 'window.__pgMark = true');
   const marked = (id: number) => inViewerFrame<boolean>(h, id, 'window.__pgMark === true').catch(() => false);
+  /**
+   * Counts, in the playground, each draw as it begins: a draw replaces the viewer frame's page, which the frame's
+   * navigation object announces at once (the count is kept by the playground, as the frame's page goes).
+   */
+  const watchDraws = (id: number) => inViewerFrame(h, id, "navigation.addEventListener('navigate', () => { parent.__pgDraws = (parent.__pgDraws ?? 0) + 1; }); true");
+  const draws = (id: number) => inPlain<number>(h, id, 'window.__pgDraws ?? 0');
 
   async function drawnAgain(id: number, what: string, ms = 60_000): Promise<number> {
     const t0 = Date.now();
@@ -480,8 +486,11 @@ describe.skipIf(!HAS_HOLOML)('PG3 to PG8: the playground (holoml #58)', () => {
       await waitFor('the first page drawn', () => frameState(id), (s) => s === 'drawn', 60_000);
       const first = await editorText(id);
       await mark(id);
+      await watchDraws(id);
       await type(id, first.replace('#c0182a', '#2a6fc0'));
       const ms = await drawnAgain(id, 'after the colour changed');
+      // The count sees a draw (what the switch's check below relies on).
+      expect(await draws(id)).toBe(1);
       console.log(`PG4: the first page drawn again ${ms} ms after the edit (the pause is 1 s)`);
       expect(await inViewerFrame<string>(h, id, "document.querySelector('body > pre')?.textContent ?? ''").catch(() => '')).toBe('');
       // A problem: the scene stays, marked, and is not drawn again.
@@ -491,15 +500,30 @@ describe.skipIf(!HAS_HOLOML)('PG3 to PG8: the playground (holoml #58)', () => {
       expect(await inPlain<boolean>(h, id, "document.querySelector('.pg-scene').classList.contains('pg-stale')")).toBe(true);
       expect(await inPlain<string>(h, id, "document.getElementById('pg-note').textContent")).toMatch(/last version without one/);
       // Drawing as you type off: a good edit is checked but not drawn; Ctrl+Enter draws it.
+      await watchDraws(id);
+      const drawn = await draws(id);
       await inPlain(h, id, "document.getElementById('pg-live').click()");
       await type(id, first.replace('#c0182a', '#3aa56f'));
       await waitFor('checked', () => count(id), (t) => t === 'No problems.', 10_000);
-      // A draw would come 1 s after this check; look 2 s after, once the checker has answered.
-      await new Promise((r) => setTimeout(r, 2000));
+      // A draw as you type begins 0.75 s after the check (site/playground/playground.js, DRAW_AFTER - CHECK_AFTER).
+      // A timer of 1 s set in the playground after the check has answered runs after that draw would have begun,
+      // however slow the machine: the page's own timers keep their order (AGENTS.md: no sleep in a check that
+      // something does not happen).
+      await inPlain(h, id, 'new Promise((r) => setTimeout(() => r(true), 1000))');
+      expect(await draws(id), 'not drawn with the switch off').toBe(drawn);
       expect(await marked(id), 'not drawn with the switch off').toBe(true);
       await inPlain(h, id, "document.getElementById('pg-text').focus()");
       await keyInPlain(h, id, 'Enter', ['control']);
       await drawnAgain(id, 'by Ctrl+Enter');
+      // Run draws a page that has a problem; at the next edit the note does not call that scene the last version
+      // without one (review of 2026-10-21).
+      await type(id, first.replace('<light type="ambient"', '<light type="glow"'));
+      await waitFor('the problem again', () => count(id), (t) => t === '1 problem.', 10_000);
+      await mark(id);
+      await inPlain(h, id, "document.getElementById('pg-run').click()");
+      await waitFor('drawn by Run, with the problem', () => marked(id), (m) => !m, 60_000);
+      await type(id, first.replace('<light type="ambient"', '<light type="glare"'));
+      await waitFor('the note', () => inPlain<string>(h, id, "document.getElementById('pg-note').textContent"), (t) => /earlier version/.test(t), 10_000);
     } finally {
       await closePlain(h, id);
     }
@@ -545,6 +569,44 @@ describe.skipIf(!HAS_HOLOML)('PG3 to PG8: the playground (holoml #58)', () => {
     }
   });
 
+  it('PG5 text typed while a preset loads is not replaced without asking, and a preset that fails to load leaves the menu on the page shown (review of 2026-10-21)', async () => {
+    const id = await openPlain(h, playground());
+    try {
+      await waitFor('the first page', () => count(id), (t) => t === 'No problems.', 20_000);
+      const first = await editorText(id);
+      // The preset's answer held until the check lets it go; what is typed meanwhile is the person's.
+      await inPlain(h, id, `(() => {
+        const real = window.fetch;
+        window.fetch = (...a) => new Promise((go) => { window.__letGo = () => go(real(...a)); });
+        window.confirm = (m) => { window.__asked = m; return false; };
+        const s = document.getElementById('pg-preset');
+        s.value = 'showroom';
+        s.dispatchEvent(new Event('change'));
+        return true;
+      })()`);
+      await waitFor('the preset asked for', () => inPlain<boolean>(h, id, 'typeof window.__letGo === "function"'), (v) => v, 5_000);
+      await type(id, `${first}\n<!-- typed while it loads -->`);
+      await inPlain(h, id, 'window.__letGo(); true');
+      await waitFor('asked before replacing', () => inPlain<string | null>(h, id, 'window.__asked ?? null'), (m) => m !== null, 10_000);
+      expect(await inPlain<string>(h, id, 'window.__asked')).toMatch(/Replace your changes/);
+      expect(await editorText(id)).toContain('<!-- typed while it loads -->');
+      expect(await inPlain<string>(h, id, "document.getElementById('pg-preset').value")).toBe('first');
+      // A preset whose answer fails: the menu goes back to the page the text is from.
+      await inPlain(h, id, `(() => {
+        window.fetch = () => Promise.reject(new Error('refused here'));
+        window.confirm = () => true;
+        const s = document.getElementById('pg-preset');
+        s.value = 'words';
+        s.dispatchEvent(new Event('change'));
+        return true;
+      })()`);
+      await waitFor('the failure said', () => count(id), (t) => /could not be loaded/.test(t), 10_000);
+      expect(await inPlain<string>(h, id, "document.getElementById('pg-preset').value")).toBe('first');
+    } finally {
+      await closePlain(h, id);
+    }
+  });
+
   it('PG6 sends nothing anywhere: every request is to the site, and none carries the text', async () => {
     const before = new Map(server.hits);
     const otherBefore = new Map(other.hits);
@@ -576,6 +638,14 @@ describe.skipIf(!HAS_HOLOML)('PG3 to PG8: the playground (holoml #58)', () => {
       await waitFor('indented', () => editorText(id), (t) => t === `  ${before}`, 5_000);
       await keyInPlain(h, id, '[', ['control']);
       await waitFor('outdented', () => editorText(id), (t) => t === before, 5_000);
+      // The caret at the very start of a text whose first line is empty: that line is the one indented (review of
+      // 2026-10-21; the second line was).
+      await type(id, `\n${before}`);
+      await inPlain(h, id, "document.getElementById('pg-text').setSelectionRange(0, 0)");
+      await keyInPlain(h, id, ']', ['control']);
+      await waitFor('the first line indented', () => editorText(id), (t) => t === `  \n${before}`, 5_000);
+      await type(id, before);
+      await inPlain(h, id, "document.getElementById('pg-text').setSelectionRange(0, 0)");
       await keyInPlain(h, id, 'Tab');
       await waitFor('Tab leaves the text', () => inPlain<string>(h, id, 'document.activeElement.id'), (v) => v !== 'pg-text', 5_000);
       expect(await editorText(id), 'Tab typed nothing').toBe(before);
@@ -606,6 +676,20 @@ describe.skipIf(!HAS_HOLOML)('PG3 to PG8: the playground (holoml #58)', () => {
       expect(await inPlain<boolean>(h, id, "document.getElementById('pg-run').disabled")).toBe(true);
       await type(id, (await editorText(id)).replace('scale="1.8"', 'scale="big"'));
       await waitFor('the problem', () => count(id), (t) => t === '1 problem.', 10_000);
+      // A mistake in the syntax and Ctrl+Enter, then another key: the note still says why nothing is drawn
+      // (review of 2026-10-21; the syntax's message took its place, and the next key left none).
+      const text = await editorText(id);
+      await type(id, `${text}<`);
+      await waitFor('the syntax mistake', () => count(id), (t) => /mistake in the syntax/.test(t), 10_000);
+      // Seen after the playground's own handler, which was there first.
+      await inPlain(h, id, "(() => { const t = document.getElementById('pg-text'); t.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.ctrlKey) window.__ctrlEnter = true; }); t.focus(); return true; })()");
+      await keyInPlain(h, id, 'Enter', ['control']);
+      await waitFor('Ctrl+Enter handled', () => inPlain<boolean>(h, id, 'window.__ctrlEnter === true'), (v) => v, 5_000);
+      expect(await inPlain<string>(h, id, "document.getElementById('pg-note').textContent")).toMatch(/cannot draw 3D scenes/);
+      await type(id, `${text}<<`);
+      // The check comes 0.25 s after the key (CHECK_AFTER); a timer of 0.5 s set after the key runs after it.
+      await inPlain(h, id, 'new Promise((r) => setTimeout(() => r(true), 500))');
+      expect(await inPlain<string>(h, id, "document.getElementById('pg-note').textContent")).toMatch(/cannot draw 3D scenes/);
     } finally {
       await closePlain(h, id);
     }

@@ -8,6 +8,8 @@ export interface FullScreenSettle {
   why: 'closed' | 'left' | 'entered';
   pageFull: boolean;
   shellHoldsElement: boolean;
+  /** Whether the person started the window's full screen, with the window's own control (not a page). */
+  byPerson: boolean;
   left: boolean;
 }
 
@@ -53,6 +55,15 @@ export interface FullScreenSettle {
  *   still after a tab closes, after a page leaves, and a second after the
  *   window enters, it is looked at (settle), and leaves by itself if no
  *   page holds it (shared/fullscreen.ts, windowShouldLeave).
+ * - But not a full screen the person started (the review of 2026-10-21,
+ *   owner, 2026-10-21): the window's own control makes it full screen
+ *   too (macOS's green button, Ctrl+Cmd+F, and the Window menu's Enter
+ *   Full Screen; a Linux window manager's key), and that stays until
+ *   the person leaves it, through a page's full screen and back. A page
+ *   that asks (its enter-html-full-screen, or the browser's own page's
+ *   for its element) marks the window; the first look after the window
+ *   enters says who started it: a page, if one had asked, or else the
+ *   person. Both are forgotten when the window leaves full screen.
  */
 export class FullScreen {
   /** By page; kept weakly, so a page that is gone takes its state with it (no listener of its own on each page). */
@@ -65,6 +76,12 @@ export class FullScreen {
    * error).
    */
   private readonly fullNow = new Set<WebContents>();
+  /**
+   * By window: whether a page of it asked for full screen since the window
+   * last left it, and who started the window's full screen, once its first
+   * look has said (settleNow).
+   */
+  private readonly windows = new WeakMap<BrowserWindow, { asked: boolean; by: 'page' | 'person' | null }>();
 
   constructor(
     private readonly send: (page: WebContents, command: ShellCommand) => void,
@@ -94,6 +111,21 @@ export class FullScreen {
     return s;
   }
 
+  private windowState(win: BrowserWindow): { asked: boolean; by: 'page' | 'person' | null } {
+    let w = this.windows.get(win);
+    if (!w) {
+      w = { asked: false, by: null };
+      this.windows.set(win, w);
+    }
+    return w;
+  }
+
+  /** Marks the window of a shell: a page of it asked for full screen. */
+  private asked(shell: WebContents | null): void {
+    const win = shell && !shell.isDestroyed() ? BrowserWindow.fromWebContents(shell) : null;
+    if (win && !win.isDestroyed()) this.windowState(win).asked = true;
+  }
+
   /** Whether a page holds the screen or the pointer now. */
   holds(page: WebContents): boolean {
     const s = this.holding.get(page);
@@ -106,6 +138,7 @@ export class FullScreen {
     page.on('enter-html-full-screen', () => {
       this.state(page).full = true;
       this.fullNow.add(page);
+      this.asked(page.hostWebContents);
       this.send(page, { type: 'page-fullscreen', webContentsId: id, on: true });
     });
     page.on('leave-html-full-screen', () => {
@@ -155,7 +188,11 @@ export class FullScreen {
       event.preventDefault();
       for (const p of holding) this.leave(p);
     });
-    BrowserWindow.fromWebContents(shell)?.on('enter-full-screen', () => setTimeout(() => this.settle(shell, 'entered'), 1000));
+    // A page's element held full in the browser's own page: Electron's way for a page's full screen.
+    shell.on('enter-html-full-screen', () => this.asked(shell));
+    const win = BrowserWindow.fromWebContents(shell);
+    win?.on('enter-full-screen', () => setTimeout(() => this.settle(shell, 'entered'), 1000));
+    win?.on('leave-full-screen', () => this.windows.delete(win));
   }
 
   /**
@@ -175,8 +212,11 @@ export class FullScreen {
     const pageFull = [...this.fullNow].some((p) => p.hostWebContents === shell);
     const shellHoldsElement = (await shell.executeJavaScript('document.fullscreenElement !== null', true).catch(() => false)) as boolean;
     if (shell.isDestroyed() || win.isDestroyed()) return;
-    const left = windowShouldLeave({ windowFull: win.isFullScreen(), pageFull, shellHoldsElement });
-    this.settleLog?.({ at: Date.now(), why, pageFull, shellHoldsElement, left });
+    const w = this.windowState(win);
+    w.by ??= w.asked ? 'page' : 'person';
+    const byPerson = w.by === 'person';
+    const left = windowShouldLeave({ windowFull: win.isFullScreen(), pageFull, shellHoldsElement, byPerson });
+    this.settleLog?.({ at: Date.now(), why, pageFull, shellHoldsElement, byPerson, left });
     if (!left) return;
     win.setFullScreen(false);
     for (const ms of [300, 1200]) setTimeout(() => void this.mendWindow(shell), ms);

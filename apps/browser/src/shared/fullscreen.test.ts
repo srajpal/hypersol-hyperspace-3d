@@ -25,16 +25,21 @@ describe('full screen and pointer lock', () => {
     expect(escapeLeaves({ type: 'keyDown', key: 'q' }, true)).toBe(false);
   });
 
-  it('FS9 the window leaves full screen by itself only when it is full and nothing of a page holds it (issue #87)', () => {
+  it('FS9 the window leaves full screen by itself only when a page started it and nothing of a page holds it (issue #87; the person\'s own full screen stays, the review of 2026-10-21)', () => {
+    const page = { byPerson: false };
     // A tab closed in full screen: the page gone, its element gone with it, the window still full.
-    expect(windowShouldLeave({ windowFull: true, pageFull: false, shellHoldsElement: false })).toBe(true);
+    expect(windowShouldLeave({ ...page, windowFull: true, pageFull: false, shellHoldsElement: false })).toBe(true);
     // A page full screen, by Electron's word or by its element in the browser's own page (one may come before the other).
-    expect(windowShouldLeave({ windowFull: true, pageFull: true, shellHoldsElement: true })).toBe(false);
-    expect(windowShouldLeave({ windowFull: true, pageFull: true, shellHoldsElement: false })).toBe(false);
-    expect(windowShouldLeave({ windowFull: true, pageFull: false, shellHoldsElement: true })).toBe(false);
+    expect(windowShouldLeave({ ...page, windowFull: true, pageFull: true, shellHoldsElement: true })).toBe(false);
+    expect(windowShouldLeave({ ...page, windowFull: true, pageFull: true, shellHoldsElement: false })).toBe(false);
+    expect(windowShouldLeave({ ...page, windowFull: true, pageFull: false, shellHoldsElement: true })).toBe(false);
     // A window that is not full has nothing to leave.
-    expect(windowShouldLeave({ windowFull: false, pageFull: false, shellHoldsElement: false })).toBe(false);
-    expect(windowShouldLeave({ windowFull: false, pageFull: true, shellHoldsElement: true })).toBe(false);
+    expect(windowShouldLeave({ ...page, windowFull: false, pageFull: false, shellHoldsElement: false })).toBe(false);
+    expect(windowShouldLeave({ ...page, windowFull: false, pageFull: true, shellHoldsElement: true })).toBe(false);
+    // The person's own full screen (the window's control): it stays with no page in it, and after one leaves.
+    const person = { byPerson: true };
+    expect(windowShouldLeave({ ...person, windowFull: true, pageFull: false, shellHoldsElement: false })).toBe(false);
+    expect(windowShouldLeave({ ...person, windowFull: true, pageFull: true, shellHoldsElement: true })).toBe(false);
   });
 
   it('the way out is the document\'s own, run apart from the page (it cannot be replaced there)', () => {

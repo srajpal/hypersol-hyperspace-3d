@@ -6444,7 +6444,9 @@ sometimes does not is still not known, so the fix is a rule that holds
 whatever the cause, not a change to the race.
 
 The rule: the browser's window is full screen only while a page of it
-holds full screen. (Today nothing else makes the window full screen;
+holds full screen. (Changed by the review of 2026-10-21: only a full
+screen a page started; the person's own, from the window's control,
+stays. See "The review of 2026-10-21".) (Today nothing else makes the window full screen;
 the browser's own full screen, F11, is issue #84, and when it is built
 the rule becomes "while a page, or the browser itself, holds it".)
 
@@ -8743,6 +8745,114 @@ Results:
   index samples say `version="0.3"` (holoml pull request #61, closing
   #54; its 885 tests passed). Words only. Step 2, the three links
   clicked by hand, is the owner's.
+
+## The review of 2026-10-21 (prompt 204)
+
+Asked in prompt 204: a finding of 2026-10-07 handed back (the content
+policy's `webrtc 'block'`, which Chromium ignores), then a review of
+both repositories since the end of the milestones (main at fb498a5
+here, baf7388 in holoml, to origin/main of 2026-10-21) with two
+outside skills: a code review on two axes, standards and the issues'
+own words, and an architecture review (deepening candidates, in a
+report kept outside the repository). The owner asked for every fix
+found, the optional ones too ("fix all including optional").
+
+The webrtc finding was already fixed, by the viewer's guard (prompt
+172, viewer/guard.ts; in 0.9.1). Checked again on 2026-10-21: on
+still.holoml from the fixture server `RTCPeerConnection` is
+undefined, a new one throws ReferenceError, and a frame is refused;
+on link-a.html an offer reaches have-local-offer and a frame has the
+constructor; M6's check passed. Only files from the computer were
+checked: a check for a page from a site and an ordinary page is
+added (below).
+
+Fixed here (this repository):
+
+- `holoml.add` left out an animation, or a click action, whose target
+  or trigger was already in the page: the markup was checked alone, so
+  the checker said "No element has the id". HoloML's specification
+  (SPEC.md, `holoml.add` in the scene API) leaves one out only when its target or
+  trigger is not in the scene once the markup is added. The markup is
+  now checked with stand-ins, after it, for the elements of the page
+  that it names (each written again with its attributes); the
+  checker's problems in the stand-ins are not the markup's. So what
+  the element is still counts (a sound's rotation is still refused).
+  viewer/scene.ts, addMarkup.
+- PG4 waited a fixed 2 s before checking that the switch stopped a
+  draw (AGENTS.md: no sleep in a check that something does not
+  happen). The playground now counts its draws as they begin (the
+  viewer frame's navigation object announces each), and the check
+  looks once a 1 s timer set in the playground after the check has
+  answered runs, which comes after any draw (0.75 s after the check).
+- The release workflow's setup-node was v7.0.0; it is v7.1.0, as in
+  ci.yml and pages.yml.
+- AGENTS.md's "Where tests live" names site/ and tests/screenshots/.
+
+Fixed in holoml (its pull request; the checks are here, as the
+playground's are): the playground's note without WebGL 2 lost to
+Ctrl+Enter on a syntax mistake; text typed while a preset loads was
+replaced without asking; a preset that failed to load left the menu
+on it; Ctrl+] at the very start of a text whose first line is empty
+indented the second line; after Run drew a page with problems, the
+note called that scene the last version without one. Also its
+CHANGELOG's two "Added" headings, the README's GIF moved to the top
+(issue #93 asked), and a test for Blockworld's `?seed=` and `?hour=`.
+
+Checks added (same command):
+
+| Check | File | What |
+|---|---|---|
+| M6 on the web | review-134-main.e2e.ts | still.holoml from a site: no constructor, no offer, no frame; link-a.html: the constructor, an offer at have-local-offer, a frame's own |
+| HL6 | m25.e2e.ts | holoml.add of animations of #stand and with trigger #car, already in the page: added, and the action joined; a sound's rotation still refused |
+| PG4 | web-viewer.e2e.ts | the draws counted; none with the switch off; after Run with a problem, the note says "an earlier version" |
+| PG5 | web-viewer.e2e.ts | typed while a preset loads: asked first, kept; a failed preset: the menu back |
+| PG7 | web-viewer.e2e.ts | Ctrl+] at the very start indents the empty first line |
+| PG8 | web-viewer.e2e.ts | without WebGL 2, Ctrl+Enter on a syntax mistake and the next key keep the note |
+
+Results (2026-10-21, Windows 11, this computer): `pnpm lint` and
+`pnpm typecheck` clean; `pnpm test` 615 passed; holoml's lint, types,
+and tests clean (897 passed). The new checks, run once with the old
+viewer and the old playground: all five failed (HL6's, PG4, PG5's new
+check, PG7, PG8); with the fixes they pass. The full `pnpm test:e2e`:
+483 passed and 1 skipped (FS5, which needs a window with the system's
+focus), 34 files. Blockworld's new test fails when the seed is read
+from `location`.
+
+GitHub issue #87's rule on macOS, decided by the owner the same day.
+The plan ("Today nothing else makes the window full screen") does not
+hold on a Mac, where the green button, Ctrl+Cmd+F, and the Window
+menu's "Enter Full Screen" make the window full screen (and a Linux
+window manager's key does); settle's look a second later found no
+page holding it and took the window out (read in the code, not run on
+a Mac). The owner: "a full screen the person starts with the window's
+own control stays; only one a page started leaves when no page holds
+it. Change FS10 and #87's rule to match." So:
+
+- main/fullscreen.ts marks the window when a page asks (the page's
+  enter-html-full-screen, or the browser's own page's for its
+  element); the first look after the window enters records who
+  started it, a page if one had asked, else the person; both are
+  forgotten when the window leaves full screen. The settle log says
+  `byPerson`.
+- shared/fullscreen.ts, windowShouldLeave: never for the person's
+  full screen. FS9 adds those cases.
+- FS10: #87's state is now made as a page leaves it (the browser's own
+  page's event for a page's element, then the window full with no
+  page): it leaves. Then the person's full screen
+  (`setFullScreen(true)` with no page asking, as the window's control
+  does): the look after it entered leaves it be; a page's full screen
+  inside it and Escape leave it still full; the person leaves it and
+  the window is back where it was. Then a page's own full screen, as
+  before.
+
+Results (2026-10-21, Windows 11): issue-75.e2e.ts 8 passed and 1
+skipped (FS5, as always without a focused window); FS10 three more
+times, 3 of 3; with the old rule (main/fullscreen.ts and
+shared/fullscreen.ts as before), FS10 fails at the person's full
+screen, which was taken out. A page's full screen inside the
+person's, then Escape, leaves the window full on Windows (Electron
+keeps a window's own full screen when a page's ends). Not yet run on
+a Mac, where the green button is what changed.
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
