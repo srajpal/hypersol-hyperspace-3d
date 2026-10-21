@@ -8279,6 +8279,94 @@ tags and publishes 0.9.2. 0.9.1's zips stay as they are.
 - Not checked yet: AT2 to AT4 (they need the tag), and the other
   systems' zips (the release workflow builds and smoke-checks them).
 
+### The README's Download section for 0.9.2, with a badge per zip (plan, 2026-10-20)
+
+Status: approved by the owner on 2026-10-20 (the three questions
+below taken as recommended); the badge is made, and the rest waits
+for 0.9.2's publish. The owner asked on 2026-10-20
+for the README to show 0.9.2 and for each zip to have a small badge
+showing its attestation, the badge a picture committed to the
+repository with no outside service (option a; shields.io, a
+third-party service under AGENTS.md rule 3, was not chosen). Checked
+on 2026-10-20: the tag `v0.9.2` is not on GitHub yet, no release run
+has built 0.9.2, and the newest release is 0.9.1, so the work below
+starts once the owner has tagged and published 0.9.2 (HANDOFF.md).
+
+What changes:
+
+- docs/branding/attested.svg (new): a small badge, 72 by 20
+  pixels, a rounded box with a check mark and the word "attested" in
+  white on a dark green fill of its own, so it reads the same on
+  GitHub's light and dark themes without a second picture (the text at
+  least 4.5 to 1 on its fill, WCAG 2.2 AA; the fill at least 3 to 1
+  against both white and GitHub's dark background, so the box's edge
+  shows on both). Drawn by hand as plain SVG: a `<title>`, no script,
+  no outside font or picture; the word in a system font stack.
+- README.md, Download: the version and release link name 0.9.2; the
+  table's four links and sizes are the published zips' (the sizes from
+  the release's assets, in MB as now); a fourth column, "Provenance",
+  holds per zip the badge, linked to that zip's own attestation page
+  on GitHub (`https://github.com/srajpal/hypersol-hyperspace-3d/attestations/<id>`),
+  with alt text naming the zip ("Build provenance attestation for the
+  Windows zip"). Each attestation's address is the attest step's
+  `attestation-url` in the tag's release run, and is checked against
+  the zip: `gh api repos/srajpal/hypersol-hyperspace-3d/attestations/sha256:<digest>`
+  with the digest from the zip's `.sha256` file finds it. The
+  paragraph on checking a zip loses "Once 0.9.2 is published" and
+  says what the badge links to; the `gh attestation verify` line
+  stays as it is. The one-minute tour stays the 0.9.1 release's (no
+  new video is made).
+- README.md, the status paragraph: dated the day 0.9.2 is published,
+  0.9.2 the newest version (a security update of 0.9.1, with Electron
+  44.9.2 and attested zips), 0.9.1 and 0.9.0 before it.
+- The landing page (site/index.html) already names 0.9.2 in its
+  download links, as site/build.mjs writes the version from
+  package.json; it gets no badges, as each release's attestation
+  addresses would have to be written into the page by hand. Unless the
+  owner wants it (question 2), it is left as it is.
+- docs/launch/faq.md: the attestation answer's "Before posting" note
+  goes, as it is then true. CHANGELOG.md: no change (0.9.2's section
+  already says the zips are attested; the badges are a change to the
+  README, not to the release). HANDOFF.md and this section: the
+  results, and what is left.
+- No new package, tool, or service; nothing published by the agent.
+
+Checks:
+
+| Check | What | Pass when |
+|---|---|---|
+| AT5 | The badge | attested.svg reads as SVG, has a title, and loads nothing; its colour pairs meet the contrasts above (worked out from the hex values); it looks right on GitHub's light and dark themes in the pull request's README |
+| AT6 | The links | Each of the four badges opens its own zip's attestation page, whose digest is the one in that zip's `.sha256` file; each zip's link downloads (an HTTP 200 after the redirect) and its size matches the table |
+
+With AT2 to AT4 (run first, as they are the badges' substance), the
+unit tests (`pnpm test`, site/site.test.ts among them), and lint. No
+check in a test file: a test that the README names the package's
+version would fail between a version's merge and its publish, as it
+would today; AT5 and AT6 are checked by hand and recorded here.
+
+Questions for the owner:
+
+1. A GitHub issue: none new, the work recorded here under #127 and the
+   pull request naming it (recommended); or a new issue for the
+   badges.
+2. The landing page: as it is, with no badges (recommended); or one
+   line under its download links to the repository's attestations
+   page.
+3. The badge's word: "attested" (recommended, as asked); or
+   "provenance".
+
+Results so far (Windows 11, 2026-10-20):
+
+- AT5, in part: docs/branding/attested.svg made, 72 by 20 pixels. Its
+  contrasts, worked out from the hex values: the white text on the
+  fill #1a7f37 5.08 to 1; the fill against white 5.08 and against
+  GitHub's dark background (#0d1117) 3.73. Drawn by Electron on white
+  and on #0d1117, at its size and three times larger, and looked at:
+  the check mark and the word read on both. Not checked yet: on GitHub
+  itself, in the pull request's README.
+- Not checked yet: AT2 to AT4 and AT6, and the README's changes, which
+  need 0.9.2 published.
+
 ## The promotion plan (2026-10-14)
 
 On 2026-10-14 the owner asked for a review of the README and the
