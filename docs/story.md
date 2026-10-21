@@ -81,9 +81,12 @@ go up to the roof terrace. Six more examples are on the
 [landing page](https://srajpal.github.io/hypersol-hyperspace-3d/): a
 car showroom, a block game, a sofa shop where the fabric changes in
 place, a sneaker store, an ocean tunnel with fish, and a room of words
-in many languages. The browser itself is a portable zip for Windows,
-macOS, and Linux on the
-[0.9.1 release](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1).
+in many languages. To write a page of your own, HoloML's
+[playground](https://srajpal.github.io/holoml/playground/) has the
+markup on the left, the scene on the right, and the checker's problems
+as you type. The browser itself is a portable zip for Windows, macOS,
+and Linux on the
+[0.9.2 release](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.2).
 
 ![HyperSpace 3D showing HoloML's Harbour Loft: a loft's living room by day, boats in the harbour through tall steel windows, a floor plan in the corner, and four tabs as cards on the left](screenshots/readme.png)
 
@@ -185,9 +188,9 @@ them was mostly tests, and a few times it was me.
   went blank in the layers view, found while taking screenshots. Each
   became a fix and a check.
 
-Today the browser has 607 unit tests and 463 end-to-end checks, which
-drive the real app with Playwright on Windows, Linux, and macOS on
-every change; HoloML has 885 tests of its own, including conformance
+Today the browser has 614 unit tests and 480 end-to-end checks, which
+drive the real app with Playwright on Windows and Linux on every
+change, and on macOS on main; HoloML has 885 tests of its own, including conformance
 samples for the language. **[owner: one honest sentence on how much
 you read of the code yourself, and what you looked at most.]**
 
@@ -232,13 +235,11 @@ richer pointer events, and more.
 
 ## What is next
 
-- **A HoloML playground** on the language's site: markup on the left,
-  the scene on the right, and the checker's problems as you type.
 - **HoloML's parser and checker on npm**, and its VS Code extension in
   the editors' registries.
 - **The browser's open issues**, one at a time: a screen-reader pass
   over its own interface, sharper text on the tilted page, and the
-  browser's own full screen. Several are marked "good first issue".
+  browser's own full screen. Two are marked "good first issue".
 
 If you try it, I would love to hear what breaks. Issues and
 Discussions are open on both repositories.
@@ -247,7 +248,7 @@ Discussions are open on both repositories.
 
 ## Notes for the owner (not part of the article)
 
-Where each number comes from (2026-10-19):
+Where each number comes from (2026-10-19; the test counts 2026-10-20):
 
 | Claim | Source |
 |---|---|
@@ -255,8 +256,8 @@ Where each number comes from (2026-10-19):
 | About 770 commits | `git rev-list --count HEAD`: 606 here (on main), 164 in holoml |
 | 28 milestones | TODO.md, the roadmap |
 | Models | PROMPTS.md: 176 prompts to Claude Opus 5.5, 28 to Claude Fable 5.1, 3 to Codex. Say so if you name the tools. |
-| 607 unit tests | TODO.md, "Issue #93", T6 (2026-10-17) |
-| 463 end-to-end checks; 17 missed on the Mac | TODO.md, "Issue #94", MC3; "Issue #111" |
+| 614 unit tests | TODO.md, "Issue #127", results (2026-10-20) |
+| 480 end-to-end checks (the full run of 2026-10-20); 17 of 463 missed on the Mac (2026-10-15) | TODO.md, "Issue #94", MC3; "Issue #111" |
 | 885 HoloML tests | TODO.md, "Issues and advisories of 2026-10-09" |
 | WebRTC rule ignored | TODO.md, milestone 25 results, and "After milestone 25" |
 | Ten reviewers | TODO.md, "The review of 2026-09-30", "What was reviewed, and how" |
@@ -272,8 +273,6 @@ Pictures by raw address, for dev.to:
 
 Before posting:
 
-- The video must be attached to the 0.9.1 release first, if the post
-  links it.
 - dev.to tags (four at most): `opensource`, `webdev`, `threejs`, `ai`.
 - Post it a day or two before launch day, so the Show HN can link it
   (docs/launch/).

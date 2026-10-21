@@ -2,8 +2,9 @@
 
 Thank you for taking a look. HyperSpace 3D is a personal open-source
 project: a desktop web browser with a 3D interface, built with Electron.
-This version is a developer preview: there are no installers, so you
-build and run it from source.
+This version is a developer preview: there are no installers, but each
+release has a portable zip per system (the README's Download section);
+to change it, you build and run it from source.
 
 ## Set up
 
@@ -95,13 +96,14 @@ fixture pages in `tests/`.
 - AI agents working in this repository follow [AGENTS.md](AGENTS.md).
 - `main` is protected: it cannot be force-pushed or deleted, and a pull
   request is merged once its "All checks" job passes (Windows and Linux,
-  each in four parts, Node 26, and Android).
+  each in four parts; macOS's lint, type check, unit tests, and build;
+  Node 26; and Android).
 
 ## Making your own build
 
 The project publishes no installers, and plans none (owner,
 2026-10-08): each release is a portable zip per system (since 0.9.1,
-2026-10-15; GitHub issue #92), unzipped and started, nothing signed,
+2026-10-16; GitHub issue #92), unzipped and started, nothing signed,
 plus the source. `pnpm package` makes that zip for the system it runs
 on (apps/browser/scripts/package.mjs; `pnpm build` first):
 
@@ -133,8 +135,12 @@ on (apps/browser/scripts/package.mjs; `pnpm build` first):
 - A release: the tag `v<version>` pushed starts
   .github/workflows/release.yml, which makes a draft release with the
   changelog's section as its notes, packages on Windows, Linux, and
-  macOS (Apple silicon and Intel), smoke-checks each, and attaches the
-  zips and checksums; the owner reads the draft and publishes it.
+  macOS (Apple silicon and Intel), smoke-checks each, attests each zip
+  (build provenance, GitHub issue #127; a run started by hand starts
+  from the tag itself), and attaches the zips and checksums; the owner
+  reads the draft and publishes it. Releases published since
+  2026-10-20 are immutable: their tag and files cannot be changed or
+  added to, so everything goes on the draft first.
 
 Under the Apache 2.0 licence anyone may fork the repository and make an
 installable build of their own from the same staging folder.

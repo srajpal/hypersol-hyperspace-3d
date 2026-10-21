@@ -1,26 +1,33 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-20 (release 0.9.2 published, its zips attested,
-and the README's Download section with a badge per zip, issue #127;
-the promotion plan approved, TODO.md, "The
-promotion plan (2026-10-14)": 19 steps, each a GitHub issue, #90 to
-#101 here and #54 to #60 in holoml; steps 1 and 3 to 10 done: release
-0.9.1 published 2026-10-16 as a portable zip for Windows, Linux, and
-macOS (#113); macOS in the automatic builds (#110) and the owner's
-Mac's 17 misses settled (#114, closing #111); the HoloML viewer for
-ordinary browsers (#106, holoml #64), Pages on since 2026-10-17; the
-repository settings (#117); the landing page (#118); the video and the
-GIF (#121; the video still to be attached to the release, and holoml
-#66, its README's GIF, to be merged); the curated lists' entries
-drafted (#122, for the owner to send). On 2026-10-19 the owner chose
-two waves: the records tidied, steps 11 and 12 drafted, and step 16,
-the playground, planned to land before launch day; milestones 1 to 28 accepted,
-milestone 28, lift to 3D, on 2026-10-10, prompt 201; no more
-milestones (prompt 203): work continues from GitHub issues, the first
-of them #75, full screen and pointer lock, accepted 2026-10-10; the
-fixes of 2026-10-09 below; the review's last items in TODO.md, "The
-review's last items". The roadmap is in TODO.md).
+Last updated 2026-10-20.
+
+- Release 0.9.2 is published (2026-10-20, issue #127): Electron
+  44.9.2, and each zip with a build provenance attestation. The
+  README's Download section with an *attested* badge per zip is pull
+  request #129, with a documents review after it; both are open for
+  the owner. Immutable releases are on from 2026-10-20, for the next
+  release on (0.9.2 itself is not immutable).
+- The promotion plan (TODO.md, "The promotion plan (2026-10-14)"): 19
+  steps, each a GitHub issue, #90 to #101 here and #54 to #60 in
+  holoml. Done: steps 1 and 3 to 10, and 16. Release 0.9.1, published
+  2026-10-16 as a portable zip for Windows, Linux, and macOS (#113);
+  macOS in the automatic builds (#110) and the owner's Mac's 17 misses
+  settled (#114, closing #111); the HoloML viewer for ordinary
+  browsers (#106, holoml #64), Pages on since 2026-10-17; the
+  repository settings (#117); the landing page (#118); the video and
+  the GIF (#121; the video is attached to 0.9.1, and holoml #66, its
+  README's GIF, merged 2026-10-19); the curated lists' entries drafted
+  (#122, for the owner to send); the playground (#123, #124, holoml
+  #67, merged 2026-10-20), with issue #125 (#126, holoml #68). Steps
+  11 and 12, the article and the launch kit, are drafted for the
+  owner's edits.
+- Milestones 1 to 28 are accepted (milestone 28, lift to 3D, on
+  2026-10-10, prompt 201); there are no more (prompt 203), and work
+  continues from GitHub issues. The fixes of 2026-10-09 are below; the
+  review's last items are in TODO.md, "The review's last items". The
+  roadmap is in TODO.md.
 
 ## Where things stand
 
@@ -84,22 +91,26 @@ state; this is a summary.
   196); 28 lift to 3D, pictures and models lifted into the room
   (accepted 2026-10-10, prompt 201). Polish (29) was removed (prompt
   203): no more milestones; work continues from GitHub issues. The installers (30 and 31) were dropped in prompt 172:
-  the project stays source only, and a fork may package its own build
-  (CONTRIBUTING.md, "Making your own build").
+  no installers, and a fork may package its own build
+  (CONTRIBUTING.md, "Making your own build"); since the promotion plan
+  (2026-10-14) each release has an unsigned portable zip per system.
 - Since the milestones, GitHub issues: #75, full screen and pointer lock
   for pages with the browser's own notice (accepted 2026-10-10, pull
-  request #83).
+  request #83); the promotion plan's #90 to #97 and holoml #58; #111
+  (macOS), #125 (the viewer on the web follows links to other HoloML
+  pages), and #127 (attested zips). Releases: 0.9.1 (2026-10-16) and
+  0.9.2 (2026-10-20), pre-releases with portable zips.
 - The logo direction is chosen (concept 4d in
-  docs/branding/logo-concepts/); there are no app icons yet (the
-  installers that would have brought them were dropped, prompt 172).
+  docs/branding/logo-concepts/), and the app's icon is drawn from it
+  since 0.9.1 (`pnpm --filter @hypersol/browser icons`, issue #92).
 - HyperSol, the company founded in 2001, no longer exists. This is a
   personal project honouring it, not marketed for now. Copyright: "The
   HyperSpace 3D Authors" and "The HoloML Authors" (AUTHORS files).
 
 Two repositories, kept as sibling folders (never one inside the other).
-Both main branches are up to date: issue #75 is merged here (#83,
-2026-10-10), and HoloML 0.3's second edition in holoml (#44, tagged
-v0.3.1; then #45, no more milestones):
+The newest merges are #128 here (release 0.9.2's preparation) and
+holoml #67 (the playground), both 2026-10-20; pull request #129 (the
+README's 0.9.2 badges) is open. HoloML's newest release is v0.3.1:
 
 - Browser: https://github.com/srajpal/hypersol-hyperspace-3d (renamed
   from hypersol-websurfer-3d; GitHub redirects the old address)
@@ -730,7 +741,8 @@ to this repository for rules and the prompt log.
   since prompt 135), which the owner, as admin, may bypass (so the
   agreed direct pushes to main still work). TODO.md, "Branch
   protection", has the details.
-- Desktop first: Windows and Linux, then macOS (not checked yet).
+- Desktop first: Windows and Linux, and macOS (in the automatic builds
+  since #110; the owner's Mac, #94 and #111).
   Android tablets in this repository (apps/android, milestone 24;
   prompt 152); phones and iOS later. Mouse, keyboard, and touch.
 - Stack: Electron (the newest stable line; 44.9.2 since 2026-10-20),
@@ -748,7 +760,9 @@ to this repository for rules and the prompt log.
   so (owner, prompt 60).
 - Automatic builds and tests: GitHub Actions on Windows and Linux for
   every pull request and every push to main (.github/workflows/ci.yml),
-  the end-to-end checks in four parts on each system; a change to
+  the end-to-end checks in four parts on each system, and on macOS
+  (lint, types, unit tests, and the build required; its end-to-end
+  checks an experiment on main and by hand, issue #94); a change to
   documents only skips them. The runners have no graphics
   card: C9's frame rate is measured but skipped there (owner, prompt
   59), and so is G9's frame-time budget; Linux runs use SwiftShader for
@@ -761,8 +775,10 @@ to this repository for rules and the prompt log.
   and conformance samples (milestone 13).
 - License: Apache 2.0 for both repositories; the HoloML spec text also
   CC BY 4.0. Contributions come under Apache 2.0's own terms.
-- Versions: 0.9.0 is the source-only developer preview; no installers
-  are planned (prompt 172).
+- Versions: 0.9.0 (source only), 0.9.1 and 0.9.2 (pre-releases with
+  unsigned portable zips; 0.9.2's zips attested); 1.0.0 is kept for a
+  commercial release (owner, 2026-10-15); no installers are planned
+  (prompt 172).
 
 ## Open items (need an owner decision)
 
@@ -777,6 +793,16 @@ to this repository for rules and the prompt log.
   prompt 187).
   A run of the frame-rate and load-time budgets on a machine with a
   graphics card in the automatic builds is now GitHub issue #80.
+- Waiting on the owner (2026-10-20): pull request #129 (the README's
+  0.9.2 badges) and the documents review after it; a line for the
+  video in 0.9.1's release notes; the checks by eye (the landing page
+  and the viewer in Firefox and Safari and from the keyboard, RL6's
+  icon, the zips started on a Mac and on Linux); the promotion plan's
+  step 2 (three links by hand) and the three lists' pull requests
+  (docs/launch/lists.md); the edits to the article (docs/story.md,
+  #98) and the launch kit (docs/launch/, #99); the npm and editor
+  registry accounts (holoml #56, #57); and #91's Q4, the text view
+  without WebGL 2, which waits for the owner's word.
 
 ## How to resume
 
@@ -807,7 +833,7 @@ to this repository for rules and the prompt log.
    checked with a screen reader and an input method), #77 (soft text on
    the tilted page), #78 (a dropped .holoml file), #79 (checks that
    sleep and then look), #80 (the budgets with a graphics card in the
-   automatic builds), #81 (macOS), #82 (C9 and L9 on the owner's
+   automatic builds), #81 (macOS; closed 2026-10-15, #94), #82 (C9 and L9 on the owner's
    computer; I8 and m17's development-run check to watch too), and #84
    (the browser's own full screen, F11), and #87 (closing a tab in full
    screen once left the window full screen on GitHub's Windows; not
@@ -860,13 +886,11 @@ to this repository for rules and the prompt log.
    video-encode.mjs, gif.mjs with gif.test.ts) makes
    `_video/hyperspace-3d-<version>.webm` (not committed) and
    docs/video/hyperspace-3d.gif (committed; in both READMEs and on the
-   landing page). After the merge the owner attaches the video to the
-   0.9.1 release (`gh release upload v0.9.1
-   _video/hyperspace-3d-0.9.1.webm`), adds a line to its notes, and
-   reviews the cut; holoml's README shows the GIF by its raw address
-   (holoml pull request #66, open, its checks passed). Until the video
-   is attached, the README's and the landing page's links to it answer
-   404 (checked 2026-10-19).
+   landing page). The video is attached to the 0.9.1 release (its
+   link answers 200, checked 2026-10-20); a line about it in 0.9.1's
+   notes, and the review of the cut, are still the owner's. holoml's
+   README shows the GIF by its raw address (holoml pull request #66,
+   merged 2026-10-19).
    Step 9 (#96), the landing page, done 2026-10-17 (pull request
    #118 merged, the page published at
    https://srajpal.github.io/hypersol-hyperspace-3d/; TODO.md, "Issue
@@ -880,53 +904,45 @@ to this repository for rules and the prompt log.
    and video have their marked place in it. Pages is on since
    2026-10-17 (GitHub Actions as the source), so pages.yml publishes
    from main after lint, the type check, and the unit tests.
-   Next in the plan (the owner, 2026-10-19: two waves): first the
-   blockers that are the owner's (the video attached to the release,
-   holoml #66 merged, the checks by eye, step 2's three links, the
-   three lists' pull requests), with step 11, the article (#98,
-   docs/story.md), and step 12, the launch kit (#99, docs/launch/),
-   drafted for the owner's edits, and step 16, the playground (holoml
-   #58), planned (TODO.md, "holoml #58"); the playground, and npm if
-   the owner's accounts are ready (step 14), land before launch day;
-   then the launch (step 12) with the video's clips, and steps 13, 17,
-   and 18 the week after. Electron's security releases are checked
-   again on launch day (rule 13).
-   Release 0.9.2 (issue #127, 2026-10-20) is prepared on the branch
-   issue-127-attest-0.9.2: Electron 44.9.2 (rule 13), build provenance
-   attestations for the zips in release.yml, the version in the four
-   package files and D11, the changelog's section, and the About
-   picture. Then the owner's: merge, the tag `v0.9.2` on main at once
-   (the landing page's download links name 0.9.2 from the merge),
-   publish the draft, turn on immutable releases (Settings, General,
-   Releases); a release run started by hand starts from the tag itself
-   ("Use workflow from" the tag), as release.yml now stops a run from
-   any other ref so that the zips' attestations name the tag; the agent
-   then checks AT2 to AT4 and updates the
-   README's Download section and status paragraph (TODO.md, "Issue
-   #127"). Done 2026-10-20: the owner merged #128, tagged `v0.9.2`
-   (1426b17), and published the release (a pre-release, without a
-   discussion); AT2 and AT3 pass, and the README names 0.9.2 with an
-   *attested* badge per zip (docs/branding/attested.svg, no outside
-   service) linked to the zip's own attestation page. AT4 does not
-   pass: the repository's immutable-releases setting read as off after
-   the publish, and GitHub applies it only to releases published once
-   it is on, so 0.9.2 is not immutable. The owner turned the setting
-   on that evening and left 0.9.2 as it is; AT4 is checked again with
-   the next release (TODO.md, "Issue #127", "After the publish").
-   The playground (holoml #58), approved 2026-10-19 with the
-   recommended answers, is built in two pull requests: #124 here (the
+   Next in the plan (the owner, 2026-10-19: two waves; updated
+   2026-10-20): first the owner's own items (the checks by eye, step
+   2's three links, the three lists' pull requests, a line for the
+   video in 0.9.1's notes, and the edits to step 11's article, #98,
+   docs/story.md, and step 12's launch kit, #99, docs/launch/, both
+   drafted), with npm if the owner's accounts are ready (step 14)
+   before launch day; then the launch (step 12) with the video's
+   clips, and steps 13, 17, and 18 the week after. Electron's security
+   releases are checked again on launch day (rule 13).
+   Release 0.9.2 (issue #127, 2026-10-20): Electron 44.9.2 (rule 13),
+   build provenance attestations for the zips in release.yml, the
+   version in the four package files and D11, the changelog's section,
+   and the About picture, merged as #128. The owner tagged `v0.9.2`
+   (1426b17) and published the release (a pre-release, without a
+   discussion). AT2 and AT3 pass. The README's Download section names
+   0.9.2 with an *attested* badge per zip (docs/branding/attested.svg,
+   no outside service) linked to the zip's own attestation page, in
+   pull request #129, open for the owner. AT4 does not pass: the
+   repository's immutable-releases setting was off at the publish, and
+   GitHub applies it only to releases published once it is on, so
+   0.9.2 is not immutable. The owner turned the setting on that
+   evening and left 0.9.2 as it is; AT4 is checked again with the next
+   release (TODO.md, "Issue #127", "After the publish"). A run of
+   release.yml started by hand starts from the tag itself ("Use
+   workflow from" the tag): it stops a run from any other ref, so that
+   the zips' attestations name the tag.
+   The playground (holoml #58, step 16), approved 2026-10-19 with the
+   recommended answers, merged 2026-10-20: #123 and #124 here (the
    viewer's `?from=parent` and checks PG1 to PG8; PG3 to PG8 need the
    holoml folder beside this one and are skipped without it) and
-   holoml #67 (the page); merge #123, then #124, then holoml #67.
-   Found then, for the owner: in the viewer on the web a link to
-   another HoloML page leads to the `.holoml` file, which GitHub Pages
-   sends as a download (TODO.md, "holoml #58", results). Fixed in
-   issue #125 (approved 2026-10-19 with the recommended answers; the
-   agent filed the issue): the viewer opens such a link in itself by
-   `?page=`; a pull request here, stacked on #124, and one in holoml
-   (the shoe's and Blockworld's scripts read `document.baseURI`, and
-   the guides), stacked on holoml #67; the examples' copy here is from
-   that holoml commit until it is merged.
+   holoml #67 (the page, https://srajpal.github.io/holoml/playground/).
+   Found with it: in the viewer on the web a link to another HoloML
+   page led to the `.holoml` file, which GitHub Pages sends as a
+   download. Fixed in issue #125 (closed): the viewer opens such a link
+   in itself by `?page=` (#126 here; holoml #68, the shoe's and
+   Blockworld's scripts read `document.baseURI`, and the guides). The
+   examples' copy here was synced from holoml #68's branch before it
+   merged; it can be synced again from holoml's main (`pnpm
+   holoml:sync main --examples main`), not checked yet.
    Step 8 (#95) done 2026-10-16 (TODO.md, "Issue #95": the values,
    the two pictures, the owner's steps, and what was set): in both
    repositories Discussions are on, the wiki and Projects off, the
@@ -964,8 +980,8 @@ to this repository for rules and the prompt log.
    (https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1).
    Still by hand: RL6, the icon by eye on Windows and Linux, and the
    published zips unzipped and started on a Mac and on Linux. The next
-   release repeats this: the changelog's section, the version in both
-   package.json files, m2's D11 and the About screenshot, the rule 13
+   release repeats this: the changelog's section, the version in the
+   four package files, m2's D11 and the About screenshot, the rule 13
    check, then the tag, and after the publish the README's Download
    section (added 2026-10-16, after the publish, at the owner's
    request: the four zips by link with their sizes, how each system
@@ -986,4 +1002,7 @@ to this repository for rules and the prompt log.
 - HoloML's packages are not published to npm; the browser keeps a copy
   (packages/holoml, pnpm holoml:sync).
 - No installers, signing, or updates: none are planned (prompt 172).
-- No installers attached to releases: v0.9.0 is source only.
+  Releases carry unsigned portable zips (since 0.9.1) and, from 0.9.2,
+  their build provenance attestations.
+- 0.9.2 is not an immutable release (AT4): the setting was turned on
+  after its publish, so the next release is the first immutable one.

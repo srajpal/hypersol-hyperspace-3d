@@ -4,7 +4,6 @@ What each finished milestone added, with screenshots of the main screens,
 and the GitHub issues worked since the last of them.
 Moved here from the README on 2026-09-26 (owner, prompt 47).
 
-
 Screenshots from each finished milestone. Only the newest sets are
 kept in [docs/screenshots](screenshots) (milestone 28's, the newest of
 the desktop, and milestone 24's, from the tablet); the older ones are
@@ -405,3 +404,35 @@ that drafts the release on the tag; published 2026-10-16, the day
 after the merge. The app has its icon
 now, the logo chosen in prompt 46, on the window and the taskbar; the
 About panel's picture in the newest set shows the version.
+
+**macOS** (the promotion plan's step 7, GitHub issues #94 and #111,
+2026-10-15 and 16). The automatic builds run on macOS too: lint, the
+type check, the unit tests, and the build are required, and the
+end-to-end checks run there as an experiment. On the owner's Mac the
+unit tests pass, and the 17 end-to-end checks that missed at first
+were settled one group at a time.
+
+**The video, the GIF, and the landing page** (steps 6 and 9, GitHub
+issues #93 and #96, 2026-10-17). A one-minute video, attached to the
+0.9.1 release, and a nine-second GIF of Harbour Loft at the top of
+the README, both made by `pnpm screenshots:video` from the local
+copies; and a landing page at
+https://srajpal.github.io/hypersol-hyperspace-3d/, with the
+screenshots, the GIF, the seven examples opening in the viewer, and
+the downloads.
+
+**HoloML's playground, and links in the viewer on the web** (step 16,
+holoml #58, and GitHub issue #125, 2026-10-20). The playground on the
+HoloML site, https://srajpal.github.io/holoml/playground/, has a
+page's markup on the left and its scene on the right, drawn by this
+browser's viewer and checked as you type. In the viewer on the web, a
+link to another HoloML page now opens that page in the viewer, with
+Back and Forward, instead of downloading the file. Nothing on the
+browser's screen changes.
+
+**0.9.2, a security update** (GitHub issue #127, 2026-10-20). 0.9.1
+with Electron 44.9.2, and each zip with a build provenance
+attestation, a statement signed through GitHub that it was built by
+this repository's release workflow from the release's tag; the
+README's Download section has an *attested* badge beside each zip.
+The About panel's picture in the newest set shows 0.9.2.

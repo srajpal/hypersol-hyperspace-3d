@@ -10,7 +10,8 @@ HoloML, 3D web pages drawn with Three.js
 
 **Post:**
 
-> ![Harbour Loft in HyperSpace 3D](upload the GIF, docs/video/hyperspace-3d.gif)
+**[owner: upload docs/video/hyperspace-3d.gif here, with the alt text
+"Harbour Loft in HyperSpace 3D"]**
 >
 > Two open-source projects (Apache 2.0) built on Three.js:
 >
@@ -36,8 +37,9 @@ HoloML, 3D web pages drawn with Three.js
 > - Blockworld, a small block game: https://srajpal.github.io/hypersol-hyperspace-3d/viewer/?page=https://srajpal.github.io/holoml/blockworld/index.holoml
 > - All seven: https://srajpal.github.io/hypersol-hyperspace-3d/
 >
-> The models are from Poly Haven and Kenney (CC0), and the shoe in the
-> sneaker store is CC BY 4.0 (credited in its NOTICE).
+> Most models are from Poly Haven and Kenney (CC0); the sneaker store's
+> shoe and most of the ocean tunnel's fish are CC BY 4.0, credited in
+> HoloML's NOTICE and each example's models/CREDITS.md.
 >
 > Code: https://github.com/srajpal/hypersol-hyperspace-3d (the viewer
 > is apps/browser/src/viewer, the room apps/browser/src/renderer/scene)

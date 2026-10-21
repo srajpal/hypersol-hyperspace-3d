@@ -8,7 +8,8 @@ the rules change. If a subreddit's rules do not allow it, skip it.
 Reply to comments for the first hours; faq.md has the answers.
 
 `<ARTICLE>` is the article's address once posted (docs/story.md);
-`<PLAYGROUND>` the playground's, if it is live.
+The playground is live at https://srajpal.github.io/holoml/playground/
+(holoml #58, 2026-10-20).
 
 ## r/programming
 
@@ -52,7 +53,8 @@ viewer that opens them in any browser
 > https://srajpal.github.io/hypersol-hyperspace-3d/viewer/?page=https://srajpal.github.io/holoml/harbour-loft/index.holoml
 >
 > The language: https://github.com/srajpal/holoml (spec, parser,
-> checker, seven example sites). There's also a desktop browser with a
+> checker, seven example sites), and a playground to write one in:
+> https://srajpal.github.io/holoml/playground/. There's also a desktop browser with a
 > 3D interface that reads it: https://srajpal.github.io/hypersol-hyperspace-3d/
 >
 > It's experimental. I'd love to know what you'd want a 3D page to do
@@ -97,10 +99,10 @@ interface
 > snapshots, ad and tracker blocking with @ghostery/adblocker-electron,
 > DNS over HTTPS, HTTPS-only, passwords in the system keychain through
 > safeStorage, and history in SQLite through node:sqlite in a worker.
-> 463 end-to-end checks drive the real app with Playwright on Windows,
+> 480 end-to-end checks drive the real app with Playwright on Windows,
 > Linux, and macOS.
 >
-> Portable zips for all three: https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1
+> Portable zips for all three: https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.2
 >
 > Things that were harder than expected, if anyone's curious: clicks
 > landing on a tilted webview, full screen and pointer lock with the

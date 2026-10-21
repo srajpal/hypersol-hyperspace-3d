@@ -10,7 +10,8 @@ package files.
 Checked 2026-10-10: the Runtime table against the installed packages
 (each one's package.json version and licence field) and pnpm-lock.yaml,
 the Android table against its Gradle build, and the test fixtures
-against each example's own models/CREDITS.md. The
+against each example's own models/CREDITS.md; Electron's row updated
+2026-10-20 (44.9.2, release 0.9.2). The
 filter lists' licences are as recorded on 2026-09-26 (their sources were
 not read again), and the pictures in `docs/` were not gone through
 again.

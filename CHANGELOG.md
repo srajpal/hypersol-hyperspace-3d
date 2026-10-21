@@ -51,7 +51,7 @@ And since 0.9.1, in the viewer on the web and on the project's sites (the app it
   examples' scripts says what is so: they run in the viewer on the
   web, as both sites are on srajpal.github.io.
 
-## 0.9.1 — developer preview (2026-10-15)
+## 0.9.1 — developer preview (2026-10-16)
 
 Everything accepted since 0.9.0: milestones 13 to 28, the review of
 2026-09-30, and the GitHub issues worked since, listed below. New with
@@ -548,7 +548,7 @@ are the review's):
   credited as CC BY 4.0 but licensed CC BY-NC 4.0 (non-commercial).
   [E1]
 - Built on Electron 44.5.1, with its backported Chromium, V8, ANGLE,
-  and Dawn fixes (44.7.0 since, above). [H2]
+  and Dawn fixes (44.7.2 since, above). [H2]
 - The copy of HoloML's parser and checker is HoloML 0.2.2, the
   specification's third edition: the same language, stricter in places
   (HoloML 0.3.1 since: milestone 25 and the fixes of 2026-10-09).

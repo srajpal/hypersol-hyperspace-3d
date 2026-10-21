@@ -8,16 +8,16 @@ or exclamation marks. Titles are cut at 80 characters.
 ## Title (choose one)
 
 1. `Show HN: HyperSpace 3D – an open-source browser with a 3D interface`
-   (69 characters)
+   (67 characters)
 2. `Show HN: HoloML, a markup language for 3D websites, and a browser for it`
-   (73)
+   (72)
 3. `Show HN: A 3D web browser we imagined in 2001, built with AI agents`
-   (68)
+   (67)
 
 Recommended: 1. It says what the thing is; the 2001 story and the AI
 agents are in the first comment, where they invite questions rather
-than arguments. Choose 2 if the playground is live, as it gives the
-language the front.
+than arguments. The playground is live, so 2 is a fair choice too:
+it gives the language the front.
 
 ## Link
 
@@ -44,6 +44,9 @@ Posted at once, under the owner's account.
 > flat by a harbour that you can walk through, in your own browser:
 > https://srajpal.github.io/hypersol-hyperspace-3d/viewer/?page=https://srajpal.github.io/holoml/harbour-loft/index.holoml
 >
+> There's also a playground where you edit a page and see it change:
+> https://srajpal.github.io/holoml/playground/
+>
 > Some background: in 2001 a friend and I made a free Windows browser
 > called HyperSol WebSurfer, and our next idea was a browser you look
 > into rather than at. It never got past a concept screen. This year is
@@ -56,15 +59,12 @@ Posted at once, under the owner's account.
 > does what it says. The article has the whole story: <ARTICLE>
 >
 > It's an experimental developer preview: portable zips for Windows,
-> macOS, and Linux, unsigned, so each system asks once. Apache 2.0.
+> macOS, and Linux, unsigned, so each system asks once; each zip has a
+> build provenance attestation you can check with `gh`. Apache 2.0.
 > I'd love to hear what breaks, and what you'd want a 3D page to do.
 >
 > Browser: https://github.com/srajpal/hypersol-hyperspace-3d
 > Language: https://github.com/srajpal/holoml
-
-**[owner: if the playground is live, add a line before "Some
-background": "There's also a playground where you edit a page and see
-it change: <PLAYGROUND>".]**
 
 ## Questions to expect
 
