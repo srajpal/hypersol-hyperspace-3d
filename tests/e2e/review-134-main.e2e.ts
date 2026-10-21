@@ -536,6 +536,45 @@ window.__escape = out;
   });
 });
 
+describe('M6: peer connections on the web (review of 2026-10-21)', () => {
+  /** What a page's script gets when it tries for a peer connection: the constructor, an offer, and a frame's own. */
+  const TRY_PEER = `(async () => {
+  const r = { constructor: typeof RTCPeerConnection, webkit: typeof webkitRTCPeerConnection };
+  try {
+    const pc = new RTCPeerConnection();
+    pc.createDataChannel('out');
+    await pc.setLocalDescription(await pc.createOffer());
+    r.offer = pc.signalingState;
+    pc.close();
+  } catch (e) { r.offer = 'refused: ' + e.name; }
+  try {
+    const f = document.createElement('iframe');
+    document.body.appendChild(f);
+    r.frame = typeof f.contentWindow.RTCPeerConnection;
+    f.remove();
+  } catch (e) { r.frame = 'refused: ' + e.name; }
+  return r;
+})()`;
+
+  it("a HoloML page from a site makes none, as one from the computer makes none; an ordinary page's are as they were", async () => {
+    const h = await launch(server.url('holoml/still.holoml'), { userDataDir: newProfile() });
+    try {
+      await waitForPage(h, 'still.holoml');
+      expect(await inPage(h, TRY_PEER, await focusedPage(h))).toEqual({
+        constructor: 'undefined',
+        webkit: 'undefined',
+        offer: 'refused: ReferenceError',
+        frame: 'refused: NotSupportedError',
+      });
+      await navigateTo(h, server.url('link-a.html'));
+      await waitForPage(h, 'link-a');
+      expect(await inPage(h, TRY_PEER, await focusedPage(h))).toEqual({ constructor: 'function', webkit: 'function', offer: 'have-local-offer', frame: 'function' });
+    } finally {
+      await h.close();
+    }
+  });
+});
+
 describe('M11: a .holoml file dropped on a page', () => {
   it('opens in that tab when it comes from the page\'s own drop; a path of another kind does not', async () => {
     const folder = mkdtempSync(join(tmpdir(), 'hypersol-holoml-'));

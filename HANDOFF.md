@@ -100,6 +100,11 @@ state; this is a summary.
   (macOS), #125 (the viewer on the web follows links to other HoloML
   pages), and #127 (attested zips). Releases: 0.9.1 (2026-10-16) and
   0.9.2 (2026-10-20), pre-releases with portable zips.
+- The review of 2026-10-21 (prompt 204; TODO.md has it): the webrtc
+  finding was already fixed (prompt 172), now checked on the web too;
+  `holoml.add` keeps an animation of an element already in the page;
+  the playground's faults fixed in holoml; one question for the owner,
+  #87's rule against the Mac's own full screen.
 - The logo direction is chosen (concept 4d in
   docs/branding/logo-concepts/), and the app's icon is drawn from it
   since 0.9.1 (`pnpm --filter @hypersol/browser icons`, issue #92).

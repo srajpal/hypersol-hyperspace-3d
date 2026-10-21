@@ -8744,6 +8744,87 @@ Results:
   #54; its 885 tests passed). Words only. Step 2, the three links
   clicked by hand, is the owner's.
 
+## The review of 2026-10-21 (prompt 204)
+
+Asked in prompt 204: a finding of 2026-10-07 handed back (the content
+policy's `webrtc 'block'`, which Chromium ignores), then a review of
+both repositories since the end of the milestones (main at fb498a5
+here, baf7388 in holoml, to origin/main of 2026-10-21) with two
+outside skills: a code review on two axes, standards and the issues'
+own words, and an architecture review (deepening candidates, in a
+report kept outside the repository). The owner asked for every fix
+found, the optional ones too ("fix all including optional").
+
+The webrtc finding was already fixed, by the viewer's guard (prompt
+172, viewer/guard.ts; in 0.9.1). Checked again on 2026-10-21: on
+still.holoml from the fixture server `RTCPeerConnection` is
+undefined, a new one throws ReferenceError, and a frame is refused;
+on link-a.html an offer reaches have-local-offer and a frame has the
+constructor; M6's check passed. Only files from the computer were
+checked: a check for a page from a site and an ordinary page is
+added (below).
+
+Fixed here (this repository):
+
+- `holoml.add` left out an animation, or a click action, whose target
+  or trigger was already in the page: the markup was checked alone, so
+  the checker said "No element has the id". HoloML's specification
+  (SPEC.md, `holoml.add` in the scene API) leaves one out only when its target or
+  trigger is not in the scene once the markup is added. The markup is
+  now checked with stand-ins, after it, for the elements of the page
+  that it names (each written again with its attributes); the
+  checker's problems in the stand-ins are not the markup's. So what
+  the element is still counts (a sound's rotation is still refused).
+  viewer/scene.ts, addMarkup.
+- PG4 waited a fixed 2 s before checking that the switch stopped a
+  draw (AGENTS.md: no sleep in a check that something does not
+  happen). The playground now counts its draws as they begin (the
+  viewer frame's navigation object announces each), and the check
+  looks once a 1 s timer set in the playground after the check has
+  answered runs, which comes after any draw (0.75 s after the check).
+- The release workflow's setup-node was v7.0.0; it is v7.1.0, as in
+  ci.yml and pages.yml.
+- AGENTS.md's "Where tests live" names site/ and tests/screenshots/.
+
+Fixed in holoml (its pull request; the checks are here, as the
+playground's are): the playground's note without WebGL 2 lost to
+Ctrl+Enter on a syntax mistake; text typed while a preset loads was
+replaced without asking; a preset that failed to load left the menu
+on it; Ctrl+] at the very start of a text whose first line is empty
+indented the second line; after Run drew a page with problems, the
+note called that scene the last version without one. Also its
+CHANGELOG's two "Added" headings, the README's GIF moved to the top
+(issue #93 asked), and a test for Blockworld's `?seed=` and `?hour=`.
+
+Checks added (same command):
+
+| Check | File | What |
+|---|---|---|
+| M6 on the web | review-134-main.e2e.ts | still.holoml from a site: no constructor, no offer, no frame; link-a.html: the constructor, an offer at have-local-offer, a frame's own |
+| HL6 | m25.e2e.ts | holoml.add of animations of #stand and with trigger #car, already in the page: added, and the action joined; a sound's rotation still refused |
+| PG4 | web-viewer.e2e.ts | the draws counted; none with the switch off; after Run with a problem, the note says "an earlier version" |
+| PG5 | web-viewer.e2e.ts | typed while a preset loads: asked first, kept; a failed preset: the menu back |
+| PG7 | web-viewer.e2e.ts | Ctrl+] at the very start indents the empty first line |
+| PG8 | web-viewer.e2e.ts | without WebGL 2, Ctrl+Enter on a syntax mistake and the next key keep the note |
+
+Results (2026-10-21, Windows 11, this computer): `pnpm lint` and
+`pnpm typecheck` clean; `pnpm test` 615 passed; holoml's lint, types,
+and tests clean (897 passed). The new checks, run once with the old
+viewer and the old playground: all five failed (HL6's, PG4, PG5's new
+check, PG7, PG8); with the fixes they pass. The full `pnpm test:e2e`:
+483 passed and 1 skipped (FS5, which needs a window with the system's
+focus), 34 files. Blockworld's new test fails when the seed is read
+from `location`.
+
+Left for the owner: GitHub issue #87's rule on macOS. The plan above
+("Today nothing else makes the window full screen") does not hold on
+a Mac, where the green button, Ctrl+Cmd+F, and the Window menu's
+"Enter Full Screen" make the window full screen; settle's look a
+second later finds no page holding it and takes the window out
+(read in the code, not run on a Mac). FS10 checks that a window put
+in full screen with no page (`setFullScreen(true)`) leaves, so a
+change is a change to #87's requirement, for the owner to decide.
+
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 
 Five new issues (#66 to #68 here, #42 and #43 in holoml) and three

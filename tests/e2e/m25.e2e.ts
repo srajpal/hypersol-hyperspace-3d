@@ -342,6 +342,20 @@ describe('HL6: the scene API of HoloML 0.3', () => {
     expect(await consoleText(h)).toMatch(/holoml\.add: line 1, column \d+: No element has the id "nothing"; <animate> left out\./);
   });
 
+  it('HL6 holoml.add takes an animation of an element already in the page, and a click action whose trigger is there; what that element is still counts (review of 2026-10-21)', async () => {
+    const kinds = await inPage<string[]>(
+      h,
+      `holoml.add('<animate target="#stand" attribute="position" to="3 1 0" duration="1s" /><animate id="hop" target="#stand" attribute="position" to="3 2 0" duration="1s" begin="click" trigger="#car" label="Hop" /><animate target="#tone" attribute="rotation" to="0 90 0" duration="1s" />').map((t) => t.kind)`,
+      PAGE,
+    );
+    expect(kinds).toEqual(['animate', 'animate']);
+    await waitFor('the action joined its trigger', () => holo<{ trigger: string | null }[]>(h, 'window.__holoml.actions()', PAGE), (a) => a.some((x) => x.trigger === 'car'));
+    const said = await consoleText(h);
+    expect(said).not.toMatch(/No element has the id "(stand|car)"/);
+    // The element is there, but a sound cannot be turned: the checker still sees what it is.
+    expect(said).toMatch(/holoml\.add: line 1, column \d+: The rotation of a <sound> cannot be animated; <animate> left out\./);
+  });
+
   it("HL6 a 0.2 page's scripts have the API as it was", async () => {
     await openPage(h, 'review-134-api.holoml');
     expect(await inPage(h, `[typeof holoml.viewer.goTo, 'place' in holoml.viewer, 'label' in holoml.find('car')]`, 'review-134-api.holoml')).toEqual(['undefined', false, false]);

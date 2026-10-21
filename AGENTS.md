@@ -160,7 +160,8 @@ Do not change earlier entries except to correct an error.
 
 Where tests live:
 - Unit tests next to the code they test: `*.test.ts` in each package, in
-  apps/browser/src, and in apps/android/src (the Android room page's);
+  apps/browser/src, in apps/android/src (the Android room page's), in
+  site (the landing page's), and in tests/screenshots (the GIF's);
   the Android app's Kotlin unit tests (JUnit) in
   apps/android/app/src/test.
 - End-to-end tests in tests/e2e (Playwright driving the Electron app).
@@ -199,7 +200,7 @@ date given and grow with each issue; TODO.md has the latest.
   social-preview.png here and in holoml beside this repository;
   committed; run it when the logo, the README's first screenshot, or
   the words change; issue #95).
-- Unit: `pnpm test` (Vitest; 594 tests passed on 2026-10-10;
+- Unit: `pnpm test` (Vitest; 615 tests passed on 2026-10-21;
   each test may take up to 20 seconds, vitest.config.ts)
 - HyperSpace 3D for Android (milestone 24; first run 2026-10-05): after
   `pnpm build` and `pnpm --filter @hypersol/android build:web`, in
@@ -703,6 +704,15 @@ milestone's checks are defined in TODO.md):
   rule for the address is a unit test (viewer/links.test.ts), and
   m14's P4, m19's places, and m20's shoe page check that the desktop
   follows links as before (WL9).
+- The review of 2026-10-21 (prompt 204; same command; TODO.md, "The
+  review of 2026-10-21"): in review-134-main.e2e.ts, M6 on the web (a
+  HoloML page from a site makes no peer connection, and an ordinary
+  page's are as they were); in m25.e2e.ts, HL6's `holoml.add` of an
+  animation whose target or trigger is already in the page; and in
+  web-viewer.e2e.ts, PG4's switch counted by the playground's draws as
+  they begin (no fixed wait) and a scene drawn with problems, PG5's
+  text typed while a preset loads and a preset that fails, PG7's
+  Ctrl+] at the very start, and PG8's Ctrl+Enter without WebGL 2.
 - No more milestones (prompt 203): polish (29) was taken off the
   roadmap, and installers before it (prompt 172). A fix for a GitHub
   issue adds its checks to the file of the part it changes, or to a
