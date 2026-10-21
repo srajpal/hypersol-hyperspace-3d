@@ -2224,3 +2224,47 @@ Agreed, go ahead with all three.
 Also update AGENTS.md to not record any more prompts unless requested
 to do so.
 ```
+
+## 204 — 2026-10-21 · Claude Opus 5.5, high effort
+
+Asked to be recorded. A finding from 2026-10-07 (milestone 25) handed
+back for a proposal, then a review of both repositories.
+
+```text
+Read AGENTS.md first and follow it (log the owner's prompt in
+PROMPTS.md; propose before building; nothing outside an approved plan
+without approval).
+
+Finding (2026-10-07, found during milestone 25 on branch
+m25-holoml-0.3): HoloML pages get a content policy, HOLOML_CSP in
+apps/browser/src/main/holoml.ts, that ends with "webrtc 'block'", meant
+to stop a HoloML page's scripts from opening peer connections (the
+review of 2026-09-30, finding M6; docs/privacy.md says HoloML 0.2 page
+scripts "cannot open peer-to-peer connections"; ARCHITECTURE.md's
+"HoloML pages" row says "no peer connections (`webrtc 'block'`)"). In
+Electron 44.7.0, Chromium does not recognise the directive: every
+HoloML page logs "Unrecognized Content-Security-Policy directive
+'webrtc'." and, in a HoloML page (tests/fixtures/holoml/still.holoml
+served by the fixture server), `new RTCPeerConnection()`,
+`createDataChannel`, `createOffer`, and `setLocalDescription` all
+succeed (signalingState have-local-offer). The only check is a unit
+test (apps/browser/src/main/holoml.test.ts) that the policy text
+contains the directive. This matters most for HoloML files opened from
+the computer (hypersol-file:), whose scripts can read local files and
+whose other ways out were closed by the review.
+
+Task: investigate and propose (do not build until the owner approves) a
+block that works, for example making RTCPeerConnection unavailable to
+HoloML pages before page scripts run, or a per-webContents WebRTC IP
+handling policy while a HoloML page is shown, and weigh each against
+what a page can still do. Propose an end-to-end check (tests/e2e) that
+a HoloML page cannot create a working peer connection (and that
+ordinary web pages are unchanged), the doc changes (docs/privacy.md,
+ARCHITECTURE.md, CHANGELOG.md security section), and whether to keep or
+remove the ignored directive. Report the evidence first.
+
+then review both repositories using the following skills
+https://github.com/mattpocock/skills/tree/main/skills/engineering/code-review
+https://github.com/mattpocock/skills/tree/main/skills/engineering/improve-codebase-architecture
+and let me know what you find.
+```
