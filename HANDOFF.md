@@ -935,8 +935,8 @@ to this repository for rules and the prompt log.
    approved 2026-10-21 with the recommended answers and built on the
    branch issue-87-fullscreen-close, stacked on #130. The window is
    full screen only while a page holds it (main/fullscreen.ts, settle;
-   checks FS9 and FS10). Before the merge: issue-75.e2e.ts on the
-   owner's Mac (Q2). TODO.md, "Issue #87", "The fix", has the plan and
+   checks FS9 and FS10). issue-75.e2e.ts passed on the owner's Mac
+   (Q2, 2026-10-21). TODO.md, "Issue #87", "The fix", has the plan and
    the results.
    The playground (holoml #58, step 16), approved 2026-10-19 with the
    recommended answers, merged 2026-10-20: #123 and #124 here (the

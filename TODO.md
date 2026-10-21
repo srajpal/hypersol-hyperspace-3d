@@ -6424,7 +6424,7 @@ was full screen. Whether the tab closed is not in the log.
 
 ### The fix (plan, 2026-10-21)
 
-Status: built 2026-10-21, for the owner's review (the Mac run first);
+Status: built 2026-10-21 and passed on the owner's Mac, for the owner's review;
 approved by the owner on 2026-10-21 with the recommended
 answers (Q1 the full rule with FS10, Q2 the Mac run before the merge,
 Q3 stacked on pull request #130). The owner asked on 2026-10-21,
@@ -6549,9 +6549,19 @@ Results (Windows 11, 2026-10-21):
   as GitHub's machines run it): 8 passed, FS5 skipped; FS2 there too
   came back by Electron.
 - `pnpm typecheck` and `pnpm lint` pass.
-- Not checked yet: the owner's Mac (Q2, before the merge), and the pull
-  request's automatic builds. Whether the rule ever acts in FS2 on
-  GitHub's machines shows in their logs ("by the browser's own look").
+- The owner's Mac (Q2; an iMac Pro, drawing with ANGLE on Metal, AMD
+  Radeon Pro Vega 56; 2026-10-21, on this branch): issue-75.e2e.ts, 8
+  passed, FS5 skipped, in 47 s, with 0 input retries; FS2's closing
+  check logged "the window came back by Electron".
+- The pull request's first automatic build (run 39611004325): Windows
+  part 2 missed m14's P4 ("the label link", three clicks at the label
+  reaching nothing, drawn in software), a check this change does not
+  touch; the same miss came in #117's and #118's builds, and it is of
+  the kind issue #79 covers. The branch was pushed again with these
+  results, which runs the builds anew.
+- Not checked yet: the automatic builds passing. Whether the rule ever
+  acts in FS2 on GitHub's machines shows in their logs ("by the
+  browser's own look").
 
 ## Issue #91: the HoloML viewer for ordinary browsers (promotion plan, step 4)
 
