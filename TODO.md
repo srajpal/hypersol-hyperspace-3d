@@ -6373,6 +6373,14 @@ the window: the page was gone (the tab closed), and the window was
 still full screen 15 seconds later, at its off-screen place, 1280 by
 800. So the first reading (the page gone before its leaving script
 ran) is the one the evidence now supports, on Linux as on Windows.
+Seen a third time on 2026-10-20, in pull request #126's Windows build
+(part 1, run 39457435352; recorded on the issue), and a fourth on
+2026-10-21, in pull request #130's Linux build (part 1, run
+39530587263, a documents review with one sentence of the landing
+page): again the page gone 55 ms after Ctrl+W and the window still
+full screen 15 seconds later, at its off-screen place (2120, 0), 1280
+by 800; the failed jobs were run again. Each time the other checks of
+the part passed.
 FS2's check that closing
 a tab in full screen leaves failed once, in the Windows build of #86
 (part 1; its run again passed): the window was still in full screen 15
