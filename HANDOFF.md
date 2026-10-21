@@ -1,7 +1,9 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-19 (the promotion plan approved, TODO.md, "The
+Last updated 2026-10-20 (release 0.9.2 published, its zips attested,
+and the README's Download section with a badge per zip, issue #127;
+the promotion plan approved, TODO.md, "The
 promotion plan (2026-10-14)": 19 steps, each a GitHub issue, #90 to
 #101 here and #54 to #60 in holoml; steps 1 and 3 to 10 done: release
 0.9.1 published 2026-10-16 as a portable zip for Windows, Linux, and
@@ -901,7 +903,15 @@ to this repository for rules and the prompt log.
    any other ref so that the zips' attestations name the tag; the agent
    then checks AT2 to AT4 and updates the
    README's Download section and status paragraph (TODO.md, "Issue
-   #127").
+   #127"). Done 2026-10-20: the owner merged #128, tagged `v0.9.2`
+   (1426b17), and published the release (a pre-release, without a
+   discussion); AT2 and AT3 pass, and the README names 0.9.2 with an
+   *attested* badge per zip (docs/branding/attested.svg, no outside
+   service) linked to the zip's own attestation page. AT4 does not
+   pass: the repository's immutable-releases setting read as off after
+   the publish, and GitHub applies it only to releases published once
+   it is on, so 0.9.2 is not immutable (TODO.md, "Issue #127", what is
+   left).
    The playground (holoml #58), approved 2026-10-19 with the
    recommended answers, is built in two pull requests: #124 here (the
    viewer's `?from=parent` and checks PG1 to PG8; PG3 to PG8 need the
