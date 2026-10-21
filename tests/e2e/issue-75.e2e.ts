@@ -68,9 +68,20 @@ async function goFull(h: Harness, page = 'fullscreen.html'): Promise<void> {
   const before = (await events(h, page)).filter((e) => e === 'in').length;
   const at = await screenPointOf(h, '#full', page);
   const went = async () => (await events(h, page)).filter((e) => e === 'in').length > before;
-  // A click that misses says what it found there, the window's size and place, and the room's layout.
+  // A click that misses says what it found there, the window's size and place, and the room's layout; and what the
+  // page logged (a refused request, a click that reached it) and what of each document is full, with the looks at
+  // the window (FS10 on the owner's Mac, 2026-10-21: in the person's own full screen the page did not enter).
   await clickUntil(h, at, 'full screen', went, {}, async () =>
-    JSON.stringify({ at: await describeMissedClick(h, at, went), window: await windowState(h), inner: await h.shell.evaluate(() => [innerWidth, innerHeight]), layout: await shellCall(h, 'layout') }),
+    JSON.stringify({
+      at: await describeMissedClick(h, at, went),
+      window: await windowState(h),
+      inner: await h.shell.evaluate(() => [innerWidth, innerHeight]),
+      layout: await shellCall(h, 'layout'),
+      pageEvents: await events(h, page),
+      pageFull: await inPage<string | null>(h, 'document.fullscreenElement?.id ?? null', page),
+      shellFull: await h.shell.evaluate(() => document.fullscreenElement?.tagName ?? null),
+      looks: await mainLog(h, 'fullscreenSettles'),
+    }),
   );
   await waitFor('the window full screen', () => windowState(h), (w) => w.full);
   await waitFor('the notice', () => notice(h), (n) => n.open && n.holding.some((x) => x.full));
