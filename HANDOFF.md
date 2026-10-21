@@ -106,6 +106,10 @@ state; this is a summary.
   the playground's faults fixed in holoml; and #87's rule keeps the
   person's own full screen (the Mac's green button), as the owner
   decided.
+- Issue #133 (2026-10-21): the ad blocker's page scripts run each in a
+  block, in the frame that asked, at once, with no user gesture
+  (YouTube broke in part, and the terminal warned of listeners and
+  unhandled rejections).
 - The logo direction is chosen (concept 4d in
   docs/branding/logo-concepts/), and the app's icon is drawn from it
   since 0.9.1 (`pnpm --filter @hypersol/browser icons`, issue #92).

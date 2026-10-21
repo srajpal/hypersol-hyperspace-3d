@@ -14,6 +14,7 @@ import { readLimited } from '../favicon';
 import type { StorageService } from '../storage/service';
 import { readTextIfExists, writeFileAtomic } from '../storage/files';
 import { DnsControl, QUAD9 } from './dns';
+import { cosmeticsRequest } from './cosmetics';
 import { FilterService, type ListManifest } from './filters';
 import { verifyStarter, type StarterInfo } from './filters-build';
 import { OwnRequests } from './own-requests';
@@ -313,7 +314,8 @@ export class Privacy {
     ipcMain.handle(COSMETICS_CHANNEL, (event, _url: unknown, msg: unknown) => {
       const page = this.cosmeticsPage(event);
       if (page === null) return undefined;
-      return this.filters.engine.onInjectCosmeticFilters(event, page, msg as Parameters<ElectronBlocker['onInjectCosmeticFilters']>[2]);
+      // The library's own injection, with the page's scripts run as cosmetics.ts says (issue #133).
+      return this.filters.engine.onInjectCosmeticFilters(cosmeticsRequest(event), page, msg as Parameters<ElectronBlocker['onInjectCosmeticFilters']>[2]);
     });
     ipcMain.handle(MUTATION_OBSERVER_CHANNEL, (event) =>
       this.cosmeticsPage(event) === null ? false : this.filters.engine.config.enableMutationObserver,

@@ -8746,6 +8746,63 @@ Results:
   #54; its 885 tests passed). Words only. Step 2, the three links
   clicked by hand, is the owner's.
 
+## Issue #133: the ad blocker's page scripts (YouTube)
+
+Reported by the owner on 2026-10-21 (macOS, a dev run): YouTube did not
+work, and the terminal showed `MaxListenersExceededWarning: 11
+did-stop-loading listeners` and seven `UnhandledPromiseRejectionWarning:
+Script failed to execute`. The owner approved finding and fixing it as
+an issue ("go ahead").
+
+Found (a run of the built app on Windows with a throwaway profile, a
+YouTube video): the same warnings, and in the page's console
+"Identifier 'JSONPath' has already been declared" three times and
+YouTube's own "Constructing dom-repeat: RangeError: Maximum call stack
+size exceeded". The video played on Windows. The cause is the blocker
+library's own injection (@ghostery/adblocker-electron 2.20.1,
+onInjectCosmeticFilters), which runs each of the lists' page scripts
+with `event.sender.executeJavaScript(script, true)`:
+
+- YouTube gets thirty scripts from the starter lists; four of them
+  (trusted-json-edit-xhr-request) each declare `class JSONPath` at
+  their top level. All run in the page's one realm, so three failed to
+  run at all.
+- A web page's executeJavaScript waits until the page has loaded, with a
+  did-stop-loading listener for each script: past Node's warning at ten.
+  And so every script ran after the page's own load, too late for
+  scripts that must act before the page's code does.
+- A failure was a rejected promise the library never caught (its
+  try/catch is around a call that does not throw).
+- `true` gives each script a user gesture: the page could then act as if
+  clicked (full screen, a new window).
+
+The fix (main/privacy/cosmetics.ts): the library is given a request of
+our own in place of the page's; its scripts run in the frame that asked
+(WebFrameMain.executeJavaScript, at once), each in a block of its own,
+with no user gesture, and failures caught. Styles go in as before. With
+it, the YouTube run shows none of the warnings or errors, and the video
+plays.
+
+Checks (tests/e2e/issue-133.e2e.ts, part 1; a list made in the check
+with buildEngine and the app's own page scripts, on a local page):
+
+| Check | What | Result |
+|---|---|---|
+| BS1 | Two json-edit scripts that declare the same class each take their key out of what JSON.parse gives; twelve set-constant scripts all ran | Pass with the fix; fails on the old code (neither json-edit acted: the old scripts ran after the page's load) |
+| BS2 | No MaxListenersExceededWarning and no UnhandledPromiseRejection in the main process's output, once caughtUp | Pass; on the old code the rejection shows (the listener warning did not, on this small page; it did on YouTube) |
+| BS3 | The page has no user gesture at its load | Pass; it cannot fail on the old code, whose scripts ran after the page read it, but with scripts now before the load it would show a gesture given again; main/privacy/cosmetics.test.ts checks `false` is passed |
+
+Unit tests: main/privacy/cosmetics.test.ts (5): the ids kept, a script in
+the asking frame in a block with no gesture, a failure caught, nothing in
+a frame that has gone, styles as before, and two scripts declaring one
+class in one realm (node:vm): bare, the second fails; in blocks, both run.
+
+Results (2026-10-21, Windows 11): the new unit tests pass; BS1 to BS3
+pass; m4 (F1 to F10) 14 passed; the full `pnpm test:e2e` 484 passed and 1
+skipped (FS5), 35 files; `pnpm test` 620 passed. Not yet run: the
+owner's Mac (where YouTube "did not work"; what failed there is not
+known: the page's partial breakage is the likely reason).
+
 ## The review of 2026-10-21 (prompt 204)
 
 Asked in prompt 204: a finding of 2026-10-07 handed back (the content

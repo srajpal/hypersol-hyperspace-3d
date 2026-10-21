@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- The ad blocker's page scripts (GitHub issue #133, seen on YouTube):
+  several of the filter lists' scripts declare the same name, and as they
+  all ran in the page's one realm, every one after the first failed, and
+  YouTube's own page broke in part ("Maximum call stack size exceeded").
+  Each now runs in a block of its own, in the frame that asked for it, at
+  once rather than after the page has loaded (each wait was a listener:
+  YouTube's thirty went past Node's warning of a leak), without the user
+  gesture the blocker's library gave it (a page could act as if clicked),
+  and a script that fails no longer leaves an unhandled rejection.
 - A tab closed while its page was full screen could leave the window in
   full screen with no page in it (GitHub issue #87, seen now and then
   on GitHub's machines). A full screen a page started now lasts only

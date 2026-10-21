@@ -200,7 +200,7 @@ date given and grow with each issue; TODO.md has the latest.
   social-preview.png here and in holoml beside this repository;
   committed; run it when the logo, the README's first screenshot, or
   the words change; issue #95).
-- Unit: `pnpm test` (Vitest; 615 tests passed on 2026-10-21;
+- Unit: `pnpm test` (Vitest; 620 tests passed on 2026-10-21;
   each test may take up to 20 seconds, vitest.config.ts)
 - HyperSpace 3D for Android (milestone 24; first run 2026-10-05): after
   `pnpm build` and `pnpm --filter @hypersol/android build:web`, in
@@ -716,6 +716,13 @@ milestone's checks are defined in TODO.md):
   they begin (no fixed wait) and a scene drawn with problems, PG5's
   text typed while a preset loads and a preset that fails, PG7's
   Ctrl+] at the very start, and PG8's Ctrl+Enter without WebGL 2.
+- GitHub issue #133 checks BS1 to BS3 (TODO.md, "Issue #133"; same
+  command, tests/e2e/issue-133.e2e.ts, in part 1): the ad blocker's page
+  scripts, from a list made for the check (two json-edit scripts that
+  declare the same class, and twelve set-constant ones) on a local page:
+  both json-edit scripts run, no listener warning or unhandled rejection
+  in the main process, and no user gesture for the page. The request the
+  library is given is a unit test (main/privacy/cosmetics.test.ts).
 - No more milestones (prompt 203): polish (29) was taken off the
   roadmap, and installers before it (prompt 172). A fix for a GitHub
   issue adds its checks to the file of the part it changes, or to a
