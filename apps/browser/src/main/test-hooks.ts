@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron';
 import { LAYERS_SETTLED_CHANNEL } from '../shared/layers';
 import type { FaviconEnd } from './favicon';
+import type { FullScreenSettle } from './fullscreen';
 import type { AttachRecord } from './security';
 
 /**
@@ -69,6 +70,8 @@ export interface TestLog {
   fullscreenEdges: number[];
   /** macOS: each look at the shell's document and the page's after full screen (main/fullscreen.ts, mendPage; issue #111). */
   fullscreenMends: { at: number; page: number; shellFull: boolean; pageFull: boolean; shellAsked: boolean; pageAsked: boolean }[];
+  /** GitHub issue #87: each look at the window in full screen (main/fullscreen.ts, settle), and whether it left by itself. */
+  fullscreenSettles: FullScreenSettle[];
 }
 
 declare global {
@@ -76,7 +79,7 @@ declare global {
 }
 
 export function installTestHooks(): TestLog {
-  const log: TestLog = { attaches: [], requests: [], heldRequests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave', refusedPermissions: [], layersSettled: {}, faviconEnds: [], captures: [], lifts: [], fullscreenEdges: [], fullscreenMends: [] };
+  const log: TestLog = { attaches: [], requests: [], heldRequests: [], blockedPopups: [], menus: [], dataOps: {}, dnsApplied: [], opened: [], leaveAsks: [], leaveAnswer: 'leave', refusedPermissions: [], layersSettled: {}, faviconEnds: [], captures: [], lifts: [], fullscreenEdges: [], fullscreenMends: [], fullscreenSettles: [] };
   globalThis.__hypersolTest = log;
   // log.requests is filled by the privacy shield's request listener
   // (main/privacy/index.ts): Electron allows one listener per session.

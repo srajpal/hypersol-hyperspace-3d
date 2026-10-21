@@ -1251,13 +1251,16 @@ export class App {
   /**
    * Every page that holds the screen or the pointer and is not the tab in
    * front gives both up; one whose tab has closed holds nothing (a page
-   * that is gone never says it left: found by check FS2).
+   * that is gone never says it left: found by check FS2), and if it held
+   * the screen the main process is told, to look at the window (issue #87:
+   * now and then it stayed full screen).
    */
   private releaseHeld(): void {
     const front = this.focusedView?.webContentsId ?? null;
-    for (const id of [...this.holding.keys()]) {
+    for (const [id, state] of [...this.holding]) {
       if (this.tabForWebContents(id) === undefined) {
         this.holding.delete(id);
+        if (state.full) void this.options.bridge.leaveFullscreen(id).catch(() => undefined);
         if (this.holding.size === 0) this.options.holdNotice.hide();
       } else if (id !== front) {
         void this.options.bridge.leaveFullscreen(id).catch(() => undefined);

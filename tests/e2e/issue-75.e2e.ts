@@ -1,5 +1,5 @@
 /**
- * GitHub issue #75, checks FS1 to FS7 (TODO.md, "Issue #75"): full
+ * GitHub issue #75, checks FS1 to FS7 (TODO.md, "Issue #75"), and FS10 (issue #87): full
  * screen and pointer lock for web pages, with the browser's own notice and
  * Escape that always leaves. The fixture page (tests/fixtures/
  * fullscreen.html) asks for each from a click on its button, and tries to
@@ -245,8 +245,44 @@ describe('FS2: closing the tab', () => {
       // In steps, so a failure says which (issue #87, once in GitHub's Windows build): the tab did not close (the key
       // was lost), or it closed and the window stayed in full screen.
       await waitFor('closing the tab: the page gone', () => livePages(h, 'fullscreen.html'), (n) => n === 0);
-      await outOfFull(h, 'closing the tab');
+      // Issue #87: the window back by Electron, or by the browser's own look at it (main/fullscreen.ts, settle).
+      // Either passes; the log says which, and a failure says what each look found.
+      try {
+        await outOfFull(h, 'closing the tab');
+      } catch (error) {
+        throw new Error(`${(error as Error).message}; the looks at the window: ${JSON.stringify(await mainLog(h, 'fullscreenSettles'))}`);
+      }
+      const looks = await mainLog(h, 'fullscreenSettles');
+      console.log(`FS2 closing the tab: the window came back ${looks.some((l) => l.left) ? "by the browser's own look" : 'by Electron'} (${JSON.stringify(looks)})`);
       await waitForPage(h, 'link-a');
+    } finally {
+      await h.close();
+    }
+  });
+});
+
+describe('FS10: a window full screen with no page in it (issue #87)', () => {
+  it("leaves by itself and is back where it was; a page's own full screen is not undone", async () => {
+    const h = await launch(server.url('fullscreen.html'), { userDataDir: newProfile({ parallax: 'off' }) });
+    try {
+      await waitForPage(h, 'fullscreen.html');
+      // The state #87 left on GitHub's machines, made here: the window full screen and no page holding it.
+      windowBefore = (await windowState(h)).bounds;
+      await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.setFullScreen(true));
+      await waitFor('the window full screen', () => windowState(h), (w) => w.full);
+      await outOfFull(h, 'a window full screen with no page');
+      const looks = await mainLog(h, 'fullscreenSettles');
+      expect(looks.some((l) => l.why === 'entered' && l.left && !l.pageFull && !l.shellHoldsElement), JSON.stringify(looks)).toBe(true);
+      // A page's own full screen: the look a second after the window entered finds the page holding it, and leaves
+      // it be; Escape then leaves as before.
+      await goFull(h);
+      const seen = looks.length;
+      const look = await waitFor('the look after the page entered', () => mainLog(h, 'fullscreenSettles'), (l) => l.slice(seen).some((x) => x.why === 'entered'));
+      expect(look.slice(seen).every((x) => !x.left), JSON.stringify(look)).toBe(true);
+      expect((await windowState(h)).full).toBe(true);
+      expect((await notice(h)).holding.some((x) => x.full)).toBe(true);
+      await pressInPage(h, 'Escape', [], 'fullscreen.html');
+      await outOfFull(h, 'Escape');
     } finally {
       await h.close();
     }

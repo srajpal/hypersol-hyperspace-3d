@@ -6422,6 +6422,147 @@ was full screen. Whether the tab closed is not in the log.
   software m19 9 (2 skipped), m20 9 (1), m21 8 (3), the budgets skipped
   as before.
 
+### The fix (plan, 2026-10-21)
+
+Status: built 2026-10-21 and passed on the owner's Mac, for the owner's review;
+approved by the owner on 2026-10-21 with the recommended
+answers (Q1 the full rule with FS10, Q2 the Mac run before the merge,
+Q3 stacked on pull request #130). The owner asked on 2026-10-21,
+after FS2's fourth failure (pull request #130's Linux build), for a
+plan to fix #87: the window leaves full screen itself when no live
+page holds it.
+
+What the four failures show: each time the tab closed (the page gone
+55 ms after Ctrl+W, where the check could tell) and the window stayed
+full screen. Nothing in the browser puts the window back in that case.
+The shell's `releaseHeld` (renderer/app.ts) only forgets a page whose
+tab has closed and hides the notice; it asks the main process for
+nothing, as the page is gone. The window comes back only if Electron
+brings it back as the page's view goes, which it does every time here
+(24 of 24) and not always on GitHub's slower machines. Why Electron
+sometimes does not is still not known, so the fix is a rule that holds
+whatever the cause, not a change to the race.
+
+The rule: the browser's window is full screen only while a page of it
+holds full screen. (Today nothing else makes the window full screen;
+the browser's own full screen, F11, is issue #84, and when it is built
+the rule becomes "while a page, or the browser itself, holds it".)
+
+What changes:
+
+- main/fullscreen.ts: a new `settle(shell)`. Once the window has held
+  still for a moment (the same wait as the macOS look after leaving,
+  300 ms still, at most 3 s), if the window is full screen, no live
+  page of that shell is full screen (`fullNow`, the pages gone
+  dropped), and the shell's own document holds no full-screen element,
+  then the shell's document leaves full screen (as mendPage asks it),
+  the window leaves (`setFullScreen(false)`), and its size is checked
+  as after any full screen (mendWindow, changed to take the shell
+  rather than a page). It runs:
+  - when the shell says a tab that held full screen has closed;
+  - after a page leaves full screen (beside the size checks at 300 and
+    1200 ms);
+  - one second after the window enters full screen, so a window that
+    is full screen with no page holding it (whatever put it there)
+    comes back. A page's own full screen is never undone: its
+    `enter-html-full-screen` comes soon after the window's event (the
+    rule looks again before it acts), and the shell's document holds
+    the page's element while it is full.
+- renderer/app.ts, `releaseHeld`: for a page whose tab has closed and
+  which held full screen, the shell tells the main process (the
+  existing `leaveFullscreen` with the page's id), so the main process
+  settles the window. main/index.ts's handler, which today drops a
+  request for a page that is gone, settles the sender's own window
+  then; it acts only on the window of the shell that asked
+  (`handleFromShell`), and a page that is still there is taken out as
+  before.
+- shared/fullscreen.ts: the rule as a pure function,
+  `windowShouldLeave({ windowFull, pagesFull, shellHoldsElement })`,
+  so it is unit tested and read in one place.
+- Test runs only: each time the rule acts it is logged
+  (`fullscreenSettles` in the test log, beside `fullscreenMends`), so a
+  check can say whether the window came back by Electron or by the rule.
+
+Checks (FS9 and FS10 new; FS2 unchanged):
+
+| Check | What | Pass when |
+|---|---|---|
+| FS9 | The rule (unit, shared/fullscreen.test.ts) | Leave only when the window is full and no page and no shell element holds it; never when a page is full; never when the window is not full |
+| FS10 | A window full screen with no page (issue-75.e2e.ts, part 1) | The test puts the window into full screen with no page holding it (the app's own `setFullScreen(true)`, as the stuck state is): within 3 s it is back at its place and size, the room laid out again, and the log says the rule acted; and a page's own full screen (FS1's page) is still full 3 s after it entered, and Escape leaves as before |
+| FS2 | Closing a tab in full screen (unchanged) | As today; it now also logs whether the rule acted, so a failure on GitHub's machines says more |
+
+FS2's failure cannot be made to happen here (24 of 24 passed, and
+three ways of forcing it failed), so FS10 is the check that shows the
+rule working, and FS2 keeps watching on GitHub's machines. Each new
+check fails without its fix (run once with the change taken out).
+
+Runs before the pull request: the unit tests, lint, the type check;
+issue-75.e2e.ts with the graphics card and in software
+(HYPERSOL_TEST_SOFTWARE=1), FS2 and FS10 ten times each; `pnpm
+test:linux tests/e2e/issue-75.e2e.ts` (Linux, as GitHub's machines
+run it); and the pull request's automatic builds (Windows and Linux,
+four parts each). Documents: ARCHITECTURE.md (the full-screen row),
+AGENTS.md's regression list (issue #75's line: FS1 to FS10), this
+section's results, HANDOFF.md, and CHANGELOG.md's next section. No new
+package, service, or setting.
+
+Questions for the owner:
+
+1. The rule's reach: the window settled after a closed tab, after a
+   page leaves, and one second after the window enters full screen,
+   which makes FS10 possible (recommended); or after a closed tab only,
+   smaller, with FS2 alone to show it, which happens too seldom to tell
+   (a fix of that kind was not kept on 2026-10-10 for this reason).
+2. macOS: GitHub's macOS machine runs the end-to-end checks on main
+   only, as an experiment, and the window there leaves a full-screen
+   Space with a transition. Run issue-75.e2e.ts on the owner's Mac
+   before the merge (recommended), or after it.
+3. The branch: stacked on pull request #130 (this section is edited
+   there too), so merge #130 first (recommended); or after #130 merges,
+   from main.
+
+Built 2026-10-21 as planned: shared/fullscreen.ts (windowShouldLeave),
+main/fullscreen.ts (settle, its three triggers, whenStill shared with
+the macOS look, mendWindow by the shell), main/index.ts (the shell's
+leave request settles its own window, and the test log), renderer/
+app.ts (releaseHeld tells the main process of a closed tab that held
+full screen), main/test-hooks.ts and tests/e2e/harness.ts
+(`fullscreenSettles`), and tests/e2e/issue-75.e2e.ts (FS10; FS2 logs
+which way the window came back).
+
+Results (Windows 11, 2026-10-21):
+
+- FS9 passes (`pnpm test`: 613 passed, 2 skipped, holoml's copy check
+  without the holoml folder beside the worktree). It cannot pass
+  without the fix, as the rule is new.
+- FS10 passes. Without the fix (the look after the window enters taken
+  out, built, run alone) it fails as GitHub's machines did: "the window
+  back where it was" timed out with the window still full screen, 1920
+  by 1080, no page in it; the fix put back.
+- issue-75.e2e.ts with the graphics card: 8 passed, FS5 skipped (hidden
+  windows), as before; drawn in software (HYPERSOL_TEST_SOFTWARE=1) the
+  same. FS2's closing check and FS10, ten runs each: 10 of 10 passed.
+  Every FS2 run here logged "the window came back by Electron" with no
+  look needed (the window had left before the look's moment), as
+  expected on this computer.
+- `pnpm test:linux tests/e2e/issue-75.e2e.ts` (Linux in the container,
+  as GitHub's machines run it): 8 passed, FS5 skipped; FS2 there too
+  came back by Electron.
+- `pnpm typecheck` and `pnpm lint` pass.
+- The owner's Mac (Q2; an iMac Pro, drawing with ANGLE on Metal, AMD
+  Radeon Pro Vega 56; 2026-10-21, on this branch): issue-75.e2e.ts, 8
+  passed, FS5 skipped, in 47 s, with 0 input retries; FS2's closing
+  check logged "the window came back by Electron".
+- The pull request's first automatic build (run 39611004325): Windows
+  part 2 missed m14's P4 ("the label link", three clicks at the label
+  reaching nothing, drawn in software), a check this change does not
+  touch; the same miss came in #117's and #118's builds, and it is of
+  the kind issue #79 covers. The branch was pushed again with these
+  results, which runs the builds anew.
+- Not checked yet: the automatic builds passing. Whether the rule ever
+  acts in FS2 on GitHub's machines shows in their logs ("by the
+  browser's own look").
+
 ## Issue #91: the HoloML viewer for ordinary browsers (promotion plan, step 4)
 
 Status: the browser's half merged (pull request #106, 2026-10-14,

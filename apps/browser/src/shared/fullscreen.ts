@@ -46,6 +46,19 @@ export function noticeSite(url: string): string {
   }
 }
 
+/**
+ * Whether the browser's window leaves full screen by itself (GitHub issue
+ * #87): it is full screen only while a page of it holds full screen. A page
+ * holds it while Electron says so (its enter-html-full-screen, until its
+ * leave), and while the browser's own page holds a page's element full
+ * (Electron's way for a webview). A tab closed in full screen once left the
+ * window full with neither. (The browser's own full screen, issue #84, will
+ * hold it too, when there is one.)
+ */
+export function windowShouldLeave(state: { windowFull: boolean; pageFull: boolean; shellHoldsElement: boolean }): boolean {
+  return state.windowFull && !state.pageFull && !state.shellHoldsElement;
+}
+
 /** Whether a key leaves full screen or gives the pointer back: Escape pressed, with any other keys, while a page holds either. */
 export function escapeLeaves(input: { type: string; key: string }, holding: boolean): boolean {
   return holding && input.type === 'keyDown' && input.key === 'Escape';

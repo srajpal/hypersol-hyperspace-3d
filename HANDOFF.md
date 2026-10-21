@@ -930,6 +930,14 @@ to this repository for rules and the prompt log.
    release.yml started by hand starts from the tag itself ("Use
    workflow from" the tag): it stops a run from any other ref, so that
    the zips' attestations name the tag.
+   Issue #87 (closing a tab in full screen could leave the window full
+   screen; seen four times on GitHub's machines, never here): the fix
+   approved 2026-10-21 with the recommended answers and built on the
+   branch issue-87-fullscreen-close, stacked on #130. The window is
+   full screen only while a page holds it (main/fullscreen.ts, settle;
+   checks FS9 and FS10). issue-75.e2e.ts passed on the owner's Mac
+   (Q2, 2026-10-21). TODO.md, "Issue #87", "The fix", has the plan and
+   the results.
    The playground (holoml #58, step 16), approved 2026-10-19 with the
    recommended answers, merged 2026-10-20: #123 and #124 here (the
    viewer's `?from=parent` and checks PG1 to PG8; PG3 to PG8 need the

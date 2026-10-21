@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ALLOWED_WITH_NOTICE, LEAVE_SCRIPT, escapeLeaves, holdNotice, noticeSite } from './fullscreen';
+import { ALLOWED_WITH_NOTICE, LEAVE_SCRIPT, escapeLeaves, holdNotice, noticeSite, windowShouldLeave } from './fullscreen';
 
 /** GitHub issue #75: the rules of full screen and pointer lock. */
 
@@ -23,6 +23,18 @@ describe('full screen and pointer lock', () => {
     expect(escapeLeaves({ type: 'keyDown', key: 'Escape' }, false)).toBe(false);
     expect(escapeLeaves({ type: 'keyUp', key: 'Escape' }, true)).toBe(false);
     expect(escapeLeaves({ type: 'keyDown', key: 'q' }, true)).toBe(false);
+  });
+
+  it('FS9 the window leaves full screen by itself only when it is full and nothing of a page holds it (issue #87)', () => {
+    // A tab closed in full screen: the page gone, its element gone with it, the window still full.
+    expect(windowShouldLeave({ windowFull: true, pageFull: false, shellHoldsElement: false })).toBe(true);
+    // A page full screen, by Electron's word or by its element in the browser's own page (one may come before the other).
+    expect(windowShouldLeave({ windowFull: true, pageFull: true, shellHoldsElement: true })).toBe(false);
+    expect(windowShouldLeave({ windowFull: true, pageFull: true, shellHoldsElement: false })).toBe(false);
+    expect(windowShouldLeave({ windowFull: true, pageFull: false, shellHoldsElement: true })).toBe(false);
+    // A window that is not full has nothing to leave.
+    expect(windowShouldLeave({ windowFull: false, pageFull: false, shellHoldsElement: false })).toBe(false);
+    expect(windowShouldLeave({ windowFull: false, pageFull: true, shellHoldsElement: true })).toBe(false);
   });
 
   it('the way out is the document\'s own, run apart from the page (it cannot be replaced there)', () => {

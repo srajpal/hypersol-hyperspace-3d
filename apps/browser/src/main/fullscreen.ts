@@ -1,6 +1,15 @@
 import { BrowserWindow, ipcMain, type WebContents } from 'electron';
 import type { ShellCommand } from '../shared/commands';
-import { LEAVE_SCRIPT, LEAVE_WORLD, POINTER_LOCK_CHANNEL, TOP_EDGE_EVERY_MS, TOP_EDGE_PX, escapeLeaves } from '../shared/fullscreen';
+import { LEAVE_SCRIPT, LEAVE_WORLD, POINTER_LOCK_CHANNEL, TOP_EDGE_EVERY_MS, TOP_EDGE_PX, escapeLeaves, windowShouldLeave } from '../shared/fullscreen';
+
+/** Test runs: one look at a window in full screen (settle), what asked for it, what held it, and whether it left. */
+export interface FullScreenSettle {
+  at: number;
+  why: 'closed' | 'left' | 'entered';
+  pageFull: boolean;
+  shellHoldsElement: boolean;
+  left: boolean;
+}
 
 /**
  * Full screen and pointer lock for web pages (GitHub issue #75), the main
@@ -37,6 +46,13 @@ import { LEAVE_SCRIPT, LEAVE_WORLD, POINTER_LOCK_CHANNEL, TOP_EDGE_EVERY_MS, TOP
  *   are looked at after the window's leave-full-screen event and taken
  *   out again if they still say they are full (issue #111, found on the
  *   owner's Mac; Windows and Linux leave in one step).
+ * - The window is full screen only while a page of it holds full screen
+ *   (GitHub issue #87): a tab closed in full screen now and then left the
+ *   window full screen on GitHub's machines, with no page in it, though
+ *   Electron brings it back every time here. So once the window holds
+ *   still after a tab closes, after a page leaves, and a second after the
+ *   window enters, it is looked at (settle), and leaves by itself if no
+ *   page holds it (shared/fullscreen.ts, windowShouldLeave).
  */
 export class FullScreen {
   /** By page; kept weakly, so a page that is gone takes its state with it (no listener of its own on each page). */
@@ -56,6 +72,8 @@ export class FullScreen {
     private readonly edgeLog?: (y: number) => void,
     /** Test runs: told each look after full screen on macOS (mendPage). */
     private readonly mendLog?: (mend: { at: number; page: number; shellFull: boolean; pageFull: boolean; shellAsked: boolean; pageAsked: boolean }) => void,
+    /** Test runs: told each look at a window in full screen (settle), and whether it left. */
+    private readonly settleLog?: (look: FullScreenSettle) => void,
   ) {
     ipcMain.on(POINTER_LOCK_CHANNEL, (event, on: unknown) => {
       const page = event.sender;
@@ -94,8 +112,10 @@ export class FullScreen {
       this.state(page).full = false;
       this.fullNow.delete(page);
       this.send(page, { type: 'page-fullscreen', webContentsId: id, on: false });
-      for (const ms of [300, 1200]) setTimeout(() => void this.mendWindow(page), ms);
+      const shell = page.hostWebContents;
+      for (const ms of [300, 1200]) setTimeout(() => void this.mendWindow(shell), ms);
       if (process.platform === 'darwin') this.mendPageOnceLeft(page);
+      if (shell) this.settle(shell, 'left');
     });
     page.on('before-input-event', (event, input) => {
       if (!escapeLeaves(input, this.holds(page))) return;
@@ -122,7 +142,12 @@ export class FullScreen {
     });
   }
 
-  /** Escape on the shell (the keyboard was the browser's): every page the shell hosts leaves both. */
+  /**
+   * Escape on the shell (the keyboard was the browser's): every page the
+   * shell hosts leaves both. And the shell's window, a second after it
+   * enters full screen, is looked at (settle): whatever put it there, it
+   * stays only while a page holds it.
+   */
   watchShell(shell: WebContents, pages: () => WebContents[]): void {
     shell.on('before-input-event', (event, input) => {
       const holding = pages().filter((p) => !p.isDestroyed() && p.hostWebContents === shell && this.holds(p));
@@ -130,11 +155,35 @@ export class FullScreen {
       event.preventDefault();
       for (const p of holding) this.leave(p);
     });
+    BrowserWindow.fromWebContents(shell)?.on('enter-full-screen', () => setTimeout(() => this.settle(shell, 'entered'), 1000));
+  }
+
+  /**
+   * Looks at the shell's window once it holds still, and takes it out of
+   * full screen if no page of the shell holds it (GitHub issue #87). `why`:
+   * what asked for the look (a tab closed, a page left, the window entered).
+   */
+  settle(shell: WebContents, why: FullScreenSettle['why']): void {
+    const win = shell.isDestroyed() ? null : BrowserWindow.fromWebContents(shell);
+    if (!win || win.isDestroyed() || !win.isFullScreen()) return;
+    this.whenStill(win, () => void this.settleNow(shell, win, why));
+  }
+
+  private async settleNow(shell: WebContents, win: BrowserWindow, why: FullScreenSettle['why']): Promise<void> {
+    if (shell.isDestroyed() || win.isDestroyed() || !win.isFullScreen()) return;
+    for (const p of this.fullNow) if (p.isDestroyed()) this.fullNow.delete(p);
+    const pageFull = [...this.fullNow].some((p) => p.hostWebContents === shell);
+    const shellHoldsElement = (await shell.executeJavaScript('document.fullscreenElement !== null', true).catch(() => false)) as boolean;
+    if (shell.isDestroyed() || win.isDestroyed()) return;
+    const left = windowShouldLeave({ windowFull: win.isFullScreen(), pageFull, shellHoldsElement });
+    this.settleLog?.({ at: Date.now(), why, pageFull, shellHoldsElement, left });
+    if (!left) return;
+    win.setFullScreen(false);
+    for (const ms of [300, 1200]) setTimeout(() => void this.mendWindow(shell), ms);
   }
 
   /** After full screen: the browser's own page as large as its window, or the window's bounds set again. */
-  private async mendWindow(page: WebContents): Promise<void> {
-    const shell = page.isDestroyed() ? null : page.hostWebContents;
+  private async mendWindow(shell: WebContents | null): Promise<void> {
     const win = shell && !shell.isDestroyed() ? BrowserWindow.fromWebContents(shell) : null;
     if (!shell || !win || win.isDestroyed() || win.isFullScreen() || win.isMinimized()) return;
     const inner = (await shell.executeJavaScript('[innerWidth, innerHeight]').catch(() => null)) as [number, number] | null;
@@ -157,25 +206,30 @@ export class FullScreen {
     const mend = () => void this.mendPage(page);
     // The window's leave-full-screen event can come while the window is still on its way back to its place;
     // an exit asked then is ignored, and so is every one after it. So the look waits until the window's bounds
-    // have held still for a moment (at most 3 s). It looks once: a second look later fell into the next full
+    // have held still for a moment (whenStill). It looks once: a second look later fell into the next full
     // screen (another tab's, before its own event had come) and broke it.
     const onceStill = () => {
       if (!win || win.isDestroyed()) return mend();
-      let last = JSON.stringify(win.getBounds());
-      let stillFor = 0;
-      const started = Date.now();
-      const tick = () => {
-        if (win.isDestroyed()) return;
-        const now = JSON.stringify(win.getBounds());
-        stillFor = now === last ? stillFor + 100 : 0;
-        last = now;
-        if (stillFor >= 300 || Date.now() - started > 3000) mend();
-        else setTimeout(tick, 100);
-      };
-      setTimeout(tick, 100);
+      this.whenStill(win, mend);
     };
     if (win && !win.isDestroyed() && win.isFullScreen()) win.once('leave-full-screen', onceStill);
     else onceStill();
+  }
+
+  /** Runs `then` once the window's bounds have held still for 300 ms (at most 3 s from now); not if the window goes. */
+  private whenStill(win: BrowserWindow, then: () => void): void {
+    let last = JSON.stringify(win.getBounds());
+    let stillFor = 0;
+    const started = Date.now();
+    const tick = () => {
+      if (win.isDestroyed()) return;
+      const now = JSON.stringify(win.getBounds());
+      stillFor = now === last ? stillFor + 100 : 0;
+      last = now;
+      if (stillFor >= 300 || Date.now() - started > 3000) then();
+      else setTimeout(tick, 100);
+    };
+    setTimeout(tick, 100);
   }
 
   /** The shell's document and the page's out of full screen if either still says it is in (macOS, after the window has left). */
