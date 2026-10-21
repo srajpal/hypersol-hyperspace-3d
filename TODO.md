@@ -8397,8 +8397,11 @@ Results (Windows 11, 2026-10-20):
   fill #1a7f37 5.08 to 1; the fill against white 5.08 and against
   GitHub's dark background (#0d1117) 3.73. Drawn by Electron on white
   and on #0d1117, at its size and three times larger, and looked at:
-  the check mark and the word read on both. Not checked yet: on GitHub
-  itself, in the pull request's README.
+  the check mark and the word read on both. On GitHub, the branch's
+  README in the dark theme: the four badges drawn at 72 by 20 in the
+  Provenance column, each linked to its zip's attestation, and read
+  well. GitHub's light theme was not seen there (the page kept the
+  dark theme); the picture on white is the check for it.
 - The README: Download names 0.9.2, its table the four zips with their
   sizes (157, 130, 134, and 123 MB, in MiB rounded as for 0.9.1) and a
   Provenance column with the badges; the paragraph on checking a zip
