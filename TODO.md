@@ -6424,7 +6424,10 @@ was full screen. Whether the tab closed is not in the log.
 
 ### The fix (plan, 2026-10-21)
 
-Status: plan, for the owner's approval. The owner asked on 2026-10-21,
+Status: built 2026-10-21, for the owner's review (the Mac run first);
+approved by the owner on 2026-10-21 with the recommended
+answers (Q1 the full rule with FS10, Q2 the Mac run before the merge,
+Q3 stacked on pull request #130). The owner asked on 2026-10-21,
 after FS2's fourth failure (pull request #130's Linux build), for a
 plan to fix #87: the window leaves full screen itself when no live
 page holds it.
@@ -6517,6 +6520,38 @@ Questions for the owner:
 3. The branch: stacked on pull request #130 (this section is edited
    there too), so merge #130 first (recommended); or after #130 merges,
    from main.
+
+Built 2026-10-21 as planned: shared/fullscreen.ts (windowShouldLeave),
+main/fullscreen.ts (settle, its three triggers, whenStill shared with
+the macOS look, mendWindow by the shell), main/index.ts (the shell's
+leave request settles its own window, and the test log), renderer/
+app.ts (releaseHeld tells the main process of a closed tab that held
+full screen), main/test-hooks.ts and tests/e2e/harness.ts
+(`fullscreenSettles`), and tests/e2e/issue-75.e2e.ts (FS10; FS2 logs
+which way the window came back).
+
+Results (Windows 11, 2026-10-21):
+
+- FS9 passes (`pnpm test`: 613 passed, 2 skipped, holoml's copy check
+  without the holoml folder beside the worktree). It cannot pass
+  without the fix, as the rule is new.
+- FS10 passes. Without the fix (the look after the window enters taken
+  out, built, run alone) it fails as GitHub's machines did: "the window
+  back where it was" timed out with the window still full screen, 1920
+  by 1080, no page in it; the fix put back.
+- issue-75.e2e.ts with the graphics card: 8 passed, FS5 skipped (hidden
+  windows), as before; drawn in software (HYPERSOL_TEST_SOFTWARE=1) the
+  same. FS2's closing check and FS10, ten runs each: 10 of 10 passed.
+  Every FS2 run here logged "the window came back by Electron" with no
+  look needed (the window had left before the look's moment), as
+  expected on this computer.
+- `pnpm test:linux tests/e2e/issue-75.e2e.ts` (Linux in the container,
+  as GitHub's machines run it): 8 passed, FS5 skipped; FS2 there too
+  came back by Electron.
+- `pnpm typecheck` and `pnpm lint` pass.
+- Not checked yet: the owner's Mac (Q2, before the merge), and the pull
+  request's automatic builds. Whether the rule ever acts in FS2 on
+  GitHub's machines shows in their logs ("by the browser's own look").
 
 ## Issue #91: the HoloML viewer for ordinary browsers (promotion plan, step 4)
 

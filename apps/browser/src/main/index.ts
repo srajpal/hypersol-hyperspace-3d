@@ -772,12 +772,20 @@ if (!app.requestSingleInstanceLock()) {
     handleFromShell(PERMISSIONS_CHANNEL, (event, request) => perms.handle(event, request));
 
     // Full screen and pointer lock (GitHub issue #75): what each page holds, Escape, and the shell's request to
-    // take one of its pages out of both (a tab switch, a closing tab).
-    const full = new FullScreen(sendToHost, testLog ? (y) => testLog?.fullscreenEdges.push(y) : undefined, testLog ? (m) => testLog?.fullscreenMends.push(m) : undefined);
+    // take one of its pages out of both (a tab switch, a closing tab). Its own window is then looked at, and leaves
+    // full screen if no page holds it (issue #87): a page whose tab has closed may be gone before it says it left.
+    const full = new FullScreen(
+      sendToHost,
+      testLog ? (y) => testLog?.fullscreenEdges.push(y) : undefined,
+      testLog ? (m) => testLog?.fullscreenMends.push(m) : undefined,
+      testLog ? (s) => testLog?.fullscreenSettles.push(s) : undefined,
+    );
     fullScreen = full;
     handleFromShell(LEAVE_FULLSCREEN_CHANNEL, (event, id: unknown) => {
       const page = typeof id === 'number' ? webContents.fromId(id) : undefined;
-      if (page && !page.isDestroyed() && page.getType() === 'webview' && page.hostWebContents === event.sender) full.leave(page);
+      const live = page !== undefined && !page.isDestroyed() && page.getType() === 'webview' && page.hostWebContents === event.sender;
+      if (live) full.leave(page);
+      full.settle(event.sender, live ? 'left' : 'closed');
     }, undefined);
 
     // HTTP sign-in (main/sign-in.ts): a site or a proxy that asks for a user

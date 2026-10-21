@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- A tab closed while its page was full screen could leave the window in
+  full screen with no page in it (GitHub issue #87, seen now and then
+  on GitHub's machines). The window is now full screen only while a
+  page holds it: if none does, it leaves by itself.
+
 ## 0.9.2 — developer preview (2026-10-20)
 
 A security update of the 0.9.1 developer preview, with the release's

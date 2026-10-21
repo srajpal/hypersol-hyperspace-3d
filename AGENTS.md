@@ -644,7 +644,12 @@ milestone's checks are defined in TODO.md):
   back after. FS5, pointer lock, needs a window with the system's focus:
   hidden test windows never take it, so it is reported as skipped unless
   HYPERSOL_TEST_SHOW=1. The rules are unit tests (shared/fullscreen.test.ts,
-  and main/permissions.test.ts).
+  and main/permissions.test.ts). GitHub issue #87 adds FS9 (the rule
+  that the window is full screen only while a page holds it, a unit
+  test there) and FS10 (in the same file: a window full screen with no
+  page leaves by itself, and a page's own full screen is not undone);
+  FS2's closing check says whether the window came back by Electron or
+  by that rule.
 - GitHub issue #91 checks WV1 to WV8 (TODO.md, "Issue #91"; same
   command, tests/e2e/web-viewer.e2e.ts, in part 1): the HoloML viewer
   for ordinary browsers, the site's host page. The file builds the site
