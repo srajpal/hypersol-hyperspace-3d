@@ -56,7 +56,7 @@ is a commit, and every milestone's plan, decisions, and check results
 are in TODO.md. The agents worked under written rules (AGENTS.md):
 build only what was approved, never invent a result, mark a step "not
 checked yet" until it has run, and never weaken a test to get a pass.
-About 2,000 tests run on every change: 607 unit tests, 463 end-to-end
+About 2,000 tests run on every change: 614 unit tests, 480 end-to-end
 checks that drive the real app on Windows, Linux, and macOS, and 885 in
 HoloML, with its conformance samples. A review by ten agents, each
 reading one area, found real faults, among them security ones, and
@@ -88,7 +88,9 @@ are only: the pages you open and what they name, your searches to the
 search engine you chose (DuckDuckGo by default), DNS over HTTPS to
 Quad9, and the filter lists' daily update (which can be turned off).
 No update checks, no account, no sync. The privacy page lists every
-one: https://github.com/srajpal/hypersol-hyperspace-3d/blob/main/docs/privacy.md Ads and trackers are
+one: https://github.com/srajpal/hypersol-hyperspace-3d/blob/main/docs/privacy.md
+
+Ads and trackers are
 blocked by EasyList and EasyPrivacy through Ghostery's open-source
 blocker, with a shield that shows what was blocked.
 

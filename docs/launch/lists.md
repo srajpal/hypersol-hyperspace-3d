@@ -13,7 +13,9 @@ was created on 2026-09-25 (22 days ago) and has 0 stars; it has an
 English README with screenshots, a portable zip for Windows, Linux,
 and macOS on the 0.9.1 release, Electron 44, and the Apache 2.0
 licence; the app's icon is 1024 by 1024 PNG; nothing in the name or the
-icon is another company's.
+icon is another company's. Since then (2026-10-20): release 0.9.2, its
+zips attested, which the entries below link; the repository turns 30
+days old on 2026-10-25.
 
 ## 1. electron/apps (electronjs.org/apps): ready now
 
@@ -56,8 +58,8 @@ Steps:
    >
    > - Repository: https://github.com/srajpal/hypersol-hyperspace-3d
    > - Site: https://srajpal.github.io/hypersol-hyperspace-3d/
-   > - Release 0.9.1, a portable zip for Windows, macOS, and Linux:
-   >   https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1
+   > - Release 0.9.2, a portable zip for Windows, macOS, and Linux:
+   >   https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.2
    >
    > The README has screenshots and a GIF; the icon and the name are
    > the project's own.

@@ -9,3 +9,8 @@
   social-previews` (apps/browser/scripts/social-previews.mjs), which
   draws holoml's too when that repository is beside this one (GitHub
   issue #95). Uploaded by hand in Settings, General, Social preview.
+- attested.svg: the *attested* badge beside each zip in the README's
+  Download section (72 by 20), linked to that zip's build provenance
+  attestation; drawn by hand for this project, a white check mark and
+  word on its own green, so it reads on light and dark pages, and
+  loads nothing from elsewhere (GitHub issue #127).

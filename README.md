@@ -102,19 +102,19 @@ it from source instead.
 [0.9.2 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.2),
 a pre-release published 2026-10-20 as a portable zip for Windows,
 Linux, and macOS ([Download](#download) above) and as source: a
-security update of
+security update (Electron 44.9.2), its zips the first with build
+provenance attestations, of
 [0.9.1](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1)
-of 2026-10-16 (Electron 44.9.2), its zips the first with build
-provenance attestations. The
+of 2026-10-16. The
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0)
 of 2026-09-26 was source only. Windows and Linux are checked by the
 automatic tests on every change; macOS builds and passes its unit
-tests there, and a Mac in hand passes the end-to-end checks but two
-(TODO.md, "Issue #111"). Apache 2.0. No telemetry. There are no
+tests there, and a Mac in hand passes the end-to-end checks but a
+few (TODO.md, "Issue #111"). Apache 2.0. No telemetry. There are no
 installers, and none are planned (owner, 2026-10-08): a fork may make
 one of its own ([CONTRIBUTING.md](CONTRIBUTING.md), "Making your own
 build"). Everything since 0.9.0, from HoloML pages to lifting a page's
-pictures and models into the room, is in 0.9.1:
+pictures and models into the room, came in 0.9.1:
 [What it does](#what-it-does) lists it, [Progress](#progress) tells it
 milestone by milestone with screenshots, and
 [CHANGELOG.md](CHANGELOG.md) release by release. No more milestones
@@ -300,10 +300,13 @@ bugs and enhancements, one at a time (installers were dropped on
 being worked first, since 2026-10-14, make the project easier to try
 and to find (the plan is in [TODO.md](TODO.md), "The promotion
 plan"): done so far, a HoloML viewer for ordinary browsers, macOS in
-the automatic builds, the 0.9.1 preview with its portable zip, a
-video, and a [landing page](https://srajpal.github.io/hypersol-hyperspace-3d/);
-still to come, a HoloML playground, the launch posts, and HoloML's
-packages on npm and its extension in the editors' registries. Ideas for later: phones, and VR. The roadmap that was,
+the automatic builds, the 0.9.1 preview with its portable zips (and
+0.9.2 with their attestations), a video, the repository's settings, a
+[landing page](https://srajpal.github.io/hypersol-hyperspace-3d/), and
+a [playground](https://srajpal.github.io/holoml/playground/) on the
+HoloML site; still to come, the long-form article, the launch posts, a
+case study, HoloML's packages on npm and its extension in the editors'
+registries, and a regular cadence of posts. Ideas for later: phones, and VR. The roadmap that was,
 milestones 1 to 28, is in [TODO.md](TODO.md).
 
 ## Progress
@@ -450,12 +453,13 @@ pages still work without the room, and a notice says so.
 The Android app, for a tablet (milestone 24), has its own
 steps in [apps/android/README.md](apps/android/README.md).
 
-The portable zip of 0.9.1 is under [Download](#download) above; this
+The portable zip of 0.9.2 is under [Download](#download) above; this
 section is running from source. Checked on Windows 11 here, and on
 Windows and Linux (Ubuntu) by GitHub Actions for every pull request
 and every push to main; on macOS the same builds run lint, the type
 check, the unit tests, and the build (required), and the end-to-end
-checks as an experiment that does not block a merge, since GitHub's
+checks as an experiment that does not block a merge (on main and
+when started by hand, not on pull requests), since GitHub's
 macOS machine (a small display, windows kept on screen) fails checks
 written against Windows and Linux (TODO.md, "Issue #94"). A Mac in
 hand (an iMac Pro, 2026-10-15) passes the unit tests, and the

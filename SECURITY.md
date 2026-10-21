@@ -27,3 +27,8 @@ releases to pick up their fixes.
 ## Supported versions
 
 Only the latest code on `main` and the latest release are supported.
+From 0.9.2 on, each release's zips have a build provenance attestation
+that shows they were built by this repository's release workflow from
+the release's tag (the README's Download section says how to check
+one), and releases published since 2026-10-20 cannot be changed once
+published.

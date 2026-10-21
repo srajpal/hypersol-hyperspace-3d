@@ -130,6 +130,13 @@ recorded only when the owner asks. The "Further out" row stays as a
 list of ideas, as does milestone 29's polish (a custom font, sound
 design, a theme editor, motion tuning).
 
+On 2026-10-14 the owner approved the promotion plan ("The promotion
+plan (2026-10-14)" below), which reversed part of prompt 172: each
+release has a portable zip per system, built by the automatic builds
+(still no installers). Releases since: 0.9.1 (2026-10-16) and 0.9.2
+(2026-10-20, Electron 44.9.2, its zips attested). The work goes in the
+plan's order.
+
 - Milestone 25 (HoloML 0.3; 23 when this was written), the language
   engineer's list for its plan:
   the look written down, so that a second renderer can match a picture
@@ -7760,9 +7767,8 @@ the addresses that do not exist yet.
 
 ## holoml #58: the playground (promotion plan, step 16)
 
-Status: built (2026-10-19), in two pull requests for the owner's
-review: #124 here (the viewer's way in, PG1 to PG8) and holoml #67
-(the playground). The owner asked for this plan on
+Status: done (merged 2026-10-20): #124 here (the viewer's way in,
+PG1 to PG8) and holoml #67 (the playground); holoml #58 closed. The owner asked for this plan on
 2026-10-19, for the playground to land before launch day ("The
 promotion plan", results: two waves), and approved it the same day
 with the recommended answers (Q1 a, Q2 a, Q3 a, Q4 a, Q5 a), the
@@ -7976,8 +7982,8 @@ M: about a day for both pull requests, with the checks.
 
 ## Issue #125: links between HoloML pages in the viewer on the web
 
-Status: built (2026-10-19), for the owner's review; approved the same
-day with the recommended answers (Q1 a, Q2 a, Q3 a, Q4 a, Q5 a), and
+Status: done (merged 2026-10-20: #126 here, holoml #68; issue #125
+closed); approved on 2026-10-19 with the recommended answers (Q1 a, Q2 a, Q3 a, Q4 a, Q5 a), and
 the agent filed GitHub issue #125 for it.
 Found while building the playground (above). It matters for the
 launch: the showroom is about choosing a car, and on the web each car
@@ -8395,7 +8401,7 @@ Questions for the owner:
 
 Results (Windows 11, 2026-10-20):
 
-- AT5, in part: docs/branding/attested.svg made, 72 by 20 pixels. Its
+- AT5: passes. docs/branding/attested.svg made, 72 by 20 pixels. Its
   contrasts, worked out from the hex values: the white text on the
   fill #1a7f37 5.08 to 1; the fill against white 5.08 and against
   GitHub's dark background (#0d1117) 3.73. Drawn by Electron on white
@@ -8489,6 +8495,22 @@ computer; the workflows take over after.
 
 Results:
 
+- Release 0.9.2 (2026-10-20, issue #127): a security update with
+  Electron 44.9.2, each zip with a build provenance attestation, and
+  the README's Download section with a badge per zip (pull request
+  #129); "Issue #127" above.
+- Step 16 done (2026-10-20): the playground, #123 and #124 here and
+  holoml #67, https://srajpal.github.io/holoml/playground/; holoml #58
+  closed. With it, issue #125, the viewer on the web following links to
+  other HoloML pages (#126 here, holoml #68).
+- Steps 11 and 12 drafted (2026-10-19, pull request #123):
+  docs/story.md and docs/launch/, for the owner's edits.
+- The first wave's blockers, as of 2026-10-20: the video is attached
+  to 0.9.1 (a line in its notes still to add) and holoml #66 merged
+  2026-10-19; the checks by eye, step 2's three links, and the three
+  lists' pull requests are still the owner's. The Electron check
+  before launch was last made 2026-10-20 (44.9.2, before the 0.9.2
+  tag).
 - The way on (the owner, 2026-10-19, after a review of both
   repositories): two waves. First the blockers, which are the
   owner's: the video attached to the 0.9.1 release (the README's and
@@ -8564,7 +8586,8 @@ Results:
 - Step 4 (2026-10-14): the browser's half merged, pull request #106
   (the plan, decisions, and results in "Issue #91" above; Q4's text
   view without WebGL 2 waits for a viewer change of its own); holoml's
-  half in holoml pull request #64. Pages is the owner's to turn on.
+  half in holoml pull request #64, merged 2026-10-16. Pages is on
+  since 2026-10-17.
 - Step 3 done (2026-10-14): the README's history says every example
   has since moved to HoloML 0.3, the version to write today (pull
   request #104, closing #90), and holoml's README and documentation

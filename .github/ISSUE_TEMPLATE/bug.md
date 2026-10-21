@@ -13,8 +13,8 @@ labels: bug
 1.
 2.
 
-**Your system**: Windows or Linux and its version; the commit or release
-you built; a graphics card or not.
+**Your system**: Windows, macOS, or Linux and its version; the release
+zip you started, or the commit you built; a graphics card or not.
 
-**Anything the app printed** (the terminal you ran `pnpm dev` in, or the
-instrument panel's console)
+**Anything the app printed** (the terminal you ran `pnpm dev` or the
+app in, or the instrument panel's console)

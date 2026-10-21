@@ -8,7 +8,9 @@
 - The one-minute video, `hyperspace-3d-<version>.webm` (1280 by 720,
   30 frames a second, VP8), is not committed: it is attached to the
   release it was made for (0.9.1's assets), linked from the landing
-  page and the README.
+  page and the README. Releases published since 2026-10-20 are
+  immutable, so a new video goes on the release's draft before it is
+  published.
 
 Both are made by `pnpm screenshots:video` (the promotion plan's step 6,
 GitHub issue #93; TODO.md, "Issue #93", has the cut): the built app
