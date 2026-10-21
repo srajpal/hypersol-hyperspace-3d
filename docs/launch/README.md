@@ -34,7 +34,7 @@ because every post sends people to these places.
       posts can link it. Its address goes in the places marked
       `<ARTICLE>` below.
 - [ ] Electron's security releases checked (AGENTS.md rule 13; last
-      2026-10-15, 44.7.2). If a security release is out, it goes in a
+      2026-10-20, 44.9.2, before 0.9.2). If a security release is out, it goes in a
       0.9.2 first.
 - [ ] Clips cut from the video for the social posts (social.md lists
       them): short MP4s or GIFs under each service's limits.

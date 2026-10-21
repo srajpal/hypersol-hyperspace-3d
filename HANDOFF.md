@@ -731,7 +731,7 @@ to this repository for rules and the prompt log.
 - Desktop first: Windows and Linux, then macOS (not checked yet).
   Android tablets in this repository (apps/android, milestone 24;
   prompt 152); phones and iOS later. Mouse, keyboard, and touch.
-- Stack: Electron (the newest stable line; 44.7.0 since 2026-10-07),
+- Stack: Electron (the newest stable line; 44.9.2 since 2026-10-20),
   TypeScript, Three.js, Lit, SQLite through Node's node:sqlite,
   @ghostery/adblocker-electron, electron-vite, Vitest, Playwright. Node
   24 or newer, pnpm 12.4.1 pinned. Reasons in ARCHITECTURE.md
@@ -889,6 +889,19 @@ to this repository for rules and the prompt log.
    then the launch (step 12) with the video's clips, and steps 13, 17,
    and 18 the week after. Electron's security releases are checked
    again on launch day (rule 13).
+   Release 0.9.2 (issue #127, 2026-10-20) is prepared on the branch
+   issue-127-attest-0.9.2: Electron 44.9.2 (rule 13), build provenance
+   attestations for the zips in release.yml, the version in the four
+   package files and D11, the changelog's section, and the About
+   picture. Then the owner's: merge, the tag `v0.9.2` on main at once
+   (the landing page's download links name 0.9.2 from the merge),
+   publish the draft, turn on immutable releases (Settings, General,
+   Releases); a release run started by hand starts from the tag itself
+   ("Use workflow from" the tag), as release.yml now stops a run from
+   any other ref so that the zips' attestations name the tag; the agent
+   then checks AT2 to AT4 and updates the
+   README's Download section and status paragraph (TODO.md, "Issue
+   #127").
    The playground (holoml #58), approved 2026-10-19 with the
    recommended answers, is built in two pull requests: #124 here (the
    viewer's `?from=parent` and checks PG1 to PG8; PG3 to PG8 need the
@@ -952,7 +965,7 @@ to this repository for rules and the prompt log.
    list.
    One issue at a time, approved by the owner first (AGENTS.md rule 2);
    check Electron's security releases at least monthly and before any
-   tag (rule 13; last checked 2026-10-15, 44.7.2, before the 0.9.1 tag). Prompts are recorded
+   tag (rule 13; last checked 2026-10-20, 44.9.2, before the 0.9.2 tag). Prompts are recorded
    only when the owner asks. The three advisories of 2026-10-09 are
    published, and the merged branches deleted (2026-10-10) but for
    `issue-75-fullscreen`, merged as #83, still on GitHub.

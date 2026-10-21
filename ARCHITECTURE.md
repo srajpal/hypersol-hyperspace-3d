@@ -204,6 +204,19 @@ PDFium, and V8, and a fix for clicks dropped by a background app on
 macOS (issue #111's kind). Upgraded to 44.7.2 for the release; 45 is
 in beta (45.0.0-beta.3).
 
+Rule 13 check, 2026-10-20 (before the 0.9.2 tag, GitHub issue #127):
+44.8.0 (2026-10-16), 44.9.0 (2026-10-17), and 44.9.1 and 44.9.2
+(2026-10-20) are out. 44.8.0 backports fixes from upstream Chromium
+and V8, with Chromium 152.0.7977.167 and Node 24.22.0, and fixes
+`win.isFullScreen()` reporting a stale value in full screen events on
+Windows (perhaps issue #87's kind). 44.9.0 fixes windows opened by a
+link not taking the opener's session and `webPreferences`, and
+`setCertificateVerifyProc` sometimes missing a request made beside a
+host's first. 44.9.1 and 44.9.2 have no notes. Upgraded to 44.9.2, the
+line's newest, for the release, taken at once past pnpm's minimum
+release age, as 44.7.0 was (pnpm-workspace.yaml). 45 is still in beta
+(45.0.0-beta.6).
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |

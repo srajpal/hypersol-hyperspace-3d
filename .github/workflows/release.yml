@@ -8,6 +8,16 @@
 # Nothing is signed (Q5): the notes say what Windows SmartScreen and
 # macOS Gatekeeper will say. The actions are pinned to commits, as in
 # ci.yml; the uploads use the repository's own token through gh.
+# Each zip gets a build provenance attestation (GitHub issue #127): a
+# statement, signed through GitHub's Sigstore service, that the zip was
+# made by this workflow from the tag's commit; anyone can check it with
+# `gh attestation verify <zip> -R srajpal/hypersol-hyperspace-3d
+# --signer-workflow srajpal/hypersol-hyperspace-3d/.github/workflows/release.yml
+# --source-ref refs/tags/<tag>`. It is not code signing: SmartScreen and
+# Gatekeeper still ask once. An attestation names the run's own ref and
+# commit, so a run started by hand must be started from the tag itself
+# ("Use workflow from" the tag), and a run from any other ref stops
+# before anything is drafted or built.
 name: Release
 
 on:
@@ -16,7 +26,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'The tag to release (for example v0.9.1), already pushed'
+        description: 'The tag to release (for example v0.9.2), already pushed; start the run from that tag ("Use workflow from")'
         required: true
 
 permissions:
@@ -44,6 +54,17 @@ jobs:
         run: |
           tag="${INPUT_TAG:-$REF_NAME}"
           echo "tag=$tag" | tee -a "$GITHUB_OUTPUT"
+      # The zips' attestations name the run's ref and commit (issue #127),
+      # so the run must be the tag's own: a run by hand from main with a
+      # tag typed in would build the tag and attest main.
+      - name: The run is the tag's own
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          if [ "$GITHUB_REF" != "refs/tags/$TAG" ]; then
+            echo "This run is on $GITHUB_REF; start it from the tag $TAG itself, so that the zips' attestations name refs/tags/$TAG." >&2
+            exit 1
+          fi
       # The tag names the version the checked-out package has (a dispatch
       # with a mistyped tag would otherwise draft one version with another's
       # files), and a release the owner has published is never made a draft
@@ -64,7 +85,7 @@ jobs:
             exit 1
           fi
           {
-            echo "A developer preview, as a portable zip for Windows, Linux, and macOS: unzip it and start HyperSpace3D (HyperSpace 3D.app on a Mac). Nothing is signed: Windows SmartScreen says the app is unrecognised (More info, then Run anyway), and macOS Gatekeeper refuses it until it is allowed in System Settings, Privacy & Security, or with \`xattr -dr com.apple.quarantine \"HyperSpace 3D.app\"\`. The SHA-256 of each zip is beside it. Or build it from source: CONTRIBUTING.md."
+            echo "A developer preview, as a portable zip for Windows, Linux, and macOS: unzip it and start HyperSpace3D (HyperSpace 3D.app on a Mac). Nothing is signed: Windows SmartScreen says the app is unrecognised (More info, then Run anyway), and macOS Gatekeeper refuses it until it is allowed in System Settings, Privacy & Security, or with \`xattr -dr com.apple.quarantine \"HyperSpace 3D.app\"\`. The SHA-256 of each zip is beside it, and each zip has a build provenance attestation: \`gh attestation verify <the zip> -R srajpal/hypersol-hyperspace-3d --signer-workflow srajpal/hypersol-hyperspace-3d/.github/workflows/release.yml --source-ref refs/tags/$TAG\` shows it was built by this repository's release workflow from this tag. Or build it from source: CONTRIBUTING.md."
             echo
             awk -v v="$version" '
               $0 ~ "^## " v " " { on = 1; next }
@@ -96,6 +117,12 @@ jobs:
             name: macOS on Intel
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    # The upload, and the attestation (issue #127): a token for Sigstore's
+    # signing certificate, and the right to record the attestation.
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -129,6 +156,11 @@ jobs:
       - name: Smoke check
         if: runner.os != 'Linux'
         run: pnpm package:smoke
+
+      - name: Attest the zip's build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: release/*.zip
 
       - name: Upload to the draft
         env:

@@ -8182,6 +8182,103 @@ S: about half a day, with the checks, and the small holoml change.
     times: 2 passed each time; on Windows, web-viewer.e2e.ts and m19
     together: 31 passed and 6 skipped (PG3 to PG8).
 
+## Issue #127: attested release zips, and release 0.9.2
+
+Status: prepared (2026-10-20), for the owner's review; the tag and the
+publish are the owner's. The owner approved on 2026-10-20 build
+provenance attestations for the release zips and immutable releases,
+and asked for the version to be raised so that they show: release
+0.9.2, a security update of 0.9.1, with the attestations its first.
+
+### How it works
+
+- `.github/workflows/release.yml`: in each system's package job, after
+  the smoke check and before the upload,
+  `actions/attest-build-provenance` (v4.2.2, pinned by its commit
+  4d101475) attests `release/*.zip`. The job asks for `id-token: write`
+  (a token for Sigstore's signing certificate) and `attestations:
+  write` beside `contents: write`; the draft job keeps the workflow's
+  `contents: write` alone. The draft's notes say how to check a zip.
+  An attestation names the run's own ref and commit, so the draft job
+  stops a run whose ref is not `refs/tags/<tag>` (a run by hand from
+  main with a tag typed in would build the tag and attest main; the
+  review of #128): a run by hand starts from the tag itself.
+- Checking a zip: `gh attestation verify <the zip> -R
+  srajpal/hypersol-hyperspace-3d --signer-workflow
+  srajpal/hypersol-hyperspace-3d/.github/workflows/release.yml --source-ref
+  refs/tags/<tag>`, naming the workflow and the tag so that an
+  attestation from another workflow or ref of the repository does not
+  pass (the review of #128) (the README's Download section, the
+  release notes, and docs/launch/faq.md), and the repository's
+  attestations page,
+  https://github.com/srajpal/hypersol-hyperspace-3d/attestations. It
+  shows where the zip came from, not that it is signed: SmartScreen and
+  Gatekeeper ask as before.
+- Immutable releases: a setting the owner turns on (Settings, General,
+  Releases), so that a published release's tag and files cannot be
+  changed; GitHub then marks the release "Immutable" and adds a release
+  attestation of its own.
+- 0.9.2, by the checklist of "Issue #92": the rule 13 check
+  (ARCHITECTURE.md section 3: Electron 44.9.2, past pnpm's minimum
+  release age as 44.7.0 was, pnpm-workspace.yaml), the version in the
+  four package files and m2's D11, the changelog's section,
+  THIRD-PARTY.md's Electron, `pnpm filters:update`, the screenshots
+  (the m28 set and the README's four remade; kept only where the
+  pictures changed), and the documents. After the publish, the README's
+  Download section (the zips' links and sizes) and its status paragraph
+  name 0.9.2; until the tag's release is published, the landing page,
+  which writes the version into its download links when it is built
+  from main, links zips that are not there yet, so the tag follows the
+  merge.
+
+### Checks (named AT, for attestations)
+
+| Check | What | Pass when |
+|---|---|---|
+| AT1 | The workflow | release.yml reads as YAML, its new action is pinned by commit, and the package job asks only `contents`, `id-token`, and `attestations` |
+| AT2 | The release | The v0.9.2 tag's run attests all four zips; the repository's attestations page lists them |
+| AT3 | Verifying | `gh attestation verify` with `--signer-workflow` and `--source-ref` passes on each downloaded zip, as the README writes it, and fails on a changed copy and with another tag named |
+| AT4 | Immutable | Once published, 0.9.2 shows as immutable; the owner confirms the setting |
+| RL4 | The version | About shows 0.9.2 with Electron 44.9.2; m2's D11 passes |
+
+AT2 to AT4 can run only with the tag; they are checked after the owner
+tags and publishes 0.9.2. 0.9.1's zips stay as they are.
+
+### Results so far (Windows 11, 2026-10-20)
+
+- AT1: release.yml's diff read through (no YAML parser is installed
+  here, and none was added): the attest step pinned by commit, the
+  package job's three permissions, and the notes' line. GitHub reads
+  the file again when the tag runs it.
+- Rule 13 (2026-10-20): Electron 44.9.2, ARCHITECTURE.md section 3.
+  `pnpm install --frozen-lockfile` passes the lockfile's supply-chain
+  check with the exception.
+- `pnpm build`, the unit tests (614 in 73 files), lint, and the type
+  check pass.
+- `pnpm filters:update`: the same 6,760,817 bytes from the 13 lists;
+  only starter.json's build time changed.
+- The screenshots: the m28 set remade (`MILESTONE=m28 pnpm
+  screenshots`) and compared pixel by pixel with Electron's decoder.
+  Kept: 39-about.png (Version 0.9.2, Electron 44.9.2, Chromium
+  152.0.7977.167) and 64-holoml-docs.png (27% changed: HoloML's
+  documentation home with "Edit it in the playground" for each
+  example). Every other picture differed by under 1% (encoding, and
+  the aquarium's fish) and was put back. The README's four remade
+  (`pnpm screenshots:readme`) differed by under 0.15% and were put
+  back.
+- The full end-to-end run (`pnpm test:e2e`, 1482 s): 478 passed, 1
+  skipped (FS5, pointer lock, in hidden windows), 1 failed: m17's
+  "Blockworld plays in a development run" (the island not drawn in 40
+  s, the check HANDOFF.md lists to watch with issue #82). It passed
+  alone three times of three.
+- RL4: m2's D11 passed with 0.9.2 in that run, and the About picture
+  shows it.
+- `pnpm package`: HyperSpace3D-0.9.2-windows-x64.zip, 156.6 MB, with
+  Electron 44.9.2; `pnpm package:smoke`: the packaged app starts, with
+  the title "HyperSpace 3D" and its room.
+- Not checked yet: AT2 to AT4 (they need the tag), and the other
+  systems' zips (the release workflow builds and smoke-checks them).
+
 ## The promotion plan (2026-10-14)
 
 On 2026-10-14 the owner asked for a review of the README and the

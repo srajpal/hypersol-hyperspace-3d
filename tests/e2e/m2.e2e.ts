@@ -577,10 +577,10 @@ describe('D11 about', () => {
     await waitFor('about panel', () => about.isVisible(), (v) => v);
     const electron = await h.app.evaluate(() => process.versions.electron);
     expect(await h.shell.locator('hs-about [data-testid="about-engine"]').textContent()).toContain(`Electron ${electron}`);
-    // The version the app is built as (0.9.0 from milestone 12, 0.9.1 from issue #92), read from its package file.
+    // The version the app is built as (0.9.0 from milestone 12, 0.9.1 from issue #92, 0.9.2 from issue #127), read from its package file.
     const { version } = JSON.parse(readFileSync(join(APP_DIR, 'package.json'), 'utf8')) as { version: string };
     expect(await h.shell.locator('hs-about [data-testid="about-version"]').textContent()).toContain(`Version ${version}`);
-    expect(version).toBe('0.9.1');
+    expect(version).toBe('0.9.2');
     // An experimental developer preview until 1.0 (owner, prompt 131).
     expect(await h.shell.locator('hs-about [data-testid="about-status"]').textContent()).toContain('experimental developer preview');
     await h.shell.keyboard.press('Escape');
