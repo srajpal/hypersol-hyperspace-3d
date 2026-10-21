@@ -262,23 +262,50 @@ describe('FS2: closing the tab', () => {
 });
 
 describe('FS10: a window full screen with no page in it (issue #87)', () => {
-  it("leaves by itself and is back where it was; a page's own full screen is not undone", async () => {
+  it("leaves by itself and is back where it was when a page started it; the person's own full screen stays; a page's own is not undone", async () => {
     const h = await launch(server.url('fullscreen.html'), { userDataDir: newProfile({ parallax: 'off' }) });
+    const setFull = (full: boolean) => h.app.evaluate(({ BrowserWindow }, full) => BrowserWindow.getAllWindows()[0]!.setFullScreen(full), full);
     try {
       await waitForPage(h, 'fullscreen.html');
-      // The state #87 left on GitHub's machines, made here: the window full screen and no page holding it.
+      // The state #87 left on GitHub's machines, made here: a page asked for full screen (the browser's own page's
+      // event for the page's element, as Electron sends it), the window full screen, and no page holding it.
       windowBefore = (await windowState(h)).bounds;
-      await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.setFullScreen(true));
+      await h.app.evaluate(({ BrowserWindow }) => {
+        const w = BrowserWindow.getAllWindows()[0]!;
+        w.webContents.emit('enter-html-full-screen');
+        w.setFullScreen(true);
+      });
       await waitFor('the window full screen', () => windowState(h), (w) => w.full);
       await outOfFull(h, 'a window full screen with no page');
-      const looks = await mainLog(h, 'fullscreenSettles');
-      expect(looks.some((l) => l.why === 'entered' && l.left && !l.pageFull && !l.shellHoldsElement), JSON.stringify(looks)).toBe(true);
+      let looks = await mainLog(h, 'fullscreenSettles');
+      expect(looks.some((l) => l.why === 'entered' && l.left && !l.byPerson && !l.pageFull && !l.shellHoldsElement), JSON.stringify(looks)).toBe(true);
+
+      // The person's own full screen (the review of 2026-10-21): the window's control (macOS's green button, a
+      // window manager's key) asks no page. The look after it entered leaves it be; so does the look after a page's
+      // full screen inside it ends; the person leaves it.
+      let seen = looks.length;
+      await setFull(true);
+      await waitFor('the window full screen', () => windowState(h), (w) => w.full);
+      looks = await waitFor('the look after the window entered', () => mainLog(h, 'fullscreenSettles'), (l) => l.slice(seen).some((x) => x.why === 'entered'));
+      expect(looks.slice(seen).filter((x) => x.why === 'entered'), 'the person\'s full screen stays').toEqual([expect.objectContaining({ byPerson: true, left: false })]);
+      seen = looks.length;
+      const before = windowBefore;
+      await goFull(h);
+      await pressInPage(h, 'Escape', [], 'fullscreen.html');
+      await waitFor('the page out, nothing held', () => notice(h), (n) => n.holding.length === 0);
+      looks = await waitFor('the look after the page left', () => mainLog(h, 'fullscreenSettles'), (l) => l.slice(seen).some((x) => x.why === 'left'));
+      expect(looks.slice(seen).every((x) => x.byPerson && !x.left), JSON.stringify(looks.slice(seen))).toBe(true);
+      expect((await windowState(h)).full, 'still the person\'s full screen').toBe(true);
+      windowBefore = before;
+      await setFull(false);
+      await outOfFull(h, 'the person leaving');
+      looks = await mainLog(h, 'fullscreenSettles');
       // A page's own full screen: the look a second after the window entered finds the page holding it, and leaves
       // it be; Escape then leaves as before.
+      seen = looks.length;
       await goFull(h);
-      const seen = looks.length;
       const look = await waitFor('the look after the page entered', () => mainLog(h, 'fullscreenSettles'), (l) => l.slice(seen).some((x) => x.why === 'entered'));
-      expect(look.slice(seen).every((x) => !x.left), JSON.stringify(look)).toBe(true);
+      expect(look.slice(seen).every((x) => !x.left && !x.byPerson), JSON.stringify(look)).toBe(true);
       expect((await windowState(h)).full).toBe(true);
       expect((await notice(h)).holding.some((x) => x.full)).toBe(true);
       await pressInPage(h, 'Escape', [], 'fullscreen.html');

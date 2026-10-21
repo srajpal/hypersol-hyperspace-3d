@@ -103,8 +103,9 @@ state; this is a summary.
 - The review of 2026-10-21 (prompt 204; TODO.md has it): the webrtc
   finding was already fixed (prompt 172), now checked on the web too;
   `holoml.add` keeps an animation of an element already in the page;
-  the playground's faults fixed in holoml; one question for the owner,
-  #87's rule against the Mac's own full screen.
+  the playground's faults fixed in holoml; and #87's rule keeps the
+  person's own full screen (the Mac's green button), as the owner
+  decided.
 - The logo direction is chosen (concept 4d in
   docs/branding/logo-concepts/), and the app's icon is drawn from it
   since 0.9.1 (`pnpm --filter @hypersol/browser icons`, issue #92).

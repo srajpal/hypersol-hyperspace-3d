@@ -4,8 +4,12 @@
 
 - A tab closed while its page was full screen could leave the window in
   full screen with no page in it (GitHub issue #87, seen now and then
-  on GitHub's machines). The window is now full screen only while a
-  page holds it: if none does, it leaves by itself.
+  on GitHub's machines). A full screen a page started now lasts only
+  while a page holds it: if none does, the window leaves by itself. A
+  full screen you start with the window's own control (macOS's green
+  button or Ctrl+Cmd+F, a window manager's key) stays until you leave
+  it, through a page's full screen inside it (the review of
+  2026-10-21: the first version of the fix took that out too).
 - A HoloML 0.3 page's script that added an animation, or a click action,
   of an element already in the page (`holoml.add('<animate
   target="#car" …/>')`) had it left out, as naming no element: the

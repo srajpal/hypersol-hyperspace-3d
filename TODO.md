@@ -6444,7 +6444,9 @@ sometimes does not is still not known, so the fix is a rule that holds
 whatever the cause, not a change to the race.
 
 The rule: the browser's window is full screen only while a page of it
-holds full screen. (Today nothing else makes the window full screen;
+holds full screen. (Changed by the review of 2026-10-21: only a full
+screen a page started; the person's own, from the window's control,
+stays. See "The review of 2026-10-21".) (Today nothing else makes the window full screen;
 the browser's own full screen, F11, is issue #84, and when it is built
 the rule becomes "while a page, or the browser itself, holds it".)
 
@@ -8816,14 +8818,41 @@ check, PG7, PG8); with the fixes they pass. The full `pnpm test:e2e`:
 focus), 34 files. Blockworld's new test fails when the seed is read
 from `location`.
 
-Left for the owner: GitHub issue #87's rule on macOS. The plan above
-("Today nothing else makes the window full screen") does not hold on
-a Mac, where the green button, Ctrl+Cmd+F, and the Window menu's
-"Enter Full Screen" make the window full screen; settle's look a
-second later finds no page holding it and takes the window out
-(read in the code, not run on a Mac). FS10 checks that a window put
-in full screen with no page (`setFullScreen(true)`) leaves, so a
-change is a change to #87's requirement, for the owner to decide.
+GitHub issue #87's rule on macOS, decided by the owner the same day.
+The plan ("Today nothing else makes the window full screen") does not
+hold on a Mac, where the green button, Ctrl+Cmd+F, and the Window
+menu's "Enter Full Screen" make the window full screen (and a Linux
+window manager's key does); settle's look a second later found no
+page holding it and took the window out (read in the code, not run on
+a Mac). The owner: "a full screen the person starts with the window's
+own control stays; only one a page started leaves when no page holds
+it. Change FS10 and #87's rule to match." So:
+
+- main/fullscreen.ts marks the window when a page asks (the page's
+  enter-html-full-screen, or the browser's own page's for its
+  element); the first look after the window enters records who
+  started it, a page if one had asked, else the person; both are
+  forgotten when the window leaves full screen. The settle log says
+  `byPerson`.
+- shared/fullscreen.ts, windowShouldLeave: never for the person's
+  full screen. FS9 adds those cases.
+- FS10: #87's state is now made as a page leaves it (the browser's own
+  page's event for a page's element, then the window full with no
+  page): it leaves. Then the person's full screen
+  (`setFullScreen(true)` with no page asking, as the window's control
+  does): the look after it entered leaves it be; a page's full screen
+  inside it and Escape leave it still full; the person leaves it and
+  the window is back where it was. Then a page's own full screen, as
+  before.
+
+Results (2026-10-21, Windows 11): issue-75.e2e.ts 8 passed and 1
+skipped (FS5, as always without a focused window); FS10 three more
+times, 3 of 3; with the old rule (main/fullscreen.ts and
+shared/fullscreen.ts as before), FS10 fails at the person's full
+screen, which was taken out. A page's full screen inside the
+person's, then Escape, leaves the window full on Windows (Electron
+keeps a window's own full screen when a page's ends). Not yet run on
+a Mac, where the green button is what changed.
 
 ## Issues and advisories of 2026-10-09 (prompts 188 and 189)
 

@@ -52,11 +52,14 @@ export function noticeSite(url: string): string {
  * holds it while Electron says so (its enter-html-full-screen, until its
  * leave), and while the browser's own page holds a page's element full
  * (Electron's way for a webview). A tab closed in full screen once left the
- * window full with neither. (The browser's own full screen, issue #84, will
- * hold it too, when there is one.)
+ * window full with neither. A full screen the person started with the
+ * window's own control (macOS's green button, a window manager's key) is
+ * theirs, and stays (the review of 2026-10-21; owner, 2026-10-21). (The
+ * browser's own full screen, issue #84, will hold it too, when there is
+ * one.)
  */
-export function windowShouldLeave(state: { windowFull: boolean; pageFull: boolean; shellHoldsElement: boolean }): boolean {
-  return state.windowFull && !state.pageFull && !state.shellHoldsElement;
+export function windowShouldLeave(state: { windowFull: boolean; pageFull: boolean; shellHoldsElement: boolean; byPerson: boolean }): boolean {
+  return state.windowFull && !state.byPerson && !state.pageFull && !state.shellHoldsElement;
 }
 
 /** Whether a key leaves full screen or gives the pointer back: Escape pressed, with any other keys, while a page holds either. */
