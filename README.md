@@ -42,18 +42,18 @@ screenshots:video` from the local copies, no network
 
 ## Download
 
-**[HyperSpace 3D 0.9.1](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1)**,
+**[HyperSpace 3D 0.9.2](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.2)**,
 a developer preview, as a portable zip: take the one for your
 computer, unzip it anywhere, and start it. Nothing to install, nothing
 to sign in to, and no update check: a newer version is a newer zip on
 the [releases page](https://github.com/srajpal/hypersol-hyperspace-3d/releases).
 
-| Your computer | Download | Size |
-|---|---|---|
-| Windows 10 or 11, x64 | [HyperSpace3D-0.9.1-windows-x64.zip](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.1/HyperSpace3D-0.9.1-windows-x64.zip) | 156 MB |
-| macOS, Apple silicon (M1 and later) | [HyperSpace3D-0.9.1-macos-arm64.zip](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.1/HyperSpace3D-0.9.1-macos-arm64.zip) | 130 MB |
-| macOS, Intel | [HyperSpace3D-0.9.1-macos-x64.zip](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.1/HyperSpace3D-0.9.1-macos-x64.zip) | 134 MB |
-| Linux, x64 | [HyperSpace3D-0.9.1-linux-x64.zip](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.1/HyperSpace3D-0.9.1-linux-x64.zip) | 123 MB |
+| Your computer | Download | Size | Provenance |
+|---|---|---|---|
+| Windows 10 or 11, x64 | [HyperSpace3D-0.9.2-windows-x64.zip](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.2/HyperSpace3D-0.9.2-windows-x64.zip) | 157 MB | [![Build provenance attestation for the Windows zip](docs/branding/attested.svg)](https://github.com/srajpal/hypersol-hyperspace-3d/attestations/58027393) |
+| macOS, Apple silicon (M1 and later) | [HyperSpace3D-0.9.2-macos-arm64.zip](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.2/HyperSpace3D-0.9.2-macos-arm64.zip) | 130 MB | [![Build provenance attestation for the macOS Apple silicon zip](docs/branding/attested.svg)](https://github.com/srajpal/hypersol-hyperspace-3d/attestations/58027204) |
+| macOS, Intel | [HyperSpace3D-0.9.2-macos-x64.zip](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.2/HyperSpace3D-0.9.2-macos-x64.zip) | 134 MB | [![Build provenance attestation for the macOS Intel zip](docs/branding/attested.svg)](https://github.com/srajpal/hypersol-hyperspace-3d/attestations/58027276) |
+| Linux, x64 | [HyperSpace3D-0.9.2-linux-x64.zip](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.2/HyperSpace3D-0.9.2-linux-x64.zip) | 123 MB | [![Build provenance attestation for the Linux zip](docs/branding/attested.svg)](https://github.com/srajpal/hypersol-hyperspace-3d/attestations/58027210) |
 
 Starting it the first time (nothing is signed, so each system asks
 once):
@@ -77,10 +77,11 @@ file: check a download with `certutil -hashfile <the zip> SHA256` on
 Windows, `shasum -a 256 <the zip>` on macOS, or `sha256sum -c <the
 .sha256 file>` on Linux. From 0.9.2 on, each zip also has a build
 provenance attestation, a statement signed through GitHub that it was
-built by this repository's release workflow from the release's tag.
-Once 0.9.2 is published, check its Windows zip with
-[GitHub's CLI](https://cli.github.com/), naming the workflow and the
-tag so that nothing else of the repository passes:
+built by this repository's release workflow from the release's tag;
+each zip's *attested* badge above opens its own, which names the
+zip's SHA-256, the workflow, the tag, and the commit. Check the
+Windows zip with [GitHub's CLI](https://cli.github.com/), naming the
+workflow and the tag so that nothing else of the repository passes:
 
 ```bash
 gh attestation verify HyperSpace3D-0.9.2-windows-x64.zip -R srajpal/hypersol-hyperspace-3d --signer-workflow srajpal/hypersol-hyperspace-3d/.github/workflows/release.yml --source-ref refs/tags/v0.9.2
@@ -97,10 +98,14 @@ yet for everyday browsing: the status paragraph below says where it
 stands, and [Building and running](#building-and-running) how to run
 it from source instead.
 
-**Status (2026-10-16): experimental.** The newest version is the
-[0.9.1 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1),
-a pre-release published 2026-10-16 as a portable zip for Windows,
-Linux, and macOS ([Download](#download) above) and as source; the
+**Status (2026-10-20): experimental.** The newest version is the
+[0.9.2 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.2),
+a pre-release published 2026-10-20 as a portable zip for Windows,
+Linux, and macOS ([Download](#download) above) and as source: a
+security update of
+[0.9.1](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.1)
+of 2026-10-16 (Electron 44.9.2), its zips the first with build
+provenance attestations. The
 [0.9.0 developer preview](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.0)
 of 2026-09-26 was source only. Windows and Linux are checked by the
 automatic tests on every change; macOS builds and passes its unit

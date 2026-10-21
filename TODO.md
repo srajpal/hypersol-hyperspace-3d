@@ -8184,8 +8184,10 @@ S: about half a day, with the checks, and the small holoml change.
 
 ## Issue #127: attested release zips, and release 0.9.2
 
-Status: prepared (2026-10-20), for the owner's review; the tag and the
-publish are the owner's. The owner approved on 2026-10-20 build
+Status: released (2026-10-20): the owner merged #128, tagged
+`v0.9.2`, and published it; AT2 and AT3 pass, AT4 does not for 0.9.2
+(the setting was off at its publish; on since, for the next release;
+see "After the publish"). The owner approved on 2026-10-20 build
 provenance attestations for the release zips and immutable releases,
 and asked for the version to be raised so that they show: release
 0.9.2, a security update of 0.9.1, with the attestations its first.
@@ -8278,6 +8280,150 @@ tags and publishes 0.9.2. 0.9.1's zips stay as they are.
   the title "HyperSpace 3D" and its room.
 - Not checked yet: AT2 to AT4 (they need the tag), and the other
   systems' zips (the release workflow builds and smoke-checks them).
+
+### After the publish (2026-10-20)
+
+- The tag `v0.9.2` is 1426b17, the merge of #128. Its release run
+  (39527712517, started by the tag's push, 2 min 26 s) passed every
+  job: the draft, and each system's zip built, smoke-checked, attested,
+  and uploaded. The owner published the draft at 01:36 UTC on
+  2026-10-21 (20:36 on 2026-10-20 here), a pre-release without a
+  discussion, with the four zips and their `.sha256` files.
+- AT2: passes. Each package job's log reads "Attestation created" for
+  its zip with the zip's SHA-256, and gives the attestation's page:
+  Windows 58027393, macOS on Apple silicon 58027204, macOS on Intel
+  58027276, Linux 58027210. `gh api
+  repos/srajpal/hypersol-hyperspace-3d/attestations/sha256:<digest>`
+  finds exactly one for each zip, each page opens (HTTP 200) and names
+  its zip, its SHA-256, and `refs/tags/v0.9.2`, and the attestations
+  page opens.
+- AT3: passes. The release's files downloaded with `gh release
+  download v0.9.2` (into a scratch folder, removed after);
+  `sha256sum -c` passes on all four `.sha256` files, and the release's
+  own digests are the same; `gh attestation verify` as the README
+  writes it (`--signer-workflow` and `--source-ref refs/tags/v0.9.2`)
+  passes on each zip; it fails on the Windows zip with
+  `refs/tags/v0.9.1` named, and on a copy with one byte added.
+- AT4: does not pass. GitHub's API reads the release as not immutable,
+  and the repository's setting (`gh api
+  repos/srajpal/hypersol-hyperspace-3d/immutable-releases`) as
+  `"enabled": false` after the publish. GitHub's documentation says
+  "immutability will only apply to future releases", so turning it on
+  now covers the next release, not 0.9.2. The zips are still checked
+  by their attestations, which a changed file fails (AT3). The owner
+  turned the setting on the same evening (Settings, General, Releases,
+  "Enable release immutability"; the API then read `"enabled": true`)
+  and chose to leave 0.9.2 as it is rather than delete and publish it
+  again. AT4 is checked again with the next release, which should then
+  show as immutable.
+
+### The README's Download section for 0.9.2, with a badge per zip (plan, 2026-10-20)
+
+Status: approved by the owner on 2026-10-20 (the three questions
+below taken as recommended), and built the same day, for the owner's
+review in a pull request. The owner asked on 2026-10-20
+for the README to show 0.9.2 and for each zip to have a small badge
+showing its attestation, the badge a picture committed to the
+repository with no outside service (option a; shields.io, a
+third-party service under AGENTS.md rule 3, was not chosen). Checked
+on 2026-10-20: the tag `v0.9.2` is not on GitHub yet, no release run
+has built 0.9.2, and the newest release is 0.9.1, so the work below
+starts once the owner has tagged and published 0.9.2 (HANDOFF.md).
+
+What changes:
+
+- docs/branding/attested.svg (new): a small badge, 72 by 20
+  pixels, a rounded box with a check mark and the word "attested" in
+  white on a dark green fill of its own, so it reads the same on
+  GitHub's light and dark themes without a second picture (the text at
+  least 4.5 to 1 on its fill, WCAG 2.2 AA; the fill at least 3 to 1
+  against both white and GitHub's dark background, so the box's edge
+  shows on both). Drawn by hand as plain SVG: a `<title>`, no script,
+  no outside font or picture; the word in a system font stack.
+- README.md, Download: the version and release link name 0.9.2; the
+  table's four links and sizes are the published zips' (the sizes from
+  the release's assets, in MB as now); a fourth column, "Provenance",
+  holds per zip the badge, linked to that zip's own attestation page
+  on GitHub (`https://github.com/srajpal/hypersol-hyperspace-3d/attestations/<id>`),
+  with alt text naming the zip ("Build provenance attestation for the
+  Windows zip"). Each attestation's address is the attest step's
+  `attestation-url` in the tag's release run, and is checked against
+  the zip: `gh api repos/srajpal/hypersol-hyperspace-3d/attestations/sha256:<digest>`
+  with the digest from the zip's `.sha256` file finds it. The
+  paragraph on checking a zip loses "Once 0.9.2 is published" and
+  says what the badge links to; the `gh attestation verify` line
+  stays as it is. The one-minute tour stays the 0.9.1 release's (no
+  new video is made).
+- README.md, the status paragraph: dated the day 0.9.2 is published,
+  0.9.2 the newest version (a security update of 0.9.1, with Electron
+  44.9.2 and attested zips), 0.9.1 and 0.9.0 before it.
+- The landing page (site/index.html) already names 0.9.2 in its
+  download links, as site/build.mjs writes the version from
+  package.json; it gets no badges, as each release's attestation
+  addresses would have to be written into the page by hand. Unless the
+  owner wants it (question 2), it is left as it is.
+- docs/launch/faq.md: the attestation answer's "Before posting" note
+  goes, as it is then true. CHANGELOG.md: no change (0.9.2's section
+  already says the zips are attested; the badges are a change to the
+  README, not to the release). HANDOFF.md and this section: the
+  results, and what is left.
+- No new package, tool, or service; nothing published by the agent.
+
+Checks:
+
+| Check | What | Pass when |
+|---|---|---|
+| AT5 | The badge | attested.svg reads as SVG, has a title, and loads nothing; its colour pairs meet the contrasts above (worked out from the hex values); it looks right on GitHub's light and dark themes in the pull request's README |
+| AT6 | The links | Each of the four badges opens its own zip's attestation page, whose digest is the one in that zip's `.sha256` file; each zip's link downloads (an HTTP 200 after the redirect) and its size matches the table |
+
+With AT2 to AT4 (run first, as they are the badges' substance), the
+unit tests (`pnpm test`, site/site.test.ts among them), and lint. No
+check in a test file: a test that the README names the package's
+version would fail between a version's merge and its publish, as it
+would today; AT5 and AT6 are checked by hand and recorded here.
+
+Questions for the owner:
+
+1. A GitHub issue: none new, the work recorded here under #127 and the
+   pull request naming it (recommended); or a new issue for the
+   badges.
+2. The landing page: as it is, with no badges (recommended); or one
+   line under its download links to the repository's attestations
+   page.
+3. The badge's word: "attested" (recommended, as asked); or
+   "provenance".
+
+Results (Windows 11, 2026-10-20):
+
+- AT5, in part: docs/branding/attested.svg made, 72 by 20 pixels. Its
+  contrasts, worked out from the hex values: the white text on the
+  fill #1a7f37 5.08 to 1; the fill against white 5.08 and against
+  GitHub's dark background (#0d1117) 3.73. Drawn by Electron on white
+  and on #0d1117, at its size and three times larger, and looked at:
+  the check mark and the word read on both. On GitHub, the branch's
+  README in the dark theme: the four badges drawn at 72 by 20 in the
+  Provenance column, each linked to its zip's attestation, and read
+  well. GitHub's light theme was not seen there (the page kept the
+  dark theme); the picture on white is the check for it.
+- The README: Download names 0.9.2, its table the four zips with their
+  sizes (157, 130, 134, and 123 MB, in MiB rounded as for 0.9.1) and a
+  Provenance column with the badges; the paragraph on checking a zip
+  says what a badge opens; the status paragraph is dated 2026-10-20
+  with 0.9.2 the newest. docs/launch/faq.md's "Before posting" note
+  on the attestation answer is gone. HANDOFF.md says what was done.
+  The landing page is as it was (question 2): its links, built from
+  main, already name 0.9.2, and now download.
+- AT6: passes. Every 0.9.2 and attestation address in the README
+  opens (HTTP 200, after the redirect for the zips); each zip's
+  Content-Length is its size on the release; each badge's address is
+  the attestation the zip's own job made, whose page names that zip
+  and its SHA-256 (AT2).
+- AT2 and AT3 pass, AT4 does not ("After the publish", above).
+- `pnpm test`: 612 passed in 73 files, among them site/site.test.ts's
+  nine (LP1 to LP4); 2 skipped, packages/holoml's copy check, which
+  needs the holoml folder beside the repository and had none in the
+  agent's worktree. `pnpm lint` passes. No end-to-end run: nothing the
+  app runs changed.
 
 ## The promotion plan (2026-10-14)
 
