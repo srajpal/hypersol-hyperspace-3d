@@ -8941,6 +8941,46 @@ reason), which document is full, and the looks at the window. Run
 macOS asks), read the report, and propose the fix to the check in a
 pull request of its own from main, with ed72b1b in it.
 
+### BS1 in GitHub's Windows builds (2026-10-22)
+
+PR #137's builds failed once, at BS1 in windows-latest part 1: neither
+json-edit script had acted when the page parsed its JSON at its load
+(`{ a: 0, c: 1, d: 1 }`). The library's page script asks for the page's
+styles and scripts as the page starts but does not wait for the answer,
+and the fix above ran the scripts as soon as the answer came: earlier
+than before, but a fast page (the check's small one on GitHub's slower
+machine; YouTube from the cache, too) could still run first. The owner
+chose a handoff that waits ("build the synchronous handoff").
+
+The fix: the page preload asks for the page's scripts on
+hypersol:page-scripts and waits for the answer (ipcRenderer.sendSync,
+preload/page-scripts.ts, in the top frame as the library's own page
+script), and runs each in the page with webFrame.executeJavaScript, no
+user gesture, before any of the page's own scripts: a preload runs
+before them. The main process takes the scripts from the library's own
+onInjectCosmeticFilters, asked as for a page's first request (it hands
+over every script before its first await), each in a block
+(main/privacy/cosmetics.ts, pageScripts), and always answers, with none
+on a failure or for a paused site or a page that is not a tab. The
+library's own requests then put in styles alone: its first brings the
+same scripts again, and later ones none.
+
+BS1 is stricter: the page's own first script reads what the scripts did
+as it runs, as well as at the load (tests/fixtures/scriptlets.html).
+Unit tests: main/privacy/cosmetics.test.ts (6): the ids kept, the
+library's request runs no script, styles as before, a page's scripts in
+blocks from a real engine (buildEngine with the app's page scripts) and
+none for another site, no styles from pageScripts, and the realm test.
+
+Results (2026-10-22, the owner's Mac): lint and types clean; `pnpm test`
+619 passed and 2 skipped; issue-133.e2e.ts passed four times (three
+before BS1 was made stricter, once after). On this
+Mac the old code passed the stricter BS1 too (the answer came before the
+page's first script), so an experiment, not committed: with the main
+process's answer held 300 ms, the old code failed BS1 "at the start"
+(`{ a: 0, c: 1, d: 1 }`, as in GitHub's build), and the new code passed
+twice (the page waited for its scripts).
+
 ## The review of 2026-10-21 (prompt 204)
 
 Asked in prompt 204: a finding of 2026-10-07 handed back (the content

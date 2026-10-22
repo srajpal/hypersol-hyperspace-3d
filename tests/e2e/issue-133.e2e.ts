@@ -51,10 +51,15 @@ describe("BS1 to BS3: the blocker's page scripts (issue #133)", () => {
       await waitForPage(h, 'link-a');
       await navigateTo(h, server.url('scriptlets.html'));
       await waitForPage(h, 'scriptlets');
-      const page = await waitFor('the page read what the scripts did', () => inPage<{ parsed: Record<string, number>; constants: Record<string, unknown>; activated: boolean } | null>(h, 'window.__fixture ?? null', 'scriptlets'), (f) => f !== null);
-      // BS1: the second json-edit ran too (before, it failed: "Identifier 'JSONPath' has already been declared").
-      expect(page!.parsed).toEqual({ a: 0 });
-      expect(Object.values(page!.constants).every((v) => v === true), JSON.stringify(page!.constants)).toBe(true);
+      type Read = { parsed: Record<string, number>; constants: Record<string, unknown> };
+      const page = await waitFor('the page read what the scripts did', () => inPage<(Read & { atStart: Read; activated: boolean }) | null>(h, 'window.__fixture ?? null', 'scriptlets'), (f) => f !== null);
+      // BS1: the second json-edit ran too (before, it failed: "Identifier 'JSONPath' has already been declared"), and
+      // every script had acted when the page's own first script ran (before, they ran after the page's load; then as
+      // soon as the main process answered, which a fast page could beat, in GitHub's Windows builds).
+      for (const [when, read] of [['at the start', page!.atStart], ['at the load', page!]] as const) {
+        expect(read.parsed, when).toEqual({ a: 0 });
+        expect(Object.values(read.constants).every((v) => v === true), `${when}: ${JSON.stringify(read.constants)}`).toBe(true);
+      }
       // BS3: the scripts gave the page no user gesture.
       expect(page!.activated).toBe(false);
       // BS2: fourteen scripts while the page loaded, and, once the app has dealt with all the page sent, the main

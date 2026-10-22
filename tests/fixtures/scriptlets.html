@@ -7,13 +7,18 @@
   <body>
     <p>A page the blocker's page scripts run in (GitHub issue #133).</p>
     <script>
-      // What the scripts did, read once the page has loaded: two that each take a key out of what JSON.parse gives
-      // (each declares the same class at its top level), the constants others set, and whether the page was given a
-      // user gesture.
-      window.addEventListener('load', () => {
+      // What the scripts did: two that each take a key out of what JSON.parse gives (each declares the same class at
+      // its top level), and the constants others set, read first by the page's own first script, as it runs (the
+      // scripts must act before any of the page's code), and again once the page has loaded; and whether the page
+      // was given a user gesture.
+      const read = () => {
         const constants = {};
         for (let i = 1; i <= 12; i++) constants['hs' + i] = window['hs' + i];
-        window.__fixture = { parsed: JSON.parse('{"a":0,"c":1,"d":1}'), constants, activated: navigator.userActivation.hasBeenActive };
+        return { parsed: JSON.parse('{"a":0,"c":1,"d":1}'), constants };
+      };
+      const atStart = read();
+      window.addEventListener('load', () => {
+        window.__fixture = { atStart, ...read(), activated: navigator.userActivation.hasBeenActive };
       });
     </script>
   </body>

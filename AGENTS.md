@@ -723,9 +723,12 @@ milestone's checks are defined in TODO.md):
   command, tests/e2e/issue-133.e2e.ts, in part 1): the ad blocker's page
   scripts, from a list made for the check (two json-edit scripts that
   declare the same class, and twelve set-constant ones) on a local page:
-  both json-edit scripts run, no listener warning or unhandled rejection
-  in the main process, and no user gesture for the page. The request the
-  library is given is a unit test (main/privacy/cosmetics.test.ts).
+  both json-edit scripts run, and both had acted when the page's own
+  first script ran (the page preload waits for the scripts and runs them
+  first), no listener warning or unhandled rejection in the main
+  process, and no user gesture for the page. The scripts handed to the
+  page preload and the request the library is given are unit tests
+  (main/privacy/cosmetics.test.ts).
 - No more milestones (prompt 203): polish (29) was taken off the
   roadmap, and installers before it (prompt 172). A fix for a GitHub
   issue adds its checks to the file of the part it changes, or to a
