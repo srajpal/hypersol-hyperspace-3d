@@ -8,7 +8,9 @@ Last updated 2026-10-21.
   where a YouTube video restarts over and over on the Mac and plays
   through on Windows; and FS10 failing on the Mac (branch
   review-204-fixes). The steps are in TODO.md, "Issue #133", "On the
-  owner's Mac". Do not merge #137 before them.
+  owner's Mac". Do not merge #137 before them. On the Mac the probe
+  plays its video through (2026-10-21, results there); the restart
+  waits for the video the owner saw it on.
 
 - Release 0.9.2 is published (2026-10-20, issue #127): Electron
   44.9.2, and each zip with a build provenance attestation. The

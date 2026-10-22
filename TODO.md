@@ -8859,6 +8859,32 @@ Steps, recording each result here:
 5. If it is the Mac alone: say so with what the probe printed, and
    ask the owner before going further.
 
+Results on the owner's Mac (2026-10-21, the built app of
+issue-133-blocker-scripts at 5033eff, video aqz-KE-bpKQ, 90 s each):
+
+- Step 1 and 2 with a throwaway profile: both met Google's "unusual
+  traffic" check (google.com/sorry) in place of the video, so neither
+  said anything. The probe now takes `--profile=<folder>` (kept after
+  the run; `--empty-lists` sets its saved lists aside and puts them
+  back) and `--show` (a normal window, no watching). The owner passed
+  the check once by hand with `--show --profile=userData/youtube-probe`.
+- Step 1 with that profile: the video played through, 1.7 s to 89.8 s,
+  never went back, no `loadstart` or `emptied`, player state 1
+  (playing), no message, no console error, nothing else printed by the
+  main process.
+- Step 2 (`--empty-lists`) with that profile: the same, played through.
+- The same with the layers view on (the probe's profile has it off;
+  a dev run has it on): the same, played through.
+- The lists of the owner's dev profile (userData/dev, refreshed from
+  the internet that day) give www.youtube.com the same thirty page
+  scripts as the starter copy.
+
+So the probe does not reproduce the restart on the Mac. What differs
+from the owner's run: a dev run (`pnpm dev`) in a window on screen,
+and the video (likely one with ads, which this one has none of; the
+lists' YouTube scripts edit the player's ads out, and now act before
+YouTube's own code). Steps 3 to 5 wait for the owner's video.
+
 **2. FS10 fails on the Mac (issue #87's check, issue-75.e2e.ts).** In
 the person's own full screen, a page's click on its full-screen button
 did not bring its full screen in the check, though by hand on the Mac
