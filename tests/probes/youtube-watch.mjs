@@ -28,7 +28,14 @@ if (isMainThread) setTimeout(async () => {
     // Counted from when the page has a video: a restart is the video loaded again, or its time going back.
     const COUNT = `(() => { const v = document.querySelector('video'); if (!v) return false; if (!v.__probe) { v.__probe = { loadstart: 0, emptied: 0, seeking: 0, ended: 0, error: 0 }; for (const k of Object.keys(v.__probe)) v.addEventListener(k, () => v.__probe[k]++); } return true; })()`;
     const SAMPLE = `(() => { const v = document.querySelector('video'); const p = document.getElementById('movie_player'); return { t: v ? Math.round(v.currentTime * 10) / 10 : null, paused: v ? v.paused : null, events: v ? v.__probe : null, state: p && p.getPlayerState ? p.getPlayerState() : null, message: (document.querySelector('.ytp-error')?.innerText ?? '').replace(/\\s+/g, ' ').slice(0, 120), webdriver: navigator.webdriver }; })()`;
-    const run = (code) => (w.isDestroyed() ? Promise.resolve('gone') : w.executeJavaScript(code, false).catch((e) => `script: ${e.message}`));
+    // A page that has not finished loading holds executeJavaScript until it has: 5 s, then the page's state.
+    const run = (code) =>
+      w.isDestroyed()
+        ? Promise.resolve('gone')
+        : Promise.race([
+            w.executeJavaScript(code, false).catch((e) => `script: ${e.message}`),
+            sleep(5000).then(() => `no answer${w.isLoading() ? ' (loading)' : ''}`),
+          ]);
     for (let i = 0; i < 20 && (await run(COUNT)) !== true; i++) await sleep(1000);
     const samples = [];
     for (let i = 0; i < seconds / 2; i++) {

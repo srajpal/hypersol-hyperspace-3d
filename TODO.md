@@ -8885,6 +8885,26 @@ and the video (likely one with ads, which this one has none of; the
 lists' YouTube scripts edit the player's ads out, and now act before
 YouTube's own code). Steps 3 to 5 wait for the owner's video.
 
+More runs the same evening, the same build and the kept profile:
+
+- dQw4w9WgXcQ (a popular video with ads), with the lists: played
+  through, 0 s to 86.2 s, never went back. With `--empty-lists`: the
+  ads played (two doubleclick requests refused in the console), and
+  the time went back twice with a `loadstart` and an `emptied` each:
+  an ad giving way to the video and the next, not a fault.
+- MEi7WlKb4Js, the video the owner sees fail in `pnpm dev`: with the
+  lists, played through, 1.7 s to 89.8 s, never went back; with
+  `--empty-lists`, an ad at the end (it went back once).
+- MEi7WlKb4Js with a copy of the owner's dev profile
+  (userData/youtube-probe-dev, its lock files removed: a copy with them
+  hands its address to the dev run that holds the profile and quits):
+  played through, 0 s to 85.7 s, never went back.
+
+So the built app plays the owner's video with the owner's profile; it
+fails only in the owner's `pnpm dev` (on this branch, started 22:22).
+The probe's page reads now give up after 5 s and say whether the page
+is still loading, in place of holding the probe.
+
 **2. FS10 fails on the Mac (issue #87's check, issue-75.e2e.ts).** In
 the person's own full screen, a page's click on its full-screen button
 did not bring its full screen in the check, though by hand on the Mac
