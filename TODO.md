@@ -8923,6 +8923,10 @@ run). Next: what the owner's `pnpm dev` terminal printed, and whether
 the video restarts in a new tab with the address pasted and nothing
 clicked.
 
+The owner then tried MEi7WlKb4Js again in the same `pnpm dev` run: "it
+works now". The restart was not seen again, on the Mac or in any probe
+run; what made the first tab restart is not known.
+
 **2. FS10 fails on the Mac (issue #87's check, issue-75.e2e.ts).** In
 the person's own full screen, a page's click on its full-screen button
 did not bring its full screen in the check, though by hand on the Mac
