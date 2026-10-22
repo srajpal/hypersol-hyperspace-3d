@@ -20,6 +20,10 @@
 // probe's runs after keep its cookie. --empty-lists sets the profile's saved lists aside for its run and
 // puts them back after.
 // --show: the app in a normal window with the profile, and no watching, until the person quits it.
+// --no-test-mode: watched as usual, but the app out of test mode (no HYPERSOL_TEST), so in a normal window on
+// screen as a person runs it, with the filter lists refreshed as a dev run does.
+// --dev: the app as `pnpm dev` runs it (electron-vite dev, the shell from Vite's server), in place of the built
+// app; it builds the main process into out/ as a dev run does, so `pnpm build` again before a run without it.
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
@@ -32,6 +36,8 @@ const repo = resolve(here, '..', '..');
 const args = process.argv.slice(2);
 const emptyLists = args.includes('--empty-lists');
 const show = args.includes('--show');
+const noTestMode = args.includes('--no-test-mode');
+const dev = args.includes('--dev');
 const kept = args.find((a) => a.startsWith('--profile='))?.slice(10);
 const seconds = Number(args.find((a) => a.startsWith('--seconds='))?.slice(10) ?? 60);
 const url = args.find((a) => !a.startsWith('--')) ?? 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
@@ -61,12 +67,14 @@ const env = show
   ? { ...process.env, HYPERSOL_TEST: '1' }
   : {
       ...process.env,
-      HYPERSOL_TEST: '1',
-      HYPERSOL_TEST_BACKGROUND: '1',
+      ...(noTestMode ? {} : { HYPERSOL_TEST: '1', HYPERSOL_TEST_BACKGROUND: '1' }),
       HYPERSOL_PROBE_SECONDS: String(seconds),
       NODE_OPTIONS: `--import ${pathToFileURL(join(here, 'youtube-watch.mjs')).href}`,
     };
-const child = spawn(req('electron'), [appDir, `--start-url=${url}`, `--hypersol-user-data=${profile}`], { env });
+const appArgs = [`--start-url=${url}`, `--hypersol-user-data=${profile}`];
+const child = dev
+  ? spawn(process.execPath, [join(appDir, 'node_modules', 'electron-vite', 'bin', 'electron-vite.js'), 'dev', '--', ...appArgs], { env, cwd: appDir })
+  : spawn(req('electron'), [appDir, ...appArgs], { env });
 let out = '';
 child.stdout.on('data', (d) => (out += d.toString()));
 child.stderr.on('data', (d) => (out += d.toString()));
@@ -81,7 +89,7 @@ if (kept && emptyLists) {
 if (show) process.exit(0);
 const lines = out.split('\n');
 const probe = lines.filter((l) => l.startsWith('PROBE') || (!l.startsWith('PROBE') && out.indexOf('PROBE log:') >= 0 && out.indexOf(l) > out.indexOf('PROBE log:')));
-console.log(`probe${emptyLists ? ' (blocker with no rules)' : ''}:`);
+console.log(`probe${emptyLists ? ' (blocker with no rules)' : ''}${noTestMode ? ' (no test mode)' : ''}${dev ? ' (dev run)' : ''}:`);
 console.log(probe.join('\n').slice(0, 6000) || '(the app printed no probe lines)');
 const rest = lines.filter((l) => !probe.includes(l)).join('\n').trim();
 console.log('main process printed besides:\n' + (rest.slice(0, 4000) || '(nothing)'));

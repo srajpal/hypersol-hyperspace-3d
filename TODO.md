@@ -8905,6 +8905,24 @@ fails only in the owner's `pnpm dev` (on this branch, started 22:22).
 The probe's page reads now give up after 5 s and say whether the page
 is still loading, in place of holding the probe.
 
+Then closer to the owner's run, MEi7WlKb4Js with the dev profile's
+copy, 90 s each:
+
+- `--no-test-mode` (the built app out of test mode, in a normal window
+  on screen): played through, 0 s to 85.8 s, never went back.
+- `--dev --no-test-mode` (electron-vite dev as `pnpm dev` runs it, the
+  shell from Vite's server, a window on screen): played through, 0 s
+  to 85.2 s, never went back, nothing printed but the build.
+
+The blocker library runs the lists' page scripts only on a frame's
+first request (onInjectCosmeticFilters, `msg` undefined), so YouTube's
+own navigation inside the page does not run them again. What is left
+between these runs and the owner's: the owner's hands on the page, and
+the state of the running session (its other tabs, how long it has
+run). Next: what the owner's `pnpm dev` terminal printed, and whether
+the video restarts in a new tab with the address pasted and nothing
+clicked.
+
 **2. FS10 fails on the Mac (issue #87's check, issue-75.e2e.ts).** In
 the person's own full screen, a page's click on its full-screen button
 did not bring its full screen in the check, though by hand on the Mac

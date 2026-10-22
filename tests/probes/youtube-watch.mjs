@@ -5,7 +5,8 @@
 // worker threads too (the history worker): it does nothing there.
 import { isMainThread } from 'node:worker_threads';
 
-if (isMainThread) setTimeout(async () => {
+// With --dev, NODE_OPTIONS reaches electron-vite's own Node process too, where there is no Electron app.
+if (isMainThread && process.versions.electron) setTimeout(async () => {
   const { app, webContents } = await import('electron');
   const seconds = Number(process.env.HYPERSOL_PROBE_SECONDS ?? 60);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
