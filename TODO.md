@@ -8746,6 +8746,241 @@ Results:
   #54; its 885 tests passed). Words only. Step 2, the three links
   clicked by hand, is the owner's.
 
+## Issue #133: the ad blocker's page scripts (YouTube)
+
+Reported by the owner on 2026-10-21 (macOS, a dev run): YouTube did not
+work, and the terminal showed `MaxListenersExceededWarning: 11
+did-stop-loading listeners` and seven `UnhandledPromiseRejectionWarning:
+Script failed to execute`. The owner approved finding and fixing it as
+an issue ("go ahead").
+
+Found (a run of the built app on Windows with a throwaway profile, a
+YouTube video): the same warnings, and in the page's console
+"Identifier 'JSONPath' has already been declared" three times and
+YouTube's own "Constructing dom-repeat: RangeError: Maximum call stack
+size exceeded". The video played on Windows. The cause is the blocker
+library's own injection (@ghostery/adblocker-electron 2.20.1,
+onInjectCosmeticFilters), which runs each of the lists' page scripts
+with `event.sender.executeJavaScript(script, true)`:
+
+- YouTube gets thirty scripts from the starter lists; four of them
+  (trusted-json-edit-xhr-request) each declare `class JSONPath` at
+  their top level. All run in the page's one realm, so three failed to
+  run at all.
+- A web page's executeJavaScript waits until the page has loaded, with a
+  did-stop-loading listener for each script: past Node's warning at ten.
+  And so every script ran after the page's own load, too late for
+  scripts that must act before the page's code does.
+- A failure was a rejected promise the library never caught (its
+  try/catch is around a call that does not throw).
+- `true` gives each script a user gesture: the page could then act as if
+  clicked (full screen, a new window).
+
+The fix (main/privacy/cosmetics.ts): the library is given a request of
+our own in place of the page's; its scripts run in the frame that asked
+(WebFrameMain.executeJavaScript, at once), each in a block of its own,
+with no user gesture, and failures caught. Styles go in as before. With
+it, the YouTube run shows none of the warnings or errors, and the video
+plays.
+
+Checks (tests/e2e/issue-133.e2e.ts, part 1; a list made in the check
+with buildEngine and the app's own page scripts, on a local page):
+
+| Check | What | Result |
+|---|---|---|
+| BS1 | Two json-edit scripts that declare the same class each take their key out of what JSON.parse gives; twelve set-constant scripts all ran | Pass with the fix; fails on the old code (neither json-edit acted: the old scripts ran after the page's load) |
+| BS2 | No MaxListenersExceededWarning and no UnhandledPromiseRejection in the main process's output, once caughtUp | Pass; on the old code the rejection shows (the listener warning did not, on this small page; it did on YouTube) |
+| BS3 | The page has no user gesture at its load | Pass; it cannot fail on the old code, whose scripts ran after the page read it, but with scripts now before the load it would show a gesture given again; main/privacy/cosmetics.test.ts checks `false` is passed |
+
+Unit tests: main/privacy/cosmetics.test.ts (5): the ids kept, a script in
+the asking frame in a block with no gesture, a failure caught, nothing in
+a frame that has gone, styles as before, and two scripts declaring one
+class in one realm (node:vm): bare, the second fails; in blocks, both run.
+
+Results (2026-10-21, Windows 11): the new unit tests pass; BS1 to BS3
+pass; m4 (F1 to F10) 14 passed; the full `pnpm test:e2e` 484 passed and 1
+skipped (FS5), 35 files; `pnpm test` 620 passed. Not yet run: the
+owner's Mac (where YouTube "did not work"; what failed there is not
+known: the page's partial breakage is the likely reason).
+
+### On the owner's Mac (handoff, 2026-10-21)
+
+For a Claude Code session started on the owner's Mac, in this
+repository with holoml beside it. Read AGENTS.md first; the rules hold
+(one issue at a time, the owner approves, nothing merged, results
+recorded here as they ran). Two things are open.
+
+**1. YouTube restarts over and over on the Mac (issue #133, PR #137).**
+The owner ran `pnpm dev` on branch issue-133-blocker-scripts: a video
+"is just restarting over and over again". On Windows the same branch
+plays a video through (70 s and more, no restart, no warning). What is
+known:
+
+- Never judge YouTube from a Playwright-driven run (the end-to-end
+  harness, or any probe that uses it): Playwright makes
+  `navigator.webdriver` true, and YouTube then stops every video after
+  about 40 seconds with "Something went wrong. Refresh or try again
+  later.", in a bare Electron window too. A bare Electron window
+  without it plays on.
+- The probe tests/probes/youtube.mjs runs the built app as a person
+  would (no automation; youtube-watch.mjs is loaded into its main
+  process by NODE_OPTIONS=--import), off screen, with a throwaway
+  profile, and prints the video's time every 2 s, how often it went
+  back, YouTube's player state and message, the page's console errors,
+  and anything else the main process printed. It needs the network
+  (one YouTube video, approved for this issue) and `pnpm build` first.
+- #137 makes the lists' page scripts run before the page's own code
+  (before, all of them ran after the page's load, and three of
+  YouTube's four that declare `class JSONPath` failed). So YouTube's
+  rules now act, and one that no longer fits YouTube could make the
+  player start again. The other possibility is a Mac-only cause.
+
+Steps, recording each result here:
+
+1. `git fetch origin && git checkout issue-133-blocker-scripts && pnpm
+   install --frozen-lockfile && pnpm build`, then `node
+   tests/probes/youtube.mjs --seconds=90`. Expect the restart: the times
+   go back, and the counts of `loadstart` and `emptied` grow.
+2. `node tests/probes/youtube.mjs --seconds=90 --empty-lists` (the
+   blocker with no rules). If it plays through, the lists' rules cause
+   the restart; if not, the cause is elsewhere.
+3. The same two on main (`git checkout main && pnpm build`): did main
+   restart too? (The owner's first report, on review-204-fixes, which
+   has main's blocker, said only "YouTube did not work".)
+4. If the rules cause it: find the one. The scripts for a YouTube page
+   come from the starter lists (`FiltersEngine.deserialize` of
+   apps/browser/resources/filters/starter.bin, then
+   `getCosmeticsFilters` for www.youtube.com, as in this section's
+   finding; thirty scripts on 2026-10-21); a profile with a list of
+   some of them (tests/e2e/issue-133.e2e.ts, profileWith, shows how)
+   narrows it. Then propose to the owner what to do: for example,
+   leave YouTube's page scripts out, or keep a rule from the lists
+   out, with a check that needs no network.
+5. If it is the Mac alone: say so with what the probe printed, and
+   ask the owner before going further.
+
+Results on the owner's Mac (2026-10-21, the built app of
+issue-133-blocker-scripts at 5033eff, video aqz-KE-bpKQ, 90 s each):
+
+- Step 1 and 2 with a throwaway profile: both met Google's "unusual
+  traffic" check (google.com/sorry) in place of the video, so neither
+  said anything. The probe now takes `--profile=<folder>` (kept after
+  the run; `--empty-lists` sets its saved lists aside and puts them
+  back) and `--show` (a normal window, no watching). The owner passed
+  the check once by hand with `--show --profile=userData/youtube-probe`.
+- Step 1 with that profile: the video played through, 1.7 s to 89.8 s,
+  never went back, no `loadstart` or `emptied`, player state 1
+  (playing), no message, no console error, nothing else printed by the
+  main process.
+- Step 2 (`--empty-lists`) with that profile: the same, played through.
+- The same with the layers view on (the probe's profile has it off;
+  a dev run has it on): the same, played through.
+- The lists of the owner's dev profile (userData/dev, refreshed from
+  the internet that day) give www.youtube.com the same thirty page
+  scripts as the starter copy.
+
+So the probe does not reproduce the restart on the Mac. What differs
+from the owner's run: a dev run (`pnpm dev`) in a window on screen,
+and the video (likely one with ads, which this one has none of; the
+lists' YouTube scripts edit the player's ads out, and now act before
+YouTube's own code). Steps 3 to 5 wait for the owner's video.
+
+More runs the same evening, the same build and the kept profile:
+
+- dQw4w9WgXcQ (a popular video with ads), with the lists: played
+  through, 0 s to 86.2 s, never went back. With `--empty-lists`: the
+  ads played (two doubleclick requests refused in the console), and
+  the time went back twice with a `loadstart` and an `emptied` each:
+  an ad giving way to the video and the next, not a fault.
+- MEi7WlKb4Js, the video the owner sees fail in `pnpm dev`: with the
+  lists, played through, 1.7 s to 89.8 s, never went back; with
+  `--empty-lists`, an ad at the end (it went back once).
+- MEi7WlKb4Js with a copy of the owner's dev profile
+  (userData/youtube-probe-dev, its lock files removed: a copy with them
+  hands its address to the dev run that holds the profile and quits):
+  played through, 0 s to 85.7 s, never went back.
+
+So the built app plays the owner's video with the owner's profile; it
+fails only in the owner's `pnpm dev` (on this branch, started 22:22).
+The probe's page reads now give up after 5 s and say whether the page
+is still loading, in place of holding the probe.
+
+Then closer to the owner's run, MEi7WlKb4Js with the dev profile's
+copy, 90 s each:
+
+- `--no-test-mode` (the built app out of test mode, in a normal window
+  on screen): played through, 0 s to 85.8 s, never went back.
+- `--dev --no-test-mode` (electron-vite dev as `pnpm dev` runs it, the
+  shell from Vite's server, a window on screen): played through, 0 s
+  to 85.2 s, never went back, nothing printed but the build.
+
+The blocker library runs the lists' page scripts only on a frame's
+first request (onInjectCosmeticFilters, `msg` undefined), so YouTube's
+own navigation inside the page does not run them again. What is left
+between these runs and the owner's: the owner's hands on the page, and
+the state of the running session (its other tabs, how long it has
+run). Next: what the owner's `pnpm dev` terminal printed, and whether
+the video restarts in a new tab with the address pasted and nothing
+clicked.
+
+The owner then tried MEi7WlKb4Js again in the same `pnpm dev` run: "it
+works now". The restart was not seen again, on the Mac or in any probe
+run; what made the first tab restart is not known.
+
+**2. FS10 fails on the Mac (issue #87's check, issue-75.e2e.ts).** In
+the person's own full screen, a page's click on its full-screen button
+did not bring its full screen in the check, though by hand on the Mac
+(the green button, a video's full screen, Esc, the green button again)
+all four steps worked (owner, 2026-10-21). So the check is likely at
+fault, not the browser. Branch review-204-fixes has one commit past
+what #132 merged (ed72b1b): the report of a click that does not bring
+full screen now has the page's own log (a refused request and its
+reason), which document is full, and the looks at the window. Run
+`caffeinate -d pnpm test:e2e tests/e2e/issue-75.e2e.ts -t FS10
+--reporter=verbose` on that branch (allow "Electron" the microphone if
+macOS asks), read the report, and propose the fix to the check in a
+pull request of its own from main, with ed72b1b in it.
+
+### BS1 in GitHub's Windows builds (2026-10-22)
+
+PR #137's builds failed once, at BS1 in windows-latest part 1: neither
+json-edit script had acted when the page parsed its JSON at its load
+(`{ a: 0, c: 1, d: 1 }`). The library's page script asks for the page's
+styles and scripts as the page starts but does not wait for the answer,
+and the fix above ran the scripts as soon as the answer came: earlier
+than before, but a fast page (the check's small one on GitHub's slower
+machine; YouTube from the cache, too) could still run first. The owner
+chose a handoff that waits ("build the synchronous handoff").
+
+The fix: the page preload asks for the page's scripts on
+hypersol:page-scripts and waits for the answer (ipcRenderer.sendSync,
+preload/page-scripts.ts, in the top frame as the library's own page
+script), and runs each in the page with webFrame.executeJavaScript, no
+user gesture, before any of the page's own scripts: a preload runs
+before them. The main process takes the scripts from the library's own
+onInjectCosmeticFilters, asked as for a page's first request (it hands
+over every script before its first await), each in a block
+(main/privacy/cosmetics.ts, pageScripts), and always answers, with none
+on a failure or for a paused site or a page that is not a tab. The
+library's own requests then put in styles alone: its first brings the
+same scripts again, and later ones none.
+
+BS1 is stricter: the page's own first script reads what the scripts did
+as it runs, as well as at the load (tests/fixtures/scriptlets.html).
+Unit tests: main/privacy/cosmetics.test.ts (6): the ids kept, the
+library's request runs no script, styles as before, a page's scripts in
+blocks from a real engine (buildEngine with the app's page scripts) and
+none for another site, no styles from pageScripts, and the realm test.
+
+Results (2026-10-22, the owner's Mac): lint and types clean; `pnpm test`
+619 passed and 2 skipped; issue-133.e2e.ts passed four times (three
+before BS1 was made stricter, once after). On this
+Mac the old code passed the stricter BS1 too (the answer came before the
+page's first script), so an experiment, not committed: with the main
+process's answer held 300 ms, the old code failed BS1 "at the start"
+(`{ a: 0, c: 1, d: 1 }`, as in GitHub's build), and the new code passed
+twice (the page waited for its scripts).
+
 ## The review of 2026-10-21 (prompt 204)
 
 Asked in prompt 204: a finding of 2026-10-07 handed back (the content

@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { app, ipcMain, net, webContents, type IpcMainInvokeEvent, type Session, type WebContents } from 'electron';
+import { app, ipcMain, net, webContents, type IpcMainEvent, type IpcMainInvokeEvent, type Session, type WebContents } from 'electron';
 import { ElectronBlocker, Request, type RequestType } from '@ghostery/adblocker-electron';
 import { SHELL_COMMAND_CHANNEL, type ShellCommand } from '../../shared/commands';
 import {
@@ -14,10 +14,12 @@ import { readLimited } from '../favicon';
 import type { StorageService } from '../storage/service';
 import { readTextIfExists, writeFileAtomic } from '../storage/files';
 import { DnsControl, QUAD9 } from './dns';
+import { cosmeticsRequest, pageScripts } from './cosmetics';
 import { FilterService, type ListManifest } from './filters';
 import { verifyStarter, type StarterInfo } from './filters-build';
 import { OwnRequests } from './own-requests';
 import { hostOf } from '../../shared/site';
+import { PAGE_SCRIPTS_CHANNEL } from '../../shared/page-scripts';
 import { HttpsOnly } from './https-only';
 import { SiteData } from '../site-data';
 import { Shield, type Matcher } from './shield';
@@ -313,7 +315,19 @@ export class Privacy {
     ipcMain.handle(COSMETICS_CHANNEL, (event, _url: unknown, msg: unknown) => {
       const page = this.cosmeticsPage(event);
       if (page === null) return undefined;
-      return this.filters.engine.onInjectCosmeticFilters(event, page, msg as Parameters<ElectronBlocker['onInjectCosmeticFilters']>[2]);
+      // The library's own injection, styles alone: the page preload has run the scripts (cosmetics.ts, issue #133).
+      return this.filters.engine.onInjectCosmeticFilters(cosmeticsRequest(event), page, msg as Parameters<ElectronBlocker['onInjectCosmeticFilters']>[2]);
+    });
+    // The page preload waits for this answer, so one is always given.
+    ipcMain.on(PAGE_SCRIPTS_CHANNEL, (event) => {
+      let scripts: string[] = [];
+      try {
+        const page = this.cosmeticsPage(event);
+        if (page !== null) scripts = pageScripts(this.filters.engine, event, page);
+      } catch {
+        // No scripts for this page, rather than a page that waits.
+      }
+      event.returnValue = scripts;
     });
     ipcMain.handle(MUTATION_OBSERVER_CHANNEL, (event) =>
       this.cosmeticsPage(event) === null ? false : this.filters.engine.config.enableMutationObserver,
@@ -511,7 +525,7 @@ export class Privacy {
   }
 
   /** The page asking for element hiding, if it is a tab and not paused; else null. */
-  private cosmeticsPage(event: IpcMainInvokeEvent): string | null {
+  private cosmeticsPage(event: IpcMainEvent | IpcMainInvokeEvent): string | null {
     if (!this.tabs.has(event.sender.id)) return null;
     const page = event.senderFrame?.url ?? event.sender.getURL();
     return this.isPausedFor(event.sender.id, hostOf(page)) ? null : page;
