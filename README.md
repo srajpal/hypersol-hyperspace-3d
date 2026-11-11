@@ -1,11 +1,5 @@
 # HyperSol HyperSpace 3D
 
-HyperSpace 3D is an open-source desktop web browser whose interface lives in three
-dimensions. It is experimental: a developer preview, not yet for
-everyday browsing. Ordinary websites float as panels in a 3D room, page sections
-lift into layered depth, and a companion markup language, HoloML, lets
-anyone publish a fully 3D website as easily as writing HTML.
-
 <table>
   <tr>
     <td width="50%"><img src="docs/screenshots/readme.png" alt="HyperSpace 3D showing HoloML's Harbour Loft: a loft's living room by day, boats in the harbour through tall steel windows, a floor plan in the corner, and four tabs as cards on the left"></td>
@@ -36,9 +30,21 @@ a made-up sample page.*
 [one-minute tour](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.1/hyperspace-3d-0.9.1.webm)
 (WebM, 27 MB: the room and its tabs, Harbour Loft's doors and lamps,
 pictures and a shoe lifted off a page, and looking around the room)
-is attached to the 0.9.1 release; both are made by `pnpm
-screenshots:video` from the local copies, no network
+was recorded with 0.9.1 and is attached to that release; both are made
+by `pnpm screenshots:video` from the local copies, no network
 ([docs/video](docs/video/README.md)).*
+
+HyperSpace 3D is an open-source desktop web browser whose interface
+lives in three dimensions. Ordinary websites float as panels in a 3D
+room, page sections lift into layered depth, and a companion markup
+language, HoloML, lets anyone publish a fully 3D website as easily as
+writing HTML. It is experimental: a developer preview, not yet for
+everyday browsing.
+
+To try a HoloML site without the browser, open one in Chrome, Firefox,
+or Safari from the
+[landing page](https://srajpal.github.io/hypersol-hyperspace-3d/); the
+seven examples are listed under [HoloML](#holoml) below.
 
 ## Download
 
@@ -55,43 +61,17 @@ the [releases page](https://github.com/srajpal/hypersol-hyperspace-3d/releases).
 | macOS, Intel | [HyperSpace3D-0.9.2-macos-x64.zip](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.2/HyperSpace3D-0.9.2-macos-x64.zip) | 134 MB | [![Build provenance attestation for the macOS Intel zip](docs/branding/attested.svg)](https://github.com/srajpal/hypersol-hyperspace-3d/attestations/58027276) |
 | Linux, x64 | [HyperSpace3D-0.9.2-linux-x64.zip](https://github.com/srajpal/hypersol-hyperspace-3d/releases/download/v0.9.2/HyperSpace3D-0.9.2-linux-x64.zip) | 123 MB | [![Build provenance attestation for the Linux zip](docs/branding/attested.svg)](https://github.com/srajpal/hypersol-hyperspace-3d/attestations/58027210) |
 
-Starting it the first time (nothing is signed, so each system asks
-once):
+Nothing is signed, so each system asks once, the first time: on
+Windows, SmartScreen (*More info*, then *Run anyway*); on macOS,
+Gatekeeper (*Open Anyway* in System Settings, Privacy & Security); on
+Ubuntu 24.04 and some other Linux systems, the `chrome-sandbox` helper
+needs its rights first. The steps for each system, and how to check a
+download (its SHA-256, and the build provenance attestation that each
+*attested* badge opens: a signed statement of which workflow built the
+zip, and from which tag), are in
+[docs/verifying-downloads.md](docs/verifying-downloads.md).
 
-- **Windows:** start `HyperSpace3D.exe` in the unzipped folder.
-  SmartScreen says the app is unrecognised: choose *More info*, then
-  *Run anyway*.
-- **macOS:** keep `HyperSpace 3D.app` where it is or drag it to
-  Applications. Gatekeeper refuses to open it: go to System Settings,
-  Privacy & Security, and choose *Open Anyway* under the message about
-  it; or clear the mark in Terminal with
-  `xattr -dr com.apple.quarantine "HyperSpace 3D.app"`.
-- **Linux:** start `./HyperSpace3D` in the unzipped folder. On Ubuntu
-  24.04 and other systems that restrict user namespaces, it stops at
-  once with a message about `chrome-sandbox`: give that helper its
-  rights first, in the unzipped folder, with
-  `sudo chown root:root chrome-sandbox && sudo chmod 4755 chrome-sandbox`.
-
-Beside each zip on the releases page is its SHA-256 in a `.sha256`
-file: check a download with `certutil -hashfile <the zip> SHA256` on
-Windows, `shasum -a 256 <the zip>` on macOS, or `sha256sum -c <the
-.sha256 file>` on Linux. From 0.9.2 on, each zip also has a build
-provenance attestation, a statement signed through GitHub that it was
-built by this repository's release workflow from the release's tag;
-each zip's *attested* badge above opens its own, which names the
-zip's SHA-256, the workflow, the tag, and the commit. Check the
-Windows zip with [GitHub's CLI](https://cli.github.com/), naming the
-workflow and the tag so that nothing else of the repository passes:
-
-```bash
-gh attestation verify HyperSpace3D-0.9.2-windows-x64.zip -R srajpal/hypersol-hyperspace-3d --signer-workflow srajpal/hypersol-hyperspace-3d/.github/workflows/release.yml --source-ref refs/tags/v0.9.2
-```
-
-or see them all on the repository's
-[attestations page](https://github.com/srajpal/hypersol-hyperspace-3d/attestations).
-It shows where a zip came from, not that it is safe or free of faults,
-and it is not code signing, so Windows and macOS still ask once (issue
-#127). The browser keeps its data in your system's
+The browser keeps its data in your system's
 usual profile folder and sends nothing anywhere
 ([docs/privacy.md](docs/privacy.md)). It is a developer preview, not
 yet for everyday browsing: the status paragraph below says where it
@@ -121,6 +101,228 @@ milestone by milestone with screenshots, and
 are planned: the work continues from the
 [GitHub issues](https://github.com/srajpal/hypersol-hyperspace-3d/issues)
 (owner, 2026-10-10); see [What comes next](#what-comes-next).
+
+## What it does
+
+- Any normal website, live on a tilted page in a 3D room, with tabs as
+  cards (or a list in the top bar), an address bar that completes and
+  searches, bookmarks, history, and a Library.
+- A layers view that lifts a page's sections and pictures to different
+  depths.
+- Full screen for video players and games, with the browser's own
+  notice and Escape to leave.
+- Looking around the room: drag on the room, use the
+  arrows and W, A, S, D, or press the top bar's button (Ctrl+Shift+K) to
+  leave the desk; Escape brings you back, with the page as sharp as
+  before.
+- Lifting into the room: right-click a picture, a video,
+  or a 3D model on a page and choose "Lift into the room", or lift
+  everything in view with the top bar's Lift button (Ctrl+Shift+U). They
+  stand beside the page; turn one, bring it nearer, or put it back. A
+  picture is taken as the page shows it; a model is fetched only from
+  the page's own site, and read where it cannot reach the network.
+- Privacy on by default: ad and tracker blocking with a shield, encrypted
+  DNS, private tabs, and no telemetry. Pages load over HTTPS only,
+  with a warning before any site is used over plain HTTP.
+- Your data in your hands: one site's cookies and stored
+  data seen and cleared in the Library's Sites tab, and bookmarks
+  imported from another browser's bookmark file, after a preview, and
+  exported to one.
+- A password manager using the system's keychain, site permissions
+  for the camera, microphone, and location, and a prompt for sites and
+  proxies that ask for a user name and password in the browser's own
+  dialog (HTTP sign-in; what you type goes to Chromium's handling of the
+  request only, and is never saved).
+- Two themes, Nebula (a synthwave night) and Daylight (a pastel 1990s
+  day), an instrument panel with live readouts, zoom, find in page,
+  downloads, printing, remappable shortcuts, and an economy mode with
+  sleeping tabs.
+- HoloML pages: fully 3D sites you orbit or walk around,
+  with limits that keep a heavy scene from exhausting memory, Tab and
+  screen-reader access to a scene's links and named things, a text view,
+  reduced motion, and a Scene part in the instrument panel.
+- Seven HoloML example sites to try, from a new tab's Try HoloML or
+  the HoloML examples section (Ctrl+Shift+E): a car showroom,
+  Blockworld (a small block game), the sofa studio, Harbour Loft, the
+  sneaker store, the ocean tunnel, and Words in a room ([HoloML](#holoml)
+  below links to each).
+- What a HoloML 0.2 or 0.3 page can do, each shown by one of those
+  sites: scripts from the page's own site, sound after the first click
+  or key, text on the screen and on boards in the scene, walls and
+  gravity, its own walking and turning speeds, sliders and choices on
+  the screen, shadows, textured materials, and light from a panorama,
+  doors and lamps that work with a click, places to go to, a fade
+  between a site's pages, a sky, a floor plan, groups of models that
+  load only while you are near, water, sounds that come from a place,
+  names for models that screen readers say, text in any language and
+  direction, a lighter model for far away, compressed models, and a
+  page's description in its tab's tooltip.
+- Mouse and keyboard throughout; touch for scenes.
+
+Known limitations: Electron ships no DRM module, so video from Netflix
+and similar services will not play. The 3D room needs WebGL 2; where
+Chromium cannot start it (no graphics driver, some virtual machines),
+pages still work without the room, and a notice says so.
+
+## HoloML
+
+HoloML is the 3D markup language developed alongside the browser, in its
+own repository so it stays independent and reusable:
+[github.com/srajpal/holoml](https://github.com/srajpal/holoml).
+Versions 0.1, 0.2, and 0.3 are written down there (SPEC.md), with a
+parser, a checker, and sample pages. The version to write today is
+0.3, released as
+[v0.3.1](https://github.com/srajpal/holoml/releases/tag/v0.3.1); its
+[releases](https://github.com/srajpal/holoml/releases) hold 0.2 as
+well (v0.2.0 to v0.2.2). Each is a pre-release, as HoloML is
+experimental: one renderer so far, and until 1.0 a later version may
+change what an earlier one has.
+Its documentation, the specification with tutorials, how-to guides,
+reference pages, and explanation, is published at
+https://srajpal.github.io/holoml/, and the HoloML
+examples section links to the specification there. The site's
+[playground](https://srajpal.github.io/holoml/playground/) has a
+page's text beside its scene, checked as you type, drawn by this
+browser's viewer. The holoml repository also has HoloML for VS Code,
+an extension: syntax colours, mistakes as you type, suggestions, and
+help on hover.
+HoloML files use the extension `.holoml`. This browser
+shows HoloML pages: open a `.holoml` address, or a file
+with Ctrl+O, and walk or orbit around the scene. A page's size, models,
+pictures, and triangles have limits; what crosses one is
+left out and marked, and a notice says why.
+
+To try one, open a new tab and choose one under Try HoloML, or open the
+HoloML examples (the menu, or Ctrl+Shift+E). Each is written in HoloML
+0.3 now, whatever version first showed it, and comes from the holoml
+repository, which publishes it with GitHub Pages; the browser asks
+nothing of those sites until you choose one:
+
+- [The showroom](https://srajpal.github.io/holoml/showroom/): five
+  cars in a hall, each to walk around in three colours.
+- [Blockworld](https://srajpal.github.io/holoml/blockworld/): a small
+  block game; break and place blocks, and find five gems.
+- [The sofa studio](https://srajpal.github.io/holoml/sofa-studio/): a
+  shop page with shadows, textured fabrics, and choices that change
+  the sofa in place.
+- [Harbour Loft](https://srajpal.github.io/holoml/harbour-loft/): a
+  flat by the harbour to tour, with doors, lamps, and a roof terrace.
+- [The sneaker store](https://srajpal.github.io/holoml/sneaker-store/):
+  one shoe in ten colourways to walk among and turn over.
+- [The ocean tunnel](https://srajpal.github.io/holoml/aquarium/): an
+  aquarium to walk through, with 30 fish.
+- [Words in a room](https://srajpal.github.io/holoml/words/): signs in
+  three languages, two of them right to left.
+
+**In any browser.** The viewer is also published on a plain web page,
+https://srajpal.github.io/hypersol-hyperspace-3d/viewer/, so a HoloML
+page opens in Chrome, Firefox, or Safari by link: `viewer/?page=`
+followed by the page's https address (the HoloML examples link to it).
+It is the same viewer, with the browser's content policy on the page:
+a page's scripts run only when the page is on that site itself, so the
+examples work in full and a page of another site shows without its
+scripts. Without WebGL 2 it says the page cannot be drawn. The site's
+home page, https://srajpal.github.io/hypersol-hyperspace-3d/, is the
+browser's landing page: the
+four screenshots, the story, the seven examples opening in the viewer,
+the downloads for each system, and the licence, with no script, no
+analytics, and nothing fetched from elsewhere.
+
+## Building and running
+
+The portable zip of 0.9.2 is under [Download](#download) above; this
+section is running from source. The Android app, for a tablet, has
+its own steps in [apps/android/README.md](apps/android/README.md).
+
+You need Node 24 or newer and pnpm 12.4.1. The pnpm version is pinned
+in package.json (`packageManager`), so pnpm, or `corepack enable`, uses
+that exact version. Install with the lockfile as it is:
+
+```
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+The first run downloads the Electron binary (about 100 MB, from
+Electron's GitHub releases) and checks it against the checksums shipped
+in the electron package. The end-to-end tests also need `openssl` on
+PATH, which Git for Windows provides.
+
+`pnpm dev` opens the app on a start tab, at the size and place the
+window was last left (or 1280 by 800 the first time). Type an address or a search in
+the top bar, or click a card on the left to switch tabs. The main keys
+(all listed, and changeable, in Settings > Shortcuts; the text view's
+keys act only with a HoloML page in front):
+
+- Ctrl+T, Ctrl+W, Ctrl+Tab: open, close, and move between tabs;
+  Ctrl+Shift+N opens a private tab.
+- Ctrl+D bookmarks the page; Ctrl+Shift+O opens the Library; Ctrl+,
+  opens Settings.
+- Ctrl+Shift+L switches the layers view; Ctrl+Shift+I the instrument
+  panel.
+- Ctrl+plus and minus zoom; Ctrl+F finds; Ctrl+J shows downloads; Ctrl+P
+  prints.
+- Esc closes what is open (a menu, a panel, the address bar's list).
+  With nothing open for it to close, Esc in the top bar stops a page
+  that is still loading.
+- Ctrl+O opens a HoloML file from the computer (or drop one on the
+  window); a `.holoml` address shows as a 3D scene across the window.
+  In a scene, Tab moves through its places ("Go to"), links, and named
+  things, Enter or Space works a door or a lamp that a click would, Esc
+  stops models still loading, and Ctrl+Shift+V switches the text view.
+  Walking in a scene: W, A, S, D or the up and down arrows move, the
+  left and right arrows turn, Page Up and Page Down look up and down,
+  Shift runs, and Space jumps where the page allows; the page chooses
+  how fast. A slider on a scene's screen takes the arrow keys, Home, and
+  End while it has the keyboard, and a choice's options the arrow keys
+  (Tab reaches both).
+  Ctrl+Shift+E shows the HoloML examples.
+
+What the browser stores and sends is listed in
+[docs/privacy.md](docs/privacy.md). Development runs use a throwaway
+profile in the `userData/` folder, never your normal browser data.
+
+Tests: `pnpm test` (unit), `pnpm lint`, `pnpm typecheck`, and
+`pnpm test:e2e` (builds the app and drives it for about twenty-five to
+thirty minutes; needs openssl on PATH, which Git for Windows provides).
+Its windows stay
+off screen and never take focus, so you can keep working; set
+`HYPERSOL_TEST_SHOW=1` to watch instead. With Docker, `pnpm test:linux`
+runs them all on Linux, as GitHub's Linux machines do. Current results
+are in TODO.md.
+
+Where it is checked: on Windows 11 here, and on
+Windows and Linux (Ubuntu) by GitHub Actions for every pull request
+and every push to main; on macOS the same builds run lint, the type
+check, the unit tests, and the build (required), and the end-to-end
+checks as an experiment that does not block a merge (on main and
+when started by hand, not on pull requests), since GitHub's
+macOS machine (a small display, windows kept on screen) fails checks
+written against Windows and Linux (TODO.md, "Issue #94"). A Mac in
+hand (an iMac Pro, 2026-10-15) passes the unit tests, and the
+end-to-end checks but a few, settled one by one under "Issue #111"
+there. [CONTRIBUTING.md](CONTRIBUTING.md) has the full setup,
+including Linux and a Mac's own notes (Node 24 from nvm rather than
+Homebrew, the microphone dialog on the first run, and the display
+kept awake with `caffeinate` for a test run).
+
+The repository's site, the landing page at its root and the HoloML
+viewer for ordinary browsers under `viewer/`, is built by `pnpm
+site:build`: it builds the app, then site/build.mjs writes both into
+`_site/` (the landing page's download links take the version from
+apps/browser/package.json). A workflow publishes the site after the
+checks pass.
+
+## Technology
+
+In use now: Electron 44 (the current supported stable line), TypeScript,
+Three.js (with its glTF loader and the decoders of compressed models, for HoloML pages), Lit, SQLite through
+Node's built-in node:sqlite, and Ghostery's open-source ad-blocking
+engine with open filter lists; Vite and electron-vite to build; Vitest
+and Playwright to test. On Android: Kotlin,
+Android's own WebView, and Gradle with the Android Gradle Plugin; JUnit
+to test.
+Reasons for each choice are in ARCHITECTURE.md.
 
 ## The story
 
@@ -183,63 +385,6 @@ project that honours it, not a commercial product.
 An archived copy of the 2001 site is available through the
 [Wayback Machine](https://web.archive.org/web/20010922111629/http://www.hypersol.com/).
 
-## What it does
-
-- Any normal website, live on a tilted page in a 3D room, with tabs as
-  cards (or a list in the top bar), an address bar that completes and
-  searches, bookmarks, history, and a Library.
-- A layers view that lifts a page's sections and pictures to different
-  depths.
-- Full screen for video players and games, with the browser's own
-  notice and Escape to leave.
-- Looking around the room: drag on the room, use the
-  arrows and W, A, S, D, or press the top bar's button (Ctrl+Shift+K) to
-  leave the desk; Escape brings you back, with the page as sharp as
-  before.
-- Lifting into the room: right-click a picture, a video,
-  or a 3D model on a page and choose "Lift into the room", or lift
-  everything in view with the top bar's Lift button (Ctrl+Shift+U). They
-  stand beside the page; turn one, bring it nearer, or put it back. A
-  picture is taken as the page shows it; a model is fetched only from
-  the page's own site, and read where it cannot reach the network.
-- Privacy on by default: ad and tracker blocking with a shield, encrypted
-  DNS, private tabs, and no telemetry. Pages load over HTTPS only,
-  with a warning before any site is used over plain HTTP.
-- Your data in your hands: one site's cookies and stored
-  data seen and cleared in the Library's Sites tab, and bookmarks
-  imported from another browser's bookmark file, after a preview, and
-  exported to one.
-- A password manager using the system's keychain, site permissions
-  for the camera, microphone, and location, and a prompt for sites and
-  proxies that ask for a user name and password in the browser's own
-  dialog (HTTP sign-in; what you type goes to Chromium's handling of the
-  request only, and is never saved).
-- Two themes, Nebula (a synthwave night) and Daylight (a pastel 1990s
-  day), an instrument panel with live readouts, zoom, find in page,
-  downloads, printing, remappable shortcuts, and an economy mode with
-  sleeping tabs.
-- HoloML pages: fully 3D sites you orbit or walk around,
-  with limits that keep a heavy scene from exhausting memory, Tab and
-  screen-reader access to a scene's links and named things, a text view,
-  reduced motion, and a Scene part in the instrument panel.
-- Seven HoloML example sites to try, from a new tab's Try HoloML or
-  the HoloML examples section (Ctrl+Shift+E): a car showroom,
-  Blockworld (a small block game), the sofa studio, Harbour Loft, the
-  sneaker store, the ocean tunnel, and Words in a room ([HoloML](#holoml)
-  below links to each).
-- What a HoloML 0.2 or 0.3 page can do, each shown by one of those
-  sites: scripts from the page's own site, sound after the first click
-  or key, text on the screen and on boards in the scene, walls and
-  gravity, its own walking and turning speeds, sliders and choices on
-  the screen, shadows, textured materials, and light from a panorama,
-  doors and lamps that work with a click, places to go to, a fade
-  between a site's pages, a sky, a floor plan, groups of models that
-  load only while you are near, water, sounds that come from a place,
-  names for models that screen readers say, text in any language and
-  direction, a lighter model for far away, compressed models, and a
-  page's description in its tab's tooltip.
-- Mouse and keyboard throughout; touch for scenes.
-
 ## Built with the Buildwright approach
 
 Sunny Rajpal developed this project through agentic coding: directing AI
@@ -291,12 +436,22 @@ by AI coding agents directed by prompts. To follow it:
   GitHub's scanner fixed, and acceptance.
 - [AGENTS.md](AGENTS.md) holds the rules the agents worked under.
 
+## Progress
+
+Twenty-eight milestones are done and accepted. Milestones 1 to 12
+built the browser and released it as the 0.9.0 developer preview; 13
+to 25 added HoloML, its example sites, its documentation, its
+extension for VS Code, and HyperSpace 3D for Android, for a tablet; 26
+to 28 added the privacy and data tools, looking around the room, and
+lifting into the room. See [docs/progress.md](docs/progress.md) for
+each milestone with screenshots, and [TODO.md](TODO.md) for the
+roadmap.
+
 ## What comes next
 
 No more milestones are planned: since 2026-10-10 the work is the
 [GitHub issues](https://github.com/srajpal/hypersol-hyperspace-3d/issues),
-bugs and enhancements, one at a time (installers were dropped on
-2026-10-08: anyone may fork the repository and make one). The issues
+bugs and enhancements, one at a time. The issues
 being worked first, since 2026-10-14, make the project easier to try
 and to find (the plan is in [TODO.md](TODO.md), "The promotion
 plan"): done so far, a HoloML viewer for ordinary browsers, macOS in
@@ -308,111 +463,6 @@ HoloML site; still to come, the long-form article, the launch posts, a
 case study, HoloML's packages on npm and its extension in the editors'
 registries, and a regular cadence of posts. Ideas for later: phones, and VR. The roadmap that was,
 milestones 1 to 28, is in [TODO.md](TODO.md).
-
-## Progress
-
-Twenty-eight milestones are done and accepted: 1 to 28.
-Milestones 1 to 11 built the browser: a live page on a tilted panel in
-the 3D room, tabs as cards, bookmarks and history, ad and tracker
-blocking with encrypted DNS, the layers view, two themes, an instrument
-panel, the everyday tools (zoom, find, downloads, printing, private
-tabs), passwords and site permissions, tab tools with an economy mode,
-address bar completion, view settings, and remappable shortcuts.
-Milestone 12 released it as the 0.9.0 developer preview, with automatic
-tests on Windows and Linux. Milestone 13 wrote HoloML 0.1 down in its
-own repository, and milestone 14 shows HoloML pages in the browser.
-Milestone 15 hardens them: limits for
-heavy scenes, keyboard and screen-reader access, a text view, and a
-scene inspector. Milestone 16 adds a HoloML car showroom, published with GitHub Pages and linked from the
-start panel. Milestone 17 adds Blockworld, a small block game in HoloML
-0.2, and the HoloML examples section. Milestone 18 adds walking speeds,
-sliders, and the sofa studio, a shop page with shadows, textured
-fabrics, and choices that change the sofa in place. Milestone 19 adds
-Harbour Loft, a flat to tour, with panels of text, doors and lamps to
-click, places, a sky, and a floor plan. Milestone 20 adds loading by
-area and the sneaker store. Milestone 21 adds water, sounds from a
-place, and the ocean tunnel, an aquarium, and completes HoloML 0.2.
-Milestone 22 documents HoloML, with its specification, guides, and site.
-Milestone 23 adds HoloML for VS Code, an extension in the holoml
-repository: syntax colours, mistakes as you type, suggestions, and
-help on hover. Milestone 24 adds HyperSpace 3D for Android, for a
-tablet: the room, tabs, live pages, and HoloML pages by touch.
-Milestone 25 adds HoloML 0.3: names, languages, and far and
-compressed models. Milestone 26 adds privacy and data tools:
-HTTPS-only browsing, clearing one site's data, and bookmark files.
-Milestone 27 adds looking around the room, and back to the desk.
-Milestone 28 lifts pictures and 3D models from pages into the room.
-GitHub issue #75 (2026-10-10) adds full screen and pointer lock for
-pages, with the browser's own notice.
-See [docs/progress.md](docs/progress.md) for each milestone with
-screenshots, and [TODO.md](TODO.md) for the roadmap.
-
-## HoloML
-
-HoloML is the 3D markup language developed alongside the browser, in its
-own repository so it stays independent and reusable:
-[github.com/srajpal/holoml](https://github.com/srajpal/holoml).
-Versions 0.1, 0.2, and 0.3 are written down there (SPEC.md), with a
-parser, a checker, and sample pages. The version to write today is
-0.3, released as
-[v0.3.1](https://github.com/srajpal/holoml/releases/tag/v0.3.1); its
-[releases](https://github.com/srajpal/holoml/releases) hold 0.2 as
-well (v0.2.0 to v0.2.2). Each is a pre-release, as HoloML is
-experimental: one renderer so far, and until 1.0 a later version may
-change what an earlier one has.
-Its documentation, the specification with tutorials, how-to guides,
-reference pages, and explanation, is published at
-https://srajpal.github.io/holoml/ (milestone 22), and the HoloML
-examples section links to the specification there. The site's
-[playground](https://srajpal.github.io/holoml/playground/) has a
-page's text beside its scene, checked as you type, drawn by this
-browser's viewer (holoml #58).
-HoloML files use the extension `.holoml`. This browser
-shows HoloML pages (milestone 14): open a `.holoml` address, or a file
-with Ctrl+O, and walk or orbit around the scene. A page's size, models,
-pictures, and triangles have limits (milestone 15); what crosses one is
-left out and marked, and a notice says why.
-
-To try one, open a new tab and choose one under Try HoloML, or open the
-HoloML examples (the menu, or Ctrl+Shift+E). Each is written in HoloML
-0.3 now, whatever version first showed it, and comes from the holoml
-repository, which publishes it with GitHub Pages; the browser asks
-nothing of those sites until you choose one:
-
-- [The showroom](https://srajpal.github.io/holoml/showroom/): five
-  cars in a hall, each to walk around in three colours.
-- [Blockworld](https://srajpal.github.io/holoml/blockworld/): a small
-  block game; break and place blocks, and find five gems.
-- [The sofa studio](https://srajpal.github.io/holoml/sofa-studio/): a
-  shop page with shadows, textured fabrics, and choices that change
-  the sofa in place.
-- [Harbour Loft](https://srajpal.github.io/holoml/harbour-loft/): a
-  flat by the harbour to tour, with doors, lamps, and a roof terrace.
-- [The sneaker store](https://srajpal.github.io/holoml/sneaker-store/):
-  one shoe in ten colourways to walk among and turn over.
-- [The ocean tunnel](https://srajpal.github.io/holoml/aquarium/): an
-  aquarium to walk through, with 30 fish.
-- [Words in a room](https://srajpal.github.io/holoml/words/): signs in
-  three languages, two of them right to left.
-
-**In any browser.** The viewer is also published on a plain web page,
-https://srajpal.github.io/hypersol-hyperspace-3d/viewer/, so a HoloML
-page opens in Chrome, Firefox, or Safari by link: `viewer/?page=`
-followed by the page's https address (the HoloML examples link to it).
-It is the same viewer, with the browser's content policy on the page:
-a page's scripts run only when the page is on that site itself, so the
-examples work in full and a page of another site shows without its
-scripts. Without WebGL 2 it says the page cannot be drawn. The site's
-home page, https://srajpal.github.io/hypersol-hyperspace-3d/, is the
-browser's landing page (issue #96, the promotion plan's step 9): the
-four screenshots, the story, the seven examples opening in the viewer,
-the downloads for each system, and the licence, with no script, no
-analytics, and nothing fetched from elsewhere. The site is built
-from this repository by `pnpm site:build` (site/build.mjs; the
-landing page's download links take the version from
-apps/browser/package.json) and
-published by a workflow after the checks pass (GitHub issue #91, the
-promotion plan's step 4).
 
 ## Project documents
 
@@ -430,103 +480,8 @@ promotion plan's step 4).
 | [THIRD-PARTY.md](THIRD-PARTY.md) | The licences of the parts from other projects |
 | [docs/progress.md](docs/progress.md) | Each milestone, with screenshots |
 | [docs/privacy.md](docs/privacy.md) | Everything the browser stores and sends |
+| [docs/verifying-downloads.md](docs/verifying-downloads.md) | Starting a downloaded zip the first time, and checking it |
 | [docs/name-checks.md](docs/name-checks.md) | Trademark and file extension checks |
-
-## Technology
-
-In use now: Electron 44 (the current supported stable line), TypeScript,
-Three.js (with its glTF loader and the decoders of compressed models, for HoloML pages), Lit, SQLite through
-Node's built-in node:sqlite, and Ghostery's open-source ad-blocking
-engine with open filter lists; Vite and electron-vite to build; Vitest
-and Playwright to test. On Android (milestone 24): Kotlin,
-Android's own WebView, and Gradle with the Android Gradle Plugin; JUnit
-to test.
-Reasons for each choice are in ARCHITECTURE.md.
-
-Known limitations: Electron ships no DRM module, so video from Netflix
-and similar services will not play. The 3D room needs WebGL 2; where
-Chromium cannot start it (no graphics driver, some virtual machines),
-pages still work without the room, and a notice says so.
-
-## Building and running
-
-The Android app, for a tablet (milestone 24), has its own
-steps in [apps/android/README.md](apps/android/README.md).
-
-The portable zip of 0.9.2 is under [Download](#download) above; this
-section is running from source. Checked on Windows 11 here, and on
-Windows and Linux (Ubuntu) by GitHub Actions for every pull request
-and every push to main; on macOS the same builds run lint, the type
-check, the unit tests, and the build (required), and the end-to-end
-checks as an experiment that does not block a merge (on main and
-when started by hand, not on pull requests), since GitHub's
-macOS machine (a small display, windows kept on screen) fails checks
-written against Windows and Linux (TODO.md, "Issue #94"). A Mac in
-hand (an iMac Pro, 2026-10-15) passes the unit tests, and the
-end-to-end checks but a few, settled one by one under "Issue #111"
-there. [CONTRIBUTING.md](CONTRIBUTING.md) has the full setup,
-including Linux and a Mac's own notes (Node 24 from nvm rather than
-Homebrew, the microphone dialog on the first run, and the display
-kept awake with `caffeinate` for a test run).
-
-You need Node 24 or newer and pnpm 12.4.1. The pnpm version is pinned
-in package.json (`packageManager`), so pnpm, or `corepack enable`, uses
-that exact version. Install with the lockfile as it is:
-
-```
-pnpm install --frozen-lockfile
-pnpm dev
-```
-
-The first run downloads the Electron binary (about 100 MB, from
-Electron's GitHub releases) and checks it against the checksums shipped
-in the electron package. The end-to-end tests also need `openssl` on
-PATH, which Git for Windows provides.
-
-`pnpm dev` opens the app on a start tab, at the size and place the
-window was last left (or 1280 by 800 the first time). Type an address or a search in
-the top bar, or click a card on the left to switch tabs. The main keys
-(all listed, and changeable, in Settings > Shortcuts; the text view's
-keys act only with a HoloML page in front):
-
-- Ctrl+T, Ctrl+W, Ctrl+Tab: open, close, and move between tabs;
-  Ctrl+Shift+N opens a private tab.
-- Ctrl+D bookmarks the page; Ctrl+Shift+O opens the Library; Ctrl+,
-  opens Settings.
-- Ctrl+Shift+L switches the layers view; Ctrl+Shift+I the instrument
-  panel.
-- Ctrl+plus and minus zoom; Ctrl+F finds; Ctrl+J shows downloads; Ctrl+P
-  prints.
-- Esc closes what is open (a menu, a panel, the address bar's list).
-  With nothing open for it to close, Esc in the top bar stops a page
-  that is still loading.
-- Ctrl+O opens a HoloML file from the computer (or drop one on the
-  window); a `.holoml` address shows as a 3D scene across the window.
-  In a scene, Tab moves through its places ("Go to"), links, and named
-  things, Enter or Space works a door or a lamp that a click would, Esc
-  stops models still loading, and Ctrl+Shift+V switches the text view.
-  Walking in a scene: W, A, S, D or the up and down arrows move, the
-  left and right arrows turn, Page Up and Page Down look up and down,
-  Shift runs, and Space jumps where the page allows; the page chooses
-  how fast. A slider on a scene's screen takes the arrow keys, Home, and
-  End while it has the keyboard, and a choice's options the arrow keys
-  (Tab reaches both).
-  Ctrl+Shift+E shows the HoloML examples.
-
-What the browser stores and sends is listed in
-[docs/privacy.md](docs/privacy.md). Development runs use a throwaway
-profile in the `userData/` folder, never your normal browser data.
-
-Tests: `pnpm test` (unit), `pnpm lint`, `pnpm typecheck`, and
-`pnpm test:e2e` (builds the app and drives it for about twenty-five to
-thirty minutes; needs openssl on PATH, which Git for Windows provides).
-Its windows stay
-off screen and never take focus, so you can keep working; set
-`HYPERSOL_TEST_SHOW=1` to watch instead. With Docker, `pnpm test:linux`
-runs them all on Linux, as GitHub's Linux machines do. Current results
-are in TODO.md. `pnpm site:build` builds the app and then the
-repository's site (the HoloML viewer for ordinary browsers) into
-`_site/`.
 
 ## Contributing
 
