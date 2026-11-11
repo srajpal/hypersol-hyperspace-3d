@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Electron 45.3.0, from 44.9.2 (AGENTS.md rule 13, checked
+  2026-11-11): the newest stable line, with Chromium 156.0.8078.96
+  and Node 24.22.2. In a run from source, Electron 45 writes its own
+  developer warnings into every page's console; the instrument
+  panel's console leaves them out, as the page did not log them.
 - The ad blocker's page scripts (GitHub issue #133, seen on YouTube):
   several of the filter lists' scripts declare the same name, and as they
   all ran in the page's one realm, every one after the first failed, and
