@@ -116,8 +116,11 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-          sudo apt-get update
-          sudo apt-get install -y xvfb gnome-keyring dbus-x11
+          # Ubuntu's package servers fail now and then from GitHub's machines
+          # (2026-11-11: "Temporary failure resolving"): ask again, up to five
+          # times, before giving up.
+          sudo apt-get -o Acquire::Retries=5 update
+          sudo apt-get -o Acquire::Retries=5 install -y xvfb gnome-keyring dbus-x11
 
       # A session bus and a throwaway keyring, unlocked with a throwaway
       # password; both disappear with the runner.

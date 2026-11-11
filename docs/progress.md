@@ -437,8 +437,8 @@ this repository's release workflow from the release's tag; the
 README's Download section has an *attested* badge beside each zip.
 The About panel's picture in the newest set showed 0.9.2.
 
-**0.9.3, a security update** (2026-11-11). 0.9.2 with Electron
-44.11.1, and two fixes made since: the ad blocker's page scripts run
+**0.9.3, a security update** (2026-11-11). 0.9.2 on Electron 45.3.0
+(Chromium 156) and Three.js 0.187, with two fixes made since: the ad blocker's page scripts run
 before a page's own, each apart from the others (GitHub issue #133,
 seen on YouTube), and a tab closed in full screen no longer leaves
 the window full screen with no page in it (GitHub issue #87).

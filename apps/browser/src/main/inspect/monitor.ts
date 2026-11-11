@@ -63,6 +63,17 @@ export function declaredBytes(headers: Record<string, string[]> | undefined): nu
  * for the showing page and for the waiting record: a request in that
  * moment can be either page's.
  */
+/**
+ * Electron's own advice to an app's developer ("Electron Security
+ * Warning (Insecure Resources)", "(Insecure Content-Security-Policy)",
+ * and the like). From Electron 45 a run that is not packaged writes it
+ * into the console of every web page, about that page's own addresses
+ * and policy: it is not something the page logged, so the console here
+ * leaves it out. A packaged app never writes it. The page's DevTools
+ * still show it.
+ */
+const ELECTRONS_OWN_WARNING = /^(?:%c)?Electron Security Warning \(/;
+
 export class PageMonitor {
   private readonly tabs = new Map<number, TabRecord>();
   /** Each tab's page on its way: requested, not yet arrived. */
@@ -184,6 +195,7 @@ export class PageMonitor {
   }
 
   console(tab: number, level: ConsoleLevel, message: string, source: string, line: number, at: number): void {
+    if (ELECTRONS_OWN_WARNING.test(message)) return;
     const r = this.showing(tab);
     if (!r) return;
     const n = this.numbersOf(tab);

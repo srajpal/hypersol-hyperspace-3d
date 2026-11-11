@@ -238,10 +238,33 @@ past pnpm's minimum release age, as 44.7.0 and 44.9.2 were
 (pnpm-workspace.yaml). Electron 45 is stable since 2026-10-21
 (45.3.0 on 2026-11-10), so 44 is no longer the newest line; it is
 still a supported one (Electron supports its three newest: 45, 44,
-and 43, each with a release on 2026-11-10). The browser stays on 44
-for 0.9.3: Dependabot's pull request #140 to 45.0.0 fails
-end-to-end parts 1 and 2 on Windows, not yet looked into, and the
-move to 45 is work of its own.
+and 43, each with a release on 2026-11-10). This upgrade was made on
+the 0.9.3 release's branch and stood for some hours: the same day
+the owner asked for Dependabot's pull request #140 (45.0.0) to be
+looked into, fixed, and merged, and 0.9.3 ships Electron 45.3.0 (the
+next entry). 44.11.1 was never released.
+
+Rule 13 check, 2026-11-11 (the move to Electron 45, in place of
+Dependabot's pull request #140 to 45.0.0, as the owner asked):
+Electron 45 is stable since 2026-10-21 (45.0.0), with 45.1.0
+(2026-10-27), 45.2.0 to 45.2.3 (2026-10-30 to 2026-11-04), and 45.3.0
+(2026-11-10) since; 45.2.0 and 45.3.0 backport fixes from upstream
+Chromium and V8. Upgraded to 45.3.0, the newest (Chromium
+156.0.8078.96 and Node 24.22.2, read from the installed binary),
+taken at once past pnpm's minimum release age
+(pnpm-workspace.yaml). 45's breaking changes read against the app:
+its preloads use none of the modules and globals taken out of
+sandboxed preloads (`events`, `timers`, `url`, `Buffer`,
+`setImmediate`); screen capture now asks as `display-capture`, not
+`media`, which the permission handlers refuse as they refuse every
+kind not listed (main/permissions.ts); 32-bit builds are gone, and
+the release has none. Two things follow. From 45, a run that is not
+packaged writes Electron's own "Electron Security Warning" advice
+into every web page's console, so the instrument panel's console
+leaves it out (main/inspect/monitor.ts; m7's I4 failed on it in
+#140's builds). And the synchronous `safeStorage` calls the password
+store uses are deprecated in 45 and go in 46: the move to the
+asynchronous ones is an issue of its own, to be done before 46.
 
 ## 4. Decisions and reasons
 

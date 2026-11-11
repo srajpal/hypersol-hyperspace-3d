@@ -2,16 +2,21 @@
 
 ## 0.9.3 — developer preview (2026-11-11)
 
-A security update of the 0.9.2 developer preview, with the fixes made
-since. New with it:
+A security update of the 0.9.2 developer preview, on a new line of
+Electron, with the fixes made since. New with it:
 
-- Electron 44.11.1, from 44.9.2 (AGENTS.md rule 13, checked
-  2026-11-11): six releases of Electron 44, five of them with fixes
-  backported from Chromium and V8; Chromium 152.0.7977.169 and Node
-  24.22.2; gaps closed in what a page may write to through the File
-  System Access API; and two crashes of the main process fixed (a
-  Blob upload seen by a request listener, and a pointer lock request
-  answered late).
+- Electron 45.3.0, from 44.9.2 (AGENTS.md rule 13, checked
+  2026-11-11): the newest stable line, with Chromium 156.0.8078.96
+  (0.9.2 had Chromium 152) and Node 24.22.2, and so every security
+  fix of Chromium and V8 since 0.9.2. In a run from source, Electron
+  45 writes its own developer warnings into every page's console;
+  the instrument panel's console leaves them out, as the page did
+  not log them.
+- Three.js 0.187.0, from 0.186.1, and the ad blocker's library
+  2.20.3, from 2.20.1. A HoloML page's models may now use glTF's
+  `KHR_materials_diffuse_roughness` extension, which Three.js 0.187
+  reads and draws. Its lighting is a little brighter than before
+  (about one part in twenty-five on a floor in shadow).
 - The ad blocker's page scripts (GitHub issue #133, seen on YouTube):
   several of the filter lists' scripts declare the same name, and as they
   all ran in the page's one realm, every one after the first failed, and

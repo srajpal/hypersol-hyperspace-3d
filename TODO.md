@@ -135,7 +135,7 @@ plan (2026-10-14)" below), which reversed part of prompt 172: each
 release has a portable zip per system, built by the automatic builds
 (still no installers). Releases since: 0.9.1 (2026-10-16) and 0.9.2
 (2026-10-20, Electron 44.9.2, its zips attested); 0.9.3 (Electron
-44.11.1) is prepared, "Issue #144" below. The work goes in the plan's
+45.3.0) is prepared, "Issue #144" below. The work goes in the plan's
 order.
 
 - Milestone 25 (HoloML 0.3; 23 when this was written), the language
@@ -3127,7 +3127,7 @@ the sofa studio's copy in tests/fixtures/holoml/sofa-studio.
 | # | Result |
 |---|---|
 | U8 | Pass. holoml's tests: 182 passed (a valid sample, v02-shadows-textures-choice; a problem sample, bad-choice, with 12 problems; newer-than-declared uses the new elements in a 0.1 page; the examples test checks the sofa studio's files, size, choices, and credits); lint and types clean |
-| U9 | Pass. With a graphics card, the floor under the block marked `shadows` was darker than three quarters of the floor under the block without (one shadow light, two models with shadows). Drawn in software (HYPERSOL_TEST_SOFTWARE=1): no shadow lights, the console says why, and the check logged "shadows left out, drawing in software (ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) …)))" (Q5 a) |
+| U9 | Pass. With a graphics card, the floor under the block marked `shadows` was darker than three quarters of the floor under the block without (one shadow light, two models with shadows). Since 2026-11-11 the measure is four fifths (the owner's choice): Three.js 0.187 changed its lighting a little, and the floor read 138 under the shadow and 180 beside it (0.77), where 0.186 gave 132 and 177 (0.745, just inside three quarters). The shadow is as before; the requirement, that it darkens the floor, is unchanged. Drawn in software (HYPERSOL_TEST_SOFTWARE=1): no shadow lights, the console says why, and the check logged "shadows left out, drawing in software (ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) …)))" (Q5 a) |
 | U10 | Pass. The stripes' address and tiling (3 by 1) read back, and tiling alone tiled the model's own picture (2 by 2); on the page, red and blue stripes, crossed at least 3 times in 80 pixels; the picture from another site (never asked for) and the 8192 by 8192 picture were left out with their reasons, and those models kept their own; the page's byte total was the model file and the stripes, the refused picture counting nothing |
 | U11 | Pass. Both choices in their corners with their labels and options (an option without a value takes its label); the chosen option on the block at the start; a click on Red changed the material in place (the same page) and the script heard it; the right arrow picked Blue (the material's own roughness back: each option starts from the material's own look), then Striped (tiled 2); scripts read the value, the options, and the label, and set the value without an event; a value no option has is an error; the script-only choice was heard; screen readers find each choice as a group named by its label, with its options as radio buttons and the chosen one checked; the text view shows the choices |
 | U12 | Pass. The green panorama made the mirror-like block green (green above red and blue by more than 40); the surroundings loaded, at full brightness; the page's byte total included the panorama. A panorama over the picture limit was left out with its reason; the scene showed with the renderer's own light |
@@ -8796,9 +8796,9 @@ branch of its own for the owner's review:
 
 | Step | What | Where |
 |---|---|---|
-| 1 | Release 0.9.3: Electron 44.11.1, with #87's and #133's fixes | "Issue #144" below; branch release-0.9.3 |
+| 1 | Release 0.9.3: Electron 44.11.1 at first, 45.3.0 by the day's end, with #87's and #133's fixes | "Issue #144" below; branch release-0.9.3, pull request #145 |
 | 2 | HANDOFF.md, this file's "Issue #133", the counts, an issue for FS10 (#143) | with step 1 |
-| 3 | Dependabot's #142 with the viewer's list of extensions; #141; a decision on #140 (Electron 45) | branch deps-minor-patch-2026-11 |
+| 3 | Dependabot's #142 with the viewer's list of extensions; #141; #140 (Electron 45) | done the same day: #141, #148, #149, and #151 merged; "Electron 45 and the dependency updates" below |
 | 4 | holoml: its documents now; a 0.3.2 release and Dependabot's #72 to #74 after | holoml branch docs-review-2026-11-11 |
 | 5 | The README for a first-time reader, a draft for the owner | branch readme-first-reader |
 | 6 | Loading feedback in the web viewer's first frame (holoml #51), plan first | not started |
@@ -8807,13 +8807,19 @@ branch of its own for the owner's review:
 
 ## Issue #144: release 0.9.3, a security update
 
-Status: prepared on the branch release-0.9.3 (2026-11-11) for the
-owner to merge, tag, and publish. By the checklist of "Issue #92", as
-0.9.2 followed it ("Issue #127"):
+Status: prepared on the branch release-0.9.3 (2026-11-11, pull
+request #145) for the owner to merge, tag, and publish. It was
+prepared first on Electron 44.11.1; the same day the owner asked for
+Dependabot's three failing pull requests to be looked into, fixed,
+and merged, so 0.9.3 ships Electron 45.3.0 and Three.js 0.187
+("Electron 45 and the dependency updates" below, with the release's
+checks run again). By the checklist of "Issue #92", as 0.9.2
+followed it ("Issue #127"):
 
-- Rule 13 (2026-11-11): Electron 44.11.1, ARCHITECTURE.md section 3,
+- Rule 13 (2026-11-11): Electron 45.3.0, ARCHITECTURE.md section 3
+  (two entries of that day: 44.11.1, never released, then 45.3.0),
   taken past pnpm's minimum release age as 44.7.0 and 44.9.2 were
-  (pnpm-workspace.yaml). Electron 45 stays out of this release.
+  (pnpm-workspace.yaml).
 - The version in the four package files and m2's D11; the changelog's
   section (the Electron upgrade, and what was under "Unreleased":
   #133, #87, `holoml.add`, and the checks); THIRD-PARTY.md's
@@ -8825,7 +8831,8 @@ owner to merge, tag, and publish. By the checklist of "Issue #92", as
   2026-10-20; `gh api .../immutable-releases` read `true` on
   2026-11-11).
 
-Results (Windows 11, 2026-11-11):
+Results on Electron 44.11.1 (Windows 11, 2026-11-11; kept as they
+ran, and run again on 45.3.0 below):
 
 - `pnpm install`: the lockfile passes pnpm's supply-chain check with
   the exception for electron@44.11.1; the installed binary reads
@@ -8862,6 +8869,92 @@ Results (Windows 11, 2026-11-11):
 - Not checked yet: the other systems' zips (the release workflow
   builds, smoke-checks, and attests them at the tag), the Mac, the
   Android app (nothing of it changed), and AT4 with the publish.
+
+### Electron 45 and the dependency updates (2026-11-11)
+
+The owner asked for Dependabot's #140, #141, and #142 to be looked
+into, fixed, and merged once their builds passed. Why each failed,
+and what was done:
+
+- #141 (the CodeQL action, 4.39.0 to 4.39.1) changes no code. Its
+  build failed at PD5 (m26) on Linux, and its second at the package
+  install. Merged once a third build passed.
+- #142 (Three.js 0.187.0, the ad blocker's 2.20.3, eslint,
+  typescript-eslint) failed viewer/budget.test.ts on every system:
+  Three.js 0.187's loader knows `KHR_materials_diffuse_roughness`,
+  which the viewer's list lacked. The loader reads it and the WebGL
+  renderer draws it by themselves, so the name went into the list
+  (viewer/budget.ts; HoloML's SPEC.md section 9 needs the same
+  name). In its place: pull request #148. With a graphics card, U9
+  then failed: Three.js 0.187 lights a floor a little more (138
+  under the shadow and 180 beside it, 0.77, where 0.186 gave 132 and
+  177, 0.745, just inside the check's three quarters). The owner
+  chose four fifths as the check's measure; the requirement is
+  unchanged. GitHub's machines draw in software and skip U9.
+- #140 (Electron 45.0.0) failed I4 (m7) and R5 (m15) on Windows. I4
+  is a real difference: from Electron 45, a run that is not packaged
+  writes Electron's own "Electron Security Warning" advice into
+  every web page's console, and the instrument panel showed five
+  rows where the page logs three. The panel's monitor leaves that
+  advice out (main/inspect/monitor.ts, with a unit test); a packaged
+  app never writes it. R5 did not come back (the full run, and three
+  times of three alone). In its place: pull request #149, to 45.3.0,
+  the line's newest, with 45's breaking changes read against the app
+  (ARCHITECTURE.md section 3). The password store's synchronous
+  `safeStorage` calls are deprecated in 45 and go in 46: issue #150.
+- The builds themselves (pull request #151): PD5 read the plain-HTTP
+  requests as the page loaded and expected the page alone, and the
+  page's own icon had sometimes arrived by then on GitHub's Linux
+  machines (2026-10-28, 2026-11-11); it now leaves that icon out.
+  And Ubuntu's package servers could not be resolved from GitHub's
+  machines several times on 2026-11-11, which failed Linux jobs
+  before any check ran; `apt-get` now asks again, up to five times
+  (ci.yml, release.yml).
+- m17's "Blockworld plays in a development run" missed its 40
+  seconds in every full run of the day on this computer (on 44.11.1
+  and on 45.3.0) and once in #149's Windows build, and passed alone
+  (six of seven on 44.11.1, four of four on 45.3.0): most often the
+  first development run after the packages changed. It is on issue
+  #82's watch list; not settled here.
+
+Merged on 2026-11-11: #141, #151, #149, and #148; #140 and #142
+closed for #149 and #148.
+
+Results on Electron 45.3.0 with Three.js 0.187 (the release branch
+with main merged in; Windows 11, 2026-11-11):
+
+- The installed binary reads Electron 45.3.0, Chromium 156.0.8078.96,
+  Node 24.22.2; Three.js 0.187.0.
+- `pnpm lint` and `pnpm typecheck` clean; `pnpm test` 622 passed in
+  74 files (one new: the monitor's).
+- The full end-to-end run (`pnpm test:e2e`, 1423 s): 481 passed, 1
+  skipped (FS5), 3 failed, all three on issue #82's list: C9 (46.8
+  frames a second for 50; alone, 67.0, 67.0, and 67.9), L9 (a search
+  at 60 ms for 50; alone, three of three), and m17's development run
+  (above). I4, U9 (at four fifths), and R5 passed. RL4: m2's D11
+  passed with 0.9.3.
+- Before that, on the same versions without the release's changes
+  (the branches of #149 and #148 together): 475 passed, 8 skipped
+  (7 need the holoml folder, absent from that worktree), 2 failed:
+  m17's development run, and U9 at three quarters.
+- `pnpm package`: HyperSpace3D-0.9.3-windows-x64.zip, 156.3 MB, with
+  Electron 45.3.0; `pnpm package:smoke`: the packaged app starts,
+  with the title "HyperSpace 3D" and its room.
+- The screenshots: the m28 set remade and compared pixel by pixel.
+  Kept: 39-about.png (Version 0.9.3, Electron 45.3.0, Chromium
+  156.0.8078.96) and five HoloML scenes that Three.js 0.187 lights a
+  little more (51-blockworld, 53-sofa-studio, 55-harbour-loft,
+  57-harbour-loft-terrace, 75-holoml-inspector-names: 1.2% to 4%
+  changed; Harbour Loft looked at). 82-lifted-pictures differed by
+  28%: the page scrolls about 25 pixels further on Chromium 156, the
+  lifted pictures as before; put back with the rest (under 1%). The
+  README's four remade (`pnpm screenshots:readme`) and kept: 1% to
+  3% changed, and Blockworld's 21% (its greens a little brighter;
+  the old and the new looked at side by side).
+- Not checked yet: the other systems' zips (the release workflow
+  builds, smoke-checks, and attests them at the tag), the Mac, the
+  Android app (it shares the viewer: Three.js 0.187 is new to it,
+  and its tablet check is by hand), and AT4 with the publish.
 
 ## Issue #133: the ad blocker's page scripts (YouTube)
 

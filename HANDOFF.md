@@ -4,23 +4,30 @@ The state of the project for whoever picks it up next, person or agent.
 Last updated 2026-11-11.
 
 - Open now (2026-11-11): release 0.9.3, a security update, GitHub
-  issue #144, prepared on the branch release-0.9.3 for the owner to
-  merge, tag, and publish: Electron 44.11.1 (the rule 13 check of
-  2026-11-11; six releases of 44 since 0.9.2's 44.9.2), with the
-  fixes merged since 0.9.2 (#133 and #87). TODO.md, "Issue #144", has
-  the checklist and the results. After the publish: the README's
-  Download section and status paragraph, and AT4 (immutable).
+  issue #144, prepared on the branch release-0.9.3 (pull request
+  #145) for the owner to merge, tag, and publish: Electron 45.3.0
+  (Chromium 156; 0.9.2 had 44.9.2 and Chromium 152), Three.js 0.187,
+  and the fixes merged since 0.9.2 (#133 and #87). TODO.md, "Issue
+  #144", has the checklist and the results. After the publish: the
+  README's Download section and status paragraph, and AT4
+  (immutable).
 - A review of both repositories on 2026-11-11 (TODO.md, "The review
   of 2026-11-11") found this file three weeks stale, corrected here,
   and the rest below. Beside the release, on branches of their own
-  for the owner's review: the dependency updates of Dependabot's #142
-  with the viewer's list of glTF extensions (Three.js 0.187 reads one
-  more), the README shortened for a first-time reader, the launch
-  drafts corrected, and holoml's documents.
-- Electron 45 is stable since 2026-10-21. The browser stays on 44, a
-  supported line, for now: Dependabot's #140 (45.0.0) fails
-  end-to-end parts 1 and 2 on Windows, not yet looked into. The move
-  to 45 is work of its own, to be approved.
+  for the owner's review: the README shortened for a first-time
+  reader (#147), the launch drafts corrected (#146), and holoml's
+  documents (holoml #75).
+- Dependabot's three failing pull requests were settled the same day,
+  as the owner asked (TODO.md, "Issue #144", "Electron 45 and the
+  dependency updates"): #141 merged; #140 closed for #149 (Electron
+  45.3.0, and the instrument panel's console without Electron's own
+  developer warnings); #142 closed for #148 (Three.js 0.187: the
+  viewer's list of glTF extensions, and U9's measure, four fifths
+  from three quarters, the owner's choice); and #151 for two things
+  that failed the builds themselves (PD5 counting the page's own
+  icon, and Ubuntu's package servers).
+- Before Electron 46: the password store's synchronous `safeStorage`
+  calls, deprecated in 45 and removed in 46 (issue #150).
 - For a session on the owner's Mac: FS10 fails there (issue #143),
   likely the check and not the browser; the commit that makes its
   report say more (ed72b1b) is on the branch review-204-fixes,
@@ -145,10 +152,12 @@ state; this is a summary.
   HyperSpace 3D Authors" and "The HoloML Authors" (AUTHORS files).
 
 Two repositories, kept as sibling folders (never one inside the other).
-The newest merges are #137 here (issue #133, 2026-10-22; before it
-#129 to #132 and Dependabot's #134 to #136, 2026-10-21) and holoml
+The newest merges are #141, #148, #149, and #151 here (2026-11-11;
+before them #137, issue #133, 2026-10-22, #129 to #132, and
+Dependabot's #134 to #136, 2026-10-21) and holoml
 #70 (the review of 2026-10-21's fixes, 2026-10-21). Open pull
-requests are Dependabot's: #140 to #142 here, holoml #72 to #74.
+requests on 2026-11-11: #145 to #147 here; holoml #75 and
+Dependabot's holoml #72 to #74.
 HoloML's newest release is v0.3.1; the playground and the fixes
 since are on its site but in no release yet:
 
@@ -785,8 +794,8 @@ to this repository for rules and the prompt log.
   since #110; the owner's Mac, #94 and #111).
   Android tablets in this repository (apps/android, milestone 24;
   prompt 152); phones and iOS later. Mouse, keyboard, and touch.
-- Stack: Electron (a supported stable line: 44, at 44.11.1 since
-  2026-11-11; 45 is the newest line since 2026-10-21),
+- Stack: Electron (the newest stable line: 45, at 45.3.0 since
+  2026-11-11),
   TypeScript, Three.js, Lit, SQLite through Node's node:sqlite,
   @ghostery/adblocker-electron, electron-vite, Vitest, Playwright. Node
   24 or newer, pnpm 12.4.1 pinned. Reasons in ARCHITECTURE.md
@@ -883,7 +892,8 @@ to this repository for rules and the prompt log.
    Open on 2026-11-11: #76 to #80, #82, #84, #98 to #101 (the
    promotion plan's steps 11 to 13 and 19), #138 (a unit test's 100
    ms budget missed now and then on a busy machine), #143 (FS10 on a
-   Mac), and #144 (release 0.9.3). In holoml, open on 2026-10-10:
+   Mac), #144 (release 0.9.3), and #150 (the password store's calls
+   before Electron 46). In holoml, open on 2026-10-10:
    enhancements #46 to #52 (forms and richer controls, reusable
    components and styles, object descriptions and states, pointer and
    drag events, more of the scene API, adaptive detail and loading
@@ -1045,7 +1055,7 @@ to this repository for rules and the prompt log.
    list.
    One issue at a time, approved by the owner first (AGENTS.md rule 2);
    check Electron's security releases at least monthly and before any
-   tag (rule 13; last checked 2026-11-11, 44.11.1, before the 0.9.3 tag;
+   tag (rule 13; last checked 2026-11-11, 45.3.0, before the 0.9.3 tag;
    the next is due by 2026-12-11). Prompts are recorded
    only when the owner asks. The three advisories of 2026-10-09 are
    published, and the merged branches deleted (2026-10-10) but for

@@ -54,6 +54,12 @@ const SITE = (id: string) => `hs-site-panel [data-testid="${id}"]`;
 const BAR = (id: string) => `hs-toolbar [data-testid="${id}"]`;
 const cardKind = (h: Harness) => h.shell.locator(CARD).getAttribute('data-kind').catch(() => null);
 const httpTo = (host: string) => dual.httpRequests.filter((r) => r.startsWith(`${host}/`));
+/**
+ * The pages asked of a site over plain HTTP: its requests but the page's own icon (link-a.html's icon.png),
+ * which a page loaded over HTTP asks for over HTTP too, a moment after it has loaded. On GitHub's Linux machines
+ * it had sometimes arrived by the time PD5 looked, and the check failed on it (2026-10-28 and 2026-11-11).
+ */
+const pagesOverHttp = (host: string) => httpTo(host).filter((r) => r !== `${host}/icon.png`);
 const openLibrary = async (h: Harness, tab: 'bookmarks' | 'sites') => {
   if ((await shellCall(h, 'openPanel')) !== 'library') await pressInShell(h, 'O', ['control', 'shift']);
   await waitFor('Library open', () => shellCall(h, 'openPanel'), (p) => p === 'library');
@@ -223,7 +229,7 @@ describe('PD1 to PD5: HTTPS-only browsing (issue #24)', () => {
     await pressInShell(h, 'Escape');
     await navigateTo(h, dual.url('http', secure, '/link-a.html?off=1'));
     await waitFor('loaded over plain HTTP', () => focusedTab(h), (t) => t.state === 'loaded' && t.url === dual.url('http', secure, '/link-a.html?off=1'));
-    expect(httpTo(secure)).toEqual([`${secure}/link-a.html?off=1`]);
+    expect(pagesOverHttp(secure)).toEqual([`${secure}/link-a.html?off=1`]);
     await openSettingsAt(h, 'set-https-only');
     await h.shell.click(SET('set-https-only'));
     await pressInShell(h, 'Escape');
