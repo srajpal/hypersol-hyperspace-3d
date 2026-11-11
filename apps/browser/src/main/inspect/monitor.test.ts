@@ -62,6 +62,15 @@ describe('PageMonitor', () => {
     expect(b.net[0]!.rev).toBeGreaterThan(a.net[0]!.rev);
   });
 
+  it("leaves out Electron's own security warnings, which Electron 45 writes into a page's console in a run that is not packaged", () => {
+    const m = new PageMonitor();
+    m.request(1, 1, 'http://a.example/', 'mainFrame', 'GET', 0);
+    m.console(1, 'warning', 'Electron Security Warning (Insecure Resources) This renderer process loads resources using insecure protocols.', '', 0, 0);
+    m.console(1, 'warning', '%cElectron Security Warning (Insecure Content-Security-Policy) This renderer process has either no Content Security', '', 0, 0);
+    m.console(1, 'warning', 'a warning about the Electron Security Warning (not one)', '', 0, 0);
+    expect(m.snapshot(1, 0, 0).console.map((c) => c.message)).toEqual(['a warning about the Electron Security Warning (not one)']);
+  });
+
   it('keeps console messages with their levels, caps them, and clears them', () => {
     const m = new PageMonitor();
     m.request(1, 1, 'http://a.example/', 'mainFrame', 'GET', 0);

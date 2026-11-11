@@ -187,7 +187,7 @@ their time; and a run there keeps the display awake (`caffeinate -d
 pnpm test:e2e`), as macOS makes no full screen with the display asleep
 or the screen locked (issue #111). Counts are as of the
 date given and grow with each issue; TODO.md has the latest.
-- Toolchain: Node 24 (the Node inside Electron 44; the automatic
+- Toolchain: Node 24 (the Node inside Electron 45; the automatic
   builds run it, and Node 26 for lint, types, and unit tests; owner,
   prompt 161; `engines` asks for 24 or newer since prompt 164); pnpm
   12.4.1, pinned in package.json.
@@ -203,7 +203,7 @@ date given and grow with each issue; TODO.md has the latest.
   social-preview.png here and in holoml beside this repository;
   committed; run it when the logo, the README's first screenshot, or
   the words change; issue #95).
-- Unit: `pnpm test` (Vitest; 620 tests passed on 2026-10-21;
+- Unit: `pnpm test` (Vitest; 622 tests passed on 2026-11-11;
   each test may take up to 20 seconds, vitest.config.ts)
 - HyperSpace 3D for Android (milestone 24; first run 2026-10-05): after
   `pnpm build` and `pnpm --filter @hypersol/android build:web`, in
