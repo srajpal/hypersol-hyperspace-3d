@@ -435,4 +435,12 @@ with Electron 44.9.2, and each zip with a build provenance
 attestation, a statement signed through GitHub that it was built by
 this repository's release workflow from the release's tag; the
 README's Download section has an *attested* badge beside each zip.
-The About panel's picture in the newest set shows 0.9.2.
+The About panel's picture in the newest set showed 0.9.2.
+
+**0.9.3, a security update** (2026-11-11). 0.9.2 with Electron
+44.11.1, and two fixes made since: the ad blocker's page scripts run
+before a page's own, each apart from the others (GitHub issue #133,
+seen on YouTube), and a tab closed in full screen no longer leaves
+the window full screen with no page in it (GitHub issue #87).
+Nothing on the browser's screen changes but the version in the About
+panel, whose picture in the newest set shows 0.9.3.

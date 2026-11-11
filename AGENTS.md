@@ -203,7 +203,7 @@ date given and grow with each issue; TODO.md has the latest.
   social-preview.png here and in holoml beside this repository;
   committed; run it when the logo, the README's first screenshot, or
   the words change; issue #95).
-- Unit: `pnpm test` (Vitest; 620 tests passed on 2026-10-21;
+- Unit: `pnpm test` (Vitest; 621 tests passed on 2026-11-11;
   each test may take up to 20 seconds, vitest.config.ts)
 - HyperSpace 3D for Android (milestone 24; first run 2026-10-05): after
   `pnpm build` and `pnpm --filter @hypersol/android build:web`, in
@@ -220,11 +220,12 @@ date given and grow with each issue; TODO.md has the latest.
   a promise nobody awaits or catches is an error, since the review of
   2026-09-30)
 - End-to-end: `pnpm test:e2e` builds the app, then runs Playwright
-  against it (about twenty-five to thirty minutes; 454 checks in 33
-  files: in the full run of 2026-10-10, issue #75, 450 passed on this
-  computer and FS5 was skipped in hidden windows; C1 and #12's check
-  failed on a listener warning, fixed and passing since, and C9's frame
-  rate missed its budget, issue #82; TODO.md has the details). On
+  against it (about twenty-five to thirty minutes; 485 checks in 35
+  files: in the full run of 2026-11-11, issue #144, 483 passed on this
+  computer and FS5 was skipped in hidden windows; m17's "Blockworld
+  plays in a development run" missed its 40 seconds, as it does now
+  and then, and passed alone six times of seven, issue #82; TODO.md
+  has the details). On
   this computer vitest's report leaves out what passing checks log (the
   load times, frame rates, and memory); `pnpm test:e2e
   --reporter=verbose` shows it, as the automatic builds do. Needs

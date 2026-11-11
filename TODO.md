@@ -134,8 +134,9 @@ On 2026-10-14 the owner approved the promotion plan ("The promotion
 plan (2026-10-14)" below), which reversed part of prompt 172: each
 release has a portable zip per system, built by the automatic builds
 (still no installers). Releases since: 0.9.1 (2026-10-16) and 0.9.2
-(2026-10-20, Electron 44.9.2, its zips attested). The work goes in the
-plan's order.
+(2026-10-20, Electron 44.9.2, its zips attested); 0.9.3 (Electron
+44.11.1) is prepared, "Issue #144" below. The work goes in the plan's
+order.
 
 - Milestone 25 (HoloML 0.3; 23 when this was written), the language
   engineer's list for its plan:
@@ -8746,7 +8747,130 @@ Results:
   #54; its 885 tests passed). Words only. Step 2, the three links
   clicked by hand, is the owner's.
 
+## The review of 2026-11-11
+
+On 2026-11-11 the owner asked for a review of both repositories and
+their documents, a plan for what to fix, and then a talk about
+promoting the project. Both local folders were behind main (this one
+by 15 commits, on the merged branch issue-133-blocker-scripts) and
+were moved to main first. On main (926379f), before any change: lint
+and the type check clean, `pnpm test` 621 passed in 74 files, `pnpm
+audit --prod` no known advisories. Found:
+
+- Electron: 0.9.2 ships 44.9.2, and 44.9.3 to 44.11.1 were out, five
+  of the six with fixes backported from Chromium and V8; the rule 13
+  check was last recorded on 2026-10-20. Electron 45 is stable.
+- Dependabot's three pull requests fail: #142 at one unit test
+  (viewer/budget.test.ts: Three.js 0.187's loader knows one more glTF
+  extension than the viewer's list of 22), #140 (Electron 45.0.0) at
+  end-to-end parts 1 and 2 on Windows (not looked into), #141 (the
+  actions) not looked into.
+- HANDOFF.md had not been updated since 2026-10-21: it opened with
+  "Do not merge #137" (merged 2026-10-22, #133 closed), called #129
+  open in four places (merged 2026-10-21), named #128 and holoml #67
+  the newest merges, and listed the open issues of 2026-10-10.
+- This file's "Issue #133" never recorded the merge; CHANGELOG.md and
+  HANDOFF.md described #133's first fix, not the merged one.
+- FS10's failure on the Mac had no issue.
+- AGENTS.md's end-to-end count was of 2026-10-10 (454 checks in 33
+  files).
+- The README is long for a first-time reader (the Download section's
+  checking detail before what the browser does; the Progress wall).
+- holoml: the playground and the web viewer's fixes are on its site
+  but under `[Unreleased]`; its README's first link to try a page in
+  an ordinary browser was at line 131, and it said 885 tests where
+  AGENTS.md said 897; its packages are not ready to publish (private,
+  no build step, fields and READMEs missing; holoml #56 and #57).
+- The launch drafts (docs/launch/, docs/story.md): "every prompt
+  published" (true up to prompt 203), the end-to-end checks on macOS
+  "on every change" (on main only, an experiment), Electron "44.9.2,
+  the current stable line", counts of 2026-10-19, and three [owner]
+  gaps still open.
+- In order, verified: no broken relative link, no private data in
+  tracked files, the download links against the release's files, the
+  scripts the documents name, and nine published pages answering.
+
+The plan, as the owner approved its start ("Yes, start fixes", then
+"use additional agents to fix other things at once"), each on a
+branch of its own for the owner's review:
+
+| Step | What | Where |
+|---|---|---|
+| 1 | Release 0.9.3: Electron 44.11.1, with #87's and #133's fixes | "Issue #144" below; branch release-0.9.3 |
+| 2 | HANDOFF.md, this file's "Issue #133", the counts, an issue for FS10 (#143) | with step 1 |
+| 3 | Dependabot's #142 with the viewer's list of extensions; #141; a decision on #140 (Electron 45) | branch deps-minor-patch-2026-11 |
+| 4 | holoml: its documents now; a 0.3.2 release and Dependabot's #72 to #74 after | holoml branch docs-review-2026-11-11 |
+| 5 | The README for a first-time reader, a draft for the owner | branch readme-first-reader |
+| 6 | Loading feedback in the web viewer's first frame (holoml #51), plan first | not started |
+| 7 | The launch drafts corrected; the [owner] gaps are the owner's | branch launch-drafts-2026-11 |
+| 8 | npm and the editor registries (holoml #56, #57) | not started |
+
+## Issue #144: release 0.9.3, a security update
+
+Status: prepared on the branch release-0.9.3 (2026-11-11) for the
+owner to merge, tag, and publish. By the checklist of "Issue #92", as
+0.9.2 followed it ("Issue #127"):
+
+- Rule 13 (2026-11-11): Electron 44.11.1, ARCHITECTURE.md section 3,
+  taken past pnpm's minimum release age as 44.7.0 and 44.9.2 were
+  (pnpm-workspace.yaml). Electron 45 stays out of this release.
+- The version in the four package files and m2's D11; the changelog's
+  section (the Electron upgrade, and what was under "Unreleased":
+  #133, #87, `holoml.add`, and the checks); THIRD-PARTY.md's
+  Electron; docs/progress.md.
+- After the publish, as for 0.9.2: the README's Download section (the
+  zips' links, sizes, and attestation badges) and its status
+  paragraph, which name 0.9.2 until then; and AT4, the release shown
+  as immutable, which 0.9.2 could not pass (the setting is on since
+  2026-10-20; `gh api .../immutable-releases` read `true` on
+  2026-11-11).
+
+Results (Windows 11, 2026-11-11):
+
+- `pnpm install`: the lockfile passes pnpm's supply-chain check with
+  the exception for electron@44.11.1; the installed binary reads
+  Chromium 152.0.7977.169 and Node 24.22.2.
+- `pnpm lint` and `pnpm typecheck` clean; `pnpm test` 621 passed in
+  74 files.
+- The full end-to-end run (`pnpm test:e2e`, 1445 s, while three other
+  sessions built and ran checks on this computer): 483 passed, 1
+  skipped (FS5, pointer lock, in hidden windows), 1 failed: m17's
+  "Blockworld plays in a development run" (the island not drawn in 40
+  s; the check that missed in 0.9.2's run too, watched with issue
+  #82). Alone it failed the first time and then passed six times of
+  six. RL4: m2's D11 passed with 0.9.3 in that run.
+- `pnpm filters:update`: the same 6,760,817 bytes from the 13 lists;
+  only starter.json's build time changed.
+- `pnpm package`: HyperSpace3D-0.9.3-windows-x64.zip, 156.6 MB, with
+  Electron 44.11.1; `pnpm package:smoke`: the packaged app starts,
+  with the title "HyperSpace 3D" and its room.
+- The screenshots: the m28 set remade (`MILESTONE=m28 pnpm
+  screenshots`) and compared pixel by pixel with Electron's decoder.
+  Kept: 39-about.png (Version 0.9.3, Electron 44.11.1, Chromium
+  152.0.7977.169; 2.2% changed). Every other picture differed by
+  under 1% and was put back. The README's four were not remade:
+  nothing in them changed.
+- The screenshot script's last capture (84, Daylight from the side)
+  failed twice in the whole set and once of four alone: it pressed
+  the arrow keys straight after the look-around shortcut, and on
+  44.11.1 they could arrive before looking around was on (the room
+  then ignores them; on 44.9.2, in a worktree of main, the set
+  passed). The script now waits for looking around first, as m27's
+  checks do (tests/screenshots/capture.shots.ts); with it the capture
+  passed five times of five alone and the whole set once. Not a fault
+  of the browser: m27's FC1 to FC9 passed in the full run.
+- Not checked yet: the other systems' zips (the release workflow
+  builds, smoke-checks, and attests them at the tag), the Mac, the
+  Android app (nothing of it changed), and AT4 with the publish.
+
 ## Issue #133: the ad blocker's page scripts (YouTube)
+
+Status: closed. Pull request #137 merged on 2026-10-22 with the fix
+of "BS1 in GitHub's Windows builds" below (the page preload waits for
+the scripts), after the runs on the owner's Mac recorded here; the
+restart the owner first saw there was not seen again. Released in
+0.9.3. FS10 on the Mac (item 2 of "On the owner's Mac") is issue
+#143.
 
 Reported by the owner on 2026-10-21 (macOS, a dev run): YouTube did not
 work, and the terminal showed `MaxListenersExceededWarning: 11

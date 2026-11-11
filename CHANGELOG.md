@@ -1,16 +1,28 @@
 # Changelog
 
-## Unreleased
+## 0.9.3 — developer preview (2026-11-11)
 
+A security update of the 0.9.2 developer preview, with the fixes made
+since. New with it:
+
+- Electron 44.11.1, from 44.9.2 (AGENTS.md rule 13, checked
+  2026-11-11): six releases of Electron 44, five of them with fixes
+  backported from Chromium and V8; Chromium 152.0.7977.169 and Node
+  24.22.2; gaps closed in what a page may write to through the File
+  System Access API; and two crashes of the main process fixed (a
+  Blob upload seen by a request listener, and a pointer lock request
+  answered late).
 - The ad blocker's page scripts (GitHub issue #133, seen on YouTube):
   several of the filter lists' scripts declare the same name, and as they
   all ran in the page's one realm, every one after the first failed, and
   YouTube's own page broke in part ("Maximum call stack size exceeded").
-  Each now runs in a block of its own, in the frame that asked for it, at
-  once rather than after the page has loaded (each wait was a listener:
-  YouTube's thirty went past Node's warning of a leak), without the user
-  gesture the blocker's library gave it (a page could act as if clicked),
-  and a script that fails no longer leaves an unhandled rejection.
+  They also ran after the page had loaded, too late for scripts that
+  must act before the page's own code (each wait was a listener:
+  YouTube's thirty went past Node's warning of a leak). Each now runs
+  in a block of its own, before any of the page's own scripts (the
+  page waits for them as it starts), without the user gesture the
+  blocker's library gave it (a page could act as if clicked), and a
+  script that fails no longer leaves an unhandled rejection.
 - A tab closed while its page was full screen could leave the window in
   full screen with no page in it (GitHub issue #87, seen now and then
   on GitHub's machines). A full screen a page started now lasts only

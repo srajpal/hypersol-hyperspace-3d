@@ -9,12 +9,13 @@ allowBuilds:
   esbuild: true
 
 # pnpm holds back a version published in the last few days. Electron
-# 44.9.2 (2026-10-20) is taken at once: 44.8.0 and 44.9.0 since 44.7.2
-# carry fixes backported from Chromium and V8, a fix for windows opened
-# by a link not taking the opener's session and webPreferences, and one
-# for setCertificateVerifyProc missing a request, and 44.9.2 is the
-# line's newest (rule 13, before the 0.9.2 release; ARCHITECTURE.md
-# section 3; the exception as the owner made it for 44.7.0, prompt 162).
+# 44.11.1 (2026-11-10) is taken at once: 44.9.3, 44.10.1, 44.10.2,
+# 44.11.0, and 44.11.1 since 44.9.2 each carry fixes backported from
+# Chromium and V8, 44.10.0 closes gaps in the File System Access
+# blocklist, 44.11.0 fixes a crash when a pointer lock request is
+# answered late, and 44.11.1 is the line's newest (rule 13, before the
+# 0.9.3 release; ARCHITECTURE.md section 3; the exception as the owner
+# made it for 44.7.0, prompt 162, and as taken for 44.9.2).
 # Remove the line with the next Electron upgrade.
 minimumReleaseAgeExclude:
-  - electron@44.9.2
+  - electron@44.11.1
