@@ -51,12 +51,12 @@ Posted at once, under the owner's account.
 > called HyperSol WebSurfer, and our next idea was a browser you look
 > into rather than at. It never got past a concept screen. This year is
 > 25 years since, so I built it. I didn't write the code: AI coding
-> agents did, over 203 prompts in 17 days, and every prompt is
-> published in the repository (PROMPTS.md) beside the commits. My part
-> was the brief, the plans, the approvals, and checking. About 2,000
-> tests (unit, end-to-end against the real app on Windows, Linux, and
-> macOS, and the language's conformance samples) are how I know it
-> does what it says. The article has the whole story: <ARTICLE>
+> agents did, over 203 prompts in 17 days, and all 203 are published
+> in the repository (PROMPTS.md) beside the commits. My part was the
+> brief, the plans, the approvals, and checking. About 2,000 tests
+> (unit, end-to-end against the real app on Windows and Linux on
+> every change and on macOS on main, and the language's conformance
+> samples) are how I know it does what it says. The article has the whole story: <ARTICLE>
 >
 > It's an experimental developer preview: portable zips for Windows,
 > macOS, and Linux, unsigned, so each system asks once; each zip has a
