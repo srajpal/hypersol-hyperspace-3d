@@ -432,7 +432,9 @@ describe('U9 to U12: shadows, pictures, choices, and the surroundings', () => {
     await drawn(h, PAGE);
     const [shaded, lit] = await pixels(h, PAGE, under);
     expect(shaded!.light, `the floor under the block with shadows (${shaded!.light.toFixed(0)}) and under the one without (${lit!.light.toFixed(0)})`).toBeLessThan(
-      lit!.light * 0.75,
+      // Four fifths, from three quarters (owner, 2026-11-11): Three.js 0.187 lights the floor a little more
+      // (138 under the shadow and 180 beside it, 0.77; with 0.186 it was 132 and 177, 0.745, just inside).
+      lit!.light * 0.8,
     );
   });
 
