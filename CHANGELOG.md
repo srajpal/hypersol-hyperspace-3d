@@ -7,6 +7,11 @@
   and Node 24.22.2. In a run from source, Electron 45 writes its own
   developer warnings into every page's console; the instrument
   panel's console leaves them out, as the page did not log them.
+- Three.js 0.187.0, from 0.186.1, and the ad blocker's library
+  2.20.3, from 2.20.1. A HoloML page's models may now use glTF's
+  `KHR_materials_diffuse_roughness` extension, which Three.js 0.187
+  reads and draws. Its lighting is a little brighter than before
+  (about one part in twenty-five on a floor in shadow).
 - The ad blocker's page scripts (GitHub issue #133, seen on YouTube):
   several of the filter lists' scripts declare the same name, and as they
   all ran in the page's one realm, every one after the first failed, and
