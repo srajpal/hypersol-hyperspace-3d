@@ -109,6 +109,8 @@ export const GLTF_EXTENSIONS: ReadonlySet<string> = new Set([
   'KHR_lights_punctual',
   'KHR_materials_anisotropy',
   'KHR_materials_clearcoat',
+  // Three.js 0.187: its loader and WebGL renderer read it by themselves.
+  'KHR_materials_diffuse_roughness',
   'KHR_materials_dispersion',
   'KHR_materials_emissive_strength',
   'KHR_materials_ior',
