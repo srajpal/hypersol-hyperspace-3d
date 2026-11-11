@@ -217,6 +217,28 @@ line's newest, for the release, taken at once past pnpm's minimum
 release age, as 44.7.0 was (pnpm-workspace.yaml). 45 is still in beta
 (45.0.0-beta.6).
 
+Rule 13 check, 2026-11-11 (the move to Electron 45, in place of
+Dependabot's pull request #140 to 45.0.0, as the owner asked):
+Electron 45 is stable since 2026-10-21 (45.0.0), with 45.1.0
+(2026-10-27), 45.2.0 to 45.2.3 (2026-10-30 to 2026-11-04), and 45.3.0
+(2026-11-10) since; 45.2.0 and 45.3.0 backport fixes from upstream
+Chromium and V8. Upgraded to 45.3.0, the newest (Chromium
+156.0.8078.96 and Node 24.22.2, read from the installed binary),
+taken at once past pnpm's minimum release age
+(pnpm-workspace.yaml). 45's breaking changes read against the app:
+its preloads use none of the modules and globals taken out of
+sandboxed preloads (`events`, `timers`, `url`, `Buffer`,
+`setImmediate`); screen capture now asks as `display-capture`, not
+`media`, which the permission handlers refuse as they refuse every
+kind not listed (main/permissions.ts); 32-bit builds are gone, and
+the release has none. Two things follow. From 45, a run that is not
+packaged writes Electron's own "Electron Security Warning" advice
+into every web page's console, so the instrument panel's console
+leaves it out (main/inspect/monitor.ts; m7's I4 failed on it in
+#140's builds). And the synchronous `safeStorage` calls the password
+store uses are deprecated in 45 and go in 46: the move to the
+asynchronous ones is an issue of its own, to be done before 46.
+
 ## 4. Decisions and reasons
 
 | Decision | Choice | Why |

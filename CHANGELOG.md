@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Electron 45.3.0, from 44.9.2 (AGENTS.md rule 13, checked
+  2026-11-11): the newest stable line, with Chromium 156.0.8078.96
+  and Node 24.22.2. In a run from source, Electron 45 writes its own
+  developer warnings into every page's console; the instrument
+  panel's console leaves them out, as the page did not log them.
 - Three.js 0.187.0, from 0.186.1, and the ad blocker's library
   2.20.3, from 2.20.1. A HoloML page's models may now use glTF's
   `KHR_materials_diffuse_roughness` extension, which Three.js 0.187

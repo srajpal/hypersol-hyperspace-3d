@@ -434,7 +434,7 @@ promotion plan's step 4).
 
 ## Technology
 
-In use now: Electron 44 (the current supported stable line), TypeScript,
+In use now: Electron 45 (the current supported stable line), TypeScript,
 Three.js (with its glTF loader and the decoders of compressed models, for HoloML pages), Lit, SQLite through
 Node's built-in node:sqlite, and Ghostery's open-source ad-blocking
 engine with open filter lists; Vite and electron-vite to build; Vitest

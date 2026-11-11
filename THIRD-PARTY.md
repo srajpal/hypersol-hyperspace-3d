@@ -11,7 +11,7 @@ Checked 2026-10-10: the Runtime table against the installed packages
 (each one's package.json version and licence field) and pnpm-lock.yaml,
 the Android table against its Gradle build, and the test fixtures
 against each example's own models/CREDITS.md; Electron's row updated
-2026-10-20 (44.9.2, release 0.9.2). The
+2026-11-11 (45.3.0). The
 filter lists' licences are as recorded on 2026-09-26 (their sources were
 not read again), and the pictures in `docs/` were not gone through
 again.
@@ -20,7 +20,7 @@ again.
 
 | Project | Version | Licence | Used for |
 |---|---|---|---|
-| [Electron](https://www.electronjs.org/) | 44.9.2 | MIT; it includes Chromium, Node.js, and V8 under their own licences (BSD-3-Clause and others), listed in Electron's `LICENSES.chromium.html` | The browser engine and the app shell |
+| [Electron](https://www.electronjs.org/) | 45.3.0 | MIT; it includes Chromium, Node.js, and V8 under their own licences (BSD-3-Clause and others), listed in Electron's `LICENSES.chromium.html` | The browser engine and the app shell |
 | [Three.js](https://threejs.org/) | 0.187.0 | MIT | The 3D room, and the HoloML viewer (with the loaders and controls from its examples) |
 | The decoders of compressed glTF files, as three.js carries them in its examples (examples/jsm/libs): [Draco](https://github.com/google/draco)'s glTF decoder (draco/gltf), the [Basis Universal](https://github.com/BinomialLLC/basis_universal) transcoder (basis), and [meshoptimizer](https://github.com/zeux/meshoptimizer)'s decoder (meshopt_decoder.module.js); for KTX2 pictures, [KTX-Parse](https://github.com/donmccurdy/KTX-Parse) (ktx-parse.module.js) and [zstddec](https://github.com/donmccurdy/zstddec) (zstddec.module.js, which carries the [Zstandard](https://github.com/facebook/zstd) decompressor, compiled) | as in three.js 0.187.0 | Apache-2.0 (Draco, Google; Basis Universal, Binomial), MIT (meshoptimizer, Arseny Kapoulkine; KTX-Parse and zstddec, Don McCurdy), BSD-3-Clause (Zstandard, Meta Platforms) | Reading HoloML models whose geometry or pictures are compressed (milestone 25) |
 | [Lit](https://lit.dev/) (lit and lit-html 3.3.3, lit-element 4.2.2, @lit/reactive-element 2.1.2, @lit-labs/ssr-dom-shim 1.6.0) | 3.3.3 | BSD-3-Clause | The top bar, panels, and other controls |
