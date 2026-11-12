@@ -1,12 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.9.3 — developer preview (2026-11-11)
+
+A security update of the 0.9.2 developer preview, on a new line of
+Electron, with the fixes made since. New with it:
 
 - Electron 45.3.0, from 44.9.2 (AGENTS.md rule 13, checked
   2026-11-11): the newest stable line, with Chromium 156.0.8078.96
-  and Node 24.22.2. In a run from source, Electron 45 writes its own
-  developer warnings into every page's console; the instrument
-  panel's console leaves them out, as the page did not log them.
+  (0.9.2 had Chromium 152) and Node 24.22.2, and so every security
+  fix of Chromium and V8 since 0.9.2. In a run from source, Electron
+  45 writes its own developer warnings into every page's console;
+  the instrument panel's console leaves them out, as the page did
+  not log them.
 - Three.js 0.187.0, from 0.186.1, and the ad blocker's library
   2.20.3, from 2.20.1. A HoloML page's models may now use glTF's
   `KHR_materials_diffuse_roughness` extension, which Three.js 0.187
@@ -16,11 +21,13 @@
   several of the filter lists' scripts declare the same name, and as they
   all ran in the page's one realm, every one after the first failed, and
   YouTube's own page broke in part ("Maximum call stack size exceeded").
-  Each now runs in a block of its own, in the frame that asked for it, at
-  once rather than after the page has loaded (each wait was a listener:
-  YouTube's thirty went past Node's warning of a leak), without the user
-  gesture the blocker's library gave it (a page could act as if clicked),
-  and a script that fails no longer leaves an unhandled rejection.
+  They also ran after the page had loaded, too late for scripts that
+  must act before the page's own code (each wait was a listener:
+  YouTube's thirty went past Node's warning of a leak). Each now runs
+  in a block of its own, before any of the page's own scripts (the
+  page waits for them as it starts), without the user gesture the
+  blocker's library gave it (a page could act as if clicked), and a
+  script that fails no longer leaves an unhandled rejection.
 - A tab closed while its page was full screen could leave the window in
   full screen with no page in it (GitHub issue #87, seen now and then
   on GitHub's machines). A full screen a page started now lasts only

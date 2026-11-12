@@ -217,6 +217,33 @@ line's newest, for the release, taken at once past pnpm's minimum
 release age, as 44.7.0 was (pnpm-workspace.yaml). 45 is still in beta
 (45.0.0-beta.6).
 
+Rule 13 check, 2026-11-11 (before the 0.9.3 tag; three weeks after
+the last, with the monthly check due by 2026-11-20): 44.9.3
+(2026-10-21), 44.10.0 (2026-10-27), 44.10.1 (2026-10-31), 44.10.2
+(2026-11-03), and 44.11.0 and 44.11.1 (2026-11-10) are out. None
+names a CVE (a published security flaw's number), but 44.9.3,
+44.10.1, 44.10.2, 44.11.0, and 44.11.1 each backport fixes from
+upstream Chromium and V8 (and ANGLE, Dawn, FFmpeg, libaom, libvpx,
+PDFium, Skia, and WebRTC among them), which is where a browser's
+security fixes arrive. 44.10.0 has Chromium 152.0.7977.169 and Node
+24.22.1, closes gaps in the File System Access blocklist (writes to
+`.git/hooks`, and shares of a virtual machine's host), and fixes a
+main process crash when `onSendHeaders` saw a Blob upload; 44.10.2
+has Node 24.22.2; 44.11.0 fixes a main process crash when a
+permission handler answered a pointer or keyboard lock request late,
+and renderer crashes from `webRequest` redirect loops. Upgraded to
+44.11.1, the line's newest (Chromium 152.0.7977.169, Node 24.22.2,
+read from the installed binary), for release 0.9.3, taken at once
+past pnpm's minimum release age, as 44.7.0 and 44.9.2 were
+(pnpm-workspace.yaml). Electron 45 is stable since 2026-10-21
+(45.3.0 on 2026-11-10), so 44 is no longer the newest line; it is
+still a supported one (Electron supports its three newest: 45, 44,
+and 43, each with a release on 2026-11-10). This upgrade was made on
+the 0.9.3 release's branch and stood for some hours: the same day
+the owner asked for Dependabot's pull request #140 (45.0.0) to be
+looked into, fixed, and merged, and 0.9.3 ships Electron 45.3.0 (the
+next entry). 44.11.1 was never released.
+
 Rule 13 check, 2026-11-11 (the move to Electron 45, in place of
 Dependabot's pull request #140 to 45.0.0, as the owner asked):
 Electron 45 is stable since 2026-10-21 (45.0.0), with 45.1.0

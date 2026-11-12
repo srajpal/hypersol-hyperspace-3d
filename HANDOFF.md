@@ -1,23 +1,46 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-10-21.
+Last updated 2026-11-11.
 
-- Open now, for a session on the owner's Mac (2026-10-21): GitHub
-  issue #133, pull request #137 (branch issue-133-blocker-scripts),
-  where a YouTube video restarts over and over on the Mac and plays
-  through on Windows; and FS10 failing on the Mac (branch
-  review-204-fixes). The steps are in TODO.md, "Issue #133", "On the
-  owner's Mac". Do not merge #137 before them. On the Mac the probe
-  plays its video through (2026-10-21, results there), the owner's
-  video too, and in the owner's dev run it then played as well; the
-  first restart was not seen again.
+- Open now (2026-11-11): release 0.9.3, a security update, GitHub
+  issue #144, prepared on the branch release-0.9.3 (pull request
+  #145) for the owner to merge, tag, and publish: Electron 45.3.0
+  (Chromium 156; 0.9.2 had 44.9.2 and Chromium 152), Three.js 0.187,
+  and the fixes merged since 0.9.2 (#133 and #87). TODO.md, "Issue
+  #144", has the checklist and the results. After the publish: the
+  README's Download section and status paragraph, and AT4
+  (immutable).
+- A review of both repositories on 2026-11-11 (TODO.md, "The review
+  of 2026-11-11") found this file three weeks stale, corrected here,
+  and the rest below. Beside the release, on branches of their own
+  for the owner's review: the README shortened for a first-time
+  reader (#147), the launch drafts corrected (#146), and holoml's
+  documents (holoml #75).
+- Dependabot's three failing pull requests were settled the same day,
+  as the owner asked (TODO.md, "Issue #144", "Electron 45 and the
+  dependency updates"): #141 merged; #140 closed for #149 (Electron
+  45.3.0, and the instrument panel's console without Electron's own
+  developer warnings); #142 closed for #148 (Three.js 0.187: the
+  viewer's list of glTF extensions, and U9's measure, four fifths
+  from three quarters, the owner's choice); and #151 for two things
+  that failed the builds themselves (PD5 counting the page's own
+  icon, and Ubuntu's package servers).
+- Before Electron 46: the password store's synchronous `safeStorage`
+  calls, deprecated in 45 and removed in 46 (issue #150).
+- For a session on the owner's Mac: FS10 fails there (issue #143),
+  likely the check and not the browser; the commit that makes its
+  report say more (ed72b1b) is on the branch review-204-fixes,
+  unmerged. Issue #133 is closed: pull request #137 merged
+  2026-10-22, after the probe and the owner's own video played
+  through on the Mac; the restart the owner first saw was not seen
+  again, and its cause is not known (TODO.md, "Issue #133").
 
 - Release 0.9.2 is published (2026-10-20, issue #127): Electron
   44.9.2, and each zip with a build provenance attestation. The
   README's Download section with an *attested* badge per zip is pull
-  request #129, with a documents review after it; both are open for
-  the owner. Immutable releases are on from 2026-10-20, for the next
+  request #129, with a documents review after it (#130); both merged
+  2026-10-21. Immutable releases are on from 2026-10-20, for the next
   release on (0.9.2 itself is not immutable).
 - The promotion plan (TODO.md, "The promotion plan (2026-10-14)"): 19
   steps, each a GitHub issue, #90 to #101 here and #54 to #60 in
@@ -116,10 +139,11 @@ state; this is a summary.
   the playground's faults fixed in holoml; and #87's rule keeps the
   person's own full screen (the Mac's green button), as the owner
   decided.
-- Issue #133 (2026-10-21): the ad blocker's page scripts run each in a
-  block, in the frame that asked, at once, with no user gesture
-  (YouTube broke in part, and the terminal warned of listeners and
-  unhandled rejections).
+- Issue #133 (closed; pull request #137, merged 2026-10-22): the ad
+  blocker's page scripts run each in a block, before any of the
+  page's own scripts (the page preload asks for them and waits), with
+  no user gesture (YouTube broke in part, and the terminal warned of
+  listeners and unhandled rejections).
 - The logo direction is chosen (concept 4d in
   docs/branding/logo-concepts/), and the app's icon is drawn from it
   since 0.9.1 (`pnpm --filter @hypersol/browser icons`, issue #92).
@@ -128,9 +152,14 @@ state; this is a summary.
   HyperSpace 3D Authors" and "The HoloML Authors" (AUTHORS files).
 
 Two repositories, kept as sibling folders (never one inside the other).
-The newest merges are #128 here (release 0.9.2's preparation) and
-holoml #67 (the playground), both 2026-10-20; pull request #129 (the
-README's 0.9.2 badges) is open. HoloML's newest release is v0.3.1:
+The newest merges are #141, #148, #149, and #151 here (2026-11-11;
+before them #137, issue #133, 2026-10-22, #129 to #132, and
+Dependabot's #134 to #136, 2026-10-21) and holoml
+#70 (the review of 2026-10-21's fixes, 2026-10-21). Open pull
+requests on 2026-11-11: #145 to #147 here; holoml #75 and
+Dependabot's holoml #72 to #74.
+HoloML's newest release is v0.3.1; the playground and the fixes
+since are on its site but in no release yet:
 
 - Browser: https://github.com/srajpal/hypersol-hyperspace-3d (renamed
   from hypersol-websurfer-3d; GitHub redirects the old address)
@@ -765,7 +794,8 @@ to this repository for rules and the prompt log.
   since #110; the owner's Mac, #94 and #111).
   Android tablets in this repository (apps/android, milestone 24;
   prompt 152); phones and iOS later. Mouse, keyboard, and touch.
-- Stack: Electron (the newest stable line; 44.9.2 since 2026-10-20),
+- Stack: Electron (the newest stable line: 45, at 45.3.0 since
+  2026-11-11),
   TypeScript, Three.js, Lit, SQLite through Node's node:sqlite,
   @ghostery/adblocker-electron, electron-vite, Vitest, Playwright. Node
   24 or newer, pnpm 12.4.1 pinned. Reasons in ARCHITECTURE.md
@@ -813,8 +843,9 @@ to this repository for rules and the prompt log.
   prompt 187).
   A run of the frame-rate and load-time budgets on a machine with a
   graphics card in the automatic builds is now GitHub issue #80.
-- Waiting on the owner (2026-10-20): pull request #129 (the README's
-  0.9.2 badges) and the documents review after it; a line for the
+- Waiting on the owner (2026-11-11): release 0.9.3 (#144: the merge,
+  the tag, the publish); the branches of the review of 2026-11-11;
+  a line for the
   video in 0.9.1's release notes; the checks by eye (the landing page
   and the viewer in Firefox and Safari and from the keyboard, RL6's
   icon, the zips started on a Mac and on Linux); the promotion plan's
@@ -856,9 +887,13 @@ to this repository for rules and the prompt log.
    automatic builds), #81 (macOS; closed 2026-10-15, #94), #82 (C9 and L9 on the owner's
    computer; I8 and m17's development-run check to watch too), and #84
    (the browser's own full screen, F11), and #87 (closing a tab in full
-   screen once left the window full screen on GitHub's Windows; not
-   reproduced here, the check made to say which way it fails; TODO.md,
-   "Issue #87"). In holoml, open on 2026-10-10:
+   screen once left the window full screen on GitHub's Windows; fixed
+   and closed 2026-10-21, pull request #131; TODO.md, "Issue #87").
+   Open on 2026-11-11: #76 to #80, #82, #84, #98 to #101 (the
+   promotion plan's steps 11 to 13 and 19), #138 (a unit test's 100
+   ms budget missed now and then on a busy machine), #143 (FS10 on a
+   Mac), #144 (release 0.9.3), and #150 (the password store's calls
+   before Electron 46). In holoml, open on 2026-10-10:
    enhancements #46 to #52 (forms and richer controls, reusable
    components and styles, object descriptions and states, pointer and
    drag events, more of the scene API, adaptive detail and loading
@@ -941,7 +976,7 @@ to this repository for rules and the prompt log.
    discussion). AT2 and AT3 pass. The README's Download section names
    0.9.2 with an *attested* badge per zip (docs/branding/attested.svg,
    no outside service) linked to the zip's own attestation page, in
-   pull request #129, open for the owner. AT4 does not pass: the
+   pull request #129, merged 2026-10-21. AT4 does not pass: the
    repository's immutable-releases setting was off at the publish, and
    GitHub applies it only to releases published once it is on, so
    0.9.2 is not immutable. The owner turned the setting on that
@@ -952,8 +987,8 @@ to this repository for rules and the prompt log.
    the zips' attestations name the tag.
    Issue #87 (closing a tab in full screen could leave the window full
    screen; seen four times on GitHub's machines, never here): the fix
-   approved 2026-10-21 with the recommended answers and built on the
-   branch issue-87-fullscreen-close, stacked on #130. The window is
+   approved 2026-10-21 with the recommended answers, merged the same
+   day as pull request #131, and #87 closed. The window is
    full screen only while a page holds it (main/fullscreen.ts, settle;
    checks FS9 and FS10). issue-75.e2e.ts passed on the owner's Mac
    (Q2, 2026-10-21). TODO.md, "Issue #87", "The fix", has the plan and
@@ -1020,10 +1055,12 @@ to this repository for rules and the prompt log.
    list.
    One issue at a time, approved by the owner first (AGENTS.md rule 2);
    check Electron's security releases at least monthly and before any
-   tag (rule 13; last checked 2026-10-20, 44.9.2, before the 0.9.2 tag). Prompts are recorded
+   tag (rule 13; last checked 2026-11-11, 45.3.0, before the 0.9.3 tag;
+   the next is due by 2026-12-11). Prompts are recorded
    only when the owner asks. The three advisories of 2026-10-09 are
    published, and the merged branches deleted (2026-10-10) but for
-   `issue-75-fullscreen`, merged as #83, still on GitHub.
+   `issue-75-fullscreen`, merged as #83, still on GitHub, and
+   `review-204-fixes`, which holds ed72b1b for issue #143.
 
 ## Not done yet, on purpose
 

@@ -722,6 +722,8 @@ it("captures milestone 28's screens", async () => {
     await h.shell.click('hs-theme-button [data-testid="theme"]');
     await waitFor('Daylight', () => h.shell.evaluate(() => document.documentElement.style.colorScheme), (s) => s === 'light');
     await pressInShell(h, 'K', ['control', 'shift']);
+    // The arrow keys are the room's only once looking around is on: wait for it, as m27's checks do (on Electron 44.11.1 the keys could arrive first).
+    await waitFor('looking around', () => shellCall(h, 'look'), (l) => l.away && l.active && !l.moving);
     for (let i = 0; i < 4; i++) await pressInShell(h, 'Left');
     for (let i = 0; i < 2; i++) await pressInShell(h, 'Up');
     await waitFor('there', () => shellCall(h, 'look'), (l) => l.goal.yaw !== 0 && !l.moving);
