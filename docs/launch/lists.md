@@ -17,6 +17,13 @@ icon is another company's. Since then (2026-10-20): release 0.9.2, its
 zips attested, which the entries below link; the repository turns 30
 days old on 2026-10-25.
 
+As of 2026-11-11 (`gh repo view --json stargazerCount,createdAt`):
+the browser repository is 47 days old and has 1 star (holoml, created
+the same day, has 0). Electron 45 is the newest stable line and 44 is
+still a supported one; release 0.9.3, a security release on Electron
+44, is in preparation. Before sending: check the version, link the
+newest release in each entry, and count the stars again.
+
 ## 1. electron/apps (electronjs.org/apps): ready now
 
 The official Electron apps list, which the site electronjs.org/apps is
@@ -24,7 +31,8 @@ built from. Rules (its contributing.md): a folder under `apps/` named
 with lowercase letters, numbers, and dashes, holding a `.yml` file and
 a PNG icon of at least 256 by 256; `name`, `description`, `website`
 (https), and `category` from its list are required; the app must be at
-least 20 days old (it is: 22), open source with a README, a screenshot
+least 20 days old (it is: 47 on 2026-11-11), open source with a
+README, a screenshot
 in it, and a binary for at least one system; the description short,
 starting with a capital, ending with a full stop, not starting with "A"
 or "An", and not mentioning Electron; links over https. Screenshots are
@@ -53,7 +61,7 @@ Steps:
    > HyperSol HyperSpace 3D is an open-source desktop web browser with
    > a 3D interface: ordinary websites float as panels in a 3D room,
    > page sections lift into layered depth, and fully 3D sites written
-   > in HoloML open as places to walk through. Built with Electron 44
+   > in HoloML open as places to walk through. Built with Electron
    > and Three.js; Apache 2.0; no telemetry.
    >
    > - Repository: https://github.com/srajpal/hypersol-hyperspace-3d
@@ -64,10 +72,14 @@ Steps:
    > The README has screenshots and a GIF; the icon and the name are
    > the project's own.
 
+   (Before sending: check the version. The text names release 0.9.2;
+   name and link the newest one. It names no Electron version, as the
+   list's rules for the entry itself ask, and so that none goes stale.)
+
 4. After the merge, the entry appears on electronjs.org/apps within a
    day or two (their release process).
 
-## 2. awesome-electron: not yet (100 stars and 30 days)
+## 2. awesome-electron: not yet (100 stars)
 
 sindresorhus/awesome-electron (about 27,000 stars; active). Rules
 (its contributing.md): the project must be at least 30 days old and
@@ -79,10 +91,10 @@ mentioning Electron; open-source apps need an English README with a
 screenshot and a binary for at least one system; the pull request's
 title useful, its text linking the thing and saying why.
 
-Today the repository is 22 days old with 0 stars, so this one waits.
-When both are met (the stars first, which the launch posts of step 12
-work toward), the entry goes at the bottom of "Apps" > "Open Source" >
-"Other" in readme.md:
+On 2026-11-11 the repository is 47 days old, so the 30 days are met,
+and has 1 star, so this one waits for the stars, which the launch
+posts of step 12 work toward. When it has 100, the entry goes at the
+bottom of "Apps" > "Open Source" > "Other" in readme.md:
 
 ```markdown
 - [HyperSpace 3D](https://github.com/srajpal/hypersol-hyperspace-3d) - Web browser with a 3D interface, and a viewer for HoloML, a markup language for 3D websites.

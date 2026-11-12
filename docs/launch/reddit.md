@@ -17,7 +17,7 @@ Reads the engineering, not the product. Usually a link post: the
 article fits better than the landing page.
 
 **Title:** 203 prompts, 17 days: what it took to have AI agents build a
-browser and a 3D markup language, with every prompt published
+browser and a 3D markup language, with all 203 published
 
 **Link:** `<ARTICLE>`
 
@@ -89,7 +89,7 @@ pictures in posts.
 
 ## r/electronjs
 
-**Title:** HyperSpace 3D: a web browser built on Electron 44, with a 3D
+**Title:** HyperSpace 3D: a web browser built on Electron, with a 3D
 interface
 
 **Text:**
@@ -99,8 +99,8 @@ interface
 > snapshots, ad and tracker blocking with @ghostery/adblocker-electron,
 > DNS over HTTPS, HTTPS-only, passwords in the system keychain through
 > safeStorage, and history in SQLite through node:sqlite in a worker.
-> 480 end-to-end checks drive the real app with Playwright on Windows,
-> Linux, and macOS.
+> 485 end-to-end checks drive the real app with Playwright, on
+> Windows and Linux on every change and on macOS on main.
 >
 > Portable zips for all three: https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.2
 >
@@ -111,13 +111,20 @@ interface
 
 (Each technical claim checked against the code on 2026-10-19:
 safeStorage in main/passwords/vault.ts, node:sqlite in
-main/storage/database.ts, history's worker in main/storage/history.ts.)
+main/storage/database.ts, history's worker in main/storage/history.ts.
+The count of checks is the full run of 2026-10-21: 484 passed and 1
+skipped, TODO.md, "Issue #133".)
+
+(Before posting: check the version. The link names 0.9.2; link the
+newest release. No Electron version is named, so that none goes
+stale: say "a supported stable line" if asked, or read it from the
+release's notes.)
 
 ## r/opensource
 
 **Title:** HyperSpace 3D and HoloML: an open-source 3D web browser and
-markup language, Apache 2.0, built in the open with every prompt
-published
+markup language, Apache 2.0, built in the open with the build's 203
+prompts published
 
 **Text:**
 
@@ -142,7 +149,7 @@ published
 Check the flair for projects made with Claude, and use it.
 
 **Title:** A browser and a 3D markup language in 17 days, 203 prompts
-to Claude Code, every prompt published
+to Claude Code, all 203 published
 
 **Text:**
 

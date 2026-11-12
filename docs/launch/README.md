@@ -37,17 +37,62 @@ because every post sends people to these places.
       `<ARTICLE>` below.
 - [ ] Electron's security releases checked (AGENTS.md rule 13; last
       2026-10-20, 44.9.2, in 0.9.2, published that day). If a security
-      release is out, it goes in a 0.9.3 first.
+      release is out, it goes in a 0.9.3 first. The check must be made
+      again on launch day. On 2026-11-11: Electron 45 is the newest
+      stable line, 44 is still a supported one, and 0.9.3, a security
+      release on Electron 44, is in preparation. The posts name no
+      Electron version; where one links a release (0.9.2 today), its
+      "Before posting: check the version" note says so.
 - [ ] Clips cut from the video for the social posts (social.md lists
       them): short MP4s or GIFs under each service's limits.
 - [ ] The issue list tidy: "good first issue" and "help wanted" where
       they fit (done in step 8), and nothing stale at the top.
+
+## Still missing before launch
+
+Found by a review of the kit on 2026-11-11. None is drafted here; each
+is the owner's to write or to approve as work.
+
+- A one-sentence pitch: what it is and why someone would try it, the
+  same words everywhere.
+- A specific ask of readers: the posts end with "what breaks"; one
+  thing to do (try a page, write one, file an issue) would be clearer.
+- An MP4 of the video. The release has a WebM, which plays poorly on
+  iOS and on social sites. MP4 needs a full ffmpeg, which would be new
+  software (AGENTS.md rule 4; social.md, "The clips").
+- The comparison page: A-Frame, X3D, model-viewer, and the others
+  (holoml issue #59, open; the promotion plan's step 17). faq.md's
+  answer links holoml's "Why HoloML" page meanwhile.
+- Loading feedback before the web viewer's first frame (holoml issue
+  #51, open): the screen stays dark for about ten seconds before
+  Harbour Loft draws (TODO.md, "The promotion plan", results), and
+  Harbour Loft is the first link in most posts.
+- The three `[owner: ...]` placeholders to fill: in story.md, what
+  happened to HyperSol (under "2001", line 49) and how much of the
+  code the owner read (the end of "What the agents got wrong, and
+  what caught it", line 196); in faq.md, the same answer in the
+  owner's words ("Built by AI", line 57).
+- `<ARTICLE>`: the article's address, once it is posted, in
+  show-hn.md, reddit.md, and social.md.
 
 ## On the day
 
 A weekday, Tuesday to Thursday. Hacker News is busiest from about
 8:00 to 11:00 in the morning, US Eastern time, and a post made then has
 the US and Europe awake while it is on the front page.
+
+A conflict in this plan (found 2026-11-11): everything below is on one
+day, Tuesday to Thursday, but r/webdev allows showcases only on
+Saturdays (reddit.md, "r/webdev"; read its rules on the day), so its
+post cannot be on that day.
+
+**A proposal, for the owner to decide:** spread the posts over about
+two weeks, so that each gets its own answers and what the first
+readers find can be fixed before the largest audience. First the
+Three.js forum and r/threejs, who know how it is drawn; some days
+later Show HN, Tuesday to Thursday, with Mastodon and Bluesky an hour
+after; then the other subreddits one or two a day, r/webdev on a
+Saturday. Until the owner decides, the steps below stand as written.
 
 1. **Show HN** first (show-hn.md). Post the first comment at once.
    Then stay: answer every question for the first three or four
@@ -68,7 +113,7 @@ the US and Europe awake while it is on the front page.
 
 - Answer issues and Discussions within a day or two for the first
   weeks; a newcomer's first issue is the best chance to keep them.
-- awesome-electron once the browser has 100 stars and is 30 days old
-  (lists.md, section 2).
+- awesome-electron once the browser has 100 stars (it is 30 days old
+  since 2026-10-25; lists.md, section 2).
 - Step 13, the case study and the talk proposals, the week after,
   with the launch's numbers to cite.

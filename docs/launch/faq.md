@@ -25,8 +25,13 @@ with one codebase for Windows, macOS, and Linux, so every site works
 from day one, and the work could go into the 3D interface instead of a
 rendering engine. The cost: the zips are 120 to 160 MB, and Electron
 ships no Widevine, so DRM video (Netflix, Disney+, Spotify's web
-player) does not play. Electron is kept on its current stable line
-(44.9.2 today), checked monthly for security releases.
+player) does not play. The app is kept on a supported stable line of
+Electron and updated with its security releases, which are checked at
+least once a month and before every release.
+
+(Before posting: if someone asks which Electron, read the version from
+the newest release's notes; none is written here, so that it cannot go
+stale.)
 
 ## How is HoloML different from A-Frame, X3D, or model-viewer?
 
@@ -51,14 +56,17 @@ player) does not play. Electron is kept on its current stable line
 
 **[owner: one honest paragraph in your own words: how much of the code
 you read, and what you looked at most.]** What can be said from the
-record: every prompt is published in order (PROMPTS.md), each change
-is a commit, and every milestone's plan, decisions, and check results
-are in TODO.md. The agents worked under written rules (AGENTS.md):
-build only what was approved, never invent a result, mark a step "not
+record: the prompts of the build, 1 to 203, are published in order
+(PROMPTS.md; since then a prompt is recorded only on request, and one
+has been, 204), each change is a commit, and every milestone's plan,
+decisions, and check results are in TODO.md. The agents worked under
+written rules (AGENTS.md): build only what was approved, never invent a result, mark a step "not
 checked yet" until it has run, and never weaken a test to get a pass.
-About 2,000 tests run on every change: 614 unit tests, 480 end-to-end
-checks that drive the real app on Windows, Linux, and macOS, and 885 in
-HoloML, with its conformance samples. A review by ten agents, each
+There are about 2,000 tests: 621 unit tests and 485 end-to-end checks
+that drive the real app, run on Windows and Linux on every change (on
+macOS, lint, types, the unit tests, and the build on every change, and
+the end-to-end checks on main, as an experiment), and 897 in HoloML,
+with its conformance samples. A review by ten agents, each
 reading one area, found real faults, among them security ones, and
 they were fixed and published as advisories. It is still young code:
 read it, and report what you find.
@@ -81,6 +89,23 @@ It binds the zip's exact bytes to that build; it does not say the
 source or the zip is safe or free of faults, and it is not code
 signing.
 
+(Before posting: check the version. The line above names 0.9.2; if a
+newer release is out, name its tag.)
+
+## Should I use this as my everyday browser?
+
+Not yet. It is an experimental developer preview from one person, in
+spare time, and young code. Try it, look around with it, and say what
+breaks, but keep banking and anything else sensitive in the browser
+you already trust. Two things to know before relying on it. It follows
+Electron's stable releases to pick up Chromium's security fixes:
+Electron's release notes are checked at least once a month and before
+every release, and a security release goes into a new version of the
+app. And it has no automatic update and no update check: a newer
+version is a newer zip on the releases page, which you download
+yourself, so an old copy stays old until you replace it. Only the
+latest release is supported (SECURITY.md).
+
 ## What does it send, and to whom?
 
 Nothing about you. No telemetry and no crash reports. Its own requests
@@ -97,9 +122,19 @@ blocker, with a shield that shows what was blocked.
 ## Does it work on a Mac?
 
 Yes, on Apple silicon and Intel, as a zip; Gatekeeper asks once. The
-automatic builds run on macOS, and on a Mac the end-to-end checks
-pass but two (TODO.md, "Issue #111"). Windows and Linux are the systems
-it was built on and are checked most.
+automatic builds run on macOS: lint, types, the unit tests, and the
+build on every change, and the end-to-end checks on main, as an
+experiment (GitHub's small Mac fails some that a real one passes). On
+a Mac in hand (an iMac Pro, 2026-10-15) the end-to-end checks pass
+but for two things: one frame-rate check (C9) reads about 30 frames a
+second where it asks for at least 50, which measures the check's own
+loop, as the room itself draws at about 60 there; and now and then
+the app crashes when a page's DevTools open (TODO.md, "Issue #111").
+Windows and Linux are the systems it was built on and are checked
+most.
+
+(Before posting: that whole run on the Mac was of 463 checks; the 22
+added since have not all been run there.)
 
 ## Why no installer?
 

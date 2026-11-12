@@ -36,7 +36,8 @@ ffmpeg, which would be new software, AGENTS.md rule 4).
 > https://srajpal.github.io/hypersol-hyperspace-3d/
 
 (Counted 2026-10-19: every post here is under 300 characters with its
-links written out in full: 285, 281, 202, 229, and 217. Post 4's
+links written out in full: 285, 281, 202, 227, and 217 (post 4 made
+again 2026-11-11). Post 4's
 `<ARTICLE>` adds the article's address; keep that one short, or show
 it as a link card.)
 
@@ -61,7 +62,7 @@ text; Mastodon counts every link as 23 characters.)
 > The story: in 2001 a friend and I made a free browser, HyperSol
 > WebSurfer, and dreamed of one you look into, not at. 25 years later
 > I built it, by directing AI coding agents: 203 prompts in 17 days,
-> every one published. <ARTICLE>
+> all 203 published. <ARTICLE>
 
 **5**
 

@@ -15,7 +15,7 @@ Other titles to choose from:
 - "We wanted a 3D web browser in 2001. In 2026 I directed AI agents to
   build it, in the open"
 - "203 prompts: how a browser and a 3D markup language were built by
-  AI agents, and checked by nearly 2,000 tests"
+  AI agents, and checked by about 2,000 tests"
 
 ---
 
@@ -94,11 +94,13 @@ and Linux on the
 
 The first prompt was on 24 September 2026. The 203rd, which closed the
 last planned milestone, was on 10 October: seventeen days. In between
-the agents made about 770 commits across the two repositories, and
-every prompt I gave them is published, in order, in
+the agents made about 680 commits across the two repositories (about
+830 by 11 November, with the work since), and all 203 of those prompts
+are published, in order, in
 [PROMPTS.md](https://github.com/srajpal/hypersol-hyperspace-3d/blob/main/PROMPTS.md),
 lightly edited for typing slips, with the date and the model each one
-went to.
+went to. Since then the work goes by GitHub issues, and a prompt is
+recorded only when I ask for it.
 
 The first prompt did not ask for code. It described the idea in a
 few paragraphs, then said:
@@ -188,11 +190,12 @@ them was mostly tests, and a few times it was me.
   went blank in the layers view, found while taking screenshots. Each
   became a fix and a check.
 
-Today the browser has 614 unit tests and 480 end-to-end checks, which
+Today the browser has 621 unit tests and 485 end-to-end checks, which
 drive the real app with Playwright on Windows and Linux on every
-change, and on macOS on main; HoloML has 885 tests of its own, including conformance
-samples for the language. **[owner: one honest sentence on how much
-you read of the code yourself, and what you looked at most.]**
+change, and on macOS on main; HoloML has 897 tests of its own,
+including conformance samples for the language. **[owner: one honest
+sentence on how much you read of the code yourself, and what you
+looked at most.]**
 
 ## What the 3D web could be
 
@@ -248,17 +251,22 @@ Discussions are open on both repositories.
 
 ## Notes for the owner (not part of the article)
 
-Where each number comes from (2026-10-19; the test counts 2026-10-20):
+Where each number comes from (2026-10-19; the counts of tests and
+commits made again on 2026-11-11). Before posting: check the version,
+as the article links the 0.9.2 release and a 0.9.3 was in preparation
+on 2026-11-11, and count once more.
 
 | Claim | Source |
 |---|---|
 | 17 days, prompts 1 to 203 | PROMPTS.md headings: prompt 1 on 2026-09-24, 203 on 2026-10-10 |
-| About 770 commits | `git rev-list --count HEAD`: 606 here (on main), 164 in holoml |
+| About 680 commits in the 17 days; about 830 by 2026-11-11 | Up to the end of 2026-10-10: `git rev-list --count --before=2026-10-11 origin/main`, 528 here, and GitHub's commit list for holoml up to then, 152. On 2026-11-11: 656 here (origin/main), 174 in holoml (GitHub's commit list). The draft's earlier 770 was the count on 2026-10-19, not at prompt 203 |
+| Prompts 1 to 203 published; later ones only on request | PROMPTS.md's headings: 203 is the last made by default; its last heading is 204 (2026-10-21), recorded on request. AGENTS.md, "Prompt log" |
 | 28 milestones | TODO.md, the roadmap |
 | Models | PROMPTS.md: 176 prompts to Claude Opus 5.5, 28 to Claude Fable 5.1, 3 to Codex. Say so if you name the tools. |
-| 614 unit tests | TODO.md, "Issue #127", results (2026-10-20) |
-| 480 end-to-end checks (the full run of 2026-10-20); 17 of 463 missed on the Mac (2026-10-15) | TODO.md, "Issue #94", MC3; "Issue #111" |
-| 885 HoloML tests | TODO.md, "Issues and advisories of 2026-10-09" |
+| 621 unit tests | `pnpm test` on main, 2026-11-11, all passed |
+| 485 end-to-end checks (the full run of 2026-10-21: 484 passed and 1 skipped, FS5, in 35 files); 17 of 463 missed on the Mac (2026-10-15) | TODO.md, "Issue #133", results; "Issue #94", MC3; "Issue #111" |
+| Windows and Linux on every change, macOS on main | .github/workflows/ci.yml: the `macos` job (lint, types, unit tests, the build) runs on every change; `macos-e2e` not on pull requests, and "All checks" does not wait for it |
+| 897 HoloML tests | TODO.md, "The review of 2026-10-21", results |
 | WebRTC rule ignored | TODO.md, milestone 25 results, and "After milestone 25" |
 | Ten reviewers | TODO.md, "The review of 2026-09-30", "What was reviewed, and how" |
 | Three advisories of 2026-10-09 | TODO.md, "Issues and advisories of 2026-10-09"; published 2026-10-10 |
