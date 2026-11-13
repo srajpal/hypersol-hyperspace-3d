@@ -86,7 +86,7 @@ in many languages. To write a page of your own, HoloML's
 markup on the left, the scene on the right, and the checker's problems
 as you type. The browser itself is a portable zip for Windows, macOS,
 and Linux on the
-[0.9.2 release](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.2).
+[0.9.3 release](https://github.com/srajpal/hypersol-hyperspace-3d/releases/tag/v0.9.3).
 
 ![HyperSpace 3D showing HoloML's Harbour Loft: a loft's living room by day, boats in the harbour through tall steel windows, a floor plan in the corner, and four tabs as cards on the left](screenshots/readme.png)
 
@@ -253,8 +253,8 @@ Discussions are open on both repositories.
 
 Where each number comes from (2026-10-19; the counts of tests and
 commits made again on 2026-11-11). Before posting: check the version,
-as the article links the 0.9.2 release and a 0.9.3 was in preparation
-on 2026-11-11, and count once more.
+as the article links the 0.9.3 release (published 2026-11-13), and
+count once more.
 
 | Claim | Source |
 |---|---|

@@ -8956,6 +8956,32 @@ with main merged in; Windows 11, 2026-11-11):
   Android app (it shares the viewer: Three.js 0.187 is new to it,
   and its tablet check is by hand), and AT4 with the publish.
 
+### After the publish (2026-11-13)
+
+The owner merged #145 on 2026-11-12, pushed the tag `v0.9.3` (at
+1c1460a, main after #155's GitHub Actions updates), and published the
+draft on 2026-11-13. The release workflow's five jobs passed: the
+draft, and a zip built, started, and attested on each of the four
+systems.
+
+- AT2: `sha256sum -c` passes on all four `.sha256` files, and the
+  release's own digests are the same.
+- AT3: `gh attestation verify` as the README writes it
+  (`--signer-workflow` and `--source-ref refs/tags/v0.9.3`) passes on
+  each zip; it fails on the Windows zip with `refs/tags/v0.9.2` named,
+  and on a copy with one byte added.
+- AT4: passes, for the first time. GitHub's API reads the release as
+  immutable (`"immutable": true`), and the repository's setting as
+  `"enabled": true`; 0.9.3 is the first release published since the
+  owner turned it on (2026-10-20).
+- The README's Download section (the four zips, their sizes, and each
+  zip's attestation), its status paragraph, docs/verifying-downloads.md's
+  command, and the article's link (docs/story.md) name 0.9.3. The
+  launch drafts (docs/launch/) still link 0.9.2, each with its note to
+  check the version before posting.
+- Not checked yet: the Mac zips in hand, and the Android app on the
+  tablet.
+
 ## Issue #133: the ad blocker's page scripts (YouTube)
 
 Status: closed. Pull request #137 merged on 2026-10-22 with the fix

@@ -1,22 +1,25 @@
 # HANDOFF.md
 
 The state of the project for whoever picks it up next, person or agent.
-Last updated 2026-11-11.
+Last updated 2026-11-13.
 
-- Open now (2026-11-11): release 0.9.3, a security update, GitHub
-  issue #144, prepared on the branch release-0.9.3 (pull request
-  #145) for the owner to merge, tag, and publish: Electron 45.3.0
-  (Chromium 156; 0.9.2 had 44.9.2 and Chromium 152), Three.js 0.187,
-  and the fixes merged since 0.9.2 (#133 and #87). TODO.md, "Issue
-  #144", has the checklist and the results. After the publish: the
-  README's Download section and status paragraph, and AT4
-  (immutable).
+- Release 0.9.3 is published (2026-11-13, GitHub issue #144, pull
+  request #145): a security update on Electron 45.3.0 (Chromium 156;
+  0.9.2 had 44.9.2 and Chromium 152), Three.js 0.187, and the fixes
+  merged since 0.9.2 (#133 and #87). Its checksums and attestations
+  pass, and it is the first immutable release (AT4). TODO.md, "Issue
+  #144", has the checklist and the results. Nothing is open for it;
+  the launch drafts (docs/launch/) still link 0.9.2, each with its
+  note to check the version before posting.
 - A review of both repositories on 2026-11-11 (TODO.md, "The review
   of 2026-11-11") found this file three weeks stale, corrected here,
-  and the rest below. Beside the release, on branches of their own
-  for the owner's review: the README shortened for a first-time
-  reader (#147), the launch drafts corrected (#146), and holoml's
-  documents (holoml #75).
+  and the rest below. Merged on 2026-11-12 beside the release: the
+  README shortened for a first-time reader (#147), the launch drafts
+  corrected (#146), holoml's documents (holoml #75, with its Jing
+  test lifting newer Java's limit on XML nesting), and Dependabot's
+  #155 here and #72 to #74 in holoml (the language client and server
+  at 11.0.0; the extension's tests inside VS Code were not run after
+  them, as VS Code was mid-update on the owner's computer).
 - Dependabot's three failing pull requests were settled the same day,
   as the owner asked (TODO.md, "Issue #144", "Electron 45 and the
   dependency updates"): #141 merged; #140 closed for #149 (Electron

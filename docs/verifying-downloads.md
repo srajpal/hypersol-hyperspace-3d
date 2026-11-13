@@ -46,7 +46,7 @@ naming the workflow and the tag so that nothing else of the repository
 passes:
 
 ```bash
-gh attestation verify HyperSpace3D-0.9.2-windows-x64.zip -R srajpal/hypersol-hyperspace-3d --signer-workflow srajpal/hypersol-hyperspace-3d/.github/workflows/release.yml --source-ref refs/tags/v0.9.2
+gh attestation verify HyperSpace3D-0.9.3-windows-x64.zip -R srajpal/hypersol-hyperspace-3d --signer-workflow srajpal/hypersol-hyperspace-3d/.github/workflows/release.yml --source-ref refs/tags/v0.9.3
 ```
 
 or see them all on the repository's
